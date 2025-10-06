@@ -492,38 +492,43 @@ export type ShortUrlSpec = {
   /** The original path to where the short url is linking too e.g. https://localhost:3000/eer8i1kictngga/new-dashboard-with-lib-panel */
   path: string;
 };
+export type ShortUrlOperatorState = {
+  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
+  descriptiveState?: string;
+  /** details contains any extra information that is operator-specific */
+  details?: {
+    [key: string]: {
+      [key: string]: any;
+    };
+  };
+  /** lastEvaluation is the ResourceVersion last evaluated */
+  lastEvaluation: string;
+  /** state describes the state of the lastEvaluation.
+    It is limited to three possible states for machine evaluation. */
+  state: 'success' | 'in_progress' | 'failed';
+};
 export type ShortUrlStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
-    [key: string]: any;
+    [key: string]: {
+      [key: string]: any;
+    };
   };
   /** The last time the short URL was used, 0 is the initial value */
   lastSeenAt: number;
   /** operatorStates is a map of operator ID to operator state evaluations.
     Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
   operatorStates?: {
-    [key: string]: {
-      /** descriptiveState is an optional more descriptive state field which has no requirements on format */
-      descriptiveState?: string;
-      /** details contains any extra information that is operator-specific */
-      details?: {
-        [key: string]: any;
-      };
-      /** lastEvaluation is the ResourceVersion last evaluated */
-      lastEvaluation: string;
-      /** state describes the state of the lastEvaluation.
-            It is limited to three possible states for machine evaluation. */
-      state: 'success' | 'in_progress' | 'failed';
-    };
+    [key: string]: ShortUrlOperatorState;
   };
 };
 export type ShortUrl = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
+  apiVersion: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: ObjectMeta;
-  spec?: ShortUrlSpec;
+  kind: string;
+  metadata: ObjectMeta;
+  spec: ShortUrlSpec;
   status?: ShortUrlStatus;
 };
 export type ListMeta = {

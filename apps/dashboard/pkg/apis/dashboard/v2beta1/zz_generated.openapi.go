@@ -31,6 +31,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAutoGridLayoutKind":                                                                                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardAutoGridLayoutKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAutoGridLayoutSpec":                                                                                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardAutoGridLayoutSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAutoGridRepeatOptions":                                                                                                                                               schema_pkg_apis_dashboard_v2beta1_DashboardAutoGridRepeatOptions(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardClient":                                                                                                                                                              schema_pkg_apis_dashboard_v2beta1_DashboardClient(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardConditionalRenderingDataKind":                                                                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingDataKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardConditionalRenderingDataSpec":                                                                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingDataSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardConditionalRenderingGroupKind":                                                                                                                                       schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingGroupKind(ref),
@@ -634,12 +635,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableSpec(ref common.Ref
 							Format:  "",
 						},
 					},
-					"showInControlsMenu": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
 				},
 				Required: []string{"name", "baseFilters", "filters", "defaultKeys", "hide", "skipUrlSync", "allowCustomValue"},
 			},
@@ -964,6 +959,26 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAutoGridRepeatOptions(ref common
 				Required: []string{"mode", "value"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardClient(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"client": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"),
+						},
+					},
+				},
+				Required: []string{"client"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"},
 	}
 }
 
@@ -1305,12 +1320,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardConstantVariableSpec(ref common.
 							Format: "",
 						},
 					},
-					"showInControlsMenu": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
 				},
 				Required: []string{"name", "query", "current", "hide", "skipUrlSync"},
 			},
@@ -1476,12 +1485,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardCustomVariableSpec(ref common.Re
 							Default: false,
 							Type:    []string{"boolean"},
 							Format:  "",
-						},
-					},
-					"showInControlsMenu": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
 						},
 					},
 				},
@@ -1874,12 +1877,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDatasourceVariableSpec(ref commo
 							Default: false,
 							Type:    []string{"boolean"},
 							Format:  "",
-						},
-					},
-					"showInControlsMenu": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
 						},
 					},
 				},
@@ -2572,12 +2569,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableSpec(ref common.R
 							Format: "",
 						},
 					},
-					"showInControlsMenu": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
 				},
 				Required: []string{"name", "current", "options", "multi", "hide", "skipUrlSync"},
 			},
@@ -2790,12 +2781,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardIntervalVariableSpec(ref common.
 					"description": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"showInControlsMenu": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
 							Format: "",
 						},
 					},
@@ -3571,12 +3556,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardQueryVariableSpec(ref common.Ref
 					"description": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"showInControlsMenu": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
 							Format: "",
 						},
 					},
@@ -4421,12 +4400,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardTextVariableSpec(ref common.Refe
 					"description": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"showInControlsMenu": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
 							Format: "",
 						},
 					},

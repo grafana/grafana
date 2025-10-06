@@ -170,6 +170,18 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		})
 	}
 
+	// Verify all request keys are valid
+	for _, k := range settings.Collection {
+		if r := verifyRequestKey(k); r != nil {
+			return sendAndClose(&resourcepb.BulkResponse{
+				Error: &resourcepb.ErrorResult{
+					Message: fmt.Sprintf("invalid request key: %s", r.Message),
+					Code:    http.StatusBadRequest,
+				},
+			})
+		}
+	}
+
 	if settings.RebuildCollection {
 		for _, k := range settings.Collection {
 			// Can we delete the whole collection
@@ -178,7 +190,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 				Group:     k.Group,
 				Resource:  k.Resource,
 				Verb:      utils.VerbDeleteCollection,
-			})
+			}, "")
 			if err != nil || !rsp.Allowed {
 				return sendAndClose(&resourcepb.BulkResponse{
 					Error: &resourcepb.ErrorResult{
@@ -189,7 +201,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 			}
 
 			// This will be called for each request -- with the folder ID
-			runner.checker[NSGR(k)], err = s.access.Compile(ctx, user, authlib.ListRequest{
+			runner.checker[NSGR(k)], _, err = s.access.Compile(ctx, user, authlib.ListRequest{
 				Namespace: k.Namespace,
 				Group:     k.Group,
 				Resource:  k.Resource,

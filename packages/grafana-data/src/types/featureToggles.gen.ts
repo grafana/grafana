@@ -111,6 +111,14 @@ export interface FeatureToggles {
   */
   influxdbBackendMigration?: boolean;
   /**
+  * populate star status from apiserver
+  */
+  starsFromAPIServer?: boolean;
+  /**
+  * Routes stars requests from /api to the /apis endpoint
+  */
+  kubernetesStars?: boolean;
+  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   */
   influxqlStreamingParser?: boolean;
@@ -201,14 +209,15 @@ export interface FeatureToggles {
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   /**
-  * Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
-  */
-  featureToggleAdminPage?: boolean;
-  /**
   * Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
   * @default true
   */
   awsAsyncQueryCaching?: boolean;
+  /**
+  * Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
+  * @default false
+  */
+  queryCacheRequestDeduplication?: boolean;
   /**
   * Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
   */
@@ -285,6 +294,10 @@ export interface FeatureToggles {
   * Adds support for Kubernetes alerting and recording rules
   */
   kubernetesAlertingRules?: boolean;
+  /**
+  * Adds support for Kubernetes correlations
+  */
+  kubernetesCorrelations?: boolean;
   /**
   * Disable schema validation for dashboards/v1
   */
@@ -375,6 +388,10 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Enables undo/redo in dynamic dashboards
+  */
+  dashboardUndoRedo?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
   panelFilterVariable?: boolean;
@@ -447,7 +464,7 @@ export interface FeatureToggles {
   */
   alertingSaveStatePeriodic?: boolean;
   /**
-  * Enables the compressed protobuf-based alert state storage
+  * Enables the compressed protobuf-based alert state storage. Default is enabled.
   * @default true
   */
   alertingSaveStateCompressed?: boolean;
@@ -461,6 +478,11 @@ export interface FeatureToggles {
   * @default false
   */
   useScopeSingleNodeEndpoint?: boolean;
+  /**
+  * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
+  * @default false
+  */
+  useMultipleScopeNodesEndpoint?: boolean;
   /**
   * In-development feature that will allow injection of labels into prometheus queries.
   * @default true
@@ -532,22 +554,17 @@ export interface FeatureToggles {
   */
   grafanaManagedRecordingRules?: boolean;
   /**
-  * Renamed feature toggle, enables Saved queries feature
+  * Enables Saved queries (query library) feature
   */
   queryLibrary?: boolean;
   /**
-  * Enables Saved Queries feature
+  * Enable suggested dashboards when creating new dashboards
   */
-  savedQueries?: boolean;
+  dashboardLibrary?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
   logsExploreTableDefaultVisualization?: boolean;
-  /**
-  * Enables the new sharing drawer design
-  * @default true
-  */
-  newDashboardSharingComponent?: boolean;
   /**
   * Enables the new alert list view design
   */
@@ -679,6 +696,10 @@ export interface FeatureToggles {
   * Enable sprinkles on unified storage search
   */
   unifiedStorageSearchSprinkles?: boolean;
+  /**
+  * Use full n-gram indexing instead of edge n-gram for unified storage search
+  */
+  unifiedStorageUseFullNgram?: boolean;
   /**
   * Pick the dual write mode from database configs
   */
@@ -864,6 +885,11 @@ export interface FeatureToggles {
   */
   alertingJiraIntegration?: boolean;
   /**
+  * 
+  * @default true
+  */
+  alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
+  /**
   * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
   */
   useScopesNavigationEndpoint?: boolean;
@@ -944,10 +970,6 @@ export interface FeatureToggles {
   */
   multiTenantTempCredentials?: boolean;
   /**
-  * Enables localization for plugins
-  */
-  localizationForPlugins?: boolean;
-  /**
   * Enables unified navbars
   * @default false
   */
@@ -996,6 +1018,10 @@ export interface FeatureToggles {
   * Registers AuthZ /apis endpoint
   */
   kubernetesAuthzApis?: boolean;
+  /**
+  * Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+  */
+  kubernetesAuthZHandlerRedirect?: boolean;
   /**
   * Registers AuthZ resource permission /apis endpoints
   */
@@ -1153,13 +1179,28 @@ export interface FeatureToggles {
   */
   prometheusTypeMigration?: boolean;
   /**
-  * Enables dskit background service wrapper
-  * @default false
-  */
-  dskitBackgroundServices?: boolean;
-  /**
   * Enables running plugins in containers
   * @default false
   */
   pluginContainers?: boolean;
+  /**
+  * Run search queries through the tempo backend
+  * @default false
+  */
+  tempoSearchBackendMigration?: boolean;
+  /**
+  * Filter out bots from collecting data for Frontend Observability
+  * @default false
+  */
+  filterOutBotsFromFrontendLogs?: boolean;
+  /**
+  * Prioritize loading plugins from the CDN before other sources
+  * @default false
+  */
+  cdnPluginsLoadFirst?: boolean;
+  /**
+  * Enable loading plugins via declarative URLs
+  * @default false
+  */
+  cdnPluginsUrls?: boolean;
 }

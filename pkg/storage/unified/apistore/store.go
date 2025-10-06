@@ -59,6 +59,9 @@ type StorageOptions struct {
 	// Allow writing objects with metadata.annotations[grafana.app/folder]
 	EnableFolderSupport bool
 
+	// Some resources should not allow the absolute maximum (254 characters)
+	MaximumNameLength int
+
 	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
 
@@ -167,8 +170,27 @@ func NewStorage(
 	return s, func() {}, nil
 }
 
+// CompactRevision implements storage.Interface.
+// https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/interfaces.go#L278
+// https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L204
+func (s *Storage) CompactRevision() int64 {
+	return 0
+}
+
+// SetKeysFunc allows to override the function used to get keys from storage.
+// This allows to replace default function that fetches keys from storage with one using cache.
+// https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/interfaces.go#L273
+func (s *Storage) SetKeysFunc(storage.KeysFunc) {
+	// noop
+}
+
+// Stats implements storage.Interface.
+func (s *Storage) Stats(ctx context.Context) (storage.Stats, error) {
+	return storage.Stats{}, nil
+}
+
 // GetCurrentResourceVersion implements storage.Interface.
-// See: https://github.com/kubernetes/kubernetes/blob/v1.33.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L647
+// See: https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L686
 func (s *Storage) GetCurrentResourceVersion(ctx context.Context) (uint64, error) {
 	// Although not totally accurate, this is sufficient
 	return uint64(time.Now().UnixMicro()), nil
@@ -271,13 +293,6 @@ func (s *Storage) Delete(
 		if err := preconditions.Check(key, out); err != nil {
 			return err
 		}
-
-		if preconditions.ResourceVersion != nil {
-			cmd.ResourceVersion, err = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
-			if err != nil {
-				return err
-			}
-		}
 		if preconditions.UID != nil {
 			cmd.Uid = string(*preconditions.UID)
 		}
@@ -297,6 +312,10 @@ func (s *Storage) Delete(
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
 	}
 
+	cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
+	if err != nil {
+		return resource.GetError(resource.AsErrorResult(err))
+	}
 	rsp, err := s.store.Delete(ctx, cmd)
 	if err != nil {
 		return resource.GetError(resource.AsErrorResult(err))
@@ -514,6 +533,18 @@ func (s *Storage) GuaranteedUpdate(
 	if err != nil {
 		return err
 	}
+	// NOTE: by default, the RV will **not** be set in the preconditions (it is removed here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/rest/update.go#L187)
+	// instead, the RV check is done with the object from the request itself.
+	//
+	// the object from the request is retrieved in the tryUpdate function (we use the generic k8s store one). this function calls the UpdateObject function here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/generic/registry/store.go#L653
+	// and that will run a series of transformations: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/rest/update.go#L219
+	//
+	// the specific transformations it runs depends on what type of update it is.
+	// for patch, the transformers are set here and use the patchBytes from the request: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/endpoints/handlers/patch.go#L697
+	// for put, it uses the object from the request here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/endpoints/handlers/update.go#L163
+	//
+	// after those transformations, the RV will then be on the object so that the RV check can properly be done here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/generic/registry/store.go#L662
+	// it will be compared to the current object that we pass in below from storage.
 	if preconditions != nil && preconditions.ResourceVersion != nil {
 		req.ResourceVersion, err = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
 		if err != nil {
@@ -589,50 +620,48 @@ func (s *Storage) GuaranteedUpdate(
 			}
 			continue
 		}
-		break
-	}
 
-	v, err := s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
-	if err != nil {
-		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
-	}
-
-	// Only update (for real) if the bytes have changed
-	var rv uint64
-	req.Value = v.raw.Bytes()
-	if !bytes.Equal(req.Value, existingBytes) {
-		updateResponse, err := s.store.Update(ctx, req)
+		v, err := s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 		if err != nil {
-			err = resource.GetError(resource.AsErrorResult(err))
-		} else if updateResponse.Error != nil {
-			err = resource.GetError(updateResponse.Error)
+			return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
 		}
 
-		// Cleanup secure values
-		if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
+		// Only update (for real) if the bytes have changed
+		var rv uint64
+		req.Value = v.raw.Bytes()
+		if !bytes.Equal(req.Value, existingBytes) {
+			req.ResourceVersion = readResponse.ResourceVersion
+			updateResponse, err := s.store.Update(ctx, req)
+			if err != nil {
+				err = resource.GetError(resource.AsErrorResult(err))
+			} else if updateResponse.Error != nil {
+				if attempt < MaxUpdateAttempts && updateResponse.Error.Code == http.StatusConflict {
+					continue // try the read again
+				}
+				err = resource.GetError(updateResponse.Error)
+			}
+
+			// Cleanup secure values
+			if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
+				return err
+			}
+
+			rv = uint64(updateResponse.ResourceVersion)
+		}
+
+		if _, err := s.convertToObject(req.Value, destination); err != nil {
 			return err
 		}
 
-		rv = uint64(updateResponse.ResourceVersion)
-	}
-
-	if _, err := s.convertToObject(req.Value, destination); err != nil {
-		return err
-	}
-
-	if rv > 0 {
-		if err := s.versioner.UpdateObject(destination, rv); err != nil {
-			return err
+		if rv > 0 {
+			if err := s.versioner.UpdateObject(destination, rv); err != nil {
+				return err
+			}
 		}
+		return nil
 	}
 
 	return nil
-}
-
-// Count returns number of different entries under the key (generally being path prefix).
-// TODO: Implement count.
-func (s *Storage) Count(key string) (int64, error) {
-	return 0, nil
 }
 
 // RequestWatchProgress requests the a watch stream progress status be sent in the

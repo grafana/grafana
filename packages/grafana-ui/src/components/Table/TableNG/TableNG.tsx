@@ -96,6 +96,8 @@ import {
   shouldTextWrap,
   withDataLinksActionsTooltip,
   getSummaryCellTextAlign,
+  parseStyleJson,
+  IS_SAFARI_26,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -286,7 +288,7 @@ export function TableNG(props: TableNGProps) {
   const commonDataGridProps = useMemo(
     () =>
       ({
-        enableVirtualization: enableVirtualization !== false && rowHeight !== 'auto',
+        enableVirtualization: !IS_SAFARI_26 && enableVirtualization !== false && rowHeight !== 'auto',
         defaultColumnOptions: {
           minWidth: 50,
           resizable: true,
@@ -459,7 +461,8 @@ export function TableNG(props: TableNGProps) {
           ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign))
           : undefined;
 
-        const shouldOverflow = rowHeight !== 'auto' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
+        const shouldOverflow =
+          !IS_SAFARI_26 && rowHeight !== 'auto' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
         const textWrap = rowHeight === 'auto' || shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
@@ -477,6 +480,10 @@ export function TableNG(props: TableNGProps) {
         const linkStyles = getLinkStyles(theme, canBeColorized);
         const cellParentStyles = clsx(defaultCellStyles, linkStyles);
         const maxHeightClassName = maxRowHeight ? getMaxHeightCellStyles(theme, cellStyleOptions) : undefined;
+        const styleFieldValue = field.config.custom?.styleField;
+        const styleField = styleFieldValue ? data.fields.find(predicateByName(styleFieldValue)) : undefined;
+        const styleFieldName = styleField ? getDisplayName(styleField) : undefined;
+        const hasValidStyleField = Boolean(styleFieldName);
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -503,6 +510,9 @@ export function TableNG(props: TableNGProps) {
             const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
             const cellColorStyles = getCellColorInlineStyles(cellOptions, displayValue, applyToRowBgFn != null);
             Object.assign(style, cellColorStyles);
+          }
+          if (hasValidStyleField) {
+            style = { ...style, ...parseStyleJson(props.row[styleFieldName!]) };
           }
 
           return (
@@ -781,7 +791,7 @@ export function TableNG(props: TableNGProps) {
   const displayedEnd = pageRangeEnd;
   const numRows = sortedRows.length;
 
-  return (
+  let rendered = (
     <>
       <DataGrid<TableRow, TableSummaryRow>
         {...commonDataGridProps}
@@ -869,6 +879,12 @@ export function TableNG(props: TableNGProps) {
       )}
     </>
   );
+
+  if (IS_SAFARI_26) {
+    rendered = <div className={styles.safariWrapper}>{rendered}</div>;
+  }
+
+  return rendered;
 }
 
 /**

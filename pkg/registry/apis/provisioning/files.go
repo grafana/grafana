@@ -112,6 +112,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			Message:      query.Get("message"),
 			SkipDryRun:   query.Get("skipDryRun") == "true",
 			OriginalPath: query.Get("originalPath"),
+			Branch:       repo.Config().Branch(),
 		}
 		logger := logger.With("url", r.URL.Path, "ref", opts.Ref, "message", opts.Message)
 		ctx := logging.Context(r.Context(), logger)

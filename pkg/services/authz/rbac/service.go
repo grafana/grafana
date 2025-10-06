@@ -18,6 +18,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -209,10 +210,17 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 		attribute.String("action", listReq.Action),
 	)
 
-	permissions, err := s.getCachedIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
-	if err == nil {
-		s.metrics.permissionCacheUsage.WithLabelValues("true", listReq.Action).Inc()
-	} else {
+	var permissions map[string]bool
+	cacheHit := false
+
+	if !listReq.Options.SkipCache {
+		permissions, err = s.getCachedIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
+		if err == nil {
+			s.metrics.permissionCacheUsage.WithLabelValues("true", listReq.Action).Inc()
+			cacheHit = true
+		}
+	}
+	if err != nil || listReq.Options.SkipCache {
 		s.metrics.permissionCacheUsage.WithLabelValues("false", listReq.Action).Inc()
 
 		permissions, err = s.getIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
@@ -225,10 +233,20 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 
 	resp, err := s.listPermission(ctx, permissions, listReq)
 	s.metrics.requestCount.WithLabelValues(strconv.FormatBool(err != nil), "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
-	return resp, err
+	if err != nil {
+		return nil, err
+	}
+
+	if resp != nil && resp.Zookie != nil {
+		if cacheHit && time.Duration(time.Now().Unix()-resp.Zookie.Timestamp) < s.settings.CacheTTL {
+			resp.Zookie = &authzv1.Zookie{Timestamp: time.Now().Add(-s.settings.CacheTTL).Unix()}
+		}
+	}
+
+	return resp, nil
 }
 
-func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRequest) (*CheckRequest, error) {
+func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRequest) (*checkRequest, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.validateCheckRequest")
 	defer span.End()
 
@@ -247,7 +265,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 		return nil, err
 	}
 
-	checkReq := &CheckRequest{
+	checkReq := &checkRequest{
 		Namespace:    ns,
 		UserUID:      userUID,
 		IdentityType: idType,
@@ -261,7 +279,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 	return checkReq, nil
 }
 
-func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequest) (*ListRequest, error) {
+func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequest) (*listRequest, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.validateListRequest")
 	defer span.End()
 
@@ -280,7 +298,15 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		return nil, err
 	}
 
-	listReq := &ListRequest{
+	authzOptions := req.GetOptions()
+	if authzOptions == nil {
+		authzOptions = &authzv1.ListRequestOptions{}
+	}
+	options := &ListRequestOptions{
+		SkipCache: authzOptions.Skipcache,
+	}
+
+	listReq := &listRequest{
 		Namespace:    ns,
 		UserUID:      userUID,
 		IdentityType: idType,
@@ -288,6 +314,7 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		Group:        req.GetGroup(),
 		Resource:     req.GetResource(),
 		Verb:         req.GetVerb(),
+		Options:      options,
 	}
 	return listReq, nil
 }
@@ -331,18 +358,19 @@ func (s *Service) validateSubject(ctx context.Context, subject string) (string, 
 	return userUID, identityType, nil
 }
 
+// Find the action for a selected verb
 func (s *Service) validateAction(ctx context.Context, group, resource, verb string) (string, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
 	t, ok := s.mapper.Get(group, resource)
 	if !ok {
-		ctxLogger.Error("unsupport resource", "group", group, "resource", resource)
+		ctxLogger.Error("unsupported resource", "group", group, "resource", resource)
 		return "", status.Error(codes.NotFound, "unsupported resource")
 	}
 
 	action, ok := t.Action(verb)
 	if !ok {
-		ctxLogger.Error("unsupport verb", "group", group, "resource", resource, "verb", verb)
+		ctxLogger.Error("unsupported verb", "group", group, "resource", resource, "verb", verb)
 		return "", status.Error(codes.NotFound, "unsupported verb")
 	}
 
@@ -433,7 +461,7 @@ func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo
 		if err != nil {
 			return nil, err
 		}
-		scopeMap := getScopeMap(permissions)
+		scopeMap := s.getScopeMap(permissions)
 
 		scopeMap, err = s.resolveScopeMap(ctx, ns, scopeMap)
 		if err != nil {
@@ -463,7 +491,7 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns types.Namespac
 		if err != nil {
 			return nil, err
 		}
-		scopeMap := getScopeMap(permissions)
+		scopeMap := s.getScopeMap(permissions)
 		s.permCache.Set(ctx, anonPermKey, scopeMap)
 		return scopeMap, nil
 	})
@@ -570,7 +598,7 @@ func (s *Service) getUserBasicRole(ctx context.Context, ns types.NamespaceInfo, 
 	return *basicRole, nil
 }
 
-func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *CheckRequest) (bool, error) {
+func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *checkRequest) (bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.checkPermission", trace.WithAttributes(
 		attribute.Int("scope_count", len(scopeMap))))
 	defer span.End()
@@ -615,9 +643,15 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 	return s.checkInheritedPermissions(ctx, scopeMap, req)
 }
 
-func getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
+func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
 	permMap := make(map[string]bool, len(permissions))
 	for _, perm := range permissions {
+		// We've had cases where the scope wasn't split properly,
+		// failing wildcard checks. This is a recovery mechanism.
+		if perm.Kind == "" && perm.Scope != "" {
+			s.logger.Warn("found unsplit permission scope", "scope", perm.Scope)
+			perm.Kind, perm.Attribute, perm.Identifier = accesscontrol.SplitScope(perm.Scope)
+		}
 		// If has any wildcard, return immediately
 		if perm.Kind == "*" || perm.Attribute == "*" || perm.Identifier == "*" {
 			return map[string]bool{"*": true}
@@ -627,7 +661,7 @@ func getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
 	return permMap
 }
 
-func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[string]bool, req *CheckRequest) (bool, error) {
+func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[string]bool, req *checkRequest) (bool, error) {
 	if req.ParentFolder == "" {
 		return false, nil
 	}
@@ -704,9 +738,12 @@ func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (
 	return res.(folderTree), nil
 }
 
-func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, req *ListRequest) (*authzv1.ListResponse, error) {
+func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, req *listRequest) (*authzv1.ListResponse, error) {
 	if scopeMap["*"] {
-		return &authzv1.ListResponse{All: true}, nil
+		return &authzv1.ListResponse{
+			All:    true,
+			Zookie: &authzv1.Zookie{Timestamp: time.Now().Unix()},
+		}, nil
 	}
 
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.listPermission")
@@ -715,14 +752,19 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 
 	t, ok := s.mapper.Get(req.Group, req.Resource)
 	if !ok {
-		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
+		ctxLogger.Error("unsupported resource", "group", req.Group, "resource", req.Resource)
 		return nil, status.Error(codes.NotFound, "unsupported resource")
 	}
 
 	var tree folderTree
+	cacheHit := false
 	if t.HasFolderSupport() {
 		var err error
-		tree, ok = s.getCachedFolderTree(ctx, req.Namespace)
+		ok = false
+		if !req.Options.SkipCache {
+			tree, ok = s.getCachedFolderTree(ctx, req.Namespace)
+			cacheHit = true
+		}
 		if !ok {
 			tree, err = s.buildFolderTree(ctx, req.Namespace)
 			if err != nil {
@@ -737,6 +779,12 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		res = buildFolderList(scopeMap, tree)
 	} else {
 		res = buildItemList(scopeMap, tree, t.Prefix())
+	}
+
+	if cacheHit {
+		res.Zookie = &authzv1.Zookie{Timestamp: time.Now().Add(-s.settings.CacheTTL).Unix()}
+	} else {
+		res.Zookie = &authzv1.Zookie{Timestamp: time.Now().Unix()}
 	}
 
 	span.SetAttributes(attribute.Int("num_folders", len(res.Folders)), attribute.Int("num_items", len(res.Items)))
