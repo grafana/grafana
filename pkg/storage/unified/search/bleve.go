@@ -171,7 +171,12 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 
 // GetIndex will return nil if the key does not exist
 func (b *bleveBackend) GetIndex(key resource.NamespacedResource) resource.ResourceIndex {
-	return b.getCachedIndex(key, time.Now())
+	idx := b.getCachedIndex(key, time.Now())
+	// Avoid returning typed nils.
+	if idx == nil {
+		return nil
+	}
+	return idx
 }
 
 func (b *bleveBackend) GetOpenIndexes() []resource.NamespacedResource {
