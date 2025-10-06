@@ -23,7 +23,28 @@ permissions:
   security-events: write
 
 jobs:
+  detect-changes:
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      javascript: ${{ steps.detect-changes.outputs.frontend }}
+      go: ${{ steps.detect-changes.outputs.backend }}
+      actions: 'true'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/codeql-analysis.yml
+
   analyze:
+    needs: detect-changes
     name: Analyze
     runs-on: ubuntu-latest
     continue-on-error: true # doesn't block PRs from being merged if this fails
@@ -41,14 +62,15 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      if: needs.detect-changes.outputs[matrix.language] == 'true'
+      uses: actions/checkout@v5
       with:
         # We must fetch at least the immediate parents so that if this is
         # a pull request then we can checkout the head.
         fetch-depth: 2
         persist-credentials: false
 
-    - if: matrix.language == 'go'
+    - if: matrix.language == 'go' && needs.detect-changes.outputs.go == 'true'
       name: Set go version
       uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
       with:
@@ -56,6 +78,7 @@ jobs:
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
+      if: needs.detect-changes.outputs[matrix.language] == 'true'
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
@@ -64,7 +87,7 @@ jobs:
         # Prefix the list here with "+" to use these queries and those in the config file.
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
-    - if: matrix.language == 'go'
+    - if: matrix.language == 'go' && needs.detect-changes.outputs.go == 'true'
       name: Build go files
       run: |
         go mod verify

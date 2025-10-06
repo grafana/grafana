@@ -2,7 +2,7 @@
   "name": "@grafana/plugin-configs",
   "description": "Shared dependencies and files for core plugins",
   "private": true,
-  "version": "12.2.0-pre",
+  "version": "12.3.0-pre",
   "dependencies": {
     "tslib": "2.8.1"
   },
@@ -30,5 +30,5 @@
     "webpack-bundle-analyzer": "^4.10.2",
     "webpack-virtual-modules": "^0.6.2"
   },
-  "packageManager": "yarn@4.9.2"
+  "packageManager": "yarn@4.9.4"
 }

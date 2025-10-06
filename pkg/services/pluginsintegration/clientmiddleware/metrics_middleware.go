@@ -2,10 +2,13 @@ package clientmiddleware
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -15,10 +18,11 @@ import (
 
 // pluginMetrics contains the prometheus metrics used by the MetricsMiddleware.
 type pluginMetrics struct {
-	pluginRequestCounter         *prometheus.CounterVec
-	pluginRequestDuration        *prometheus.HistogramVec
-	pluginRequestSize            *prometheus.HistogramVec
-	pluginRequestDurationSeconds *prometheus.HistogramVec
+	pluginRequestCounter                      *prometheus.CounterVec
+	pluginRequestDuration                     *prometheus.HistogramVec
+	pluginRequestSize                         *prometheus.HistogramVec
+	pluginRequestDurationSeconds              *prometheus.HistogramVec
+	pluginRequestConnectionUnavailableCounter *prometheus.CounterVec
 }
 
 // MetricsMiddleware is a middleware that instruments plugin requests.
@@ -35,39 +39,47 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 		Namespace: "grafana",
 		Name:      "plugin_request_total",
 		Help:      "The total amount of plugin requests",
-	}, append([]string{"plugin_id", "endpoint", "status", "target"}, additionalLabels...))
+	}, append([]string{"plugin_id", "endpoint", "status", "target", "plugin_version"}, additionalLabels...))
 	pluginRequestDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_milliseconds",
 		Help:      "Plugin request duration",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
-	}, append([]string{"plugin_id", "endpoint", "target"}, additionalLabels...))
+	}, append([]string{"plugin_id", "endpoint", "target", "plugin_version"}, additionalLabels...))
 	pluginRequestSize := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "grafana",
 			Name:      "plugin_request_size_bytes",
 			Help:      "histogram of plugin request sizes returned",
 			Buckets:   []float64{128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576},
-		}, []string{"source", "plugin_id", "endpoint", "target"},
+		}, []string{"source", "plugin_id", "endpoint", "target", "plugin_version"},
 	)
 	pluginRequestDurationSeconds := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_seconds",
 		Help:      "Plugin request duration in seconds",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25},
-	}, append([]string{"source", "plugin_id", "endpoint", "status", "target"}, additionalLabels...))
+	}, append([]string{"source", "plugin_id", "endpoint", "status", "target", "plugin_version"}, additionalLabels...))
+	pluginRequestConnectionUnavailableCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace:   "grafana",
+		Name:        "plugin_request_connection_unavailable_total",
+		Help:        "The total amount of plugin request connection unavailable errors.",
+		ConstLabels: nil,
+	}, append([]string{"plugin_id", "endpoint", "status", "target", "plugin_version"}, additionalLabels...))
 	promRegisterer.MustRegister(
 		pluginRequestCounter,
 		pluginRequestDuration,
 		pluginRequestSize,
 		pluginRequestDurationSeconds,
+		pluginRequestConnectionUnavailableCounter,
 	)
 	return &MetricsMiddleware{
 		pluginMetrics: pluginMetrics{
-			pluginRequestCounter:         pluginRequestCounter,
-			pluginRequestDuration:        pluginRequestDuration,
-			pluginRequestSize:            pluginRequestSize,
-			pluginRequestDurationSeconds: pluginRequestDurationSeconds,
+			pluginRequestCounter:                      pluginRequestCounter,
+			pluginRequestDuration:                     pluginRequestDuration,
+			pluginRequestSize:                         pluginRequestSize,
+			pluginRequestDurationSeconds:              pluginRequestDurationSeconds,
+			pluginRequestConnectionUnavailableCounter: pluginRequestConnectionUnavailableCounter,
 		},
 		pluginRegistry: pluginRegistry,
 	}
@@ -101,7 +113,7 @@ func (m *MetricsMiddleware) instrumentPluginRequestSize(ctx context.Context, plu
 		return err
 	}
 	endpoint := backend.EndpointFromContext(ctx)
-	m.pluginRequestSize.WithLabelValues("grafana-backend", pluginCtx.PluginID, string(endpoint), target).Observe(requestSize)
+	m.pluginRequestSize.WithLabelValues("grafana-backend", pluginCtx.PluginID, string(endpoint), target, pluginCtx.PluginVersion).Observe(requestSize)
 	return nil
 }
 
@@ -120,9 +132,15 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	statusSource := backend.ErrorSourceFromContext(ctx)
 	endpoint := backend.EndpointFromContext(ctx)
 
-	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, string(endpoint), target, string(statusSource))
-	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, string(endpoint), status.String(), target, string(statusSource))
-	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, string(endpoint), status.String(), target, string(statusSource))
+	if err != nil {
+		if grpcstatus.Code(err) == codes.Unavailable || errors.Is(err, plugins.ErrPluginGrpcConnectionUnavailableBaseFn(ctx)) {
+			m.pluginRequestConnectionUnavailableCounter.WithLabelValues(pluginCtx.PluginID, string(endpoint), status.String(), target, pluginCtx.PluginVersion, string(statusSource))
+		}
+	}
+
+	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, string(endpoint), target, pluginCtx.PluginVersion, string(statusSource))
+	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, string(endpoint), status.String(), target, pluginCtx.PluginVersion, string(statusSource))
+	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, string(endpoint), status.String(), target, pluginCtx.PluginVersion, string(statusSource))
 
 	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
 		pluginRequestDurationWithLabels.(prometheus.ExemplarObserver).ObserveWithExemplar(

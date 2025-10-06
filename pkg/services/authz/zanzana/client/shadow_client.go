@@ -3,11 +3,13 @@ package client
 import (
 	"context"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
+
+var _ authlib.AccessClient = (*ShadowClient)(nil)
 
 type ShadowClient struct {
 	logger        log.Logger
@@ -27,7 +29,7 @@ func WithShadowClient(accessClient authlib.AccessClient, zanzanaClient authlib.A
 	return client
 }
 
-func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
+func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 	acResChan := make(chan authlib.CheckResponse, 1)
 	acErrChan := make(chan error, 1)
 
@@ -40,7 +42,7 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 		defer timer.ObserveDuration()
 
 		zanzanaCtx := context.WithoutCancel(ctx)
-		res, err := c.zanzanaClient.Check(zanzanaCtx, id, req)
+		res, err := c.zanzanaClient.Check(zanzanaCtx, id, req, folder)
 		if err != nil {
 			c.logger.Error("Failed to run zanzana check", "error", err)
 		}
@@ -59,7 +61,7 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 	}()
 
 	timer := prometheus.NewTimer(c.metrics.evaluationsSeconds.WithLabelValues("rbac"))
-	res, err := c.accessClient.Check(ctx, id, req)
+	res, err := c.accessClient.Check(ctx, id, req, folder)
 	timer.ObserveDuration()
 	acResChan <- res
 	acErrChan <- err
@@ -67,7 +69,7 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 	return res, err
 }
 
-func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, error) {
+func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
 	zanzanaItemCheckerChan := make(chan authlib.ItemChecker, 1)
 	go func() {
 		if c.zanzanaClient == nil {
@@ -76,7 +78,7 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 		}
 
 		timer := prometheus.NewTimer(c.metrics.compileSeconds.WithLabelValues("zanzana"))
-		itemChecker, err := c.zanzanaClient.Compile(ctx, id, req)
+		itemChecker, _, err := c.zanzanaClient.Compile(ctx, id, req)
 		timer.ObserveDuration()
 		if err != nil {
 			c.logger.Warn("Failed to compile zanzana item checker", "error", err)
@@ -85,10 +87,10 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 	}()
 
 	timer := prometheus.NewTimer(c.metrics.compileSeconds.WithLabelValues("rbac"))
-	rbacItemChecker, err := c.accessClient.Compile(ctx, id, req)
+	rbacItemChecker, _, err := c.accessClient.Compile(ctx, id, req)
 	timer.ObserveDuration()
 	if err != nil {
-		return nil, err
+		return nil, authlib.NoopZookie{}, err
 	}
 
 	zanzanaItemChecker := <-zanzanaItemCheckerChan
@@ -107,5 +109,5 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 		return rbacRes
 	}
 
-	return shadowItemChecker, err
+	return shadowItemChecker, authlib.NoopZookie{}, err
 }

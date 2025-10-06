@@ -42,6 +42,7 @@ import {
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
 } from '../../utils/utils';
+import { useSoloPanelContext } from '../SoloPanelContext';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
@@ -565,6 +566,11 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const hasClonedParents = isRepeatCloneOrChildOf(model);
   const styles = useStyles2(getStyles);
   const showCanvasActions = isEditing && config.featureToggles.dashboardNewLayouts && !hasClonedParents;
+  const soloPanelContext = useSoloPanelContext();
+
+  if (soloPanelContext) {
+    return children.map((child) => <child.Component model={child} key={child.state.key!} />);
+  }
 
   // If we are top level layout and we have no children, show empty state
   if (model.parent === dashboard && children.length === 0) {
@@ -583,6 +589,20 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
       )}
     </div>
   );
+}
+
+const OriginalSceneGridRowRenderer = SceneGridRow.Component;
+// @ts-expect-error
+SceneGridRow.Component = SceneGridRowRenderer;
+
+function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
+  const soloPanelContext = useSoloPanelContext();
+
+  if (soloPanelContext) {
+    return model.state.children.map((child) => <child.Component model={child} key={child.state.key!} />);
+  }
+
+  return <OriginalSceneGridRowRenderer model={model} />;
 }
 
 function getStyles(theme: GrafanaTheme2) {

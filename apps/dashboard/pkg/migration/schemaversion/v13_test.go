@@ -63,6 +63,7 @@ func TestV13(t *testing.T) {
 										"type": "linear",
 									},
 									"showPoints": "auto",
+									"showValues": false,
 									"spanNulls":  false,
 									"stacking": map[string]interface{}{
 										"group": "A",
@@ -161,6 +162,7 @@ func TestV13(t *testing.T) {
 										"type": "linear",
 									},
 									"showPoints": "auto",
+									"showValues": false,
 									"spanNulls":  false,
 									"stacking": map[string]interface{}{
 										"group": "A",
@@ -256,6 +258,7 @@ func TestV13(t *testing.T) {
 										"type": "linear",
 									},
 									"showPoints": "auto",
+									"showValues": false,
 									"spanNulls":  false,
 									"stacking": map[string]interface{}{
 										"group": "A",
@@ -394,6 +397,7 @@ func TestV13(t *testing.T) {
 										"log":  10.0,
 									},
 									"showPoints": "auto",
+									"showValues": false,
 									"spanNulls":  false,
 									"stacking": map[string]interface{}{
 										"group": "A",
@@ -508,6 +512,7 @@ func TestV13(t *testing.T) {
 										"type": "linear",
 									},
 									"showPoints": "auto",
+									"showValues": false,
 									"spanNulls":  false,
 									"stacking": map[string]interface{}{
 										"group": "A",

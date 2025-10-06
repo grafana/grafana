@@ -6,15 +6,18 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type changeInfo struct {
@@ -52,14 +55,17 @@ type fileChangeInfo struct {
 type evaluator struct {
 	render      ScreenshotRenderer
 	parsers     resources.ParserFactory
-	urlProvider func(namespace string) string
+	urlProvider func(ctx context.Context, namespace string) string
+	metrics     screenshotMetrics
 }
 
-func NewEvaluator(render ScreenshotRenderer, parsers resources.ParserFactory, urlProvider func(namespace string) string) Evaluator {
+func NewEvaluator(render ScreenshotRenderer, parsers resources.ParserFactory, urlProvider func(ctx context.Context, namespace string) string, registry prometheus.Registerer) Evaluator {
+	metrics := registerScreenshotMetrics(registry)
 	return &evaluator{
 		render:      render,
 		parsers:     parsers,
 		urlProvider: urlProvider,
+		metrics:     metrics,
 	}
 }
 
@@ -74,7 +80,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	rendererAvailable := e.render.IsAvailable(ctx)
 	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
 	info := changeInfo{
-		GrafanaBaseURL:       e.urlProvider(cfg.Namespace),
+		GrafanaBaseURL:       e.urlProvider(ctx, cfg.Namespace),
 		MissingImageRenderer: !rendererAvailable,
 	}
 
@@ -152,14 +158,14 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		info.PreviewURL += "?" + query.Encode()
 		if shouldRender {
 			if info.GrafanaURL != "" {
-				info.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, e.render, info.Parsed.Repo, info.GrafanaURL)
+				info.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, e.render, info.Parsed.Repo, info.GrafanaURL, e.metrics)
 				if err != nil {
 					info.Error = err.Error()
 				}
 			}
 
 			if info.PreviewURL != "" {
-				info.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, e.render, info.Parsed.Repo, info.PreviewURL)
+				info.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, e.render, info.Parsed.Repo, info.PreviewURL, e.metrics)
 				if err != nil {
 					info.Error = err.Error()
 				}
@@ -175,7 +181,13 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 	renderer ScreenshotRenderer,
 	repo provisioning.ResourceRepositoryInfo,
 	grafanaURL string,
+	metrics screenshotMetrics,
 ) (string, error) {
+	outcome := utils.ErrorOutcome
+	duration := time.Now()
+	defer func() {
+		metrics.recordScreenshotDuration(outcome, time.Since(duration))
+	}()
 	parsed, err := url.Parse(grafanaURL)
 	if err != nil {
 		logging.FromContext(ctx).Warn("invalid", "url", grafanaURL, "err", err)
@@ -194,5 +206,6 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 		logger.Warn("invalid base", "url", baseURL, "err", err)
 		return "", err
 	}
+	outcome = utils.SuccessOutcome
 	return base.JoinPath(snap).String(), nil
 }

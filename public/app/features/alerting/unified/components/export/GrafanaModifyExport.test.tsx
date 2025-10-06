@@ -6,7 +6,7 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { mockExportApi, setupMswServer } from '../../mockApi';
 import { mockDataSource } from '../../mocks';
-import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
+import { grafanaRulerRule, mockPreviewApiResponse } from '../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../testSetup/datasources';
 
 import GrafanaModifyExport from './GrafanaModifyExport';
@@ -58,6 +58,10 @@ function renderModifyExport(ruleId: string) {
 }
 
 const server = setupMswServer();
+
+beforeEach(() => {
+  mockPreviewApiResponse(server, []);
+});
 
 describe('GrafanaModifyExport', () => {
   setupDataSources(dataSources.default);

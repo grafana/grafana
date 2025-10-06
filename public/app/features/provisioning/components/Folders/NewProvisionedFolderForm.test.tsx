@@ -40,6 +40,7 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
 jest.mock('app/api/clients/provisioning/v0alpha1', () => {
   return {
     useCreateRepositoryFilesWithPathMutation: jest.fn(),
+    useGetRepositoryRefsQuery: jest.fn().mockReturnValue({ data: { items: [] }, isLoading: false, error: null }),
     provisioningAPIv0alpha1: {
       endpoints: {
         listRepository: {

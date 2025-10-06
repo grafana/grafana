@@ -50,19 +50,20 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
 
     const groupLayout = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.layout.common.group-layout', 'Group layout'),
-      id: 'group-layout-category',
+      id: 'dash-group-layout',
       isOpenDefault: false,
     });
 
     const gridLayout = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.layout.common.panel-layout', 'Panel layout'),
-      id: 'grid-layout-category',
+      id: 'dash-grid-layout',
       isOpenDefault: false,
     });
 
     gridLayout.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
+        id: 'dash-grid-layout-option',
         skipField: true,
         render: () => <DashboardLayoutSelector layoutManager={layoutManager} />,
       })
@@ -77,6 +78,7 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
       groupLayout.addItem(
         new OptionsPaneItemDescriptor({
           title: '',
+          id: 'dash-group-layout-option',
           skipField: true,
           render: () => <DashboardLayoutSelector layoutManager={layoutManager} />,
         })

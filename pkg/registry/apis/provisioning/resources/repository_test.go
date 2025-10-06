@@ -313,9 +313,9 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 
 			// Mock ForKind call
 			if tt.forKindError != nil {
-				mockClients.On("ForKind", tt.gvk).Return(nil, schema.GroupVersionResource{}, tt.forKindError)
+				mockClients.On("ForKind", mock.Anything, tt.gvk).Return(nil, schema.GroupVersionResource{}, tt.forKindError)
 			} else {
-				mockClients.On("ForKind", tt.gvk).Return(mockClient, tt.expectedGVR, nil)
+				mockClients.On("ForKind", mock.Anything, tt.gvk).Return(mockClient, tt.expectedGVR, nil)
 
 				// Mock Get call if ForKind succeeds
 				if tt.getError != nil {

@@ -309,23 +309,23 @@ func (_c *AlertmanagerMock_GetAlerts_Call) RunAndReturn(run func(context.Context
 }
 
 // GetReceivers provides a mock function with given fields: ctx
-func (_m *AlertmanagerMock) GetReceivers(ctx context.Context) ([]alertingmodels.Receiver, error) {
+func (_m *AlertmanagerMock) GetReceivers(ctx context.Context) ([]alertingmodels.ReceiverStatus, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetReceivers")
 	}
 
-	var r0 []alertingmodels.Receiver
+	var r0 []alertingmodels.ReceiverStatus
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]alertingmodels.Receiver, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]alertingmodels.ReceiverStatus, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []alertingmodels.Receiver); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []alertingmodels.ReceiverStatus); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]alertingmodels.Receiver)
+			r0 = ret.Get(0).([]alertingmodels.ReceiverStatus)
 		}
 	}
 
@@ -356,12 +356,12 @@ func (_c *AlertmanagerMock_GetReceivers_Call) Run(run func(ctx context.Context))
 	return _c
 }
 
-func (_c *AlertmanagerMock_GetReceivers_Call) Return(_a0 []alertingmodels.Receiver, _a1 error) *AlertmanagerMock_GetReceivers_Call {
+func (_c *AlertmanagerMock_GetReceivers_Call) Return(_a0 []alertingmodels.ReceiverStatus, _a1 error) *AlertmanagerMock_GetReceivers_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *AlertmanagerMock_GetReceivers_Call) RunAndReturn(run func(context.Context) ([]alertingmodels.Receiver, error)) *AlertmanagerMock_GetReceivers_Call {
+func (_c *AlertmanagerMock_GetReceivers_Call) RunAndReturn(run func(context.Context) ([]alertingmodels.ReceiverStatus, error)) *AlertmanagerMock_GetReceivers_Call {
 	_c.Call.Return(run)
 	return _c
 }

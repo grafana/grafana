@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
@@ -29,8 +29,8 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
     name: managerKind === 'repo' ? managerIdentity : undefined,
     folderName: meta.folderUid,
   });
-  const timestamp = generateTimestamp();
 
+  const timestamp = generateTimestamp();
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath];
 
   const dashboardPath = generatePath({
@@ -40,13 +40,15 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
     folderPath,
   });
 
+  const defaultWorkflow = getDefaultWorkflow(repository, loadedFromRef);
+
   if (isLoading || !repository) {
     return null;
   }
 
   return {
     values: {
-      ref: `dashboard/${timestamp}`,
+      ref: defaultWorkflow === 'branch' ? `dashboard/${timestamp}` : (repository?.branch ?? ''),
       path: dashboardPath,
       repo: managerIdentity || repository?.name || '',
       comment: '',
@@ -66,7 +68,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
 export interface ProvisionedDashboardData {
   isReady: boolean;
   isLoading: boolean;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
   defaultValues: ProvisionedDashboardFormData | null;
   repository?: RepositoryView;
   loadedFromRef?: string;
@@ -108,7 +110,7 @@ export function useProvisionedDashboardData(dashboard: DashboardScene): Provisio
   }
 
   const { values, isNew, repository } = defaultValuesResult;
-  const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
+  const workflowOptions = getWorkflowOptions(repository);
 
   return {
     isReady: true,

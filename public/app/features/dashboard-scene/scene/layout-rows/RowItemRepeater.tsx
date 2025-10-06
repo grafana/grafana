@@ -7,7 +7,6 @@ import { Spinner } from '@grafana/ui';
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
-import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
@@ -118,7 +117,6 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
   }
 
   row.setState({ repeatedRows: clonedRows });
-  row.publishEvent(new DashboardRepeatsProcessedEvent({ source: row }), true);
 }
 
 /**
