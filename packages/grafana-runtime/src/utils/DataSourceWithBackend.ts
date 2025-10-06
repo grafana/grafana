@@ -22,7 +22,6 @@ import {
 
 import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
-import { evaluateBooleanFlag } from '../internal/openFeature';
 import {
   BackendSrvRequest,
   FetchResponse,
@@ -216,7 +215,7 @@ class DataSourceWithBackend<
     }
 
     // Use the new query service
-    if (evaluateBooleanFlag('queryServiceFromUI', false)) {
+    if (config.featureToggles.queryServiceFromUI) {
       url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
     }
 
