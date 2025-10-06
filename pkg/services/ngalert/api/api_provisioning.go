@@ -673,11 +673,22 @@ func escapeRuleGroup(group definitions.AlertRuleGroupExport) definitions.AlertRu
 
 func escapeRuleNotificationSettings(ns definitions.AlertRuleNotificationSettingsExport) definitions.AlertRuleNotificationSettingsExport {
 	ns.Receiver = addEscapeCharactersToString(ns.Receiver)
-	for j := range *ns.GroupBy {
-		(*ns.GroupBy)[j] = addEscapeCharactersToString((*ns.GroupBy)[j])
+	if ns.GroupBy != nil {
+		for j := range *ns.GroupBy {
+			(*ns.GroupBy)[j] = addEscapeCharactersToString((*ns.GroupBy)[j])
+		}
 	}
-	for k := range *ns.MuteTimeIntervals {
-		(*ns.MuteTimeIntervals)[k] = addEscapeCharactersToString((*ns.MuteTimeIntervals)[k])
+
+	if ns.MuteTimeIntervals != nil {
+		for k := range *ns.MuteTimeIntervals {
+			(*ns.MuteTimeIntervals)[k] = addEscapeCharactersToString((*ns.MuteTimeIntervals)[k])
+		}
+	}
+
+	if ns.ActiveTimeIntervals != nil {
+		for k := range *ns.ActiveTimeIntervals {
+			(*ns.ActiveTimeIntervals)[k] = addEscapeCharactersToString((*ns.ActiveTimeIntervals)[k])
+		}
 	}
 	return ns
 }
