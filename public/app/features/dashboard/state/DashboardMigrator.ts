@@ -91,7 +91,7 @@ type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
  * kinds/dashboard/dashboard_kind.cue
  * Example PR: #87712
  */
-export const DASHBOARD_SCHEMA_VERSION = 42;
+export const DASHBOARD_SCHEMA_VERSION = 43;
 export class DashboardMigrator {
   dashboard: DashboardModel;
 
@@ -941,6 +941,10 @@ export class DashboardMigrator {
       panelUpgrades.push(migrateHideFromFunctionality);
     }
 
+    if (oldVersion < 43 && finalTargetVersion >= 43) {
+      panelUpgrades.push(migrateFormatTimeToConvertFieldType);
+    }
+
     /**
      * ⚠️  WARNING: DO NOT ADD NEW MIGRATIONS HERE ⚠️
      *
@@ -1518,6 +1522,44 @@ function migrateHideFromFunctionality(panel: PanelModel) {
         });
       }
       return override;
+    });
+  }
+
+  return panel;
+}
+
+function migrateFormatTimeToConvertFieldType(panel: PanelModel) {
+  // Migrate formatTime transformations to convertFieldType transformations
+  if (panel.transformations) {
+    panel.transformations = panel.transformations.map((transformation: any) => {
+      if (transformation.id === 'formatTime') {
+        const options = transformation.options || {};
+        
+        // Create the conversion object for convertFieldType
+        const conversion: any = {
+          destinationType: 'string',
+        };
+
+        // Map formatTime options to convertFieldType options
+        if (options.timeField) {
+          conversion.targetField = options.timeField;
+        }
+        if (options.outputFormat) {
+          conversion.dateFormat = options.outputFormat;
+        }
+        if (options.timezone) {
+          conversion.timezone = options.timezone;
+        }
+
+        // Return the new convertFieldType transformation
+        return {
+          id: 'convertFieldType',
+          options: {
+            conversions: [conversion],
+          },
+        };
+      }
+      return transformation;
     });
   }
 
