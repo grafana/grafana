@@ -1,99 +1,20 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import {
-  onAddLibraryPanel as onAddLibraryPanelImpl,
-  onCreateNewPanel,
-  onImportDashboard as onImportDashboardImpl,
-} from 'app/features/dashboard/utils/dashboard';
-import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { useDispatch, useSelector } from 'app/types/store';
-
-import { setInitialDatasource } from '../state/reducers';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
+import { useOnAddVisualization, useOnAddLibraryPanel, useOnImportDashboard } from './DashboardEmptyHooks';
 
 export interface Props {
   dashboard: DashboardModel | DashboardScene;
   canCreate: boolean;
 }
-
-const useOnAddVisualization = ({ dashboard, canCreate }: Props) => {
-  const dispatch = useDispatch();
-  const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
-  const { isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: dashboard instanceof DashboardScene ? dashboard.state.meta.folderUid : dashboard.meta.folderUid,
-  });
-
-  return useMemo(() => {
-    if (!canCreate || isReadOnlyRepo) {
-      return undefined;
-    }
-
-    return () => {
-      let id;
-      if (dashboard instanceof DashboardScene) {
-        const panel = dashboard.onCreateNewPanel();
-        dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
-        locationService.partial({ firstPanel: true });
-      } else {
-        id = onCreateNewPanel(dashboard, initialDatasource);
-        dispatch(setInitialDatasource(undefined));
-        locationService.partial({ editPanel: id, firstPanel: true });
-      }
-
-      DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
-    };
-  }, [canCreate, isReadOnlyRepo, dashboard, dispatch, initialDatasource]);
-};
-
-const useOnAddLibraryPanel = ({ dashboard, canCreate }: Props) => {
-  const isProvisioned = dashboard instanceof DashboardScene && dashboard.isManagedRepository();
-  const { isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: dashboard instanceof DashboardScene ? dashboard.state.meta.folderUid : dashboard.meta.folderUid,
-  });
-
-  return useMemo(() => {
-    if (!canCreate || isProvisioned || isReadOnlyRepo) {
-      return undefined;
-    }
-
-    return () => {
-      DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_from_library' });
-      if (dashboard instanceof DashboardScene) {
-        dashboard.onShowAddLibraryPanelDrawer();
-      } else {
-        onAddLibraryPanelImpl(dashboard);
-      }
-    };
-  }, [canCreate, isProvisioned, isReadOnlyRepo, dashboard]);
-};
-
-const useOnImportDashboard = ({ dashboard, canCreate }: Props) => {
-  const { isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: dashboard instanceof DashboardScene ? dashboard.state.meta.folderUid : dashboard.meta.folderUid,
-  });
-
-  return useMemo(() => {
-    if (!canCreate || isReadOnlyRepo) {
-      return undefined;
-    }
-
-    return () => {
-      DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_dashboard' });
-      onImportDashboardImpl();
-    };
-  }, [canCreate, isReadOnlyRepo]);
-};
 
 const InternalDashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
