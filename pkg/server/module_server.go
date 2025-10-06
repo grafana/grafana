@@ -128,6 +128,7 @@ type ModuleServer struct {
 	searchServerRing           *ring.Ring
 	searchServerRingClientPool *ringclient.Pool
 
+	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
 	moduleRegisterer ModuleRegisterer
 }
 
