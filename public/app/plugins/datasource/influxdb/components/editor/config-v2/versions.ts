@@ -138,4 +138,17 @@ export const INFLUXDB_VERSION_MAP: InfluxDBProduct[] = [
       },
     },
   },
+  {
+    name: 'InfluxDB OSS 3.x',
+    queryLanguages: [
+      { name: InfluxVersion.SQL, fields: ['URL', 'Token'] },
+      { name: InfluxVersion.InfluxQL, fields: ['URL', 'Token'] },
+    ],
+    detectionMethod: {
+      pingHeaderResponse: {
+        'x-influxdb-build': 'OSS',
+        'x-influxdb-version': '^3\\.',
+      },
+    },
+  },
 ];
