@@ -1,4 +1,12 @@
+import React, { useEffect, useMemo, useState } from 'react';
+
+import { t } from '@grafana/i18n';
+import { useTheme2 } from '@grafana/ui';
+
 import { GraphData, PanelOptions } from '../types';
+
+import { ArrowMarkers } from './ArrowMarkers';
+import { ExtensionRenderer } from './ExtensionRenderer';
 import {
   NodeWithPosition,
   calculateContentHeight,
@@ -8,16 +16,10 @@ import {
   getExtensionPointPositions,
   getExtensionPositions,
 } from './GraphLayout';
-import React, { useEffect, useMemo, useState } from 'react';
-
-import { ArrowMarkers } from './ArrowMarkers';
-import { ExtensionRenderer } from './ExtensionRenderer';
+import { getGraphStyles } from './GraphStyles';
 import { HeaderRenderer } from './HeaderRenderer';
 import { LinkRenderer } from './LinkRenderer';
 import { NodeRenderer } from './NodeRenderer';
-import { getGraphStyles } from './GraphStyles';
-import { t } from '@grafana/i18n';
-import { useTheme2 } from '@grafana/ui';
 
 interface DependencyGraphProps {
   data: GraphData;

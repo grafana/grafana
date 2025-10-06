@@ -14,8 +14,6 @@ import { GraphData } from '../types';
 
 import { NodeWithPosition, PositionInfo } from './GraphLayout';
 
-
-
 interface LinkRendererProps {
   theme: GrafanaTheme2;
   data: GraphData;

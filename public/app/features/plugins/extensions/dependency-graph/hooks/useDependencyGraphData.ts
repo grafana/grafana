@@ -7,7 +7,7 @@ import {
   getAvailableExtensionPoints,
   getDefaultOptions,
   processPluginDataToGraph,
-} from '../../sunker-plugindependencygraph-plugin/utils/dataProcessor';
+} from '../dependency-graph-panel/utils/dataProcessor';
 import { logGraphData } from '../utils/logger';
 
 export type VisualizationMode = 'add' | 'expose' | 'extensionpoint';

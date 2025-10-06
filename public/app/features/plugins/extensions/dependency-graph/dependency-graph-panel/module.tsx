@@ -2,7 +2,7 @@ import React from 'react';
 
 import { PanelPlugin, StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { MultiCombobox, MultiSelect } from '@grafana/ui';
+import { MultiCombobox } from '@grafana/ui';
 
 import { PluginDependencyGraphPanel } from './components/PluginDependencyGraphPanel';
 import { PanelOptions } from './types';
@@ -28,7 +28,7 @@ const ContentProviderMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ v
   const selectedValues = !value || value.length === 0 ? availableProviders : value;
 
   return (
-    <MultiSelect
+    <MultiCombobox
       options={options}
       value={selectedValues}
       onChange={(selected) => {
@@ -59,7 +59,7 @@ const ContentConsumerMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ v
   const selectedValues = !value || value.length === 0 ? activeConsumers : value;
 
   return (
-    <MultiSelect
+    <MultiCombobox
       options={options}
       value={selectedValues}
       onChange={(selected) => {
@@ -204,7 +204,7 @@ export const plugin = new PanelPlugin<PanelOptions>(PluginDependencyGraphPanel).
         ),
         editor: ContentConsumerMultiSelect,
         category: ['Filtering'],
-        showIf: (currentConfig) => currentConfig.visualizationMode !== 'extensionpoint',
+        showIf: (currentConfig: any) => currentConfig.visualizationMode !== 'extensionpoint',
       })
       .addCustomEditor({
         id: 'extensionPointFilter',
@@ -216,7 +216,7 @@ export const plugin = new PanelPlugin<PanelOptions>(PluginDependencyGraphPanel).
         ),
         editor: ExtensionPointMultiSelect,
         category: ['Filtering'],
-        showIf: (currentConfig) => currentConfig.visualizationMode === 'extensionpoint',
+        showIf: (currentConfig: any) => currentConfig.visualizationMode === 'extensionpoint',
       })
   );
 });

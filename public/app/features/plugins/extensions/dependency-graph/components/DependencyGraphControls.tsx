@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, MultiCombobox, Select } from '@grafana/ui';
+import { Button, Combobox, InlineField, InlineFieldRow, MultiCombobox } from '@grafana/ui';
 
 import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
 import { VisualizationMode, useDependencyGraphData } from '../hooks/useDependencyGraphData';
@@ -73,7 +73,7 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
       <InlineFieldRow>
         {visualizationMode !== 'extensionpoint' && (
           <InlineField label={t('extensions.api-mode.label', 'API Mode')}>
-            <Select<VisualizationMode>
+            <Combobox<VisualizationMode>
               options={modeOptions}
               value={visualizationMode}
               onChange={handleModeChange}

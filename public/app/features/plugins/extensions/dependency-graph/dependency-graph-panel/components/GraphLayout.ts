@@ -4,7 +4,6 @@
  * Handles layout calculations for both add and expose modes of the dependency graph.
  */
 
-import { GraphData, PanelOptions, PluginNode } from '../types';
 import {
   LAYOUT_CONSTANTS,
   getResponsiveGroupSpacing,
@@ -13,6 +12,7 @@ import {
   getResponsiveNodeWidth,
   getRightMargin,
 } from '../constants';
+import { GraphData, PanelOptions, PluginNode } from '../types';
 
 export interface NodeWithPosition extends PluginNode {
   x: number;
