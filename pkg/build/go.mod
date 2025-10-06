@@ -16,8 +16,8 @@ require (
 	golang.org/x/net v0.44.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/sync v0.17.0 // @grafana/alerting-backend
 	golang.org/x/text v0.29.0 // indirect; @grafana/grafana-backend-group
-	google.golang.org/grpc v1.75.0 // indirect; @grafana/plugins-platform-backend
-	google.golang.org/protobuf v1.36.8 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.75.1 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/protobuf v1.36.9 // indirect; @grafana/plugins-platform-backend
 )
 
 require (
@@ -30,8 +30,8 @@ require (
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250825161204-c5933d9347a5 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250825161204-c5933d9347a5 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250908214217-97024824d090 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250908214217-97024824d090 // indirect
 )
 
 require (

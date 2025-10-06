@@ -10,14 +10,15 @@ export { getContactPointDescription } from './grafana/contactPoints/utils';
 
 // Notification Policies
 export {
-  useMatchAlertInstancesToNotificationPolicies,
+  useMatchInstancesToRouteTrees,
+  matchInstancesToRouteTrees,
   type RouteMatch,
   type InstanceMatchResult,
 } from './grafana/notificationPolicies/hooks/useMatchPolicies';
 export {
   type TreeMatch,
   type RouteMatchResult,
-  matchAlertInstancesToPolicyTree,
+  matchInstancesToRoute,
   findMatchingRoutes,
   getInheritedProperties,
   computeInheritedTree,
@@ -28,11 +29,13 @@ export * from './grafana/notificationPolicies/types';
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
 export { StateIcon } from './grafana/rules/components/state/StateIcon';
+export { AlertLabel, type AlertLabelProps } from './grafana/rules/components/labels/AlertLabel';
+export { AlertLabels, type AlertLabelsProps } from './grafana/rules/components/labels/AlertLabels';
 
 // Matchers
 export { type LabelMatcher, type Label } from './grafana/matchers/types';
 export { matchLabelsSet, matchLabels, isLabelMatch, type LabelMatchDetails } from './grafana/matchers/utils';
 
 // API endpoints
-export { notificationsAPI } from './grafana/api/notifications/v0alpha1/notifications.api.gen';
-export { rulesAPI } from './grafana/api/rules/v0alpha1/rules.api.gen';
+export { notificationsAPI as notificationsAPIv0alpha1 } from './grafana/api/notifications/v0alpha1/notifications.api.gen';
+export { rulesAPI as rulesAPIv0alpha1 } from './grafana/api/rules/v0alpha1/rules.api.gen';

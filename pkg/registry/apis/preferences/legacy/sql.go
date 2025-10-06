@@ -49,7 +49,7 @@ func NewLegacySQL(db legacysql.LegacyDatabaseProvider) *LegacySQL {
 }
 
 // NOTE: this does not support paging -- lets check if that will be a problem in cloud
-func (s *LegacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]dashboardStars, int64, error) {
+func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user string) ([]dashboardStars, int64, error) {
 	var max sql.NullString
 	sql, err := s.db(ctx)
 	if err != nil {
@@ -120,7 +120,10 @@ func (s *LegacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]d
 			return nil, 0, fmt.Errorf("unable to get RV %w", err)
 		}
 		if max.Valid && max.String != "" {
-			fmt.Printf("max RV: %s\n", max.String)
+			t, _ := time.Parse(time.RFC3339, max.String)
+			if !t.IsZero() {
+				updated = t
+			}
 		} else {
 			updated = s.startup
 		}
@@ -206,7 +209,10 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 			return nil, 0, fmt.Errorf("unable to get RV %w", err)
 		}
 		if max.Valid && max.String != "" {
-			fmt.Printf("max RV: %s\n", max.String)
+			t, _ := time.Parse(time.RFC3339, max.String)
+			if !t.IsZero() {
+				rv.Time = t
+			}
 		} else {
 			rv.Time = s.startup
 		}
@@ -229,8 +235,11 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 	found, rv, err := s.listPreferences(ctx, ns, info.OrgID,
 		func(req *preferencesQuery) (bool, error) {
 			if user != nil {
-				req.UserUID = user.GetRawIdentifier()
-				teams, err = s.GetTeams(ctx, info.OrgID, req.UserUID, false)
+				req.UserUID = user.GetIdentifier()
+				teams, err = s.GetTeams(ctx, &identity.StaticRequester{
+					OrgID:   info.OrgID,
+					UserUID: req.UserUID,
+				}, false)
 				req.UserTeams = teams
 			}
 			return needsRV, err
@@ -240,7 +249,7 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 				return true
 			}
 			if p.UserUID.String != "" {
-				return user.GetRawIdentifier() == p.UserUID.String
+				return user.GetIdentifier() == p.UserUID.String
 			}
 			if p.TeamUID.String != "" {
 				return slices.Contains(teams, p.TeamUID.String)
@@ -260,13 +269,26 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 	return list, nil
 }
 
-func (s *LegacySQL) GetTeams(ctx context.Context, orgId int64, user string, admin bool) ([]string, error) {
+func (s *LegacySQL) InTeam(ctx context.Context, id authlib.AuthInfo, team string, admin bool) (bool, error) {
+	// Could be faster, but find for now
+	teams, err := s.GetTeams(ctx, id, admin)
+	if err != nil {
+		return false, err
+	}
+	return slices.Contains(teams, team), nil
+}
+
+func (s *LegacySQL) GetTeams(ctx context.Context, id authlib.AuthInfo, admin bool) ([]string, error) {
 	sql, err := s.db(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	req := newTeamsQueryReq(sql, orgId, user, admin)
+	xid, ok := id.(identity.Requester)
+	if !ok {
+		return nil, fmt.Errorf("expected identity.Requester")
+	}
+	req := newTeamsQueryReq(sql, xid.GetOrgID(), id.GetUID(), admin)
 
 	q, err := sqltemplate.Execute(sqlTeams, req)
 	if err != nil {
@@ -276,4 +298,16 @@ func (s *LegacySQL) GetTeams(ctx context.Context, orgId int64, user string, admi
 	sess := sql.DB.GetSqlxSession()
 	err = sess.Select(ctx, &teams, q, req.GetArgs()...)
 	return teams, err
+}
+
+func (s *LegacySQL) getLegacyTeamID(ctx context.Context, orgId int64, team string) (int64, error) {
+	sql, err := s.db(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	var id int64
+	sess := sql.DB.GetSqlxSession()
+	err = sess.Select(ctx, &id, "SELECT id FROM team WHERE org_id=? AND uid=?", orgId, team)
+	return id, err
 }

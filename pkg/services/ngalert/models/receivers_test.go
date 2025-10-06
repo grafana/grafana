@@ -6,11 +6,11 @@ import (
 	"testing"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -41,14 +41,13 @@ func TestReceiver_EncryptDecrypt(t *testing.T) {
 	encryptFn := Base64Enrypt
 	decryptnFn := Base64Decrypt
 	// Test that all known integration types encrypt and decrypt their secrets.
-	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
-		t.Run(integrationType, func(t *testing.T) {
+	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
+		t.Run(string(integrationType), func(t *testing.T) {
 			decrypedIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
-
 			encrypted := decrypedIntegration.Clone()
-			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType)
-			assert.NoError(t, err)
-			for _, key := range secrets {
+			typeVersion, ok := alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+			require.True(t, ok)
+			for _, key := range typeVersion.GetSecretFieldsPaths() {
 				val, ok, err := extractField(encrypted.Settings, NewIntegrationFieldPath(key))
 				assert.NoError(t, err)
 				if ok {
@@ -59,7 +58,7 @@ func TestReceiver_EncryptDecrypt(t *testing.T) {
 			}
 
 			testIntegration := decrypedIntegration.Clone()
-			err = testIntegration.Encrypt(encryptFn)
+			err := testIntegration.Encrypt(encryptFn)
 			assert.NoError(t, err)
 			require.Equal(t, encrypted, testIntegration)
 
@@ -77,14 +76,14 @@ func TestIntegration_Redact(t *testing.T) {
 		return "TESTREDACTED"
 	}
 	// Test that all known integration types redact their secrets.
-	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
-		t.Run(integrationType, func(t *testing.T) {
+	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
+		t.Run(string(integrationType), func(t *testing.T) {
 			validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
 
 			expected := validIntegration.Clone()
-			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType)
-			assert.NoError(t, err)
-			for _, key := range secrets {
+			version, ok := alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+			require.True(t, ok)
+			for _, key := range version.GetSecretFieldsPaths() {
 				err := setField(expected.Settings, NewIntegrationFieldPath(key), func(current any) any {
 					if s, isString := current.(string); isString && s != "" {
 						delete(expected.SecureSettings, key)
@@ -106,8 +105,8 @@ func TestIntegration_Validate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Test that all known integration types are valid.
-	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
-		t.Run(integrationType, func(t *testing.T) {
+	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
+		t.Run(string(integrationType), func(t *testing.T) {
 			validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
 			assert.NoError(t, validIntegration.Encrypt(Base64Enrypt))
 			assert.NoErrorf(t, validIntegration.Validate(Base64Decrypt), "integration should be valid")
@@ -241,19 +240,18 @@ func TestIntegration_WithExistingSecureFields(t *testing.T) {
 
 func TestSecretsIntegrationConfig(t *testing.T) {
 	// Test that all known integration types have a config and correctly mark their secrets as secure.
-	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
-		t.Run(integrationType, func(t *testing.T) {
-			config, err := IntegrationConfigFromType(integrationType, nil)
+	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
+		t.Run(string(integrationType), func(t *testing.T) {
+			schemaType, ok := alertingNotify.GetSchemaForIntegration(integrationType)
+			require.True(t, ok)
+
+			config, err := IntegrationConfigFromSchema(schemaType, schema.V1)
 			assert.NoError(t, err)
 
-			t.Run("v1 is current", func(t *testing.T) {
-				configv1, err := IntegrationConfigFromType(integrationType, util.Pointer("v1"))
-				assert.NoError(t, err)
-				assert.Equal(t, config, configv1)
-			})
+			version, ok := schemaType.GetVersion(schema.V1)
+			require.True(t, ok)
 
-			secrets, err := channels_config.GetSecretKeysForContactPointType(integrationType)
-			assert.NoError(t, err)
+			secrets := version.GetSecretFieldsPaths()
 			allSecrets := make(map[string]struct{}, len(secrets))
 			for _, key := range secrets {
 				allSecrets[key] = struct{}{}
@@ -270,17 +268,12 @@ func TestSecretsIntegrationConfig(t *testing.T) {
 		})
 	}
 
-	t.Run("Unknown type returns error", func(t *testing.T) {
-		_, err := IntegrationConfigFromType("__--**unknown_type**--__", nil)
-		assert.Error(t, err)
-	})
-
 	t.Run("Unknown version returns error", func(t *testing.T) {
-		version := util.Pointer("__--**unknown_version**--__")
-		types := maps.Keys(alertingNotify.AllKnownConfigsForTesting)
-		for itype := range types {
-			_, err := IntegrationConfigFromType(itype, version)
-			assert.Errorf(t, err, "unknown version for integration type %s did not return error but should", itype)
+		for s := range maps.Keys(notifytest.AllKnownV1ConfigsForTesting) {
+			schemaType, _ := alertingNotify.GetSchemaForIntegration(s)
+			_, err := IntegrationConfigFromSchema(schemaType, "unknown")
+			require.Error(t, err)
+			return
 		}
 	})
 }
@@ -289,8 +282,9 @@ func TestIntegration_SecureFields(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Test that all known integration types have a config and correctly mark their secrets as secure.
-	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
-		t.Run(integrationType, func(t *testing.T) {
+	for it := range notifytest.AllKnownV1ConfigsForTesting {
+		integrationType := it
+		t.Run(string(integrationType), func(t *testing.T) {
 			t.Run("contains SecureSettings", func(t *testing.T) {
 				validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
 				expected := make(map[string]bool, len(validIntegration.SecureSettings))
@@ -378,6 +372,7 @@ func TestReceiver_Fingerprint(t *testing.T) {
 		fingerprint := baseReceiver.Fingerprint()
 		excludedFields := map[string]struct{}{
 			"Version": {},
+			"Origin":  {},
 		}
 
 		reflectVal := reflect.ValueOf(&completelyDifferentReceiver).Elem()

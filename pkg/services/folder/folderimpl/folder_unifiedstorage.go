@@ -224,14 +224,15 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 	for i, item := range parsedResults.Hits {
 		slug := slugify.Slugify(item.Title)
 		hitList[i] = &model.Hit{
-			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
-			UID:       item.Name,
-			OrgID:     query.OrgID,
-			Title:     item.Title,
-			URI:       "db/" + slug,
-			URL:       dashboards.GetFolderURL(item.Name, slug),
-			Type:      model.DashHitFolder,
-			FolderUID: item.Folder,
+			ID:          item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
+			UID:         item.Name,
+			OrgID:       query.OrgID,
+			Title:       item.Title,
+			URI:         "db/" + slug,
+			URL:         dashboards.GetFolderURL(item.Name, slug),
+			Type:        model.DashHitFolder,
+			FolderUID:   item.Folder,
+			Description: item.Description,
 		}
 	}
 

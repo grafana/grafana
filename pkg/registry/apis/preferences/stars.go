@@ -2,100 +2,103 @@ package preferences
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-	"strings"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authlib "github.com/grafana/authlib/types"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
-type starItem struct {
-	group string
-	kind  string
-	id    string
+var _ grafanarest.Storage = (*starStorage)(nil)
+
+type starStorage struct {
+	store grafanarest.Storage
 }
 
-type starsREST struct {
-	store *legacy.DashboardStarsStorage
-}
-
-var (
-	_ = rest.Connecter(&starsREST{})
-	_ = rest.StorageMetadata(&starsREST{})
-)
-
-func (r *starsREST) New() runtime.Object {
-	return &preferences.Stars{}
-}
-
-func (r *starsREST) Destroy() {
-}
-
-func (r *starsREST) ConnectMethods() []string {
-	return []string{"PUT", "DELETE"}
-}
-
-func (r *starsREST) ProducesMIMETypes(verb string) []string {
-	return nil
-}
-
-func (r *starsREST) ProducesObject(verb string) interface{} {
-	return &preferences.Stars{}
-}
-
-func (r *starsREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, true, "" // true means you can use the trailing path as a variable
-}
-
-func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		item, err := itemFromPath(req.URL.Path, fmt.Sprintf("/%s/write", name))
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-
-		if item.group != "dashboard.grafana.app" || item.kind != "Dashboard" {
-			responder.Error(fmt.Errorf("only dashboards are supported right now"))
-			return
-		}
-
-		var obj runtime.Object
-		switch req.Method {
-		case "DELETE":
-			obj, err = r.store.UnstarDashboard(ctx, name, item.id)
-		case "PUT":
-			obj, err = r.store.StarDashboard(ctx, name, item.id)
-		default:
-			err = fmt.Errorf("unsupported method")
-		}
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-		responder.Object(200, obj)
-	}), nil
-}
-
-func itemFromPath(urlPath, prefix string) (starItem, error) {
-	idx := strings.Index(urlPath, prefix)
-	if idx == -1 {
-		return starItem{}, apierrors.NewBadRequest("invalid request path")
+// When using list, we really just want to get the value for the single user
+func (s *starStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	path := strings.TrimPrefix(urlPath[idx+len(prefix):], "/")
-	parts := strings.Split(path, "/")
-	if len(parts) != 3 {
-		return starItem{}, apierrors.NewBadRequest("expected {group}/{kind}/{id}")
+	switch user.GetIdentityType() {
+	case authlib.TypeAnonymous:
+		return s.NewList(), nil
+
+	// Get the single user stars
+	case authlib.TypeUser:
+		stars := &preferences.StarsList{}
+		obj, _ := s.store.Get(ctx, "user-"+user.GetIdentifier(), &v1.GetOptions{})
+		if obj != nil {
+			s, ok := obj.(*preferences.Stars)
+			if ok {
+				stars.Items = []preferences.Stars{*s}
+			}
+		}
+		return stars, nil
+
+	default:
+		return s.store.List(ctx, options)
 	}
-	return starItem{
-		group: parts[0],
-		kind:  parts[1],
-		id:    parts[2],
-	}, nil
+}
+
+// ConvertToTable implements rest.Storage.
+func (s *starStorage) ConvertToTable(ctx context.Context, obj runtime.Object, tableOptions runtime.Object) (*v1.Table, error) {
+	return s.store.ConvertToTable(ctx, obj, tableOptions)
+}
+
+// Create implements rest.Storage.
+func (s *starStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *v1.CreateOptions) (runtime.Object, error) {
+	return s.store.Create(ctx, obj, createValidation, options)
+}
+
+// Delete implements rest.Storage.
+func (s *starStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *v1.DeleteOptions) (runtime.Object, bool, error) {
+	return s.store.Delete(ctx, name, deleteValidation, options)
+}
+
+// DeleteCollection implements rest.Storage.
+func (s *starStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *v1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return s.store.DeleteCollection(ctx, deleteValidation, options, listOptions)
+}
+
+// Destroy implements rest.Storage.
+func (s *starStorage) Destroy() {
+	s.store.Destroy()
+}
+
+// Get implements rest.Storage.
+func (s *starStorage) Get(ctx context.Context, name string, options *v1.GetOptions) (runtime.Object, error) {
+	return s.store.Get(ctx, name, options)
+}
+
+// GetSingularName implements rest.Storage.
+func (s *starStorage) GetSingularName() string {
+	return s.store.GetSingularName()
+}
+
+// NamespaceScoped implements rest.Storage.
+func (s *starStorage) NamespaceScoped() bool {
+	return s.store.NamespaceScoped()
+}
+
+// New implements rest.Storage.
+func (s *starStorage) New() runtime.Object {
+	return s.store.New()
+}
+
+// NewList implements rest.Storage.
+func (s *starStorage) NewList() runtime.Object {
+	return s.store.NewList()
+}
+
+// Update implements rest.Storage.
+func (s *starStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *v1.UpdateOptions) (runtime.Object, bool, error) {
+	return s.store.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 }

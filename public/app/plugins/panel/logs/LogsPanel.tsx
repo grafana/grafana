@@ -606,9 +606,11 @@ export const LogsPanel = ({
               onOpenContext={onOpenContext}
               onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
               permalinkedLogId={getLogsPanelState()?.logs?.id ?? undefined}
+              prettifyJSON={prettifyLogMessage}
               setDisplayedFields={setDisplayedFieldsFn}
               showControls={Boolean(showControls)}
               showTime={showTime}
+              showUniqueLabels={showLabels}
               sortOrder={sortOrder}
               logOptionsStorageKey={storageKey}
               syntaxHighlighting={syntaxHighlighting}
@@ -672,6 +674,7 @@ export const LogsPanel = ({
                 logRowMenuIconsAfter={isReactNodeArray(logRowMenuIconsAfter) ? logRowMenuIconsAfter : undefined}
                 // Ascending order causes scroll to stick to the bottom, so previewing is futile
                 renderPreview={isAscending ? false : true}
+                timeRange={data.timeRange}
               />
             </InfiniteScroll>
             {showCommonLabels && isAscending && renderCommonLabels()}
@@ -725,6 +728,7 @@ export const LogsPanel = ({
             logOptionsStorageKey={controlsStorageKey}
             // Ascending order causes scroll to stick to the bottom, so previewing is futile
             renderPreview={isAscending ? false : true}
+            timeRange={data.timeRange}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>

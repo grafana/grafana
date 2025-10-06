@@ -15,7 +15,9 @@ import { AlertingEntityMetadataAnnotationsFactory } from './common';
 export const ListReceiverApiResponseFactory = Factory.define<EnhancedListReceiverApiResponse>(() => ({
   kind: 'ReceiverList',
   apiVersion: `${GROUP}/${VERSION}`,
-  metadata: {},
+  metadata: {
+    resourceVersion: generateResourceVersion(),
+  },
   items: ContactPointFactory.buildList(5),
 }));
 
@@ -23,6 +25,8 @@ export const ContactPointFactory = Factory.define<ContactPoint>(() => {
   const title = generateTitle();
 
   return {
+    kind: 'Receiver',
+    apiVersion: `${GROUP}/${VERSION}`,
     metadata: {
       name: btoa(title),
       namespace: DEFAULT_NAMESPACE,
@@ -32,7 +36,7 @@ export const ContactPointFactory = Factory.define<ContactPoint>(() => {
     },
     spec: ContactPointSpecFactory.build({ title }),
     status: {},
-  } satisfies ContactPoint;
+  };
 });
 
 export const ContactPointSpecFactory = Factory.define<ContactPoint['spec']>(() => ({
@@ -62,7 +66,7 @@ export const EmailIntegrationFactory = Factory.define<Integration>(() => ({
 export const SlackIntegrationFactory = Factory.define<Integration>(() => ({
   type: 'slack',
   version: '1',
-  secureFields: { token: '' },
+  secureFields: { token: true },
   settings: {
     mentionChannel: '#alerts',
   },
@@ -75,5 +79,6 @@ export const ContactPointMetadataAnnotationsFactory = Factory.define<ContactPoin
   'grafana.com/access/canReadSecrets': 'true',
   'grafana.com/inUse/routes': '1',
   'grafana.com/inUse/rules': '1',
+  'grafana.com/canUse': 'true',
   ...AlertingEntityMetadataAnnotationsFactory.build(),
 }));

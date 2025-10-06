@@ -115,10 +115,10 @@ func processPanelsV37(panels []interface{}) {
 			continue
 		}
 
-		displayMode, _ := legend["displayMode"].(string)
+		displayMode := GetStringValue(legend, "displayMode")
 		showLegend, hasShowLegend := legend["showLegend"].(bool)
 
-		// If displayMode is "hidden" OR showLegend is false, normalize to hidden legend
+		// If displayMode is "hidden" OR showLegend is explicitly false, normalize to hidden legend
 		if displayMode == "hidden" || (hasShowLegend && !showLegend) {
 			legend["displayMode"] = "list"
 			legend["showLegend"] = false

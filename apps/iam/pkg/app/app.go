@@ -12,6 +12,7 @@ import (
 	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	"github.com/grafana/grafana/pkg/services/authz"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var appManifestData = app.ManifestData{
@@ -24,17 +25,18 @@ type InformerConfig struct {
 }
 
 type AppConfig struct {
-	ZanzanaClientCfg          authz.ZanzanaClientConfig
-	InformerConfig            InformerConfig
-	FolderReconcilerNamespace string
+	ZanzanaClientCfg  authz.ZanzanaClientConfig
+	InformerConfig    InformerConfig
+	Namespace         string
+	MetricsRegisterer prometheus.Registerer
 }
 
 func Provider(appCfg app.SpecificConfig) app.Provider {
 	return simple.NewAppProvider(app.NewEmbeddedManifest(appManifestData), appCfg, New)
 }
 
-func generateInformerSupplier(informerConfig InformerConfig) simple.InformerSupplier {
-	return func(kind resource.Kind, clients resource.ClientGenerator, options operator.ListWatchOptions) (operator.Informer, error) {
+func generateInformerSupplier(informerConfig InformerConfig, metrics *reconcilers.ReconcilerMetrics) simple.InformerSupplier {
+	return func(kind resource.Kind, clients resource.ClientGenerator, options operator.InformerOptions) (operator.Informer, error) {
 		client, err := clients.ClientFor(kind)
 		if err != nil {
 			return nil, err
@@ -42,9 +44,7 @@ func generateInformerSupplier(informerConfig InformerConfig) simple.InformerSupp
 
 		informer, err := operator.NewKubernetesBasedInformer(
 			kind, client,
-			operator.KubernetesBasedInformerOptions{
-				ListWatchOptions: options,
-			},
+			options,
 		)
 		if err != nil {
 			return nil, err
@@ -56,6 +56,10 @@ func generateInformerSupplier(informerConfig InformerConfig) simple.InformerSupp
 				MaxConcurrentWorkers: informerConfig.MaxConcurrentWorkers,
 				ErrorHandler: func(ctx context.Context, err error) {
 					logging.FromContext(ctx).With("error", err).Error("ConcurrentInformer processing error")
+					if metrics != nil {
+						// Use "unknown" for action since informer errors don't have specific actions
+						metrics.RecordReconcileFailure("unknown", "informer")
+					}
 				},
 			},
 		)
@@ -68,10 +72,12 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, fmt.Errorf("invalid config type: expected AppConfig, got %T", cfg.SpecificConfig)
 	}
 
+	// Initialize metrics first so they can be shared across components
+	metrics := reconcilers.NewReconcilerMetrics(appSpecificConfig.MetricsRegisterer, appSpecificConfig.Namespace)
+
 	folderReconciler, err := reconcilers.NewFolderReconciler(reconcilers.ReconcilerConfig{
-		ZanzanaCfg:                appSpecificConfig.ZanzanaClientCfg,
-		KubeConfig:                &cfg.KubeConfig,
-		FolderReconcilerNamespace: appSpecificConfig.FolderReconcilerNamespace,
+		ZanzanaCfg: appSpecificConfig.ZanzanaClientCfg,
+		Metrics:    metrics,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to create FolderReconciler: %w", err)
@@ -79,26 +85,25 @@ func New(cfg app.Config) (app.App, error) {
 
 	logging.DefaultLogger.Info("FolderReconciler created")
 
-	reconcilerOptions := simple.BasicReconcileOptions{}
-
-	if cfg.SpecificConfig.(AppConfig).FolderReconcilerNamespace != "" {
-		reconcilerOptions.Namespace = cfg.SpecificConfig.(AppConfig).FolderReconcilerNamespace
-	}
-
 	config := simple.AppConfig{
 		Name:       cfg.ManifestData.AppName,
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
-			InformerSupplier: generateInformerSupplier(appSpecificConfig.InformerConfig),
-			ErrorHandler: func(ctx context.Context, err error) {
-				logging.FromContext(ctx).With("error", err).Error("Informer processing error")
+			InformerSupplier: generateInformerSupplier(appSpecificConfig.InformerConfig, metrics),
+			InformerOptions: operator.InformerOptions{
+				ErrorHandler: func(ctx context.Context, err error) {
+					logging.FromContext(ctx).With("error", err).Error("Informer processing error")
+					if metrics != nil {
+						// Use "unknown" for action since top-level informer errors don't have specific actions
+						metrics.RecordReconcileFailure("unknown", "informer")
+					}
+				},
 			},
 		},
 		UnmanagedKinds: []simple.AppUnmanagedKind{
 			{
-				Kind:             foldersKind.FolderKind(),
-				Reconciler:       folderReconciler,
-				ReconcileOptions: reconcilerOptions,
+				Kind:       foldersKind.FolderKind(),
+				Reconciler: folderReconciler,
 			},
 		},
 	}
