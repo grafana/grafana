@@ -82,6 +82,7 @@ const ResourceField = ({
           disableRow={disableRow}
           renderAdvanced={renderAdvanced}
           selectionNotice={selectionNotice}
+          datasource={datasource}
         />
       </Modal>
       <Field

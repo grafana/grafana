@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field } from '../../types/dataFrame';
+import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import {
   SpecialValue,
   DataTransformerInfo,
@@ -114,7 +114,10 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
         for (const columnName of columnValues) {
           let values = [];
           for (const rowName of rowValues) {
-            const value = matrixValues[columnName][rowName] ?? getSpecialValue(emptyValue);
+            // nested dataframes need to be undefined when empty
+            const value =
+              matrixValues[columnName][rowName] ??
+              (valueField.type === FieldType.frame ? undefined : getSpecialValue(emptyValue));
             values.push(value);
           }
 

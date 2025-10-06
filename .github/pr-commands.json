@@ -74,16 +74,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "scripts/*.star",
-      ".drone.star",
-      ".drone.yml"
-    ],
-    "action": "updateLabel",
-    "addLabel": "type/ci"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/azuremonitor/**/*",
       "pkg/tsdb/azuremonitor/**/*"
     ],

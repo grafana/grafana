@@ -28,6 +28,10 @@ func createTestService(t *testing.T, cfg *setting.Cfg) *frontendService {
 	var promRegister prometheus.Registerer = prometheus.NewRegistry()
 	promGatherer := promRegister.(*prometheus.Registry)
 
+	if cfg.BuildVersion == "" {
+		cfg.BuildVersion = "10.3.0"
+	}
+
 	service, err := ProvideFrontendService(cfg, features, promGatherer, promRegister, license)
 	require.NoError(t, err)
 
@@ -143,8 +147,8 @@ func TestFrontendService_Middleware(t *testing.T) {
 
 		metricsBody := recorder.Body.String()
 		assert.Contains(t, metricsBody, "# TYPE grafana_http_request_duration_seconds histogram")
-		assert.Contains(t, metricsBody, "grafana_http_request_duration_seconds_bucket{handler=\"public-assets\"") // assets 404
-		assert.Contains(t, metricsBody, "grafana_http_request_duration_seconds_bucket{handler=\"/*\"")            // index route
+		assert.Contains(t, metricsBody, "grafana_http_request_duration_seconds_bucket{handler=\"public-build-assets\"") // assets 404
+		assert.Contains(t, metricsBody, "grafana_http_request_duration_seconds_bucket{handler=\"/*\"")                  // index route
 	})
 
 	t.Run("should add context middleware", func(t *testing.T) {

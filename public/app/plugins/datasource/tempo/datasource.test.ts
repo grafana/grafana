@@ -48,20 +48,9 @@ import {
 } from './datasource';
 import mockJson from './test/mockJsonResponse.json';
 import mockServiceGraph from './test/mockServiceGraph.json';
-import { createMetadataRequest, createTempoDatasource } from './test/mocks';
+import { createTempoDatasource } from './test/mocks';
 import { initTemplateSrv } from './test/test_utils';
 import { TempoJsonData, TempoQuery } from './types';
-
-let mockObservable: () => Observable<unknown>;
-jest.mock('@grafana/runtime', () => {
-  return {
-    ...jest.requireActual('@grafana/runtime'),
-    getBackendSrv: () => ({
-      fetch: mockObservable,
-      _request: mockObservable,
-    }),
-  };
-});
 
 describe('Tempo data source', () => {
   // Mock the console error so that running the test suite doesnt throw the error
@@ -71,7 +60,6 @@ describe('Tempo data source', () => {
   beforeEach(() => (console.error = consoleErrorMock));
 
   describe('runs correctly', () => {
-    jest.spyOn(TempoDatasource.prototype, 'isFeatureAvailable').mockImplementation(() => true);
     const handleStreamingQuery = jest.spyOn(TempoDatasource.prototype, 'handleStreamingQuery');
     const request = jest.spyOn(TempoDatasource.prototype, '_request');
     const templateSrv: TemplateSrv = { replace: (s: string) => s } as unknown as TemplateSrv;
@@ -340,26 +328,12 @@ describe('Tempo data source', () => {
     expect(edgesFrame.meta?.preferredVisualisationType).toBe('nodeGraph');
   });
 
-  describe('test the testDatasource function', () => {
-    it('should return a success msg if response.ok is true', async () => {
-      mockObservable = () => of({ ok: true });
-      const handleStreamingQuery = jest
-        .spyOn(TempoDatasource.prototype, 'handleStreamingQuery')
-        .mockImplementation(() => of({ data: [] }));
-
-      const ds = new TempoDatasource(defaultSettings);
-      const response = await ds.testDatasource();
-      expect(response.status).toBe('success');
-      expect(handleStreamingQuery).toHaveBeenCalled();
-    });
-  });
-
   describe('test the metadataRequest function', () => {
-    it('should return the last value from the observed stream', async () => {
-      mockObservable = () => of('321', '123', '456');
+    it('should return the data from getResource', async () => {
       const ds = new TempoDatasource(defaultSettings);
-      const response = await ds.metadataRequest('/api/search/tags');
-      expect(response).toBe('456');
+      jest.spyOn(ds, 'getResource').mockResolvedValue({ data: 'test-data' });
+      const response = await ds.metadataRequest('api/v2/search/tags');
+      expect(response).toBe('test-data');
     });
   });
 
@@ -1106,13 +1080,9 @@ describe('label names - v2 tags', () => {
 
   beforeEach(() => {
     datasource = createTempoDatasource();
-    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
-      createMetadataRequest({
-        data: {
-          scopes: [{ name: 'span', tags: ['label1', 'label2'] }],
-        },
-      })
-    );
+    // Mock the language provider to return v2 tags
+    datasource.languageProvider.tagsV2 = [{ name: 'span', tags: ['label1', 'label2'] }];
+    jest.spyOn(datasource.languageProvider, 'start').mockResolvedValue([]);
   });
 
   it('get label names', async () => {
@@ -1123,55 +1093,18 @@ describe('label names - v2 tags', () => {
   });
 });
 
-describe('label names - v1 tags', () => {
-  let datasource: TempoDatasource;
-
-  beforeEach(() => {
-    datasource = createTempoDatasource();
-    jest
-      .spyOn(datasource, 'metadataRequest')
-      .mockImplementationOnce(() => {
-        throw Error;
-      })
-      .mockImplementation(
-        createMetadataRequest({
-          data: {
-            tagNames: ['label1', 'label2'],
-          },
-        })
-      );
-  });
-
-  it('get label names', async () => {
-    // label_names()
-    const response = await datasource.executeVariableQuery({ refId: 'test', type: TempoVariableQueryType.LabelNames });
-    expect(response).toEqual([{ text: 'label1' }, { text: 'label2' }, { text: 'status.code' }]);
-  });
-});
-
 describe('label values', () => {
   let datasource: TempoDatasource;
 
   beforeEach(() => {
     datasource = createTempoDatasource();
-    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
-      createMetadataRequest({
-        data: {
-          tagValues: [
-            {
-              type: 'value1',
-              value: 'value1',
-              label: 'value1',
-            },
-            {
-              type: 'value2',
-              value: 'value2',
-              label: 'value2',
-            },
-          ],
-        },
-      })
-    );
+    // Mock the language provider to return v2 tags that includes the "label" tag
+    datasource.languageProvider.tagsV2 = [{ name: 'span', tags: ['label'] }];
+    jest.spyOn(datasource.languageProvider, 'start').mockResolvedValue([]);
+    jest.spyOn(datasource.languageProvider, 'getOptionsV2').mockResolvedValue([
+      { type: 'string', value: 'value1', label: 'value1' },
+      { type: 'string', value: 'value2', label: 'value2' },
+    ]);
   });
 
   it('get label values for given label', async () => {
@@ -1182,10 +1115,7 @@ describe('label values', () => {
       label: 'label',
     });
 
-    expect(response).toEqual([
-      { text: { type: 'value1', value: 'value1', label: 'value1' } },
-      { text: { type: 'value2', value: 'value2', label: 'value2' } },
-    ]);
+    expect(response).toEqual([{ text: 'value1' }, { text: 'value2' }]);
   });
 
   it('do not raise error when label is not set', async () => {
@@ -1205,25 +1135,13 @@ describe('should provide functionality for ad-hoc filters', () => {
 
   beforeEach(() => {
     datasource = createTempoDatasource();
-    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
-      createMetadataRequest({
-        data: {
-          scopes: [{ name: 'span', tags: ['label1', 'label2'] }],
-          tagValues: [
-            {
-              type: 'value1',
-              value: 'value1',
-              label: 'value1',
-            },
-            {
-              type: 'value2',
-              value: 'value2',
-              label: 'value2',
-            },
-          ],
-        },
-      })
-    );
+    // Mock the language provider to return v2 tags
+    datasource.languageProvider.tagsV2 = [{ name: 'span', tags: ['label1', 'label2'] }];
+    jest.spyOn(datasource.languageProvider, 'fetchTags').mockResolvedValue();
+    jest.spyOn(datasource.languageProvider, 'getOptionsV2').mockResolvedValue([
+      { type: 'string', value: 'value1', label: 'value1' },
+      { type: 'string', value: 'value2', label: 'value2' },
+    ]);
   });
 
   it('for getTagKeys', async () => {
@@ -1267,7 +1185,7 @@ describe('histogram type functionality', () => {
     const target = 'server="${__data.fields.target}"';
     const serverSumBy = 'server';
 
-    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy);
+    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy, false);
     expect(links).toHaveLength(1);
     expect(links[0].title).toBe('Request classic histogram');
     expect(links[0].internal.query.expr).toBe(
@@ -1281,28 +1199,10 @@ describe('histogram type functionality', () => {
     const target = 'server="${__data.fields.target}"';
     const serverSumBy = 'server';
 
-    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy, 'native');
+    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy, true);
     expect(links).toHaveLength(1);
     expect(links[0].title).toBe('Request native histogram');
     expect(links[0].internal.query.expr).toBe(
-      'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
-    );
-  });
-
-  it('should create correct histogram links for both histogram types', () => {
-    const datasourceUid = 'prom';
-    const source = 'client="${__data.fields.source}",';
-    const target = 'server="${__data.fields.target}"';
-    const serverSumBy = 'server';
-
-    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy, 'both');
-    expect(links).toHaveLength(2);
-    expect(links[0].title).toBe('Request classic histogram');
-    expect(links[1].title).toBe('Request native histogram');
-    expect(links[0].internal.query.expr).toBe(
-      'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
-    );
-    expect(links[1].internal.query.expr).toBe(
       'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
     );
   });
@@ -1321,7 +1221,7 @@ describe('histogram type functionality', () => {
       tempoField,
       sourceField,
       undefined,
-      'native'
+      true
     );
     const histogramLink = fieldConfig.links.find((link) => link.title === 'Request native histogram');
     expect(histogramLink).toBeDefined();
@@ -1339,7 +1239,7 @@ describe('histogram type functionality', () => {
         targets: [{ serviceMapQuery: '{service="test"}' }],
         range: getDefaultTimeRange(),
       } as DataQueryRequest<TempoQuery>,
-      'native'
+      true
     );
 
     const bucketMetric = request.targets.find((t: PromQuery) => t.expr.includes('_bucket'));

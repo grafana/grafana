@@ -72,7 +72,7 @@
       "label-enable-basic-logs": "Alapvető naplók engedélyezése"
     },
     "config-editor": {
-      "description-additional-settings": "",
+      "description-additional-settings": "A további beállítások olyan opcionális beállítások, amelyek konfigurálhatók az adatforrás nagyobb mértékű ellenőrzése érdekében. Idetartozik a Secure Socks Proxy, a lekérdezési időtúllépés és a továbbított cookie-k.",
       "title-additional-settings": "További beállítások"
     },
     "current-user-fallback-credentials": {
@@ -113,12 +113,12 @@
       "aria-label-column": "Oszlop",
       "aria-label-column-value": "Oszlopérték",
       "aria-label-operator": "Műveleti jel",
-      "aria-label-remove-filter": "",
+      "aria-label-remove-filter": "Szűrő eltávolítása",
       "label-or": "VAGY"
     },
     "filter-section": {
-      "aria-label-add-filter": "",
-      "aria-label-add-or-filter": "",
+      "aria-label-add-filter": "Szűrő hozzáadása",
+      "aria-label-add-or-filter": "OR-szűrő hozzáadása",
       "label-add-group": "Csoport hozzáadása",
       "label-and": "ÉS",
       "label-filters": "Szűrők",
@@ -131,8 +131,8 @@
       "label-format-as": "Formázás mint"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "",
-      "aria-label-remove-fuzzy-search": "",
+      "aria-label-add-fuzzy-search": "Hozzávetőleges keresés hozzáadása",
+      "aria-label-remove-fuzzy-search": "Hozzávetőleges keresés eltávolítása",
       "aria-label-select-column": "Oszlop kiválasztása",
       "label-fuzzy-search": "Hozzávetőleges keresés",
       "placeholder-search-team": "Keresési kifejezés megadása",
@@ -147,7 +147,7 @@
       "aria-label-remove": "Eltávolítás"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "",
+      "aria-label-add-group-by": "Csoportosítás hozzáadása",
       "label-group-by": "Csoportosítási szempont",
       "tooltip-group-by": "Rendezze az eredményeket kategóriákba a megadott oszlopok alapján. A Csoportosítási szempont használható önállóan a kiválasztott oszlopok egyedi értékeinek felsorolására, vagy kombinálható összesítési függvényekkel az egyes csoportok összesített statisztikáinak előállításához. Ha önmagában használják, a megadott oszlopok különböző kombinációit adja vissza."
     },
@@ -190,10 +190,10 @@
       "text-loading": "Betöltés…"
     },
     "order-by-section": {
-      "aria-label-add-order-by": "",
+      "aria-label-add-order-by": "Rendezés hozzáadása",
       "aria-label-order-by-column": "Rendezés oszlop szerint",
       "aria-label-order-direction": "Rendezési irány",
-      "aria-label-remove-order-by": "",
+      "aria-label-remove-order-by": "Rendezés eltávolítása",
       "label-by": "SZEMPONT",
       "label-order-by": "Rendezési szempont",
       "tooltip-order-by": "Az eredmények rendezése egy vagy több oszlop alapján növekvő vagy csökkenő sorrendben."
@@ -227,16 +227,26 @@
       "select-resource": "Válasszon ki egy erőforrást"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Alkalmaz",
       "button-cancel": "Mégse",
       "header-location": "Hely",
+      "header-resource-group": "",
       "header-scope": "Hatókör",
       "header-type": "Típus",
       "heading-selection": "Kiválasztás",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Az első {{numResults}} találat megjelenítése",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Betöltés…",
+      "text-no-recent-resources": "",
       "text-no-resources": "Nem található erőforrás",
-      "title-error-occurred": "Hiba történt az erőforrások Azure Monitor szolgáltatásból történő lekérése során"
+      "title-error-occurred": "Hiba történt az erőforrások Azure Monitor szolgáltatásból történő lekérése során",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Hatókör"
@@ -256,7 +266,7 @@
       "label-table": "Táblázat",
       "placeholder-select-columns": "Oszlopok kiválasztása",
       "placeholder-select-table": "Tábla kiválasztása",
-      "tooltip-remove-all-columns": ""
+      "tooltip-remove-all-columns": "Összes oszlop eltávolítása"
     },
     "time-grain-field": {
       "label-time-grain": "Időszemcse"

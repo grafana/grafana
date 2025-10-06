@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -30,9 +31,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationSecretsService_EnvelopeEncryption(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
@@ -94,9 +94,8 @@ func TestIntegrationSecretsService_EnvelopeEncryption(t *testing.T) {
 }
 
 func TestIntegrationSecretsService_DataKeys(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)
 	ctx := context.Background()
@@ -175,9 +174,8 @@ func TestIntegrationSecretsService_DataKeys(t *testing.T) {
 }
 
 func TestIntegrationSecretsService_UseCurrentProvider(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
 		testDB := db.InitTestDB(t)
 		svc := SetupTestService(t, database.ProvideSecretsStore(testDB))
@@ -283,9 +281,8 @@ func (f *fakeKMS) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
 }
 
 func TestIntegrationSecretsService_Run(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)
@@ -336,9 +333,8 @@ func TestIntegrationSecretsService_Run(t *testing.T) {
 }
 
 func TestIntegrationSecretsService_ReEncryptDataKeys(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)
@@ -386,9 +382,8 @@ func TestIntegrationSecretsService_ReEncryptDataKeys(t *testing.T) {
 }
 
 func TestIntegrationSecretsService_Decrypt(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)
@@ -452,9 +447,7 @@ func TestIntegrationSecretsService_Decrypt(t *testing.T) {
 }
 
 func TestIntegration_SecretsService(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	someData := []byte(`some-data`)

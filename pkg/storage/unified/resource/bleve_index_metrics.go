@@ -9,14 +9,18 @@ import (
 )
 
 type BleveIndexMetrics struct {
-	IndexLatency       *prometheus.HistogramVec
-	IndexSize          prometheus.Gauge
-	IndexedKinds       *prometheus.GaugeVec
-	IndexCreationTime  *prometheus.HistogramVec
-	OpenIndexes        *prometheus.GaugeVec
-	IndexBuilds        *prometheus.CounterVec
-	IndexBuildFailures prometheus.Counter
-	IndexBuildSkipped  prometheus.Counter
+	IndexLatency         *prometheus.HistogramVec
+	IndexSize            prometheus.Gauge
+	IndexedKinds         *prometheus.GaugeVec
+	IndexCreationTime    *prometheus.HistogramVec
+	OpenIndexes          *prometheus.GaugeVec
+	IndexBuilds          *prometheus.CounterVec
+	IndexBuildFailures   prometheus.Counter
+	IndexBuildSkipped    prometheus.Counter
+	UpdateLatency        prometheus.Histogram
+	UpdatedDocuments     prometheus.Summary
+	SearchUpdateWaitTime *prometheus.HistogramVec
+	RebuildQueueLength   prometheus.Gauge
 }
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
@@ -62,6 +66,28 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		IndexBuildSkipped: promauto.With(reg).NewCounter(prometheus.CounterOpts{
 			Name: "index_server_index_build_skipped_total",
 			Help: "Number of times index build has been skipped due to existing valid index being found on disk",
+		}),
+		UpdateLatency: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
+			Name:                            "index_server_update_latency_seconds",
+			Help:                            "Time to execute index update with latest modifications",
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}),
+		UpdatedDocuments: promauto.With(reg).NewSummary(prometheus.SummaryOpts{
+			Name: "index_server_update_documents",
+			Help: "Number of documents indexed during index update",
+		}),
+		SearchUpdateWaitTime: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "index_server_search_update_wait_time_seconds",
+			Help:                            "Time spent waiting for index update during search queries",
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"reason"}),
+		RebuildQueueLength: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "index_server_rebuild_queue_length",
+			Help: "Number of indexes waiting for rebuild",
 		}),
 	}
 

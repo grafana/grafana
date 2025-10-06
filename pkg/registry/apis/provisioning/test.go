@@ -15,29 +15,38 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 type StatusPatcherProvider interface {
-	GetStatusPatcher() *controller.RepositoryStatusPatcher
+	GetStatusPatcher() *appcontroller.RepositoryStatusPatcher
 }
 
 type HealthCheckerProvider interface {
 	GetHealthChecker() *controller.HealthChecker
 }
 
-type testConnector struct {
-	getter         RepoGetter
-	tester         controller.RepositoryTester
-	healthProvider HealthCheckerProvider
+type ConnectorDependencies interface {
+	RepoGetter
+	HealthCheckerProvider
+	GetRepoFactory() repository.Factory
 }
 
-func NewTestConnector(getter RepoGetter, tester controller.RepositoryTester, healthProvider HealthCheckerProvider) *testConnector {
+type testConnector struct {
+	getter         RepoGetter
+	factory        repository.Factory
+	healthProvider HealthCheckerProvider
+	tester         repository.RepositoryTesterWithExistingChecker
+}
+
+func NewTestConnector(deps ConnectorDependencies, tester repository.RepositoryTesterWithExistingChecker) *testConnector {
 	return &testConnector{
-		getter:         getter,
+		factory:        deps.GetRepoFactory(),
+		getter:         deps,
+		healthProvider: deps,
 		tester:         tester,
-		healthProvider: healthProvider,
 	}
 }
 
@@ -89,22 +98,31 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 				// HACK: Set the name and namespace if not set so that the temporary repository can be created
 				// This can be removed once we deprecate legacy secrets is deprecated or we use InLineSecureValues as we
 				// use the same field and repository name to detect which one to use.
-				if cfg.GetName() == "" {
-					if name == "new" {
-						// HACK: frontend is passing a "new" we need to remove the hack there as well
-						// Otherwise creation will fail as `new` is a reserved word. Not relevant here as we only "test"
-						name = "hack-on-hack-for-new"
+				if name == "new" {
+					// HACK: frontend is passing a "new" we need to remove the hack there as well
+					// Otherwise creation will fail as `new` is a reserved word. Not relevant here as we only "test"
+					name = "hack-on-hack-for-new"
+				} else {
+					// Copy previous secure values if they exist
+					old, _ := s.getter.GetRepository(ctx, name)
+					if old != nil && !old.Config().Secure.IsZero() {
+						secure := old.Config().Secure
+						if cfg.Secure.Token.IsZero() {
+							cfg.Secure.Token = secure.Token
+						}
+						if cfg.Secure.WebhookSecret.IsZero() {
+							cfg.Secure.WebhookSecret = secure.WebhookSecret
+						}
 					}
-
-					cfg.SetName(name)
 				}
 
+				cfg.SetName(name)
 				if cfg.GetNamespace() == "" {
 					cfg.SetNamespace(ns)
 				}
 
 				// Create a temporary repository
-				tmp, err := s.getter.AsRepository(ctx, &cfg)
+				tmp, err := s.factory.Build(ctx, &cfg)
 				if err != nil {
 					responder.Error(err)
 					return
@@ -167,7 +185,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 			}
 		} else {
 			// Testing temporary repository - just run test without status update
-			rsp, err = s.tester.TestRepository(ctx, repo)
+			rsp, err = s.tester.TestRepositoryAndCheckExisting(ctx, repo)
 			if err != nil {
 				responder.Error(err)
 				return

@@ -52,6 +52,8 @@ cookie_samesite = strict
 
 {{< admonition type="note" >}}
 By setting the SameSite attribute to "strict," only the user clicks within a Grafana instance work. The default option, "lax," does not produce this behavior.
+
+If you want to use OAuth/SAML for login, it is necessary to configure this attribute as `lax`.
 {{< /admonition >}}
 
 ### Add a prefix to cookie names
@@ -143,7 +145,7 @@ If set to `true`, the Grafana server redirects requests that have a Host-header 
 Example:
 
 ```toml
-[sever]
+[server]
 # Redirect to correct domain if host header does not match domain
 # Prevents DNS rebinding attacks
 enforce_domain = true

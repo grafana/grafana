@@ -26,7 +26,7 @@ jobs:
         shell: bash
         run: echo "fetch_depth=$(( ${{ github.event.pull_request.commits }} + 2 ))" >> "$GITHUB_OUTPUT"
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
           fetch-depth: ${{ steps.fetch_depth.outputs.fetch_depth }}

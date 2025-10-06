@@ -3,6 +3,7 @@ package metadata
 import (
 	"testing"
 	"text/template"
+	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 	"k8s.io/utils/ptr"
@@ -235,6 +236,39 @@ func TestSecureValueQueries(t *testing.T) {
 						Name:        "name",
 						Namespace:   "ns",
 						ExternalID:  "extId",
+					},
+				},
+			},
+			sqlSecureValueDelete: {
+				{
+					Name: "deleteSecureValue",
+					Data: &deleteSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Name:        "name",
+						Version:     1,
+					},
+				},
+			},
+			sqlSecureValueLeaseInactive: {
+				{
+					Name: "lease inactive",
+					Data: &leaseInactiveSecureValues{
+						SQLTemplate:  mocks.NewTestingSQLTemplate(),
+						Now:          10,
+						LeaseToken:   "token",
+						LeaseTTL:     int64((30 * time.Second).Seconds()),
+						MaxBatchSize: 10,
+						MinAge:       int64((300 * time.Second).Seconds()),
+					},
+				},
+			},
+			sqlSecureValueListByLeaseToken: {
+				{
+					Name: "list by lease token",
+					Data: &listSecureValuesByLeaseToken{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						LeaseToken:  "token",
 					},
 				},
 			},

@@ -233,7 +233,7 @@ describe('BulkDeleteProvisionedResource', () => {
     const { user, mockCreateBulkJob, defaultRepository } = setup(null);
 
     // Switch to write workflow
-    const writeRadio = screen.getByRole('radio', { name: /Save/i });
+    const writeRadio = screen.getByRole('radio', { name: /Push to an existing branch/i });
     await user.click(writeRadio);
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));

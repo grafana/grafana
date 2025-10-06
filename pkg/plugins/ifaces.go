@@ -72,6 +72,7 @@ type UpdateInfo struct {
 type FS interface {
 	fs.FS
 
+	Type() string
 	Base() string
 	Files() ([]string, error)
 	Rel(string) (string, error)

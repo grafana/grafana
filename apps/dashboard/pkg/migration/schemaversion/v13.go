@@ -1,12 +1,112 @@
 package schemaversion
 
+import "context"
+
+// Default field config structure
+func getDefaultFieldConfig() map[string]interface{} {
+	return map[string]interface{}{
+		"defaults":  map[string]interface{}{},
+		"overrides": []interface{}{},
+	}
+}
+
+// Default color mode for field config
+func getDefaultColorMode() map[string]interface{} {
+	return map[string]interface{}{
+		"mode": "palette-classic",
+	}
+}
+
+// Default custom properties for field config
+func getDefaultCustomProperties() map[string]interface{} {
+	return map[string]interface{}{
+		"axisBorderShow":   false,
+		"axisCenteredZero": false,
+		"axisColorMode":    "text",
+		"axisLabel":        "",
+		"axisPlacement":    "auto",
+		"barAlignment":     0,
+		"barWidthFactor":   0.6,
+		"drawStyle":        "points",
+		"fillOpacity":      0,
+		"gradientMode":     "none",
+		"hideFrom": map[string]interface{}{
+			"legend":  false,
+			"tooltip": false,
+			"viz":     false,
+		},
+		"insertNulls":       false,
+		"lineInterpolation": "linear",
+		"lineWidth":         1,
+		"pointSize":         5,
+		"scaleDistribution": map[string]interface{}{
+			"type": "linear",
+		},
+		"showPoints": "auto",
+		"showValues": false,
+		"spanNulls":  false,
+		"stacking": map[string]interface{}{
+			"group": "A",
+			"mode":  "none",
+		},
+		"thresholdsStyle": map[string]interface{}{
+			"mode": "off",
+		},
+	}
+}
+
+// Default mappings and thresholds
+func getDefaultMappings() []interface{} {
+	return []interface{}{}
+}
+
+func getDefaultThresholds() map[string]interface{} {
+	return map[string]interface{}{
+		"mode":  "absolute",
+		"steps": []interface{}{},
+	}
+}
+
+// Default legend options
+func getDefaultLegendOptions() map[string]interface{} {
+	return map[string]interface{}{
+		"calcs":       []interface{}{},
+		"displayMode": "list",
+		"placement":   "bottom",
+		"showLegend":  true,
+	}
+}
+
+// Default tooltip options
+func getDefaultTooltipOptions() map[string]interface{} {
+	return map[string]interface{}{
+		"hideZeros": false,
+		"mode":      "single",
+		"sort":      "none",
+	}
+}
+
+// Default threshold steps for timeseries
+func getDefaultThresholdSteps() []interface{} {
+	return []interface{}{
+		map[string]interface{}{
+			"color": "green",
+			"value": interface{}(nil), // null in JSON, represents -Infinity
+		},
+		map[string]interface{}{
+			"color": "red",
+			"value": 80.0,
+		},
+	}
+}
+
 // V13 migrates graph panels to timeseries panels with complete field config and options conversion.
 // This migration replicates the complete graphPanelChangedHandler logic from the frontend, including:
 // - Panel type conversion from 'graph' to 'timeseries'
 // - Complete field config conversion (y-axis, series overrides, thresholds, etc.)
 // - Options conversion (legend, tooltip, etc.)
 // - Time regions conversion to annotations
-func V13(dashboard map[string]interface{}) error {
+func V13(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 13
 
 	panels, ok := dashboard["panels"].([]interface{})
@@ -46,10 +146,7 @@ func V13(dashboard map[string]interface{}) error {
 func convertFieldConfig(panel map[string]interface{}) {
 	// Initialize fieldConfig if it doesn't exist
 	if panel["fieldConfig"] == nil {
-		panel["fieldConfig"] = map[string]interface{}{
-			"defaults":  map[string]interface{}{},
-			"overrides": []interface{}{},
-		}
+		panel["fieldConfig"] = getDefaultFieldConfig()
 	}
 
 	fieldConfig, ok := panel["fieldConfig"].(map[string]interface{})
@@ -63,51 +160,14 @@ func convertFieldConfig(panel map[string]interface{}) {
 	}
 
 	// Set default color mode
-	defaults["color"] = map[string]interface{}{
-		"mode": "palette-classic",
-	}
+	defaults["color"] = getDefaultColorMode()
 
 	// Set default custom properties
-	defaults["custom"] = map[string]interface{}{
-		"axisBorderShow":   false,
-		"axisCenteredZero": false,
-		"axisColorMode":    "text",
-		"axisLabel":        "",
-		"axisPlacement":    "auto",
-		"barAlignment":     0,
-		"barWidthFactor":   0.6,
-		"drawStyle":        "points",
-		"fillOpacity":      0,
-		"gradientMode":     "none",
-		"hideFrom": map[string]interface{}{
-			"legend":  false,
-			"tooltip": false,
-			"viz":     false,
-		},
-		"insertNulls":       false,
-		"lineInterpolation": "linear",
-		"lineWidth":         1,
-		"pointSize":         5,
-		"scaleDistribution": map[string]interface{}{
-			"type": "linear",
-		},
-		"showPoints": "auto",
-		"spanNulls":  false,
-		"stacking": map[string]interface{}{
-			"group": "A",
-			"mode":  "none",
-		},
-		"thresholdsStyle": map[string]interface{}{
-			"mode": "off",
-		},
-	}
+	defaults["custom"] = getDefaultCustomProperties()
 
 	// Set default mappings and thresholds
-	defaults["mappings"] = []interface{}{}
-	defaults["thresholds"] = map[string]interface{}{
-		"mode":  "absolute",
-		"steps": []interface{}{},
-	}
+	defaults["mappings"] = getDefaultMappings()
+	defaults["thresholds"] = getDefaultThresholds()
 
 	// Convert y-axis settings to field config
 	if yaxes, ok := panel["yaxes"].([]interface{}); ok && len(yaxes) > 0 {
@@ -167,19 +227,10 @@ func convertOptions(panel map[string]interface{}) {
 	}
 
 	// Set default legend options
-	options["legend"] = map[string]interface{}{
-		"calcs":       []interface{}{},
-		"displayMode": "list",
-		"placement":   "bottom",
-		"showLegend":  true,
-	}
+	options["legend"] = getDefaultLegendOptions()
 
 	// Set default tooltip options
-	options["tooltip"] = map[string]interface{}{
-		"hideZeros": false,
-		"mode":      "single",
-		"sort":      "none",
-	}
+	options["tooltip"] = getDefaultTooltipOptions()
 
 	// Convert legend settings from old graph format
 	if legend, ok := panel["legend"].(map[string]interface{}); ok {
@@ -333,6 +384,7 @@ func isAliasRegex(alias string) bool {
 	return false
 }
 
+//nolint:gocyclo
 func extractSeriesProperties(seriesMap map[string]interface{}) []interface{} {
 	properties := []interface{}{}
 
@@ -376,16 +428,6 @@ func extractSeriesProperties(seriesMap map[string]interface{}) []interface{} {
 			properties = append(properties, map[string]interface{}{
 				"id":    "custom.showPoints",
 				"value": pointsBool,
-			})
-		}
-	}
-
-	// Show values
-	if showValues, ok := seriesMap["showValues"]; ok {
-		if showValuesBool, ok := showValues.(bool); ok {
-			properties = append(properties, map[string]interface{}{
-				"id":    "custom.showValues",
-				"value": showValuesBool,
 			})
 		}
 	}
@@ -716,17 +758,8 @@ func setDefaultThresholds(defaults map[string]interface{}) {
 
 	// Add default threshold steps that match the timeseries plugin defaults
 	defaults["thresholds"] = map[string]interface{}{
-		"mode": "absolute",
-		"steps": []interface{}{
-			map[string]interface{}{
-				"color": "green",
-				"value": interface{}(nil), // null in JSON, represents -Infinity
-			},
-			map[string]interface{}{
-				"color": "red",
-				"value": 80.0,
-			},
-		},
+		"mode":  "absolute",
+		"steps": getDefaultThresholdSteps(),
 	}
 }
 

@@ -21,12 +21,11 @@ type Repository struct {
 	Status RepositoryStatus `json:"status,omitempty"`
 }
 
-// NOT YET USED FOR REAL -- testing secure value workflow
 type SecureValues struct {
 	// Token used to connect the configured repository
 	Token common.InlineSecureValue `json:"token,omitzero,omitempty"`
 
-	// Some webhooks (github) require a secret key value
+	// Some webhooks (including github) require a secret key value
 	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
 }
 
@@ -55,11 +54,6 @@ type GitHubRepositoryConfig struct {
 
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
-	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
-	Token string `json:"token,omitempty"`
-	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
-	// +listType=atomic
-	EncryptedToken []byte `json:"encryptedToken,omitempty"`
 
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
@@ -80,11 +74,6 @@ type GitRepositoryConfig struct {
 	Branch string `json:"branch"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
 	TokenUser string `json:"tokenUser,omitempty"`
-	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
-	Token string `json:"token,omitempty"`
-	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
-	// +listType=atomic
-	EncryptedToken []byte `json:"encryptedToken,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -100,11 +89,6 @@ type BitbucketRepositoryConfig struct {
 	Branch string `json:"branch"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
 	TokenUser string `json:"tokenUser,omitempty"`
-	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
-	Token string `json:"token,omitempty"`
-	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
-	// +listType=atomic
-	EncryptedToken []byte `json:"encryptedToken,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -118,11 +102,6 @@ type GitLabRepositoryConfig struct {
 	URL string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
-	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
-	Token string `json:"token,omitempty"`
-	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
-	// +listType=atomic
-	EncryptedToken []byte `json:"encryptedToken,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -147,6 +126,97 @@ const (
 // IsGit returns true if the repository type is git or github
 func (r RepositoryType) IsGit() bool {
 	return r == GitRepositoryType || r == GitHubRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
+}
+
+// Branch returns the branch for git-based repositories
+// or an empty string for local repositories
+func (r *Repository) Branch() string {
+	if !r.Spec.Type.IsGit() {
+		return ""
+	}
+
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			return r.Spec.GitHub.Branch
+		}
+	case GitRepositoryType:
+		if r.Spec.Git != nil {
+			return r.Spec.Git.Branch
+		}
+	case BitbucketRepositoryType:
+		if r.Spec.Bitbucket != nil {
+			return r.Spec.Bitbucket.Branch
+		}
+	case GitLabRepositoryType:
+		if r.Spec.GitLab != nil {
+			return r.Spec.GitLab.Branch
+		}
+	default:
+		return ""
+	}
+
+	return ""
+}
+
+// URL returns the URL for git-based repositories
+// or an empty string for local repositories
+func (r *Repository) URL() string {
+	if !r.Spec.Type.IsGit() {
+		return ""
+	}
+
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			return r.Spec.GitHub.URL
+		}
+	case GitRepositoryType:
+		if r.Spec.Git != nil {
+			return r.Spec.Git.URL
+		}
+	case BitbucketRepositoryType:
+		if r.Spec.Bitbucket != nil {
+			return r.Spec.Bitbucket.URL
+		}
+	case GitLabRepositoryType:
+		if r.Spec.GitLab != nil {
+			return r.Spec.GitLab.URL
+		}
+	default:
+		return ""
+	}
+
+	return ""
+}
+
+func (r *Repository) Path() string {
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			return r.Spec.GitHub.Path
+		}
+	case GitRepositoryType:
+		if r.Spec.Git != nil {
+			return r.Spec.Git.Path
+		}
+	case BitbucketRepositoryType:
+		if r.Spec.Bitbucket != nil {
+			return r.Spec.Bitbucket.Path
+		}
+	case GitLabRepositoryType:
+		if r.Spec.GitLab != nil {
+			return r.Spec.GitLab.Path
+		}
+	case LocalRepositoryType:
+		if r.Spec.Local != nil {
+			return r.Spec.Local.Path
+		}
+	default:
+		return ""
+	}
+
+	return ""
 }
 
 type RepositorySpec struct {
@@ -240,6 +310,9 @@ type RepositoryStatus struct {
 
 	// Webhook Information (if applicable)
 	Webhook *WebhookStatus `json:"webhook"`
+
+	// Error information during repository deletion (if any)
+	DeleteError string `json:"deleteError,omitempty"`
 }
 
 // HealthFailureType represents different types of repository failures
@@ -297,8 +370,6 @@ type SyncStatus struct {
 type WebhookStatus struct {
 	ID               int64    `json:"id,omitempty"`
 	URL              string   `json:"url,omitempty"`
-	Secret           string   `json:"secret,omitempty"`
-	EncryptedSecret  []byte   `json:"encryptedSecret,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`
 }

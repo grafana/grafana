@@ -9,10 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func GetBleveMappings(fields resource.SearchableDocumentFields) (mapping.IndexMapping, error) {
+func GetBleveMappings(fields resource.SearchableDocumentFields, useFullNgram bool) (mapping.IndexMapping, error) {
 	mapper := bleve.NewIndexMapping()
 
-	err := RegisterCustomAnalyzers(mapper)
+	err := RegisterCustomAnalyzers(mapper, useFullNgram)
 	if err != nil {
 		return nil, err
 	}

@@ -38,7 +38,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   url: string;
   name: string;
   withCredentials: boolean;
-  basicAuth: any;
+  basicAuth: string;
   tsdbVersion: number;
   tsdbResolution: number;
   lookupLimit: number;
@@ -196,7 +196,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     );
   }
 
-  targetContainsTemplate(target: any) {
+  targetContainsTemplate(target: OpenTsdbQuery) {
     if (target.filters && target.filters.length > 0) {
       for (let i = 0; i < target.filters.length; i++) {
         if (this.templateSrv.containsTemplate(target.filters[i].filter)) {
