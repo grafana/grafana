@@ -6,12 +6,14 @@ import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { getFocusStyles } from '../../themes/mixins';
+import { getFocusStyles, getInternalRadius } from '../../themes/mixins';
 import { IconName } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { SubMenu } from './SubMenu';
+
+export const MENU_ITEM_PADDING = 4;
 
 /** @internal */
 export type MenuItemElement = HTMLAnchorElement & HTMLButtonElement & HTMLDivElement;
@@ -225,7 +227,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
       padding: theme.spacing(0.5, 1.5),
       minHeight: theme.spacing(4),
-      borderRadius: theme.shape.radius.default,
+      borderRadius: getInternalRadius(theme, MENU_ITEM_PADDING, { parentBorderWidth: 0 }),
       margin: 0,
       border: 'none',
       width: '100%',
