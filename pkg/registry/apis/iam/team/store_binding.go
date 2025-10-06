@@ -30,6 +30,9 @@ var (
 	_ rest.Getter               = (*LegacyBindingStore)(nil)
 	_ rest.Lister               = (*LegacyBindingStore)(nil)
 	_ rest.Creater              = (*LegacyBindingStore)(nil)
+	_ rest.Updater              = (*LegacyBindingStore)(nil)
+	_ rest.GracefulDeleter      = (*LegacyBindingStore)(nil)
+	_ rest.CollectionDeleter    = (*LegacyBindingStore)(nil)
 )
 
 func NewLegacyBindingStore(store legacy.LegacyIdentityStore, enableAuthnMutation bool) *LegacyBindingStore {
@@ -67,6 +70,18 @@ func (l *LegacyBindingStore) GetSingularName() string {
 // ConvertToTable implements rest.Lister.
 func (l *LegacyBindingStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return bindingResource.TableConverter().ConvertToTable(ctx, object, tableOptions)
+}
+
+func (l *LegacyBindingStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+}
+
+func (l *LegacyBindingStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+}
+
+func (l *LegacyBindingStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "deleteCollection")
 }
 
 func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
@@ -118,6 +133,7 @@ func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, cre
 		TeamID:     teamObj.ID,
 		UserID:     userObj.ID,
 		Permission: permission,
+		External:   false,
 	}
 
 	result, err := l.store.CreateTeamMember(ctx, ns, createCmd)
