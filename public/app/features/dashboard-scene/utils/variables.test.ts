@@ -6,6 +6,7 @@ import {
   IntervalVariableModel,
   LoadingState,
   QueryVariableModel,
+  SwitchVariableModel,
   TextBoxVariableModel,
   TypedVariableModel,
 } from '@grafana/data';
@@ -17,6 +18,7 @@ import {
   GroupByVariable,
   QueryVariable,
   SceneVariableSet,
+  SwitchVariable,
 } from '@grafana/scenes';
 import { defaultDashboard, defaultTimePickerConfig, VariableType } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -654,6 +656,340 @@ describe('when creating variables objects', () => {
       };
 
       expect(() => createSceneVariableFromVariableModel(variable)).toThrow('Scenes: Unsupported variable type');
+    });
+  });
+
+  it('should migrate switch variable with string true value', () => {
+    const variable: SwitchVariableModel = {
+      id: 'switch0',
+      global: false,
+      index: 0,
+      state: LoadingState.Done,
+      error: null,
+      name: 'switchVar',
+      label: 'Switch Label',
+      description: 'Switch Description',
+      type: 'switch',
+      rootStateKey: 'N4XLmH5Vz',
+      current: {
+        selected: true,
+        text: 'true',
+        value: 'true',
+      },
+      hide: 0,
+      skipUrlSync: false,
+      options: [
+        {
+          selected: true,
+          text: 'true',
+          value: 'true',
+        },
+        {
+          selected: false,
+          text: 'false',
+          value: 'false',
+        },
+      ],
+      query: '',
+      multi: false,
+      includeAll: false,
+      allValue: null,
+    };
+
+    const migrated = createSceneVariableFromVariableModel(variable);
+    const { key, ...rest } = migrated.state;
+
+    expect(migrated).toBeInstanceOf(SwitchVariable);
+    expect(rest).toEqual({
+      description: 'Switch Description',
+      hide: 0,
+      label: 'Switch Label',
+      name: 'switchVar',
+      skipUrlSync: false,
+      type: 'switch',
+      value: true,
+    });
+  });
+
+  it('should migrate switch variable with string false value', () => {
+    const variable: SwitchVariableModel = {
+      id: 'switch1',
+      global: false,
+      index: 0,
+      state: LoadingState.Done,
+      error: null,
+      name: 'switchVar2',
+      label: 'Switch Label 2',
+      description: 'Switch Description 2',
+      type: 'switch',
+      rootStateKey: 'N4XLmH5Vz',
+      current: {
+        selected: true,
+        text: 'false',
+        value: 'false',
+      },
+      hide: 1,
+      skipUrlSync: true,
+      options: [
+        {
+          selected: false,
+          text: 'true',
+          value: 'true',
+        },
+        {
+          selected: true,
+          text: 'false',
+          value: 'false',
+        },
+      ],
+      query: '',
+      multi: false,
+      includeAll: false,
+      allValue: null,
+    };
+
+    const migrated = createSceneVariableFromVariableModel(variable);
+    const { key, ...rest } = migrated.state;
+
+    expect(migrated).toBeInstanceOf(SwitchVariable);
+    expect(rest).toEqual({
+      description: 'Switch Description 2',
+      hide: 1,
+      label: 'Switch Label 2',
+      name: 'switchVar2',
+      skipUrlSync: true,
+      type: 'switch',
+      value: false,
+    });
+  });
+
+  it('should migrate switch variable with array true value', () => {
+    const variable: SwitchVariableModel = {
+      id: 'switch2',
+      global: false,
+      index: 0,
+      state: LoadingState.Done,
+      error: null,
+      name: 'switchVar3',
+      type: 'switch',
+      rootStateKey: 'N4XLmH5Vz',
+      current: {
+        selected: true,
+        text: ['true'],
+        value: ['true'],
+      },
+      hide: 0,
+      skipUrlSync: false,
+      options: [],
+      query: '',
+      multi: false,
+      includeAll: false,
+      allValue: null,
+    };
+
+    const migrated = createSceneVariableFromVariableModel(variable);
+    const { key, ...rest } = migrated.state;
+
+    expect(migrated).toBeInstanceOf(SwitchVariable);
+    expect(rest).toEqual({
+      description: undefined,
+      hide: 0,
+      label: undefined,
+      name: 'switchVar3',
+      skipUrlSync: false,
+      type: 'switch',
+      value: true,
+    });
+  });
+
+  it('should migrate switch variable with array false value', () => {
+    const variable: SwitchVariableModel = {
+      id: 'switch3',
+      global: false,
+      index: 0,
+      state: LoadingState.Done,
+      error: null,
+      name: 'switchVar4',
+      type: 'switch',
+      rootStateKey: 'N4XLmH5Vz',
+      current: {
+        selected: true,
+        text: ['false'],
+        value: ['false'],
+      },
+      hide: 0,
+      skipUrlSync: false,
+      options: [],
+      query: '',
+      multi: false,
+      includeAll: false,
+      allValue: null,
+    };
+
+    const migrated = createSceneVariableFromVariableModel(variable);
+    const { key, ...rest } = migrated.state;
+
+    expect(migrated).toBeInstanceOf(SwitchVariable);
+    expect(rest).toEqual({
+      description: undefined,
+      hide: 0,
+      label: undefined,
+      name: 'switchVar4',
+      skipUrlSync: false,
+      type: 'switch',
+      value: false,
+    });
+  });
+
+  it('should migrate switch variable with boolean true value', () => {
+    const variable: SwitchVariableModel = {
+      id: 'switch4',
+      global: false,
+      index: 0,
+      state: LoadingState.Done,
+      error: null,
+      name: 'switchVar5',
+      type: 'switch',
+      rootStateKey: 'N4XLmH5Vz',
+      current: {
+        selected: true,
+        text: true,
+        value: true,
+      },
+      hide: 0,
+      skipUrlSync: false,
+      options: [],
+      query: '',
+      multi: false,
+      includeAll: false,
+      allValue: null,
+    };
+
+    const migrated = createSceneVariableFromVariableModel(variable);
+    const { key, ...rest } = migrated.state;
+
+    expect(migrated).toBeInstanceOf(SwitchVariable);
+    expect(rest).toEqual({
+      description: undefined,
+      hide: 0,
+      label: undefined,
+      name: 'switchVar5',
+      skipUrlSync: false,
+      type: 'switch',
+      value: true,
+    });
+  });
+
+  it('should migrate switch variable with boolean false value', () => {
+    const variable: SwitchVariableModel = {
+      id: 'switch5',
+      global: false,
+      index: 0,
+      state: LoadingState.Done,
+      error: null,
+      name: 'switchVar6',
+      type: 'switch',
+      rootStateKey: 'N4XLmH5Vz',
+      current: {
+        selected: true,
+        text: false,
+        value: false,
+      },
+      hide: 0,
+      skipUrlSync: false,
+      options: [],
+      query: '',
+      multi: false,
+      includeAll: false,
+      allValue: null,
+    };
+
+    const migrated = createSceneVariableFromVariableModel(variable);
+    const { key, ...rest } = migrated.state;
+
+    expect(migrated).toBeInstanceOf(SwitchVariable);
+    expect(rest).toEqual({
+      description: undefined,
+      hide: 0,
+      label: undefined,
+      name: 'switchVar6',
+      skipUrlSync: false,
+      type: 'switch',
+      value: false,
+    });
+  });
+
+  it('should migrate switch variable with no current value', () => {
+    const variable: SwitchVariableModel = {
+      id: 'switch6',
+      global: false,
+      index: 0,
+      state: LoadingState.Done,
+      error: null,
+      name: 'switchVar7',
+      type: 'switch',
+      rootStateKey: 'N4XLmH5Vz',
+      current: undefined,
+      hide: 0,
+      skipUrlSync: false,
+      options: [],
+      query: '',
+      multi: false,
+      includeAll: false,
+      allValue: null,
+    };
+
+    const migrated = createSceneVariableFromVariableModel(variable);
+    const { key, ...rest } = migrated.state;
+
+    expect(migrated).toBeInstanceOf(SwitchVariable);
+    expect(rest).toEqual({
+      description: undefined,
+      hide: 0,
+      label: undefined,
+      name: 'switchVar7',
+      skipUrlSync: false,
+      type: 'switch',
+      value: false,
+    });
+  });
+
+  it('should migrate switch variable with array containing non-true value', () => {
+    const variable: SwitchVariableModel = {
+      id: 'switch7',
+      global: false,
+      index: 0,
+      state: LoadingState.Done,
+      error: null,
+      name: 'switchVar8',
+      type: 'switch',
+      rootStateKey: 'N4XLmH5Vz',
+      current: {
+        selected: true,
+        text: ['something'],
+        value: ['something'],
+      },
+      hide: 0,
+      skipUrlSync: false,
+      options: [],
+      query: '',
+      multi: false,
+      includeAll: false,
+      allValue: null,
+    };
+
+    const migrated = createSceneVariableFromVariableModel(variable);
+    const { key, ...rest } = migrated.state;
+
+    expect(migrated).toBeInstanceOf(SwitchVariable);
+    expect(rest).toEqual({
+      description: undefined,
+      hide: 0,
+      label: undefined,
+      name: 'switchVar8',
+      skipUrlSync: false,
+      type: 'switch',
+      value: false,
     });
   });
 

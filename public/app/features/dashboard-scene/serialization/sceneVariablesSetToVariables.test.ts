@@ -21,6 +21,7 @@ import {
   IntervalVariable,
   QueryVariable,
   SceneVariableSet,
+  SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
 import { DataSourceRef, VariableHide, VariableRefresh } from '@grafana/schema';
@@ -877,6 +878,95 @@ describe('sceneVariablesSetToVariables', () => {
     });
   });
 
+  it('should handle SwitchVariable with true value', () => {
+    const variable = new SwitchVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
+      value: true,
+      skipUrlSync: true,
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "current": {
+        "text": "True",
+        "value": "true",
+      },
+      "description": "test-desc",
+      "hide": 3,
+      "label": "test-label",
+      "name": "test",
+      "skipUrlSync": true,
+      "type": "switch",
+    }
+    `);
+  });
+
+  it('should handle SwitchVariable with false value', () => {
+    const variable = new SwitchVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
+      value: false,
+      skipUrlSync: false,
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "current": {
+        "text": "False",
+        "value": "false",
+      },
+      "description": "test-desc",
+      "hide": 3,
+      "label": "test-label",
+      "name": "test",
+      "type": "switch",
+    }
+    `);
+  });
+
+  it('should handle SwitchVariable with minimal configuration', () => {
+    const variable = new SwitchVariable({
+      name: 'minimal',
+      value: true,
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "current": {
+        "text": "True",
+        "value": "true",
+      },
+      "description": undefined,
+      "label": undefined,
+      "name": "minimal",
+      "type": "switch",
+    }
+    `);
+  });
+
   describe('sceneVariablesSetToSchemaV2Variables', () => {
     it('should handle QueryVariable', () => {
       const variable = new QueryVariable({
@@ -1454,6 +1544,111 @@ describe('sceneVariablesSetToVariables', () => {
 
         expect(() => sceneVariablesSetToSchemaV2Variables(set)).toThrow('Unsupported variable type');
       });
+    });
+
+    it('should handle SwitchVariable with true value', () => {
+      const variable = new SwitchVariable({
+        name: 'test',
+        label: 'test-label',
+        description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
+        value: true,
+        skipUrlSync: true,
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "kind": "SwitchVariable",
+      "spec": {
+        "current": true,
+        "description": "test-desc",
+        "hide": "inControlsMenu",
+        "label": "test-label",
+        "name": "test",
+        "skipUrlSync": true,
+      },
+    }
+    `);
+    });
+
+    it('should handle SwitchVariable with false value', () => {
+      const variable = new SwitchVariable({
+        name: 'test',
+        label: 'test-label',
+        description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
+        value: false,
+        skipUrlSync: false,
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "kind": "SwitchVariable",
+      "spec": {
+        "current": false,
+        "description": "test-desc",
+        "hide": "inControlsMenu",
+        "label": "test-label",
+        "name": "test",
+        "skipUrlSync": false,
+      },
+    }
+    `);
+    });
+
+    it('should handle SwitchVariable with minimal configuration', () => {
+      const variable = new SwitchVariable({
+        name: 'minimal',
+        value: true,
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "kind": "SwitchVariable",
+      "spec": {
+        "current": true,
+        "description": undefined,
+        "hide": "dontHide",
+        "label": undefined,
+        "name": "minimal",
+        "skipUrlSync": false,
+      },
+    }
+    `);
+    });
+
+    it('should handle SwitchVariable with string value conversion', () => {
+      // Test edge case where value might be passed as string
+      const variable = new SwitchVariable({
+        name: 'test',
+        value: 'true' as any, // Simulating potential string input
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].spec.current).toBe(true);
     });
   });
 });

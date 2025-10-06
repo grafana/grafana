@@ -18,6 +18,7 @@ import {
   AdHocFiltersVariable,
   SceneVariableState,
   SceneVariableSet,
+  SwitchVariable,
 } from '@grafana/scenes';
 import { VariableHide, VariableType } from '@grafana/schema';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -31,6 +32,7 @@ import { DataSourceVariableEditor, getDataSourceVariableOptions } from './editor
 import { getGroupByVariableOptions, GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { getIntervalVariableOptions, IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { getQueryVariableOptions, QueryVariableEditor } from './editors/QueryVariableEditor';
+import { getSwitchVariableOptions, SwitchVariableEditor } from './editors/SwitchVariableEditor';
 import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
 
 interface EditableVariableConfig {
@@ -117,6 +119,15 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
     editor: TextBoxVariableEditor,
     getOptions: getTextBoxVariableOptions,
   },
+  switch: {
+    name: t('dashboard-scene.get-editable-variables.name.switch', 'Switch'),
+    description: t(
+      'dashboard-scene.get-editable-variables.description.users-enter-arbitrary-strings-switch',
+      'A variable that can be toggled on and off'
+    ),
+    editor: SwitchVariableEditor,
+    getOptions: getSwitchVariableOptions,
+  },
 });
 
 export function getEditableVariableDefinition(type: string): EditableVariableConfig {
@@ -138,6 +149,7 @@ export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'interval',
   'adhoc',
   'groupby',
+  'switch',
 ];
 
 export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVariableType>> {
@@ -187,6 +199,8 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
       return new GroupByVariable(initialState);
     case 'textbox':
       return new TextBoxVariable(initialState);
+    case 'switch':
+      return new SwitchVariable(initialState);
   }
 }
 
@@ -262,7 +276,8 @@ export function isSceneVariableInstance(sceneObject: SceneObject): sceneObject i
     sceneUtils.isIntervalVariable(sceneObject) ||
     sceneUtils.isQueryVariable(sceneObject) ||
     sceneUtils.isTextBoxVariable(sceneObject) ||
-    sceneUtils.isGroupByVariable(sceneObject)
+    sceneUtils.isGroupByVariable(sceneObject) ||
+    sceneUtils.isSwitchVariable(sceneObject)
   );
 }
 
