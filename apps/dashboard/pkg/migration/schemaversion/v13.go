@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // Default field config structure
 func getDefaultFieldConfig() map[string]interface{} {
 	return map[string]interface{}{
@@ -104,7 +106,7 @@ func getDefaultThresholdSteps() []interface{} {
 // - Complete field config conversion (y-axis, series overrides, thresholds, etc.)
 // - Options conversion (legend, tooltip, etc.)
 // - Time regions conversion to annotations
-func V13(dashboard map[string]interface{}) error {
+func V13(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 13
 
 	panels, ok := dashboard["panels"].([]interface{})

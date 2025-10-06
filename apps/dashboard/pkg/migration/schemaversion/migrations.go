@@ -8,7 +8,7 @@ import (
 
 const (
 	MIN_VERSION    = 12
-	LATEST_VERSION = 41
+	LATEST_VERSION = 42
 
 	// The pluginVersion to set after simulating auto-migrate for angular panels
 	pluginVersionForAutoMigrate = "12.1.0"
