@@ -457,27 +457,6 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 			ctxLogger.Warn("Failed to invalidate OAuth tokens", "authID", tokenRefreshMetadata.AuthID, "error", err)
 		}
 
-		// // Update the external session with the new token if we the user has an external session,
-		// // regardless of the feature flag state to keep the `user_external_session` table in sync.
-		// // ExternalSessionID should always be set except for some edge cases:
-		// // - when Grafana was updated to a version where the `improvedExternalSessionHandling` feature flag
-		// //   was enabled after the user logged in
-		// if tokenRefreshMetadata.ExternalSessionID != 0 {
-		// 	sessionToken, err := o.sessionService.GetTokenByExternalSessionID(ctx, tokenRefreshMetadata.ExternalSessionID)
-		// 	if err != nil {
-		// 		ctxLogger.Error("Failed to get session token by external session ID", "error", err)
-		// 		span.SetStatus(codes.Error, "Failed to get session token by external session ID")
-		// 		return nil, err
-		// 	}
-
-		// 	// Remove the associated internal session
-		// 	if err := o.sessionService.RevokeToken(ctx, sessionToken, false); err != nil {
-		// 		ctxLogger.Error("Failed to revoke internal session token", "error", err)
-		// 		span.SetStatus(codes.Error, "Failed to revoke internal session token")
-		// 		return nil, err
-		// 	}
-		// }
-
 		return nil, refreshErr
 	}
 
