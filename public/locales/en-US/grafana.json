@@ -12655,6 +12655,7 @@
       "label-right": "Right"
     },
     "category-state-timeline": "State timeline",
+    "name-align-series-names": "Position of series names (Y-axis)",
     "name-align-values": "Align values",
     "name-connect-null-values": "Connect null values",
     "name-disconnect-values": "Disconnect values",
