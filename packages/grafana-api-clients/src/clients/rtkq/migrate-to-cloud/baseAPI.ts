@@ -3,7 +3,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { createBaseQuery } from '../../../utils/createBaseQuery';
 
 export const api = createApi({
-  reducerPath: 'userPreferencesAPI',
+  reducerPath: 'migrateToCloudGeneratedAPI',
   baseQuery: createBaseQuery({ baseURL: '/api' }),
   endpoints: () => ({}),
 });
