@@ -87,6 +87,7 @@
 /apps/plugins/ @grafana/plugins-platform-backend
 /apps/preferences/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/shorturl/ @grafana/sharing-squad
+/apps/scope/ @grafana/grafana-operator-experience-squad
 /apps/secret/ @grafana/grafana-operator-experience-squad
 /apps/investigations/ @fcjack @matryer @svennergr
 /apps/advisor/ @grafana/plugins-platform-backend
