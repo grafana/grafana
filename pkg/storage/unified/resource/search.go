@@ -715,7 +715,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 
 			// Recheck if some other goroutine managed to build an index in the meantime.
 			// (That is, it finished running this function and stored the index into the cache)
-			idx := s.search.GetIndex(key)
+			idx = s.search.GetIndex(key)
 			if idx != nil {
 				return idx, nil
 			}
