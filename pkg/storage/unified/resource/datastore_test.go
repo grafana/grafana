@@ -3,6 +3,7 @@ package resource
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"testing"
@@ -86,11 +87,24 @@ func TestDataKey_Validate(t *testing.T) {
 		key         DataKey
 		expectError bool
 		errorMsg    string
+		errorField  string
 	}{
 		{
 			name: "valid key with created action",
 			key: DataKey{
 				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - underscore in namespace",
+			key: DataKey{
+				Namespace:       "test_namespace",
 				Group:           "test-group",
 				Resource:        "test-resource",
 				Name:            "test-name",
@@ -124,18 +138,6 @@ func TestDataKey_Validate(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "valid key with dots and dashes",
-			key: DataKey{
-				Namespace:       "test.namespace-with-dashes",
-				Group:           "test.group-123",
-				Resource:        "test-resource.v1",
-				Name:            "test-name.with.dots",
-				ResourceVersion: rv,
-				Action:          DataActionCreated,
-			},
-			expectError: false,
-		},
-		{
 			name: "valid - name ends with dash",
 			key: DataKey{
 				Namespace:       "test-namespace",
@@ -148,11 +150,11 @@ func TestDataKey_Validate(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "valid key with single character names",
+			name: "valid key with minimum character lengths",
 			key: DataKey{
-				Namespace:       "a",
-				Group:           "b",
-				Resource:        "c",
+				Namespace:       "abc",
+				Group:           "bcd",
+				Resource:        "cde",
 				Name:            "d",
 				ResourceVersion: rv,
 				Action:          DataActionCreated,
@@ -183,6 +185,42 @@ func TestDataKey_Validate(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "valid - uppercase in namespace",
+			key: DataKey{
+				Namespace:       "Test-Namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - uppercase in group",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "Test-Group",
+				Resource:        "test-resource",
+				Name:            "test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - uppercase in resource",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "Test-Resource",
+				Name:            "test-name",
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+			},
+			expectError: false,
+		},
 		// Invalid cases - empty fields
 		{
 			name: "invalid - empty namespace",
@@ -195,7 +233,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "namespace is required",
+			errorMsg:    ErrNamespaceRequired,
 		},
 		{
 			name: "invalid - empty group",
@@ -208,7 +246,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "group is required",
+			errorField:  "group",
 		},
 		{
 			name: "invalid - empty resource",
@@ -221,7 +259,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "resource is required",
+			errorField:  "resource",
 		},
 		{
 			name: "invalid - empty name",
@@ -234,7 +272,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "name is required",
+			errorField:  "name",
 		},
 		{
 			name: "invalid - empty action",
@@ -247,7 +285,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          "",
 			},
 			expectError: true,
-			errorMsg:    "action is required",
+			errorMsg:    ErrActionRequired,
 		},
 		{
 			name: "invalid - all fields empty",
@@ -260,61 +298,21 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          "",
 			},
 			expectError: true,
-			errorMsg:    "group is required",
-		},
-		// Invalid cases - uppercase characters
-		{
-			name: "invalid - uppercase in namespace",
-			key: DataKey{
-				Namespace:       "Test-Namespace",
-				Group:           "test-group",
-				Resource:        "test-resource",
-				Name:            "test-name",
-				ResourceVersion: rv,
-				Action:          DataActionCreated,
-			},
-			expectError: true,
-			errorMsg:    "namespace 'Test-Namespace' is invalid",
-		},
-		{
-			name: "invalid - uppercase in group",
-			key: DataKey{
-				Namespace:       "test-namespace",
-				Group:           "Test-Group",
-				Resource:        "test-resource",
-				Name:            "test-name",
-				ResourceVersion: rv,
-				Action:          DataActionCreated,
-			},
-			expectError: true,
-			errorMsg:    "group 'Test-Group' is invalid",
-		},
-		{
-			name: "invalid - uppercase in resource",
-			key: DataKey{
-				Namespace:       "test-namespace",
-				Group:           "test-group",
-				Resource:        "Test-Resource",
-				Name:            "test-name",
-				ResourceVersion: rv,
-				Action:          DataActionCreated,
-			},
-			expectError: true,
-			errorMsg:    "resource 'Test-Resource' is invalid",
+			errorField:  "namespace",
 		},
 		// Invalid cases - invalid characters
 		{
-			name: "invalid - underscore in namespace",
+			name: "invalid - key with dots and dashes",
 			key: DataKey{
-				Namespace:       "test_namespace",
-				Group:           "test-group",
-				Resource:        "test-resource",
-				Name:            "test-name",
+				Namespace:       "test.namespace-with-dashes",
+				Group:           "test.group-123",
+				Resource:        "test-resource.v1",
+				Name:            "test-name.with.dots",
 				ResourceVersion: rv,
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "namespace 'test_namespace' is invalid",
+			errorField:  "namespace",
 		},
 		{
 			name: "invalid - space in group",
@@ -415,7 +413,6 @@ func TestDataKey_Validate(t *testing.T) {
 			},
 			expectError: false,
 		},
-		// Invalid name cases
 		{
 			name: "valid - name starts with dash (legacy format)",
 			key: DataKey{
@@ -441,7 +438,7 @@ func TestDataKey_Validate(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "invalid - name starts with dot",
+			name: "valid - name starts with dot",
 			key: DataKey{
 				Namespace:       "test-namespace",
 				Group:           "test-group",
@@ -450,11 +447,10 @@ func TestDataKey_Validate(t *testing.T) {
 				ResourceVersion: rv,
 				Action:          DataActionCreated,
 			},
-			expectError: true,
-			errorMsg:    "name '.test-name' is invalid, must match k8s qualified name format or Grafana shortid format",
+			expectError: false,
 		},
 		{
-			name: "invalid - name ends with dot",
+			name: "valid - name ends with dot",
 			key: DataKey{
 				Namespace:       "test-namespace",
 				Group:           "test-group",
@@ -463,8 +459,7 @@ func TestDataKey_Validate(t *testing.T) {
 				ResourceVersion: rv,
 				Action:          DataActionCreated,
 			},
-			expectError: true,
-			errorMsg:    "name 'test-name.' is invalid, must match k8s qualified name format or Grafana shortid format",
+			expectError: false,
 		},
 		{
 			name: "valid - name starts with underscore (legacy format)",
@@ -490,6 +485,7 @@ func TestDataKey_Validate(t *testing.T) {
 			},
 			expectError: false,
 		},
+		// Invalid name cases
 		{
 			name: "invalid - name with slash",
 			key: DataKey{
@@ -501,7 +497,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "name 'test/name' is invalid, must match k8s qualified name format or Grafana shortid format",
+			errorField:  "name",
 		},
 		{
 			name: "invalid - name with spaces",
@@ -514,7 +510,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "name 'test name' is invalid, must match k8s qualified name format or Grafana shortid format",
+			errorField:  "name",
 		},
 		{
 			name: "invalid - name with special characters",
@@ -527,7 +523,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "name 'test@name#with$special' is invalid, must match k8s qualified name format or Grafana shortid format",
+			errorField:  "name",
 		},
 		{
 			name: "invalid - empty name",
@@ -540,7 +536,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Action:          DataActionCreated,
 			},
 			expectError: true,
-			errorMsg:    "name cannot be empty",
+			errorField:  "name",
 		},
 		// Invalid cases - start/end with invalid characters
 		{
@@ -605,6 +601,10 @@ func TestDataKey_Validate(t *testing.T) {
 				require.Error(t, err)
 				if tt.errorMsg != "" {
 					require.Contains(t, err.Error(), tt.errorMsg)
+				}
+				var validationErr *ValidationError
+				if errors.Is(err, validationErr) && tt.errorField != "" {
+					require.Equal(t, tt.errorField, validationErr.Field)
 				}
 			} else {
 				require.NoError(t, err)
@@ -1159,7 +1159,7 @@ func TestDataStore_ValidationEnforced(t *testing.T) {
 
 	// Create an invalid key
 	invalidKey := DataKey{
-		Namespace:       "Invalid-Namespace", // uppercase is invalid
+		Namespace:       "Invalid-Namespace-$$$",
 		Group:           "test-group",
 		Resource:        "test-resource",
 		Name:            "test-name",
@@ -1173,21 +1173,27 @@ func TestDataStore_ValidationEnforced(t *testing.T) {
 		_, err := ds.Get(ctx, invalidKey)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid data key")
-		require.Contains(t, err.Error(), "namespace 'Invalid-Namespace' is invalid")
+		var validationErr ValidationError
+		require.True(t, errors.As(err, &validationErr))
+		require.Equal(t, "namespace", validationErr.Field)
 	})
 
 	t.Run("Save with invalid key returns validation error", func(t *testing.T) {
 		err := ds.Save(ctx, invalidKey, testValue)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid data key")
-		require.Contains(t, err.Error(), "namespace 'Invalid-Namespace' is invalid")
+		var validationErr ValidationError
+		require.True(t, errors.As(err, &validationErr))
+		require.Equal(t, "namespace", validationErr.Field)
 	})
 
 	t.Run("Delete with invalid key returns validation error", func(t *testing.T) {
 		err := ds.Delete(ctx, invalidKey)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid data key")
-		require.Contains(t, err.Error(), "namespace 'Invalid-Namespace' is invalid")
+		var validationErr ValidationError
+		require.True(t, errors.As(err, &validationErr))
+		require.Equal(t, "namespace", validationErr.Field)
 	})
 
 	// Test another type of invalid key
@@ -1228,11 +1234,51 @@ func TestListRequestKey_Validate(t *testing.T) {
 		key         ListRequestKey
 		expectError bool
 		errorMsg    string
+		errorField  string
 	}{
 		{
 			name: "valid - all fields provided",
 			key: ListRequestKey{
 				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "test-name",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - uppercase in namespace",
+			key: ListRequestKey{
+				Namespace: "Test-Namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "test-name",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - uppercase in group and resource",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "Test-Group",
+				Resource:  "test-resource",
+				Name:      "test-name",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - uppercase in resource",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "Test-Resource",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - underscore in namespace",
+			key: ListRequestKey{
+				Namespace: "test_namespace",
 				Group:     "test-group",
 				Resource:  "test-resource",
 				Name:      "test-name",
@@ -1260,7 +1306,7 @@ func TestListRequestKey_Validate(t *testing.T) {
 			name:        "invalid - all empty",
 			key:         ListRequestKey{},
 			expectError: true,
-			errorMsg:    "group is required",
+			errorField:  "namespace",
 		},
 		{
 			name: "valid - legacy grafana uid 1",
@@ -1309,7 +1355,7 @@ func TestListRequestKey_Validate(t *testing.T) {
 				Group: "test-group",
 			},
 			expectError: true,
-			errorMsg:    "resource is required",
+			errorField:  "resource",
 		},
 		{
 			name: "invalid - name without namespace",
@@ -1319,7 +1365,7 @@ func TestListRequestKey_Validate(t *testing.T) {
 				Group:    "test-group",
 			},
 			expectError: true,
-			errorMsg:    "name must be empty when namespace is empty",
+			errorMsg:    ErrNameMustBeEmptyWhenNamespaceEmpty,
 		},
 		{
 			name: "invalid - name without group and resource",
@@ -1328,52 +1374,9 @@ func TestListRequestKey_Validate(t *testing.T) {
 				Name:      "test-name",
 			},
 			expectError: true,
-			errorMsg:    "group is required",
+			errorField:  "group",
 		},
 		// Invalid naming cases
-		{
-			name: "invalid - uppercase in namespace",
-			key: ListRequestKey{
-				Namespace: "Test-Namespace",
-				Group:     "test-group",
-				Resource:  "test-resource",
-				Name:      "test-name",
-			},
-			expectError: true,
-			errorMsg:    "namespace 'Test-Namespace' is invalid",
-		},
-		{
-			name: "invalid - uppercase in group and resource",
-			key: ListRequestKey{
-				Namespace: "test-namespace",
-				Group:     "Test-Group",
-				Resource:  "test-resource",
-				Name:      "test-name",
-			},
-			expectError: true,
-			errorMsg:    "group 'Test-Group' is invalid",
-		},
-		{
-			name: "invalid - uppercase in resource",
-			key: ListRequestKey{
-				Namespace: "test-namespace",
-				Group:     "test-group",
-				Resource:  "Test-Resource",
-			},
-			expectError: true,
-			errorMsg:    "resource 'Test-Resource' is invalid",
-		},
-		{
-			name: "invalid - underscore in namespace",
-			key: ListRequestKey{
-				Namespace: "test_namespace",
-				Group:     "test-group",
-				Resource:  "test-resource",
-				Name:      "test-name",
-			},
-			expectError: true,
-			errorMsg:    "namespace 'test_namespace' is invalid",
-		},
 		{
 			name: "invalid - starts with dash",
 			key: ListRequestKey{
@@ -2512,10 +2515,11 @@ func TestDataKey_SameResource(t *testing.T) {
 
 func TestGetRequestKey_Validate(t *testing.T) {
 	tests := []struct {
-		name      string
-		key       GetRequestKey
-		expectErr bool
-		wantError string
+		name       string
+		key        GetRequestKey
+		expectErr  bool
+		wantError  string
+		errorField string
 	}{
 		{
 			name: "valid key",
@@ -2538,14 +2542,24 @@ func TestGetRequestKey_Validate(t *testing.T) {
 			expectErr: false,
 		},
 		{
+			name: "valid grafana name - ends with dot",
+			key: GetRequestKey{
+				Group:     "apps",
+				Resource:  "resources",
+				Namespace: "default",
+				Name:      ".123_hello",
+			},
+			expectErr: false,
+		},
+		{
 			name: "missing group",
 			key: GetRequestKey{
 				Resource:  "resources",
 				Namespace: "default",
 				Name:      "test-resource",
 			},
-			expectErr: true,
-			wantError: "group is required",
+			expectErr:  true,
+			errorField: "group",
 		},
 		{
 			name: "missing resource",
@@ -2554,8 +2568,8 @@ func TestGetRequestKey_Validate(t *testing.T) {
 				Namespace: "default",
 				Name:      "test-resource",
 			},
-			expectErr: true,
-			wantError: "resource is required",
+			expectErr:  true,
+			errorField: "resource",
 		},
 		{
 			name: "missing namespace",
@@ -2564,8 +2578,8 @@ func TestGetRequestKey_Validate(t *testing.T) {
 				Resource: "resources",
 				Name:     "test-resource",
 			},
-			expectErr: true,
-			wantError: "namespace is required",
+			expectErr:  true,
+			errorField: "namespace",
 		},
 		{
 			name: "missing name",
@@ -2574,30 +2588,19 @@ func TestGetRequestKey_Validate(t *testing.T) {
 				Resource:  "resources",
 				Namespace: "default",
 			},
-			expectErr: true,
-			wantError: "name is required",
+			expectErr:  true,
+			errorField: "name",
 		},
 		{
-			name: "invalid namespace - uppercase",
+			name: "invalid group - underscore at start",
 			key: GetRequestKey{
-				Group:     "apps",
-				Resource:  "resources",
-				Namespace: "Default",
-				Name:      "test-resource",
-			},
-			expectErr: true,
-			wantError: "namespace 'Default' is invalid",
-		},
-		{
-			name: "invalid group - underscore",
-			key: GetRequestKey{
-				Group:     "apps_v1",
+				Group:     "_apps_v1",
 				Resource:  "resources",
 				Namespace: "default",
 				Name:      "test-resource",
 			},
-			expectErr: true,
-			wantError: "group 'apps_v1' is invalid",
+			expectErr:  true,
+			errorField: "group",
 		},
 		{
 			name: "invalid resource - starts with dash",
@@ -2607,19 +2610,8 @@ func TestGetRequestKey_Validate(t *testing.T) {
 				Namespace: "default",
 				Name:      "test-resource",
 			},
-			expectErr: true,
-			wantError: "resource '-resources' is invalid",
-		},
-		{
-			name: "invalid name - ends with dot",
-			key: GetRequestKey{
-				Group:     "apps",
-				Resource:  "resources",
-				Namespace: "default",
-				Name:      "test-resource.",
-			},
-			expectErr: true,
-			wantError: "name 'test-resource.' is invalid",
+			expectErr:  true,
+			errorField: "resource",
 		},
 	}
 
@@ -2630,6 +2622,10 @@ func TestGetRequestKey_Validate(t *testing.T) {
 				require.Error(t, err)
 				if tt.wantError != "" {
 					require.Contains(t, err.Error(), tt.wantError)
+				}
+				var validationErr *ValidationError
+				if errors.Is(err, validationErr) && tt.errorField != "" {
+					require.Equal(t, tt.errorField, validationErr.Field)
 				}
 			} else {
 				require.NoError(t, err)
