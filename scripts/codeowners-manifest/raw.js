@@ -30,6 +30,11 @@ async function generateCodeownersRawAudit(codeownersPath, outputPath) {
       stderrData += data.toString();
     });
 
+    outputStream.on('error', (error) => {
+      child.kill();
+      reject(new Error(`Failed to write to output file: ${error.message}`));
+    });
+
     child.stdout.pipe(outputStream);
 
     child.on('close', (code) => {
