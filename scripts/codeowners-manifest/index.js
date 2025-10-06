@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('node:fs');
+const { writeFile } = require('node:fs/promises');
 
 const {
   CODEOWNERS_FILE_PATH,
@@ -65,7 +66,7 @@ async function generateCodeownersManifestComplete(
       codeownersByFilenamePath,
       filenamesByCodeownerPath
     );
-    fs.writeFileSync(metadataPath, JSON.stringify(newMetadata, null, 2), 'utf8');
+    await writeFile(metadataPath, JSON.stringify(newMetadata, null, 2), 'utf8');
     return true;
   }
 

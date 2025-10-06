@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('node:fs');
-const { stat } = require('node:fs/promises');
+const { stat, writeFile } = require('node:fs/promises');
 const readline = require('node:readline');
 
 const {
@@ -33,10 +33,6 @@ async function generateCodeownersManifest(
 
   const auditFileInput = fs.createReadStream(rawAuditPath);
 
-  const codeownersOutput = fs.createWriteStream(codeownersJsonPath);
-  const codeownersByFilenameOutput = fs.createWriteStream(codeownersByFilenamePath);
-  const filenamesByCodeownerOutput = fs.createWriteStream(filenamesByCodeownerPath);
-
   const lineReader = readline.createInterface({
     input: auditFileInput,
     crlfDelay: Infinity,
@@ -63,9 +59,11 @@ async function generateCodeownersManifest(
 
   await new Promise((resolve) => lineReader.once('close', resolve));
 
-  codeownersOutput.write(JSON.stringify(Array.from(codeowners).sort(), null, 2));
-  codeownersByFilenameOutput.write(JSON.stringify(codeownersByFilename, null, 2));
-  filenamesByCodeownerOutput.write(JSON.stringify(filenamesByCodeowner, null, 2));
+  await Promise.all([
+    writeFile(codeownersJsonPath, JSON.stringify(Array.from(codeowners).sort(), null, 2)),
+    writeFile(codeownersByFilenamePath, JSON.stringify(codeownersByFilename, null, 2)),
+    writeFile(filenamesByCodeownerPath, JSON.stringify(filenamesByCodeowner, null, 2)),
+  ]);
 }
 
 if (require.main === module) {
