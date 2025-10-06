@@ -9,7 +9,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.34.1
 	k8s.io/apiserver v0.34.1
-	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b
+	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 )
 
@@ -17,7 +17,7 @@ require github.com/go-jose/go-jose/v4 v4.1.2
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
+	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect

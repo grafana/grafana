@@ -223,7 +223,7 @@ require (
 	k8s.io/component-base v0.34.1 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.130.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-aggregator v0.34.1 // @grafana/grafana-app-platform-squad
-	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // @grafana/grafana-app-platform-squad
+	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // @grafana/partner-datasources
 	modernc.org/sqlite v1.38.2 // @grafana/grafana-backend-group
 	pgregory.net/rapid v1.2.0 // @grafana/grafana-operator-experience-squad

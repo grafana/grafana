@@ -3,11 +3,11 @@ module github.com/grafana/grafana/apps/alerting/notifications
 go 1.24.6
 
 require (
-	github.com/grafana/grafana-app-sdk v0.45.0
+	github.com/grafana/grafana-app-sdk v0.46.0
 	github.com/grafana/grafana-app-sdk/logging v0.45.0
 	k8s.io/apimachinery v0.34.1
 	k8s.io/apiserver v0.34.1
-	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b
+	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912
 )
 
 require (
@@ -19,7 +19,7 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
+	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect

@@ -23,7 +23,7 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 require (
 	github.com/grafana/authlib v0.0.0-20250924100039-ea07223cdb6c
 	github.com/grafana/grafana v6.1.6+incompatible
-	github.com/grafana/grafana-app-sdk v0.45.0
+	github.com/grafana/grafana-app-sdk v0.46.0
 	github.com/grafana/grafana-app-sdk/logging v0.45.0
 	github.com/grafana/grafana-app-sdk/plugin v0.45.0
 	github.com/grafana/grafana/apps/folder v0.0.0
@@ -33,7 +33,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.38.0
 	k8s.io/apimachinery v0.34.1
 	k8s.io/client-go v0.34.1
-	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b
+	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912
 )
 
 require (
@@ -148,7 +148,7 @@ require (
 	github.com/dolthub/vitess v0.0.0-20250410090211-143e6b272ad4 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/elazarl/goproxy v1.7.2 // indirect
-	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
+	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
