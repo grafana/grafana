@@ -233,17 +233,6 @@ export class DashboardMigrator {
       if (old.nav && old.nav.length) {
         this.dashboard.timepicker = old.nav[0];
       }
-
-      // ensure query refIds
-      panelUpgrades.push((panel: any) => {
-        each(panel.targets, (target) => {
-          if (!target.refId) {
-            target.refId = panel.getNextQueryLetter && panel.getNextQueryLetter();
-          }
-        });
-
-        return panel;
-      });
     }
 
     if (oldVersion < 8 && finalTargetVersion >= 8) {
