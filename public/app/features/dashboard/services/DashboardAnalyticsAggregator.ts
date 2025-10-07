@@ -6,9 +6,15 @@ import {
   type DashboardInteractionCompleteData,
   type PanelPerformanceData,
   type QueryPerformanceData,
-  getScenePerformanceTracker,
-  writePerformanceLog,
 } from '@grafana/scenes';
+
+import {
+  registerPerformanceObserver,
+  getPerformanceMemory,
+  writePerformanceGroupStart,
+  writePerformanceGroupLog,
+  writePerformanceGroupEnd,
+} from './performanceUtils';
 
 /**
  * Panel metrics structure for analytics
@@ -49,23 +55,11 @@ interface PanelAnalyticsMetrics {
 
 /**
  * Aggregates Scene performance events into analytics-ready panel metrics
- * Replaces the complex PanelPerformanceCollector with a clean observer-based approach
  */
 export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   private panelMetrics = new Map<string, PanelAnalyticsMetrics>();
   private dashboardUID = '';
   private dashboardTitle = '';
-
-  constructor() {
-    // Bind all observer methods to preserve 'this' context when called by ScenePerformanceTracker
-    this.onDashboardInteractionStart = this.onDashboardInteractionStart.bind(this);
-    this.onDashboardInteractionMilestone = this.onDashboardInteractionMilestone.bind(this);
-    this.onDashboardInteractionComplete = this.onDashboardInteractionComplete.bind(this);
-    this.onPanelOperationStart = this.onPanelOperationStart.bind(this);
-    this.onPanelOperationComplete = this.onPanelOperationComplete.bind(this);
-    this.onQueryStart = this.onQueryStart.bind(this);
-    this.onQueryComplete = this.onQueryComplete.bind(this);
-  }
 
   public initialize(uid: string, title: string) {
     // Clear previous dashboard data and set new context
@@ -96,27 +90,27 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   }
 
   // Dashboard-level events (we don't need to track these for panel analytics)
-  onDashboardInteractionStart(data: DashboardInteractionStartData): void {
+  onDashboardInteractionStart = (data: DashboardInteractionStartData): void => {
     // Clear metrics when new dashboard interaction starts
     this.clearMetrics();
-  }
+  };
 
-  onDashboardInteractionMilestone(data: DashboardInteractionMilestoneData): void {
+  onDashboardInteractionMilestone = (_data: DashboardInteractionMilestoneData): void => {
     // No action needed for milestones in analytics
-  }
+  };
 
-  onDashboardInteractionComplete(data: DashboardInteractionCompleteData): void {
+  onDashboardInteractionComplete = (data: DashboardInteractionCompleteData): void => {
     // Send analytics report for dashboard interaction completion
     this.sendAnalyticsReport(data);
-  }
+  };
 
   // Panel-level events
-  onPanelOperationStart(data: PanelPerformanceData): void {
+  onPanelOperationStart = (data: PanelPerformanceData): void => {
     // Start events don't need aggregation, just ensure panel exists
     this.ensurePanelExists(data.panelKey, data.panelId, data.pluginId, data.pluginVersion);
-  }
+  };
 
-  onPanelOperationComplete(data: PanelPerformanceData): void {
+  onPanelOperationComplete = (data: PanelPerformanceData): void => {
     // Aggregate panel metrics without verbose logging (handled by ScenePerformanceLogger)
     const panel = this.panelMetrics.get(data.panelKey);
     if (!panel) {
@@ -166,21 +160,20 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
         panel.pluginLoadTime += duration;
         break;
     }
-  }
+  };
 
   // Query-level events
-  onQueryStart(data: QueryPerformanceData): void {
-    // Non-panel queries (annotations, variables, plugins, datasources) don't need aggregation
+  onQueryStart = (_data: QueryPerformanceData): void => {
+    // Non-panel queries (annotations, variables, datasources) don't need aggregation
     // These are infrastructure queries that don't belong to specific panels
     // Logging handled by ScenePerformanceLogger to avoid duplication
-  }
+  };
 
-  onQueryComplete(data: QueryPerformanceData): void {
-    // Non-panel queries (annotations, variables, plugins, datasources) don't need panel aggregation
+  onQueryComplete = (_data: QueryPerformanceData): void => {
+    // Non-panel queries (annotations, variables, datasources) don't need panel aggregation
     // These are infrastructure queries that don't belong to specific panels
     // Logging handled by ScenePerformanceLogger to avoid duplication
-    // Could track infrastructure query metrics separately in the future if needed
-  }
+  };
 
   /**
    * Ensure a panel exists in our tracking map
@@ -219,25 +212,19 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   private sendAnalyticsReport(data: DashboardInteractionCompleteData): void {
     const payload = {
       duration: data.duration || 0,
-      networkDuration: data.networkDuration || 0, // TODO: Calculate network duration from data
+      networkDuration: data.networkDuration || 0,
       startTs: data.timestamp,
       endTs: data.timestamp + (data.duration || 0),
-      totalJSHeapSize: performance.memory?.totalJSHeapSize || 0,
-      usedJSHeapSize: performance.memory?.usedJSHeapSize || 0,
-      jsHeapSizeLimit: performance.memory?.jsHeapSizeLimit || 0,
       timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
       longFramesCount: data.longFramesCount,
       longFramesTotalTime: data.longFramesTotalTime,
+      ...getPerformanceMemory(),
     };
 
     const panelMetrics = this.getPanelMetrics();
 
-    // S4.0/S5.0: Log complete analytics event including panel metrics
     this.logDashboardAnalyticsEvent(data, payload, panelMetrics);
 
-    // Analytics payload logged separately if needed for debugging
-
-    // Send the same analytics as before
     reportInteraction('dashboard_render', {
       interactionType: data.interactionType,
       uid: this.dashboardUID,
@@ -270,21 +257,21 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
           100
       ).length || 0;
 
-    // eslint-disable-next-line no-console
-    console.groupCollapsed(
-      `DAA: [ANALYTICS] ${data.interactionType} | ${panelSummary}${slowPanelCount > 0 ? ` | ${slowPanelCount} slow panels ⚠️` : ''}`
+    writePerformanceGroupStart(
+      'DAA',
+      `[ANALYTICS] ${data.interactionType} | ${panelSummary}${slowPanelCount > 0 ? ` | ${slowPanelCount} slow panels ⚠️` : ''}`
     );
 
     // Dashboard overview
-    console.log('📊 Dashboard:', {
-      duration: `${(data.duration || 0).toFixed(1)}ms`,
-      network: `${(data.networkDuration || 0).toFixed(1)}ms`,
+    writePerformanceGroupLog('DAA', '📊 Dashboard (ms):', {
+      duration: Math.round((data.duration || 0) * 10) / 10,
+      network: Math.round((data.networkDuration || 0) * 10) / 10,
       interactionType: data.interactionType,
       slowPanels: slowPanelCount,
     });
 
     // Analytics payload
-    console.log('📈 Analytics payload:', payload);
+    writePerformanceGroupLog('DAA', '📈 Analytics payload:', payload);
 
     // Individual collapsible panel logs with detailed breakdown
     if (panelMetrics && panelMetrics.length > 0) {
@@ -299,36 +286,36 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
         const isSlowPanel = totalPanelTime > 100;
         const slowWarning = isSlowPanel ? ' ⚠️ SLOW' : '';
 
-        // eslint-disable-next-line no-console
-        console.groupCollapsed(
+        writePerformanceGroupStart(
+          'DAA',
           `🎨 Panel ${panel.pluginId}-${panel.panelId}: ${totalPanelTime.toFixed(1)}ms total${slowWarning}`
         );
 
-        console.log('🔧 Plugin:', {
+        writePerformanceGroupLog('DAA', '🔧 Plugin:', {
           id: panel.pluginId,
           version: panel.pluginVersion || 'unknown',
           panelId: panel.panelId,
           panelKey: panel.panelKey,
         });
 
-        console.log('⚡ Performance:', {
-          totalTime: `${totalPanelTime.toFixed(1)}ms`,
+        writePerformanceGroupLog('DAA', '⚡ Performance (ms):', {
+          totalTime: Math.round(totalPanelTime * 10) / 10, // Round to 1 decimal
           isSlowPanel: isSlowPanel,
           breakdown: {
-            query: `${panel.totalQueryTime.toFixed(1)}ms`,
-            transform: `${panel.totalTransformationTime.toFixed(1)}ms`,
-            render: `${panel.totalRenderTime.toFixed(1)}ms`,
-            fieldConfig: `${panel.totalFieldConfigTime.toFixed(1)}ms`,
-            pluginLoad: `${panel.pluginLoadTime.toFixed(1)}ms`,
+            query: Math.round(panel.totalQueryTime * 10) / 10,
+            transform: Math.round(panel.totalTransformationTime * 10) / 10,
+            render: Math.round(panel.totalRenderTime * 10) / 10,
+            fieldConfig: Math.round(panel.totalFieldConfigTime * 10) / 10,
+            pluginLoad: Math.round(panel.pluginLoadTime * 10) / 10,
           },
         });
 
         if (panel.queryOperations.length > 0) {
-          console.log('📊 Queries:', {
+          writePerformanceGroupLog('DAA', '📊 Queries:', {
             count: panel.queryOperations.length,
             details: panel.queryOperations.map((op, index) => ({
               operation: index + 1,
-              duration: `${op.duration.toFixed(1)}ms`,
+              duration: Math.round(op.duration * 10) / 10,
               timestamp: op.timestamp,
               queryType: op.queryType || 'unknown',
             })),
@@ -336,11 +323,11 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
         }
 
         if (panel.transformationOperations.length > 0) {
-          console.log('🔄 Transformations:', {
+          writePerformanceGroupLog('DAA', '🔄 Transformations:', {
             count: panel.transformationOperations.length,
             details: panel.transformationOperations.map((op, index) => ({
               operation: index + 1,
-              duration: `${op.duration.toFixed(1)}ms`,
+              duration: Math.round(op.duration * 10) / 10,
               timestamp: op.timestamp,
               transformationId: op.transformationId || 'unknown',
               success: op.success !== false,
@@ -349,53 +336,48 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
         }
 
         if (panel.renderOperations.length > 0) {
-          console.log('🎨 Renders:', {
+          writePerformanceGroupLog('DAA', '🎨 Renders:', {
             count: panel.renderOperations.length,
             details: panel.renderOperations.map((op, index) => ({
               operation: index + 1,
-              duration: `${op.duration.toFixed(1)}ms`,
+              duration: Math.round(op.duration * 10) / 10,
               timestamp: op.timestamp,
             })),
           });
         }
 
         if (panel.fieldConfigOperations.length > 0) {
-          console.log('⚙️ FieldConfigs:', {
+          writePerformanceGroupLog('DAA', '⚙️ FieldConfigs:', {
             count: panel.fieldConfigOperations.length,
             details: panel.fieldConfigOperations.map((op, index) => ({
               operation: index + 1,
-              duration: `${op.duration.toFixed(1)}ms`,
+              duration: Math.round(op.duration * 10) / 10,
               timestamp: op.timestamp,
             })),
           });
         }
 
-        // eslint-disable-next-line no-console
-        console.groupEnd();
+        writePerformanceGroupEnd();
       });
     }
 
-    // eslint-disable-next-line no-console
-    console.groupEnd();
+    writePerformanceGroupEnd();
   }
 }
 
 // Global singleton instance with lazy initialization
 let dashboardAnalyticsAggregator: DashboardAnalyticsAggregator | null = null;
 
-export function initialiseDashboardAnalyticsAggregator(): DashboardAnalyticsAggregator {
+export function initializeDashboardAnalyticsAggregator(): DashboardAnalyticsAggregator {
   if (!dashboardAnalyticsAggregator) {
     dashboardAnalyticsAggregator = new DashboardAnalyticsAggregator();
 
-    // Register as global performance observer on first access
-    const tracker = getScenePerformanceTracker();
-    tracker.addObserver(dashboardAnalyticsAggregator);
-
-    writePerformanceLog('DAA', 'Initialized globally and registered as performance observer');
+    // Register as global performance observer
+    registerPerformanceObserver(dashboardAnalyticsAggregator, 'DAA');
   }
   return dashboardAnalyticsAggregator;
 }
 
 export function getDashboardAnalyticsAggregator(): DashboardAnalyticsAggregator {
-  return initialiseDashboardAnalyticsAggregator();
+  return initializeDashboardAnalyticsAggregator();
 }

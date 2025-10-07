@@ -299,12 +299,15 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         }
       : undefined;
 
+  // Create profiler once and reuse to avoid duplicate metadata setting
+  const dashboardProfiler = getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title);
+
   const queryController = new behaviors.SceneQueryController(
     {
       enableProfiling:
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
     },
-    getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title)
+    dashboardProfiler
   );
 
   const interactionTracker = new behaviors.SceneInteractionTracker(
@@ -313,7 +316,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
       onInteractionComplete: getDashboardComponentInteractionCallback(oldModel.uid, oldModel.title),
     },
-    getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title)
+    dashboardProfiler
   );
 
   const behaviorList: SceneObjectState['$behaviors'] = [

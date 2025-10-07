@@ -165,12 +165,15 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   //createLayoutManager(dashboard);
 
+  // Create profiler once and reuse to avoid duplicate metadata setting
+  const dashboardProfiler = getDashboardSceneProfilerWithMetadata(metadata.name, dashboard.title);
+
   const queryController = new behaviors.SceneQueryController(
     {
       enableProfiling:
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
     },
-    getDashboardSceneProfilerWithMetadata(metadata.name, dashboard.title)
+    dashboardProfiler
   );
 
   const interactionTracker = new behaviors.SceneInteractionTracker(
@@ -179,7 +182,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
       onInteractionComplete: getDashboardComponentInteractionCallback(metadata.name, dashboard.title),
     },
-    getDashboardSceneProfilerWithMetadata(metadata.name, dashboard.title)
+    dashboardProfiler
   );
 
   const dashboardScene = new DashboardScene(

@@ -7,11 +7,6 @@ interface SceneInteractionProfileEvent {
   networkDuration: number;
   startTs: number;
   endTs: number;
-  totalJSHeapSize?: number;
-  usedJSHeapSize?: number;
-  jsHeapSizeLimit?: number;
-  longFramesCount?: number;
-  longFramesTotalTime?: number;
 }
 
 let dashboardSceneProfiler: SceneRenderProfiler | undefined;
