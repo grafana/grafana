@@ -760,12 +760,10 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	cacheHit := false
 	if t.HasFolderSupport() {
 		var err error
-		ok = false
 		if !req.Options.SkipCache {
-			tree, ok = s.getCachedFolderTree(ctx, req.Namespace)
-			cacheHit = ok
+			tree, cacheHit = s.getCachedFolderTree(ctx, req.Namespace)
 		}
-		if !ok {
+		if !cacheHit {
 			tree, err = s.buildFolderTree(ctx, req.Namespace)
 			if err != nil {
 				ctxLogger.Error("could not build folder and dashboard tree", "error", err)
