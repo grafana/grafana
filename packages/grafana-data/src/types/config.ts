@@ -1,3 +1,5 @@
+import type { InternalLoggerLevel } from '@grafana/faro-core';
+
 import { SystemDateFormatSettings } from '../datetime/formats';
 import { MapLayerOptions } from '../geo/layer';
 
@@ -93,11 +95,14 @@ export interface LicenseInfo {
 export interface GrafanaJavascriptAgentConfig {
   enabled: boolean;
   customEndpoint: string;
-  errorInstrumentalizationEnabled: boolean;
-  consoleInstrumentalizationEnabled: boolean;
-  webVitalsInstrumentalizationEnabled: boolean;
-  tracingInstrumentalizationEnabled: boolean;
   apiKey: string;
+  internalLoggerLevel: InternalLoggerLevel;
+
+  consoleInstrumentalizationEnabled: boolean;
+  performanceInstrumentalizationEnabled: boolean;
+  cspInstrumentalizationEnabled: boolean;
+  tracingInstrumentalizationEnabled: boolean;
+  webVitalsAttribution: boolean;
 }
 
 export interface UnifiedAlertingStateHistoryConfig {
