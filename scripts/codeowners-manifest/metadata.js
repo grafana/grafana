@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 
 const { execSync } = require('node:child_process');
-const fs = require('node:fs');
-const { writeFile } = require('node:fs/promises');
+const { writeFile, mkdir, access } = require('node:fs/promises');
 
 const { CODEOWNERS_FILE_PATH, CODEOWNERS_MANIFEST_DIR, METADATA_JSON_PATH } = require('./constants.js');
 
@@ -37,8 +36,10 @@ if (require.main === module) {
     try {
       console.log('⚙️ Generating codeowners-manifest metadata ...');
 
-      if (!fs.existsSync(CODEOWNERS_MANIFEST_DIR)) {
-        fs.mkdirSync(CODEOWNERS_MANIFEST_DIR, { recursive: true });
+      try {
+        await access(CODEOWNERS_MANIFEST_DIR);
+      } catch (error) {
+        await mkdir(CODEOWNERS_MANIFEST_DIR, { recursive: true });
       }
 
       const metadata = generateCodeownersMetadata(CODEOWNERS_FILE_PATH, CODEOWNERS_MANIFEST_DIR, METADATA_JSON_PATH);
