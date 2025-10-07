@@ -174,13 +174,23 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
         const consumerBoxHeight = 50; // Height of consumer box
         const consumerSpacing = 60; // Space between consumer boxes
 
-        // Find the index of this consumer within the specific provider's section
-        const providerConsumers = exposedComponent.consumers;
-        const consumerIndex = providerConsumers.indexOf(consumerId);
-
         // Use the same positioning logic as ExtensionRenderer - position within the provider's section
         // We need to get the provider's group position, not the individual component position
         const providerId = exposedComponent.providingPlugin;
+
+        // Find the index of this consumer within the specific provider's section
+        // We need to get all consumers for this provider, not just for this specific component
+        const providerConsumers = new Set<string>();
+        data.exposedComponents?.forEach((comp) => {
+          if (comp.providingPlugin === providerId) {
+            comp.consumers.forEach((consumerId) => {
+              providerConsumers.add(consumerId);
+            });
+          }
+        });
+        const providerConsumersArray = Array.from(providerConsumers);
+        const consumerIndex = providerConsumersArray.indexOf(consumerId);
+
         const firstExposedComponent = data.exposedComponents?.find((comp) => comp.providingPlugin === providerId);
         if (!firstExposedComponent) {
           return; // Skip this consumer if we can't find the provider

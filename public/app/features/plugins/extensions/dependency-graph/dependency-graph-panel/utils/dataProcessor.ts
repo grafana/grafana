@@ -1,7 +1,4 @@
 import { AppPluginConfig, PanelData } from '@grafana/data';
-import { t } from '@grafana/i18n';
-
-import pluginDataFallback from '../data.json';
 import {
   ExposedComponent,
   Extension,
@@ -11,6 +8,9 @@ import {
   PluginDependency,
   PluginNode,
 } from '../types';
+
+import pluginDataFallback from '../data.json';
+import { t } from '@grafana/i18n';
 
 // Cache for expensive calculations
 const cache = new Map<string, GraphData>();
@@ -579,7 +579,7 @@ const processPluginDataToAddedLinksGraph = (
   });
 
   // Filter extension points to only include those that are targeted by link extensions
-  const filteredExtensionPoints = Array.from(extensionPoints.values()).filter((ep) => {
+  let filteredExtensionPoints = Array.from(extensionPoints.values()).filter((ep) => {
     // Check if this extension point is targeted by any link extensions
     return pluginEntries.some(([pluginId, pluginInfo]) => {
       const extensions = pluginInfo.extensions;
@@ -590,7 +590,45 @@ const processPluginDataToAddedLinksGraph = (
     });
   });
 
-  // Filter nodes to only include those that are relevant to link extensions
+  // Apply filtering based on selectedContentProviders
+  let filteredDependencies = dependencies;
+  if (options.selectedContentProviders && options.selectedContentProviders.length > 0) {
+    // Filter dependencies to only include selected content providers
+    filteredDependencies = dependencies.filter((dep) => options.selectedContentProviders.includes(dep.source));
+
+    // Update extension points to only include those that still have providers after filtering
+    filteredExtensionPoints = filteredExtensionPoints
+      .map((ep) => ({
+        ...ep,
+        providers: ep.providers.filter((provider) => options.selectedContentProviders.includes(provider)),
+      }))
+      .filter((ep) => ep.providers.length > 0);
+  }
+
+  // Apply filtering based on selectedContentConsumers
+  let consumersToShow: Set<string>;
+  if (!options.selectedContentConsumers || options.selectedContentConsumers.length === 0) {
+    // Default: show only consumers that have providers extending to them
+    const activeConsumers = new Set<string>();
+    filteredDependencies.forEach((dep) => {
+      const extensionPoint = filteredExtensionPoints.find((ep) => ep.id === dep.target);
+      if (extensionPoint) {
+        activeConsumers.add(extensionPoint.definingPlugin);
+      }
+    });
+    consumersToShow = activeConsumers;
+  } else {
+    consumersToShow = new Set(options.selectedContentConsumers);
+  }
+
+  // Filter extension points to only include those defined by selected consumers
+  filteredExtensionPoints = filteredExtensionPoints.filter((ep) => consumersToShow.has(ep.definingPlugin));
+
+  // Filter dependencies to only include those targeting remaining extension points
+  const remainingExtensionPointIds = new Set(filteredExtensionPoints.map((ep) => ep.id));
+  filteredDependencies = filteredDependencies.filter((dep) => remainingExtensionPointIds.has(dep.target));
+
+  // Filter nodes to only include those that are relevant to link extensions and filtering
   const filteredNodes = Array.from(nodes.values()).filter((node) => {
     // Include if it's a provider of link extensions or a consumer with link-targeted extension points
     const pluginInfo = pluginData[node.id];
@@ -600,25 +638,29 @@ const processPluginDataToAddedLinksGraph = (
 
     const extensions = pluginInfo.extensions;
 
-    // Include if it provides link extensions
+    // Include if it provides link extensions (and is selected if filtering is applied)
     if (extensions.addedLinks && extensions.addedLinks.length > 0) {
+      if (options.selectedContentProviders && options.selectedContentProviders.length > 0) {
+        return options.selectedContentProviders.includes(node.id);
+      }
       return true;
     }
 
-    // Include if it defines extension points that are targeted by link extensions
+    // Include if it defines extension points that are targeted by link extensions (and is selected if filtering is applied)
     if (extensions.extensionPoints && extensions.extensionPoints.length > 0) {
-      return extensions.extensionPoints.some((ep) => {
+      const hasRelevantExtensionPoints = extensions.extensionPoints.some((ep) => {
         return filteredExtensionPoints.some((filteredEp) => filteredEp.id === ep.id);
       });
+
+      if (hasRelevantExtensionPoints) {
+        if (options.selectedContentConsumers && options.selectedContentConsumers.length > 0) {
+          return options.selectedContentConsumers.includes(node.id);
+        }
+        return true;
+      }
     }
 
     return false;
-  });
-
-  // Filter dependencies to only include those related to link extensions
-  const filteredDependencies = dependencies.filter((dep) => {
-    // Include if the target is in our filtered extension points
-    return filteredExtensionPoints.some((ep) => ep.id === dep.target);
   });
 
   const result: GraphData = {
@@ -718,14 +760,19 @@ export const processPluginDataToExposeGraph = (
             }
 
             // Create dependency - this represents the flow from provider through component to consumer
-            dependencies.push({
+            const dependency = {
               source: exposedComponent.providingPlugin, // Provider is the source
               target: pluginId, // Consumer is the target
               type: 'depends',
               description: `${getDisplayName(pluginId)} consumes ${exposedComponent.title} from ${getDisplayName(
                 exposedComponent.providingPlugin
               )}`,
-            });
+            };
+            dependencies.push(dependency);
+
+            if (ENABLE_DEBUG_LOGS) {
+              console.log('Created dependency:', dependency);
+            }
 
             // Add the consuming plugin as a node
             if (!nodes.has(pluginId)) {
@@ -760,13 +807,13 @@ export const processPluginDataToExposeGraph = (
 
     // Filter dependencies to only include those where the provider is in selected providers
     filteredDependencies = filteredDependencies.filter((dep) => {
-      return options.selectedContentProviders.includes(dep.target);
+      return options.selectedContentProviders.includes(dep.source);
     });
   }
 
   // Filter by selected content consumers (plugins that consume exposed components)
   if (options.selectedContentConsumers && options.selectedContentConsumers.length > 0) {
-    filteredDependencies = filteredDependencies.filter((dep) => options.selectedContentConsumers.includes(dep.source));
+    filteredDependencies = filteredDependencies.filter((dep) => options.selectedContentConsumers.includes(dep.target));
     // Also filter exposed components to only show those consumed by selected consumers
     filteredExposedComponents = filteredExposedComponents.filter((comp) =>
       comp.consumers.some((consumer) => options.selectedContentConsumers.includes(consumer))
@@ -775,7 +822,7 @@ export const processPluginDataToExposeGraph = (
 
   // Get the set of active plugins based on filtered data
   const activeProviders = new Set(filteredExposedComponents.map((comp) => comp.providingPlugin));
-  const activeConsumers = new Set(filteredDependencies.map((dep) => dep.source));
+  const activeConsumers = new Set(filteredDependencies.map((dep) => dep.target));
 
   if (ENABLE_DEBUG_LOGS) {
     console.log('[Expose Mode Debug]');
@@ -831,6 +878,9 @@ export const processPluginDataToExposeGraph = (
 
   if (ENABLE_DEBUG_LOGS) {
     console.log('processPluginDataToExposeGraph - final result:', result);
+    console.log('processPluginDataToExposeGraph - dependencies:', result.dependencies);
+    console.log('processPluginDataToExposeGraph - exposedComponents:', result.exposedComponents);
+    console.log('processPluginDataToExposeGraph - nodes:', result.nodes);
   }
 
   return result;

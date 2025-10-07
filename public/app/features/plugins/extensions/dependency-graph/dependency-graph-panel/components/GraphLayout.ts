@@ -163,7 +163,7 @@ const calculateExposeLayout = (
   }
 
   data.dependencies.forEach((dep) => {
-    contentConsumers.add(dep.source); // Source is the consumer in expose mode
+    contentConsumers.add(dep.target); // Target is the consumer in expose mode
   });
 
   const providerNodes = data.nodes.filter((node) => contentProviders.has(node.id));
