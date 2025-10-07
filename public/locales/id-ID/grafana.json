@@ -4122,6 +4122,13 @@
       "body": "Coba Advisor baru untuk mengungkap potensi masalah dengan sumber data dan plugin Anda.",
       "go-to-advisor": "Masuk ke Advisor"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4170,6 +4177,20 @@
         "unknown-datasource": "Sumber data tidak diketahui"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Pilih jenis sumber data"
@@ -4199,6 +4220,13 @@
         },
         "subtitle": "Kelola koneksi sumber data Anda di satu tempat. Gunakan halaman ini untuk menambahkan sumber data baru atau mengelola koneksi yang ada."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Cari semua",
@@ -13612,6 +13640,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "dan",
       "placeholder-from": "",
