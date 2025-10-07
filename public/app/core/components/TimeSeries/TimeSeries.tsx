@@ -32,9 +32,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
       tweakAxis,
       hoverProximity: options?.tooltip?.hoverProximity,
       orientation: options?.orientation,
-      xAxisConfig: {
-        ...calculateAnnotationLaneSizes(annotationLanes, options?.annotations),
-      },
+      xAxisConfig: calculateAnnotationLaneSizes(annotationLanes, options?.annotations),
     });
   };
 

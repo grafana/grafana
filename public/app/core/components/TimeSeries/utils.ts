@@ -75,8 +75,8 @@ import {
 import { ANNOTATION_LANE_SIZE } from '../../../plugins/panel/timeseries/plugins/utils';
 
 // See UPlotAxisBuilder.ts::calculateAxisSize for default axis size calculation
-const UPLOT_DEFAULT_AXIS_SIZE = 17;
-const UPLOT_DEFAULT_AXIS_GAP = 5;
+export const UPLOT_DEFAULT_AXIS_SIZE = 17;
+export const UPLOT_DEFAULT_AXIS_GAP = 5;
 
 const defaultFormatter = (v: any, decimals: DecimalCount = 1) => (v == null ? '-' : v.toFixed(decimals));
 
@@ -721,7 +721,7 @@ export function calculateAnnotationLaneSizes(
   annotationLanes = 0,
   annotationConfig?: common.VizAnnotations
 ): Pick<AxisProps, 'size' | 'gap' | 'ticks'> {
-  if (annotationConfig?.multiLane) {
+  if (annotationConfig?.multiLane && annotationLanes > 1) {
     const annotationLanesSize = annotationLanes * ANNOTATION_LANE_SIZE;
     // Add an extra lane's worth of height below the annotation lanes in order to show the gridlines through the annotation lanes
     const axisSize = annotationLanes > 0 ? annotationLanesSize + UPLOT_DEFAULT_AXIS_GAP : 0;
