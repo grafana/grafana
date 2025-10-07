@@ -4542,11 +4542,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/logs/types.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/nodeGraph/Edge.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
