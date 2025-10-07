@@ -19,6 +19,7 @@ import {
   TYPOGRAPHY_CONSTANTS,
   VISUAL_CONSTANTS,
   getResponsiveGroupSpacing,
+  getRightMargin,
 } from '../constants';
 import { GraphData, PanelOptions } from '../types';
 
@@ -94,9 +95,17 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
   styles,
 }) => {
   if (isExposeMode) {
-    return renderExposedComponents();
+    return (
+      <g>
+        {renderExposedComponents()}
+        {renderContentConsumers()}
+      </g>
+    );
   } else if (isExtensionPointMode) {
     return renderExtensionPointMode();
+  } else if (options.visualizationMode === 'addedlinks') {
+    // In "Added links" view, render extension points (which are the consumers)
+    return renderExtensionPoints();
   } else {
     return renderExtensionPoints();
   }
@@ -249,6 +258,110 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                   strokeDasharray="5,5"
                 />
               )}
+            </g>
+          );
+        })}
+      </g>
+    );
+  }
+
+  function renderContentConsumers() {
+    if (!data.exposedComponents) {
+      return null;
+    }
+
+    // Get all unique consumers from exposed components
+    const allConsumersSet = new Set<string>();
+    data.exposedComponents.forEach((comp) => {
+      comp.consumers.forEach((consumerId) => {
+        allConsumersSet.add(consumerId);
+      });
+    });
+
+    if (allConsumersSet.size === 0) {
+      return null;
+    }
+
+    const consumerBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
+
+    // Group consumers by provider section to keep them within their respective sections
+    const consumerGroupsByProvider = new Map<string, string[]>();
+    data.exposedComponents.forEach((comp) => {
+      if (!consumerGroupsByProvider.has(comp.providingPlugin)) {
+        consumerGroupsByProvider.set(comp.providingPlugin, []);
+      }
+      comp.consumers.forEach((consumerId) => {
+        if (!consumerGroupsByProvider.get(comp.providingPlugin)!.includes(consumerId)) {
+          consumerGroupsByProvider.get(comp.providingPlugin)!.push(consumerId);
+        }
+      });
+    });
+
+    return (
+      <g>
+        {Array.from(consumerGroupsByProvider.entries()).map(([providingPlugin, consumerIds]) => {
+          // Get the first exposed component position for this provider to align consumer group
+          const firstCompPos = exposedComponentPositions.get(
+            data.exposedComponents?.find((comp) => comp.providingPlugin === providingPlugin)?.id || ''
+          );
+
+          if (!firstCompPos || consumerIds.length === 0) {
+            return null;
+          }
+
+          // Position consumer boxes within this provider's section
+          const consumerBoxHeight = 50; // Just enough height for the header
+          const consumerSpacing = 60; // Space between consumer boxes
+          const rightMargin = getRightMargin(width);
+          const consumerBoxX = width - rightMargin - consumerBoxWidth - 20;
+
+          return (
+            <g key={`consumers-${providingPlugin}`}>
+              {consumerIds.map((consumerId, index) => {
+                const consumerNode = data.nodes.find((node) => node.id === consumerId);
+                const consumerY = firstCompPos.groupY + 25 + index * consumerSpacing; // Position within the provider's section
+
+                return (
+                  <g key={consumerId}>
+                    {/* Individual consumer box */}
+                    <rect
+                      x={consumerBoxX - 20}
+                      y={consumerY}
+                      width={consumerBoxWidth + 40}
+                      height={consumerBoxHeight}
+                      fill={theme.colors.background.secondary}
+                      stroke={theme.colors.border.strong}
+                      strokeWidth={VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
+                      rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
+                    />
+
+                    {/* Consumer app name as header */}
+                    <text
+                      x={consumerBoxX}
+                      y={consumerY + 25}
+                      textAnchor="start"
+                      fill={theme.colors.text.primary}
+                      fontSize={TYPOGRAPHY_CONSTANTS.SECTION_HEADER_SIZE}
+                      fontWeight="bold"
+                    >
+                      {getDisplayName(consumerId)}
+                    </text>
+
+                    {/* Consumer version */}
+                    {consumerNode?.version && (
+                      <text
+                        x={consumerBoxX + consumerBoxWidth}
+                        y={consumerY + 25}
+                        textAnchor="end"
+                        fill={theme.colors.text.secondary}
+                        fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
+                      >
+                        <Trans i18nKey="dependency-graph.app-version">{polishVersion(consumerNode.version)}</Trans>
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
             </g>
           );
         })}
@@ -794,6 +907,25 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
               >
                 {getDisplayName(definingPlugin)}
               </text>
+
+              {/* App version */}
+              {(() => {
+                const appNode = data.nodes.find((node) => node.id === definingPlugin);
+                if (appNode?.version) {
+                  return (
+                    <text
+                      x={firstEpPos.x + extensionBoxWidth}
+                      y={firstEpPos.groupY + 22}
+                      textAnchor="end"
+                      fill={theme.colors.text.secondary}
+                      fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
+                    >
+                      <Trans i18nKey="dependency-graph.app-version">{polishVersion(appNode.version)}</Trans>
+                    </text>
+                  );
+                }
+                return null;
+              })()}
             </g>
           );
         })}

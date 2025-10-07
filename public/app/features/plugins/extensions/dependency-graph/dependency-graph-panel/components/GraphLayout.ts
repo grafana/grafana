@@ -30,7 +30,7 @@ export interface PositionInfo {
 }
 
 // Unified spacing constants for grouped boxes (boxes inside boxes)
-const GROUPED_BOX_SPACING = {
+export const GROUPED_BOX_SPACING = {
   // Spacing from main group heading to first inner box
   HEADER_TO_FIRST_BOX: 40, // Increased from 25 to 40 to prevent overlap with heading
   // Distance between last box and parent border
@@ -325,7 +325,7 @@ const calculateAddLayout = (
   providerNodes.forEach((node, index) => {
     result.push({
       ...node,
-      x: margin + 113, // Adjusted from 90 to 113 to account for wider boxes (90 + 23)
+      x: margin + LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH / 2, // Position for full-width consumer-style boxes
       y: providerStartY + index * nodeSpacing,
     });
   });

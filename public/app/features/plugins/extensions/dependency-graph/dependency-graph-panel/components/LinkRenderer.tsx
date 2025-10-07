@@ -4,13 +4,15 @@
  * Renders dependency links/arrows between nodes in the dependency graph.
  */
 
-import { LAYOUT_CONSTANTS, VISUAL_CONSTANTS, getResponsiveNodeWidth } from '../constants';
-import { NodeWithPosition, PositionInfo } from './GraphLayout';
+import { SerializedStyles } from '@emotion/react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { LAYOUT_CONSTANTS, VISUAL_CONSTANTS, getRightMargin } from '../constants';
 import { GraphData } from '../types';
-import React from 'react';
-import { SerializedStyles } from '@emotion/react';
+
+import { NodeWithPosition, PositionInfo } from './GraphLayout';
 
 interface LinkRendererProps {
   theme: GrafanaTheme2;
@@ -100,8 +102,9 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
         // Calculate group center
         const groupCenterY = firstExtensionPos.groupY + firstExtensionPos.groupHeight / 2;
 
-        const nodeWidth = getResponsiveNodeWidth(width);
-        const startX = sourceNode.x + nodeWidth / 2;
+        // For consumer-style content provider boxes, calculate start position from right edge
+        const consumerBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
+        const startX = sourceNode.x + consumerBoxWidth / 2; // Right edge of consumer-style box
         const startY = sourceNode.y;
         const endX = firstExtensionPos.x - 2; // End at left edge of extension box so arrowhead shows
         const endY = groupCenterY;
@@ -147,7 +150,6 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
     }
 
     const arrows: React.JSX.Element[] = [];
-    const nodeWidth = getResponsiveNodeWidth(width);
     const componentBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH; // Use same width as other views
 
     data.exposedComponents.forEach((exposedComponent) => {
@@ -158,44 +160,66 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
 
       // Arrows: Consumer → Component (pointing to the right side of the component box)
       exposedComponent.consumers.forEach((consumerId) => {
-        // Find the section-specific consumer instance for this provider
-        const sectionConsumerNode = nodes.find(
-          (n) => n.originalId === consumerId && n.id.includes(`-at-${exposedComponent.providingPlugin}`)
-        );
+        // Check if this specific arrow should be highlighted
+        const isConsumerArrowHighlighted =
+          selectedExposedComponent === exposedComponent.id || selectedContentConsumer === consumerId;
 
-        if (sectionConsumerNode) {
-          // Check if this specific arrow should be highlighted
-          const isConsumerArrowHighlighted =
-            selectedExposedComponent === exposedComponent.id || selectedContentConsumer === consumerId;
+        // Calculate consumer box position (right side of the graph) - use same logic as ExtensionRenderer
+        const rightMargin = getRightMargin(width);
+        const consumerBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
+        const consumerBoxX = width - rightMargin - consumerBoxWidth - 20; // Left edge of consumer box
+        const consumerBoxHeight = 50; // Height of consumer box
+        const consumerSpacing = 60; // Space between consumer boxes
 
-          // Arrow from consumer to component - pointing to the right side of the component box
-          const consumerStartX = sectionConsumerNode.x - nodeWidth / 2; // Start at left edge of consumer box
-          const consumerStartY = sectionConsumerNode.y;
-          const componentEndX = componentPos.x + componentBoxWidth + 5; // End at right edge of component box
-          const componentEndY = componentPos.y;
+        // Find the index of this consumer within the specific provider's section
+        const providerConsumers = exposedComponent.consumers;
+        const consumerIndex = providerConsumers.indexOf(consumerId);
 
-          arrows.push(
-            <line
-              key={`consumer-to-component-${exposedComponent.id}-${sectionConsumerNode.id}`}
-              x1={consumerStartX}
-              y1={consumerStartY}
-              x2={componentEndX}
-              y2={componentEndY}
-              stroke={isConsumerArrowHighlighted ? theme.colors.success.main : theme.colors.primary.main}
-              strokeWidth={
-                isConsumerArrowHighlighted
-                  ? VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH
-                  : VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH
-              }
-              markerEnd={isConsumerArrowHighlighted ? 'url(#arrowhead-highlighted)' : 'url(#arrowhead)'}
-              opacity={
-                (selectedExposedComponent || selectedContentConsumer) && !isConsumerArrowHighlighted
-                  ? VISUAL_CONSTANTS.UNSELECTED_OPACITY
-                  : VISUAL_CONSTANTS.SELECTED_OPACITY
-              }
-            />
-          );
+        // Use the same positioning logic as ExtensionRenderer - position within the provider's section
+        // We need to get the provider's group position, not the individual component position
+        const providerId = exposedComponent.providingPlugin;
+        const firstExposedComponent = data.exposedComponents?.find((comp) => comp.providingPlugin === providerId);
+        if (!firstExposedComponent) {
+          return; // Skip this consumer if we can't find the provider
         }
+
+        const firstCompPos = exposedComponentPositions.get(firstExposedComponent.id);
+        if (!firstCompPos) {
+          return; // Skip this consumer if we can't find its position
+        }
+
+        const consumerBoxY = firstCompPos.groupY + 25 + consumerIndex * consumerSpacing;
+
+        // Arrow starts from the middle of the left side of the consumer box
+        // The actual left edge of the consumer box is at consumerBoxX - 20 (same as ExtensionRenderer)
+        const consumerStartX = consumerBoxX - 20; // Left edge of consumer box
+        const consumerStartY = consumerBoxY + consumerBoxHeight / 2; // Middle of consumer box
+
+        // Arrow from consumer to component - pointing to the right side of the component box
+        const componentEndX = componentPos.x + componentBoxWidth + 5; // End at right edge of component box
+        const componentEndY = componentPos.y;
+
+        arrows.push(
+          <line
+            key={`consumer-to-component-${exposedComponent.id}-${consumerId}`}
+            x1={consumerStartX}
+            y1={consumerStartY}
+            x2={componentEndX}
+            y2={componentEndY}
+            stroke={isConsumerArrowHighlighted ? theme.colors.success.main : theme.colors.primary.main}
+            strokeWidth={
+              isConsumerArrowHighlighted
+                ? VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH
+                : VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH
+            }
+            markerEnd={isConsumerArrowHighlighted ? 'url(#arrowhead-highlighted)' : 'url(#arrowhead)'}
+            opacity={
+              (selectedExposedComponent || selectedContentConsumer) && !isConsumerArrowHighlighted
+                ? VISUAL_CONSTANTS.UNSELECTED_OPACITY
+                : VISUAL_CONSTANTS.SELECTED_OPACITY
+            }
+          />
+        );
       });
     });
 
