@@ -1,5 +1,6 @@
 import { t } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from 'app/features/logs/components/otel/formats';
 
 import { getLogsFieldsStyles } from './LogsTableActiveFields';
 import { LogsTableEmptyFields } from './LogsTableEmptyFields';
@@ -36,7 +37,9 @@ export const LogsTableAvailableFields = (props: {
   const theme = useTheme2();
 
   const styles = getLogsFieldsStyles(theme);
-  const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labelName));
+  const labelKeys = Object.keys(labels)
+    .filter((labelName) => labelName !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME)
+    .filter((labelName) => valueFilter(labelName));
   if (labelKeys.length) {
     // Otherwise show list with a hardcoded order
     return (

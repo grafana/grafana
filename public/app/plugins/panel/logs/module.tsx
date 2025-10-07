@@ -119,6 +119,19 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       defaultValue: false,
     });
 
+    if (config.featureToggles.otelLogsFormatting) {
+      builder.addBooleanSwitch({
+        path: 'showLogAttributes',
+        name: t('logs.show-log-attributes', 'Display log attributes for OTel logs'),
+        category,
+        description: t(
+          'logs.description-show-log-attributes',
+          'Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.'
+        ),
+        defaultValue: true,
+      });
+    }
+
     if (config.featureToggles.newLogsPanel) {
       builder
         .addBooleanSwitch({

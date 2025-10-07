@@ -2,9 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, createTheme, getDefaultTimeRange, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../mocks/logRow';
+import { getDisplayedFieldsForLogs, OTEL_PROBE_FIELD } from '../otel/formats';
 
 import { getGridTemplateColumns, getStyles, LogLine, Props } from './LogLine';
 import { LogListFontSize } from './LogList';
@@ -269,6 +271,55 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       );
       expect(screen.getByTestId('ansiLogLine')).toBeInTheDocument();
       expect(screen.queryByText(log.entry)).not.toBeInTheDocument();
+    });
+
+    test('Highlights the OTel attributes field when rendered', () => {
+      const originalState = config.featureToggles.otelLogsFormatting;
+      config.featureToggles.otelLogsFormatting = true;
+      log = createLogLine({
+        labels: { [OTEL_PROBE_FIELD]: '1', service: 'some service' },
+        entry: `place="luna" 1ms 3 KB`,
+      });
+      const displayedFields = getDisplayedFieldsForLogs([log]);
+
+      render(
+        <LogListContextProvider {...contextProps} displayedFields={displayedFields}>
+          <LogLine {...defaultProps} displayedFields={displayedFields} log={log} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByText('service=')).toBeInTheDocument();
+      expect(screen.getByText('some service')).toBeInTheDocument();
+
+      expect(screen.getByText('place')).toBeInTheDocument();
+      expect(screen.getByText('1ms')).toBeInTheDocument();
+      expect(screen.getByText('3 KB')).toBeInTheDocument();
+      expect(screen.queryByText(`place="luna" 1ms 3 KB`)).not.toBeInTheDocument();
+
+      config.featureToggles.otelLogsFormatting = originalState;
+    });
+
+    test('OTel attributes field is not present when the flag is disabled', () => {
+      const originalState = config.featureToggles.otelLogsFormatting;
+      config.featureToggles.otelLogsFormatting = false;
+      log = createLogLine({
+        labels: { [OTEL_PROBE_FIELD]: '1', service: 'some service' },
+        entry: `place="luna" 1ms 3 KB`,
+      });
+
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
+      expect(screen.queryByText('service')).not.toBeInTheDocument();
+      expect(screen.queryByText('some service')).not.toBeInTheDocument();
+
+      expect(screen.getByText('place')).toBeInTheDocument();
+      expect(screen.getByText('1ms')).toBeInTheDocument();
+      expect(screen.getByText('3 KB')).toBeInTheDocument();
+      expect(screen.queryByText(`place="luna" 1ms 3 KB`)).not.toBeInTheDocument();
+
+      config.featureToggles.otelLogsFormatting = originalState;
     });
   });
 

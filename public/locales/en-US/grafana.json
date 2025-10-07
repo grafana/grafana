@@ -9446,6 +9446,7 @@
     "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
     "description-enable-logs-highlighting": "Use a predefined coloring scheme to highlight relevant parts of the log lines",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
+    "description-show-log-attributes": "Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.",
     "fields": {
       "type": {
         "loki": {
@@ -9496,9 +9497,6 @@
       "collapse": "Collapse labels",
       "expand": "Expand labels"
     },
-    "log-labels-list": {
-      "log-line": "log line"
-    },
     "log-line": {
       "has-error": "Has errors",
       "is-sampled": "Is sampled",
@@ -9538,6 +9536,7 @@
       "inline-mode": "Display inline",
       "link-value-tooltip": "Link value",
       "links-section": "Links",
+      "log-attributes-field": "OTel attributes",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
       "move-displayed-field-down": "Move down",
@@ -9744,6 +9743,7 @@
       "line-contains": "Add as line contains filter",
       "line-contains-not": "Add as line does not contain filter"
     },
+    "show-log-attributes": "Display log attributes for OTel logs",
     "timestamp-format": "Timestamp resolution",
     "un-themed-log-details": {
       "aria-label-data-links": "Data links",
