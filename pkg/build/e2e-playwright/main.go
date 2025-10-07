@@ -144,8 +144,8 @@ func run(ctx context.Context, cmd *cli.Command) error {
 			"public/app/core/icons/cached.json",
 
 			// packages we use in playwright tests
-			"packages",           // TODO: do we need all of this?
-			"public/app/plugins", // TODO: do we need all of this?
+			"packages",
+			"public",
 
 			// e2e files
 			"e2e-playwright",

@@ -14,6 +14,7 @@ export interface ColorValueEditorSettings {
 }
 
 interface Props {
+  id?: string;
   value?: string;
   onChange: (value: string | undefined) => void;
   settings?: ColorValueEditorSettings;
@@ -25,7 +26,7 @@ interface Props {
 /**
  * @alpha
  * */
-export const ColorValueEditor = ({ value, settings, onChange, details }: Props) => {
+export const ColorValueEditor = ({ value, settings, onChange, details, id }: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
@@ -37,6 +38,7 @@ export const ColorValueEditor = ({ value, settings, onChange, details }: Props) 
             <div className={styles.colorPicker}>
               <ColorSwatch
                 ref={ref}
+                id={id}
                 onClick={showColorPicker}
                 onMouseLeave={hideColorPicker}
                 color={value ? theme.visualization.getColorByName(value) : theme.components.input.borderColor}

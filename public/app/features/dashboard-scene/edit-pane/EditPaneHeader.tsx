@@ -4,6 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Menu, Stack, Text, useStyles2, Dropdown, Icon, IconButton } from '@grafana/ui';
+import { trackDeleteDashboardElement } from 'app/features/dashboard-scene/utils/tracking';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
@@ -25,6 +26,15 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   // temporary simple solution, should select parent element
   const onGoBack = () => editPane.clearSelection();
   const canGoBack = editPane.state.selection;
+
+  const onDeleteElement = () => {
+    if (onConfirmDelete) {
+      onConfirmDelete();
+    } else if (onDelete) {
+      onDelete();
+    }
+    trackDeleteDashboardElement(elementInfo);
+  };
 
   return (
     <div className={styles.wrapper}>
@@ -75,7 +85,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
 
         {(onDelete || onConfirmDelete) && (
           <Button
-            onClick={onConfirmDelete || onDelete}
+            onClick={onDeleteElement}
             size="sm"
             variant="destructive"
             fill="outline"

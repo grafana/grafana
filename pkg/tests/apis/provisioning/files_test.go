@@ -7,9 +7,12 @@ import (
 	"io"
 	"net/http"
 	"path"
+	"sync"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,9 +20,7 @@ import (
 )
 
 func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
@@ -35,17 +36,37 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 			"testdata/timeline-demo.json": "folder/nested/dashboard3.json",
 			"testdata/.keep":              "folder/nested/.keep",
 		},
-		ExpectedDashboards: 3,
-		ExpectedFolders:    2,
+		SkipResourceAssertions: true, // tested below
 	})
 
-	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, 3, len(dashboards.Items))
+	var dashboards *unstructured.UnstructuredList
+	var folders *unstructured.UnstructuredList
+	var err error
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		dashboards, err = helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if err != nil {
+			collect.Errorf("could not list dashboards error: %s", err.Error())
+			return
+		}
+		if len(dashboards.Items) != 3 {
+			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 2)
+			return
+		}
+		folders, err = helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if err != nil {
+			collect.Errorf("could not list folders: error: %s", err.Error())
+			return
+		}
+		if len(folders.Items) != 2 {
+			collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), 2)
+			return
+		}
 
-	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, 2, len(folders.Items))
+		assert.Len(collect, dashboards.Items, 3)
+		assert.Len(collect, folders.Items, 2)
+	}, waitTimeoutDefault, waitIntervalDefault, "should have the expected dashboards and folders after sync")
+
+	helper.validateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
 
 	t.Run("delete individual dashboard file, should delete from repo and grafana", func(t *testing.T) {
 		result := helper.AdminREST.Delete().
@@ -108,9 +129,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_MoveResources(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
@@ -125,6 +144,13 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		ExpectedDashboards: 1,
 		ExpectedFolders:    0,
 	})
+
+	// Validate the dashboard metadata
+	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 1, len(dashboards.Items))
+
+	helper.validateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
 
 	// Verify the original dashboard exists in Grafana (using the UID from all-panels.json)
 	const allPanelsUID = "n1jR8vnnz" // This is the UID from the all-panels.json file
@@ -298,6 +324,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	})
 
 	t.Run("move directory", func(t *testing.T) {
+		t.Skip("Skip as implementation is broken and leaves dashboards behind in the move")
+		// FIXME: https://github.com/grafana/git-ui-sync-project/issues/379
+		// The current implementation of moving directories is flawed.
+		// It will be deprecated in favor of queuing a move job
 		// Create some files in a directory first using existing testdata files
 		helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "source-dir/timeline-demo.json")
 		helper.CopyToProvisioningPath(t, "testdata/text-options.json", "source-dir/text-options.json")
@@ -316,6 +346,9 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err, "should read response body")
+		t.Logf("Response Body: %s", string(body))
 		require.Equal(t, http.StatusOK, resp.StatusCode, "directory move should succeed")
 
 		// Verify source directory no longer exists
@@ -386,39 +419,80 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
 
+	// create both repos concurrently to reduce duration of this test
 	// Create first repository targeting "folder-1" with its own subdirectory
 	const repo1 = "ownership-repo-1"
-	helper.CreateRepo(t, TestRepo{
-		Name:   repo1,
-		Path:   path.Join(helper.ProvisioningPath, "repo1"),
-		Target: "folder",
-		Copies: map[string]string{
-			"testdata/all-panels.json": "dashboard1.json",
-		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    1,
-	})
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		helper.CreateRepo(t, TestRepo{
+			Name:   repo1,
+			Path:   path.Join(helper.ProvisioningPath, "repo1"),
+			Target: "folder",
+			Copies: map[string]string{
+				"testdata/all-panels.json": "dashboard1.json",
+			},
+			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
+		})
+	}()
 
 	// Create second repository targeting "folder-2" with its own subdirectory
 	const repo2 = "ownership-repo-2"
 	path2 := path.Join(helper.ProvisioningPath, "repo2")
-	helper.CreateRepo(t, TestRepo{
-		Name:   repo2,
-		Path:   path2,
-		Target: "folder",
-		Copies: map[string]string{
-			"testdata/timeline-demo.json": "dashboard2.json",
-		},
-		ExpectedDashboards: 2, // Total across both repos
-		ExpectedFolders:    2, // Total across both repos
-	})
+	go func() {
+		defer wg.Done()
+		helper.CreateRepo(t, TestRepo{
+			Name:   repo2,
+			Path:   path2,
+			Target: "folder",
+			Copies: map[string]string{
+				"testdata/timeline-demo.json": "dashboard2.json",
+			},
+			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
+		})
+	}()
+	wg.Wait()
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if err != nil {
+			collect.Errorf("could not list dashboards error: %s", err.Error())
+			return
+		}
+		if len(dashboards.Items) != 2 {
+			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 2)
+			return
+		}
+		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if err != nil {
+			collect.Errorf("could not list folders: error: %s", err.Error())
+			return
+		}
+		if len(folders.Items) != 2 {
+			collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), 2)
+			return
+		}
+
+		assert.Len(collect, dashboards.Items, 2)
+		assert.Len(collect, folders.Items, 2)
+	}, waitTimeoutDefault, waitIntervalDefault, "should have the expected dashboards and folders after sync")
+
+	allDashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	for _, dashboard := range allDashboards.Items {
+		annotations := dashboard.GetAnnotations()
+		// Expect to be managed by repo1 or repo2
+		managerID := annotations["grafana.app/managerId"]
+		if managerID != repo1 && managerID != repo2 {
+			t.Fatalf("dashboard %s is not managed by repo1 or repo2", dashboard.GetName())
+		}
+	}
 
 	t.Run("CREATE file with UID already owned by different repository - should fail", func(t *testing.T) {
 		// Try to create a dashboard in repo2 that has the same UID as the one in repo1

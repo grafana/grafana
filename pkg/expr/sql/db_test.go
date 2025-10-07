@@ -206,7 +206,7 @@ func TestErrorsFromGoMySQLServerAreFlagged(t *testing.T) {
 
 	_, err := db.QueryFrames(context.Background(), &testTracer{}, "sqlExpressionRefId", query, nil)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "error in go-mysql-server")
+	require.Contains(t, err.Error(), "error from the sql expression engine")
 }
 
 func TestFrameToSQLAndBack_JSONRoundtrip(t *testing.T) {
@@ -308,7 +308,7 @@ func TestQueryFrames_Limits(t *testing.T) {
 				CROSS JOIN (SELECT 1 AS val UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5) b
 			`,
 			opts:        []QueryOption{WithTimeout(1 * time.Nanosecond)},
-			expectError: "did not complete within the timeout",
+			expectError: "timed out",
 		},
 	}
 

@@ -1,5 +1,5 @@
 import { toLonLat } from 'ol/proj';
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useId } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -63,11 +63,14 @@ export const MapViewEditor = ({
     [value, onChange]
   );
 
+  const viewInputId = useId();
+  const zoomInputId = useId();
+
   return (
     <>
       <InlineFieldRow>
         <InlineField label={t('geomap.map-view-editor.label-view', 'View')} labelWidth={labelWidth} grow={true}>
-          <Select options={views.options} value={views.current} onChange={onSelectView} />
+          <Select inputId={viewInputId} options={views.options} value={views.current} onChange={onSelectView} />
         </InlineField>
       </InlineFieldRow>
       {value.id === MapCenterID.Coordinates && (
@@ -88,6 +91,7 @@ export const MapViewEditor = ({
           grow={true}
         >
           <NumberInput
+            id={zoomInputId}
             value={value?.zoom ?? 1}
             min={1}
             max={18}

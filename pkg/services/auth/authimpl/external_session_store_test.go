@@ -8,13 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationGetExternalSession(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("returns existing external session", func(t *testing.T) {
 		store := setupTest(t)
 
@@ -40,9 +40,7 @@ func TestIntegrationGetExternalSession(t *testing.T) {
 }
 
 func TestIntegrationListExternalSessions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("returns external sessions by ID", func(t *testing.T) {
 		store := setupTest(t)
@@ -106,9 +104,7 @@ func TestIntegrationListExternalSessions(t *testing.T) {
 }
 
 func TestIntegrationDeleteExternalSessionsByUserID(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("deletes all external sessions for a given user ID", func(t *testing.T) {
 		store := setupTest(t)
@@ -147,9 +143,7 @@ func TestIntegrationDeleteExternalSessionsByUserID(t *testing.T) {
 }
 
 func TestIntegrationDeleteExternalSession(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("deletes an existing external session", func(t *testing.T) {
 		store := setupTest(t)
@@ -177,9 +171,7 @@ func TestIntegrationDeleteExternalSession(t *testing.T) {
 }
 
 func TestIntegrationBatchDeleteExternalSessionsByUserIDs(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("deletes all external sessions for given user IDs", func(t *testing.T) {
 		store := setupTest(t)

@@ -144,13 +144,20 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
     ),
 };
 
-const shouldCalculateField = (field: Field, options: GroupByTransformerOptions): boolean => {
+// exported for test
+export const shouldCalculateField = (field: Field, options: GroupByTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
-  return (
-    options?.fields[fieldName]?.operation === GroupByOperationID.aggregate &&
-    Array.isArray(options?.fields[fieldName]?.aggregations) &&
-    options?.fields[fieldName].aggregations.length > 0
-  );
+  const { operation, aggregations = [] } = options.fields[fieldName] ?? {};
+
+  if (!Array.isArray(aggregations)) {
+    return false;
+  } else if (operation === GroupByOperationID.aggregate) {
+    return aggregations.length > 0;
+  } else if (operation === GroupByOperationID.groupBy) {
+    return aggregations.length === 1 && aggregations[0] === ReducerID.count;
+  } else {
+    return false;
+  }
 };
 
 /**

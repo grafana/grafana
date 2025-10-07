@@ -6,7 +6,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getStatusFromError } from 'app/core/utils/errors';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
@@ -36,6 +36,12 @@ export interface NestedFolderPickerProps {
   /* Folder UIDs to exclude from the picker, to prevent invalid operations */
   excludeUIDs?: string[];
 
+  /* Start tree from this folder instead of root */
+  rootFolderUID?: string;
+
+  /* Custom root folder item, default is "Dashboards" */
+  rootFolderItem?: DashboardsTreeItem;
+
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
   permission?: 'view' | 'edit';
 
@@ -44,6 +50,9 @@ export interface NestedFolderPickerProps {
 
   /* Whether the picker should be clearable */
   clearable?: boolean;
+
+  /* HTML ID for the button element for form labels */
+  id?: string;
 }
 
 const debouncedSearch = debounce(getSearchResults, 300);
@@ -66,8 +75,11 @@ export function NestedFolderPicker({
   showRootFolder = true,
   clearable = false,
   excludeUIDs,
+  rootFolderUID,
+  rootFolderItem,
   permission = 'edit',
   onChange,
+  id,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const selectedFolder = useGetFolderQueryFacade(value);
@@ -99,10 +111,17 @@ export function NestedFolderPicker({
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
+    emptyFolders,
     items: browseFlatTree,
     isLoading: isBrowseLoading,
     requestNextPage: fetchFolderPage,
-  } = useFoldersQuery(isBrowsing, foldersOpenState, permissionLevel);
+  } = useFoldersQuery({
+    isBrowsing,
+    openFolders: foldersOpenState,
+    permission: permissionLevel,
+    rootFolderUID,
+    rootFolderItem,
+  });
 
   useEffect(() => {
     if (!search) {
@@ -132,7 +151,7 @@ export function NestedFolderPicker({
     flip({
       // see https://floating-ui.com/docs/flip#combining-with-shift
       crossAxis: false,
-      boundary: document.body,
+      boundary: document.getElementById(floatingUtils.BOUNDARY_ELEMENT_ID) ?? undefined,
     }),
   ];
 
@@ -215,6 +234,8 @@ export function NestedFolderPicker({
             kind: 'folder' as const,
             title: item.title,
             uid: item.uid,
+            parentUID: item.parentUID,
+            parentTitle: item.parentTitle,
           },
         })) ?? [];
     }
@@ -283,6 +304,7 @@ export function NestedFolderPicker({
   if (!overlayOpen) {
     return (
       <Trigger
+        id={id}
         label={labelComponent}
         handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
         invalid={invalid}
@@ -307,7 +329,7 @@ export function NestedFolderPicker({
       <Input
         ref={refs.setReference}
         autoFocus
-        prefix={label ? <Icon name="folder" /> : null}
+        prefix={label ? <Icon name="folder" /> : <Icon name="search" />}
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
         invalid={invalid}
@@ -320,7 +342,6 @@ export function NestedFolderPicker({
         aria-owns={overlayId}
         aria-activedescendant={getDOMId(overlayId, flatTree[focusedItemIndex]?.item.uid)}
         role="combobox"
-        suffix={<Icon name="search" />}
         {...getReferenceProps()}
         onKeyDown={handleKeyDown}
       />
@@ -360,6 +381,7 @@ export function NestedFolderPicker({
               foldersAreOpenable={!(search && searchResults)}
               isItemLoaded={isItemLoaded}
               requestLoadMore={handleLoadMore}
+              emptyFolders={emptyFolders}
             />
           </div>
         )}

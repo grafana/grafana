@@ -22,7 +22,7 @@ export const getStyles: TableCellStyles = (theme, { textWrap, textAlign }) =>
     ...(textWrap && {
       flexDirection: 'column',
       justifyContent: 'center',
-      alignItems: getJustifyContent(textAlign),
+      alignItems: `${getJustifyContent(textAlign)} !important`, // we can't guarantee order, and alignItems is set on a sibling class.
     }),
     '> a': {
       flexWrap: 'nowrap',

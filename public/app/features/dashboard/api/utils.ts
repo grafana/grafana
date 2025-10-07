@@ -9,7 +9,7 @@ import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardWithAccessInfo } from './types';
 
-export function isV2StoredVersion(version: string): boolean {
+export function isV2StoredVersion(version: string | undefined): boolean {
   return version === 'v2alpha1' || version === 'v2beta1';
 }
 
@@ -100,15 +100,15 @@ export function getFailedVersion(
 }
 
 /**
- * Helper function to check if a dashboard resource has a failed conversion from a specific version family
+ * Helper function to check if a dashboard resource has a failed conversion from specific versions
  * @param item - Dashboard resource item
- * @param versionPrefix - Version prefix to check (e.g., 'v1', 'v2')
- * @returns True if conversion failed and stored version starts with the specified prefix
+ * @param versionPrefixes - Array of version prefixes to check (e.g., ['v1', 'v2'])
+ * @returns True if conversion failed and stored version starts with any of the specified prefixes
  */
 export function failedFromVersion(
   item: Resource<Dashboard | DashboardV2Spec | DashboardDataDTO, Status>,
-  versionPrefix: string
+  versionPrefixes: string[]
 ): boolean {
   const storedVersion = getFailedVersion(item);
-  return !!storedVersion && storedVersion.startsWith(versionPrefix);
+  return !!storedVersion && versionPrefixes.some((prefix) => storedVersion.startsWith(prefix));
 }

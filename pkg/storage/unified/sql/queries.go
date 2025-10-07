@@ -432,7 +432,8 @@ type sqlResourceListModifiedSinceRequest struct {
 	Namespace string
 	Group     string
 	Resource  string
-	SinceRv   int64
+	SinceRv   int64 // Exclusive
+	LatestRv  int64 // Inclusive
 }
 
 func (r sqlResourceListModifiedSinceRequest) Validate() error {
@@ -447,6 +448,9 @@ func (r sqlResourceListModifiedSinceRequest) Validate() error {
 	}
 	if r.SinceRv < 0 {
 		return fmt.Errorf("since resource version must be greater than or equal to zero")
+	}
+	if r.LatestRv < r.SinceRv {
+		return fmt.Errorf("latest resource version must be greater or equal to since resource version")
 	}
 	return nil
 }

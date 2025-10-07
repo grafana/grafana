@@ -1,30 +1,25 @@
+import { Page } from 'playwright-core';
+
 import { test, expect } from '@grafana/plugin-e2e';
 
-// Todo: Fix datasource creation
-test.describe.skip(
+test.describe(
   'Prometheus config',
   {
     tag: ['@various'],
   },
   () => {
-    const DATASOURCE_ID = 'Prometheus';
-    const DATASOURCE_TYPED_NAME = 'PrometheusDatasourceInstance';
-
-    test.beforeEach(async ({ page, selectors, createDataSourceConfigPage }) => {
-      // Navigate to add data source page
-      await page.goto('/datasources/new');
-
-      // Select the Prometheus data source
-      const prometheusPlugin = page.getByRole('button', { name: DATASOURCE_ID });
-      await prometheusPlugin.scrollIntoViewIfNeeded();
-      await expect(prometheusPlugin).toBeVisible();
-      await prometheusPlugin.click();
-    });
+    const DATASOURCE_PREFIX = 'PrometheusConfig';
 
     test('should have the following components: connection settings, managed alerts, scrape interval, query timeout, default editor, disable metric lookup, prometheus type, cache level, incremental querying, disable recording rules, custom query parameters, http method', async ({
       page,
       selectors,
+      createDataSourceConfigPage,
     }) => {
+      const DATASOURCE_NAME = `${DATASOURCE_PREFIX}_${Date.now()}`;
+      const configPage = await createDataSourceConfigPage({
+        type: 'prometheus',
+        name: DATASOURCE_NAME,
+      });
       // connection settings
       const connectionSettings = page.getByLabel(
         selectors.components.DataSource.Prometheus.configPage.connectionSettings
@@ -33,72 +28,85 @@ test.describe.skip(
 
       // managed alerts
       const manageAlerts = page.locator(`#${selectors.components.DataSource.Prometheus.configPage.manageAlerts}`);
-      await manageAlerts.scrollIntoViewIfNeeded();
       await expect(manageAlerts).toBeVisible();
 
       // scrape interval
-      const scrapeInterval = page.getByTestId(selectors.components.DataSource.Prometheus.configPage.scrapeInterval);
-      await scrapeInterval.scrollIntoViewIfNeeded();
+      const scrapeInterval = configPage.getByGrafanaSelector(
+        selectors.components.DataSource.Prometheus.configPage.scrapeInterval
+      );
       await expect(scrapeInterval).toBeVisible();
 
       // query timeout
-      const queryTimeout = page.getByTestId(selectors.components.DataSource.Prometheus.configPage.queryTimeout);
-      await queryTimeout.scrollIntoViewIfNeeded();
+      const queryTimeout = configPage.getByGrafanaSelector(
+        selectors.components.DataSource.Prometheus.configPage.queryTimeout
+      );
       await expect(queryTimeout).toBeVisible();
 
       // default editor
-      const defaultEditor = page.getByTestId(selectors.components.DataSource.Prometheus.configPage.defaultEditor);
-      await defaultEditor.scrollIntoViewIfNeeded();
+      const defaultEditor = configPage.getByGrafanaSelector(
+        selectors.components.DataSource.Prometheus.configPage.defaultEditor
+      );
       await expect(defaultEditor).toBeVisible();
 
       // disable metric lookup
       const disableMetricLookup = page.locator(
         `#${selectors.components.DataSource.Prometheus.configPage.disableMetricLookup}`
       );
-      await disableMetricLookup.scrollIntoViewIfNeeded();
       await expect(disableMetricLookup).toBeVisible();
 
       // prometheus type
-      const prometheusType = page.getByTestId(selectors.components.DataSource.Prometheus.configPage.prometheusType);
-      await prometheusType.scrollIntoViewIfNeeded();
+      const prometheusType = configPage.getByGrafanaSelector(
+        selectors.components.DataSource.Prometheus.configPage.prometheusType
+      );
       await expect(prometheusType).toBeVisible();
 
       // cache level
-      const cacheLevel = page.getByTestId(selectors.components.DataSource.Prometheus.configPage.cacheLevel);
-      await cacheLevel.scrollIntoViewIfNeeded();
+      const cacheLevel = configPage.getByGrafanaSelector(
+        selectors.components.DataSource.Prometheus.configPage.cacheLevel
+      );
       await expect(cacheLevel).toBeVisible();
 
       // incremental querying
       const incrementalQuerying = page.locator(
         `#${selectors.components.DataSource.Prometheus.configPage.incrementalQuerying}`
       );
-      await incrementalQuerying.scrollIntoViewIfNeeded();
       await expect(incrementalQuerying).toBeVisible();
 
       // disable recording rules
       const disableRecordingRules = page.locator(
         `#${selectors.components.DataSource.Prometheus.configPage.disableRecordingRules}`
       );
-      await disableRecordingRules.scrollIntoViewIfNeeded();
       await expect(disableRecordingRules).toBeVisible();
 
       // custom query parameters
-      const customQueryParameters = page.getByTestId(
+      const customQueryParameters = configPage.getByGrafanaSelector(
         selectors.components.DataSource.Prometheus.configPage.customQueryParameters
       );
-      await customQueryParameters.scrollIntoViewIfNeeded();
       await expect(customQueryParameters).toBeVisible();
 
       // http method
-      const httpMethod = page.getByTestId(selectors.components.DataSource.Prometheus.configPage.httpMethod);
-      await httpMethod.scrollIntoViewIfNeeded();
+      const httpMethod = configPage.getByGrafanaSelector(
+        selectors.components.DataSource.Prometheus.configPage.httpMethod
+      );
       await expect(httpMethod).toBeVisible();
     });
 
-    test('should save the default editor when navigating to explore', async ({ page, selectors }) => {
+    test('should save the default editor when navigating to explore', async ({
+      createDataSourceConfigPage,
+      explorePage,
+      page,
+      selectors,
+    }) => {
+      const DATASOURCE_NAME = `${DATASOURCE_PREFIX}_${Date.now()}`;
+      const configPage = await createDataSourceConfigPage({
+        type: 'prometheus',
+        name: DATASOURCE_NAME,
+      });
+
       // Click on default editor
-      const defaultEditor = page.getByTestId(selectors.components.DataSource.Prometheus.configPage.defaultEditor);
-      await defaultEditor.scrollIntoViewIfNeeded();
+      const defaultEditor = configPage.getByGrafanaSelector(
+        selectors.components.DataSource.Prometheus.configPage.defaultEditor
+      );
       await expect(defaultEditor).toBeVisible();
       await defaultEditor.click();
 
@@ -111,17 +119,12 @@ test.describe.skip(
       );
       await connectionSettings.fill('http://prom-url:9090');
 
-      // Set data source name
-      const nameInput = page.getByTestId(selectors.pages.DataSource.name);
-      await nameInput.clear();
-      await nameInput.fill(DATASOURCE_TYPED_NAME);
-
       // Save and test
-      const saveAndTestButton = page.getByTestId(selectors.pages.DataSource.saveAndTest);
+      const saveAndTestButton = configPage.getByGrafanaSelector(selectors.pages.DataSource.saveAndTest);
       await saveAndTestButton.click();
 
       // Navigate to explore
-      await page.goto('/explore');
+      await explorePage.goto();
 
       // Select the data source
       const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
@@ -129,7 +132,7 @@ test.describe.skip(
       await dataSourcePicker.click();
 
       // Type the data source name and press enter
-      await page.keyboard.type(DATASOURCE_TYPED_NAME);
+      await page.keyboard.type(DATASOURCE_NAME);
       await page.keyboard.press('Enter');
 
       // Verify the builder metric select is visible
@@ -139,10 +142,21 @@ test.describe.skip(
       await expect(metricSelect).toBeVisible();
     });
 
-    test('should allow a user to add the version when the Prom type is selected', async ({ page, selectors }) => {
+    test('should allow a user to add the version when the Prom type is selected', async ({
+      createDataSourceConfigPage,
+      page,
+      selectors,
+    }) => {
+      const DATASOURCE_NAME = `${DATASOURCE_PREFIX}_${Date.now()}`;
+      const configPage = await createDataSourceConfigPage({
+        type: 'prometheus',
+        name: DATASOURCE_NAME,
+      });
+
       // Click on prometheus type
-      const prometheusType = page.getByTestId(selectors.components.DataSource.Prometheus.configPage.prometheusType);
-      await prometheusType.scrollIntoViewIfNeeded();
+      const prometheusType = configPage.getByGrafanaSelector(
+        selectors.components.DataSource.Prometheus.configPage.prometheusType
+      );
       await expect(prometheusType).toBeVisible();
       await prometheusType.click();
 
@@ -150,43 +164,54 @@ test.describe.skip(
       await selectOption(page, 'Prometheus');
 
       // Verify prometheus version is visible
-      const prometheusVersion = page.getByTestId(
+      const prometheusVersion = configPage.getByGrafanaSelector(
         selectors.components.DataSource.Prometheus.configPage.prometheusVersion
       );
-      await prometheusVersion.scrollIntoViewIfNeeded();
       await expect(prometheusVersion).toBeVisible();
     });
 
-    test('should have a cache level component', async ({ page, selectors }) => {
+    test('should have a cache level component', async ({ createDataSourceConfigPage, page, selectors }) => {
+      const DATASOURCE_NAME = `${DATASOURCE_PREFIX}_${Date.now()}`;
+      const configPage = await createDataSourceConfigPage({
+        type: 'prometheus',
+        name: DATASOURCE_NAME,
+      });
+
       // Verify cache level is visible
-      const cacheLevel = page.getByTestId(selectors.components.DataSource.Prometheus.configPage.cacheLevel);
-      await cacheLevel.scrollIntoViewIfNeeded();
+      const cacheLevel = configPage.getByGrafanaSelector(
+        selectors.components.DataSource.Prometheus.configPage.cacheLevel
+      );
       await expect(cacheLevel).toBeVisible();
     });
 
     test('should allow a user to select a query overlap window when incremental querying is selected', async ({
+      createDataSourceConfigPage,
       page,
       selectors,
     }) => {
+      const DATASOURCE_NAME = `${DATASOURCE_PREFIX}_${Date.now()}`;
+      const configPage = await createDataSourceConfigPage({
+        type: 'prometheus',
+        name: DATASOURCE_NAME,
+      });
+
       // Check the incremental querying checkbox
       const incrementalQuerying = page.locator(
         `#${selectors.components.DataSource.Prometheus.configPage.incrementalQuerying}`
       );
-      await incrementalQuerying.scrollIntoViewIfNeeded();
       await expect(incrementalQuerying).toBeVisible();
       await incrementalQuerying.check({ force: true });
 
       // Verify query overlap window is visible
-      const queryOverlapWindow = page.getByTestId(
+      const queryOverlapWindow = configPage.getByGrafanaSelector(
         selectors.components.DataSource.Prometheus.configPage.queryOverlapWindow
       );
-      await queryOverlapWindow.scrollIntoViewIfNeeded();
       await expect(queryOverlapWindow).toBeVisible();
     });
   }
 );
 
-async function selectOption(page, option) {
+async function selectOption(page: Page, option: string) {
   const optionElement = page.getByRole('option').filter({ hasText: option });
   await expect(optionElement).toBeVisible();
   await optionElement.click();
