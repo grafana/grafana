@@ -119,7 +119,7 @@ const calculateExposeLayout = (
     componentSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
 
     const groupSpacing = getResponsiveGroupSpacing(height) + 30; // Extra space for dotted lines
-    let currentGroupY = margin + LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET + 10; // Start extremely close to headers and dotted lines
+    let currentGroupY = margin + LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET + 30; // Match exposed component positioning
 
     // Position consumers per provider section - each consumer appears in every section they're connected to
     Array.from(componentGroupsByProvider.entries()).forEach(([providingPlugin, componentIds]) => {
@@ -134,10 +134,10 @@ const calculateExposeLayout = (
       });
 
       const sectionConsumerArray = Array.from(sectionConsumers);
-      const consumerSpacing = Math.max(componentSpacing, 80); // Ensure proper spacing for consumer boxes
+      const consumerSpacing = componentSpacing; // Match component spacing exactly
 
       // Calculate group height based on components only - consumers will align with component height
-      const groupHeight = 80 + (componentIds.length - 1) * componentSpacing + 60 + 12; // Header space + components + component height + bottom padding
+      const groupHeight = 80 + (componentIds.length - 1) * componentSpacing + 50; // Header space + components + 50px bottom padding
       const groupCenterY = currentGroupY + groupHeight / 2;
 
       // Position provider node (for layout calculation, but won't be rendered)
@@ -153,9 +153,30 @@ const calculateExposeLayout = (
       }
 
       // Position consumer instances for this provider section
-      const consumersStartY = currentGroupY + 57; // Start within the section
+      // Each consumer should be positioned to align with the exposed components it's connected to
+      const consumerPositions = new Map<string, number>();
 
-      sectionConsumerArray.forEach((consumerId, consumerIndex) => {
+      // First, find the position for each consumer based on the exposed components it's connected to
+      data.exposedComponents?.forEach((comp) => {
+        if (comp.providingPlugin === providingPlugin) {
+          const componentIndex = componentIds.indexOf(comp.id);
+          if (componentIndex !== -1) {
+            const componentY = currentGroupY + 70 + componentIndex * componentSpacing;
+            comp.consumers.forEach((consumerId) => {
+              // If this consumer is already positioned, use the average of its positions
+              if (consumerPositions.has(consumerId)) {
+                const existingY = consumerPositions.get(consumerId)!;
+                consumerPositions.set(consumerId, (existingY + componentY) / 2);
+              } else {
+                consumerPositions.set(consumerId, componentY);
+              }
+            });
+          }
+        }
+      });
+
+      // Now position each consumer at its calculated position
+      consumerPositions.forEach((consumerY, consumerId) => {
         const consumerNode = data.nodes.find((n) => n.id === consumerId);
         if (consumerNode) {
           result.push({
@@ -163,7 +184,7 @@ const calculateExposeLayout = (
             id: `${consumerId}-at-${providingPlugin}`, // Unique ID for this section instance
             originalId: consumerId, // Keep track of original ID
             x: consumerX,
-            y: consumersStartY + consumerIndex * consumerSpacing,
+            y: consumerY,
           });
         }
       });
@@ -429,12 +450,12 @@ export const getExposedComponentPositions = (
     });
 
     // Calculate group height based on components only - consumers will align with component height
-    const groupHeight = 80 + (componentIds.length - 1) * componentSpacing + 60 + 12; // Header space + components + component height + bottom padding
+    const groupHeight = 80 + (componentIds.length - 1) * componentSpacing + 50; // Header space + components + 50px bottom padding
 
     componentIds.forEach((compId, index) => {
       positions.set(compId, {
         x: componentX,
-        y: currentGroupY + 80 + index * componentSpacing,
+        y: currentGroupY + 70 + index * componentSpacing,
         groupY: currentGroupY,
         groupHeight: groupHeight,
       });
@@ -684,7 +705,7 @@ export const calculateContentHeight = (
       });
 
       // Calculate group height based on components only - consumers will align with component height
-      const groupHeight = 80 + (componentIds.length - 1) * spacing + 60 + 12; // Header space + components + component height + bottom padding
+      const groupHeight = 80 + (componentIds.length - 1) * spacing + 50; // Header space + components + 50px bottom padding
 
       totalHeight += groupHeight + groupSpacing;
     });

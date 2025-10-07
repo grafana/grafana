@@ -173,7 +173,7 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
           // Simple straight line within the same section - adjust end position so arrowhead is visible
           const startX = sectionConsumerNode.x - nodeWidth / 2;
           const startY = sectionConsumerNode.y;
-          const endX = componentPos.x + componentBoxWidth - 2; // End at right edge of component box so arrowhead shows
+          const endX = componentPos.x + componentBoxWidth + 5; // End outside the component box
           const endY = componentPos.y;
 
           arrows.push(
