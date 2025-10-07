@@ -431,15 +431,24 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                           />
 
                           {/* Extension point ID */}
-                          <text
-                            x={epPos.x + extensionBoxWidth / 2}
-                            y={epPos.y - 5}
-                            textAnchor="middle"
-                            fill={theme.colors.getContrastText(theme.colors.primary.main)}
-                            style={{ fontSize: '12px', pointerEvents: 'none' }}
-                          >
-                            <tspan>{epId}</tspan>
-                          </text>
+                          {(() => {
+                            const hasDescription =
+                              extensionPoint.description && extensionPoint.description.trim() !== '';
+                            const epIdY = hasDescription ? epPos.y - 5 : epPos.y;
+
+                            return (
+                              <text
+                                x={epPos.x + extensionBoxWidth / 2}
+                                y={epIdY}
+                                textAnchor="middle"
+                                dominantBaseline={hasDescription ? undefined : 'middle'}
+                                fill={theme.colors.getContrastText(theme.colors.primary.main)}
+                                style={{ fontSize: '12px', pointerEvents: 'none' }}
+                              >
+                                <tspan>{epId}</tspan>
+                              </text>
+                            );
+                          })()}
 
                           {/* Extension point description */}
                           {extensionPoint.description && extensionPoint.description.trim() !== '' && (
@@ -646,15 +655,28 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                           />
 
                           {/* Extension point ID - first line */}
-                          <text
-                            x={epPos.x + extensionBoxWidth / 2}
-                            y={options.showDependencyTypes ? epPos.y - 5 : epPos.y + 5}
-                            textAnchor="middle"
-                            fill={theme.colors.getContrastText(extensionColor)}
-                            style={{ fontSize: '12px', pointerEvents: 'none' }}
-                          >
-                            {epId}
-                          </text>
+                          {(() => {
+                            const hasDescription =
+                              extensionPoint?.description && extensionPoint.description.trim() !== '';
+                            const epIdY = hasDescription
+                              ? options.showDependencyTypes
+                                ? epPos.y - 5
+                                : epPos.y + 5
+                              : epPos.y;
+
+                            return (
+                              <text
+                                x={epPos.x + extensionBoxWidth / 2}
+                                y={epIdY}
+                                textAnchor="middle"
+                                dominantBaseline={hasDescription ? undefined : 'middle'}
+                                fill={theme.colors.getContrastText(extensionColor)}
+                                style={{ fontSize: '12px', pointerEvents: 'none' }}
+                              >
+                                {epId}
+                              </text>
+                            );
+                          })()}
 
                           {/* Extension point description - second line */}
                           {extensionPoint?.description && extensionPoint.description.trim() !== '' && (

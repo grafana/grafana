@@ -117,6 +117,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
             x={nodeWidth / 2}
             y={nodeHeight / 2}
             textAnchor="middle"
+            dominantBaseline="middle"
             fill={theme.colors.getContrastText(theme.colors.primary.main)}
           >
             {node.originalId || node.id}
