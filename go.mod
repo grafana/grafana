@@ -55,7 +55,7 @@ require (
 	github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e // @grafana/grafana-datasources-core-services
 	github.com/dolthub/vitess v0.0.0-20250410090211-143e6b272ad4 // @grafana/grafana-datasources-core-services
 	github.com/dustin/go-humanize v1.0.1 // @grafana/observability-traces-and-profiling
-	github.com/emicklei/go-restful/v3 v3.12.2 // @grafana/grafana-app-platform-squad
+	github.com/emicklei/go-restful/v3 v3.13.0 // @grafana/grafana-app-platform-squad
 	github.com/fatih/color v1.18.0 // @grafana/grafana-backend-group
 	github.com/fullstorydev/grpchan v1.1.1 // @grafana/grafana-backend-group
 	github.com/gchaincl/sqlhooks v1.3.0 // @grafana/grafana-search-and-storage
@@ -86,7 +86,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.2 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250925200825-7a889aa4934d // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20251007160934-e642236ea9eb // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250926065801-df98203cff37 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -96,7 +96,7 @@ require (
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
-	github.com/grafana/grafana-app-sdk v0.45.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.46.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.45.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.2.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 // @grafana/partner-datasources
@@ -246,6 +246,7 @@ require (
 	github.com/grafana/grafana/apps/plugins v0.0.0 // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/apps/preferences v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/provisioning v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/scope v0.0.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/apps/secret v0.0.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/apps/shorturl v0.0.0 // @grafana/sharing-squad
 	github.com/grafana/grafana/pkg/aggregator v0.0.0 // @grafana/grafana-app-platform-squad
@@ -274,6 +275,7 @@ replace (
 	github.com/grafana/grafana/apps/plugins => ./apps/plugins
 	github.com/grafana/grafana/apps/preferences => ./apps/preferences
 	github.com/grafana/grafana/apps/provisioning => ./apps/provisioning
+	github.com/grafana/grafana/apps/scope => ./apps/scope
 	github.com/grafana/grafana/apps/secret => ./apps/secret
 	github.com/grafana/grafana/apps/shorturl => ./apps/shorturl
 

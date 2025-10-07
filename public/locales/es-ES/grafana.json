@@ -3240,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Definir ID de equipos permitidos",
       "display-name-description": "Se mostrará en la página de inicio de sesión como «Iniciar sesión con...». Resulta útil si utiliza más de un proveedor de identidad o protocolos SSO.",
       "display-name-label": "Nombre para mostrar",
-      "domain-hint-description": "Parámetro para indicar el ámbito del usuario en el inquilino de Azure AD/Entra ID y agilizar el proceso de inicio de sesión.",
+      "domain-hint-description": "",
       "domain-hint-label": "Sugerencia de dominio",
       "domain-hint-valid-domain": "Este campo debe ser un dominio válido.",
       "email-attribute-name-description": "Nombre de la clave que se utilizará para la búsqueda de correo electrónico del usuario dentro del mapa de atributos del token de identificación OAuth2.",
@@ -3496,6 +3496,7 @@
       "move-modal-field-label": "Nombre de la carpeta",
       "move-modal-text": "Esta acción moverá el siguiente contenido:",
       "move-modal-title": "Mover",
+      "move-provisioned-folder": "",
       "moving": "Moviendo...",
       "new-folder-name-required-phrase": "Se requiere el nombre de la carpeta.",
       "selected-mix-resources-modal-text": "Has seleccionado recursos aprovisionados y no aprovisionados. No se pueden procesar juntos. Selecciona solo recursos aprovisionados o solo recursos no aprovisionados e inténtalo de nuevo.",
@@ -4141,6 +4142,13 @@
       "body": "Prueba el nuevo Asesor para descubrir posibles problemas con tus fuentes de datos y plugins.",
       "go-to-advisor": "Ir al Asesor"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4189,6 +4197,20 @@
         "unknown-datasource": "Fuente de datos desconocida"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Seleccionar un tipo de fuente de datos"
@@ -4218,6 +4240,13 @@
         },
         "subtitle": "Gestiona las conexiones de fuentes de datos en un solo lugar. Utiliza esta página para añadir una nueva fuente de datos o gestionar las conexiones existentes."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Buscar todo",
@@ -8696,6 +8725,9 @@
       "tooltip-hide": "Ocultar contraseña",
       "tooltip-show": "Mostrar contraseña"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Expandir fila",
       "collapse": "Contraer fila",
@@ -8723,6 +8755,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Usar eje y derecho"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Cargando"
@@ -10166,7 +10201,7 @@
       "title": "Orígenes de datos"
     },
     "databases": {
-      "title": "Bases de datos"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Añadir y configurar orígenes de datos",
@@ -11692,6 +11727,8 @@
       "button-cancelling": "",
       "button-next": "Terminar",
       "button-start": "Iniciar la sincronización",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Esto eliminará la configuración del repositorio y se perderá todo el progreso. ¿Seguro que quieres descartar los cambios?",
         "confirm": "Sí, descartar",
@@ -13648,6 +13685,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "y",
       "placeholder-from": "",

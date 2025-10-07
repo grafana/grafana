@@ -198,6 +198,7 @@ fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 newLogsPanel,experimental,@grafana/observability-logs,false,false,true
 grafanaconThemes,GA,@grafana/grafana-frontend-platform,false,true,false
 alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
+alertingUseNewSimplifiedRoutingHashAlgorithm,preview,@grafana/alerting-squad,false,true,false
 useScopesNavigationEndpoint,experimental,@grafana/grafana-frontend-platform,false,false,true
 scopeSearchAllLevels,experimental,@grafana/grafana-frontend-platform,false,false,false
 alertingRuleVersionHistoryRestore,GA,@grafana/alerting-squad,false,false,true
@@ -216,7 +217,6 @@ unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,
 alertingRulePermanentlyDelete,GA,@grafana/alerting-squad,false,false,true
 alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true
 multiTenantTempCredentials,experimental,@grafana/aws-datasources,false,false,false
-localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,false,false
 unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
 logsPanelControls,preview,@grafana/observability-logs,false,false,true
 metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
@@ -226,7 +226,6 @@ tempoAlerting,experimental,@grafana/observability-traces-and-profiling,false,fal
 pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
 alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,false,true
 alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
-alertingGenerateSimplifiedRoutingWithOldHashes,experimental,@grafana/alerting-squad,false,false,false
 alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
 kubernetesAuthzApis,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthZHandlerRedirect,experimental,@grafana/identity-access-team,false,false,false
@@ -267,3 +266,4 @@ pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,fal
 tempoSearchBackendMigration,GA,@grafana/oss-big-tent,false,true,false
 filterOutBotsFromFrontendLogs,experimental,@grafana/plugins-platform-backend,false,false,true
 cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
+cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false

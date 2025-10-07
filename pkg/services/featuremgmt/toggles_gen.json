@@ -309,19 +309,6 @@
     },
     {
       "metadata": {
-        "name": "alertingGenerateSimplifiedRoutingWithOldHashes",
-        "resourceVersion": "1759334385382",
-        "creationTimestamp": "2025-10-01T15:59:45Z"
-      },
-      "spec": {
-        "description": "Generate simplified routing with old hashes",
-        "stage": "experimental",
-        "codeowner": "@grafana/alerting-squad",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "alertingImportAlertmanagerAPI",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-06-10T08:32:50Z"
@@ -568,14 +555,14 @@
     {
       "metadata": {
         "name": "alertingSaveStateCompressed",
-        "resourceVersion": "1754657532777",
+        "resourceVersion": "1759485036332",
         "creationTimestamp": "2025-01-27T17:47:33Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-08-08 12:52:12.777935 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-10-03 09:50:36.332762 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Enables the compressed protobuf-based alert state storage",
+        "description": "Enables the compressed protobuf-based alert state storage. Default is enabled.",
         "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "expression": "true"
@@ -621,6 +608,46 @@
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingUseNewSimplifiedRoutingHashAlgorithm",
+        "resourceVersion": "1759339813575",
+        "creationTimestamp": "2025-10-01T17:28:42Z",
+        "deletionTimestamp": "2025-10-01T17:29:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-01 17:30:13.575464 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "",
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingUseOldSimplifiedRoutingHashAlgorithm",
+        "resourceVersion": "1759339782639",
+        "creationTimestamp": "2025-10-01T17:29:29Z",
+        "deletionTimestamp": "2025-10-01T17:30:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-01 17:29:42.63941 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "",
+        "stage": "deprecated",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -871,6 +898,19 @@
       },
       "spec": {
         "description": "Prioritize loading plugins from the CDN before other sources",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "cdnPluginsUrls",
+        "resourceVersion": "1759489886228",
+        "creationTimestamp": "2025-10-03T11:11:26Z"
+      },
+      "spec": {
+        "description": "Enable loading plugins via declarative URLs",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "expression": "false"
@@ -2230,7 +2270,8 @@
       "metadata": {
         "name": "localizationForPlugins",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-31T04:38:38Z"
+        "creationTimestamp": "2025-03-31T04:38:38Z",
+        "deletionTimestamp": "2025-09-29T07:10:59Z"
       },
       "spec": {
         "description": "Enables localization for plugins",
