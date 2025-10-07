@@ -98,15 +98,8 @@ async function initFaroBackend() {
   registerEchoBackend(
     new GrafanaJavascriptAgentBackend({
       ...config.grafanaJavascriptAgent,
-      app: {
-        version: config.buildInfo.version,
-        environment: config.buildInfo.env,
-      },
       buildInfo: config.buildInfo,
-      user: {
-        id: String(contextSrv.user?.id),
-        email: contextSrv.user?.email,
-      },
+      userIdentifier: contextSrv.user.analytics.identifier,
       ignoreUrls: rudderstackUrls,
     })
   );
