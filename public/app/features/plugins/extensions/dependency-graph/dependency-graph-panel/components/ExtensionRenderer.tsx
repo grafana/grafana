@@ -610,27 +610,29 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
 
                 return (
                   <g key={`${definingPlugin}-${type}`}>
-                    {/* Type header - always show if there are extension points of this type */}
-                    <text
-                      x={firstEpPos.x}
-                      y={headerY}
-                      textAnchor="start"
-                      fill={theme.colors.text.primary}
-                      fontSize="12"
-                      fontWeight="normal"
-                      style={{
-                        pointerEvents: 'none',
-                        zIndex: 1000,
-                      }}
-                    >
-                      {type === 'function' ? (
-                        <Trans i18nKey="extensions.dependency-graph.function-extensions">Function extensions</Trans>
-                      ) : type === 'component' ? (
-                        <Trans i18nKey="extensions.dependency-graph.component-extensions">Component extensions</Trans>
-                      ) : (
-                        <Trans i18nKey="extensions.dependency-graph.link-extensions">Link extensions</Trans>
-                      )}
-                    </text>
+                    {/* Type header - hide in addedlinks mode since all extensions are link extensions */}
+                    {options.visualizationMode !== 'addedlinks' && (
+                      <text
+                        x={firstEpPos.x}
+                        y={headerY}
+                        textAnchor="start"
+                        fill={theme.colors.text.primary}
+                        fontSize="12"
+                        fontWeight="normal"
+                        style={{
+                          pointerEvents: 'none',
+                          zIndex: 1000,
+                        }}
+                      >
+                        {type === 'function' ? (
+                          <Trans i18nKey="extensions.dependency-graph.function-extensions">Function extensions</Trans>
+                        ) : type === 'component' ? (
+                          <Trans i18nKey="extensions.dependency-graph.component-extensions">Component extensions</Trans>
+                        ) : (
+                          <Trans i18nKey="extensions.dependency-graph.link-extensions">Link extensions</Trans>
+                        )}
+                      </text>
+                    )}
 
                     {/* Extension points for this type */}
                     {extensionPointIds.map((epId) => {

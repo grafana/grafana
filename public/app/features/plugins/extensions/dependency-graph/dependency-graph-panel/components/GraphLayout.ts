@@ -325,7 +325,7 @@ export const getExtensionPointPositions = (
   }
 
   const groupSpacing = 40;
-  const typeHeaderSpacing = 40; // Increased space for type headers
+  const typeHeaderSpacing = options.visualizationMode === 'addedlinks' ? 0 : 40; // No space for type headers in addedlinks mode
   const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
   const rightSideX = width - margin - extensionBoxWidth - LAYOUT_CONSTANTS.ARROW_SAFETY_MARGIN;
 
@@ -333,7 +333,7 @@ export const getExtensionPointPositions = (
 
   Array.from(extensionPointGroups.entries()).forEach(([definingPlugin, typeGroups]) => {
     // Calculate total height for this plugin group
-    let totalGroupHeight = 50; // Base group height
+    let totalGroupHeight = 40; // Base group height (moderately reduced bottom padding)
     const typeOrder = ['function', 'component', 'link'];
 
     typeOrder.forEach((type) => {
@@ -344,16 +344,16 @@ export const getExtensionPointPositions = (
       }
     });
 
-    let currentY = currentGroupY + 60;
+    let currentY = currentGroupY + 66;
 
     // Position extension points by type
     typeOrder.forEach((type) => {
       const extensionPointIds = typeGroups.get(type);
       if (extensionPointIds && extensionPointIds.length > 0) {
-        // Add space for type header
+        // Add space for type header (skip in addedlinks mode)
         currentY += typeHeaderSpacing;
 
-        const typeHeaderY = currentY - typeHeaderSpacing;
+        const typeHeaderY = typeHeaderSpacing > 0 ? currentY - typeHeaderSpacing : currentY;
         extensionPointIds.forEach((epId, index) => {
           const yPosition = currentY + index * extensionPointSpacing;
 
@@ -447,12 +447,12 @@ export const getExposedComponentPositions = (
     });
 
     // Calculate group height based on components only - consumers will align with component height
-    const groupHeight = 80 + (componentIds.length - 1) * componentSpacing + 50; // Header space + components + 50px bottom padding
+    const groupHeight = 80 + (componentIds.length - 1) * componentSpacing + 40; // Header space + components + 40px bottom padding
 
     componentIds.forEach((compId, index) => {
       positions.set(compId, {
         x: componentX,
-        y: currentGroupY + 70 + index * componentSpacing,
+        y: currentGroupY + 64 + index * componentSpacing,
         groupY: currentGroupY,
         groupHeight: groupHeight,
       });
@@ -512,9 +512,9 @@ export const getExtensionPositions = (
 
   // Process each app section
   Array.from(extensionGroups.entries()).forEach(([providingPlugin, extensionIds]) => {
-    const groupHeight = extensionIds.length * extensionSpacing + 40;
+    const groupHeight = extensionIds.length * extensionSpacing + 30;
 
-    let currentY = currentGroupY + 80;
+    let currentY = currentGroupY + 86;
 
     extensionIds.forEach((extId, index) => {
       positions.set(extId, {
@@ -593,7 +593,7 @@ export const getExtensionPointModePositions = (
   // Process each defining plugin section
   Array.from(extensionPointGroups.entries()).forEach(([definingPlugin, typeGroups]) => {
     // Calculate total height for this plugin group (no header spacing in extension point mode)
-    let totalGroupHeight = 20; // Base group height
+    let totalGroupHeight = 20; // Base group height (moderately reduced bottom padding)
     const typeOrder = ['function', 'component', 'link'];
 
     typeOrder.forEach((type) => {
@@ -603,7 +603,7 @@ export const getExtensionPointModePositions = (
       }
     });
 
-    let currentY = currentGroupY + 70;
+    let currentY = currentGroupY + 76;
 
     // Position extension points by type (no header spacing in extension point mode)
     typeOrder.forEach((type) => {
@@ -677,7 +677,7 @@ export const calculateContentHeight = (
     });
 
     Array.from(extensionGroups.entries()).forEach(([providingPlugin, extensionIds]) => {
-      const groupHeight = extensionIds.length * spacing + 40;
+      const groupHeight = extensionIds.length * spacing + 30;
       totalHeight += groupHeight + groupSpacing;
     });
   } else if (isExposeMode && data.exposedComponents && data.exposedComponents.length > 0) {
@@ -702,7 +702,7 @@ export const calculateContentHeight = (
       });
 
       // Calculate group height based on components only - consumers will align with component height
-      const groupHeight = 80 + (componentIds.length - 1) * spacing + 50; // Header space + components + 50px bottom padding
+      const groupHeight = 80 + (componentIds.length - 1) * spacing + 40; // Header space + components + 40px bottom padding
 
       totalHeight += groupHeight + groupSpacing;
     });

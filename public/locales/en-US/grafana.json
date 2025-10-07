@@ -7626,6 +7626,7 @@
     "view": {
       "add": "Add",
       "expose": "Expose",
+      "addedlinks": "Added links",
       "label": "View"
     }
   },

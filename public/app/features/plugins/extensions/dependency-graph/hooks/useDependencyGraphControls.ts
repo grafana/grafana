@@ -54,7 +54,9 @@ export function useDependencyGraphControls(): DependencyGraphControls {
   const [visualizationMode, setVisualizationModeState] = useState<VisualizationMode>(() => {
     const mode = searchParams.get(URL_PARAMS.API_MODE);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return mode === 'add' || mode === 'expose' || mode === 'extensionpoint' ? (mode as VisualizationMode) : 'add';
+    return mode === 'add' || mode === 'expose' || mode === 'extensionpoint' || mode === 'addedlinks'
+      ? (mode as VisualizationMode)
+      : 'add';
   });
 
   const [selectedContentProviders, setSelectedContentProvidersState] = useState<string[]>(() => {
@@ -129,7 +131,7 @@ export function useDependencyGraphControls(): DependencyGraphControls {
   // Sync state with URL parameters when they change externally
   useEffect(() => {
     const mode = searchParams.get(URL_PARAMS.API_MODE);
-    if (mode === 'add' || mode === 'expose' || mode === 'extensionpoint') {
+    if (mode === 'add' || mode === 'expose' || mode === 'extensionpoint' || mode === 'addedlinks') {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       setVisualizationModeState(mode as VisualizationMode);
     } else {
@@ -150,6 +152,7 @@ export function useDependencyGraphControls(): DependencyGraphControls {
   const modeOptions = [
     { label: t('extensions.view.add', 'Add'), value: 'add' as const },
     { label: t('extensions.view.expose', 'Expose'), value: 'expose' as const },
+    { label: t('extensions.view.addedlinks', 'Added links'), value: 'addedlinks' as const },
   ];
 
   return {

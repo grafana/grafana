@@ -40,7 +40,7 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
 
   const handleModeChange = useCallback(
     (option: { value?: VisualizationMode }) => {
-      if (option.value && (option.value === 'add' || option.value === 'expose')) {
+      if (option.value && (option.value === 'add' || option.value === 'expose' || option.value === 'addedlinks')) {
         setVisualizationMode(option.value);
       }
     },
