@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V8 migration updates old InfluxDB query schema to the new format.
 // This migration transforms the legacy InfluxDB query structure with fields, tags, and groupBy
 // into the newer select-based query format.
@@ -62,7 +64,7 @@ package schemaversion
 //   ]
 // }
 
-func V8(dashboard map[string]interface{}) error {
+func V8(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 8
 
 	panels, ok := dashboard["panels"].([]interface{})
