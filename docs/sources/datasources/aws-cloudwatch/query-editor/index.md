@@ -200,25 +200,6 @@ The link provided is valid for any account but displays the expected metrics onl
 
 This feature is not available for metrics based on [metric math expressions](#metric-math-expressions).
 
-## Create queries for alerting
-
-Alerting requires queries that return numeric data, which CloudWatch Logs supports.
-For example, you can enable alerts through the use of the `stats` command.
-
-The following is a valid query for alerting on messages that include the text "Exception":
-
-```
-filter @message like /Exception/
-    | stats count(*) as exceptionCount by bin(1h)
-    | sort exceptionCount desc
-```
-
-{{< admonition type="note" >}}
-If you receive an error like `input data must be a wide series but got ...` when trying to alert on a query, make sure that your query returns valid numeric data that can be output to a Time series panel.
-{{< /admonition >}}
-
-For more information on Grafana alerts, refer to [Alerting](ref:alerting).
-
 ### Use Metric Insights syntax
 
 Metric Insights uses a dialect of SQL and this query syntax:
@@ -299,6 +280,25 @@ WHERE `@message` LIKE '%Exception%'
 
 You can also write queries returning time series data by using the [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html).
 When making `stats` queries in [Explore](ref:explore), ensure you are in Metrics Explore mode.
+
+### Create queries for alerting
+
+Alerting requires queries that return numeric data, which CloudWatch Logs supports.
+For example, you can enable alerts through the use of the `stats` command.
+
+The following is a valid query for alerting on messages that include the text "Exception":
+
+```
+filter @message like /Exception/
+    | stats count(*) as exceptionCount by bin(1h)
+    | sort exceptionCount desc
+```
+
+{{< admonition type="note" >}}
+If you receive an error like `input data must be a wide series but got ...` when trying to alert on a query, make sure that your query returns valid numeric data that can be output to a Time series panel.
+{{< /admonition >}}
+
+For more information on Grafana alerts, refer to [Alerting](ref:alerting).
 
 ## Cross-account observability
 
