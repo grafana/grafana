@@ -116,6 +116,9 @@ export class DefaultGridLayoutManager
 
     // Remove from source and append to destination
     sourceGrid.setState({ children: [] });
+    for (const child of movedChildren) {
+      child.clearParent();
+    }
     this.state.grid.setState({ children: [...this.state.grid.state.children, ...movedChildren] });
   }
 
