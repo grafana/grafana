@@ -160,7 +160,7 @@ func validateOnUpdate(ctx context.Context,
 
 	// if by moving a folder we exceed the max depth, return an error
 	if len(info.Items)+1 >= maxDepth {
-		return folder.ErrMaximumDepthReached
+		return folder.ErrMaximumDepthReached.Errorf("maximum folder depth reached")
 	}
 	return nil
 }
@@ -184,7 +184,7 @@ func validateOnDelete(ctx context.Context,
 
 	for _, v := range resp.Stats {
 		if v.Count > 0 {
-			return folder.ErrFolderNotEmpty
+			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d resources", v.Count)
 		}
 	}
 	return nil
