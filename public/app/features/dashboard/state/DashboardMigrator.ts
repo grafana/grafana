@@ -293,23 +293,8 @@ export class DashboardMigrator {
 
     // schema version 9 changes
     if (oldVersion < 9 && finalTargetVersion >= 9) {
-      // move aliasYAxis changes
-      panelUpgrades.push((panel: PanelModel) => {
-        if (panel.type !== 'singlestat' && panel.thresholds !== '') {
-          return panel;
-        }
-
-        if (panel.thresholds) {
-          const k = panel.thresholds.split(',');
-
-          if (k.length >= 3) {
-            k.shift();
-            panel.thresholds = k.join(',');
-          }
-        }
-
-        return panel;
-      });
+      // singlestat panel is automigrated to stat panel
+      // see autoMigrateAngular map in public/app/features/dashboard/state/PanelModel.ts
     }
 
     // schema version 10 changes

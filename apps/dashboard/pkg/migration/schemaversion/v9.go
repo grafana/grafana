@@ -1,7 +1,7 @@
 package schemaversion
 
 import (
-	"strings"
+	"context"
 )
 
 // V9 migration removes the first threshold value from singlestat panel thresholds when they have 3 or more values.
@@ -35,43 +35,8 @@ import (
 //   ]
 // }
 
-func V9(dashboard map[string]interface{}) error {
+func V9(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 9
-
-	panels, ok := dashboard["panels"].([]interface{})
-	if !ok {
-		return nil
-	}
-
-	for _, p := range panels {
-		panel, ok := p.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		// Only process singlestat panels
-		panelType := GetStringValue(panel, "type")
-		if panelType != "singlestat" {
-			continue
-		}
-
-		// Get thresholds as string
-		thresholds, ok := panel["thresholds"].(string)
-		if !ok || thresholds == "" {
-			continue
-		}
-
-		// Split the comma-separated thresholds
-		thresholdParts := strings.Split(thresholds, ",")
-
-		// Only modify thresholds if they have 3 or more values
-		if len(thresholdParts) >= 3 {
-			// Remove the first threshold value (equivalent to JavaScript's shift())
-			newThresholdParts := thresholdParts[1:]
-			// Join them back into a comma-separated string
-			panel["thresholds"] = strings.Join(newThresholdParts, ",")
-		}
-	}
 
 	return nil
 }
