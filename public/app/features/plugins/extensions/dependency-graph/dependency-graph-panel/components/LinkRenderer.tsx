@@ -106,7 +106,10 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
         const consumerBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
         const startX = sourceNode.x + consumerBoxWidth / 2; // Right edge of consumer-style box
         const startY = sourceNode.y;
-        const endX = firstExtensionPos.x - 2; // End at left edge of extension box so arrowhead shows
+
+        // End just next to the left edge of the outer consumer box, not the inner extension point box
+        // The outer consumer box left edge is at firstExtensionPos.x - 10
+        const endX = firstExtensionPos.x - 10 - 4; // 5 pixels to the left of the left edge of outer consumer box
         const endY = groupCenterY;
 
         // Calculate control points for a curved path
