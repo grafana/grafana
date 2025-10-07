@@ -9,7 +9,6 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -45,86 +44,5 @@ func TestAfterCreatePermissionCreator(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, creator)
 		require.Contains(t, err.Error(), "missing auth info")
-	})
-
-	t.Run("should succeed for user identity", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Type:    authtypes.TypeUser,
-			OrgID:   1,
-			OrgRole: "Admin",
-			UserID:  1,
-		})
-		obj := &v0alpha1.Dashboard{}
-		key := &resourcepb.ResourceKey{
-			Group:     "test",
-			Resource:  "test",
-			Namespace: "test",
-			Name:      "test",
-		}
-
-		creator, err := afterCreatePermissionCreator(ctx, key, utils.AnnoGrantPermissionsDefault, obj, mockSetter)
-		require.NoError(t, err)
-		require.NotNil(t, creator)
-
-		err = creator(ctx)
-		require.NoError(t, err)
-	})
-
-	t.Run("should succeed for service account identity", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Type:    authtypes.TypeServiceAccount,
-			OrgID:   1,
-			OrgRole: "Admin",
-			UserID:  1,
-		})
-		obj := &v0alpha1.Dashboard{}
-		key := &resourcepb.ResourceKey{
-			Group:     "test",
-			Resource:  "test",
-			Namespace: "test",
-			Name:      "test",
-		}
-
-		creator, err := afterCreatePermissionCreator(ctx, key, utils.AnnoGrantPermissionsDefault, obj, mockSetter)
-		require.NoError(t, err)
-		require.NotNil(t, creator)
-
-		err = creator(ctx)
-		require.NoError(t, err)
-	})
-
-	t.Run("should succeed for access policy identity", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Type:    authtypes.TypeAccessPolicy,
-			OrgID:   1,
-			OrgRole: "Admin",
-			UserID:  1,
-		})
-		obj := &v0alpha1.Dashboard{}
-		key := &resourcepb.ResourceKey{
-			Group:     "test",
-			Resource:  "test",
-			Namespace: "test",
-			Name:      "test",
-		}
-
-		creator, err := afterCreatePermissionCreator(ctx, key, utils.AnnoGrantPermissionsDefault, obj, mockSetter)
-		require.NoError(t, err)
-		require.NotNil(t, creator)
-
-		err = creator(ctx)
-		require.NoError(t, err)
-	})
-
-	t.Run("should error for non-user/non-service-account identity", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Type: authtypes.TypeAnonymous,
-		})
-		obj := &v0alpha1.Dashboard{}
-
-		creator, err := afterCreatePermissionCreator(ctx, nil, utils.AnnoGrantPermissionsDefault, obj, mockSetter)
-		require.Error(t, err)
-		require.Nil(t, creator)
-		require.Contains(t, err.Error(), "only users, service accounts, and access policies may grant permissions")
 	})
 }

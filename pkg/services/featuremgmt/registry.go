@@ -181,6 +181,13 @@ var (
 			HideFromDocs:   true,
 		},
 		{
+			Name:            "kubernetesStars",
+			Description:     "Routes stars requests from /api to the /apis endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
@@ -775,7 +782,7 @@ var (
 		},
 		{
 			Name:         "alertingSaveStateCompressed",
-			Description:  "Enables the compressed protobuf-based alert state storage",
+			Description:  "Enables the compressed protobuf-based alert state storage. Default is enabled.",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
@@ -792,6 +799,16 @@ var (
 		{
 			Name:              "useScopeSingleNodeEndpoint",
 			Description:       "Use the single node endpoint for the scope api. This is used to fetch the scope parent node.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaOperatorExperienceSquad,
+			Expression:        "false",
+			FrontendOnly:      true,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "useMultipleScopeNodesEndpoint",
+			Description:       "Makes the frontend use the 'names' param for fetching multiple scope nodes at once",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaOperatorExperienceSquad,
 			Expression:        "false",
@@ -1504,6 +1521,16 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:              "alertingUseNewSimplifiedRoutingHashAlgorithm",
+			Description:       "",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+			Expression:        "true",
+		},
+		{
 			Name:              "useScopesNavigationEndpoint",
 			Description:       "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
 			Stage:             FeatureStageExperimental,
@@ -1649,13 +1676,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			HideFromDocs: true,
 			Owner:        awsDatasourcesSquad,
-		},
-		{
-			Name:         "localizationForPlugins",
-			Description:  "Enables localization for plugins",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaPluginsPlatformSquad,
-			FrontendOnly: false,
 		},
 		{
 			Name:         "unifiedNavbars",
@@ -2052,6 +2072,14 @@ var (
 		{
 			Name:         "cdnPluginsLoadFirst",
 			Description:  "Prioritize loading plugins from the CDN before other sources",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "cdnPluginsUrls",
+			Description:  "Enable loading plugins via declarative URLs",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,

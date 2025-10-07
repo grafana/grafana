@@ -154,7 +154,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugin-page-grafana-k8s-app':
       return t('nav.kubernetes.title', 'Kubernetes');
     case 'plugin-page-grafana-dbo11y-app':
-      return t('nav.databases.title', 'Databases');
+      return t('nav.databases.title', 'Database');
     case 'plugin-page-grafana-app-observability-app':
       return t('nav.application.title', 'Application');
     case 'plugin-page-grafana-pyroscope-app':
