@@ -87,9 +87,10 @@ func TestV12(t *testing.T) {
 				"templating": map[string]interface{}{
 					"list": []interface{}{
 						map[string]interface{}{
-							"type": "query",
-							"name": "hide_variable_var",
-							"hide": 2,
+							"type":         "query",
+							"name":         "hide_variable_var",
+							"hideVariable": true,
+							"hide":         2,
 						},
 					},
 				},
@@ -116,9 +117,10 @@ func TestV12(t *testing.T) {
 				"templating": map[string]interface{}{
 					"list": []interface{}{
 						map[string]interface{}{
-							"type": "query",
-							"name": "hide_label_var",
-							"hide": 1,
+							"type":      "query",
+							"name":      "hide_label_var",
+							"hideLabel": true,
+							"hide":      1,
 						},
 					},
 				},
@@ -146,9 +148,11 @@ func TestV12(t *testing.T) {
 				"templating": map[string]interface{}{
 					"list": []interface{}{
 						map[string]interface{}{
-							"type": "query",
-							"name": "priority_var",
-							"hide": 2,
+							"type":         "query",
+							"name":         "priority_var",
+							"hideVariable": true,
+							"hideLabel":    true,
+							"hide":         2,
 						},
 					},
 				},
@@ -206,6 +210,103 @@ func TestV12(t *testing.T) {
 				"schemaVersion": 12,
 				"templating": map[string]interface{}{
 					"list": []interface{}{},
+				},
+			},
+		},
+		{
+			name: "variables with hideVariable=false and hideLabel=false do not get hide property",
+			input: map[string]interface{}{
+				"title":         "V12 False Hide Properties Test",
+				"schemaVersion": 11,
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"type":         "query",
+							"name":         "false_hide_var",
+							"hideVariable": false,
+							"hideLabel":    false,
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V12 False Hide Properties Test",
+				"schemaVersion": 12,
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"type":         "query",
+							"name":         "false_hide_var",
+							"hideVariable": false,
+							"hideLabel":    false,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "variable with hideVariable=false but hideLabel=true gets hide=1",
+			input: map[string]interface{}{
+				"title":         "V12 Mixed Hide Properties Test",
+				"schemaVersion": 11,
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"type":         "query",
+							"name":         "mixed_hide_var",
+							"hideVariable": false,
+							"hideLabel":    true,
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V12 Mixed Hide Properties Test",
+				"schemaVersion": 12,
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"type":         "query",
+							"name":         "mixed_hide_var",
+							"hideVariable": false,
+							"hideLabel":    true,
+							"hide":         1,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "variable with all properties gets all migrations applied",
+			input: map[string]interface{}{
+				"title":         "V12 All Properties Test",
+				"schemaVersion": 11,
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"type":         "query",
+							"name":         "all_properties_var",
+							"refresh":      true,
+							"hideVariable": true,
+							"hideLabel":    false,
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V12 All Properties Test",
+				"schemaVersion": 12,
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"type":         "query",
+							"name":         "all_properties_var",
+							"refresh":      1,
+							"hideVariable": true,
+							"hideLabel":    false,
+							"hide":         2,
+						},
+					},
 				},
 			},
 		},
