@@ -465,7 +465,7 @@ func TestReceiverService_Create(t *testing.T) {
 						{
 							UID:                   lineIntegration.UID,
 							Name:                  lineIntegration.Name,
-							Type:                  lineIntegration.Config.Type,
+							Type:                  string(lineIntegration.Config.Type()),
 							DisableResolveMessage: lineIntegration.DisableResolveMessage,
 							Settings:              definitions.RawMessage(`{}`), // Empty settings, not nil.
 							SecureSettings: map[string]string{
