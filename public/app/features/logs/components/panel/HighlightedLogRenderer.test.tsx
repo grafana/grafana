@@ -34,7 +34,7 @@ describe('HighlightedLogRenderer', () => {
       }
     );
 
-    const { container } = render(<HighlightedLogRenderer log={log} />);
+    const { container } = render(<HighlightedLogRenderer tokens={log.highlightedBodyTokens} />);
 
     expect(container.innerHTML).toEqual(log.highlightedBody);
   });
@@ -177,7 +177,7 @@ describe('HighlightedLogRenderer', () => {
       }
     );
 
-    const { container } = render(<HighlightedLogRenderer log={log} />);
+    const { container } = render(<HighlightedLogRenderer tokens={log.highlightedBodyTokens} />);
 
     expect(container.innerHTML).toEqual(log.highlightedBody);
   });
@@ -201,7 +201,7 @@ describe('HighlightedLogRenderer', () => {
       }
     );
 
-    const { container } = render(<HighlightedLogRenderer log={log} />);
+    const { container } = render(<HighlightedLogRenderer tokens={log.highlightedBodyTokens} />);
 
     expect(container.innerHTML).toEqual(log.highlightedBody);
   });

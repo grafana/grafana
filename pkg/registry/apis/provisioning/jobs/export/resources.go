@@ -98,10 +98,10 @@ func exportResource(ctx context.Context,
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) (err error) {
 		gvk := item.GroupVersionKind()
 		result := jobs.JobResourceResult{
-			Name:     item.GetName(),
-			Resource: resource,
-			Group:    gvk.Group,
-			Action:   repository.FileActionCreated,
+			Name:   item.GetName(),
+			Group:  gvk.Group,
+			Kind:   gvk.Kind,
+			Action: repository.FileActionCreated,
 		}
 
 		// Check if resource is already managed by a repository
