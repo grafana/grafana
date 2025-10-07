@@ -33,7 +33,7 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 		return err
 	}
 
-	// TODO, before v1 and v2 final -- this should be required
+	// TODO? before v1 and v2 final -- this should be required
 	if meta.GetFolder() == "" {
 		meta.SetFolder(rootFolder) // "general"
 	}
