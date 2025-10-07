@@ -15,8 +15,8 @@ import {
   COLOR_DEFAULTS,
   DISPLAY_NAMES,
   LAYOUT_CONSTANTS,
+  TYPOGRAPHY_CONSTANTS,
   VISUAL_CONSTANTS,
-  getResponsiveComponentWidth,
   getResponsiveGroupSpacing,
 } from '../constants';
 import { GraphData, PanelOptions } from '../types';
@@ -85,12 +85,8 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
       exposedComponentGroups.get(comp.providingPlugin)!.push(comp.id);
     });
 
-    const componentBoxWidth = getResponsiveComponentWidth(width);
-    const originalComponentHeight = 60; // Fixed height to match our constants
-    let componentBoxHeight = originalComponentHeight;
-
-    // Always add extra height for descriptions in expose mode since we always show them
-    componentBoxHeight += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
+    const componentBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH; // Use same width as other views
+    const componentBoxHeight = 60; // Two-line boxes (title + ID)
 
     return (
       <g>
@@ -133,7 +129,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                     {/* Individual exposed component box */}
                     <rect
                       x={compPos.x}
-                      y={compPos.y - originalComponentHeight / 2}
+                      y={compPos.y - componentBoxHeight / 2}
                       width={componentBoxWidth}
                       height={componentBoxHeight}
                       fill={theme.colors.warning.main}
@@ -172,23 +168,10 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       y={compPos.y + 15}
                       textAnchor="middle"
                       fill={theme.colors.getContrastText(theme.colors.warning.main)}
-                      style={{ fontSize: '12px', pointerEvents: 'none' }}
+                      style={{ fontSize: `${TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}px`, pointerEvents: 'none' }}
                     >
                       {exposedComponent.id}
                     </text>
-
-                    {/* Description text underneath component ID - always show in expose mode */}
-                    {exposedComponent?.description && exposedComponent.description.trim() !== '' && (
-                      <text
-                        x={compPos.x + componentBoxWidth / 2}
-                        y={compPos.y + 30}
-                        textAnchor="middle"
-                        fill={theme.colors.getContrastText(theme.colors.warning.main)}
-                        style={{ fontSize: '10px', pointerEvents: 'none' }}
-                      >
-                        {exposedComponent.description}
-                      </text>
-                    )}
                   </g>
                 );
               })}
@@ -199,7 +182,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 y={firstCompPos.groupY + 25}
                 textAnchor="start"
                 fill={theme.colors.text.primary}
-                fontSize="16"
+                fontSize={TYPOGRAPHY_CONSTANTS.SECTION_HEADER_SIZE}
                 fontWeight="bold"
               >
                 {getDisplayName(providingPlugin)}
@@ -255,7 +238,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
     });
 
     const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
-    const extensionBoxHeight = 60 + LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING; // Add space for descriptions
+    const extensionBoxHeight = 60; // Two-line boxes (title + ID)
 
     return (
       <g>
@@ -309,32 +292,24 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
                     />
 
-                    {/* Extension title - position dynamically based on description presence */}
-                    {(() => {
-                      const hasDescription = extension.description && extension.description.trim() !== '';
-                      const titleY = hasDescription ? extPos.y - 5 : extPos.y;
+                    {/* Extension title */}
+                    <text
+                      x={extPos.x + extensionBoxWidth / 2}
+                      y={extPos.y - 5}
+                      textAnchor="middle"
+                      fill={theme.colors.getContrastText(extensionColor)}
+                    >
+                      {extension.title || extension.id}
+                    </text>
 
-                      return (
-                        <text
-                          x={extPos.x + extensionBoxWidth / 2}
-                          y={titleY}
-                          textAnchor="middle"
-                          dominantBaseline={hasDescription ? undefined : 'middle'}
-                          fill={theme.colors.getContrastText(extensionColor)}
-                        >
-                          {extension.title || extension.id}
-                        </text>
-                      );
-                    })()}
-
-                    {/* Extension description - always show in extension point mode */}
+                    {/* Extension description */}
                     {extension.description && extension.description.trim() !== '' && (
                       <text
                         x={extPos.x + extensionBoxWidth / 2}
                         y={extPos.y + 15}
                         textAnchor="middle"
                         fill={theme.colors.getContrastText(extensionColor)}
-                        style={{ fontSize: '10px', pointerEvents: 'none' }}
+                        style={{ fontSize: `${TYPOGRAPHY_CONSTANTS.DESCRIPTION_SIZE}px`, pointerEvents: 'none' }}
                       >
                         {extension.description}
                       </text>
@@ -349,7 +324,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 y={firstExtPos.groupY + 25}
                 textAnchor="start"
                 fill={theme.colors.text.primary}
-                fontSize="16"
+                fontSize={TYPOGRAPHY_CONSTANTS.SECTION_HEADER_SIZE}
                 fontWeight="bold"
               >
                 {getDisplayName(providingPlugin)}
@@ -381,7 +356,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
     });
 
     const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
-    const extensionBoxHeight = 60;
+    const extensionBoxHeight = 60; // Two-line boxes (title + ID)
 
     return (
       <g>
@@ -445,37 +420,19 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                           />
 
                           {/* Extension point ID */}
-                          {(() => {
-                            const hasDescription =
-                              extensionPoint.description && extensionPoint.description.trim() !== '';
-                            const epIdY = hasDescription ? epPos.y - 5 : epPos.y;
-
-                            return (
-                              <text
-                                x={epPos.x + extensionBoxWidth / 2}
-                                y={epIdY}
-                                textAnchor="middle"
-                                dominantBaseline={hasDescription ? undefined : 'middle'}
-                                fill={theme.colors.getContrastText(theme.colors.primary.main)}
-                                style={{ fontSize: '12px', pointerEvents: 'none' }}
-                              >
-                                <tspan>{epId}</tspan>
-                              </text>
-                            );
-                          })()}
-
-                          {/* Extension point description */}
-                          {extensionPoint.description && extensionPoint.description.trim() !== '' && (
-                            <text
-                              x={epPos.x + extensionBoxWidth / 2}
-                              y={epPos.y + 10}
-                              textAnchor="middle"
-                              fill={theme.colors.getContrastText(theme.colors.primary.main)}
-                              style={{ fontSize: '10px', pointerEvents: 'none' }}
-                            >
-                              <tspan>{extensionPoint.description}</tspan>
-                            </text>
-                          )}
+                          <text
+                            x={epPos.x + extensionBoxWidth / 2}
+                            y={epPos.y}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            fill={theme.colors.getContrastText(theme.colors.primary.main)}
+                            style={{
+                              fontSize: `${TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}px`,
+                              pointerEvents: 'none',
+                            }}
+                          >
+                            <tspan>{epId}</tspan>
+                          </text>
                         </g>
                       );
                     })}
@@ -489,7 +446,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 y={firstEpPos.groupY + 25}
                 textAnchor="start"
                 fill={theme.colors.text.primary}
-                fontSize="16"
+                fontSize={TYPOGRAPHY_CONSTANTS.SECTION_HEADER_SIZE}
                 fontWeight="bold"
               >
                 {getDisplayName(definingPlugin)}
@@ -521,14 +478,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
     });
 
     const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
-    const originalHeight = options.showDependencyTypes
-      ? LAYOUT_CONSTANTS.EXTENSION_BOX_HEIGHT
-      : LAYOUT_CONSTANTS.EXTENSION_BOX_HEIGHT_NO_TYPE;
-    let extensionBoxHeight = originalHeight;
-
-    if (options.showDescriptions) {
-      extensionBoxHeight += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
-    }
+    const extensionBoxHeight = 60; // Two-line boxes (ID + description)
 
     return (
       <g>
@@ -610,14 +560,14 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
 
                 return (
                   <g key={`${definingPlugin}-${type}`}>
-                    {/* Type header - hide in addedlinks mode since all extensions are link extensions */}
-                    {options.visualizationMode !== 'addedlinks' && (
+                    {/* Type header - hide in addedlinks and add modes since all extensions are link extensions */}
+                    {options.visualizationMode !== 'addedlinks' && options.visualizationMode !== 'add' && (
                       <text
                         x={firstEpPos.x}
                         y={headerY}
                         textAnchor="start"
                         fill={theme.colors.text.primary}
-                        fontSize="12"
+                        fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
                         fontWeight="normal"
                         style={{
                           pointerEvents: 'none',
@@ -650,7 +600,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                           {/* Extension point box with type-specific color */}
                           <rect
                             x={epPos.x}
-                            y={epPos.y - originalHeight / 2}
+                            y={epPos.y - extensionBoxHeight / 2}
                             width={extensionBoxWidth}
                             height={extensionBoxHeight}
                             fill={extensionColor}
@@ -687,7 +637,10 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                                 textAnchor="middle"
                                 dominantBaseline={hasDescription ? undefined : 'middle'}
                                 fill={theme.colors.getContrastText(extensionColor)}
-                                style={{ fontSize: '12px', pointerEvents: 'none' }}
+                                style={{
+                                  fontSize: `${TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}px`,
+                                  pointerEvents: 'none',
+                                }}
                               >
                                 {epId}
                               </text>
@@ -701,7 +654,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                               y={options.showDependencyTypes ? epPos.y + 10 : epPos.y + 20}
                               textAnchor="middle"
                               fill={theme.colors.getContrastText(extensionColor)}
-                              style={{ fontSize: '10px', pointerEvents: 'none' }}
+                              style={{ fontSize: `${TYPOGRAPHY_CONSTANTS.DESCRIPTION_SIZE}px`, pointerEvents: 'none' }}
                             >
                               {extensionPoint.description}
                             </text>
@@ -749,7 +702,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 y={firstEpPos.groupY + 22}
                 textAnchor="start"
                 fill={theme.colors.text.primary}
-                fontSize="16"
+                fontSize={TYPOGRAPHY_CONSTANTS.SECTION_HEADER_SIZE}
                 fontWeight="bold"
               >
                 {getDisplayName(definingPlugin)}

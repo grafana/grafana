@@ -29,6 +29,74 @@ export interface PositionInfo {
   extensionType?: string; // Extension type for this position
 }
 
+// Unified spacing constants for grouped boxes (boxes inside boxes)
+const GROUPED_BOX_SPACING = {
+  // Spacing from main group heading to first inner box
+  HEADER_TO_FIRST_BOX: 40, // Increased from 25 to 40 to prevent overlap with heading
+  // Distance between last box and parent border
+  BOTTOM_PADDING: -16, // Larger negative padding to further reduce bottom spacing
+  // Gap between each inner box (8px gap between boxes)
+  INNER_BOX_GAP: 8,
+  // Type header spacing (used in views that have type headers)
+  TYPE_HEADER_SPACING: 40,
+  // Box heights based on content lines
+  BOX_HEIGHT_ONE_LINE: 50, // ID only
+  BOX_HEIGHT_TWO_LINES: 60, // Title + ID
+  BOX_HEIGHT_THREE_LINES: 80, // Title + ID + Description
+} as const;
+
+/**
+ * Unified positioning function for all grouped boxes.
+ * This ensures consistent spacing across all views.
+ */
+function calculateUnifiedGroupedBoxPositions(
+  currentGroupY: number,
+  itemIds: string[],
+  xPosition: number,
+  typeHeaderSpacing = 0,
+  boxHeights: number[] = []
+): { positions: Map<string, PositionInfo>; groupHeight: number } {
+  const positions = new Map<string, PositionInfo>();
+
+  // If no box heights provided, use default two-line height for all items
+  const heights =
+    boxHeights.length > 0 ? boxHeights : new Array(itemIds.length).fill(GROUPED_BOX_SPACING.BOX_HEIGHT_TWO_LINES);
+
+  // Calculate total height of all boxes plus gaps
+  const totalBoxHeight = heights.reduce((sum, height) => sum + height, 0);
+  const totalGapHeight = (itemIds.length - 1) * 8; // 8px gap between boxes
+
+  // Calculate group height
+  const groupHeight =
+    25 + // Heading height
+    GROUPED_BOX_SPACING.HEADER_TO_FIRST_BOX +
+    typeHeaderSpacing + // Space for type header (if any)
+    totalBoxHeight + // Sum of all box heights
+    totalGapHeight + // 8px gap between boxes
+    GROUPED_BOX_SPACING.BOTTOM_PADDING;
+
+  // Calculate positions using the same logic as "Added links" view
+  // The heading is at currentGroupY + 25, so first box should be at currentGroupY + 25 + HEADER_TO_FIRST_BOX
+  let currentY = currentGroupY + 25 + GROUPED_BOX_SPACING.HEADER_TO_FIRST_BOX;
+
+  // Add type header spacing if needed
+  currentY += typeHeaderSpacing;
+
+  let cumulativeHeight = 0;
+  itemIds.forEach((itemId, index) => {
+    const boxHeight = heights[index] || GROUPED_BOX_SPACING.BOX_HEIGHT_TWO_LINES;
+    positions.set(itemId, {
+      x: xPosition,
+      y: currentY + cumulativeHeight,
+      groupY: currentGroupY,
+      groupHeight: groupHeight,
+    });
+    cumulativeHeight += boxHeight + 8; // Add box height + 8px gap
+  });
+
+  return { positions, groupHeight };
+}
+
 /**
  * Calculate optimal node positions for the dependency graph layout.
  *
@@ -114,8 +182,8 @@ const calculateExposeLayout = (
     const rightMargin = getRightMargin(width);
     const consumerX = width - rightMargin - getResponsiveNodeWidth(width) / 2;
 
-    // Component spacing - always add extra spacing for descriptions in expose mode
-    let componentSpacing = 70; // Fixed spacing to match other functions
+    // Component spacing - use unified inner box gap
+    let componentSpacing = GROUPED_BOX_SPACING.BOX_HEIGHT_TWO_LINES + 8;
     componentSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
 
     const groupSpacing = getResponsiveGroupSpacing(height) + 30; // Extra space for dotted lines
@@ -134,7 +202,12 @@ const calculateExposeLayout = (
       });
 
       // Calculate group height based on components only - consumers will align with component height
-      const groupHeight = 80 + (componentIds.length - 1) * componentSpacing + 50; // Header space + components + 50px bottom padding
+      const groupHeight =
+        25 + // Heading height
+        GROUPED_BOX_SPACING.HEADER_TO_FIRST_BOX +
+        componentIds.length * GROUPED_BOX_SPACING.BOX_HEIGHT_TWO_LINES +
+        (componentIds.length - 1) * GROUPED_BOX_SPACING.INNER_BOX_GAP + // 8px gap between boxes
+        GROUPED_BOX_SPACING.BOTTOM_PADDING;
       const groupCenterY = currentGroupY + groupHeight / 2;
 
       // Position provider node (for layout calculation, but won't be rendered)
@@ -158,7 +231,13 @@ const calculateExposeLayout = (
         if (comp.providingPlugin === providingPlugin) {
           const componentIndex = componentIds.indexOf(comp.id);
           if (componentIndex !== -1) {
-            const componentY = currentGroupY + 70 + componentIndex * componentSpacing;
+            // Consumers align with components, so use the same spacing
+            const componentY =
+              currentGroupY +
+              25 + // Heading height
+              GROUPED_BOX_SPACING.HEADER_TO_FIRST_BOX +
+              28 + // Extra spacing
+              componentIndex * (GROUPED_BOX_SPACING.BOX_HEIGHT_TWO_LINES + GROUPED_BOX_SPACING.INNER_BOX_GAP);
             comp.consumers.forEach((consumerId) => {
               // If this consumer is already positioned, use the average of its positions
               if (consumerPositions.has(consumerId)) {
@@ -319,13 +398,16 @@ export const getExtensionPointPositions = (
   const positions = new Map<string, PositionInfo>();
   const margin = getResponsiveMargin(width);
 
-  let extensionPointSpacing = 65;
+  let extensionPointSpacing = GROUPED_BOX_SPACING.BOX_HEIGHT_TWO_LINES + 8;
   if (options.showDescriptions) {
     extensionPointSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
   }
 
   const groupSpacing = 40;
-  const typeHeaderSpacing = options.visualizationMode === 'addedlinks' ? 0 : 40; // No space for type headers in addedlinks mode
+  const typeHeaderSpacing =
+    options.visualizationMode === 'addedlinks' || options.visualizationMode === 'add'
+      ? 0
+      : GROUPED_BOX_SPACING.TYPE_HEADER_SPACING; // No space for type headers in addedlinks and add modes
   const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
   const rightSideX = width - margin - extensionBoxWidth - LAYOUT_CONSTANTS.ARROW_SAFETY_MARGIN;
 
@@ -333,49 +415,52 @@ export const getExtensionPointPositions = (
 
   Array.from(extensionPointGroups.entries()).forEach(([definingPlugin, typeGroups]) => {
     // Calculate total height for this plugin group
-    let totalGroupHeight = 40; // Base group height (moderately reduced bottom padding)
+    let totalGroupHeight = 25 + GROUPED_BOX_SPACING.HEADER_TO_FIRST_BOX; // Start with heading height + header spacing
     const typeOrder = ['function', 'component', 'link'];
 
     typeOrder.forEach((type) => {
       const extensionPointIds = typeGroups.get(type);
       if (extensionPointIds && extensionPointIds.length > 0) {
         totalGroupHeight += typeHeaderSpacing; // Space for type header
-        totalGroupHeight += extensionPointIds.length * extensionPointSpacing;
+        totalGroupHeight += extensionPointIds.length * GROUPED_BOX_SPACING.BOX_HEIGHT_TWO_LINES; // Box heights
+        totalGroupHeight += (extensionPointIds.length - 1) * GROUPED_BOX_SPACING.INNER_BOX_GAP; // 8px gap between boxes
       }
     });
+    totalGroupHeight += GROUPED_BOX_SPACING.BOTTOM_PADDING; // Add bottom padding
 
-    let currentY = currentGroupY + 66;
+    // Position extension points by type using unified positioning
+    let currentY = currentGroupY + 25 + GROUPED_BOX_SPACING.HEADER_TO_FIRST_BOX;
 
-    // Position extension points by type
     typeOrder.forEach((type) => {
       const extensionPointIds = typeGroups.get(type);
       if (extensionPointIds && extensionPointIds.length > 0) {
-        // Add space for type header (skip in addedlinks mode)
+        // Add space for type header
         currentY += typeHeaderSpacing;
 
         const typeHeaderY = typeHeaderSpacing > 0 ? currentY - typeHeaderSpacing : currentY;
-        extensionPointIds.forEach((epId, index) => {
-          const yPosition = currentY + index * extensionPointSpacing;
 
-          // Validate positions before setting
-          if (isNaN(yPosition) || isNaN(typeHeaderY) || isNaN(rightSideX)) {
-            console.warn(
-              `Invalid position calculated for extension point ${epId}: y=${yPosition}, typeHeaderY=${typeHeaderY}, x=${rightSideX}`
-            );
-            return;
-          }
+        // Use unified positioning function for this type group
+        // Extension points in Add/Added links mode are two-line boxes (title + ID), so use 60px height
+        const extensionPointBoxHeights = extensionPointIds.map(() => GROUPED_BOX_SPACING.BOX_HEIGHT_TWO_LINES);
+        const { positions: typePositions } = calculateUnifiedGroupedBoxPositions(
+          currentGroupY,
+          extensionPointIds,
+          rightSideX,
+          typeHeaderSpacing,
+          extensionPointBoxHeights
+        );
 
+        // Add type-specific information to positions
+        typePositions.forEach((pos, epId) => {
           positions.set(epId, {
-            x: rightSideX,
-            y: yPosition,
-            groupY: currentGroupY,
-            groupHeight: totalGroupHeight,
-            typeHeaderY: typeHeaderY, // Store type header position
+            ...pos,
+            typeHeaderY: typeHeaderY,
             extensionType: type,
           });
         });
 
-        currentY += extensionPointIds.length * extensionPointSpacing;
+        currentY +=
+          extensionPointIds.length * (GROUPED_BOX_SPACING.BOX_HEIGHT_TWO_LINES + GROUPED_BOX_SPACING.INNER_BOX_GAP);
       }
     });
 
@@ -422,10 +507,6 @@ export const getExposedComponentPositions = (
   const positions = new Map<string, PositionInfo>();
   const margin = getResponsiveMargin(width);
 
-  let componentSpacing = 70; // Adequate spacing between components (60px height + 10px margin)
-  // Always add extra spacing for descriptions in expose mode
-  componentSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
-
   const groupSpacing = getResponsiveGroupSpacing(height) + 30; // Extra space for dotted lines
 
   // Position components inside their provider boxes instead of at center
@@ -446,16 +527,20 @@ export const getExposedComponentPositions = (
       }
     });
 
-    // Calculate group height based on components only - consumers will align with component height
-    const groupHeight = 80 + (componentIds.length - 1) * componentSpacing + 40; // Header space + components + 40px bottom padding
+    // Use unified positioning function for consistent spacing
+    // Exposed components are two-line boxes (title + ID), so use 60px height
+    const componentBoxHeights = componentIds.map(() => GROUPED_BOX_SPACING.BOX_HEIGHT_TWO_LINES);
+    const { positions: componentPositions, groupHeight } = calculateUnifiedGroupedBoxPositions(
+      currentGroupY,
+      componentIds,
+      componentX,
+      0, // No type header spacing in expose mode
+      componentBoxHeights
+    );
 
-    componentIds.forEach((compId, index) => {
-      positions.set(compId, {
-        x: componentX,
-        y: currentGroupY + 64 + index * componentSpacing,
-        groupY: currentGroupY,
-        groupHeight: groupHeight,
-      });
+    // Add component positions to the main positions map
+    componentPositions.forEach((pos, compId) => {
+      positions.set(compId, pos);
     });
 
     currentGroupY += groupHeight + groupSpacing;
@@ -501,10 +586,6 @@ export const getExtensionPositions = (
   const positions = new Map<string, PositionInfo>();
   const margin = getResponsiveMargin(width);
 
-  let extensionSpacing = 70;
-  // Always add extra spacing for descriptions in extension point mode
-  extensionSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
-
   const groupSpacing = getResponsiveGroupSpacing(height) + 30;
   const leftSideX = margin + 20; // Position on the left side
 
@@ -512,17 +593,20 @@ export const getExtensionPositions = (
 
   // Process each app section
   Array.from(extensionGroups.entries()).forEach(([providingPlugin, extensionIds]) => {
-    const groupHeight = extensionIds.length * extensionSpacing + 30;
+    // Use unified positioning function for consistent spacing
+    // Extensions are two-line boxes (title + ID), so use 60px height
+    const extensionBoxHeights = extensionIds.map(() => GROUPED_BOX_SPACING.BOX_HEIGHT_TWO_LINES);
+    const { positions: extensionPositions, groupHeight } = calculateUnifiedGroupedBoxPositions(
+      currentGroupY,
+      extensionIds,
+      leftSideX,
+      0, // No type header spacing in extension point mode left side
+      extensionBoxHeights
+    );
 
-    let currentY = currentGroupY + 86;
-
-    extensionIds.forEach((extId, index) => {
-      positions.set(extId, {
-        x: leftSideX,
-        y: currentY + index * extensionSpacing,
-        groupY: currentGroupY,
-        groupHeight: groupHeight,
-      });
+    // Add extension positions to the main positions map
+    extensionPositions.forEach((pos, extId) => {
+      positions.set(extId, pos);
     });
 
     currentGroupY += groupHeight + groupSpacing;
@@ -580,7 +664,7 @@ export const getExtensionPointModePositions = (
   const positions = new Map<string, PositionInfo>();
   const margin = getResponsiveMargin(width);
 
-  let extensionPointSpacing = 70;
+  let extensionPointSpacing = GROUPED_BOX_SPACING.BOX_HEIGHT_TWO_LINES + 8;
   // Always add extra spacing for descriptions in extension point mode
   extensionPointSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
 
@@ -592,38 +676,47 @@ export const getExtensionPointModePositions = (
 
   // Process each defining plugin section
   Array.from(extensionPointGroups.entries()).forEach(([definingPlugin, typeGroups]) => {
-    // Calculate total height for this plugin group (no header spacing in extension point mode)
-    let totalGroupHeight = 20; // Base group height (moderately reduced bottom padding)
+    const typeHeaderSpacing = 0; // No type header spacing to match left side
     const typeOrder = ['function', 'component', 'link'];
 
+    // Collect all extension point IDs for this plugin group
+    const allExtensionPointIds: string[] = [];
     typeOrder.forEach((type) => {
       const extensionPointIds = typeGroups.get(type);
       if (extensionPointIds && extensionPointIds.length > 0) {
-        totalGroupHeight += extensionPointIds.length * extensionPointSpacing;
+        allExtensionPointIds.push(...extensionPointIds);
       }
     });
 
-    let currentY = currentGroupY + 76;
+    // Use unified positioning function for the entire plugin group
+    // Extension points are two-line boxes (ID + description), so use 60px height
+    const extensionPointBoxHeights = allExtensionPointIds.map(() => GROUPED_BOX_SPACING.BOX_HEIGHT_TWO_LINES);
+    const { positions: allPositions, groupHeight } = calculateUnifiedGroupedBoxPositions(
+      currentGroupY,
+      allExtensionPointIds,
+      rightSideX,
+      typeHeaderSpacing,
+      extensionPointBoxHeights
+    );
 
-    // Position extension points by type (no header spacing in extension point mode)
+    // Add type-specific information to positions
     typeOrder.forEach((type) => {
       const extensionPointIds = typeGroups.get(type);
       if (extensionPointIds && extensionPointIds.length > 0) {
-        extensionPointIds.forEach((epId, index) => {
-          positions.set(epId, {
-            x: rightSideX,
-            y: currentY + index * extensionPointSpacing,
-            groupY: currentGroupY,
-            groupHeight: totalGroupHeight,
-            extensionType: type,
-          });
+        extensionPointIds.forEach((epId) => {
+          const pos = allPositions.get(epId);
+          if (pos) {
+            positions.set(epId, {
+              ...pos,
+              typeHeaderY: pos.y - typeHeaderSpacing, // Calculate type header position
+              extensionType: type,
+            });
+          }
         });
-
-        currentY += extensionPointIds.length * extensionPointSpacing;
       }
     });
 
-    currentGroupY += totalGroupHeight + groupSpacing;
+    currentGroupY += groupHeight + groupSpacing;
   });
 
   return positions;
@@ -728,7 +821,7 @@ export const calculateContentHeight = (
 
     Array.from(extensionPointGroups.entries()).forEach(([_, typeGroups]) => {
       let groupHeight = 20; // Base group height
-      const typeHeaderSpacing = 40; // Space for type headers
+      const typeHeaderSpacing = GROUPED_BOX_SPACING.TYPE_HEADER_SPACING; // Space for type headers
       const typeOrder = ['function', 'component', 'link'];
 
       typeOrder.forEach((type) => {

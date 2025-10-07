@@ -4,15 +4,13 @@
  * Renders dependency links/arrows between nodes in the dependency graph.
  */
 
-import { SerializedStyles } from '@emotion/react';
-import React from 'react';
+import { LAYOUT_CONSTANTS, VISUAL_CONSTANTS, getResponsiveNodeWidth } from '../constants';
+import { NodeWithPosition, PositionInfo } from './GraphLayout';
 
 import { GrafanaTheme2 } from '@grafana/data';
-
-import { LAYOUT_CONSTANTS, VISUAL_CONSTANTS, getResponsiveComponentWidth, getResponsiveNodeWidth } from '../constants';
 import { GraphData } from '../types';
-
-import { NodeWithPosition, PositionInfo } from './GraphLayout';
+import React from 'react';
+import { SerializedStyles } from '@emotion/react';
 
 interface LinkRendererProps {
   theme: GrafanaTheme2;
@@ -150,7 +148,7 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
 
     const arrows: React.JSX.Element[] = [];
     const nodeWidth = getResponsiveNodeWidth(width);
-    const componentBoxWidth = getResponsiveComponentWidth(width);
+    const componentBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH; // Use same width as other views
 
     data.exposedComponents.forEach((exposedComponent) => {
       const componentPos = exposedComponentPositions.get(exposedComponent.id);
@@ -158,7 +156,7 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
         return;
       }
 
-      // Arrows: Section-specific consumers → Component (within same provider section only)
+      // Arrows: Consumer → Component (pointing to the right side of the component box)
       exposedComponent.consumers.forEach((consumerId) => {
         // Find the section-specific consumer instance for this provider
         const sectionConsumerNode = nodes.find(
@@ -167,29 +165,31 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
 
         if (sectionConsumerNode) {
           // Check if this specific arrow should be highlighted
-          const isThisArrowHighlighted =
+          const isConsumerArrowHighlighted =
             selectedExposedComponent === exposedComponent.id || selectedContentConsumer === consumerId;
 
-          // Simple straight line within the same section - adjust end position so arrowhead is visible
-          const startX = sectionConsumerNode.x - nodeWidth / 2;
-          const startY = sectionConsumerNode.y;
-          const endX = componentPos.x + componentBoxWidth + 5; // End outside the component box
-          const endY = componentPos.y;
+          // Arrow from consumer to component - pointing to the right side of the component box
+          const consumerStartX = sectionConsumerNode.x - nodeWidth / 2; // Start at left edge of consumer box
+          const consumerStartY = sectionConsumerNode.y;
+          const componentEndX = componentPos.x + componentBoxWidth + 5; // End at right edge of component box
+          const componentEndY = componentPos.y;
 
           arrows.push(
             <line
               key={`consumer-to-component-${exposedComponent.id}-${sectionConsumerNode.id}`}
-              x1={startX}
-              y1={startY}
-              x2={endX}
-              y2={endY}
-              stroke={isThisArrowHighlighted ? theme.colors.success.main : theme.colors.primary.main}
+              x1={consumerStartX}
+              y1={consumerStartY}
+              x2={componentEndX}
+              y2={componentEndY}
+              stroke={isConsumerArrowHighlighted ? theme.colors.success.main : theme.colors.primary.main}
               strokeWidth={
-                isThisArrowHighlighted ? VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH : VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH
+                isConsumerArrowHighlighted
+                  ? VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH
+                  : VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH
               }
-              markerEnd={isThisArrowHighlighted ? 'url(#arrowhead-highlighted)' : 'url(#arrowhead)'}
+              markerEnd={isConsumerArrowHighlighted ? 'url(#arrowhead-highlighted)' : 'url(#arrowhead)'}
               opacity={
-                (selectedExposedComponent || selectedContentConsumer) && !isThisArrowHighlighted
+                (selectedExposedComponent || selectedContentConsumer) && !isConsumerArrowHighlighted
                   ? VISUAL_CONSTANTS.UNSELECTED_OPACITY
                   : VISUAL_CONSTANTS.SELECTED_OPACITY
               }

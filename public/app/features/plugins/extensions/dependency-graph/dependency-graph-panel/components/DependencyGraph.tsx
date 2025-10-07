@@ -1,12 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
-
-import { t } from '@grafana/i18n';
-import { useTheme2 } from '@grafana/ui';
-
 import { GraphData, PanelOptions } from '../types';
-
-import { ArrowMarkers } from './ArrowMarkers';
-import { ExtensionRenderer } from './ExtensionRenderer';
 import {
   NodeWithPosition,
   calculateContentHeight,
@@ -16,10 +8,16 @@ import {
   getExtensionPointPositions,
   getExtensionPositions,
 } from './GraphLayout';
-import { getGraphStyles } from './GraphStyles';
+import React, { useEffect, useMemo, useState } from 'react';
+
+import { ArrowMarkers } from './ArrowMarkers';
+import { ExtensionRenderer } from './ExtensionRenderer';
 import { HeaderRenderer } from './HeaderRenderer';
 import { LinkRenderer } from './LinkRenderer';
 import { NodeRenderer } from './NodeRenderer';
+import { getGraphStyles } from './GraphStyles';
+import { t } from '@grafana/i18n';
+import { useTheme2 } from '@grafana/ui';
 
 interface DependencyGraphProps {
   data: GraphData;
@@ -45,6 +43,15 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
   // Memoized layout calculation
   const layoutNodes = useMemo(() => calculateLayout(data, options, width, height), [data, options, width, height]);
 
+  // Position calculations are now handled by the unified renderer
+
+  const contentHeight = useMemo(() => {
+    const calculatedHeight = calculateContentHeight(data, options, width, height, isExposeMode || isExtensionPointMode);
+    // For full height behavior, use the calculated height if it's larger than the available height
+    // This allows the content to expand beyond the viewport and make the page scrollable
+    return calculatedHeight;
+  }, [data, options, width, height, isExposeMode, isExtensionPointMode]);
+
   // Memoized position calculations
   const extensionPointPositions = useMemo(
     () => getExtensionPointPositions(data, options, width, height, isExposeMode),
@@ -65,13 +72,6 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
     () => getExtensionPointModePositions(data, options, width, height, isExtensionPointMode),
     [data, options, width, height, isExtensionPointMode]
   );
-
-  const contentHeight = useMemo(() => {
-    const calculatedHeight = calculateContentHeight(data, options, width, height, isExposeMode || isExtensionPointMode);
-    // For full height behavior, use the calculated height if it's larger than the available height
-    // This allows the content to expand beyond the viewport and make the page scrollable
-    return calculatedHeight;
-  }, [data, options, width, height, isExposeMode, isExtensionPointMode]);
 
   useEffect(() => {
     setNodes(layoutNodes);
