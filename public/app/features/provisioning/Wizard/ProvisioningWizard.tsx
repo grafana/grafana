@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getAppEvents, isFetchError } from '@grafana/runtime';
+import { getAppEvents, isFetchError, reportInteraction } from '@grafana/runtime';
 import { Box, Button, ConfirmModal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RepositoryViewList, useDeleteRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
@@ -14,7 +14,7 @@ import { getDefaultValues } from '../Config/defaults';
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
-import { dataToSpec } from '../utils/data';
+import { dataToSpec, getWorkflows } from '../utils/data';
 import { getFormErrors } from '../utils/getFormErrors';
 
 import { BootstrapStep } from './BootstrapStep';
@@ -209,6 +209,12 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
   const handleConfirmCancel = () => {
     setShowCancelConfirmation(false);
+    const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
+    reportInteraction('grafana_provisioning_wizard_cancelled', {
+      cancelledAtStep: activeStep,
+      stepIndex: currentStepIndex,
+      repositoryType: repoType,
+    });
     handleRepositoryDeletion(repoName);
   };
 
@@ -254,6 +260,16 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
     // Only navigate to provisioning URL if we're on the actual last step
     if (isLastStep) {
+      // Track repository creation success
+      const formData = getValues();
+      reportInteraction('grafana_provisioning_repository_created', {
+        repositoryType: repoType,
+        target: syncTarget,
+        syncEnabled: formData.repository.sync?.enabled ?? false,
+        workflowsEnabled: getWorkflows(formData.repository),
+        syncSkipped: shouldSkipSync,
+        requiresMigration: requiresMigration,
+      });
       navigate(PROVISIONING_URL);
     } else {
       let nextStepIndex = currentStepIndex + 1;
@@ -273,6 +289,15 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
         navigate(PROVISIONING_URL);
         return;
       }
+
+      // Track step completion
+      reportInteraction('grafana_provisioning_wizard_step_completed', {
+        step: activeStep,
+        stepIndex: currentStepIndex,
+        repositoryType: repoType,
+        syncSkipped: canSkipSync && activeStep === 'bootstrap',
+        target: syncTarget,
+      });
 
       setActiveStep(steps[nextStepIndex].id);
       setCompletedSteps((prev) => [...new Set([...prev, activeStep])]);
