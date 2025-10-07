@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 
 export const getAPINamespace = () => config.namespace;
 
@@ -10,4 +10,46 @@ export const getAPINamespace = () => config.namespace;
  */
 export const getAPIBaseURL = (group: string, version: string) => {
   return `/apis/${group}/${version}/namespaces/${getAPINamespace()}` as const;
+};
+
+/**
+ * Normalize error from various error formats into a string message
+ * @param e the raw error
+ * @returns string error message
+ */
+export const normalizeError = (e: unknown): string => {
+  if (!e) {
+    return 'Unknown error';
+  }
+
+  if (typeof e === 'object') {
+    if ('data' in e && e.data && typeof e.data === 'object' && 'message' in e.data) {
+      return String(e.data.message);
+    }
+
+    // Direct error with message property
+    if ('message' in e) {
+      return String(e.message);
+    }
+
+    // Nested error wrapper (RTK Query format)
+    if ('error' in e) {
+      if (e.error instanceof Error) {
+        return e.error.message;
+      } else if (isFetchError(e.error)) {
+        if (e.error.data && typeof e.error.data === 'object' && 'message' in e.error.data) {
+          return String(e.error.data.message);
+        }
+        if (Array.isArray(e.error.data.errors) && e.error.data.errors.length) {
+          return e.error.data.errors.join('\n');
+        }
+      }
+    }
+  }
+
+  if (e instanceof Error) {
+    return e.message;
+  }
+
+  return String(e);
 };
