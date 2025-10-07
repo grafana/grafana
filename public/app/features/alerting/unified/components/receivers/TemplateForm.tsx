@@ -32,9 +32,9 @@ import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
+import { EditorColumnHeader } from '../EditorColumnHeader';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { Spacer } from '../Spacer';
-import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 import {
   NotificationTemplate,
   useCreateNotificationTemplate,
