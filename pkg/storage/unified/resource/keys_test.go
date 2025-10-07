@@ -181,3 +181,88 @@ func TestVerifyRequestKey(t *testing.T) {
 		})
 	}
 }
+
+func TestVerifyRequestKeyCollection(t *testing.T) {
+	validGroup := "group.grafana.app"
+	validResource := "resource"
+	validNamespace := "default"
+	invalidName := "    " // only spaces
+
+	invalidGroup := "group.~~~~~grafana.app"
+	invalidResource := "##resource"
+	invalidNamespace := "(((((default"
+
+	namespaceTooLong := strings.Repeat("a", 61)
+
+	tests := []struct {
+		name         string
+		input        *resourcepb.ResourceKey
+		expectedCode int32
+	}{
+		{
+			name: "no error when all fields are set and valid",
+			input: &resourcepb.ResourceKey{
+				Namespace: validNamespace,
+				Group:     validGroup,
+				Resource:  validResource,
+			},
+		},
+		{
+			name: "invalid namespace returns error",
+			input: &resourcepb.ResourceKey{
+				Namespace: invalidNamespace,
+				Group:     validGroup,
+				Resource:  validResource,
+			},
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			name: "invalid group returns error",
+			input: &resourcepb.ResourceKey{
+				Namespace: validNamespace,
+				Group:     invalidGroup,
+				Resource:  validResource,
+			},
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			name: "invalid resource returns error",
+			input: &resourcepb.ResourceKey{
+				Namespace: validNamespace,
+				Group:     validGroup,
+				Resource:  invalidResource,
+			},
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			name: "invalid name returns no error",
+			input: &resourcepb.ResourceKey{
+				Namespace: validNamespace,
+				Group:     validGroup,
+				Resource:  validResource,
+				Name:      invalidName,
+			},
+		},
+		{
+			name: "namespace too long returns error",
+			input: &resourcepb.ResourceKey{
+				Namespace: namespaceTooLong,
+				Group:     validGroup,
+				Resource:  validResource,
+			},
+			expectedCode: http.StatusBadRequest,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := verifyRequestKeyCollection(test.input)
+			if test.expectedCode == 0 {
+				require.Nil(t, err)
+				return
+			}
+
+			require.Equal(t, test.expectedCode, err.Code)
+		})
+	}
+}

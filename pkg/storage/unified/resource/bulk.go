@@ -170,9 +170,9 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		})
 	}
 
-	// Verify all request keys are valid
+	// Verify all collection request keys are valid
 	for _, k := range settings.Collection {
-		if r := verifyRequestKey(k); r != nil {
+		if r := verifyRequestKeyCollection(k); r != nil {
 			return sendAndClose(&resourcepb.BulkResponse{
 				Error: &resourcepb.ErrorResult{
 					Message: fmt.Sprintf("invalid request key: %s", r.Message),
