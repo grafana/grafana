@@ -337,20 +337,6 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
           binaryExpressionWithinFunctionArgs = child.getChild(BinaryExpr);
         }
 
-        // we should only block binary expressions that are plain number literals
-        // if the binary expression is of type: func() / literal, we should allow it
-        const tempChild = child.firstChild;
-        if (binaryExpressionWithinFunctionArgs && tempChild?.type.id === NumberDurationLiteral) {
-          context.errors.push({
-            text: t(
-              'grafana-prometheus.querybuilder.update-function-args.text.query-parsing-is-ambiguous',
-              'Query parsing is ambiguous.'
-            ),
-            from: binaryExpressionWithinFunctionArgs.from,
-            to: binaryExpressionWithinFunctionArgs.to,
-          });
-        }
-
         updateFunctionArgs(expr, child, context, op);
         child = child.nextSibling;
       }
