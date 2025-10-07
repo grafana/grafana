@@ -192,7 +192,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
         ],
       };
     }
-    console.log('dataFrame', dataFrame);
     return of({ key: target.refId, data: [dataFrame] }).pipe(delay(100));
   }
 
