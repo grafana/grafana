@@ -40,17 +40,13 @@ var (
 	ErrRetriesExhausted    = errors.New("retries exhausted")
 )
 
-type serverLock interface {
-	LockExecuteAndReleaseWithRetries(ctx context.Context, actionName string, timeConfig serverlock.LockTimeConfig, fn func(ctx context.Context), retryOpts ...serverlock.RetryOpt) error
-}
-
 type Service struct {
 	Cfg             *setting.Cfg
 	SocialService   social.Service
 	AuthInfoService login.AuthInfoService
 	sessionService  auth.UserTokenService
 	features        featuremgmt.FeatureToggles
-	serverLock      serverLock
+	serverLock      *serverlock.ServerLockService
 	tracer          tracing.Tracer
 
 	tokenRefreshDuration *prometheus.HistogramVec
