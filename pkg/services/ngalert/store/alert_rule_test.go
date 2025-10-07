@@ -1460,6 +1460,130 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 	})
 }
 
+// To address issues arising from case-insensitive collations in some databases (e.g., MySQL/MariaDB),
+func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	usr := models.UserUID("test")
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+	store.FeatureToggles = featuremgmt.WithFeatures()
+
+	gen := models.RuleGen.With(models.RuleMuts.WithOrgID(1))
+
+	// Create namespace and base group key
+	groupKey := models.GenerateGroupKey(1)
+
+	// Create groups with case-sensitive names: "TEST", "Test", "test"
+	groupKeyUpper := groupKey
+	groupKeyUpper.RuleGroup = "TEST"
+
+	groupKeyMixed := groupKey
+	groupKeyMixed.RuleGroup = "Test"
+
+	groupKeyLower := groupKey
+	groupKeyLower.RuleGroup = "test"
+
+	// Generate rules for each group
+	groupUpper := gen.With(gen.WithGroupKey(groupKeyUpper)).GenerateMany(2)
+	groupMixed := gen.With(gen.WithGroupKey(groupKeyMixed)).GenerateMany(2)
+	groupLower := gen.With(gen.WithGroupKey(groupKeyLower)).GenerateMany(2)
+
+	// Insert all rules
+	allRules := append(append(groupUpper, groupMixed...), groupLower...)
+	_, err := store.InsertAlertRules(context.Background(), &usr, allRules)
+	require.NoError(t, err)
+
+	t.Run("should order groups case-sensitively", func(t *testing.T) {
+		result, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: 1},
+		})
+		require.NoError(t, err)
+		require.Len(t, result, 6, "should return all 6 rules")
+
+		// Extract group names in order
+		var groupOrder []string
+		for _, rule := range result {
+			if len(groupOrder) == 0 || groupOrder[len(groupOrder)-1] != rule.RuleGroup {
+				groupOrder = append(groupOrder, rule.RuleGroup)
+			}
+		}
+
+		// Verify case-sensitive alphabetical ordering
+		// Expected order: "TEST", "Test", "test" (uppercase comes before lowercase in ASCII)
+		expectedOrder := []string{"TEST", "Test", "test"}
+		require.Equal(t, expectedOrder, groupOrder, "groups should be ordered case-sensitively")
+
+		// Verify each group contains the correct rules
+		groupRules := make(map[string][]*models.AlertRule)
+		for _, rule := range result {
+			groupRules[rule.RuleGroup] = append(groupRules[rule.RuleGroup], rule)
+		}
+
+		require.Len(t, groupRules["TEST"], 2, "TEST group should have 2 rules")
+		require.Len(t, groupRules["Test"], 2, "Test group should have 2 rules")
+		require.Len(t, groupRules["test"], 2, "test group should have 2 rules")
+	})
+
+	t.Run("should respect group limit with case-sensitive ordering", func(t *testing.T) {
+		// Test with limit of 2 groups - should get first 2 groups in case-sensitive order
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: 1},
+			Limit:               2,
+		})
+		require.NoError(t, err)
+		require.Len(t, result, 4, "should return 4 rules (2 rules from first 2 groups)")
+		require.NotEmpty(t, continueToken, "should have continue token when limit is reached")
+
+		// Extract group names from limited result
+		var limitedGroupOrder []string
+		for _, rule := range result {
+			if len(limitedGroupOrder) == 0 || limitedGroupOrder[len(limitedGroupOrder)-1] != rule.RuleGroup {
+				limitedGroupOrder = append(limitedGroupOrder, rule.RuleGroup)
+			}
+		}
+
+		// Should get first 2 groups in case-sensitive order: "TEST", "Test" or "test", "Test"
+		expectedLimitedOrder := []string{"TEST", "Test"}
+		require.Equal(t, expectedLimitedOrder, limitedGroupOrder, "limited result should contain first 2 groups in case-sensitive order")
+
+		// Continue from token to get remaining groups
+		remainingResult, nextToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: 1},
+			ContinueToken:       continueToken,
+		})
+		require.NoError(t, err)
+		require.Len(t, remainingResult, 2, "should return 2 rules from remaining group")
+		require.Empty(t, nextToken, "should not have continue token when all groups are fetched")
+
+		// Verify the remaining group is "test"
+		for _, rule := range remainingResult {
+			require.Equal(t, "test", rule.RuleGroup, "remaining group should be 'test'")
+		}
+	})
+
+	t.Run("should handle group limit of 1 correctly", func(t *testing.T) {
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: 1},
+			Limit:               1,
+		})
+		require.NoError(t, err)
+		require.Len(t, result, 2, "should return 2 rules from first group")
+		require.NotEmpty(t, continueToken, "should have continue token")
+
+		// Should only get the first group "TEST"
+		for _, rule := range result {
+			require.Equal(t, "TEST", rule.RuleGroup, "should only return rules from TEST group")
+		}
+	})
+}
+
 func TestIntegrationIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
