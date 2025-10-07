@@ -6,6 +6,7 @@
 
 import { SerializedStyles } from '@emotion/react';
 import React from 'react';
+import semver from 'semver';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -22,6 +23,35 @@ import {
 import { GraphData, PanelOptions } from '../types';
 
 import { PositionInfo } from './GraphLayout';
+
+/**
+ * Polishes version strings by removing build metadata and pre-release identifiers
+ */
+function polishVersion(version: string): string {
+  try {
+    // Remove 'v' prefix if present for semver parsing
+    const cleanVersion = version.startsWith('v') ? version.slice(1) : version;
+
+    // Parse with semver to extract major.minor.patch
+    const parsed = semver.parse(cleanVersion);
+    if (parsed) {
+      // Return only major.minor.patch, ignoring pre-release and build metadata
+      return `v${parsed.major}.${parsed.minor}.${parsed.patch}`;
+    }
+
+    // Fallback: if semver parsing fails, try to extract just the version numbers
+    const versionMatch = cleanVersion.match(/^(\d+\.\d+\.\d+)/);
+    if (versionMatch) {
+      return `v${versionMatch[1]}`;
+    }
+
+    // If all else fails, return original version
+    return version;
+  } catch {
+    // If all else fails, return original version
+    return version;
+  }
+}
 
 interface ExtensionRendererProps {
   theme: GrafanaTheme2;
@@ -188,6 +218,25 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 {getDisplayName(providingPlugin)}
               </text>
 
+              {/* App version */}
+              {(() => {
+                const appNode = data.nodes.find((node) => node.id === providingPlugin);
+                if (appNode?.version) {
+                  return (
+                    <text
+                      x={firstCompPos.x + componentBoxWidth}
+                      y={firstCompPos.groupY + 25}
+                      textAnchor="end"
+                      fill={theme.colors.text.secondary}
+                      fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
+                    >
+                      <Trans i18nKey="dependency-graph.app-version">{polishVersion(appNode.version)}</Trans>
+                    </text>
+                  );
+                }
+                return null;
+              })()}
+
               {/* Dotted line separator between provider sections (except for the last one) */}
               {groupIndex < Array.from(exposedComponentGroups.entries()).length - 1 && (
                 <line
@@ -329,6 +378,25 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
               >
                 {getDisplayName(providingPlugin)}
               </text>
+
+              {/* App version */}
+              {(() => {
+                const appNode = data.nodes.find((node) => node.id === providingPlugin);
+                if (appNode?.version) {
+                  return (
+                    <text
+                      x={firstExtPos.x + extensionBoxWidth}
+                      y={firstExtPos.groupY + 25}
+                      textAnchor="end"
+                      fill={theme.colors.text.secondary}
+                      fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
+                    >
+                      <Trans i18nKey="dependency-graph.app-version">{polishVersion(appNode.version)}</Trans>
+                    </text>
+                  );
+                }
+                return null;
+              })()}
             </g>
           );
         })}
@@ -451,6 +519,25 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
               >
                 {getDisplayName(definingPlugin)}
               </text>
+
+              {/* App version */}
+              {(() => {
+                const appNode = data.nodes.find((node) => node.id === definingPlugin);
+                if (appNode?.version) {
+                  return (
+                    <text
+                      x={firstEpPos.x + extensionBoxWidth}
+                      y={firstEpPos.groupY + 25}
+                      textAnchor="end"
+                      fill={theme.colors.text.secondary}
+                      fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
+                    >
+                      <Trans i18nKey="dependency-graph.app-version">{polishVersion(appNode.version)}</Trans>
+                    </text>
+                  );
+                }
+                return null;
+              })()}
             </g>
           );
         })}
