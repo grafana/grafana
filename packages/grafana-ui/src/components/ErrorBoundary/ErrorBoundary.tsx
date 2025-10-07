@@ -14,8 +14,8 @@ export interface ErrorBoundaryApi {
 }
 
 interface Props {
-  /** Unique identifier for the error boundary. Used when reporting errors in Faro. */
-  id?: string;
+  /** Name of the error boundary. Used when reporting errors in Faro. */
+  boundaryName?: string;
 
   children: (r: ErrorBoundaryApi) => ReactNode;
   /** Will re-render children after error if recover values changes */
@@ -46,7 +46,7 @@ export class ErrorBoundary extends PureComponent<Props, State> {
       faro?.api?.pushError(error, {
         type: 'boundary',
         context: {
-          source: this.props.id ?? 'unknown',
+          source: this.props.boundaryName ?? 'unknown',
         },
       });
     }
