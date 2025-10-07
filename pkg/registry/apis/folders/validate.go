@@ -95,7 +95,7 @@ func validateOnUpdate(ctx context.Context,
 	newParent := folderObj.GetFolder()
 
 	// If we move to root, we don't need to validate the depth.
-	if newParent == folder.RootFolderUID {
+	if newParent == folder.GeneralFolderUID {
 		return nil
 	}
 
