@@ -93,7 +93,7 @@ export const TransformationOperationRowHeader = (props: Props) => {
             'Edit transformation name'
           )}
           onClick={() => toggleIsRefIdEditing()}
-          data-testid="query-name-div"
+          data-testid="transformation-refid-div"
           type="button"
         >
           <span className={cx(styles.refIdStyle, !isStaticRefId && styles.placeholderText)}>
@@ -160,7 +160,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:hover, &:focus': {
-        '.query-name-edit-icon': {
+        '.transformation-refid-edit-icon': {
           visibility: 'visible',
         },
       },
@@ -176,7 +176,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         marginLeft: theme.spacing(1),
         visibility: 'hidden',
       }),
-      'query-name-edit-icon'
+      'transformation-refid-edit-icon'
     ),
     refIdInput: css({
       maxWidth: '300px',
