@@ -9,7 +9,6 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { Modal, Button } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
@@ -22,13 +21,13 @@ import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutMan
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
-import { layoutRegistry } from '../layouts-shared/layoutRegistry';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
+import { ConvertMixedGridsModal } from './ConvertMixedGridsModal';
 import { RowItem } from './RowItem';
 import { RowLayoutManagerRenderer } from './RowsLayoutManagerRenderer';
 
@@ -50,51 +49,6 @@ function mapIdToGridLayoutType(id?: string): GridLayoutType | undefined {
     default:
       return undefined;
   }
-}
-
-function ConvertMixedGridsModal({
-  availableIds,
-  onSelect,
-  onDismiss,
-}: {
-  availableIds: Set<string>;
-  onSelect: (id: string) => void;
-  onDismiss: () => void;
-}) {
-  const options = layoutRegistry.list(Array.from(availableIds));
-
-  return (
-    <Modal
-      isOpen={true}
-      title={t('dashboard.rows-layout.ungroup-convert-title', 'Convert mixed grids?')}
-      onDismiss={onDismiss}
-    >
-      <p>
-        {t(
-          'dashboard.rows-layout.ungroup-convert-text',
-          'All grids must be converted to the same type and positions will be lost.'
-        )}
-      </p>
-      <Modal.ButtonRow>
-        <Button variant="secondary" fill="outline" onClick={onDismiss}>
-          {t('dashboard.rows-layout.cancel', 'Cancel')}
-        </Button>
-        {options.map((opt) => (
-          <Button
-            icon={opt.icon}
-            key={opt.id}
-            variant="primary"
-            onClick={() => {
-              onSelect(opt.id);
-              onDismiss();
-            }}
-          >
-            {t('dashboard.rows-layout.convert-to', 'Convert to {{name}}', { name: opt.name })}
-          </Button>
-        ))}
-      </Modal.ButtonRow>
-    </Modal>
-  );
 }
 
 export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> implements DashboardLayoutManager {
@@ -196,10 +150,6 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return outlineChildren;
   }
 
-  public merge(other: DashboardLayoutManager) {
-    throw new Error('Not implemented');
-  }
-
   public convertAllRowsLayouts(gridLayoutType: GridLayoutType) {
     for (const row of this.state.rows) {
       switch (gridLayoutType) {
@@ -298,7 +248,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
           if (layout instanceof RowsLayoutManager) {
             layout._ungroupRows(gridLayoutType);
           } else {
-            throw new Error('Not implemented');
+            throw new Error(`Ungrouping not supported for layout type: ${layout.descriptor.name}`);
           }
         }
       }
@@ -311,7 +261,12 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     const otherRows = this.state.rows.slice(1);
 
     for (const row of otherRows) {
-      firstRowLayout.merge(row.getLayout());
+      const layout = row.getLayout();
+      if (firstRowLayout.merge) {
+        firstRowLayout.merge(layout);
+      } else {
+        throw new Error(`Layout type ${firstRowLayout.descriptor.name} does not support merging`);
+      }
     }
 
     this.setState({ rows: [firstRow] });
@@ -321,7 +276,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   public removeRow(row: RowItem, skipUndo?: boolean) {
     // When removing last row replace ourselves with the inner row layout
     if (this.shouldUngroup()) {
-      ungroupLayout(this, row.state.layout, skipUndo);
+      ungroupLayout(this, row.state.layout, skipUndo ?? false);
       return;
     }
 
@@ -409,7 +364,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
         if (child instanceof SceneGridRow) {
           // Skip repeated row clones
-          if (child.state.repeatSourceKey) {
+          if ('repeatSourceKey' in child.state && child.state.repeatSourceKey) {
             return;
           }
 

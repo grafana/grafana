@@ -210,6 +210,9 @@ export class AutoGridLayoutManager
 
     // Remove from source and append to destination
     sourceLayout.setState({ children: [] });
+    movedChildren.forEach((child) => {
+      child.clearParent();
+    });
     this.state.layout.setState({ children: [...this.state.layout.state.children, ...movedChildren] });
   }
 

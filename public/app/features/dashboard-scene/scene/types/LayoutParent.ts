@@ -13,7 +13,8 @@ export interface LayoutParent extends SceneObject {
 
   /**
    * Switches the inner layout manager
-   * @param newLayout
+   * @param newLayout The new layout manager to switch to
+   * @param skipUndo If true, skips creating an undo entry for this operation
    */
   switchLayout(newLayout: DashboardLayoutManager, skipUndo?: boolean): void;
 }

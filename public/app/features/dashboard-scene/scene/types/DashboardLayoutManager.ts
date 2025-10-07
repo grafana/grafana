@@ -90,7 +90,7 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   /**
    * Merge the layout with another layout
    */
-  merge(other: DashboardLayoutManager): void;
+  merge?(other: DashboardLayoutManager): void;
 }
 
 export interface LayoutManagerSerializer {
