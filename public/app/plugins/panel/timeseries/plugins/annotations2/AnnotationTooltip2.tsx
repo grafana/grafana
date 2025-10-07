@@ -10,23 +10,30 @@ interface Props {
   annoVals: Record<string, any[]>;
   annoIdx: number;
   timeZone: string;
+  isPinned: boolean;
+  onClose: () => void;
   onEdit: () => void;
 }
 
 const retFalse = () => false;
 
-export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Props) => {
+export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, isPinned, onClose, onEdit }: Props) => {
   const annoId = annoVals.id?.[annoIdx];
 
   const styles = useStyles2(getStyles);
-
+  const focusRef = React.useRef<HTMLButtonElement | null>(null);
   const { canEditAnnotations = retFalse, canDeleteAnnotations = retFalse, onAnnotationDelete } = usePanelContext();
-
   const dashboardUID = annoVals.dashboardUID?.[annoIdx];
 
   // grafana can be configured to load alert rules from loki. Those annotations cannot be edited or deleted. The id being 0 is the best indicator the annotation came from loki
   const canEdit = annoId !== 0 && canEditAnnotations(dashboardUID);
   const canDelete = annoId !== 0 && canDeleteAnnotations(dashboardUID) && onAnnotationDelete != null;
+
+  React.useEffect(() => {
+    if (isPinned) {
+      focusRef.current?.focus();
+    }
+  }, [isPinned]);
 
   const timeFormatter = (value: number) =>
     dateTimeFormat(value, {
@@ -73,8 +80,20 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
             </span>
             {time}
           </div>
-          {(canEdit || canDelete) && (
-            <div className={styles.editControls}>
+          {(canEdit || canDelete || isPinned) && (
+            <div className={styles.controls}>
+              {isPinned && (
+                <IconButton
+                  name={'times'}
+                  size={'sm'}
+                  onClick={(e) => {
+                    // Don't trigger onClick
+                    e.stopPropagation();
+                    onClose();
+                  }}
+                  tooltip={t('timeseries.annotation-tooltip2.tooltip-close', 'Close')}
+                />
+              )}
               {canEdit && (
                 <IconButton
                   name={'pen'}
@@ -134,7 +153,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.primary,
     fontWeight: 400,
   }),
-  editControls: css({
+  controls: css({
     display: 'flex',
     '> :last-child': {
       marginLeft: 0,
