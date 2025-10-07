@@ -23,9 +23,11 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
+import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
 import { InlineSecureValueWarning } from '../components/InlineSecureValueWarning';
+import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { RepositoryFormData } from '../types';
 import { dataToSpec } from '../utils/data';
@@ -62,7 +64,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
     setError,
     watch,
     getValues,
-  } = useForm<RepositoryFormData>({ defaultValues: getDefaultValues(data?.spec) });
+  } = useForm<RepositoryFormData>({
+    defaultValues: getDefaultValues({
+      repository: data?.spec,
+      allowedTargets: settings.data?.allowedTargets,
+    }),
+  });
 
   const isEdit = Boolean(repositoryName);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
@@ -353,6 +360,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
               ? t('provisioning.config-form.button-saving', 'Saving...')
               : t('provisioning.config-form.button-save', 'Save')}
           </Button>
+          {repositoryName && data && (
+            <DeleteRepositoryButton name={repositoryName} repository={data} redirectTo={PROVISIONING_URL} />
+          )}
         </Stack>
       </Stack>
     </form>

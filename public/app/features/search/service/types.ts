@@ -1,6 +1,6 @@
 import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { PermissionLevelString } from 'app/types/acl';
+import { PermissionLevel } from 'app/types/acl';
 
 import { ManagerKind } from '../../apiserver/types';
 
@@ -39,7 +39,7 @@ export interface SearchQuery {
   limit?: number;
   from?: number;
   starred?: boolean;
-  permission?: PermissionLevelString;
+  permission?: PermissionLevel;
   deleted?: boolean;
   offset?: number;
 }
@@ -97,6 +97,7 @@ export interface GrafanaSearcher {
   tags: (query: SearchQuery) => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
   sortPlaceholder?: string;
+  getLocationInfo: () => Promise<Record<string, LocationInfo>>;
 
   /** Gets the default sort used for the Folder view */
   getFolderViewSort: () => string;

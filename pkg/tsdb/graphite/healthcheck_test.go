@@ -42,7 +42,7 @@ func (rt *healthCheckFailRoundTripper) RoundTrip(req *http.Request) (*http.Respo
 		Status:        "400",
 		StatusCode:    400,
 		Header:        nil,
-		Body:          nil,
+		Body:          io.NopCloser(strings.NewReader("this is a failed healthcheck")),
 		ContentLength: 0,
 		Request:       req,
 	}, nil
@@ -107,7 +107,7 @@ func Test_CheckHealth(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, backend.HealthStatusError, res.Status)
 		assert.Equal(t, "Graphite health check failed. See details below", res.Message)
-		assert.Equal(t, []byte("{\"verboseMessage\": \"request failed, status: 400\" }"), res.JSONDetails)
+		assert.Equal(t, []byte("{\"verboseMessage\": \"request failed with error: this is a failed healthcheck\" }"), res.JSONDetails)
 	})
 }
 

@@ -11,7 +11,7 @@ export const MakeDashboardEditableButton = ({ dashboard }: ToolbarActionProps) =
     <Button
       disabled={playlistSrv.state.isPlaying}
       onClick={() => {
-        trackDashboardSceneEditButtonClicked();
+        trackDashboardSceneEditButtonClicked(dashboard.state.uid);
         dashboard.onEnterEditMode();
         dashboard.setState({ editable: true, meta: { ...dashboard.state.meta, canEdit: true } });
       }}

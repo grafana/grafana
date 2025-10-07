@@ -74,7 +74,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
         <Box>
           <PluginInsights pluginInsights={plugin.insights} />
         </Box>
-        <Box padding={2} borderColor="medium" borderStyle="solid">
+        <Box borderRadius="lg" padding={2} borderColor="medium" borderStyle="solid">
           <Stack direction="column" gap={2}>
             {pluginExtentionsInfo.map((infoItem, index) => {
               return (
@@ -102,7 +102,13 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
         </Box>
         {shouldRenderLinks && (
           <>
-            <Box padding={2} borderColor="medium" borderStyle="solid" data-testid="plugin-details-regular-links">
+            <Box
+              borderRadius="lg"
+              padding={2}
+              borderColor="medium"
+              borderStyle="solid"
+              data-testid="plugin-details-regular-links"
+            >
               <Stack direction="column" gap={2}>
                 {plugin.details?.repositoryUrl && (
                   <LinkButton
@@ -169,7 +175,13 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
           </>
         )}
         {customLinks && customLinks?.length > 0 && (
-          <Box padding={2} borderColor="medium" borderStyle="solid" data-testid="plugin-details-custom-links">
+          <Box
+            borderRadius="lg"
+            padding={2}
+            borderColor="medium"
+            borderStyle="solid"
+            data-testid="plugin-details-custom-links"
+          >
             <CollapsableSection
               isOpen={true}
               label={
@@ -202,7 +214,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
           </Box>
         )}
         {!plugin?.isCore && (
-          <Box padding={2} borderColor="medium" borderStyle="solid">
+          <Box borderRadius="lg" padding={2} borderColor="medium" borderStyle="solid">
             <CollapsableSection
               headerDataTestId="reportConcern"
               isOpen={false}
