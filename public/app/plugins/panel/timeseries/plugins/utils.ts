@@ -14,7 +14,8 @@ export function getAnnotationFrames(dataFrames: DataFrame[] = []) {
   return dataFrames.filter(
     (frame) =>
       frame.name !== 'exemplar' &&
+      frame.meta?.dataTopic === DataTopic.Annotations &&
       frame.length > 0 &&
-      frame.fields.some((f) => f.name === 'time' && frame.meta?.dataTopic === DataTopic.Annotations)
+      frame.fields.some((f) => f.name === 'time')
   );
 }
