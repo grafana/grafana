@@ -16,12 +16,21 @@ import {
 
 import type { Props } from './DashboardEmpty';
 
-export const useOnAddVisualization = ({ dashboard, canCreate }: Props) => {
-  const dispatch = useDispatch();
-  const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
+export const useIsReadOnlyRepo = ({ dashboard }: Props) => {
   const { isReadOnlyRepo } = useGetResourceRepositoryView({
     folderName: dashboard instanceof DashboardScene ? dashboard.state.meta.folderUid : dashboard.meta.folderUid,
   });
+
+  return isReadOnlyRepo;
+};
+
+interface HookProps extends Props {
+  isReadOnlyRepo: boolean;
+}
+
+export const useOnAddVisualization = ({ dashboard, canCreate, isReadOnlyRepo }: HookProps) => {
+  const dispatch = useDispatch();
+  const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
 
   return useMemo(() => {
     if (!canCreate || isReadOnlyRepo) {
@@ -44,11 +53,8 @@ export const useOnAddVisualization = ({ dashboard, canCreate }: Props) => {
   }, [canCreate, isReadOnlyRepo, dashboard, dispatch, initialDatasource]);
 };
 
-export const useOnAddLibraryPanel = ({ dashboard, canCreate }: Props) => {
+export const useOnAddLibraryPanel = ({ dashboard, canCreate, isReadOnlyRepo }: HookProps) => {
   const isProvisioned = dashboard instanceof DashboardScene && dashboard.isManagedRepository();
-  const { isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: dashboard instanceof DashboardScene ? dashboard.state.meta.folderUid : dashboard.meta.folderUid,
-  });
 
   return useMemo(() => {
     if (!canCreate || isProvisioned || isReadOnlyRepo) {
@@ -66,11 +72,7 @@ export const useOnAddLibraryPanel = ({ dashboard, canCreate }: Props) => {
   }, [canCreate, isProvisioned, isReadOnlyRepo, dashboard]);
 };
 
-export const useOnImportDashboard = ({ dashboard, canCreate }: Props) => {
-  const { isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: dashboard instanceof DashboardScene ? dashboard.state.meta.folderUid : dashboard.meta.folderUid,
-  });
-
+export const useOnImportDashboard = ({ dashboard, canCreate, isReadOnlyRepo }: HookProps) => {
   return useMemo(() => {
     if (!canCreate || isReadOnlyRepo) {
       return undefined;
