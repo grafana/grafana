@@ -262,7 +262,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       reportInteraction('grafana_provisioning_repository_created', {
         repositoryType: repoType,
         target: syncTarget,
-        syncEnabled: formData.repository.sync?.enabled ?? false,
         workflowsEnabled: getWorkflows(formData.repository),
       });
       navigate(PROVISIONING_URL);
