@@ -172,37 +172,41 @@ export function useGetFolderQueryFacade(uid?: string) {
 }
 
 export function useDeleteFolderMutationFacade() {
-  const [deleteFolder] = useDeleteFolderMutation();
+  const [deleteFolderMutation] = useDeleteFolderMutation();
   const [deleteFolderLegacy] = useDeleteFolderMutationLegacy();
   const refresh = useRefreshFolders();
   const notify = useAppNotification();
 
-  return async (folder: FolderDTO) => {
-    if (config.featureToggles.foldersAppPlatformAPI) {
-      const result = await deleteFolder({ name: folder.uid });
-      if (!result.error) {
-        // we could do this in the enhanceEndpoint method, but we would also need to change the args as we need parentUID
-        // here and so it seemed easier to do it here.
-        refresh({ childrenOf: folder.parentUid });
-        // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
-        // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
-        notify.success(t('folders.api.folder-deleted-success', 'Folder deleted'));
-      }
-      return result;
-    } else {
-      return deleteFolderLegacy(folder);
+  // TODO right now the app platform backend does not support cascading delete of children so we cannot use it.
+  const isBackendSupport = false;
+  if (!(config.featureToggles.foldersAppPlatformAPI && isBackendSupport)) {
+    return deleteFolderLegacy;
+  }
+
+  return async function deleteFolder(folder: FolderDTO) {
+    const result = await deleteFolderMutation({ name: folder.uid });
+    if (!result.error) {
+      // we could do this in the enhanceEndpoint method, but we would also need to change the args as we need parentUID
+      // here and so it seemed easier to do it here.
+      refresh({ childrenOf: folder.parentUid });
+      // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
+      // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
+      notify.success(t('folders.api.folder-deleted-success', 'Folder deleted'));
     }
+    return result;
   };
 }
 
 export function useDeleteMultipleFoldersMutationFacade() {
-  const [deleteFolders] = useDeleteFoldersMutationLegacy();
+  const [deleteFoldersLegacy] = useDeleteFoldersMutationLegacy();
   const [deleteFolder] = useDeleteFolderMutation();
   const dispatch = useDispatch();
   const refresh = useRefreshFolders();
 
-  if (!config.featureToggles.foldersAppPlatformAPI) {
-    return deleteFolders;
+  // TODO right now the app platform backend does not support cascading delete of children so we cannot use it.
+  const isBackendSupport = false;
+  if (!(config.featureToggles.foldersAppPlatformAPI && isBackendSupport)) {
+    return deleteFoldersLegacy;
   }
 
   return async function deleteFolders({ folderUIDs }: DeleteFoldersArgs) {
