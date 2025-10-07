@@ -3,15 +3,13 @@ package store
 import (
 	"fmt"
 
-	jsoniter "github.com/json-iterator/go"
-
+	json "github.com/goccy/go-json"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// json is a drop-in replacement for encoding/json using json-iterator for better performance
-var jsonRangeToInstant = jsoniter.ConfigCompatibleWithStandardLibrary
+// Note: Using goccy/go-json imported as 'json' for better performance than encoding/json
 
 const (
 	grafanaCloudProm  = "grafanacloud-prom"
@@ -64,7 +62,7 @@ func canBeInstant(queries []models.AlertQuery) ([]Optimization, bool) {
 	for i := range queries {
 		var t dsType
 		// We can ignore the error here, the query just won't be optimized.
-		_ = jsonRangeToInstant.Unmarshal(queries[i].Model, &t)
+		_ = json.Unmarshal(queries[i].Model, &t)
 
 		switch t.DS.Type {
 		case datasources.DS_PROMETHEUS:
@@ -95,7 +93,7 @@ func canBeInstant(queries []models.AlertQuery) ([]Optimization, bool) {
 				continue
 			}
 			exprRaw := make(map[string]any)
-			if err := jsonRangeToInstant.Unmarshal(queries[ii].Model, &exprRaw); err != nil {
+			if err := json.Unmarshal(queries[ii].Model, &exprRaw); err != nil {
 				continue
 			}
 			// Second query part should use first query part as expression.
@@ -126,21 +124,21 @@ func canBeInstant(queries []models.AlertQuery) ([]Optimization, bool) {
 func migrateToInstant(queries []models.AlertQuery, optimizations []Optimization) error {
 	for _, opti := range optimizations {
 		modelRaw := make(map[string]any)
-		if err := jsonRangeToInstant.Unmarshal(queries[opti.i].Model, &modelRaw); err != nil {
+		if err := json.Unmarshal(queries[opti.i].Model, &modelRaw); err != nil {
 			return err
 		}
 		switch opti.t {
 		case datasources.DS_PROMETHEUS:
 			modelRaw["instant"] = true
 			modelRaw["range"] = false
-			model, err := jsonRangeToInstant.Marshal(modelRaw)
+			model, err := json.Marshal(modelRaw)
 			if err != nil {
 				return err
 			}
 			queries[opti.i].Model = model
 		case datasources.DS_LOKI:
 			modelRaw["queryType"] = "instant"
-			model, err := jsonRangeToInstant.Marshal(modelRaw)
+			model, err := json.Marshal(modelRaw)
 			if err != nil {
 				return err
 			}

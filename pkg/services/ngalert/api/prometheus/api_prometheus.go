@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	gojson "github.com/goccy/go-json"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
@@ -66,6 +67,42 @@ func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, status
 }
 
 const queryIncludeInternalLabels = "includeInternalLabels"
+
+// GoJsonResponse is a custom response type that uses goccy/go-json for faster JSON encoding.
+// This is specifically designed for the Prometheus rules API endpoint which can return large payloads.
+type GoJsonResponse struct {
+	status int
+	body   any
+}
+
+// Status returns the HTTP status code.
+func (r GoJsonResponse) Status() int {
+	return r.status
+}
+
+// Body returns nil as this is a streaming response.
+func (r GoJsonResponse) Body() []byte {
+	return nil
+}
+
+// WriteTo writes the JSON response using goccy/go-json encoder.
+func (r GoJsonResponse) WriteTo(ctx *contextmodel.ReqContext) {
+	ctx.Resp.Header().Set("Content-Type", "application/json; charset=utf-8")
+	ctx.Resp.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	ctx.Resp.WriteHeader(r.status)
+	enc := gojson.NewEncoder(ctx.Resp)
+	if err := enc.Encode(r.body); err != nil {
+		ctx.Logger.Error("Error encoding JSON with goccy/go-json", "err", err)
+	}
+}
+
+// newGoJsonResponse creates a new GoJsonResponse.
+func newGoJsonResponse(status int, body any) response.Response {
+	return &GoJsonResponse{
+		status: status,
+		body:   body,
+	}
+}
 
 func getBoolWithDefault(vals url.Values, field string, d bool) bool {
 	f := vals.Get(field)
@@ -266,7 +303,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		ruleResponse.Status = "error"
 		ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
 		ruleResponse.ErrorType = apiv1.ErrServer
-		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+		return newGoJsonResponse(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
 
 	allowedNamespaces := map[string]string{}
@@ -277,7 +314,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 			ruleResponse.Status = "error"
 			ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
 			ruleResponse.ErrorType = apiv1.ErrServer
-			return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+			return newGoJsonResponse(ruleResponse.HTTPStatusCode(), ruleResponse)
 		}
 		if hasAccess {
 			allowedNamespaces[namespaceUID] = folder.Fullpath
@@ -289,7 +326,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		ruleResponse.Status = "error"
 		ruleResponse.Error = fmt.Sprintf("failed to get provenances visible to the user: %s", err.Error())
 		ruleResponse.ErrorType = apiv1.ErrServer
-		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+		return newGoJsonResponse(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
 
 	ruleResponse = PrepareRuleGroupStatusesV2(
@@ -306,7 +343,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		provenanceRecords,
 	)
 
-	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+	return newGoJsonResponse(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
 
 // mutator function used to attach status to the rule
@@ -556,6 +593,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		DatasourceUIDs:  datasourceUIDs,
 		Limit:           storeLevelLimit,
 		ContinueToken:   storeLevelToken,
+		DisableCache:    false,
 	}
 	ruleList, continueToken, err := store.ListAlertRulesByGroup(opts.Ctx, &byGroupQuery)
 	if err != nil {

@@ -39,6 +39,7 @@ func hasAnyFilters(query *ngmodels.ListAlertRulesExtendedQuery) bool {
 		len(query.Labels) > 0 ||
 		query.DashboardUID != "" ||
 		query.PanelID != 0 ||
+		query.ReceiverName != "" ||
 		query.ContactPointName != "" ||
 		query.HidePluginRules ||
 		len(query.DatasourceUIDs) > 0
@@ -118,7 +119,12 @@ func matchesAllFilters(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesE
 		}
 	}
 
-	// Contact point filter
+	// Receiver name filter (from base query)
+	if query.ReceiverName != "" && !matchesContactPoint(rule, query.ReceiverName) {
+		return false
+	}
+
+	// Contact point filter (from extended query)
 	if query.ContactPointName != "" && !matchesContactPoint(rule, query.ContactPointName) {
 		return false
 	}

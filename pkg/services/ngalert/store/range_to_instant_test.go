@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	jsoniter "github.com/json-iterator/go"
+	json "github.com/goccy/go-json"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -12,8 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// jsonTest is used for tests to use the same json library as production code
-var jsonTest = jsoniter.ConfigCompatibleWithStandardLibrary
+// Note: Using goccy/go-json imported as 'json' for tests (same as production code)
 
 const (
 	promIsInstant    = true
@@ -67,10 +66,10 @@ func TestCanBeInstant(t *testing.T) {
 			expected: false,
 			rule: createMigratablePromRuleWithDefaultDS(t, func(r *models.AlertRule) {
 				raw := make(map[string]any)
-				err := jsonTest.Unmarshal(r.Data[0].Model, &raw)
+				err := json.Unmarshal(r.Data[0].Model, &raw)
 				require.NoError(t, err)
 				raw["range"] = false
-				r.Data[0].Model, err = jsonTest.Marshal(raw)
+				r.Data[0].Model, err = json.Marshal(raw)
 				require.NoError(t, err)
 			}),
 		},
@@ -132,10 +131,10 @@ func TestCanBeInstant(t *testing.T) {
 			expected: false,
 			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
 				raw := make(map[string]any)
-				err := jsonTest.Unmarshal(r.Data[1].Model, &raw)
+				err := json.Unmarshal(r.Data[1].Model, &raw)
 				require.NoError(t, err)
 				raw["expression"] = "C"
-				r.Data[1].Model, err = jsonTest.Marshal(raw)
+				r.Data[1].Model, err = json.Marshal(raw)
 				require.NoError(t, err)
 			}),
 		},
@@ -164,9 +163,9 @@ func TestIntegrationMigrateLokiQueryToInstant(t *testing.T) {
 	require.Equal(t, migrated.Data[0].QueryType, original.Data[0].QueryType)
 
 	originalModel := make(map[string]any)
-	require.NoError(t, jsonTest.Unmarshal(original.Data[0].Model, &originalModel))
+	require.NoError(t, json.Unmarshal(original.Data[0].Model, &originalModel))
 	migratedModel := make(map[string]any)
-	require.NoError(t, jsonTest.Unmarshal(migrated.Data[0].Model, &migratedModel))
+	require.NoError(t, json.Unmarshal(migrated.Data[0].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)
 
@@ -196,16 +195,16 @@ func TestIntegrationMigrateMultiLokiQueryToInstant(t *testing.T) {
 	require.Equal(t, migrated.Data[1].QueryType, original.Data[1].QueryType)
 
 	originalModel := make(map[string]any)
-	require.NoError(t, jsonTest.Unmarshal(original.Data[0].Model, &originalModel))
+	require.NoError(t, json.Unmarshal(original.Data[0].Model, &originalModel))
 	migratedModel := make(map[string]any)
-	require.NoError(t, jsonTest.Unmarshal(migrated.Data[0].Model, &migratedModel))
+	require.NoError(t, json.Unmarshal(migrated.Data[0].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)
 
 	originalModel = make(map[string]any)
-	require.NoError(t, jsonTest.Unmarshal(original.Data[1].Model, &originalModel))
+	require.NoError(t, json.Unmarshal(original.Data[1].Model, &originalModel))
 	migratedModel = make(map[string]any)
-	require.NoError(t, jsonTest.Unmarshal(migrated.Data[1].Model, &migratedModel))
+	require.NoError(t, json.Unmarshal(migrated.Data[1].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)
 
@@ -226,9 +225,9 @@ func TestIntegrationMigratePromQueryToInstant(t *testing.T) {
 	require.NoError(t, migrateToInstant(original.Data, optimizableIndices))
 
 	originalModel := make(map[string]any)
-	require.NoError(t, jsonTest.Unmarshal(original.Data[0].Model, &originalModel))
+	require.NoError(t, json.Unmarshal(original.Data[0].Model, &originalModel))
 	migratedModel := make(map[string]any)
-	require.NoError(t, jsonTest.Unmarshal(migrated.Data[0].Model, &migratedModel))
+	require.NoError(t, json.Unmarshal(migrated.Data[0].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)
 
@@ -255,16 +254,16 @@ func TestIntegrationMigrateMultiPromQueryToInstant(t *testing.T) {
 	require.Equal(t, optimizations[1].RefID, original.Data[1].RefID)
 
 	originalModel := make(map[string]any)
-	require.NoError(t, jsonTest.Unmarshal(original.Data[0].Model, &originalModel))
+	require.NoError(t, json.Unmarshal(original.Data[0].Model, &originalModel))
 	migratedModel := make(map[string]any)
-	require.NoError(t, jsonTest.Unmarshal(migrated.Data[0].Model, &migratedModel))
+	require.NoError(t, json.Unmarshal(migrated.Data[0].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)
 
 	originalModel = make(map[string]any)
-	require.NoError(t, jsonTest.Unmarshal(original.Data[1].Model, &originalModel))
+	require.NoError(t, json.Unmarshal(original.Data[1].Model, &originalModel))
 	migratedModel = make(map[string]any)
-	require.NoError(t, jsonTest.Unmarshal(migrated.Data[1].Model, &migratedModel))
+	require.NoError(t, json.Unmarshal(migrated.Data[1].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)
 

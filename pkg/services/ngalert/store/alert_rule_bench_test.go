@@ -5,14 +5,13 @@ import (
 	"testing"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
+	json "github.com/goccy/go-json"
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// jsonBench is used for benchmark tests to use the same json library as production code
-var jsonBench = jsoniter.ConfigCompatibleWithStandardLibrary
+// Note: Using goccy/go-json imported as 'json' for benchmark tests (same as production code)
 
 // generateTestAlertRules creates a slice of alertRule structs with realistic JSON data for benchmarking
 func generateTestAlertRules(count int) []alertRule {
@@ -217,21 +216,21 @@ func BenchmarkJSONParsing(b *testing.B) {
 	b.Run("ParseData", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			var data []ngmodels.AlertQuery
-			_ = jsonBench.Unmarshal([]byte(dataJSON), &data)
+			_ = json.Unmarshal([]byte(dataJSON), &data)
 		}
 	})
 
 	b.Run("ParseLabels", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			var labels map[string]string
-			_ = jsonBench.Unmarshal([]byte(labelsJSON), &labels)
+			_ = json.Unmarshal([]byte(labelsJSON), &labels)
 		}
 	})
 
 	b.Run("ParseAnnotations", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			var annotations map[string]string
-			_ = jsonBench.Unmarshal([]byte(annotationsJSON), &annotations)
+			_ = json.Unmarshal([]byte(annotationsJSON), &annotations)
 		}
 	})
 
@@ -240,9 +239,9 @@ func BenchmarkJSONParsing(b *testing.B) {
 			var data []ngmodels.AlertQuery
 			var labels map[string]string
 			var annotations map[string]string
-			_ = jsonBench.Unmarshal([]byte(dataJSON), &data)
-			_ = jsonBench.Unmarshal([]byte(labelsJSON), &labels)
-			_ = jsonBench.Unmarshal([]byte(annotationsJSON), &annotations)
+			_ = json.Unmarshal([]byte(dataJSON), &data)
+			_ = json.Unmarshal([]byte(labelsJSON), &labels)
+			_ = json.Unmarshal([]byte(annotationsJSON), &annotations)
 		}
 	})
 }

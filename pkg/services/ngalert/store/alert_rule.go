@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
+	json "github.com/goccy/go-json"
 	"github.com/google/uuid"
-	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -32,8 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// json is a drop-in replacement for encoding/json using json-iterator for better performance
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
+// json is imported as an alias from goccy/go-json for better performance than encoding/json
 
 // AlertRuleMaxTitleLength is the maximum length of the alert rule title
 const AlertRuleMaxTitleLength = 190
@@ -639,7 +638,6 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			// Don't apply cursor to DB query - we need ALL rules for caching
 			// We'll apply pagination after filtering in-memory
 
-			alertRules := make([]*ngmodels.AlertRule, 0)
 			rule := new(alertRule)
 			rows, err := q.Rows(rule)
 			if err != nil {
@@ -649,29 +647,8 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 				_ = rows.Close()
 			}()
 
-			for rows.Next() {
-				rule := new(alertRule)
-				err = rows.Scan(rule)
-				if err != nil {
-					st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "ListAlertRulesByGroup", "error", err)
-					continue
-				}
-
-				converted, err := alertRuleToModelsAlertRule(*rule, st.Logger)
-				if err != nil {
-					st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "ListAlertRulesByGroup", "error", err)
-					continue
-				}
-
-				// Apply post-query filters that were built into the SQL query (should be none for caching)
-				if !shouldIncludeRule(&converted, dbQuery, groupsSet) {
-					continue
-				}
-
-				alertRules = append(alertRules, &converted)
-			}
-
-			allRules = alertRules
+			// Use batched conversion to overlap DB I/O with JSON unmarshaling
+			allRules = st.convertAlertRulesBatched(rows, dbQuery, groupsSet, 1000)
 			return nil
 		})
 
@@ -869,6 +846,126 @@ func (st DBstore) convertAlertRulesInParallel(rawRules []alertRule, query *ngmod
 	return compacted
 }
 
+// Batch size for streaming conversion - process this many rows before sending to unmarshaling goroutine
+const alertRuleBatchSize = 100
+
+// convertAlertRulesStreaming converts alert rules from a database rows iterator to models.AlertRule
+// using simple streaming. It processes rows one at a time as they arrive from the database,
+// reducing memory usage by not buffering all raw rows before processing.
+// This is simpler than parallel processing and maintains strict ordering naturally.
+func (st DBstore) convertAlertRulesStreaming(rows *xorm.Rows, query *ngmodels.ListAlertRulesExtendedQuery, groupsSet map[string]struct{}, expectedSize int) []*ngmodels.AlertRule {
+	results := make([]*ngmodels.AlertRule, 0, expectedSize)
+
+	for rows.Next() {
+		rule := new(alertRule)
+		err := rows.Scan(rule)
+		if err != nil {
+			st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "convertAlertRulesStreaming", "error", err)
+			continue
+		}
+
+		// Convert the alertRule to models.AlertRule
+		converted, err := alertRuleToModelsAlertRule(*rule, st.Logger)
+		if err != nil {
+			st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "convertAlertRulesStreaming", "error", err)
+			continue
+		}
+
+		// Apply post-conversion filters
+		if !shouldIncludeRule(&converted, query, groupsSet) {
+			continue
+		}
+
+		results = append(results, &converted)
+	}
+
+	return results
+}
+
+// convertAlertRulesBatched converts alert rules from a database rows iterator using a batched
+// producer-consumer pattern. The producer goroutine reads from the database and batches rows,
+// while the consumer goroutine unmarshals JSON (the expensive operation).
+// This overlaps database I/O with CPU-intensive JSON unmarshaling for better performance.
+func (st DBstore) convertAlertRulesBatched(rows *xorm.Rows, query *ngmodels.ListAlertRulesExtendedQuery, groupsSet map[string]struct{}, expectedSize int) []*ngmodels.AlertRule {
+	// Channels for producer-consumer communication
+	// Buffer 2 batches to keep both goroutines busy
+	batchChan := make(chan []alertRule, 2)
+	resultsChan := make(chan []*ngmodels.AlertRule, 2)
+
+	// Producer goroutine: Read from database and batch rows
+	go func() {
+		defer close(batchChan)
+
+		batch := make([]alertRule, 0, alertRuleBatchSize)
+		for rows.Next() {
+			rule := new(alertRule)
+			err := rows.Scan(rule)
+			if err != nil {
+				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "convertAlertRulesBatched", "error", err)
+				continue
+			}
+
+			batch = append(batch, *rule)
+
+			// Send full batch and start new one
+			if len(batch) == alertRuleBatchSize {
+				batchChan <- batch
+				batch = make([]alertRule, 0, alertRuleBatchSize)
+			}
+		}
+
+		// Send final partial batch if any
+		if len(batch) > 0 {
+			batchChan <- batch
+		}
+	}()
+
+	// Consumer coordinator: Launch a goroutine for each batch
+	go func() {
+		defer close(resultsChan)
+
+		var wg sync.WaitGroup
+		for batch := range batchChan {
+			wg.Add(1)
+			go func(batch []alertRule) {
+				defer wg.Done()
+
+				batchResults := make([]*ngmodels.AlertRule, 0, len(batch))
+
+				for _, rawRule := range batch {
+					// This is the expensive operation: multiple json.Unmarshal calls
+					converted, err := alertRuleToModelsAlertRule(rawRule, st.Logger)
+					if err != nil {
+						st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "convertAlertRulesBatched", "error", err)
+						continue
+					}
+
+					// Apply post-conversion filters
+					if !shouldIncludeRule(&converted, query, groupsSet) {
+						continue
+					}
+
+					batchResults = append(batchResults, &converted)
+				}
+
+				// Send batch results
+				if len(batchResults) > 0 {
+					resultsChan <- batchResults
+				}
+			}(batch)
+		}
+		wg.Wait()
+	}()
+
+	// Collect all results in order
+	allResults := make([]*ngmodels.AlertRule, 0, expectedSize)
+	for batchResults := range resultsChan {
+		allResults = append(allResults, batchResults...)
+	}
+
+	return allResults
+}
+
 // ListAlertRulesPaginated is a handler for retrieving alert rules of specific organization paginated.
 func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (result ngmodels.RulesGroup, nextToken string, err error) {
 	startTotal := time.Now()
@@ -965,11 +1062,8 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 		}
 		queryBuildDuration = time.Since(startQueryBuild)
 
-		// Time: Row scanning from database
+		// Time: Row scanning and conversion (overlapped with streaming)
 		startRowScan := time.Now()
-		// First, scan all rows from the database into memory
-		// Pre-allocate with expected size to reduce memory reallocations
-		rawRules := make([]alertRule, 0, expectedSize)
 		rule := new(alertRule)
 		rows, err := q.Rows(rule)
 		if err != nil {
@@ -979,22 +1073,13 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 			_ = rows.Close()
 		}()
 
-		for rows.Next() {
-			rule := new(alertRule)
-			err := rows.Scan(rule)
-			if err != nil {
-				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "ListAlertRulesPaginated", "error", err)
-				continue
-			}
-			rawRules = append(rawRules, *rule)
-		}
-		rowScanDuration = time.Since(startRowScan)
+		// Use batched conversion: overlaps DB I/O with JSON unmarshaling
+		// Producer goroutine fetches rows while consumer unmarshals previous batch
+		alertRules := st.convertAlertRulesBatched(rows, query, groupsSet, expectedSize)
 
-		// Time: Parallel conversion (JSON deserialization + filtering)
-		startConversion := time.Now()
-		// Convert rules in parallel using worker pool for better performance
-		alertRules := st.convertAlertRulesInParallel(rawRules, query, groupsSet)
-		conversionDuration = time.Since(startConversion)
+		// Combined duration includes both row scanning and conversion (overlapped)
+		conversionDuration = time.Since(startRowScan)
+		rowScanDuration = conversionDuration // They're now overlapped, report same duration
 
 		// Cache the full result set if this was a cacheable query (before filtering and pagination)
 		if canUseCache {

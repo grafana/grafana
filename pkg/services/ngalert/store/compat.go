@@ -3,6 +3,8 @@ package store
 import (
 	"fmt"
 
+	json "github.com/goccy/go-json"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 
