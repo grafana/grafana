@@ -33,17 +33,28 @@ export const getFieldActions = (
   const actions: Array<ActionModel<Field>> = [];
   const actionLookup = new Set<string>();
 
-  const actionsModel = getActions(dataFrame, field, field.state!.scopedVars!, replaceVars, field.config.actions ?? [], {
-    valueRowIndex: rowIndex,
-  });
+  if (field.state?.scopedVars) {
+    const actionsModel = getActions(
+      dataFrame,
+      field,
+      field.state!.scopedVars!,
+      replaceVars,
+      field.config.actions ?? [],
+      {
+        valueRowIndex: rowIndex,
+      }
+    );
 
-  actionsModel.forEach((action) => {
-    const key = `${action.title}`;
-    if (!actionLookup.has(key)) {
-      actions.push(action);
-      actionLookup.add(key);
-    }
-  });
+    actionsModel.forEach((action) => {
+      const key = `${action.title}`;
+      if (!actionLookup.has(key)) {
+        actions.push(action);
+        actionLookup.add(key);
+      }
+    });
+  } else {
+    console.warn('no scoped vars!', field);
+  }
 
   return actions;
 };

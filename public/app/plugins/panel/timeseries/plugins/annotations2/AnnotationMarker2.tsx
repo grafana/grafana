@@ -5,7 +5,7 @@ import { useState } from 'react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { ActionModel, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
 import { floatingUtils, useStyles2 } from '@grafana/ui';
@@ -22,6 +22,7 @@ interface AnnoBoxProps {
   exitWipEdit?: null | (() => void);
   portalRoot: HTMLElement;
   links: LinkModel[];
+  actions: Array<ActionModel<Field>>;
 }
 
 const STATE_DEFAULT = 0;
@@ -37,6 +38,7 @@ export const AnnotationMarker2 = ({
   timeZone,
   portalRoot,
   links,
+  actions,
 }: AnnoBoxProps) => {
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
@@ -58,6 +60,7 @@ export const AnnotationMarker2 = ({
         timeZone={timeZone}
         onEdit={() => setState(STATE_EDITING)}
         links={links}
+        actions={actions}
       />
     ) : state === STATE_EDITING ? (
       <AnnotationEditor2
