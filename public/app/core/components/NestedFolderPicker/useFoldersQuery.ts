@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { PermissionLevelString } from 'app/types/acl';
+import { PermissionLevel } from 'app/types/acl';
 
 import { useFoldersQueryAppPlatform } from './useFoldersQueryAppPlatform';
 import { useFoldersQueryLegacy } from './useFoldersQueryLegacy';
@@ -8,7 +8,7 @@ import { useFoldersQueryLegacy } from './useFoldersQueryLegacy';
 export interface UseFoldersQueryProps {
   isBrowsing: boolean;
   openFolders: Record<string, boolean>;
-  permission?: PermissionLevelString;
+  permission?: PermissionLevel;
   rootFolderUID?: string;
   rootFolderItem?: DashboardsTreeItem;
 }
