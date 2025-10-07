@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
-const fs = require('node:fs');
-const { writeFile, readFile } = require('node:fs/promises');
+const { writeFile, readFile, mkdir, access } = require('node:fs/promises');
 
 const {
   CODEOWNERS_FILE_PATH,
@@ -35,9 +34,10 @@ async function generateCodeownersManifestComplete(
   filenamesByCodeownerPath,
   metadataPath
 ) {
-  const hasManifestDirectory = fs.existsSync(manifestDir);
-  if (!hasManifestDirectory) {
-    fs.mkdirSync(manifestDir, { recursive: true });
+  try {
+    await access(manifestDir);
+  } catch (error) {
+    await mkdir(manifestDir, { recursive: true });
   }
 
   const newMetadata = generateCodeownersMetadata(codeownersFilePath, manifestDir, 'metadata.json');
