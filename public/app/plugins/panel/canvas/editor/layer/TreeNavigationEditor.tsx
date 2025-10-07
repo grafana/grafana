@@ -6,7 +6,7 @@ import { Key, useEffect, useMemo, useState } from 'react';
 import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, FileUpload, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { frameSelection, reorderElements } from 'app/features/canvas/runtime/sceneElementManagement';
@@ -14,7 +14,7 @@ import { frameSelection, reorderElements } from 'app/features/canvas/runtime/sce
 import { getGlobalStyles } from '../../globalStyles';
 import { Options } from '../../panelcfg.gen';
 import { DragNode, DropNode } from '../../types';
-import { doSelect, getElementTypes, onAddItem } from '../../utils';
+import { doSelect, getElementTypes, onAddItem, onImportFile } from '../../utils';
 import { TreeViewEditorProps } from '../element/elementEditor';
 
 import { TreeNodeTitle } from './TreeNodeTitle';
@@ -165,6 +165,16 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
             label={t('canvas.tree-navigation-editor.label-add-item', 'Add item')}
           />
         </div>
+        <div className={styles.uploadFileButtonDiv}>
+          <FileUpload
+            className={styles.uploadFileButton}
+            size="sm"
+            accept=".svg"
+            onFileUpload={({ currentTarget }) => onImportFile(currentTarget, layer)}
+          >
+            <span>{t('canvas.tree-navigation-editor.upload-SVG-file', 'Upload SVG file')}</span>
+          </FileUpload>
+        </div>
         {selection.length > 0 && (
           <Button size="sm" variant="secondary" onClick={onClearSelection}>
             <Trans i18nKey="canvas.tree-navigation-editor.clear-selection">Clear selection</Trans>
@@ -183,6 +193,12 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
 const getStyles = (theme: GrafanaTheme2) => ({
   addLayerButton: css({
     marginLeft: '18px',
+    minWidth: 'calc(min(100px, 0.05vw))',
+  }),
+  uploadFileButton: css({
+    float: 'right',
+  }),
+  uploadFileButtonDiv: css({
     minWidth: '150px',
   }),
 });

@@ -12,6 +12,7 @@ import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
 
 import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray } from './types';
+// Remove import DxfParser from 'dxf-parser';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
   try {
@@ -415,5 +416,371 @@ export function removeStyles(styles: React.CSSProperties, target: HTMLDivElement
   for (const key in styles) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
     target.style[key as any] = '';
+  }
+}
+
+// In onImportFile, simplify to only handle draw.io
+export async function onImportFile(target: EventTarget & HTMLInputElement, rootLayer?: FrameState) {
+  if (target.files && target.files[0]) {
+    const file = target.files[0];
+    if (file.name.endsWith('.svg')) {
+      handleSVGFile(file, rootLayer);
+    }
+  }
+}
+
+interface SVGElementInfo {
+  markup: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+// Convert foreignObject to SVG text element
+function convertForeignObjectToText(element: SVGForeignObjectElement, width: number, height: number): string {
+  // Extract text content from nested divs
+  const textContent = element.textContent?.trim() || '';
+
+  if (!textContent) {
+    return '';
+  }
+
+  // Try to extract styling from nested divs
+  let fontSize = '12px';
+  let fontFamily = 'Helvetica, Arial, sans-serif';
+  let fill = '#000000';
+  let textAnchor = 'middle';
+  let alignmentBaseline = 'middle';
+  let fontWeight = 'normal';
+  let fontStyle = 'normal';
+
+  // Look for style information in the foreignObject's children
+  const divs = element.querySelectorAll('div');
+  for (const div of Array.from(divs)) {
+    const style = window.getComputedStyle(div);
+
+    if (style.fontSize && style.fontSize !== '0px') {
+      fontSize = style.fontSize;
+    }
+    if (style.fontFamily && style.fontFamily !== 'none') {
+      fontFamily = style.fontFamily.replace(/['"]/g, '');
+    }
+    if (style.color && style.color !== 'rgba(0, 0, 0, 0)') {
+      fill = style.color;
+    }
+    if (style.fontWeight && parseInt(style.fontWeight, 10) >= 600) {
+      fontWeight = 'bold';
+    }
+    if (style.fontStyle === 'italic') {
+      fontStyle = 'italic';
+    }
+
+    // Check text-align for text-anchor
+    const textAlign = style.textAlign;
+    if (textAlign === 'left' || textAlign === 'start') {
+      textAnchor = 'start';
+    } else if (textAlign === 'right' || textAlign === 'end') {
+      textAnchor = 'end';
+    } else if (textAlign === 'center') {
+      textAnchor = 'middle';
+    }
+
+    // Check align-items for vertical alignment
+    const alignItems = style.alignItems;
+    if (alignItems === 'flex-start' || alignItems === 'start') {
+      alignmentBaseline = 'hanging';
+    } else if (alignItems === 'flex-end' || alignItems === 'end') {
+      alignmentBaseline = 'baseline';
+    } else if (alignItems === 'center') {
+      alignmentBaseline = 'middle';
+    }
+  }
+
+  // Calculate text position within the element's local coordinate system
+  // The text should be positioned relative to (0, 0) since we're creating a new SVG with its own viewBox
+  let textX = 0;
+  let textY = 0;
+
+  // Adjust horizontal position based on text anchor and width
+  if (textAnchor === 'start') {
+    textX = 0;
+  } else if (textAnchor === 'middle') {
+    textX = width / 2;
+  } else if (textAnchor === 'end') {
+    textX = width;
+  }
+
+  // Adjust vertical position based on alignment and height
+  // For better visual centering, we need to account for font metrics
+  const fontSizeNum = parseFloat(fontSize);
+  if (alignmentBaseline === 'hanging') {
+    textY = 0;
+  } else if (alignmentBaseline === 'middle') {
+    // Use a slight offset to better center the text visually
+    // SVG's dominant-baseline="middle" aligns to the mathematical middle,
+    // but visually we want it slightly lower to account for descenders
+    textY = height / 2 + fontSizeNum * 0.1;
+  } else if (alignmentBaseline === 'baseline') {
+    textY = height;
+  }
+
+  // Create SVG text element with position and styling info
+  return `<text x="${textX}" y="${textY}" font-family="${fontFamily}" font-size="${fontSize}" fill="${fill}" text-anchor="${textAnchor}" dominant-baseline="${alignmentBaseline}" font-weight="${fontWeight}" font-style="${fontStyle}">${textContent}</text>`;
+}
+
+async function parseSVGToElements(svgText: string): Promise<SVGElementInfo[]> {
+  const elements: SVGElementInfo[] = [];
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgText, 'image/svg+xml');
+  const svg = doc.documentElement;
+
+  // Check for parsing errors
+  const parserError = svg.querySelector('parsererror');
+  if (parserError) {
+    throw new Error('Failed to parse SVG: ' + parserError.textContent);
+  }
+
+  // Create temporary SVG for measurements
+  const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  tempSvg.setAttribute('width', svg.getAttribute('width') || '1000');
+  tempSvg.setAttribute('height', svg.getAttribute('height') || '1000');
+  tempSvg.setAttribute('viewBox', svg.getAttribute('viewBox') || '0 0 1000 1000');
+  tempSvg.style.position = 'absolute';
+  tempSvg.style.left = '-9999px';
+  tempSvg.style.top = '-9999px';
+  document.body.appendChild(tempSvg);
+
+  // Clone the entire SVG content into temp SVG for accurate measurements
+  const clonedContent = svg.cloneNode(true);
+  if (clonedContent instanceof SVGSVGElement) {
+    // Copy all children from cloned SVG to temp SVG
+    while (clonedContent.firstChild) {
+      tempSvg.appendChild(clonedContent.firstChild);
+    }
+  }
+
+  // Recursively process all elements
+  function processElement(element: Element, depth = 0): void {
+    // Skip non-SVG elements
+    if (!(element instanceof SVGElement)) {
+      return;
+    }
+
+    // Skip defs, metadata, and other non-visual elements
+    const skipTags = ['defs', 'metadata', 'style', 'script', 'title', 'desc'];
+    if (skipTags.includes(element.tagName.toLowerCase())) {
+      return;
+    }
+
+    const tagName = element.tagName.toLowerCase();
+
+    // Special handling for foreignObject - treat it as a leaf element even if it has children
+    // because its children are HTML/text content, not SVG elements to be separated
+    const isForeignObject = tagName === 'foreignobject';
+
+    // Check if this element has any visual SVG children (not applicable for foreignObject)
+    const visualChildren = isForeignObject
+      ? []
+      : Array.from(element.children).filter((child) => {
+          if (!(child instanceof SVGElement)) {
+            return false;
+          }
+          const childTag = child.tagName.toLowerCase();
+          return !skipTags.includes(childTag);
+        });
+
+    // If element has visual children, recurse into them instead of adding this element
+    if (visualChildren.length > 0) {
+      for (const child of visualChildren) {
+        processElement(child, depth + 1);
+      }
+      return;
+    }
+
+    // Special handling for foreignObject - convert to text
+    if (isForeignObject && element instanceof SVGForeignObjectElement) {
+      let x = parseFloat(element.getAttribute('x') || '0');
+      let y = parseFloat(element.getAttribute('y') || '0');
+
+      // Don't parse percentage values as numbers - they'll be extracted from nested divs
+      const widthAttrRaw = element.getAttribute('width') || '0';
+      const heightAttrRaw = element.getAttribute('height') || '0';
+      let width = widthAttrRaw.includes('%') ? 0 : parseFloat(widthAttrRaw);
+      let height = heightAttrRaw.includes('%') ? 0 : parseFloat(heightAttrRaw);
+
+      // Handle percentage-based dimensions by extracting from nested div styles
+      const widthAttr = element.getAttribute('width');
+      const heightAttr = element.getAttribute('height');
+      if (widthAttr?.includes('%') || heightAttr?.includes('%') || width === 0 || height === 0) {
+        // Extract position and dimensions from nested div styles (draw.io uses margin-left, padding-top, width)
+        const divs = element.querySelectorAll('div');
+        for (const div of Array.from(divs)) {
+          const style = window.getComputedStyle(div);
+
+          // Check for inline styles first (more accurate for draw.io)
+          const inlineStyle = div.getAttribute('style') || '';
+
+          // Extract margin-left
+          const marginLeftMatch = inlineStyle.match(/margin-left:\s*(\d+)px/);
+          if (marginLeftMatch) {
+            x = parseFloat(marginLeftMatch[1]);
+          } else if (style.marginLeft && style.marginLeft !== '0px') {
+            x = parseFloat(style.marginLeft);
+          }
+
+          // Extract padding-top (used for vertical positioning in draw.io)
+          const paddingTopMatch = inlineStyle.match(/padding-top:\s*(\d+)px/);
+          if (paddingTopMatch) {
+            y = parseFloat(paddingTopMatch[1]);
+          } else if (style.paddingTop && style.paddingTop !== '0px') {
+            y = parseFloat(style.paddingTop);
+          }
+
+          // Extract width
+          const widthMatch = inlineStyle.match(/width:\s*(\d+)px/);
+          if (widthMatch) {
+            width = parseFloat(widthMatch[1]);
+          } else if (style.width && style.width !== 'auto' && !style.width.includes('%')) {
+            width = parseFloat(style.width);
+          }
+
+          // Extract height (often 1px in draw.io, we'll use font size as fallback)
+          const heightMatch = inlineStyle.match(/height:\s*(\d+)px/);
+          if (heightMatch) {
+            const h = parseFloat(heightMatch[1]);
+            if (h > 1) {
+              height = h;
+            }
+          } else if (style.height && style.height !== 'auto' && !style.height.includes('%')) {
+            const h = parseFloat(style.height);
+            if (h > 1) {
+              height = h;
+            }
+          }
+
+          // If we found position/size info, break
+          if (x > 0 || y > 0 || width > 0) {
+            // Use a reasonable default height if not specified or too small
+            if (height <= 1) {
+              const fontSize = parseFloat(style.fontSize || '12');
+              height = fontSize * 1.5; // Line height approximation
+            }
+
+            // Adjust y position - padding-top positions the container, but we need to account for
+            // the text being vertically centered within that container
+            // Subtract half the height to position the element so its center is at the padding-top position
+            if (y > 0) {
+              y = y - height / 2;
+            }
+            break;
+          }
+        }
+      }
+
+      if (width > 0 && height > 0) {
+        const textElement = convertForeignObjectToText(element, width, height);
+        if (textElement) {
+          // Create SVG with converted text element - no transform needed since text is already in relative coords
+          const shiftedMarkup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">${textElement}</svg>`;
+
+          elements.push({
+            markup: shiftedMarkup,
+            x,
+            y,
+            width,
+            height,
+          });
+        }
+      }
+      return;
+    }
+
+    // This is a leaf element - try to get bounding box
+    let bbox: DOMRect | null = null;
+    try {
+      // Check if element is an SVGGraphicsElement which has getBBox
+      if ('getBBox' in element && typeof element.getBBox === 'function') {
+        bbox = element.getBBox();
+      }
+    } catch (e) {
+      // Some elements don't support getBBox
+    }
+
+    // If element has valid dimensions, add it
+    if (bbox && bbox.width > 0 && bbox.height > 0) {
+      // Create shifted markup with proper viewBox
+      const shiftedMarkup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${bbox.width} ${bbox.height}"><g transform="translate(${-bbox.x} ${-bbox.y})">${element.outerHTML}</g></svg>`;
+
+      elements.push({
+        markup: shiftedMarkup,
+        x: bbox.x,
+        y: bbox.y,
+        width: bbox.width,
+        height: bbox.height,
+      });
+    }
+  }
+
+  // Start processing from the root
+  for (const child of Array.from(tempSvg.children)) {
+    processElement(child);
+  }
+
+  // Cleanup
+  document.body.removeChild(tempSvg);
+
+  console.log('Parsed SVG elements:', elements);
+  return elements;
+}
+
+export async function handleSVGFile(file: File, rootLayer?: FrameState) {
+  const fileText = await file.text();
+  try {
+    const elements = await parseSVGToElements(fileText);
+
+    if (rootLayer && elements.length > 0) {
+      // Get the SVG element item from registry
+      const svgItem = canvasElementRegistry.getIfExists('svg');
+      if (!svgItem) {
+        console.error('SVG element type not found in registry');
+        return;
+      }
+
+      // Add each parsed element to the canvas
+      for (const element of elements) {
+        const newElementOptions: CanvasElementOptions = {
+          ...svgItem.getNewOptions(),
+          type: 'svg',
+          name: rootLayer.scene.getNextElementName(),
+          placement: {
+            top: element.y,
+            left: element.x,
+            width: element.width,
+            height: element.height,
+            rotation: 0,
+          },
+          config: {
+            content: {
+              mode: 'fixed' as const,
+              fixed: element.markup,
+            },
+          },
+        };
+
+        const newElement = new ElementState(svgItem, newElementOptions, rootLayer);
+        newElement.updateData(rootLayer.scene.context);
+        rootLayer.elements.push(newElement);
+      }
+
+      // Save and update the scene
+      rootLayer.scene.save();
+      rootLayer.reinitializeMoveable();
+
+      console.log(`Added ${elements.length} SVG elements to canvas`);
+    }
+  } catch (error) {
+    console.error('Error parsing SVG file:', error);
   }
 }
