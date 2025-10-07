@@ -337,7 +337,14 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
               })}
 
               {/* App name header */}
-              <text x={firstExtPos.x} y={firstExtPos.groupY + 25} textAnchor="start" fill={theme.colors.text.primary}>
+              <text
+                x={firstExtPos.x}
+                y={firstExtPos.groupY + 25}
+                textAnchor="start"
+                fill={theme.colors.text.primary}
+                fontSize="16"
+                fontWeight="bold"
+              >
                 {getDisplayName(providingPlugin)}
               </text>
             </g>

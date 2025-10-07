@@ -588,7 +588,7 @@ export const getExtensionPointModePositions = (
       }
     });
 
-    let currentY = currentGroupY + 60;
+    let currentY = currentGroupY + 70;
 
     // Position extension points by type (no header spacing in extension point mode)
     typeOrder.forEach((type) => {
