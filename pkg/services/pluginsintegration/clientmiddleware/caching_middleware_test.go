@@ -4,10 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"sync"
-	"sync/atomic"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
@@ -25,9 +22,10 @@ func TestCachingMiddleware(t *testing.T) {
 		require.NoError(t, err)
 
 		cs := caching.NewFakeOSSCachingService()
+		cachingServiceClient := caching.ProvideCachingServiceClient(cs, nil)
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
-			handlertest.WithMiddlewares(NewCachingMiddleware(cs)),
+			handlertest.WithMiddlewares(NewCachingMiddleware(cachingServiceClient)),
 		)
 
 		jsonDataMap := map[string]any{}
@@ -78,9 +76,9 @@ func TestCachingMiddleware(t *testing.T) {
 		})
 
 		t.Run("If cache returns a miss, queries are issued and the update cache function is called", func(t *testing.T) {
-			origShouldCacheQuery := shouldCacheQuery
+			origShouldCacheQuery := caching.ShouldCacheQuery
 			var shouldCacheQueryCalled bool
-			shouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
+			caching.ShouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
 				shouldCacheQueryCalled = true
 				return true
 			}
@@ -88,7 +86,7 @@ func TestCachingMiddleware(t *testing.T) {
 			t.Cleanup(func() {
 				updateCacheCalled = false
 				shouldCacheQueryCalled = false
-				shouldCacheQuery = origShouldCacheQuery
+				caching.ShouldCacheQuery = origShouldCacheQuery
 				cs.Reset()
 			})
 
@@ -108,15 +106,16 @@ func TestCachingMiddleware(t *testing.T) {
 		})
 
 		t.Run("with async queries", func(t *testing.T) {
+			cachingServiceClient := caching.ProvideCachingServiceClient(cs, featuremgmt.WithFeatures(featuremgmt.FlagAwsAsyncQueryCaching))
 			asyncCdt := handlertest.NewHandlerMiddlewareTest(t,
 				WithReqContext(req, &user.SignedInUser{}),
 				handlertest.WithMiddlewares(
-					NewCachingMiddlewareWithFeatureManager(cs, featuremgmt.WithFeatures(featuremgmt.FlagAwsAsyncQueryCaching))),
+					NewCachingMiddleware(cachingServiceClient)),
 			)
 			t.Run("If shoudCacheQuery returns true update cache function is called", func(t *testing.T) {
-				origShouldCacheQuery := shouldCacheQuery
+				origShouldCacheQuery := caching.ShouldCacheQuery
 				var shouldCacheQueryCalled bool
-				shouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
+				caching.ShouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
 					shouldCacheQueryCalled = true
 					return true
 				}
@@ -124,7 +123,7 @@ func TestCachingMiddleware(t *testing.T) {
 				t.Cleanup(func() {
 					updateCacheCalled = false
 					shouldCacheQueryCalled = false
-					shouldCacheQuery = origShouldCacheQuery
+					caching.ShouldCacheQuery = origShouldCacheQuery
 					cs.Reset()
 				})
 
@@ -144,9 +143,9 @@ func TestCachingMiddleware(t *testing.T) {
 			})
 
 			t.Run("If shoudCacheQuery returns false update cache function is not called", func(t *testing.T) {
-				origShouldCacheQuery := shouldCacheQuery
+				origShouldCacheQuery := caching.ShouldCacheQuery
 				var shouldCacheQueryCalled bool
-				shouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
+				caching.ShouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
 					shouldCacheQueryCalled = true
 					return false
 				}
@@ -154,7 +153,7 @@ func TestCachingMiddleware(t *testing.T) {
 				t.Cleanup(func() {
 					updateCacheCalled = false
 					shouldCacheQueryCalled = false
-					shouldCacheQuery = origShouldCacheQuery
+					caching.ShouldCacheQuery = origShouldCacheQuery
 					cs.Reset()
 				})
 
@@ -199,9 +198,10 @@ func TestCachingMiddleware(t *testing.T) {
 		}
 
 		cs := caching.NewFakeOSSCachingService()
+		cachingServiceClient := caching.ProvideCachingServiceClient(cs, nil)
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
-			handlertest.WithMiddlewares(NewCachingMiddleware(cs)),
+			handlertest.WithMiddlewares(NewCachingMiddleware(cachingServiceClient)),
 			handlertest.WithResourceResponses([]*backend.CallResourceResponse{simulatedPluginResponse}),
 		)
 
@@ -275,9 +275,10 @@ func TestCachingMiddleware(t *testing.T) {
 		require.NoError(t, err)
 
 		cs := caching.NewFakeOSSCachingService()
+		cachingServiceClient := caching.ProvideCachingServiceClient(cs, nil)
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			// Skip the request context in this case
-			handlertest.WithMiddlewares(NewCachingMiddleware(cs)),
+			handlertest.WithMiddlewares(NewCachingMiddleware(cachingServiceClient)),
 		)
 		reqCtx := contexthandler.FromContext(req.Context())
 		require.Nil(t, reqCtx)
@@ -324,87 +325,4 @@ func TestCachingMiddleware(t *testing.T) {
 			cs.AssertCalls(t, "HandleResourceRequest", 0)
 		})
 	})
-}
-
-func TestRequestDeduplicationMiddleware(t *testing.T) {
-	t.Parallel()
-
-	t.Run("deduplicates requests issuing the same query", func(t *testing.T) {
-		t.Parallel()
-
-		handler := newMockMiddlewareHandler()
-		middleware := newRequestDeduplicationMiddleware(nil, handler)
-
-		req := backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					UID: "uid",
-				},
-			},
-		}
-
-		wg := &sync.WaitGroup{}
-		wg.Add(2)
-
-		for range 2 {
-			go func() {
-				defer wg.Done()
-				resp, err := middleware.QueryData(t.Context(), &req)
-				require.NoError(t, err)
-				require.Equal(t, &backend.QueryDataResponse{}, resp)
-			}()
-		}
-
-		wg.Wait()
-
-		require.EqualValues(t, 1, handler.QueryDataCalls)
-	})
-
-	t.Run("requests where DataSourceInstanceSettings is nil bypass request deduplication", func(t *testing.T) {
-		t.Parallel()
-
-		handler := newMockMiddlewareHandler()
-		middleware := newRequestDeduplicationMiddleware(nil, handler)
-
-		{
-			req := backend.QueryDataRequest{
-				PluginContext: backend.PluginContext{
-					DataSourceInstanceSettings: nil,
-				},
-			}
-
-			resp, err := middleware.QueryData(t.Context(), &req)
-			require.NoError(t, err)
-			require.Empty(t, resp)
-		}
-
-		{
-			req := backend.CallResourceRequest{
-				PluginContext: backend.PluginContext{
-					DataSourceInstanceSettings: nil,
-				},
-			}
-
-			require.NoError(t, middleware.CallResource(t.Context(), &req, nil))
-		}
-	})
-}
-
-type mockMiddlewareHandler struct {
-	backend.BaseHandler
-	QueryDataCalls int32
-}
-
-func newMockMiddlewareHandler() *mockMiddlewareHandler {
-	return &mockMiddlewareHandler{}
-}
-
-func (m *mockMiddlewareHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	atomic.AddInt32(&m.QueryDataCalls, 1)
-	time.Sleep(10 * time.Millisecond)
-	return &backend.QueryDataResponse{}, nil
-}
-
-func (m *mockMiddlewareHandler) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return nil
 }
