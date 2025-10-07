@@ -147,7 +147,7 @@ Refer to the following table for information on what to configure based on how y
 
 #### Use the `sub` claim for login
 
-Many OIDC providers expose a stable subject identifier in the `sub` claim. You can use it to populate the Grafana login by setting `login_attribute_path` to `sub`. Because email is still required, also make sure Grafana can resolve the user's email (for example by including the `email` scope or mapping a custom field via `email_attribute_path`).
+Most of the OAuth2 providers expose a stable subject identifier in the `sub` claim. You can use it to populate the Grafana login by setting `login_attribute_path` to `sub`. Because email is still required, also make sure Grafana can resolve the user's email (for example by including the `email` scope or mapping a custom field via `email_attribute_path`).
 
 Example configuration:
 
