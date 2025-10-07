@@ -173,6 +173,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       y={compPos.y + 15}
                       textAnchor="middle"
                       fill={theme.colors.getContrastText(theme.colors.warning.main)}
+                      style={{ fontSize: '12px', pointerEvents: 'none' }}
                     >
                       {exposedComponent.id}
                     </text>
@@ -441,19 +442,17 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                           </text>
 
                           {/* Extension point description */}
-                          {options.showDescriptions &&
-                            extensionPoint.description &&
-                            extensionPoint.description.trim() !== '' && (
-                              <text
-                                x={epPos.x + extensionBoxWidth / 2}
-                                y={epPos.y + 25}
-                                textAnchor="middle"
-                                fill={theme.colors.getContrastText(theme.colors.primary.main)}
-                                style={{ pointerEvents: 'none' }}
-                              >
-                                <tspan>{extensionPoint.description}</tspan>
-                              </text>
-                            )}
+                          {extensionPoint.description && extensionPoint.description.trim() !== '' && (
+                            <text
+                              x={epPos.x + extensionBoxWidth / 2}
+                              y={epPos.y + 10}
+                              textAnchor="middle"
+                              fill={theme.colors.getContrastText(theme.colors.primary.main)}
+                              style={{ fontSize: '10px', pointerEvents: 'none' }}
+                            >
+                              <tspan>{extensionPoint.description}</tspan>
+                            </text>
+                          )}
                         </g>
                       );
                     })}
@@ -652,10 +651,23 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                             y={options.showDependencyTypes ? epPos.y - 5 : epPos.y + 5}
                             textAnchor="middle"
                             fill={theme.colors.getContrastText(extensionColor)}
-                            style={{ pointerEvents: 'none' }}
+                            style={{ fontSize: '12px', pointerEvents: 'none' }}
                           >
                             {epId}
                           </text>
+
+                          {/* Extension point description - second line */}
+                          {extensionPoint?.description && extensionPoint.description.trim() !== '' && (
+                            <text
+                              x={epPos.x + extensionBoxWidth / 2}
+                              y={options.showDependencyTypes ? epPos.y + 10 : epPos.y + 20}
+                              textAnchor="middle"
+                              fill={theme.colors.getContrastText(extensionColor)}
+                              style={{ fontSize: '10px', pointerEvents: 'none' }}
+                            >
+                              {extensionPoint.description}
+                            </text>
+                          )}
 
                           {/* Extension type - third line in parentheses */}
                           {options.showDependencyTypes && (
