@@ -11,6 +11,7 @@ labels:
   products:
     - enterprise
     - oss
+    - cloud
 title: Provision resources and sync dashboards
 weight: 300
 ---
@@ -27,7 +28,7 @@ Git Sync and local file provisioning are [experimental features](https://grafana
 
 Provisioning allows you to configure how to store your dashboard JSON and other files in GitHub repositories using either Git Sync or a local path.
 
-Of the two options, **Git Sync** is the favorited method for provisioning your dashboards. You can synchronize any new dashboards and changes to existing dashboards from the UI to your configured GitHub repository. If you push a change in the repository, those changes are mirrored in your Grafana instance. Refer to [Git Sync workflow](#git-sync-workflow) for more information.
+Of the two options, **Git Sync** is the preferred method for provisioning your dashboards. You can synchronize any new dashboards and changes to existing dashboards from the UI to your configured GitHub repository. If you push a change in the repository, those changes are mirrored in your Grafana instance. Refer to [Git Sync workflow](#git-sync-workflow) for more information.
 
 Alternatively, **local file provisioning** allows you to include in your Grafana instance resources (such as folders and dashboard JSON files) that are stored in a local file system. Refer to [Local file workflow](#local-file-workflow) for more information.
 

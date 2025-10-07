@@ -11,6 +11,7 @@ labels:
   products:
     - enterprise
     - oss
+    - cloud
 title: Manage provisioned repositories with Git Sync
 menuTitle: Manage repositories with Git Sync
 weight: 400
@@ -81,7 +82,7 @@ Monitor the **View** status page for synchronization issues and status updates. 
 
 ### Dashboard sync errors
 
-- If dashboards are not syncing, check if the repository URL is correct and accessible from the Grafana instance.
+- If dashboards aren't syncing, check if the repository URL is correct and accessible from the Grafana instance.
 - Ensure that the configured repository branch exists and is correctly referenced.
 - Check for conflicts in the repository that may prevent syncing.
 
