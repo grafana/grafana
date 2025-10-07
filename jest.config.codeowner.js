@@ -61,6 +61,7 @@ module.exports = {
   ...baseConfig,
 
   collectCoverage: true,
+  collectCoverageFrom: sourceFiles.map((file) => `<rootDir>/${file}`),
   coverageReporters: ['none'],
   coverageDirectory: '/tmp/jest-coverage-ignore',
 
@@ -73,9 +74,13 @@ module.exports = {
         name: `Coverage Report - ${teamName} owned files`,
         outputDir: outputDir,
         reports: ['console-summary', 'v8', 'json', 'lcov'],
-
+        sourceFilter: (coveredFile) => sourceFiles.includes(coveredFile),
         all: {
-          filter: (filePath) => sourceFiles.includes(filePath),
+          dir: ['./packages', './public'],
+          filter: (filePath) => {
+            const relativePath = filePath.replace(process.cwd() + '/', '');
+            return sourceFiles.includes(relativePath);
+          },
         },
         cleanCache: true,
         onEnd: (coverageResults) => {
