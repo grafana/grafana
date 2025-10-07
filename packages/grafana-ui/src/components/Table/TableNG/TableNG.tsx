@@ -96,6 +96,7 @@ import {
   shouldTextWrap,
   withDataLinksActionsTooltip,
   getSummaryCellTextAlign,
+  IS_SAFARI_26,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -286,7 +287,7 @@ export function TableNG(props: TableNGProps) {
   const commonDataGridProps = useMemo(
     () =>
       ({
-        enableVirtualization: enableVirtualization !== false && rowHeight !== 'auto',
+        enableVirtualization: !IS_SAFARI_26 && enableVirtualization !== false && rowHeight !== 'auto',
         defaultColumnOptions: {
           minWidth: 50,
           resizable: true,
@@ -459,7 +460,8 @@ export function TableNG(props: TableNGProps) {
           ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign))
           : undefined;
 
-        const shouldOverflow = rowHeight !== 'auto' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
+        const shouldOverflow =
+          !IS_SAFARI_26 && rowHeight !== 'auto' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
         const textWrap = rowHeight === 'auto' || shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
@@ -781,7 +783,7 @@ export function TableNG(props: TableNGProps) {
   const displayedEnd = pageRangeEnd;
   const numRows = sortedRows.length;
 
-  return (
+  let rendered = (
     <>
       <DataGrid<TableRow, TableSummaryRow>
         {...commonDataGridProps}
@@ -869,6 +871,12 @@ export function TableNG(props: TableNGProps) {
       )}
     </>
   );
+
+  if (IS_SAFARI_26) {
+    rendered = <div className={styles.safariWrapper}>{rendered}</div>;
+  }
+
+  return rendered;
 }
 
 /**
