@@ -41,19 +41,21 @@ export function calculateDimensions(
   glow: boolean,
   roundedBars: boolean,
   barWidthFactor: number,
-  barIndex: number
+  barIndex: number,
+  thresholdBar?: boolean
 ): GaugeDimensions {
   const yMaxAngle = endAngle > 180 ? 180 : endAngle;
   let margin = 0;
+  let thresholdsWidth = thresholdBar ? 16 : 0;
 
   // Max radius based on width
-  let maxRadiusH = width / 2 - margin;
+  let maxRadiusH = width / 2 - margin - thresholdsWidth;
 
   // Max radius based on height
   let heightRatioV = Math.sin(toRad(yMaxAngle));
   let outerRadiusV = (height - margin * 2) / (1 + heightRatioV);
 
-  let maxRadiusV = outerRadiusV;
+  let maxRadiusV = outerRadiusV - thresholdsWidth;
   let outerRadius = Math.min(maxRadiusH, maxRadiusV);
 
   const barWidth = Math.max(barWidthFactor * (outerRadius / 3.5), 2);

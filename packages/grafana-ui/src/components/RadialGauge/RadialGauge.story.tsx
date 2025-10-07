@@ -44,6 +44,7 @@ const meta: Meta<StoryProps> = {
     segmentCount: 0,
     segmentSpacing: 0.4,
     roundedBars: true,
+    thresholdsBar: false,
   },
   argTypes: {
     barWidthFactor: { control: { type: 'range', min: 0.1, max: 1, step: 0.01 } },
@@ -53,6 +54,7 @@ const meta: Meta<StoryProps> = {
     spotlight: { control: 'boolean' },
     roundedBars: { control: 'boolean' },
     sparkline: { control: 'boolean' },
+    thresholdsBar: { control: 'boolean' },
     gradient: { control: { type: 'radio', options: ['none', 'hue', 'shade', 'scheme'] } },
     seriesCount: { control: { type: 'range', min: 1, max: 20 } },
     segmentCount: { control: { type: 'range', min: 0, max: 100 } },
@@ -298,6 +300,7 @@ interface ExampleProps {
   segmentCount?: number;
   segmentSpacing?: number;
   roundedBars?: boolean;
+  thresholdsBar?: boolean;
 }
 
 function RadialBarExample({
@@ -322,11 +325,16 @@ function RadialBarExample({
   segmentCount = 0,
   segmentSpacing = 0.1,
   roundedBars = true,
+  thresholdsBar = false,
 }: ExampleProps) {
   const theme = useTheme2();
 
   if (gradient === 'scheme' && colorMode === FieldColorModeId.Fixed) {
     colorMode = FieldColorModeId.ContinuousGrYlRd;
+  }
+
+  if (thresholdsBar) {
+    colorMode = FieldColorModeId.Thresholds;
   }
 
   const frame = toDataFrame({
@@ -351,6 +359,14 @@ function RadialBarExample({
           max: max,
           unit: 'percent',
           color: { mode: colorMode, fixedColor: theme.visualization.getColorByName(color) },
+          thresholds: {
+            mode: 'absolute',
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: 65, color: 'orange' },
+              { value: 85, color: 'red' },
+            ],
+          },
         },
         // Add state and getLinks
         state: {},
@@ -396,6 +412,7 @@ function RadialBarExample({
       segmentCount={segmentCount}
       segmentSpacing={segmentSpacing}
       roundedBars={roundedBars}
+      thresholdsBar={thresholdsBar}
     />
   );
 }

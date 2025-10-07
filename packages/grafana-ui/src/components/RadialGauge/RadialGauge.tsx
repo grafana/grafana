@@ -13,6 +13,7 @@ import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { calculateDimensions, getValueAngleForValue } from './utils';
+import { ThresholdsBar } from './ThresholdsBar';
 
 export interface RadialGaugeProps {
   values: FieldDisplay[];
@@ -35,6 +36,7 @@ export interface RadialGaugeProps {
   glowBar?: boolean;
   glowCenter?: boolean;
   roundedBars?: boolean;
+  thresholdsBar?: boolean;
   textMode?: RadialTextMode;
   /**
    * Number of segments depends on size of gauge but this
@@ -72,6 +74,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     segmentCount = 0,
     segmentSpacing = 0,
     roundedBars = true,
+    thresholdsBar = false,
     values,
   } = props;
   const theme = useTheme2();
@@ -89,7 +92,16 @@ export function RadialGauge(props: RadialGaugeProps) {
     const displayValue = values[barIndex];
     const { angle, angleRange } = getValueAngleForValue(displayValue, startAngle, endAngle);
     const color = displayValue.display.color ?? 'gray';
-    const dimensions = calculateDimensions(width, height, endAngle, glowBar, roundedBars, barWidthFactor, barIndex);
+    const dimensions = calculateDimensions(
+      width,
+      height,
+      endAngle,
+      glowBar,
+      roundedBars,
+      barWidthFactor,
+      barIndex,
+      thresholdsBar
+    );
 
     let displayProcessor = getDisplayProcessor();
 
@@ -168,6 +180,21 @@ export function RadialGauge(props: RadialGaugeProps) {
 
       if (glowCenter) {
         graphics.push(<MiddleCircleGlow key="center-glow" gaugeId={gaugeId} color={color} dimensions={dimensions} />);
+      }
+
+      if (thresholdsBar) {
+        graphics.push(
+          <ThresholdsBar
+            key="thresholds-bar"
+            dimensions={dimensions}
+            fieldDisplay={displayValue}
+            startAngle={startAngle}
+            endAngle={endAngle}
+            angleRange={angleRange}
+            roundedBars={roundedBars}
+            glowFilter={`url(#${glowFilterId})`}
+          />
+        );
       }
 
       graphics.push(
