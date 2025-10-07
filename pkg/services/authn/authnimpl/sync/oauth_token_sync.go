@@ -93,7 +93,11 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 		updateCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
 		defer cancel()
 
-		token, refreshErr := s.service.TryTokenRefresh(updateCtx, id, id.SessionToken)
+		token, refreshErr := s.service.TryTokenRefresh(updateCtx, id, &oauthtoken.TokenRefreshMetadata{
+			ExternalSessionID: id.SessionToken.ExternalSessionId,
+			AuthModule:        id.GetAuthenticatedBy(),
+			AuthID:            id.GetAuthID(),
+		})
 		if refreshErr != nil {
 			if errors.Is(refreshErr, context.Canceled) {
 				return nil, nil
@@ -107,7 +111,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 			ctxLogger.Error("Failed to refresh OAuth access token", "id", id.ID, "error", refreshErr)
 
 			// log the user out
-			if err := s.sessionService.RevokeToken(ctx, id.SessionToken, false); err != nil {
+			if err := s.sessionService.RevokeToken(ctx, id.SessionToken, false); err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
 				ctxLogger.Warn("Failed to revoke session token", "id", id.ID, "tokenId", id.SessionToken.Id, "error", err)
 			}
 
