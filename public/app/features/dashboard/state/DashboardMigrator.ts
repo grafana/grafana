@@ -1,4 +1,4 @@
-import { each, find, findIndex, flattenDeep, isArray, isBoolean, isNumber, isString, map, max, some } from 'lodash';
+import { each, find, findIndex, flattenDeep, isArray, isBoolean, isString, map, max, some } from 'lodash';
 
 import {
   AnnotationQuery,
