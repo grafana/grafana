@@ -168,6 +168,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		b.storage = &folderStorage{
 			tableConverter:       resourceInfo.TableConverter(),
 			folderPermissionsSvc: b.folderPermissionsSvc,
+			features:             b.features,
 			acService:            b.acService,
 			permissionsOnCreate:  b.permissionsOnCreate,
 			store:                dw,
