@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { getBackendSrv, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
 import { PluginDashboard } from 'app/types/plugins';
 import { useSelector } from 'app/types/store';
@@ -12,7 +12,9 @@ import dashboardLibrary1 from 'img/dashboard-library/dashboard_library_1.png';
 import dashboardLibrary2 from 'img/dashboard-library/dashboard_library_2.png';
 import dashboardLibrary3 from 'img/dashboard-library/dashboard_library_3.png';
 
-import { DASHBOARD_LIBRARY_ROUTES } from './types';
+import { DASHBOARD_LIBRARY_ROUTES } from '../types';
+
+import { DashboardLibraryInteractions } from './interactions';
 
 export const DashboardLibrarySection = () => {
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
@@ -31,36 +33,45 @@ export const DashboardLibrarySection = () => {
 
     const dashboards = await getBackendSrv().get(`api/plugins/${ds.type}/dashboards`);
     if (dashboards.length > 0) {
-      reportInteraction('dashboard_library_loaded', {
-        count: dashboards.length,
-        datasource: ds.type,
+      DashboardLibraryInteractions.loaded({
+        numberOfItems: dashboards.length,
+        contentKinds: ['datasource_dashboard'],
+        datasourceTypes: [ds.type],
+        sourceEntryPoint: 'datasource_page',
       });
     }
 
     return dashboards;
   }, [initialDatasource]);
 
-  const onImportDashboardClick = async (dashboard: PluginDashboard) => {
-    reportInteraction('dashboard_library_clicked', {
-      id: dashboard.uid,
-      title: dashboard.title,
-      datasource: dashboard.pluginId,
-    });
-
-    const templateUrl =
-      `${DASHBOARD_LIBRARY_ROUTES.Template}?` +
-      `datasource=${encodeURIComponent(initialDatasource || '')}&` +
-      `title=${encodeURIComponent(dashboard.title || 'Template')}&` +
-      `pluginId=${encodeURIComponent(dashboard.pluginId)}&` +
-      `path=${encodeURIComponent(dashboard.path)}`;
-
-    locationService.push(templateUrl);
-  };
-
   const hasMoreThanThree = templateDashboards && templateDashboards.length > 3;
   const dashboardsToShow = showAll ? templateDashboards : templateDashboards?.slice(0, 3);
 
   const styles = useStyles2(getStyles, dashboardsToShow?.length);
+
+  const onImportDashboardClick = async (dashboard: PluginDashboard) => {
+    DashboardLibraryInteractions.itemClicked({
+      contentKind: 'datasource_dashboard',
+      datasourceTypes: [dashboard.pluginId],
+      libraryItemId: dashboard.uid,
+      libraryItemTitle: dashboard.title,
+      sourceEntryPoint: 'datasource_page',
+    });
+
+    const params = new URLSearchParams({
+      datasource: initialDatasource || '',
+      title: dashboard.title || 'Template',
+      pluginId: dashboard.pluginId,
+      path: dashboard.path,
+      // tracking event purpose values
+      sourceEntryPoint: 'datasource_page',
+      libraryItemId: dashboard.uid,
+      creationOrigin: 'dashboard_library_datasource_dashboard',
+    });
+
+    const templateUrl = `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;
+    locationService.push(templateUrl);
+  };
 
   if (!templateDashboards?.length) {
     return null;

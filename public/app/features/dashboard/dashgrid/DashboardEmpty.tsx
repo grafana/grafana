@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -19,7 +20,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { setInitialDatasource } from '../state/reducers';
 
-import { DashboardLibrarySection } from './DashboardLibrarySection';
+import { DashboardLibrarySection } from './DashboardLibrary/DashboardLibrarySection';
 
 export interface Props {
   dashboard: DashboardModel | DashboardScene;
@@ -30,6 +31,12 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
+
+  useEffect(() => {
+    return () => {
+      dispatch(setInitialDatasource(undefined));
+    };
+  }, [dispatch]);
 
   // Get repository information to check if it's read-only
   const { isReadOnlyRepo } = useGetResourceRepositoryView({

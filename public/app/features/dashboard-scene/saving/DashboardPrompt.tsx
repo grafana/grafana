@@ -3,7 +3,7 @@ import * as H from 'history';
 import { memo, useContext, useEffect, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { ModalsContext, Modal, Button, useStyles2 } from '@grafana/ui';
@@ -102,9 +102,6 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
         dashboard.exitEditMode({ skipConfirm: true });
         hideModal();
         if (originalPath === DASHBOARD_LIBRARY_ROUTES.Template) {
-          reportInteraction('grafana_dashboard_prompt_discard_template_dashboard', {
-            datasource: new URLSearchParams(originalLocation.search).get('pluginId'),
-          });
           moveToBlockedLocationAfterReactStateUpdate(location, true);
         } else {
           moveToBlockedLocationAfterReactStateUpdate(location);
