@@ -1,0 +1,94 @@
+{
+  "name": "group_simplified_routing",
+  "interval": "10s",
+  "rules": [
+    {
+      "grafana_alert": {
+        "title": "test",
+        "condition": "C",
+        "data": [
+          {
+            "refId": "A",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 600,
+              "to": 0
+            },
+            "datasourceUid": "grafanacloud-prom",
+            "model": {
+              "editorMode": "code",
+              "expr": "vector(1)",
+              "instant": true,
+              "intervalMs": 1000,
+              "legendFormat": "__auto",
+              "maxDataPoints": 43200,
+              "range": false,
+              "refId": "A"
+            }
+          },
+          {
+            "refId": "C",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 0,
+              "to": 0
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "conditions": [
+                {
+                  "evaluator": {
+                    "params": [
+                      1
+                    ],
+                    "type": "gt"
+                  },
+                  "operator": {
+                    "type": "and"
+                  },
+                  "query": {
+                    "params": [
+                      "C"
+                    ]
+                  },
+                  "reducer": {
+                    "params": [],
+                    "type": "last"
+                  },
+                  "type": "query"
+                }
+              ],
+              "datasource": {
+                "type": "__expr__",
+                "uid": "__expr__"
+              },
+              "expression": "A",
+              "intervalMs": 1000,
+              "maxDataPoints": 43200,
+              "refId": "C",
+              "type": "threshold"
+            }
+          }
+        ],
+        "is_paused": false,
+        "no_data_state": "NoData",
+        "exec_err_state": "Error",
+        "notification_settings": {
+          "receiver": "email"
+        },
+        "metadata": {
+          "editor_settings": {
+            "simplified_query_and_expressions_section": false,
+            "simplified_notifications_section": true
+          }
+        },
+        "missing_series_evals_to_resolve": 0,
+        "uid": "alert-with-simplified-routing"
+      },
+      "annotations": {},
+      "labels": {},
+      "for": "1m",
+      "keep_firing_for": "0s"
+    }
+  ]
+}

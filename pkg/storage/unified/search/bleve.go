@@ -170,13 +170,13 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 }
 
 // GetIndex will return nil if the key does not exist
-func (b *bleveBackend) GetIndex(_ context.Context, key resource.NamespacedResource) (resource.ResourceIndex, error) {
+func (b *bleveBackend) GetIndex(key resource.NamespacedResource) resource.ResourceIndex {
 	idx := b.getCachedIndex(key, time.Now())
 	// Avoid returning typed nils.
 	if idx == nil {
-		return nil, nil
+		return nil
 	}
-	return idx, nil
+	return idx
 }
 
 func (b *bleveBackend) GetOpenIndexes() []resource.NamespacedResource {
@@ -1358,7 +1358,7 @@ func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
 	return b.index.Close()
 }
 
-func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) (int64, error) {
+func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 	// We don't have to do anything if the index cannot be updated (typically in tests).
 	if b.updaterFn == nil {
 		return 0, nil
