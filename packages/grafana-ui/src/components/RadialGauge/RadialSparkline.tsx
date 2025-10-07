@@ -6,29 +6,30 @@ import { GraphFieldConfig, GraphGradientMode, LineInterpolation } from '@grafana
 import { Sparkline } from '../Sparkline/Sparkline';
 
 import { RadialShape } from './RadialGauge';
+import { GaugeDimensions } from './utils';
 
 interface RadialSparklineProps {
   sparkline: FieldDisplay['sparkline'];
-  size: number;
+  dimensions: GaugeDimensions;
   theme: GrafanaTheme2;
-  barWidth: number;
-  margin: number;
   color?: string;
   shape?: RadialShape;
 }
-export function RadialSparkline({ sparkline, size, theme, barWidth, margin, color, shape }: RadialSparklineProps) {
+export function RadialSparkline({ sparkline, dimensions, theme, color, shape }: RadialSparklineProps) {
   if (!sparkline) {
     return null;
   }
 
-  const height = size / 8;
-  const widthFactor = shape === 'gauge' ? 0.8 : 0.7;
-  const width = size * widthFactor - barWidth * 1.5 - margin * 2;
-  const barWidthFactor = shape === 'gauge' ? 0 : 0.25;
+  const { radius, barWidth } = dimensions;
+
+  const height = radius / 4;
+  const widthFactor = shape === 'gauge' ? 1.6 : 1.4;
+  const width = radius * widthFactor - barWidth;
+  const topPos = shape === 'gauge' ? `calc(100% - ${height}px)` : '65%';
 
   const styles = css({
     position: 'absolute',
-    bottom: barWidthFactor * size,
+    top: topPos,
   });
 
   const config: FieldConfig<GraphFieldConfig> = {

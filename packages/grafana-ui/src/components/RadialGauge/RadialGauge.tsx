@@ -12,7 +12,7 @@ import { RadialBarSegmented } from './RadialBarSegmented';
 import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { CenterGlowGradient, GlowGradient, SpotlightGradient } from './effects';
-import { getValueAngleForValue } from './utils';
+import { calculateDimensions, GaugeDimensions, getValueAngleForValue } from './utils';
 
 export interface RadialGaugeProps {
   values: FieldDisplay[];
@@ -81,27 +81,17 @@ export function RadialGauge(props: RadialGaugeProps) {
   const startAngle = shape === 'gauge' ? 250 : 0;
   const endAngle = shape === 'gauge' ? 110 : 360;
 
-  const { svgHeight, svgWidth, margin, size } = calculateDimensions(
-    width,
-    height,
-    shape,
-    glowBar,
-    spotlight,
-    barWidthFactor
-  );
+  const dimensions = calculateDimensions(width, height, endAngle, glowBar, spotlight, roundedBars, barWidthFactor);
+  console.log('dimensions', dimensions);
 
   const primaryValue = values[0];
   const color = primaryValue.display.color ?? theme.colors.primary.main;
-  const barWidth = Math.max(barWidthFactor * (size / 7), 2);
-  const innerDiameter = size - barWidth - margin;
-  const radius = innerDiameter / 2;
-  const center = size / 2;
 
   const { angle } = getValueAngleForValue(primaryValue, startAngle, endAngle);
 
   return (
     <div className={styles.vizWrapper} style={{ width, height }}>
-      <svg width={svgWidth} height={svgHeight}>
+      <svg width={width} height={height}>
         <defs>
           {values.map((displayValue, barIndex) => (
             <GradientDef
@@ -111,31 +101,26 @@ export function RadialGauge(props: RadialGaugeProps) {
               theme={theme}
               gaugeId={gaugeId}
               gradient={gradient}
-              width={svgWidth}
-              height={height}
+              dimensions={dimensions}
               shape={shape}
-              center={center}
-              radius={radius}
-              barWidth={barWidth}
             />
           ))}
           {spotlight && (
             <SpotlightGradient
               angle={angle + startAngle}
               gaugeId={gaugeId}
-              radius={radius}
+              dimensions={dimensions}
               roundedBars={roundedBars}
-              center={center}
               theme={theme}
             />
           )}
-          {glowBar && <GlowGradient gaugeId={gaugeId} size={size} />}
+          {glowBar && <GlowGradient gaugeId={gaugeId} radius={dimensions.radius} />}
           {glowCenter && <CenterGlowGradient gaugeId={gaugeId} color={color} />}
         </defs>
         <g>
           {values.map((displayValue, barIndex) => {
             const barColor = getColorForBar(displayValue.display, barIndex, gradient, gaugeId);
-            const barSize = size - (barWidth * 2 + 8) * barIndex;
+            //const barSize = dimensions.radius - (barWidth * 2 + 8) * barIndex;
 
             let displayProcessor = getDisplayProcessor();
 
@@ -146,16 +131,13 @@ export function RadialGauge(props: RadialGaugeProps) {
             if (segmentCount > 1) {
               return (
                 <RadialBarSegmented
-                  margin={margin}
+                  dimensions={dimensions}
                   key={barIndex}
-                  center={center}
                   gaugeId={gaugeId}
                   fieldDisplay={displayValue}
                   startAngle={startAngle}
                   endAngle={endAngle}
-                  size={barSize}
                   color={barColor}
-                  barWidth={barWidth}
                   spotlight={spotlight}
                   glow={glowBar}
                   segmentCount={segmentCount}
@@ -168,16 +150,13 @@ export function RadialGauge(props: RadialGaugeProps) {
 
             return (
               <RadialBar
-                margin={margin}
+                dimensions={dimensions}
                 key={barIndex}
-                center={center}
                 gaugeId={gaugeId}
                 fieldDisplay={displayValue}
                 startAngle={startAngle}
                 endAngle={endAngle}
-                size={barSize}
                 color={barColor}
-                barWidth={barWidth}
                 roundedBars={roundedBars}
                 spotlight={spotlight}
                 glow={glowBar}
@@ -186,15 +165,13 @@ export function RadialGauge(props: RadialGaugeProps) {
           })}
         </g>
         <g>
-          {glowCenter && (
-            <MiddleCircle barWidth={barWidth} fill={`url(#circle-glow-${gaugeId})`} size={size} margin={margin} />
-          )}
+          {glowCenter && <MiddleCircle fill={`url(#circle-glow-${gaugeId})`} dimensions={dimensions} />}
           {primaryValue && (
             <RadialText
               vizCount={vizCount}
               textMode={textMode}
               displayValue={primaryValue.display}
-              size={size}
+              dimensions={dimensions}
               theme={theme}
               shape={shape}
             />
@@ -204,39 +181,14 @@ export function RadialGauge(props: RadialGaugeProps) {
       {primaryValue && primaryValue.sparkline && (
         <RadialSparkline
           sparkline={primaryValue.sparkline}
-          size={size}
+          dimensions={dimensions}
           theme={theme}
-          barWidth={barWidth}
-          margin={margin}
           color={color}
           shape={shape}
         />
       )}
     </div>
   );
-}
-
-function calculateDimensions(
-  width: number,
-  height: number,
-  shape: RadialShape,
-  glow: boolean | undefined,
-  spotlight: boolean | undefined,
-  barWidth: number
-): { svgWidth: number; svgHeight: number; margin: number; size: number } {
-  let margin = 0;
-  let svgWidth = width;
-  let svgHeight = height;
-  let size = Math.min(width, height);
-
-  if (glow) {
-    margin = 0.035 * width;
-  }
-
-  if (shape === 'gauge') {
-  }
-
-  return { svgWidth, svgHeight, margin, size };
 }
 
 function getColorForBar(displayValue: DisplayValue, barIndex: number, gradient: RadialGradientMode, gaugeId: string) {
@@ -248,18 +200,15 @@ function getColorForBar(displayValue: DisplayValue, barIndex: number, gradient: 
 }
 
 export interface MiddleCircleProps {
-  size: number;
-  barWidth: number;
-  margin: number;
+  dimensions: GaugeDimensions;
   fill?: string;
   className?: string;
 }
 
-export function MiddleCircle({ size, barWidth, margin, fill, className }: MiddleCircleProps) {
-  const center = size / 2;
-  const radius = (size - barWidth * 2) / 2 - margin;
-
-  return <circle cx={center} cy={center} r={radius} fill={fill} className={className} />;
+export function MiddleCircle({ dimensions, fill, className }: MiddleCircleProps) {
+  return (
+    <circle cx={dimensions.centerX} cy={dimensions.centerY} r={dimensions.radius} fill={fill} className={className} />
+  );
 }
 
 function getStyles(theme: GrafanaTheme2) {

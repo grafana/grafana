@@ -1,12 +1,14 @@
 import { GrafanaTheme2 } from '@grafana/data';
 
+import { GaugeDimensions } from './utils';
+
 export interface GlowGradientProps {
   gaugeId: string;
-  size: number;
+  radius: number;
 }
 
-export function GlowGradient({ gaugeId, size }: GlowGradientProps) {
-  const glowSize = 0.025 * size;
+export function GlowGradient({ gaugeId, radius }: GlowGradientProps) {
+  const glowSize = 0.04 * radius;
 
   return (
     <filter id={`glow-${gaugeId}`} filterUnits="userSpaceOnUse">
@@ -21,25 +23,23 @@ export function GlowGradient({ gaugeId, size }: GlowGradientProps) {
 
 export function SpotlightGradient({
   gaugeId,
-  radius,
-  center,
+  dimensions,
   roundedBars,
   angle,
   theme,
 }: {
   gaugeId: string;
+  dimensions: GaugeDimensions;
   angle: number;
-  radius: number;
-  center: number;
   roundedBars: boolean;
   theme: GrafanaTheme2;
 }) {
   const angleRadian = ((angle - 90) * Math.PI) / 180;
 
-  let x1 = center + radius * Math.cos(angleRadian - 0.2);
-  let y1 = center + radius * Math.sin(angleRadian - 0.2);
-  let x2 = center + radius * Math.cos(angleRadian);
-  let y2 = center + radius * Math.sin(angleRadian);
+  let x1 = dimensions.centerX + dimensions.radius * Math.cos(angleRadian - 0.2);
+  let y1 = dimensions.centerY + dimensions.radius * Math.sin(angleRadian - 0.2);
+  let x2 = dimensions.centerX + dimensions.radius * Math.cos(angleRadian);
+  let y2 = dimensions.centerY + dimensions.radius * Math.sin(angleRadian);
 
   const color = theme.colors.text.maxContrast;
 

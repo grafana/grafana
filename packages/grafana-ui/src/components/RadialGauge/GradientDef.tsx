@@ -3,6 +3,7 @@ import tinycolor from 'tinycolor2';
 import { FieldDisplay, GrafanaTheme2, getFieldColorMode } from '@grafana/data';
 
 import { RadialGradientMode, RadialShape } from './RadialGauge';
+import { GaugeDimensions } from './utils';
 
 interface GradientDefProps {
   fieldDisplay: FieldDisplay;
@@ -10,38 +11,22 @@ interface GradientDefProps {
   theme: GrafanaTheme2;
   gaugeId: string;
   gradient: RadialGradientMode;
-  width: number;
-  height: number;
+  dimensions: GaugeDimensions;
   shape: RadialShape;
-  center: number;
-  radius: number;
-  barWidth: number;
 }
 
-export function GradientDef({
-  fieldDisplay,
-  index,
-  theme,
-  gaugeId,
-  gradient,
-  width,
-  height,
-  shape,
-  center,
-  radius,
-  barWidth,
-}: GradientDefProps) {
+export function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient, dimensions, shape }: GradientDefProps) {
   const colorModeId = fieldDisplay.field.color?.mode;
   const valuePercent = fieldDisplay.display.percent ?? 0;
   const colorMode = getFieldColorMode(colorModeId);
-  const x2 = shape === 'circle' ? 0 : width;
-  const y2 = shape === 'circle' ? height : 0;
+  const x2 = shape === 'circle' ? 0 : dimensions.centerX + dimensions.radius;
+  const y2 = shape === 'circle' ? dimensions.centerY + dimensions.radius : 0;
 
   // this makes it so the gradient is always brightest at the current value
   const transform =
     shape === 'circle'
-      ? `rotate(${360 * valuePercent - 180} ${center} ${center})`
-      : `translate(-${width * (1 - valuePercent)}, 0)`;
+      ? `rotate(${360 * valuePercent - 180} ${dimensions.centerX} ${dimensions.centerY})`
+      : `translate(-${dimensions.radius * 2 * (1 - valuePercent)}, 0)`;
 
   switch (gradient) {
     case 'shade': {

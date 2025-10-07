@@ -2,34 +2,28 @@ import { FieldDisplay, GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
-import { getValueAngleForValue } from './utils';
+import { GaugeDimensions, getValueAngleForValue } from './utils';
 
 export interface RadialBarProps {
   gaugeId: string;
-  center: number;
+  dimensions: GaugeDimensions;
   fieldDisplay: FieldDisplay;
-  size: number;
   startAngle: number;
   endAngle: number;
   color: string;
-  barWidth: number;
   roundedBars?: boolean;
   spotlight?: boolean;
-  margin: number;
   glow?: boolean;
 }
 export function RadialBar({
-  center,
+  dimensions,
   fieldDisplay,
   gaugeId,
   startAngle,
-  size,
   endAngle,
   color,
-  barWidth,
   roundedBars,
   spotlight,
-  margin,
   glow,
 }: RadialBarProps) {
   const theme = useTheme2();
@@ -44,28 +38,22 @@ export function RadialBar({
       <RadialArcPath
         gaugeId={gaugeId}
         angle={trackLength}
-        center={center}
-        size={size}
+        dimensions={dimensions}
         startAngle={trackStart}
         color={theme.colors.action.hover}
-        barWidth={barWidth}
         roundedBars={roundedBars}
-        margin={margin}
         theme={theme}
       />
       {/** The colored bar */}
       <RadialArcPath
         gaugeId={gaugeId}
         angle={angle}
-        center={center}
-        size={size}
+        dimensions={dimensions}
         startAngle={startAngle}
         color={color}
-        barWidth={barWidth}
         roundedBars={roundedBars}
         spotlight={spotlight}
         glow={glow}
-        margin={margin}
         theme={theme}
       />
     </>
@@ -76,34 +64,26 @@ export interface RadialArcPathProps {
   gaugeId: string;
   angle: number;
   startAngle: number;
-  center: number;
-  size: number;
+  dimensions: GaugeDimensions;
   color: string;
-  barWidth: number;
   roundedBars?: boolean;
   spotlight?: boolean;
   glow?: boolean;
-  margin: number;
   theme: GrafanaTheme2;
 }
 
 export function RadialArcPath({
   gaugeId,
   startAngle,
-  center,
+  dimensions,
   angle,
-  size,
   color,
-  barWidth,
   roundedBars,
   spotlight,
   glow,
-  margin,
   theme,
 }: RadialArcPathProps) {
-  const arcSize = size - barWidth;
-  const radius = arcSize / 2 - margin;
-
+  let { radius, centerX, centerY, barWidth } = dimensions;
   let startDeg = startAngle;
   let endDeg = angle + startAngle;
 
@@ -114,10 +94,10 @@ export function RadialArcPath({
   let startRadians = (Math.PI * (startDeg - 90)) / 180;
   let endRadians = (Math.PI * (endDeg - 90)) / 180;
 
-  let x1 = center + radius * Math.cos(startRadians);
-  let y1 = center + radius * Math.sin(startRadians);
-  let x2 = center + radius * Math.cos(endRadians);
-  let y2 = center + radius * Math.sin(endRadians);
+  let x1 = centerX + radius * Math.cos(startRadians);
+  let y1 = centerY + radius * Math.sin(startRadians);
+  let x2 = centerX + radius * Math.cos(endRadians);
+  let y2 = centerY + radius * Math.sin(endRadians);
 
   let largeArc = endDeg - startDeg > 180 ? 1 : 0;
 
@@ -139,7 +119,8 @@ export function RadialArcPath({
       {spotlight && angle > 8 && (
         <SpotlightSquareEffect
           radius={radius}
-          center={center}
+          centerX={centerX}
+          centerY={centerY}
           angleRadian={endRadians}
           barWidth={barWidth}
           glow={glow}
@@ -154,7 +135,8 @@ export function RadialArcPath({
 
 interface SpotlightEffectProps {
   radius: number;
-  center: number;
+  centerX: number;
+  centerY: number;
   angleRadian: number;
   barWidth: number;
   glow?: boolean;
@@ -165,17 +147,18 @@ interface SpotlightEffectProps {
 
 function SpotlightSquareEffect({
   radius,
-  center,
+  centerX,
+  centerY,
   angleRadian,
   barWidth,
   glow,
   gaugeId,
   roundedBars,
 }: SpotlightEffectProps) {
-  let x1 = center + radius * Math.cos(angleRadian - 0.2);
-  let y1 = center + radius * Math.sin(angleRadian - 0.2);
-  let x2 = center + radius * Math.cos(angleRadian);
-  let y2 = center + radius * Math.sin(angleRadian);
+  let x1 = centerX + radius * Math.cos(angleRadian - 0.2);
+  let y1 = centerY + radius * Math.sin(angleRadian - 0.2);
+  let x2 = centerX + radius * Math.cos(angleRadian);
+  let y2 = centerY + radius * Math.sin(angleRadian);
 
   const path = ['M', x1, y1, 'A', radius, radius, 0, 0, 1, x2, y2].join(' ');
 

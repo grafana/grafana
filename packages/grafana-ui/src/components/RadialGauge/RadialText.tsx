@@ -5,6 +5,7 @@ import { DisplayValue, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 
 import { RadialShape, RadialTextMode } from './RadialGauge';
+import { GaugeDimensions } from './utils';
 
 // function toCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
 //   let radian = ((angleInDegrees - 90) * Math.PI) / 180.0;
@@ -17,14 +18,15 @@ import { RadialShape, RadialTextMode } from './RadialGauge';
 interface RadialTextProps {
   displayValue: DisplayValue;
   theme: GrafanaTheme2;
-  size: number;
+  dimensions: GaugeDimensions;
   textMode: RadialTextMode;
   vizCount: number;
   shape: RadialShape;
 }
 
-export function RadialText({ displayValue, theme, size, textMode, vizCount, shape }: RadialTextProps) {
+export function RadialText({ displayValue, theme, dimensions, textMode, vizCount, shape }: RadialTextProps) {
   const styles = useStyles2(getStyles);
+  const { centerX, centerY, radius } = dimensions;
 
   if (textMode === 'none') {
     return null;
@@ -37,10 +39,7 @@ export function RadialText({ displayValue, theme, size, textMode, vizCount, shap
   const showValue = textMode === 'value' || textMode === 'value_and_name';
   const showName = textMode === 'name' || textMode === 'value_and_name';
 
-  const centerX = size / 2;
-  const centerY = size / 2;
-
-  const valueFontSize = Math.max(size / 7, 12);
+  const valueFontSize = Math.max(radius / 3.5, 12);
   const unitFontSize = Math.max(valueFontSize * 0.7, 12);
   const nameFontSize = Math.max(valueFontSize * 0.5, 12);
 

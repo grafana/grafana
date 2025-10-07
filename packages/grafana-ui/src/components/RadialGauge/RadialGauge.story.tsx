@@ -19,7 +19,6 @@ interface StoryProps extends RadialGaugeProps {
   value: number;
   seriesCount: number;
   sparkline: boolean;
-  size: number;
 }
 
 const meta: Meta<StoryProps> = {
@@ -27,26 +26,29 @@ const meta: Meta<StoryProps> = {
   component: RadialGauge,
   parameters: {
     controls: {
-      exclude: ['theme', 'values', 'width', 'height', 'vizCount'],
+      exclude: ['theme', 'values', 'vizCount'],
     },
   },
   args: {
     barWidthFactor: 0.2,
-    size: 250,
     spotlight: false,
     glowBar: false,
     glowCenter: false,
     sparkline: false,
     value: undefined,
+    width: 200,
+    height: 200,
+    shape: 'circle',
     gradient: 'hue',
     seriesCount: 1,
-    segmentCount: undefined,
-    segmentSpacing: undefined,
+    segmentCount: 0,
+    segmentSpacing: 0.4,
     roundedBars: true,
   },
   argTypes: {
     barWidthFactor: { control: { type: 'range', min: 0.1, max: 1, step: 0.01 } },
-    size: { control: { type: 'range', min: 50, max: 400 } },
+    width: { control: { type: 'range', min: 50, max: 600 } },
+    height: { control: { type: 'range', min: 50, max: 600 } },
     value: { control: { type: 'range', min: 0, max: 110 } },
     spotlight: { control: 'boolean' },
     roundedBars: { control: 'boolean' },
@@ -283,7 +285,8 @@ interface ExampleProps {
   shape?: RadialShape;
   min?: number;
   max?: number;
-  size?: number;
+  width?: number;
+  height?: number;
   spotlight?: boolean;
   glowBar?: boolean;
   glowCenter?: boolean;
@@ -306,7 +309,8 @@ function RadialBarExample({
   shape = 'circle',
   min = 0,
   max = 100,
-  size = 200,
+  width = 200,
+  height = 200,
   spotlight = false,
   glowBar = false,
   glowCenter = false,
@@ -375,8 +379,8 @@ function RadialBarExample({
   return (
     <RadialGauge
       values={values}
-      width={size}
-      height={size}
+      width={width}
+      height={height}
       barWidthFactor={barWidthFactor}
       gradient={gradient}
       shape={shape}
