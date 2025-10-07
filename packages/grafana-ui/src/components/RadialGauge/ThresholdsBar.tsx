@@ -40,8 +40,6 @@ export function ThresholdsBar({ dimensions, fieldDisplay, startAngle, angleRange
     const valueDeg = ((threshold.value - min) / (max - min)) * angleRange;
     const lengthDeg = valueDeg - currentStart + startAngle;
 
-    console.log('thresholds currentStart', currentStart, valueDeg - currentStart);
-
     paths.push(
       <RadialArcPath
         key={i}
