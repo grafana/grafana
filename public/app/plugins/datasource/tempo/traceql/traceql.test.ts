@@ -26,6 +26,11 @@ describe('TraceQL grammar', () => {
       expect(withClauseKeywords).toContain('with');
       expect(withParameters).toContain('most_recent');
     });
+
+    it('should include compare function in the functions list', () => {
+      const { functions } = languageDefinition.def.language;
+      expect(functions).toContain('compare');
+    });
   });
 
   describe('Operators', () => {

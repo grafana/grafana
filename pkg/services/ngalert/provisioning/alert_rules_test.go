@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/rand"
 	"slices"
 	"strconv"
@@ -30,14 +31,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // note: additional integration tests are in /pkg/tests/api/alerting/api_provisioning_test.go
 
 func TestIntegrationAlertRuleService(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ruleService := createAlertRuleService(t, nil)
 	var orgID int64 = 1
 	u := &user.SignedInUser{
@@ -748,12 +749,129 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 
 		require.ErrorIs(t, err, models.ErrQuotaReached)
 	})
+
+	t.Run("alert rules created without a group should be considered NoGroup rules", func(t *testing.T) {
+		rule := createNoGroupRule("test-no-group-rule", orgID, "my-namespace")
+		// This is the way legacy storage creates rules without a group
+		rule.RuleGroup = ""
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		require.NoError(t, err)
+		require.Equal(t, int64(60), rule.IntervalSeconds)
+
+		rule, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		require.NoError(t, err)
+		require.True(t, models.IsNoGroupRuleGroup(rule.RuleGroup), "Rule should be considered NoGroup rule")
+
+		ruleGroup, err := ruleService.GetRuleGroup(context.Background(), u, rule.NamespaceUID, rule.RuleGroup)
+		require.NoError(t, err)
+		require.NotNil(t, ruleGroup)
+		require.True(t, models.IsNoGroupRuleGroup(ruleGroup.Title), "Rule group should be NoGroup rule group")
+		require.Len(t, ruleGroup.Rules, 1, "Rule group should only contain one NoGroup rule")
+	})
+
+	t.Run("multiple alert rules created without a group should be considered NoGroup rules, and be returned in separate groups", func(t *testing.T) {
+		rule := createNoGroupRule("test-no-group-rule-1", orgID, "my-namespace")
+		// This is the way legacy storage creates rules without a group
+		rule.RuleGroup = ""
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		require.NoError(t, err)
+		require.Equal(t, int64(60), rule.IntervalSeconds)
+
+		rule2 := createNoGroupRule("test-no-group-rule-2", orgID, "my-namespace")
+		// This is the way legacy storage creates rules without a group
+		rule2.RuleGroup = ""
+		rule2, err = ruleService.CreateAlertRule(context.Background(), u, rule2, models.ProvenanceNone)
+		require.NoError(t, err)
+		require.Equal(t, int64(60), rule.IntervalSeconds)
+
+		rule, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		require.NoError(t, err)
+		require.True(t, models.IsNoGroupRuleGroup(rule.RuleGroup), "Rule should be considered NoGroup rule")
+
+		rule2, _, err = ruleService.GetAlertRule(context.Background(), u, rule2.UID)
+		require.NoError(t, err)
+		require.True(t, models.IsNoGroupRuleGroup(rule2.RuleGroup), "Rule should be considered NoGroup rule")
+
+		require.NotEqual(t, rule.RuleGroup, rule2.RuleGroup, "Both rules should have different NoGroup rule groups")
+
+		ruleGroup, err := ruleService.GetRuleGroup(context.Background(), u, rule.NamespaceUID, rule.RuleGroup)
+		require.NoError(t, err)
+		require.NotNil(t, ruleGroup)
+		require.True(t, models.IsNoGroupRuleGroup(ruleGroup.Title), "Rule group should be NoGroup rule group")
+		require.Len(t, ruleGroup.Rules, 1, "Rule group should only contain one NoGroup rule")
+
+		ruleGroup2, err := ruleService.GetRuleGroup(context.Background(), u, rule2.NamespaceUID, rule2.RuleGroup)
+		require.NoError(t, err)
+		require.NotNil(t, ruleGroup2)
+		require.True(t, models.IsNoGroupRuleGroup(ruleGroup2.Title), "Rule group should be NoGroup rule group")
+		require.Len(t, ruleGroup2.Rules, 1, "Rule group should only contain one NoGroup rule")
+
+		require.NotEqual(t, ruleGroup, ruleGroup2, "Both NoGroup rule groups should be different")
+	})
+
+	t.Run("setting the group interval on NoGroup rules should only affect 1 rule", func(t *testing.T) {
+		rule := createNoGroupRule("test-no-group-rule-1", orgID, "my-namespace")
+		// This is the way legacy storage creates rules without a group
+		rule.RuleGroup = ""
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		require.NoError(t, err)
+		require.Equal(t, int64(60), rule.IntervalSeconds)
+
+		rule2 := createNoGroupRule("test-no-group-rule-2", orgID, "my-namespace")
+		// This is the way legacy storage creates rules without a group
+		rule2.RuleGroup = ""
+		rule2, err = ruleService.CreateAlertRule(context.Background(), u, rule2, models.ProvenanceNone)
+		require.NoError(t, err)
+		require.Equal(t, int64(60), rule.IntervalSeconds)
+
+		rule, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		require.NoError(t, err)
+		require.True(t, models.IsNoGroupRuleGroup(rule.RuleGroup), "Rule should be considered NoGroup rule")
+
+		rule2, _, err = ruleService.GetAlertRule(context.Background(), u, rule2.UID)
+		require.NoError(t, err)
+		require.True(t, models.IsNoGroupRuleGroup(rule2.RuleGroup), "Rule should be considered NoGroup rule")
+
+		require.NotEqual(t, rule.RuleGroup, rule2.RuleGroup, "Both rules should have different NoGroup rule groups")
+
+		var updatedInterval int64 = 120
+		err = ruleService.UpdateRuleGroup(context.Background(), u, rule.NamespaceUID, rule.RuleGroup, updatedInterval)
+		require.NoError(t, err)
+
+		rule, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		require.NoError(t, err)
+		require.Equal(t, updatedInterval, rule.IntervalSeconds, "Rule should have updated interval")
+		rule2, _, err = ruleService.GetAlertRule(context.Background(), u, rule2.UID)
+		require.NoError(t, err)
+		require.Equal(t, int64(60), rule2.IntervalSeconds, "Rule should not have updated interval")
+		require.NotEqual(t, updatedInterval, rule2.IntervalSeconds, "Both rules should not have updated interval")
+	})
+
+	t.Run("alert rule in NoGroup should be updated correctly", func(t *testing.T) {
+		rule := createNoGroupRule("test-no-group-rule", orgID, "my-namespace")
+		// This is the way legacy storage creates rules without a group
+		rule.RuleGroup = ""
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		require.NoError(t, err)
+		require.Equal(t, int64(60), rule.IntervalSeconds)
+
+		// get the actual calculated group for use with the api
+		rule, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		require.NoError(t, err)
+		require.True(t, models.IsNoGroupRuleGroup(rule.RuleGroup), "Rule should be considered NoGroup rule")
+
+		err = ruleService.UpdateRuleGroup(context.Background(), u, rule.NamespaceUID, rule.RuleGroup, 120)
+		require.NoError(t, err)
+
+		rule, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		require.NoError(t, err)
+		require.Equal(t, int64(120), rule.IntervalSeconds)
+	})
 }
 
 func TestIntegrationCreateAlertRule(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID, UserUID: util.GenerateShortUID()}
 	groupKey := models.GenerateGroupKey(orgID)
@@ -1029,6 +1147,25 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		})
 	})
+
+	t.Run("should not allow creating with a NoGroup Rule", func(t *testing.T) {
+		// NoGroup rules are not allowed to be created directly via provisioning, they must be created via new k8s apis
+		ruleWNoGroup := createNoGroupRule("test_No_group_create_disallowed", orgID, "test-no-group-ns")
+		_, err := ruleService.CreateAlertRule(context.Background(), u, ruleWNoGroup, models.ProvenanceNone)
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		require.ErrorContains(t, err, "rules must have a valid group")
+	})
+
+	t.Run("should allow creating Rule without a group", func(t *testing.T) {
+		ruleWNoGroup := createNoGroupRule("test_No_group_create_allowed", orgID, "test-no-group-ns")
+		ruleWNoGroup.RuleGroup = "" // This is the way legacy storage creates rules without a group
+		_, err := ruleService.CreateAlertRule(context.Background(), u, ruleWNoGroup, models.ProvenanceNone)
+		require.NoError(t, err)
+		// We should be able to retrieve the rule and see that it is a NoGroup rule
+		retrievedRule, _, err := ruleService.GetAlertRule(context.Background(), u, ruleWNoGroup.UID)
+		require.NoError(t, err)
+		require.True(t, models.IsNoGroupRuleGroup(retrievedRule.RuleGroup), "Rule should be considered NoGroup rule")
+	})
 }
 
 func TestUpdateAlertRule(t *testing.T) {
@@ -1133,7 +1270,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		})
 
 		t.Run("when there are no changes it should be successful", func(t *testing.T) {
-			// For this test we will not change the rule, and we will not use "admin" (CanWriteAllRulesFunc)
+			// For this test we will not change the rule, and we will not use "admin" (CanWriteAllRules)
 			// permissions. The response of the service should still be successful.
 			service, ruleStore, _, ac := initServiceWithData(t)
 
@@ -1155,6 +1292,29 @@ func TestUpdateAlertRule(t *testing.T) {
 			})
 			require.Empty(t, updates)
 		})
+	})
+
+	// NoGroup-specific tests for UpdateAlertRule
+	t.Run("NoGroup: UpdateAlertRule preserves interval and sentinel group", func(t *testing.T) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) { return true, nil }
+
+		rule := createNoGroupRule("nogroup-update", orgID, "my-namespace")
+		_, err := ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.NoError(t, provenanceStore.SetProvenance(context.Background(), &rule, orgID, models.ProvenanceNone))
+
+		// mutate fields and attempt to change interval via UpdateAlertRule
+		rule.Title = "nogroup-update-new"
+		originalInterval := int64(60)
+		require.Equal(t, originalInterval, rule.IntervalSeconds)
+		rule.IntervalSeconds = originalInterval + 60
+
+		updated, err := service.UpdateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		require.NoError(t, err)
+		require.True(t, models.IsNoGroupRuleGroup(updated.RuleGroup))
+		require.Equal(t, "nogroup-update-new", updated.Title)
+		require.Equal(t, originalInterval, updated.IntervalSeconds)
 	})
 }
 
@@ -1248,6 +1408,62 @@ func TestDeleteAlertRule(t *testing.T) {
 			deletes := getDeleteQueries(ruleStore)
 			require.Empty(t, deletes)
 		})
+	})
+
+	// NoGroup-specific behaviors
+	t.Run("deleting a NoGroup rule removes only that rule", func(t *testing.T) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) { return true, nil }
+
+		// create two NoGroup rules in the same namespace (distinct sentinel groups)
+		r1 := createNoGroupRule("nogroup-del-1", orgID, "my-namespace")
+		r2 := createNoGroupRule("nogroup-del-2", orgID, "my-namespace")
+		_, err := ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{r1, r2})
+		require.NoError(t, err)
+		require.NoError(t, provenanceStore.SetProvenance(context.Background(), &r1, orgID, models.ProvenanceNone))
+		require.NoError(t, provenanceStore.SetProvenance(context.Background(), &r2, orgID, models.ProvenanceNone))
+
+		err = service.DeleteAlertRule(context.Background(), u, r1.UID, models.ProvenanceNone)
+		require.NoError(t, err)
+
+		deletes := getDeleteQueries(ruleStore)
+		require.Len(t, deletes, 1)
+		uids := deletes[0].Params[3].([]string)
+		require.Contains(t, uids, r1.UID)
+
+		// verify r2 remains in store
+		remaining := ruleStore.Rules[orgID]
+		require.Len(t, remaining, 1)
+		require.Equal(t, r2.UID, remaining[0].UID)
+		// and its sentinel group remains intact
+		require.True(t, models.IsNoGroupRuleGroup(remaining[0].RuleGroup))
+	})
+
+	t.Run("when user cannot write all rules, deleting a NoGroup rule authorizes and succeeds", func(t *testing.T) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) { return false, nil }
+
+		r := createNoGroupRule("nogroup-del-auth", orgID, "my-namespace")
+		_, err := ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{r})
+		require.NoError(t, err)
+		require.NoError(t, provenanceStore.SetProvenance(context.Background(), &r, orgID, models.ProvenanceNone))
+
+		ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+			// expect single delete and affected group contains exactly the rule
+			require.Len(t, change.Delete, 1)
+			require.Contains(t, change.AffectedGroups, change.GroupKey)
+			require.Len(t, change.AffectedGroups[change.GroupKey], 1)
+			require.Equal(t, r.UID, change.AffectedGroups[change.GroupKey][0].UID)
+			return nil
+		}
+
+		err = service.DeleteAlertRule(context.Background(), u, r.UID, models.ProvenanceNone)
+		require.NoError(t, err)
+
+		deletes := getDeleteQueries(ruleStore)
+		require.Len(t, deletes, 1)
+		uids := deletes[0].Params[3].([]string)
+		require.Contains(t, uids, r.UID)
 	})
 }
 
@@ -1420,6 +1636,145 @@ func TestGetRuleGroup(t *testing.T) {
 
 		assert.Len(t, ac.Calls, 1)
 		assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
+	})
+
+	// NoGroup-specific behaviors
+	// A NoGroup rule should be returned as a one-rule group addressed by its sentinel group title
+	t.Run("should return NoGroup rule group with exactly one rule", func(t *testing.T) {
+		service, ruleStore, _, ac := initService(t)
+		ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) { return true, nil }
+
+		rule := createNoGroupRule("nogroup-rule-1", orgID, "my-namespace")
+		ruleStore.Rules = map[int64][]*models.AlertRule{
+			orgID: {&rule},
+		}
+
+		group, err := service.GetRuleGroup(context.Background(), u, rule.NamespaceUID, rule.RuleGroup)
+		require.NoError(t, err)
+		require.True(t, models.IsNoGroupRuleGroup(group.Title))
+		require.Equal(t, rule.NamespaceUID, group.FolderUID)
+		require.Equal(t, rule.IntervalSeconds, group.Interval)
+		require.Len(t, group.Rules, 1)
+		require.Equal(t, rule.UID, group.Rules[0].UID)
+	})
+
+	// Multiple NoGroup rules in the same namespace must produce separate sentinel groups
+	t.Run("should return distinct NoGroup groups for multiple rules", func(t *testing.T) {
+		service, ruleStore, _, ac := initService(t)
+		ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) { return true, nil }
+
+		rule1 := createNoGroupRule("nogroup-rule-a", orgID, "my-namespace")
+		rule2 := createNoGroupRule("nogroup-rule-b", orgID, "my-namespace")
+		require.NotEqual(t, rule1.RuleGroup, rule2.RuleGroup)
+
+		ruleStore.Rules = map[int64][]*models.AlertRule{
+			orgID: {&rule1, &rule2},
+		}
+
+		group1, err := service.GetRuleGroup(context.Background(), u, rule1.NamespaceUID, rule1.RuleGroup)
+		require.NoError(t, err)
+		require.True(t, models.IsNoGroupRuleGroup(group1.Title))
+		require.Len(t, group1.Rules, 1)
+		require.Equal(t, rule1.UID, group1.Rules[0].UID)
+
+		group2, err := service.GetRuleGroup(context.Background(), u, rule2.NamespaceUID, rule2.RuleGroup)
+		require.NoError(t, err)
+		require.True(t, models.IsNoGroupRuleGroup(group2.Title))
+		require.Len(t, group2.Rules, 1)
+		require.Equal(t, rule2.UID, group2.Rules[0].UID)
+	})
+}
+
+func TestListAlertRules(t *testing.T) {
+	orgID := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID}
+	groupKey1 := models.GenerateGroupKey(orgID)
+	groupKey2 := models.GenerateGroupKey(orgID)
+	gen := models.RuleGen
+	rules1 := gen.With(gen.WithGroupKey(groupKey1), gen.WithUniqueGroupIndex()).GenerateManyRef(3)
+	models.RulesGroup(rules1).SortByGroupIndex()
+	rules2 := gen.With(gen.WithGroupKey(groupKey2), gen.WithUniqueGroupIndex()).GenerateManyRef(4)
+	models.RulesGroup(rules2).SortByGroupIndex()
+	allRules := append(rules1, rules2...)
+
+	fs := foldertest.NewFakeService()
+	fs.AddFolder(&folder.Folder{
+		OrgID: orgID,
+		UID:   groupKey1.NamespaceUID,
+		Title: "folder1",
+	})
+	fs.AddFolder(&folder.Folder{
+		OrgID: orgID,
+		UID:   groupKey2.NamespaceUID,
+		Title: "folder2",
+	})
+
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		service.folderService = fs
+		ruleStore.Rules = map[int64][]*models.AlertRule{
+			orgID: allRules,
+		}
+		ac.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error) {
+			return true, nil
+		}
+
+		return service, ruleStore, provenanceStore, ac
+	}
+
+	t.Run("when user can read all rules", func(t *testing.T) {
+		t.Run("should skip AuthorizeRuleGroupRead and return all rules", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			rules, _, token, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{})
+			require.NoError(t, err)
+			// check that rules contain all uids from allRules
+			ruleUIDs := make(map[string]bool)
+			for _, r := range rules {
+				ruleUIDs[r.UID] = true
+			}
+			for _, r := range allRules {
+				assert.True(t, ruleUIDs[r.UID])
+			}
+			require.Len(t, ruleUIDs, len(allRules))
+			require.Empty(t, token)
+
+			assert.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
+		})
+	})
+
+	t.Run("when user cannot read all rules", func(t *testing.T) {
+		t.Run("should return only rules in accessible folders", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			ac.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error) {
+				return folder.GetNamespaceUID() == groupKey2.NamespaceUID, nil
+			}
+
+			rules, _, token, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{})
+			require.NoError(t, err)
+			// check that rules contain all uids from rules1
+			ruleUIDs := make(map[string]bool)
+			for _, r := range rules {
+				ruleUIDs[r.UID] = true
+			}
+			for _, r := range rules2 {
+				assert.True(t, ruleUIDs[r.UID])
+			}
+			require.Len(t, ruleUIDs, len(rules2))
+			require.Empty(t, token)
+
+			assert.Len(t, ac.Calls, 3)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
+			assert.Equal(t, "HasAccessInFolder", ac.Calls[1].Method)
+			assert.Equal(t, "HasAccessInFolder", ac.Calls[2].Method)
+		})
 	})
 }
 
@@ -1668,6 +2023,36 @@ func TestReplaceGroup(t *testing.T) {
 		rule, _, err = service.GetAlertRule(context.Background(), u, rule.UID)
 		require.NoError(t, err)
 		require.Equal(t, "new", rule.Metadata.PrometheusStyleRule.OriginalRuleDefinition)
+	})
+
+	// NoGroup rule group should not allow more than one rule
+	t.Run("should reject multiple rules in a NoGroup rule group", func(t *testing.T) {
+		service, _, _, _ := initServiceWithData(t)
+
+		// Build a NoGroup group title and attempt to place 2 rules under it
+		group := createNoGroupRuleGroup("nogroup-multi", orgID, "my-namespace")
+		second := createNoGroupRule("nogroup-second", orgID, "my-namespace")
+		// Ensure the second rule is assigned to the same sentinel group
+		second.RuleGroup = group.Title
+		group.Rules = append(group.Rules, second)
+
+		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "cannot be used for rule groups with multiple rules")
+	})
+
+	t.Run("should reject changing the group name in a NoGroup rule group", func(t *testing.T) {
+		service, store, _, _ := initServiceWithData(t)
+
+		// Create a NoGroup rule and attempt to change its group name
+		groupSeed := createNoGroupRuleGroup("nogroup-multi", orgID, "my-namespace")
+		store.Rules[orgID] = []*models.AlertRule{models.CopyRule(&groupSeed.Rules[0])}
+		// change the group name away from the sentinel value
+		groupSeed.Title = "some-other-group" // not the sentinel group name
+
+		err := service.ReplaceRuleGroup(context.Background(), u, groupSeed, models.ProvenanceNone)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "cannot move rule out of this group")
 	})
 }
 
@@ -2070,6 +2455,56 @@ func dummyRule(title string, orgID int64) models.AlertRule {
 	return createTestRule(title, "my-cool-group", orgID, "my-namespace")
 }
 
+func createNoGroupRuleGroup(title string, orgID int64, namespace string) models.AlertRuleGroup {
+	uid := util.GenerateShortUID()
+	group, err := models.NewNoGroupRuleGroup(uid)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create NoGroupRuleGroup: %v", err))
+	}
+
+	return models.AlertRuleGroup{
+		Title:     group.String(),
+		Interval:  60,
+		FolderUID: namespace,
+		Rules: []models.AlertRule{
+			createNoGroupRule(title, orgID, namespace),
+		},
+	}
+}
+
+func createNoGroupRule(title string, orgID int64, namespace string) models.AlertRule {
+	uid := util.GenerateShortUID()
+	group, err := models.NewNoGroupRuleGroup(uid)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create NoGroupRuleGroup: %v", err))
+	}
+
+	return models.AlertRule{
+		UID:             uid,
+		OrgID:           orgID,
+		Title:           title,
+		Condition:       "A",
+		Version:         1,
+		IntervalSeconds: 60,
+		Data: []models.AlertQuery{
+			{
+				RefID:         "A",
+				Model:         json.RawMessage("{}"),
+				DatasourceUID: expr.DatasourceUID,
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(60),
+					To:   models.Duration(0),
+				},
+			},
+		},
+		NamespaceUID: namespace,
+		RuleGroup:    group.String(),
+		For:          time.Second * 60,
+		NoDataState:  models.OK,
+		ExecErrState: models.OkErrState,
+	}
+}
+
 func createTestRule(title string, groupTitle string, orgID int64, namespace string) models.AlertRule {
 	return models.AlertRule{
 		OrgID:           orgID,
@@ -2133,3 +2568,77 @@ func initService(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.Fake
 
 	return service, ruleStore, provenanceStore, ac
 }
+
+// func TestNoGroupRuleGroupIntervalHandling(t *testing.T) {
+// 	orgID := rand.Int63()
+// 	u := &user.SignedInUser{OrgID: orgID, UserUID: util.GenerateShortUID()}
+
+// 	t.Run("UpdateRuleGroup with NoGroupRuleGroup", func(t *testing.T) {
+// 		t.Run("should allow interval updates for NoGroupRuleGroup via UpdateRuleGroup", func(t *testing.T) {
+// 			service, store, _, ac := initService(t)
+// 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+// 				return true, nil
+// 			}
+
+// 			// pre populate a rule with NoGroupRuleGroup
+// 			rule := createNoGroupRule("test-rule", orgID, "my-namespace")
+// 			store.Rules[orgID] = []*models.AlertRule{&rule} // Pre-populate the store with the rule
+
+// 			// Update the rule with a new interval via UpdateRuleGroup
+// 			newInterval := int64(120)
+// 			createdRule, _, err := service.GetAlertRule(context.Background(), u, rule.UID)
+// 			require.NoError(t, err)
+// 			err = service.UpdateRuleGroup(context.Background(), u, createdRule.NamespaceUID, createdRule.RuleGroup, newInterval)
+// 			require.NoError(t, err)
+// 			updatedRule, _, err := service.GetAlertRule(context.Background(), u, createdRule.UID)
+// 			require.NoError(t, err)
+// 			assert.Equal(t, newInterval, updatedRule.IntervalSeconds, "Rule interval should be updated for NoGroupRuleGroup")
+
+// 		})
+
+// 		// t.Run("should preserve group interval for normal groups", func(t *testing.T) {
+// 		// 	service, _, _, ac := initService(t)
+// 		// 	ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+// 		// 		return true, nil
+// 		// 	}
+
+// 		// 	// Create a rule in a normal group
+// 		// 	groupInterval := int64(90)
+// 		// 	rule := createTestRule("test-rule", "normal-group", orgID, "my-namespace")
+// 		// 	rule2 := createTestRule("test-rule-2", "normal-group", orgID, "my-namespace")
+// 		// 	rule2.IntervalSeconds = groupInterval // Set the group interval
+// 		// 	rule.IntervalSeconds = groupInterval
+// 		// 	createdRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+// 		// 	require.NoError(t, err)
+// 		// 	createdRule2, err := service.CreateAlertRule(context.Background(), u, rule2, models.ProvenanceNone)
+// 		// 	require.NoError(t, err)
+
+// 		// 	// Try to update the rule with a different interval
+// 		// 	createdRule.IntervalSeconds = 120
+// 		// 	updatedRule, err := service.UpdateAlertRule(context.Background(), u, createdRule, models.ProvenanceNone)
+// 		// 	require.NoError(t, err)
+// 		// 	assert.Equal(t, int64(120), updatedRule.IntervalSeconds, "Rule interval should be changed for all rules in normal groups")
+// 		// 	updatedRule2, _, err := service.GetAlertRule(context.Background(), u, createdRule2.UID)
+// 		// 	require.NoError(t, err)
+// 		// 	assert.Equal(t, int64(120), updatedRule2.IntervalSeconds, "All rules in the same group should have the same interval after update")
+// 		// })
+// 	})
+
+// 	t.Run("GetRuleGroup with a NoGroupRuleGroup", func(t *testing.T) {
+// 		t.Run("should allow retrieval of sentinel group", func(t *testing.T) {
+// 			service, store, _, ac := initService(t)
+// 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+// 				return true, nil
+// 			}
+
+// 			// pre populate a rule with NoGroupRuleGroup
+// 			rule := createNoGroupRule("test-rule", orgID, "my-namespace")
+// 			store.Rules[orgID] = []*models.AlertRule{&rule} // Pre-populate the store with the rule
+
+// 			noGroupGroup, err := service.GetRuleGroup(context.Background(), u, "my-namespace", rule.RuleGroup)
+// 			require.NoError(t, err)
+// 			assert.Equal(t, rule.RuleGroup, noGroupGroup.Title, "NoGroupRuleGroup should be retrievable by its group title")
+// 			assert.Len(t, noGroupGroup.Rules, 1, "NoGroupRuleGroup should contain only the one rule")
+// 		})
+// 	})
+// }

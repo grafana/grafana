@@ -5,9 +5,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Input, Label, Modal, Stack, useStyles2 } from '@grafana/ui';
+import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
-import { useNewFolderMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { Folder } from '../../types/rule-form';
@@ -49,7 +49,7 @@ function FolderCreationModal({
   const notifyApp = useAppNotification();
   const [title, setTitle] = useState('');
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
-  const [createFolder] = useNewFolderMutation();
+  const [createFolder] = useCreateFolder();
 
   const onSubmit = async () => {
     setIsCreatingFolder(true);

@@ -216,6 +216,8 @@ export const InfiniteScroll = ({
           showTime={showTime}
           style={style}
           styles={styles}
+          timeRange={timeRange}
+          timeZone={timeZone}
           variant={getLogLineVariant(logs, index, lastLogOfPage.current)}
           virtualization={virtualization}
           wrapLogMessage={wrapLogMessage}
@@ -233,6 +235,8 @@ export const InfiniteScroll = ({
       showTime,
       sortOrder,
       styles,
+      timeRange,
+      timeZone,
       virtualization,
       wrapLogMessage,
     ]

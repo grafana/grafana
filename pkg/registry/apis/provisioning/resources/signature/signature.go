@@ -43,7 +43,7 @@ func (f *signerFactory) New(ctx context.Context, opts SignOptions) (Signer, erro
 		return nil, fmt.Errorf("get clients: %w", err)
 	}
 
-	userClient, err := clients.User()
+	userClient, err := clients.User(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get user client: %w", err)
 	}

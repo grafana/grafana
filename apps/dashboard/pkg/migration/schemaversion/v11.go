@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V11 migration is a no-op migration
 // It only updates the schema version to 11
 // It's created to keep the migration history consistent
@@ -20,7 +22,7 @@ package schemaversion
 //   "panels": [...]
 // }
 
-func V11(dashboard map[string]interface{}) error {
+func V11(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 11
 	return nil
 }

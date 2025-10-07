@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
+
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/annotation"
 )
 
 // This is where the tests for the datasource backend live.
@@ -227,15 +229,13 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 		require.Equal(t, 0, frame.Fields[0].Len())
 	})
 
-	t.Run("rateCalculated metadata for cumulative profile", func(t *testing.T) {
+	t.Run("no rateCalculated metadata for flamegraph", func(t *testing.T) {
 		tree := &ProfileTree{
 			Value: 100, Level: 0, Self: 1, Name: "root",
 		}
 		frame := treeToNestedSetDataFrame(tree, "short", 15.0, "process_cpu:cpu:nanoseconds:cpu:nanoseconds")
 		require.NotNil(t, frame.Meta)
-		require.NotNil(t, frame.Meta.Custom)
-		custom := frame.Meta.Custom.(map[string]interface{})
-		require.Equal(t, true, custom["rateCalculated"])
+		require.Nil(t, frame.Meta.Custom)
 	})
 
 	t.Run("no rateCalculated metadata for instant profile", func(t *testing.T) {
@@ -247,26 +247,24 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 		require.Nil(t, frame.Meta.Custom)
 	})
 
-	t.Run("CPU time keeps original units for tree data", func(t *testing.T) {
+	t.Run("CPU time keeps original values and units for flamegraph", func(t *testing.T) {
 		tree := &ProfileTree{
 			Value: 3000000000, Level: 0, Self: 1500000000, Name: "root", // 3s total, 1.5s self in nanoseconds
 		}
-		// Test CPU profile (should keep nanoseconds for flamegraph, no unit conversion)
+		// Test CPU profile flamegraph - should keep original cumulative values and units
 		frame := treeToNestedSetDataFrame(tree, "ns", 15.0, "process_cpu:cpu:nanoseconds:cpu:nanoseconds")
 
-		// Check unit remains as nanoseconds (no conversion for flamegraphs)
+		// Check unit remains as nanoseconds
 		require.Equal(t, "ns", frame.Fields[1].Config.Unit)
 		require.Equal(t, "ns", frame.Fields[2].Config.Unit)
 
-		// Check values were rate calculated but not unit converted: 3000000000/15 = 200000000, 1500000000/15 = 100000000
-		require.Equal(t, int64(200000000), frame.Fields[1].At(0))
-		require.Equal(t, int64(100000000), frame.Fields[2].At(0))
+		// Check values are NOT rate calculated - flamegraphs show cumulative totals
+		require.Equal(t, int64(3000000000), frame.Fields[1].At(0))
+		require.Equal(t, int64(1500000000), frame.Fields[2].At(0))
 
-		// Check metadata shows rate was calculated
+		// Check metadata shows rate was NOT calculated for flamegraphs
 		require.NotNil(t, frame.Meta)
-		require.NotNil(t, frame.Meta.Custom)
-		custom := frame.Meta.Custom.(map[string]interface{})
-		require.Equal(t, true, custom["rateCalculated"])
+		require.Nil(t, frame.Meta.Custom)
 	})
 }
 
@@ -313,7 +311,7 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 							Timestamp: int64(1609455600000),
 							Value:     30,
 							Annotations: []*typesv1.ProfileAnnotation{
-								{Key: string(profileAnnotationKeyThrottled), Value: rawAnnotation},
+								{Key: string(annotation.ProfileAnnotationKeyThrottled), Value: rawAnnotation},
 							},
 						},
 					},
@@ -337,7 +335,7 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 							Timestamp: int64(1609455600000),
 							Value:     30,
 							Annotations: []*typesv1.ProfileAnnotation{
-								{Key: string(profileAnnotationKeyThrottled), Value: rawAnnotation},
+								{Key: string(annotation.ProfileAnnotationKeyThrottled), Value: rawAnnotation},
 							},
 						},
 					},

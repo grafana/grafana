@@ -1,8 +1,10 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
+import { OrgRole } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { contextSrv } from 'app/core/core';
 import { AnnoKeyManagerIdentity } from 'app/features/apiserver/types';
 
 import { RepoType } from '../Wizard/types';
@@ -11,6 +13,7 @@ import { getIsReadOnlyRepo } from '../utils/repository';
 interface GetResourceRepositoryArgs {
   name?: string; // the repository name
   folderName?: string; // folder we are targeting
+  skipQuery?: boolean;
 }
 
 interface RepositoryViewData {
@@ -23,13 +26,19 @@ interface RepositoryViewData {
 }
 
 // This is safe to call as a viewer (you do not need full access to the Repository configs)
-export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRepositoryArgs): RepositoryViewData => {
+export const useGetResourceRepositoryView = ({
+  name,
+  folderName,
+  skipQuery,
+}: GetResourceRepositoryArgs): RepositoryViewData => {
+  const hasNoRole = contextSrv.user.orgRole === OrgRole.None;
+
   const provisioningEnabled = config.featureToggles.provisioning;
   const { data: settingsData, isLoading: isSettingsLoading } = useGetFrontendSettingsQuery(
-    !provisioningEnabled ? skipToken : undefined
+    !provisioningEnabled || skipQuery || hasNoRole ? skipToken : undefined
   );
 
-  const skipFolderQuery = !folderName || !provisioningEnabled;
+  const skipFolderQuery = !folderName || !provisioningEnabled || skipQuery || hasNoRole;
   const { data: folder, isLoading: isFolderLoading } = useGetFolderQuery(
     skipFolderQuery ? skipToken : { name: folderName }
   );

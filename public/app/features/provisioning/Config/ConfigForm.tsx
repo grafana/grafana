@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
@@ -6,6 +7,7 @@ import { t } from '@grafana/i18n';
 import {
   Button,
   Checkbox,
+  Combobox,
   ControlledCollapse,
   Field,
   Input,
@@ -14,11 +16,18 @@ import {
   Stack,
   Switch,
 } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  Repository,
+  useGetFrontendSettingsQuery,
+  useGetRepositoryRefsQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
+import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
+import { InlineSecureValueWarning } from '../components/InlineSecureValueWarning';
+import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { RepositoryFormData } from '../types';
 import { dataToSpec } from '../utils/data';
@@ -29,18 +38,22 @@ import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
-const getTargetOptions = () => {
-  return [
+const getTargetOptions = (allowedTargets: string[]) => {
+  const allOptions = [
     { value: 'instance', label: t('provisioning.config-form.option-entire-instance', 'Entire instance') },
     { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
   ];
+
+  return allOptions.filter((option) => allowedTargets.includes(option.value));
 };
 
 export interface ConfigFormProps {
   data?: Repository;
 }
 export function ConfigForm({ data }: ConfigFormProps) {
-  const [submitData, request] = useCreateOrUpdateRepository(data?.metadata?.name);
+  const repositoryName = data?.metadata?.name;
+  const settings = useGetFrontendSettingsQuery();
+  const [submitData, request] = useCreateOrUpdateRepository(repositoryName);
   const {
     register,
     handleSubmit,
@@ -48,22 +61,59 @@ export function ConfigForm({ data }: ConfigFormProps) {
     control,
     formState: { errors, isDirty },
     setValue,
+    setError,
     watch,
     getValues,
-  } = useForm<RepositoryFormData>({ defaultValues: getDefaultValues(data?.spec) });
+  } = useForm<RepositoryFormData>({
+    defaultValues: getDefaultValues({
+      repository: data?.spec,
+      allowedTargets: settings.data?.allowedTargets,
+    }),
+  });
 
-  const isEdit = Boolean(data?.metadata?.name);
+  const isEdit = Boolean(repositoryName);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [type, readOnly] = watch(['type', 'readOnly']);
-  const targetOptions = useMemo(() => getTargetOptions(), []);
+  const targetOptions = useMemo(
+    () => getTargetOptions(settings.data?.allowedTargets || ['instance', 'folder']),
+    [settings.data]
+  );
   const isGitBased = isGitProvider(type);
+
+  const {
+    data: refsData,
+    isLoading: refsLoading,
+    error: refsError,
+  } = useGetRepositoryRefsQuery(!repositoryName || !isGitBased ? skipToken : { name: repositoryName });
+
+  const branchOptions = useMemo(() => {
+    if (!refsData?.items) {
+      return [];
+    }
+
+    return refsData.items.map((ref) => ({
+      label: ref.name,
+      value: ref.name,
+    }));
+  }, [refsData?.items]);
 
   // Get field configurations based on provider type
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = type === 'local' ? getLocalProviderFields(type) : null;
   const hasTokenInstructions = getHasTokenInstructions(type);
+
+  // TODO: this should be removed after 12.2 is released
+  useEffect(() => {
+    if (isGitBased && !data?.secure?.token) {
+      setTokenConfigured(false);
+      setError('token', {
+        type: 'manual',
+        message: `Enter your ${gitFields?.tokenConfig.label ?? 'access token'}`,
+      });
+    }
+  }, [data, gitFields, setTokenConfigured, setError, isGitBased]);
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -78,8 +128,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const onSubmit = async (form: RepositoryFormData) => {
     setIsLoading(true);
     try {
-      const spec = dataToSpec(form, data);
-      await submitData(spec);
+      const spec = dataToSpec(form);
+      await submitData(spec, form.token);
     } finally {
       setIsLoading(false);
     }
@@ -108,6 +158,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
         {gitFields && (
           <>
+            <InlineSecureValueWarning repo={data} />
             <Field
               noMargin
               label={gitFields.tokenConfig.label}
@@ -126,6 +177,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                   return (
                     <SecretInput
                       {...field}
+                      invalid={!!errors.token}
                       id={'token'}
                       placeholder={gitFields.tokenConfig.placeholder}
                       isConfigured={tokenConfigured}
@@ -172,8 +224,32 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 placeholder={gitFields.urlConfig.placeholder}
               />
             </Field>
-            <Field noMargin label={gitFields.branchConfig.label} description={gitFields.branchConfig.description}>
-              <Input {...register('branch')} placeholder={gitFields.branchConfig.placeholder} />
+            <Field
+              noMargin
+              label={gitFields.branchConfig.label}
+              description={gitFields.branchConfig.description}
+              error={
+                errors?.branch?.message ||
+                (refsError ? t('provisioning.config-form.error-fetch-branches', 'Failed to fetch branches') : undefined)
+              }
+              invalid={Boolean(errors?.branch?.message || refsError)}
+            >
+              <Controller
+                name="branch"
+                control={control}
+                rules={gitFields.branchConfig.validation}
+                render={({ field: { ref, onChange, ...field } }) => (
+                  <Combobox
+                    invalid={Boolean(errors?.branch?.message || refsError)}
+                    onChange={(option) => onChange(option?.value || '')}
+                    placeholder={gitFields.branchConfig.placeholder}
+                    options={branchOptions}
+                    loading={refsLoading}
+                    isClearable
+                    {...field}
+                  />
+                )}
+              />
             </Field>
             <Field noMargin label={gitFields.pathConfig.label} description={gitFields.pathConfig.description}>
               <Input {...register('path')} />
@@ -284,6 +360,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
               ? t('provisioning.config-form.button-saving', 'Saving...')
               : t('provisioning.config-form.button-save', 'Save')}
           </Button>
+          {repositoryName && data && (
+            <DeleteRepositoryButton name={repositoryName} repository={data} redirectTo={PROVISIONING_URL} />
+          )}
         </Stack>
       </Stack>
     </form>

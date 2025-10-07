@@ -8,11 +8,20 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, accessControl ac.AccessControl) *QueryHistoryService {
+func ProvideService(cfg *setting.Cfg,
+	sqlStore db.DB,
+	routeRegister routing.RouteRegister,
+	accessControl ac.AccessControl,
+	features featuremgmt.FeatureToggles,
+	configProvider apiserver.DirectRestConfigProvider,
+) *QueryHistoryService {
 	s := &QueryHistoryService{
 		store:         sqlStore,
 		Cfg:           cfg,
@@ -24,6 +33,12 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 
 	// Register routes only when query history is enabled
 	if s.Cfg.QueryHistoryEnabled {
+		if features.IsEnabledGlobally(featuremgmt.FlagKubernetesStars) {
+			s.k8sClients = &k8sClients{
+				namespacer:     request.GetNamespaceMapper(s.Cfg),
+				configProvider: configProvider,
+			}
+		}
 		s.registerAPIEndpoints()
 	}
 
@@ -48,6 +63,7 @@ type QueryHistoryService struct {
 	log           log.Logger
 	now           func() time.Time
 	accessControl ac.AccessControl
+	k8sClients    *k8sClients
 }
 
 func (s QueryHistoryService) CreateQueryInQueryHistory(ctx context.Context, user *user.SignedInUser, cmd CreateQueryInQueryHistoryCommand) (QueryHistoryDTO, error) {

@@ -69,6 +69,7 @@ export function getAdHocFilterOptions(variable: SceneVariable): OptionsPaneItemD
 
   return [
     new OptionsPaneItemDescriptor({
+      id: `variable-${variable.state.name}-value`,
       render: () => <AdHocFiltersVariableEditor variable={variable} onRunQuery={noop} inline={true} />,
     }),
   ];

@@ -11,6 +11,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
 import { FilesView } from '../File/FilesView';
+import { InlineSecureValueWarning } from '../components/InlineSecureValueWarning';
 import { PROVISIONING_URL } from '../constants';
 
 import { RepositoryActions } from './RepositoryActions';
@@ -80,6 +81,7 @@ export default function RepositoryStatusPage() {
             </Trans>
           </Alert>
         )}
+        <InlineSecureValueWarning repo={data} />
         {notFound ? (
           <EmptyState
             message={t('provisioning.repository-status-page.not-found-message', 'Repository not found')}

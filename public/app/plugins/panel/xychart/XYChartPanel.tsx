@@ -12,6 +12,7 @@ import {
   VizLegendItem,
   useStyles2,
   useTheme2,
+  usePanelContext,
 } from '@grafana/ui';
 import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
 
@@ -27,6 +28,9 @@ type Props2 = PanelProps<Options>;
 export const XYChartPanel2 = (props: Props2) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+
+  const { canExecuteActions } = usePanelContext();
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   let { mapping, series: mappedSeries } = props.options;
 
@@ -128,6 +132,7 @@ export const XYChartPanel2 = (props: Props2) => {
                     seriesIdx={seriesIdx!}
                     replaceVariables={props.replaceVariables}
                     dataLinks={dataLinks}
+                    canExecuteActions={userCanExecuteActions}
                   />
                 );
               }}

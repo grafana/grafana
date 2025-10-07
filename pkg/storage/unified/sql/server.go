@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 
@@ -9,10 +10,11 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
+
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,15 +41,25 @@ type ServerOptions struct {
 	Features       featuremgmt.FeatureToggles
 	QOSQueue       QOSEnqueueDequeuer
 	SecureValues   secrets.InlineSecureValueSupport
-	Ring           *ring.Ring
-	RingLifecycler *ring.BasicLifecycler
+	OwnsIndexFn    func(key resource.NamespacedResource) (bool, error)
 }
 
-// Creates a new ResourceServer
-func NewResourceServer(
-	opts ServerOptions,
-) (resource.ResourceServer, error) {
+func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+
+	if opts.SecureValues == nil && opts.Cfg != nil && opts.Cfg.SecretsManagement.GrpcClientEnable {
+		inlineSecureValueService, err := inlinesecurevalue.ProvideInlineSecureValueService(
+			opts.Cfg,
+			opts.Tracer,
+			nil, // not needed for gRPC client mode
+			nil, // not needed for gRPC client mode
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create inline secure value service: %w", err)
+		}
+		opts.SecureValues = inlineSecureValueService
+	}
+
 	serverOptions := resource.ResourceServerOptions{
 		Tracer: opts.Tracer,
 		Blob: resource.BlobConfig{
@@ -101,9 +113,7 @@ func NewResourceServer(
 	serverOptions.Search = opts.SearchOptions
 	serverOptions.IndexMetrics = opts.IndexMetrics
 	serverOptions.QOSQueue = opts.QOSQueue
-	serverOptions.Ring = opts.Ring
-	serverOptions.RingLifecycler = opts.RingLifecycler
-	serverOptions.SearchAfterWrite = opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchAfterWriteExperimentalAPI)
+	serverOptions.OwnsIndexFn = opts.OwnsIndexFn
 
 	return resource.NewResourceServer(serverOptions)
 }

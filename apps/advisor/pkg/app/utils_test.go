@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -249,7 +250,9 @@ func TestProcessCheckRetry_SkipMissingItem(t *testing.T) {
 		t.Fatal(err)
 	}
 	meta.SetCreatedBy("user:1")
-	client := &mockClient{}
+	client := &mockClient{
+		res: obj,
+	}
 	typesClient := &mockTypesClient{}
 	ctx := context.TODO()
 
@@ -281,7 +284,9 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 		t.Fatal(err)
 	}
 	meta.SetCreatedBy("user:1")
-	client := &mockClient{}
+	client := &mockClient{
+		res: obj,
+	}
 	typesClient := &mockTypesClient{}
 	ctx := context.TODO()
 
@@ -294,6 +299,51 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 	assert.Equal(t, checks.StatusAnnotationProcessed, obj.GetAnnotations()[checks.StatusAnnotation])
 	assert.Empty(t, obj.GetAnnotations()[checks.RetryAnnotation])
 	assert.Empty(t, obj.Status.Report.Failures)
+}
+
+func TestProcessCheckRetry_Success_Polling(t *testing.T) {
+	retryAnnotationPollingInterval = 1 * time.Millisecond
+	obj := &advisorv0alpha1.Check{}
+	obj.SetAnnotations(map[string]string{
+		checks.RetryAnnotation:  "item",
+		checks.StatusAnnotation: checks.StatusAnnotationProcessed,
+	})
+	obj.Status.Report.Failures = []advisorv0alpha1.CheckReportFailure{
+		{
+			ItemID: "item",
+			StepID: "step",
+		},
+	}
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	meta.SetCreatedBy("user:1")
+	retryCount := 0
+	client := &mockClient{
+		get: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+			if retryCount > 0 {
+				// obj contains the retry annotation
+				return obj, nil
+			}
+			retryCount++
+			oldObject := &advisorv0alpha1.Check{}
+			oldObject.SetAnnotations(map[string]string{
+				checks.RetryAnnotation: "",
+			})
+			return oldObject, nil
+		},
+	}
+	typesClient := &mockTypesClient{}
+	ctx := context.TODO()
+
+	check := &mockCheck{
+		items: []any{"item"},
+	}
+
+	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, retryCount)
 }
 
 func TestRunStepsInParallel_ConcurrentHeaderAccess(t *testing.T) {
@@ -360,12 +410,21 @@ func TestRunStepsInParallel_ConcurrentHeaderAccess(t *testing.T) {
 type mockClient struct {
 	resource.Client
 	values []any
+	res    resource.Object
+	get    func(ctx context.Context, id resource.Identifier) (resource.Object, error)
 }
 
 func (m *mockClient) PatchInto(ctx context.Context, id resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions, obj resource.Object) error {
 	value := req.Operations[0].Value
 	m.values = append(m.values, value)
 	return nil
+}
+
+func (m *mockClient) Get(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+	if m.get != nil {
+		return m.get(ctx, id)
+	}
+	return m.res, nil
 }
 
 type mockTypesClient struct {
