@@ -15,7 +15,7 @@ import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } fro
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { dispatch } from 'app/store/store';
-import { PermissionLevelString } from 'app/types/acl';
+import { PermissionLevel } from 'app/types/acl';
 import { SaveDashboardResponseDTO, ImportDashboardResponseDTO } from 'app/types/dashboard';
 import { FolderListItemDTO, FolderDTO, DescendantCount, DescendantCountDTO } from 'app/types/folders';
 
@@ -71,7 +71,7 @@ export interface ListFolderQueryArgs {
   page: number;
   parentUid: string | undefined;
   limit: number;
-  permission?: PermissionLevelString;
+  permission?: PermissionLevel;
 }
 
 export const browseDashboardsAPI = createApi({

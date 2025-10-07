@@ -1535,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "The group is being deleted"
     },
+    "group-wrapper": {
+      "toggle": "Toggle group"
+    },
     "header": {
       "tooltip-remove": "Remove expression \"{{refId}}\""
     },
@@ -1709,6 +1712,9 @@
       },
       "placeholder-key": "key",
       "placeholder-value": "value"
+    },
+    "left-column": {
+      "label-instances": "Instances"
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "View or create contact points",
@@ -2024,6 +2030,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "The selected Alertmanager no longer exists or you may not have permission to access it. You can select a different Alertmanager from the dropdown.",
       "title-selected-alertmanager-not-found": "Selected Alertmanager not found."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "Learn about problems in your systems moments after they occur",
+        "title": "Triage"
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2915,6 +2927,13 @@
         "summary": "The following alert rules will be imported:",
         "title-warning": "Warning"
       }
+    },
+    "triage": {
+      "alert-instances": "Alert instances",
+      "firing-instances-count": "{{firingCount}} firing instances",
+      "no-instances-found": "No alert instances found for rule: {ruleUID}",
+      "no-labels": "No labels",
+      "pending-instances-count": "{{pendingCount}} pending instances"
     },
     "type-selector-button": {
       "add-expression": "Add expression"
@@ -9446,6 +9465,7 @@
     "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
     "description-enable-logs-highlighting": "Use a predefined coloring scheme to highlight relevant parts of the log lines",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
+    "description-show-log-attributes": "Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.",
     "fields": {
       "type": {
         "loki": {
@@ -9496,9 +9516,6 @@
       "collapse": "Collapse labels",
       "expand": "Expand labels"
     },
-    "log-labels-list": {
-      "log-line": "log line"
-    },
     "log-line": {
       "has-error": "Has errors",
       "is-sampled": "Is sampled",
@@ -9538,6 +9555,7 @@
       "inline-mode": "Display inline",
       "link-value-tooltip": "Link value",
       "links-section": "Links",
+      "log-attributes-field": "OTel attributes",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
       "move-displayed-field-down": "Move down",
@@ -9744,6 +9762,7 @@
       "line-contains": "Add as line contains filter",
       "line-contains-not": "Add as line does not contain filter"
     },
+    "show-log-attributes": "Display log attributes for OTel logs",
     "timestamp-format": "Timestamp resolution",
     "un-themed-log-details": {
       "aria-label-data-links": "Data links",
