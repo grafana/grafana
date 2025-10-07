@@ -1,3 +1,4 @@
+import { VERSION } from '../../api/notifications/v0alpha1/const';
 import { LabelMatcherFactory, RouteFactory } from '../../api/notifications/v0alpha1/mocks/fakes/Routes';
 import { RoutingTree } from '../../api/notifications/v0alpha1/notifications.api.gen';
 import { Label } from '../../matchers/types';
@@ -15,6 +16,7 @@ describe('matchInstancesToRouteTrees', () => {
     const trees: RoutingTree[] = [
       {
         kind: 'RoutingTree',
+        apiVersion: VERSION,
         metadata: { name: treeName },
         spec: {
           defaults: {
@@ -49,6 +51,7 @@ describe('matchInstancesToRouteTrees', () => {
     const trees: RoutingTree[] = [
       {
         kind: 'RoutingTree',
+        apiVersion: VERSION,
         metadata: { name: treeName },
         spec: {
           defaults: {
