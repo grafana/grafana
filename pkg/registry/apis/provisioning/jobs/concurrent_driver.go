@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // ConcurrentJobDriver manages multiple jobDriver instances for concurrent job processing.
@@ -31,6 +32,7 @@ func NewConcurrentJobDriver(
 	repoGetter RepoGetter,
 	historicJobs HistoryWriter,
 	notifications chan struct{},
+	registry prometheus.Registerer,
 	workers ...Worker,
 ) (*ConcurrentJobDriver, error) {
 	if numDrivers <= 0 {
@@ -54,6 +56,8 @@ func NewConcurrentJobDriver(
 	if cleanupInterval > 5*time.Minute {
 		cleanupInterval = 5 * time.Minute // Maximum cleanup interval
 	}
+
+	recordConcurrentDriverMetric(registry, numDrivers)
 
 	return &ConcurrentJobDriver{
 		numDrivers:           numDrivers,

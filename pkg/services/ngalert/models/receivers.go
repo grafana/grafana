@@ -12,9 +12,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
+	"github.com/grafana/alerting/receivers/schema"
 )
 
 // GetReceiverQuery represents a query for a single receiver.
@@ -228,30 +228,35 @@ func (f IntegrationFieldPath) With(segment string) IntegrationFieldPath {
 //	IntegrationConfig - The integration configuration
 //	error - Error if integration type not found or invalid version specified
 func IntegrationConfigFromType(integrationType string, version *string) (IntegrationConfig, error) {
-	versionConfig, err := channels_config.ConfigForIntegrationType(integrationType)
-	if err != nil {
-		return IntegrationConfig{}, err
+	typeSchema, ok := alertingNotify.GetSchemaForIntegration(schema.IntegrationType(integrationType))
+	if !ok {
+		return IntegrationConfig{}, fmt.Errorf("integration type %s not found", integrationType)
 	}
-	// if particular version is requested and the version returned does not match, try to get the correct version
-	if version != nil && *version != string(versionConfig.Version) {
-		exists := false
-		versionConfig, exists = versionConfig.Plugin.GetVersion(channels_config.NotifierVersion(*version))
-		if !exists {
-			return IntegrationConfig{}, fmt.Errorf("version %s not found in config", *version)
-		}
+	if version == nil {
+		return IntegrationConfigFromSchema(typeSchema, typeSchema.CurrentVersion)
+	}
+	return IntegrationConfigFromSchema(typeSchema, schema.Version(*version))
+}
+
+// IntegrationConfigFromSchema returns an integration configuration for a given version of the integration type schema.
+// Returns an error if the schema does not have such version
+func IntegrationConfigFromSchema(typeSchema schema.IntegrationTypeSchema, version schema.Version) (IntegrationConfig, error) {
+	typeVersion, ok := typeSchema.GetVersion(version)
+	if !ok {
+		return IntegrationConfig{}, fmt.Errorf("version %s not found in config", version)
 	}
 	integrationConfig := IntegrationConfig{
-		Type:    versionConfig.Plugin.Type,
-		Version: string(versionConfig.Version),
-		Fields:  make(map[string]IntegrationField, len(versionConfig.Options)),
+		Type:    string(typeSchema.Type),
+		Version: string(typeVersion.Version),
+		Fields:  make(map[string]IntegrationField, len(typeVersion.Options)),
 	}
-	for _, option := range versionConfig.Options {
+	for _, option := range typeVersion.Options {
 		integrationConfig.Fields[option.PropertyName] = notifierOptionToIntegrationField(option)
 	}
 	return integrationConfig, nil
 }
 
-func notifierOptionToIntegrationField(option channels_config.NotifierOption) IntegrationField {
+func notifierOptionToIntegrationField(option schema.Field) IntegrationField {
 	f := IntegrationField{
 		Name:   option.PropertyName,
 		Secure: option.Secure,
@@ -568,7 +573,7 @@ func (integration *Integration) Validate(decryptFn DecryptFn) error {
 		return err
 	}
 
-	return ValidateIntegration(context.Background(), alertingNotify.GrafanaIntegrationConfig{
+	return ValidateIntegration(context.Background(), models.IntegrationConfig{
 		UID:                   decrypted.UID,
 		Name:                  decrypted.Name,
 		Type:                  decrypted.Config.Type,
@@ -578,7 +583,7 @@ func (integration *Integration) Validate(decryptFn DecryptFn) error {
 	}, alertingNotify.NoopDecrypt)
 }
 
-func ValidateIntegration(ctx context.Context, integration alertingNotify.GrafanaIntegrationConfig, decryptFunc alertingNotify.GetDecryptedValueFn) error {
+func ValidateIntegration(ctx context.Context, integration models.IntegrationConfig, decryptFunc alertingNotify.GetDecryptedValueFn) error {
 	if integration.Type == "" {
 		return fmt.Errorf("type should not be an empty string")
 	}
@@ -587,8 +592,8 @@ func ValidateIntegration(ctx context.Context, integration alertingNotify.Grafana
 	}
 
 	_, err := alertingNotify.BuildReceiverConfiguration(ctx, &alertingNotify.APIReceiver{
-		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
-			Integrations: []*alertingNotify.GrafanaIntegrationConfig{&integration},
+		ReceiverConfig: models.ReceiverConfig{
+			Integrations: []*models.IntegrationConfig{&integration},
 		},
 	}, alertingNotify.DecodeSecretsFromBase64, decryptFunc)
 	if err != nil {
