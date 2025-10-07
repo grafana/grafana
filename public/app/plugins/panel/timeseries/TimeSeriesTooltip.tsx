@@ -42,6 +42,8 @@ export interface TimeSeriesTooltipProps {
   dataLinks: LinkModel[];
   hideZeros?: boolean;
   adHocFilters?: AdHocFilterModel[];
+  canExecuteActions?: boolean;
+  compareDiffMs?: number[];
 }
 
 export const TimeSeriesTooltip = ({
@@ -58,9 +60,17 @@ export const TimeSeriesTooltip = ({
   dataLinks,
   hideZeros,
   adHocFilters,
+  canExecuteActions,
+  compareDiffMs,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
-  const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
+  let xVal = xField.values[dataIdxs[0]!];
+
+  if (compareDiffMs != null && xField.type === FieldType.time) {
+    xVal += compareDiffMs[seriesIdx ?? 1];
+  }
+
+  const xDisp = formattedValueToString(xField.display!(xVal));
 
   const contentItems = getContentItems(
     series.fields,
@@ -82,7 +92,7 @@ export const TimeSeriesTooltip = ({
 
     if (isPinned || hasOneClickLink) {
       const dataIdx = dataIdxs[seriesIdx]!;
-      const actions = getFieldActions(series, field, replaceVariables, dataIdx);
+      const actions = canExecuteActions ? getFieldActions(series, field, replaceVariables, dataIdx) : [];
 
       footer = (
         <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} adHocFilters={adHocFilters} />
@@ -92,7 +102,7 @@ export const TimeSeriesTooltip = ({
 
   const headerItem: VizTooltipItem = {
     label: xField.type === FieldType.time ? '' : (xField.state?.displayName ?? xField.name),
-    value: xVal,
+    value: xDisp,
   };
 
   return (

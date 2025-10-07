@@ -10,7 +10,6 @@ export function addPanelsOnLoadBehavior(scene: DashboardScene) {
   const dto = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
 
   if (dto) {
-    console.log('asd', dto);
     const model = new DashboardModel(dto.dashboard);
 
     for (const panel of model.panels) {

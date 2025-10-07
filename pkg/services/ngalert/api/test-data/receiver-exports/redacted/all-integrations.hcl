@@ -261,14 +261,14 @@ resource "grafana_contact_point" "contact_point_2b661702215368fe" {
     title                   = "test-title"
     message                 = "test-message"
 
-    tlsConfig {
+    tls_config {
       insecure_skip_verify = false
       ca_certificate       = "[REDACTED]"
       client_certificate   = "[REDACTED]"
       client_key           = "[REDACTED]"
     }
 
-    hmacConfig {
+    hmac_config {
       secret           = "[REDACTED]"
       header           = "X-Grafana-Alerting-Signature"
       timestamp_header = "X-Grafana-Alerting-Timestamp"

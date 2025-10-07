@@ -42,7 +42,6 @@ import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineCo
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationHelper';
 import { CustomContainer } from './CustomContainer';
-import { DrilldownAlertBox } from './DrilldownAlertBox';
 import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
 import { GraphContainer } from './Graph/GraphContainer';
@@ -78,7 +77,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'exploreMain',
       // Is needed for some transition animations to work.
       position: 'relative',
-      marginTop: '21px',
+      marginTop: theme.spacing(3),
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
@@ -313,7 +312,19 @@ export class Explore extends PureComponent<Props, ExploreState> {
    */
   onSplitOpen = (panelType: string) => {
     return async (options?: SplitOpenOptions) => {
-      this.props.splitOpen(options ? { ...options, compact: true } : options);
+      let compact = true;
+
+      /**
+       * Temporary fix grafana-clickhouse-datasource as it requires the query editor to be fully rendered to update the query
+       * Proposed fixes:
+       * - https://github.com/grafana/clickhouse-datasource/issues/1363 - handle query update in data source
+       * - https://github.com/grafana/grafana/issues/110868 - allow data links to provide meta info if the link can be handled in compact mode (default to false)
+       */
+      if (options?.queries?.some((q) => q.datasource?.type === 'grafana-clickhouse-datasource')) {
+        compact = false;
+      }
+
+      this.props.splitOpen(options ? { ...options, compact } : options);
       if (options && this.props.datasourceInstance) {
         const target = (await getDataSourceSrv().get(options.datasourceUid)).type;
         const source =
@@ -578,7 +589,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
       correlationEditorHelperData,
       showQueryInspector,
       setShowQueryInspector,
-      splitted,
       compact,
       queryLibraryRef,
     } = this.props;
@@ -639,7 +649,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
                       mergeSingleChild={true}
                     >
                       <PanelContainer className={styles.queryContainer}>
-                        {!splitted && <DrilldownAlertBox datasourceType={datasourceInstance?.type || ''} />}
                         {correlationsBox}
                         <QueryRows
                           exploreId={exploreId}

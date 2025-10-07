@@ -11,9 +11,6 @@ import type { Situation } from './situation';
 const history: string[] = ['previous_metric_name_1', 'previous_metric_name_2', 'previous_metric_name_3'];
 const dataProviderSettings = {
   languageProvider: {
-    datasource: {
-      metricNamesAutocompleteSuggestionLimit: DEFAULT_COMPLETION_LIMIT,
-    },
     queryLabelKeys: jest.fn(),
     queryLabelValues: jest.fn(),
     retrieveLabelKeys: jest.fn(),
@@ -31,9 +28,6 @@ const metrics = {
 
 beforeEach(() => {
   dataProvider = new DataProvider(dataProviderSettings);
-  jest.replaceProperty(config, 'featureToggles', {
-    prometheusCodeModeMetricNamesSearch: true,
-  });
 });
 
 afterEach(() => {
@@ -218,30 +212,6 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
     dataProvider.monacoSettings.setInputInRange('metric_name_');
     completions = await getCompletions(situation, dataProvider, timeRange);
     expect(completions.length).toBeLessThanOrEqual(expectedCompletionsCount);
-  });
-
-  it('should enable autocomplete suggestions update when the number of metric names is greater than the limit', async () => {
-    const situation: Situation = {
-      type: situationType,
-    };
-
-    // Do not cross the metrics names threshold
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValueOnce(metrics.atLimit);
-    dataProvider.monacoSettings.setInputInRange('name_1');
-    await getCompletions(situation, dataProvider, timeRange);
-    expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(false);
-
-    // Cross the metric names threshold, without text input
-    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue(metrics.beyondLimit);
-    dataProvider.monacoSettings.setInputInRange('');
-    await getCompletions(situation, dataProvider, timeRange);
-    expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(true);
-
-    // Cross the metric names threshold, with text input
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValueOnce(metrics.beyondLimit);
-    dataProvider.monacoSettings.setInputInRange('name_1');
-    await getCompletions(situation, dataProvider, timeRange);
-    expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(true);
   });
 
   it('should handle complex queries efficiently', async () => {

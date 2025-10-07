@@ -12,6 +12,7 @@ import {
   FieldType,
   DataFrameWithValue,
   SelectableValue,
+  FieldState,
 } from '@grafana/data';
 import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
@@ -104,14 +105,6 @@ export interface TableSortByFieldState {
   desc?: boolean;
 }
 
-export interface TableFooterCalc {
-  show: boolean;
-  reducer?: string[];
-  fields?: string[];
-  enablePagination?: boolean;
-  countRows?: boolean;
-}
-
 export interface BaseTableProps {
   ariaLabel?: string;
   data: DataFrame;
@@ -127,11 +120,11 @@ export interface BaseTableProps {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
-  footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
+  maxRowHeight?: number;
   structureRev?: number;
   transparent?: boolean;
   /** @alpha Used by SparklineCell when provided */
@@ -258,6 +251,7 @@ export interface TableCellStyleOptions {
   textWrap: boolean;
   textAlign: TextAlign;
   shouldOverflow: boolean;
+  maxHeight?: number;
 }
 
 export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOptions) => string;
@@ -315,4 +309,8 @@ export interface FromFieldsResult {
   columns: TableColumn[];
   cellRootRenderers: Record<string, CellRootRenderer>;
   colsWithTooltip: Record<string, boolean>;
+}
+
+export interface FooterFieldState extends FieldState {
+  lastProcessedRowCount: number;
 }

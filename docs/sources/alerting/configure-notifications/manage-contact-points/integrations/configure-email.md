@@ -84,10 +84,9 @@ To set up email integration, complete the following steps.
 1. Enter the email addresses you want to send notifications to.
 
    E-mail addresses are case sensitive. Ensure that the e-mail address entered is correct.
+   For large numbers of emails, the **Single email** checkbox in **Optional Email Settings** allows you to send a single email to all contact points rather than send individual emails to all addresses in the contact point.
 
-1. Click **Test** to check that your integration works.
-
-   ** For Grafana Alertmanager only.**
+1. For Grafana Alertmanager: click **Test** to check that your integration works.
 
 1. Click **Save contact point**.
 

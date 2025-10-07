@@ -12,8 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -21,8 +21,8 @@ type mockClients struct {
 	mock.Mock
 }
 
-func (m *mockClients) ForResource(gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
-	args := m.Called(gvr)
+func (m *mockClients) ForResource(ctx context.Context, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	args := m.Called(ctx, gvr)
 	var ri dynamic.ResourceInterface
 	if args.Get(0) != nil {
 		ri = args.Get(0).(dynamic.ResourceInterface)
@@ -30,8 +30,8 @@ func (m *mockClients) ForResource(gvr schema.GroupVersionResource) (dynamic.Reso
 	return ri, args.Get(1).(schema.GroupVersionKind), args.Error(2)
 }
 
-func (m *mockClients) ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
-	args := m.Called(gvk)
+func (m *mockClients) ForKind(ctx context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
+	args := m.Called(ctx, gvk)
 	var ri dynamic.ResourceInterface
 	if args.Get(0) != nil {
 		ri = args.Get(0).(dynamic.ResourceInterface)
@@ -39,8 +39,8 @@ func (m *mockClients) ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInte
 	return ri, args.Get(1).(schema.GroupVersionResource), args.Error(2)
 }
 
-func (m *mockClients) Folder() (dynamic.ResourceInterface, error) {
-	args := m.Called()
+func (m *mockClients) Folder(ctx context.Context) (dynamic.ResourceInterface, error) {
+	args := m.Called(ctx)
 	var ri dynamic.ResourceInterface
 	if args.Get(0) != nil {
 		ri = args.Get(0).(dynamic.ResourceInterface)
@@ -48,8 +48,8 @@ func (m *mockClients) Folder() (dynamic.ResourceInterface, error) {
 	return ri, args.Error(1)
 }
 
-func (m *mockClients) User() (dynamic.ResourceInterface, error) {
-	args := m.Called()
+func (m *mockClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {
+	args := m.Called(ctx)
 	var ri dynamic.ResourceInterface
 	if args.Get(0) != nil {
 		ri = args.Get(0).(dynamic.ResourceInterface)
@@ -75,7 +75,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 
 	t.Run("should fail when getting resource client fails", func(t *testing.T) {
 		clients := &mockClients{}
-		clients.On("ForResource", resources.SupportedProvisioningResources[0]).
+		clients.On("ForResource", mock.Anything, resources.SupportedProvisioningResources[0]).
 			Return(nil, schema.GroupVersionKind{}, errors.New("failed to get resource client"))
 
 		mockClientFactory := resources.NewMockClientFactory(t)
@@ -113,7 +113,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		}
 
 		clients := &mockClients{}
-		clients.On("ForResource", mock.Anything).
+		clients.On("ForResource", mock.Anything, mock.Anything).
 			Return(mockDynamicClient, schema.GroupVersionKind{}, nil)
 
 		mockClientFactory := resources.NewMockClientFactory(t)
@@ -180,7 +180,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		}
 
 		clients := &mockClients{}
-		clients.On("ForResource", mock.Anything).
+		clients.On("ForResource", mock.Anything, mock.Anything).
 			Return(mockDynamicClient, schema.GroupVersionKind{}, nil)
 
 		mockClientFactory := resources.NewMockClientFactory(t)
@@ -253,7 +253,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		}
 
 		clients := &mockClients{}
-		clients.On("ForResource", mock.Anything).
+		clients.On("ForResource", mock.Anything, mock.Anything).
 			Return(mockDynamicClient, schema.GroupVersionKind{}, nil)
 
 		mockClientFactory := resources.NewMockClientFactory(t)

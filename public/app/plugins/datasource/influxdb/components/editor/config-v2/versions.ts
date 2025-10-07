@@ -14,7 +14,7 @@ interface DetectionMethod {
   urlContains?: string[];
   pingHeaderResponse?: Record<string, string>;
 }
-interface InfluxDBProduct {
+export interface InfluxDBProduct {
   name: string;
   queryLanguages?: QueryLanguageConfig[];
   detectionMethod?: DetectionMethod;

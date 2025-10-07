@@ -7,7 +7,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
 
 	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -25,7 +24,6 @@ func convertToK8sResource(v *shorturls.ShortUrl, namespacer request.NamespaceMap
 	p := &shorturl.ShortURL{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Uid,
-			UID:               types.UID(v.Uid),
 			ResourceVersion:   fmt.Sprintf("%d", v.LastSeenAt),
 			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.CreatedAt)),
 			Namespace:         namespacer(v.OrgId),

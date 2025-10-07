@@ -8,7 +8,7 @@ export function getDefaultWorkflow(config?: RepositoryView, loadedFromRef?: stri
   return config?.workflows?.[0];
 }
 
-export function getWorkflowOptions(config?: RepositoryView, ref?: string) {
+export function getWorkflowOptions(config?: RepositoryView) {
   if (!config) {
     return [];
   }
@@ -17,19 +17,17 @@ export function getWorkflowOptions(config?: RepositoryView, ref?: string) {
     return [{ label: `Save`, value: 'write' }];
   }
 
-  // When a branch is configured, show it
-  if (!ref && config.branch) {
-    ref = config.branch;
-  }
-
   // Return the workflows in the configured order
   return config.workflows.map((value) => {
     switch (value) {
       case 'write':
-        return { label: ref ? `Push to ${ref}` : 'Save', value };
+        return {
+          label: t('provisioning.workflow-options-label.push-to-existing-branch', 'Push to an existing branch'),
+          value,
+        };
       case 'branch':
         return {
-          label: t('dashboard-scene.get-workflow-options.label.push-to-a-new-branch', 'Push to a new branch'),
+          label: t('provisioning.workflow-options-label.push-to-a-new-branch', 'Push to a new branch'),
           value,
         };
     }

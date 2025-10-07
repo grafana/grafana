@@ -24,7 +24,7 @@ jobs:
     outputs:
       changed: ${{ steps.detect-changes.outputs.backend }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 2
@@ -55,7 +55,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Setup Go
@@ -68,7 +68,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
-          go test -short -timeout=30m "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -short -timeout=30m "${PACKAGES[@]}"
 
   grafana-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -90,7 +90,7 @@ jobs:
     steps:
       # Set up repository clone
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Setup Go
@@ -118,7 +118,7 @@ jobs:
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
           # This tee requires pipefail to be set, otherwise `go test`'s exit code is thrown away.
           # That means having no `-o pipefail` => failing tests => exit code 0, which is wrong.
-          go test -short -timeout=30m "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -short -timeout=30m "${PACKAGES[@]}"
 
   # This is the job that is actually required by rulesets.
   # We need to require EITHER the OSS or the Enterprise job to pass.

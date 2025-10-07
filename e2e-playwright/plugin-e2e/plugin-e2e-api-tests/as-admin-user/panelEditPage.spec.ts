@@ -11,12 +11,6 @@ const STANDARD_OTIONS_CATEGORY = 'Standard options';
 const DISPLAY_NAME_LABEL = 'Display name';
 const REACT_TABLE_DASHBOARD = { uid: 'U_bZIMRMk' };
 
-test.use({
-  featureToggles: {
-    tableNextGen: true,
-  },
-});
-
 test.describe(
   'plugin-e2e-api-tests admin',
   {

@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/maps"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
@@ -104,7 +106,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 							// If it is already SQL error with type (e.g. limit exceeded, input conversion, capture the type as that)
 							eType = errWithType.Category()
 						}
-						s.metrics.SqlCommandCount.WithLabelValues("error", eType)
+						s.metrics.SqlCommandCount.WithLabelValues("error", eType).Inc()
 						depErr = e
 					} else { // general SSE dependency error
 						depErr = MakeDependencyError(node.RefID(), neededVar)
@@ -201,6 +203,26 @@ func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline
 	if req != nil && len(req.Headers) == 0 {
 		req.Headers = map[string]string{}
 	}
+
+	instrumentSQLError := func(err error, span trace.Span) {
+		var sqlErr *sql.ErrorWithCategory
+		if errors.As(err, &sqlErr) {
+			// The SQL expression (and the entire pipeline) will not be executed, so we
+			// track the attempt to execute here.
+			s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()
+		}
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+	}
+
+	_, span := s.tracer.Start(ctx, "SSE.BuildPipeline")
+	var err error
+	defer func() {
+		instrumentSQLError(err, span)
+		span.End()
+	}()
 
 	graph, err := s.buildDependencyGraph(ctx, req)
 	if err != nil {
@@ -355,7 +377,6 @@ func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]
 					// this missing dependency. But we collection the metric as there was an
 					// attempt to execute a SQL expression.
 					e := sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
-					s.metrics.SqlCommandCount.WithLabelValues("error", e.Category()).Inc()
 					return e
 				}
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)

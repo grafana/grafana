@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { SceneObjectUrlSyncHandler, SceneObjectUrlValues, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
 import { KioskMode } from 'app/types/dashboard';
@@ -6,7 +5,6 @@ import { KioskMode } from 'app/types/dashboard';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
-import { ShareModal } from '../sharing/ShareModal';
 import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
@@ -28,7 +26,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       viewPanel: state.viewPanel,
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
-      kiosk: state.kioskMode === KioskMode.Full ? '' : undefined,
+      kiosk: state.kioskMode === KioskMode.Full ? 'true' : undefined,
       shareView: state.shareView,
       orgId: contextSrv.user.orgId.toString(),
     };
@@ -102,13 +100,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     if (typeof values.shareView === 'string') {
       update.shareView = values.shareView;
-      update.overlay = config.featureToggles.newDashboardSharingComponent
-        ? new ShareDrawer({
-            shareView: values.shareView,
-          })
-        : new ShareModal({
-            activeTab: values.shareView,
-          });
+      update.overlay = new ShareDrawer({
+        shareView: values.shareView,
+      });
     } else if (shareView && values.shareView === null) {
       update.overlay = undefined;
       update.shareView = undefined;

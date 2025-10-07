@@ -10,9 +10,9 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/apps/provisioning/pkg/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/apifmt"
 )
 
 // Store is an abstraction for the storage API.
@@ -271,14 +271,25 @@ func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, job *provision
 }
 
 func (d *jobDriver) processJob(ctx context.Context, job *provisioning.Job, recorder JobProgressRecorder) error {
+	logger := logging.FromContext(ctx)
 	for _, worker := range d.workers {
 		if !worker.IsSupported(ctx, *job) {
 			continue
 		}
 
-		repo, err := d.repoGetter.GetRepository(ctx, job.Spec.Repository)
+		repo, err := d.repoGetter.GetRepository(ctx, job.Namespace, job.Spec.Repository)
 		if err != nil {
 			return apifmt.Errorf("failed to get repository '%s': %w", job.Spec.Repository, err)
+		}
+
+		r := repo.Config()
+		if r.DeletionTimestamp != nil && !r.DeletionTimestamp.IsZero() {
+			logger.Info("repository is marked for deletion, skipping processing job",
+				"name", r.Name,
+				"namespace", r.Namespace,
+				"deletionTimestamp", r.DeletionTimestamp,
+			)
+			return nil
 		}
 
 		return worker.Process(ctx, repo, *job, recorder)

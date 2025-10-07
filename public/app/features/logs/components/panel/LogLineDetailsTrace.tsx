@@ -4,7 +4,7 @@ import { isObservable, lastValueFrom } from 'rxjs';
 
 import { DataFrame, DataQueryRequest, DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
@@ -75,6 +75,14 @@ export const LogLineDetailsTrace = ({ timeRange, timeZone, traceRef }: Props) =>
   }, [app, dataSource, timeRange, timeZone, traceRef.query]);
 
   const traceProp = useMemo(() => (dataFrames?.length ? transformDataFrames(dataFrames[0]) : undefined), [dataFrames]);
+
+  useEffect(() => {
+    if (dataSource && Array.isArray(dataFrames) && traceProp) {
+      reportInteraction('logs_log_line_details_trace_displayed');
+    } else if (dataFrames === null) {
+      reportInteraction('logs_log_line_details_trace_display_failed');
+    }
+  }, [dataFrames, dataSource, traceProp]);
 
   return (
     <div>

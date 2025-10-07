@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V35 ensures x-axis visibility in timeseries panels to prevent dashboard breakage.
 //
 // This migration addresses a specific issue where timeseries panels with all axes
@@ -33,7 +35,7 @@ package schemaversion
 //	    properties: [{ id: "custom.axisPlacement", value: "auto" }]
 //	  }]
 //	}
-func V35(dashboard map[string]interface{}) error {
+func V35(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(35)
 
 	panels, ok := dashboard["panels"].([]interface{})
@@ -56,7 +58,12 @@ func V35(dashboard map[string]interface{}) error {
 // applyXAxisVisibilityOverride adds a field override to ensure x-axis visibility
 // when the panel's default axis placement is set to hidden.
 func applyXAxisVisibilityOverride(panel map[string]interface{}) {
-	fieldConfig, _ := panel["fieldConfig"].(map[string]interface{})
+	fieldConfig, ok := panel["fieldConfig"].(map[string]interface{})
+	if !ok {
+		// Only process panels that already have fieldConfig (matches frontend behavior)
+		return
+	}
+
 	defaults, _ := fieldConfig["defaults"].(map[string]interface{})
 	custom, _ := defaults["custom"].(map[string]interface{})
 
