@@ -1,14 +1,9 @@
-import { Page } from '@playwright/test';
-
-import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect } from '@grafana/plugin-e2e';
 
 import V2DashWithTabRepeats from '../dashboards/V2DashWithTabRepeats.json';
 
 import {
-  checkRepeatedPanelTitles,
   verifyChanges,
-  movePanel,
-  getPanelPosition,
   saveDashboard,
   importTestDashboard,
   goToEmbeddedPanel,
@@ -161,6 +156,73 @@ test.describe(
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New edited panel'))
       ).toBeVisible();
+
+      await saveDashboard(dashboardPage, page, selectors);
+      await page.reload();
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New edited panel'))
+      ).toBeVisible();
+    });
+
+    test('can update repeats after panel change in editor', async ({ dashboardPage, selectors, page }) => {
+      await importTestDashboard(
+        page,
+        selectors,
+        'Tabs layout repeats - update repeats after panel change in editor',
+        JSON.stringify(V2DashWithTabRepeats)
+      );
+
+      const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first();
+      await panel.hover();
+      await page.keyboard.press('e');
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
+      ).toBeHidden(); // verifying that panel editor loaded
+
+      const panelTitleInput = dashboardPage.getByGrafanaSelector(
+        selectors.components.PanelEditor.OptionsPane.fieldInput('Title')
+      );
+      await panelTitleInput.fill('New edited panel');
+      await panelTitleInput.blur();
+
+      // playwright too fast, verifying JSON diff that changes landed
+      await verifyChanges(dashboardPage, page, selectors, 'New edited panel');
+
+      // verify panel title change in panel editor UI
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(`New edited panel`))
+      ).toBeVisible();
+
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+        .click();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
+      ).toBeVisible(); // verifying that dashboard loaded
+
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.Tab.title(`${repeatTitleBase}${repeatOptions.at(1)}`))
+        .click();
+
+      // intermediate step to verify tab switch happened
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 2 - Row 1 - Panel repeat 1'))
+      ).toBeVisible();
+
+      // verify edited panel title updated in repeated tab
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New edited panel'))
+      ).toBeVisible();
+
+      await saveDashboard(dashboardPage, page, selectors);
+      await page.reload();
+
+      // verify edited panel title updated in repeated tab
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New edited panel'))
+      ).toBeVisible();
     });
 
     test('can hide canvas grid add row action in repeats', async ({ dashboardPage, selectors, page }) => {
@@ -230,6 +292,135 @@ test.describe(
       ).toBe('true');
     });
 
+    test('can view panels in repeated tab', async ({ dashboardPage, selectors, page }) => {
+      await importTestDashboard(
+        page,
+        selectors,
+        'Tabs layout repeats - view panels in repeated tabs',
+        JSON.stringify(V2DashWithTabRepeats)
+      );
+
+      // non repeated panel in repeated tab
+      await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first().hover();
+      await page.keyboard.press('v');
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 1 - Row 1 - Panel repeat 1'))
+      ).toBeHidden();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
+      ).toBeVisible();
+
+      await page.reload();
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
+      ).toBeVisible();
+
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+        .click();
+
+      // repeated panel in original tab repeat
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.DashboardRow.title('Row 2'))
+        .scrollIntoViewIfNeeded();
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 1 - Row 2 - Panel repeat 2'))
+        .hover();
+      await page.keyboard.press('v');
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 1 - Row 1 - Panel repeat 1'))
+      ).toBeHidden();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 1 - Row 2 - Panel repeat 2'))
+      ).toBeVisible();
+
+      await page.reload();
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 1 - Row 2 - Panel repeat 2'))
+      ).toBeVisible();
+
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+        .click();
+
+      // repeated panel in repeated tab
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.Tab.title(`${repeatTitleBase}${repeatOptions.at(2)}`))
+        .click();
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.DashboardRow.title('Row 2'))
+        .scrollIntoViewIfNeeded();
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 3 - Row 2 - Panel repeat 2'))
+        .hover();
+      await page.keyboard.press('v');
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 3 - Row 1 - Panel repeat 1'))
+      ).toBeHidden();
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 3 - Row 2 - Panel repeat 2'))
+      ).toBeVisible();
+
+      await page.reload();
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 3 - Row 2 - Panel repeat 2'))
+      ).toBeVisible();
+    });
+
+    test('can view embedded panels in repeated tab', async ({ dashboardPage, selectors, page }) => {
+      await importTestDashboard(
+        page,
+        selectors,
+        'Tabs layout repeats - view embedded panels in repeated tabs',
+        JSON.stringify(V2DashWithTabRepeats)
+      );
+
+      const dashUrl = page.url();
+
+      // non repeated panel in repeated tab
+      await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first().hover();
+      await page.keyboard.press('p+e');
+      await goToEmbeddedPanel(page);
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
+      ).toBeVisible();
+      await page.goto(dashUrl);
+
+      // repeated panel in original tab repeat
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.DashboardRow.title('Row 2'))
+        .scrollIntoViewIfNeeded();
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 1 - Row 2 - Panel repeat 2'))
+        .hover();
+      await page.keyboard.press('p+e');
+      await goToEmbeddedPanel(page);
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 1 - Row 2 - Panel repeat 2'))
+      ).toBeVisible();
+      await page.goto(dashUrl);
+
+      // repeated panel in repeated tab
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.Tab.title(`${repeatTitleBase}${repeatOptions.at(2)}`))
+        .click();
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.DashboardRow.title('Row 2'))
+        .scrollIntoViewIfNeeded();
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 3 - Row 2 - Panel repeat 2'))
+        .hover();
+      await page.keyboard.press('p+e');
+      await goToEmbeddedPanel(page);
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Tab 3 - Row 2 - Panel repeat 2'))
+      ).toBeVisible();
+    });
+
     test('can remove repeats', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
@@ -291,160 +482,6 @@ test.describe(
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(`${repeatTitleBase}${repeatOptions.at(3)}`))
       ).toBeHidden();
-    });
-
-    test('can update repeats in panel editor', async ({ dashboardPage, selectors, page }) => {
-      // await importTestDashboard(
-      //   page,
-      //   selectors,
-      //   'Custom grid repeats - update through panel editor',
-      //   JSON.stringify(testV2DashWithRepeats)
-      // );
-      // await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      // // selecting last repeat
-      // const panel = dashboardPage.getByGrafanaSelector(
-      //   selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(-1)}`)
-      // );
-      // await panel.hover();
-      // await page.keyboard.press('e');
-      // await expect(
-      //   dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
-      // ).toBeHidden(); // verifying that panel editor loaded
-      // // verify original repeat panel is loaded
-      // await expect(
-      //   dashboardPage.getByGrafanaSelector(
-      //     selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(0)}`)
-      //   )
-      // ).toBeVisible();
-      // await dashboardPage
-      //   .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
-      //   .fill(`${newTitleBase}$c1`);
-      // await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title')).blur();
-      // // playwright too fast, verifying JSON diff that changes landed
-      // await verifyChanges(dashboardPage, page, selectors, newTitleBase);
-      // // verify panel title change in panel editor UI
-      // await expect(
-      //   dashboardPage.getByGrafanaSelector(
-      //     selectors.components.Panels.Panel.title(`${newTitleBase}${repeatOptions.at(0)}`)
-      //   )
-      // ).toBeVisible();
-      // await dashboardPage
-      //   .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-      //   .click();
-      // await expect(
-      //   dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
-      // ).toBeVisible(); // verifying that dashboard loaded
-      // await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
-      // await saveDashboard(dashboardPage, page, selectors);
-      // await page.reload();
-      // await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
-    });
-
-    test('can update repeats in panel editor when loaded directly', async ({ dashboardPage, selectors, page }) => {
-      // await importTestDashboard(
-      //   page,
-      //   selectors,
-      //   'Custom grid repeats - update through directly loaded panel editor',
-      //   JSON.stringify(testV2DashWithRepeats)
-      // );
-      // // loading directly into panel editor
-      // await page.goto(`${page.url()}&editPanel=1`);
-      // await expect(
-      //   dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
-      // ).toBeHidden(); // verifying that panel editor loaded
-      // await expect(
-      //   dashboardPage.getByGrafanaSelector(
-      //     selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(0)}`)
-      //   )
-      // ).toBeVisible();
-      // await dashboardPage
-      //   .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
-      //   .fill(`${newTitleBase}$c1`);
-      // await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title')).blur();
-      // // playwright too fast, verifying JSON diff that changes landed
-      // await verifyChanges(dashboardPage, page, selectors, newTitleBase);
-      // await expect(
-      //   dashboardPage.getByGrafanaSelector(
-      //     selectors.components.Panels.Panel.title(`${newTitleBase}${repeatOptions.at(0)}`)
-      //   )
-      // ).toBeVisible();
-      // await dashboardPage
-      //   .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-      //   .click();
-      // await expect(
-      //   dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
-      // ).toBeVisible(); // verifying that dashboard loaded
-      // await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
-      // await saveDashboard(dashboardPage, page, selectors);
-      // await page.reload();
-      // await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
-    });
-
-    test('can view repeated panel', async ({ dashboardPage, selectors, page }) => {
-      // await importTestDashboard(
-      //   page,
-      //   selectors,
-      //   'Custom grid repeats - move repeated panels',
-      //   JSON.stringify(testV2DashWithRepeats)
-      // );
-      // await dashboardPage
-      //   .getByGrafanaSelector(selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(-1)}`))
-      //   .hover();
-      // await page.keyboard.press('v');
-      // await expect(
-      //   dashboardPage.getByGrafanaSelector(
-      //     selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(0)}`)
-      //   )
-      // ).toBeHidden();
-      // await expect(
-      //   dashboardPage.getByGrafanaSelector(
-      //     selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(-1)}`)
-      //   )
-      // ).toBeVisible();
-      // const repeatedPanelUrl = page.url();
-      // await dashboardPage
-      //   .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-      //   .click();
-      // await dashboardPage
-      //   .getByGrafanaSelector(selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(0)}`))
-      //   .hover();
-      // await page.keyboard.press('v');
-      // await expect(
-      //   dashboardPage.getByGrafanaSelector(
-      //     selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(-1)}`)
-      //   )
-      // ).toBeHidden();
-      // await expect(
-      //   dashboardPage.getByGrafanaSelector(
-      //     selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(0)}`)
-      //   )
-      // ).toBeVisible();
-      // // load view panel directly
-      // await page.goto(repeatedPanelUrl);
-      // await expect(
-      //   dashboardPage.getByGrafanaSelector(
-      //     selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(-1)}`)
-      //   )
-      // ).toBeVisible();
-    });
-
-    test('can view embedded repeated panel', async ({ dashboardPage, selectors, page }) => {
-      // await importTestDashboard(
-      //   page,
-      //   selectors,
-      //   'Custom grid repeats - view embedded repeated panel',
-      //   JSON.stringify(testV2DashWithRepeats)
-      // );
-      // await dashboardPage
-      //   .getByGrafanaSelector(selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(-1)}`))
-      //   .hover();
-      // await page.keyboard.press('p+e');
-      // await goToEmbeddedPanel(page);
-      // await expect(
-      //   dashboardPage.getByGrafanaSelector(
-      //     selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(-1)}`)
-      //   )
-      // ).toBeVisible();
     });
   }
 );
