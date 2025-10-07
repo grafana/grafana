@@ -40,7 +40,13 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
   abstract loadSnapshot(slug: string): Promise<T>;
 
   protected loadScriptedDashboard(file: string) {
-    const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
+    const fileRegex = /^[a-zA-Z0-9-_.]*\.js$/;
+
+    if (file && !fileRegex.test(file)) {
+      return Promise.reject(new Error('Invalid script name'));
+    }
+
+    const url = `public/dashboards/${file}?${new Date().getTime()}`;
 
     return getBackendSrv()
       .get(url, undefined, undefined, { validatePath: true })
