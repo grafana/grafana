@@ -145,6 +145,12 @@ func newFolderTranslation(resource string, attribute string, folderSupport, skip
 	actionSetMapping := make(map[string][]string)
 	for verb, rbacAction := range folderTranslation.verbMapping {
 		var actionSets []string
+		// Folder creation has not been added to the FolderEditActions and FolderAdminActions slices (https://github.com/grafana/identity-access-team/issues/794)
+		// so we handle it as a special case for now
+		if rbacAction == "folders:create" {
+			actionSets = append(actionSets, "folders:edit")
+			actionSets = append(actionSets, "folders:admin")
+		}
 		if slices.Contains(ossaccesscontrol.FolderViewActions, rbacAction) {
 			actionSets = append(actionSets, "folders:view")
 		}
