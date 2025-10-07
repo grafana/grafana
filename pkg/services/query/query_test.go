@@ -940,7 +940,7 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 
 type testClient struct {
 	queryDataLastCalledWith data.QueryDataRequest
-	// The number of times the QueryData methods has been called
+	// The number of times the QueryData method has been called
 	queryDataCalls           int
 	queryDataStubbedResponse *backend.QueryDataResponse
 	queryDataStubbedError    error
