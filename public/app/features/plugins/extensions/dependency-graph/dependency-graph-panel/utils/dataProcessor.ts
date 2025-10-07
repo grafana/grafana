@@ -1,4 +1,7 @@
 import { AppPluginConfig, PanelData } from '@grafana/data';
+import { t } from '@grafana/i18n';
+
+import pluginDataFallback from '../data.json';
 import {
   ExposedComponent,
   Extension,
@@ -8,9 +11,6 @@ import {
   PluginDependency,
   PluginNode,
 } from '../types';
-
-import pluginDataFallback from '../data.json';
-import { t } from '@grafana/i18n';
 
 // Cache for expensive calculations
 const cache = new Map<string, GraphData>();
@@ -763,7 +763,7 @@ export const processPluginDataToExposeGraph = (
             const dependency = {
               source: exposedComponent.providingPlugin, // Provider is the source
               target: pluginId, // Consumer is the target
-              type: 'depends',
+              type: 'depends' as const,
               description: `${getDisplayName(pluginId)} consumes ${exposedComponent.title} from ${getDisplayName(
                 exposedComponent.providingPlugin
               )}`,
