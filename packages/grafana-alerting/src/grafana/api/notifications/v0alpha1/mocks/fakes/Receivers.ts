@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
 
-import { DEFAULT_NAMESPACE, generateResourceVersion, generateTitle, generateUID } from '../../../../mocks/util';
+import { DEFAULT_NAMESPACE, generateResourceVersion, generateTitle, generateUID } from '../../../../../mocks/util';
 import { GROUP, VERSION } from '../../const';
 import {
   ContactPoint,
@@ -47,16 +47,17 @@ export const ContactPointSpecFactory = Factory.define<ContactPoint['spec']>(() =
 
 export const GenericIntegrationFactory = Factory.define<Integration>(() => ({
   type: 'generic',
+  version: '1',
   disableResolveMessage: false,
   settings: {
     foo: 'bar',
   },
-  version: 'v1',
 }));
 
 export const EmailIntegrationFactory = Factory.define<Integration>(() => ({
   type: 'email',
-  version: 'v1',
+  version: '1',
+  secureFields: {},
   settings: {
     addresses: faker.internet.email(),
   },
@@ -64,7 +65,8 @@ export const EmailIntegrationFactory = Factory.define<Integration>(() => ({
 
 export const SlackIntegrationFactory = Factory.define<Integration>(() => ({
   type: 'slack',
-  version: 'v1',
+  version: '1',
+  secureFields: { token: true },
   settings: {
     mentionChannel: '#alerts',
   },
