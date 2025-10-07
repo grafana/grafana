@@ -3264,7 +3264,7 @@
       "define-allowed-teams-ids-label": "Definovat povolená ID týmů",
       "display-name-description": "Zobrazí se na přihlašovací stránce jako „Přihlásit se přes…“. Užitečné, pokud používáte více než jednoho poskytovatele identity nebo protokoly SSO.",
       "display-name-label": "Zobrazované jméno",
-      "domain-hint-description": "Parametr pro označení oblasti uživatele v instanci Azure AD / Entra ID a zjednodušení procesu přihlášení.",
+      "domain-hint-description": "",
       "domain-hint-label": "Nápověda k doméně",
       "domain-hint-valid-domain": "Toto pole musí být platná doména.",
       "email-attribute-name-description": "Název klíče, který se použije pro vyhledání e-mailu uživatele v mapě atributů ID tokenu OAuth2.",
@@ -4182,6 +4182,13 @@
       "body": "Vyzkoušejte nového poradce a odhalte potenciální problémy se zdroji dat a pluginy.",
       "go-to-advisor": "Přejít na poradce"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4230,6 +4237,20 @@
         "unknown-datasource": "Neznámý zdroj dat"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Vyberte typ zdroje dat"
@@ -4259,6 +4280,13 @@
         },
         "subtitle": "Spravujte připojení zdrojů dat na jednom místě. Na této stránce můžete přidat nový zdroj dat nebo spravovat stávající připojení."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Hledat vše",
@@ -8743,6 +8771,9 @@
       "tooltip-hide": "Skrýt heslo",
       "tooltip-show": "Zobrazit heslo"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Rozbalit řádek",
       "collapse": "Sbalit řádek",
@@ -8770,6 +8801,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Použít pravou osu y"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Načítání"
@@ -13741,6 +13775,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "a",
       "placeholder-from": "",

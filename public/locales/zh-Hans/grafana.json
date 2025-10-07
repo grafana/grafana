@@ -3228,7 +3228,7 @@
       "define-allowed-teams-ids-label": "定义允许的团队 ID",
       "display-name-description": "将在登录页面上显示为“使用... 登录”。如果您使用多个身份提供程序或 SSO 协议，这将很有帮助。",
       "display-name-label": "显示名称",
-      "domain-hint-description": "用于指示 Azure AD/Entra ID 租户中用户领域并简化登录流程的参数。",
+      "domain-hint-description": "",
       "domain-hint-label": "域提示",
       "domain-hint-valid-domain": "此字段必须是有效的域。",
       "email-attribute-name-description": "用于在 OAuth2 ID 令牌的属性映射中查找用户电子邮箱的密钥的名称。",
@@ -4122,6 +4122,13 @@
       "body": "尝试使用新的 Advisor 来发现数据源和插件的潜在问题。",
       "go-to-advisor": "前往顾问"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4170,6 +4177,20 @@
         "unknown-datasource": "未知数据源"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "选择一个数据源类型"
@@ -4199,6 +4220,13 @@
         },
         "subtitle": "在一个地方管理您的数据源连接。使用此页面添加新数据源或管理现有连接。"
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "搜索全部",
@@ -8674,6 +8702,9 @@
       "tooltip-hide": "隐藏密码",
       "tooltip-show": "显示密码"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "展开行",
       "collapse": "折叠行",
@@ -8701,6 +8732,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "使用右侧 Y 轴"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "正在加载"
@@ -13606,6 +13640,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "与",
       "placeholder-from": "",

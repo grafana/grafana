@@ -3240,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Définir les ID des équipes autorisées",
       "display-name-description": "Sera affiché sur la page de connexion comme « Se connecter avec... ». Utile si vous utilisez plusieurs fournisseurs d’identité ou protocoles SSO.",
       "display-name-label": "Pseudo",
-      "domain-hint-description": "Paramètre permettant d’indiquer le domaine de l’utilisateur dans le locataire Azure AD/Entra ID pour simplifier le processus de connexion.",
+      "domain-hint-description": "",
       "domain-hint-label": "Indice de domaine",
       "domain-hint-valid-domain": "Ce champ doit contenir un domaine valide.",
       "email-attribute-name-description": "Nom de la clé à utiliser pour la recherche d’e-mail de l’utilisateur dans la carte d’attributs du jeton d’identification OAuth2.",
@@ -4142,6 +4142,13 @@
       "body": "Essayez le nouveau conseiller pour découvrir les problèmes potentiels concernant vos sources de données et plugins.",
       "go-to-advisor": "Accéder au conseiller"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4190,6 +4197,20 @@
         "unknown-datasource": "Source de données inconnue"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Choisir un type de source de données"
@@ -4219,6 +4240,13 @@
         },
         "subtitle": "Centralisez la gestion de vos connexions aux sources de données : ajoutez-en de nouvelles ou modifiez celles existantes."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Rechercher tout",
@@ -8697,6 +8725,9 @@
       "tooltip-hide": "Masquer le mot de passe",
       "tooltip-show": "Afficher le mot de passe"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Développer la ligne",
       "collapse": "Réduire la ligne",
@@ -8724,6 +8755,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Utiliser l'axe y droit"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Chargement en cours"
@@ -13651,6 +13685,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "et",
       "placeholder-from": "",

@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/alerting/receivers/webhook"
 	"github.com/prometheus/alertmanager/config"
@@ -92,10 +93,8 @@ func TestDeleteReceiver(t *testing.T) {
 }
 
 func TestCreateReceiver(t *testing.T) {
-	rawCfg := notify.AllKnownConfigsForTesting[string(webhook.Type)]
-	typeSchema, _ := notify.GetSchemaForIntegration(webhook.Type)
-	cfgSchema, err := models.IntegrationConfigFromSchema(typeSchema, schema.V1)
-	require.NoError(t, err)
+	rawCfg := notifytest.AllKnownV1ConfigsForTesting[webhook.Type]
+	cfgSchema, _ := notify.GetSchemaVersionForIntegration(webhook.Type, schema.V1)
 	settings := map[string]any{}
 	require.NoError(t, json.Unmarshal([]byte(rawCfg.Config), &settings))
 
@@ -199,10 +198,8 @@ func TestCreateReceiver(t *testing.T) {
 }
 
 func TestUpdateReceiver(t *testing.T) {
-	rawCfg := notify.AllKnownConfigsForTesting[string(webhook.Type)]
-	typeSchema, _ := notify.GetSchemaForIntegration(webhook.Type)
-	cfgSchema, err := models.IntegrationConfigFromSchema(typeSchema, schema.V1)
-	require.NoError(t, err)
+	rawCfg := notifytest.AllKnownV1ConfigsForTesting[webhook.Type]
+	cfgSchema, _ := notify.GetSchemaVersionForIntegration(webhook.Type, schema.V1)
 	settings := map[string]any{}
 	require.NoError(t, json.Unmarshal([]byte(rawCfg.Config), &settings))
 
@@ -300,10 +297,8 @@ func TestUpdateReceiver(t *testing.T) {
 }
 
 func TestGetReceiver(t *testing.T) {
-	rawCfg := notify.AllKnownConfigsForTesting[string(webhook.Type)]
-	typeSchema, _ := notify.GetSchemaForIntegration(webhook.Type)
-	cfgSchema, err := models.IntegrationConfigFromSchema(typeSchema, schema.V1)
-	require.NoError(t, err)
+	rawCfg := notifytest.AllKnownV1ConfigsForTesting[webhook.Type]
+	cfgSchema, _ := notify.GetSchemaVersionForIntegration(webhook.Type, schema.V1)
 	settings := map[string]any{}
 	require.NoError(t, json.Unmarshal([]byte(rawCfg.Config), &settings))
 
@@ -491,7 +486,7 @@ func getConfigRevisionForTest() *ConfigRevision {
 								{
 									UID:      "integration-uid-1",
 									Type:     "webhook",
-									Settings: definitions.RawMessage(notify.AllKnownConfigsForTesting["webhook"].Config),
+									Settings: definitions.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
 								},
 							},
 						},
@@ -503,7 +498,7 @@ func getConfigRevisionForTest() *ConfigRevision {
 								{
 									UID:      "integration-uid-2",
 									Type:     "webhook",
-									Settings: definitions.RawMessage(notify.AllKnownConfigsForTesting["webhook"].Config),
+									Settings: definitions.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
 								},
 							},
 						},
@@ -515,7 +510,7 @@ func getConfigRevisionForTest() *ConfigRevision {
 								{
 									UID:      "integration-uid-3",
 									Type:     "email",
-									Settings: definitions.RawMessage(notify.AllKnownConfigsForTesting["email"].Config),
+									Settings: definitions.RawMessage(notifytest.AllKnownV1ConfigsForTesting["email"].Config),
 								},
 							},
 						},
