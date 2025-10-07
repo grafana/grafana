@@ -3240,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Definiera tillåtna team-ID",
       "display-name-description": "Kommer att visas på inloggningssidan som ”Logga in med …” Användbart om du använder fler än en identitetsleverantör eller SSO-protokoll.",
       "display-name-label": "Visningsnamn",
-      "domain-hint-description": "Parameter som anger användarens domän i Azure AD/Entra ID-klienten och effektiviserar inloggningsprocessen.",
+      "domain-hint-description": "",
       "domain-hint-label": "Domäntips",
       "domain-hint-valid-domain": "Detta fält måste vara en giltig domän.",
       "email-attribute-name-description": "Namn på nyckeln som ska användas för användarens e-postsökning inom attributkartan för OAuth2 ID-token.",
@@ -3496,6 +3496,7 @@
       "move-modal-field-label": "Mappnamn",
       "move-modal-text": "Denna åtgärd flyttar följande innehåll:",
       "move-modal-title": "Flytta",
+      "move-provisioned-folder": "",
       "moving": "Flyttar ...",
       "new-folder-name-required-phrase": "Mappnamn krävs.",
       "selected-mix-resources-modal-text": "Du har valt både provisionerade och icke-provisionerade resurser. Dessa kan inte hanteras tillsammans. Välj enbart provisionerade eller enbart icke-provisionerade resurser och försök igen.",
@@ -4141,6 +4142,13 @@
       "body": "Prova den nya rådgivaren för att upptäcka potentiella problem med dina datakällor och plugin-program.",
       "go-to-advisor": "Gå till rådgivare"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4189,6 +4197,20 @@
         "unknown-datasource": "Okänd datakälla"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Välj en typ av datakälla"
@@ -4218,6 +4240,13 @@
         },
         "subtitle": "Hantera dina datakällanslutningar på ett ställe. Använd den här sidan för att lägga till en ny datakälla eller hantera dina befintliga anslutningar."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Sök alla",
@@ -8696,6 +8725,9 @@
       "tooltip-hide": "Dölj lösenord",
       "tooltip-show": "Visa lösenord"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Expandera rad",
       "collapse": "Dölj rad",
@@ -8723,6 +8755,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Använd höger y-axel"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Laddar"
@@ -13650,6 +13685,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "och",
       "placeholder-from": "",

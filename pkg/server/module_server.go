@@ -44,8 +44,9 @@ func NewModule(opts Options,
 	promGatherer prometheus.Gatherer,
 	tracer tracing.Tracer, // Ensures tracing is initialized
 	license licensing.Licensing,
+	moduleRegisterer ModuleRegisterer,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer)
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +67,7 @@ func newModuleServer(opts Options,
 	reg prometheus.Registerer,
 	promGatherer prometheus.Gatherer,
 	license licensing.Licensing,
+	moduleRegisterer ModuleRegisterer,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -87,6 +89,7 @@ func newModuleServer(opts Options,
 		promGatherer:     promGatherer,
 		registerer:       reg,
 		license:          license,
+		moduleRegisterer: moduleRegisterer,
 	}
 
 	return s, nil
@@ -124,6 +127,9 @@ type ModuleServer struct {
 	httpServerRouter           *mux.Router
 	searchServerRing           *ring.Ring
 	searchServerRingClientPool *ringclient.Pool
+
+	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
+	moduleRegisterer ModuleRegisterer
 }
 
 // init initializes the server and its services.
@@ -201,6 +207,9 @@ func (s *ModuleServer) Run() error {
 	m.RegisterModule(modules.OperatorServer, s.initOperatorServer)
 
 	m.RegisterModule(modules.All, nil)
+
+	// Register modules provided by other builds (e.g. enterprise).
+	s.moduleRegisterer.RegisterModules(m)
 
 	return m.Run(s.context)
 }
