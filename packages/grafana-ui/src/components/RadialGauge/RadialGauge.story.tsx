@@ -325,6 +325,10 @@ function RadialBarExample({
 }: ExampleProps) {
   const theme = useTheme2();
 
+  if (gradient === 'scheme' && colorMode === FieldColorModeId.Fixed) {
+    colorMode = FieldColorModeId.ContinuousGrYlRd;
+  }
+
   const frame = toDataFrame({
     name: 'TestData',
     length: 18,
@@ -400,7 +404,7 @@ function getExtraSeries(seriesCount: number, colorMode: FieldColorModeId, theme:
   const fields: Field[] = [];
   const colors = ['blue', 'green', 'purple', 'orange', 'yellow'];
 
-  for (let i = 0; i < seriesCount; i++) {
+  for (let i = 1; i < seriesCount; i++) {
     fields.push({
       name: `Series ${i + 1}`,
       type: FieldType.number,

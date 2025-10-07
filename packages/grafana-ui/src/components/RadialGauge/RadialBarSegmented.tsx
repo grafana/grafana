@@ -3,30 +3,27 @@ import { DisplayProcessor, FieldDisplay } from '@grafana/data';
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialGradientMode } from './RadialGauge';
-import { GaugeDimensions, getValueAngleForValue } from './utils';
+import { GaugeDimensions } from './utils';
 
 export interface RadialBarSegmentedProps {
-  gaugeId: string;
   fieldDisplay: FieldDisplay;
   dimensions: GaugeDimensions;
+  angleRange: number;
   startAngle: number;
-  endAngle: number;
   color: string;
-  spotlight?: boolean;
-  glow?: boolean;
+  glowFilter?: string;
   segmentCount: number;
   segmentSpacing: number;
   displayProcessor: DisplayProcessor;
   gradient: RadialGradientMode;
 }
 export function RadialBarSegmented({
-  gaugeId,
   fieldDisplay,
   dimensions,
   startAngle,
-  endAngle,
+  angleRange,
   color,
-  glow,
+  glowFilter,
   segmentCount,
   segmentSpacing,
   displayProcessor,
@@ -35,8 +32,7 @@ export function RadialBarSegmented({
   const segments: React.ReactNode[] = [];
   const theme = useTheme2();
 
-  const { range } = getValueAngleForValue(fieldDisplay, startAngle, endAngle);
-  const segmentCountAdjusted = getOptimalSegmentCount(dimensions, segmentSpacing, segmentCount, range);
+  const segmentCountAdjusted = getOptimalSegmentCount(dimensions, segmentSpacing, segmentCount, angleRange);
 
   const min = fieldDisplay.field.min ?? 0;
   const max = fieldDisplay.field.max ?? 100;
@@ -54,41 +50,38 @@ export function RadialBarSegmented({
   for (let i = 0; i < segmentCountAdjusted; i++) {
     const angleValue = ((max - min) / segmentCountAdjusted) * i;
     const angleColor = getColorForValue(angleValue);
-    const segmentAngle = startAngle + (range / segmentCountAdjusted) * i + 0.01;
+    const segmentAngle = startAngle + (angleRange / segmentCountAdjusted) * i + 0.01;
     const segmentColor = angleValue > value ? theme.colors.action.hover : angleColor;
 
     segments.push(
       <RadialSegmentArcPath
-        gaugeId={gaugeId}
         angle={segmentAngle}
         dimensions={dimensions}
         color={segmentColor}
-        glow={glow}
+        glowFilter={glowFilter}
         segmentSpacing={segmentSpacing}
-        arcLengthDeg={range / segmentCountAdjusted}
+        arcLengthDeg={angleRange / segmentCountAdjusted}
       />
     );
   }
 
-  return segments;
+  return <g>{segments}</g>;
 }
 
 export interface RadialSegmentProps {
-  gaugeId: string;
   angle: number;
   dimensions: GaugeDimensions;
   color: string;
-  glow?: boolean;
+  glowFilter?: string;
   segmentSpacing: number;
   arcLengthDeg: number;
 }
 
 export function RadialSegmentArcPath({
-  gaugeId,
   angle,
   dimensions,
   color,
-  glow,
+  glowFilter,
   segmentSpacing,
   arcLengthDeg,
 }: RadialSegmentProps) {
@@ -121,7 +114,7 @@ export function RadialSegmentArcPath({
       strokeLinecap={'butt'}
       strokeWidth={barWidth}
       strokeDasharray="0"
-      filter={glow ? `url(#glow-${gaugeId})` : undefined}
+      filter={glowFilter}
     />
   );
 }

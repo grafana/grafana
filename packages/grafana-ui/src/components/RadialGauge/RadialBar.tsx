@@ -1,42 +1,38 @@
-import { FieldDisplay, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
-import { GaugeDimensions, getValueAngleForValue } from './utils';
+import { GaugeDimensions } from './utils';
 
 export interface RadialBarProps {
-  gaugeId: string;
   dimensions: GaugeDimensions;
-  fieldDisplay: FieldDisplay;
+  angleRange: number;
+  angle: number;
   startAngle: number;
-  endAngle: number;
   color: string;
   roundedBars?: boolean;
-  spotlight?: boolean;
-  glow?: boolean;
+  spotlightStroke: string;
+  glowFilter?: string;
 }
 export function RadialBar({
   dimensions,
-  fieldDisplay,
-  gaugeId,
+  angleRange,
+  angle,
   startAngle,
-  endAngle,
   color,
   roundedBars,
-  spotlight,
-  glow,
+  spotlightStroke,
+  glowFilter,
 }: RadialBarProps) {
   const theme = useTheme2();
-  const { range, angle } = getValueAngleForValue(fieldDisplay, startAngle, endAngle);
 
   const trackStart = startAngle + angle;
-  const trackLength = range - angle;
+  const trackLength = angleRange - angle;
 
   return (
-    <>
+    <g>
       {/** Track */}
       <RadialArcPath
-        gaugeId={gaugeId}
         angle={trackLength}
         dimensions={dimensions}
         startAngle={trackStart}
@@ -46,41 +42,38 @@ export function RadialBar({
       />
       {/** The colored bar */}
       <RadialArcPath
-        gaugeId={gaugeId}
         angle={angle}
         dimensions={dimensions}
         startAngle={startAngle}
         color={color}
         roundedBars={roundedBars}
-        spotlight={spotlight}
-        glow={glow}
+        spotlightStroke={spotlightStroke}
+        glowFilter={glowFilter}
         theme={theme}
       />
-    </>
+    </g>
   );
 }
 
 export interface RadialArcPathProps {
-  gaugeId: string;
   angle: number;
   startAngle: number;
   dimensions: GaugeDimensions;
   color: string;
   roundedBars?: boolean;
-  spotlight?: boolean;
-  glow?: boolean;
+  spotlightStroke?: string;
+  glowFilter?: string;
   theme: GrafanaTheme2;
 }
 
 export function RadialArcPath({
-  gaugeId,
   startAngle,
   dimensions,
   angle,
   color,
   roundedBars,
-  spotlight,
-  glow,
+  spotlightStroke,
+  glowFilter,
   theme,
 }: RadialArcPathProps) {
   let { radius, centerX, centerY, barWidth } = dimensions;
@@ -114,17 +107,17 @@ export function RadialArcPath({
         strokeLinecap={roundedBars ? 'round' : 'butt'}
         strokeWidth={barWidth}
         strokeDasharray="0"
-        filter={glow ? `url(#glow-${gaugeId})` : undefined}
+        filter={glowFilter}
       />
-      {spotlight && angle > 8 && (
+      {spotlightStroke && angle > 8 && (
         <SpotlightSquareEffect
           radius={radius}
           centerX={centerX}
           centerY={centerY}
           angleRadian={endRadians}
           barWidth={barWidth}
-          glow={glow}
-          gaugeId={gaugeId}
+          glowFilter={glowFilter}
+          spotlightStroke={spotlightStroke}
           theme={theme}
           roundedBars={roundedBars}
         />
@@ -139,8 +132,8 @@ interface SpotlightEffectProps {
   centerY: number;
   angleRadian: number;
   barWidth: number;
-  glow?: boolean;
-  gaugeId: string;
+  glowFilter?: string;
+  spotlightStroke: string;
   theme: GrafanaTheme2;
   roundedBars?: boolean;
 }
@@ -151,8 +144,8 @@ function SpotlightSquareEffect({
   centerY,
   angleRadian,
   barWidth,
-  glow,
-  gaugeId,
+  glowFilter,
+  spotlightStroke,
   roundedBars,
 }: SpotlightEffectProps) {
   let x1 = centerX + radius * Math.cos(angleRadian - 0.2);
@@ -167,9 +160,9 @@ function SpotlightSquareEffect({
       d={path}
       fill="none"
       strokeWidth={barWidth}
-      stroke={`url(#spotlight-${gaugeId})`}
+      stroke={spotlightStroke}
       strokeLinecap={roundedBars ? 'round' : 'butt'}
-      filter={glow ? `url(#glow-${gaugeId})` : undefined}
+      filter={glowFilter}
     />
   );
 }

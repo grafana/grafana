@@ -3,15 +3,15 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { GaugeDimensions } from './utils';
 
 export interface GlowGradientProps {
-  gaugeId: string;
+  id: string;
   radius: number;
 }
 
-export function GlowGradient({ gaugeId, radius }: GlowGradientProps) {
+export function GlowGradient({ id, radius }: GlowGradientProps) {
   const glowSize = 0.04 * radius;
 
   return (
-    <filter id={`glow-${gaugeId}`} filterUnits="userSpaceOnUse">
+    <filter id={id} filterUnits="userSpaceOnUse">
       <feGaussianBlur stdDeviation={glowSize} />
       <feComponentTransfer>
         <feFuncA type="linear" slope="1" />
@@ -22,13 +22,13 @@ export function GlowGradient({ gaugeId, radius }: GlowGradientProps) {
 }
 
 export function SpotlightGradient({
-  gaugeId,
+  id,
   dimensions,
   roundedBars,
   angle,
   theme,
 }: {
-  gaugeId: string;
+  id: string;
   dimensions: GaugeDimensions;
   angle: number;
   roundedBars: boolean;
@@ -44,7 +44,7 @@ export function SpotlightGradient({
   const color = theme.colors.text.maxContrast;
 
   return (
-    <linearGradient x1={x1} y1={y1} x2={x2} y2={y2} id={`spotlight-${gaugeId}`} gradientUnits="userSpaceOnUse">
+    <linearGradient x1={x1} y1={y1} x2={x2} y2={y2} id={id} gradientUnits="userSpaceOnUse">
       <stop offset="0%" stopColor={color} stopOpacity={0.0} />
       <stop offset="95%" stopColor={color} stopOpacity={0.5} />
       {roundedBars && <stop offset="100%" stopColor={color} stopOpacity={roundedBars ? 0.7 : 1} />}
@@ -58,5 +58,29 @@ export function CenterGlowGradient({ gaugeId, color }: { gaugeId: string; color:
       <stop offset="0%" stopColor={color} stopOpacity={0.2} />
       <stop offset="90%" stopColor={color} stopOpacity={0} />
     </radialGradient>
+  );
+}
+
+export interface CenterGlowProps {
+  dimensions: GaugeDimensions;
+  gaugeId: string;
+  color?: string;
+}
+
+export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps) {
+  const gradientId = `circle-glow-${gaugeId}`;
+
+  return (
+    <>
+      <defs>
+        <radialGradient id={gradientId} r={'50%'} fr={'0%'}>
+          <stop offset="0%" stopColor={color} stopOpacity={0.2} />
+          <stop offset="90%" stopColor={color} stopOpacity={0} />
+        </radialGradient>
+      </defs>
+      <g>
+        <circle cx={dimensions.centerX} cy={dimensions.centerY} r={dimensions.radius} fill={`url(#${gradientId})`} />
+      </g>
+    </>
   );
 }

@@ -2,17 +2,17 @@ import { css } from '@emotion/css';
 import { isNumber } from 'lodash';
 import { useId } from 'react';
 
-import { DisplayValue, FieldDisplay, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
+import { FieldDisplay, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 
-import { GradientDef, getGradientId } from './GradientDef';
+import { GradientDef } from './GradientDef';
 import { RadialBar } from './RadialBar';
 import { RadialBarSegmented } from './RadialBarSegmented';
 import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
-import { CenterGlowGradient, GlowGradient, SpotlightGradient } from './effects';
-import { calculateDimensions, GaugeDimensions, getValueAngleForValue } from './utils';
+import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
+import { calculateDimensions, getValueAngleForValue } from './utils';
 
 export interface RadialGaugeProps {
   values: FieldDisplay[];
@@ -81,133 +81,127 @@ export function RadialGauge(props: RadialGaugeProps) {
   const startAngle = shape === 'gauge' ? 250 : 0;
   const endAngle = shape === 'gauge' ? 110 : 360;
 
-  const dimensions = calculateDimensions(width, height, endAngle, glowBar, spotlight, roundedBars, barWidthFactor);
-  console.log('dimensions', dimensions);
+  const defs: React.ReactNode[] = [];
+  const graphics: React.ReactNode[] = [];
+  let sparklineElement: React.ReactNode | null = null;
 
-  const primaryValue = values[0];
-  const color = primaryValue.display.color ?? theme.colors.primary.main;
+  for (let barIndex = 0; barIndex < values.length; barIndex++) {
+    const displayValue = values[barIndex];
+    const { angle, angleRange } = getValueAngleForValue(displayValue, startAngle, endAngle);
+    const color = displayValue.display.color ?? 'gray';
+    const dimensions = calculateDimensions(width, height, endAngle, glowBar, roundedBars, barWidthFactor, barIndex);
 
-  const { angle } = getValueAngleForValue(primaryValue, startAngle, endAngle);
+    let displayProcessor = getDisplayProcessor();
+
+    if (displayValue.view && isNumber(displayValue.colIndex)) {
+      displayProcessor = displayValue.view.getFieldDisplayProcessor(displayValue.colIndex) ?? displayProcessor;
+    }
+
+    const spotlightGradientId = `spotlight-${barIndex}-${gaugeId}`;
+    const glowFilterId = `glow-${gaugeId}`;
+    const colorGradientId = `bar-color-${barIndex}-${gaugeId}`;
+    const barColor = gradient !== 'none' ? `url(#${colorGradientId})` : color;
+
+    defs.push(
+      <GradientDef
+        key={`gradient-${barIndex}`}
+        fieldDisplay={displayValue}
+        id={colorGradientId}
+        theme={theme}
+        gradient={gradient}
+        dimensions={dimensions}
+        shape={shape}
+      />
+    );
+
+    if (spotlight) {
+      defs.push(
+        <SpotlightGradient
+          key={spotlightGradientId}
+          id={spotlightGradientId}
+          angle={angle + startAngle}
+          dimensions={dimensions}
+          roundedBars={roundedBars}
+          theme={theme}
+        />
+      );
+    }
+
+    if (segmentCount > 1) {
+      graphics.push(
+        <RadialBarSegmented
+          dimensions={dimensions}
+          fieldDisplay={displayValue}
+          angleRange={angleRange}
+          startAngle={startAngle}
+          color={barColor}
+          glowFilter={`url(#${glowFilterId})`}
+          segmentCount={segmentCount}
+          segmentSpacing={segmentSpacing}
+          displayProcessor={displayProcessor}
+          gradient={gradient}
+        />
+      );
+    } else {
+      graphics.push(
+        <RadialBar
+          dimensions={dimensions}
+          key={barIndex}
+          angle={angle}
+          angleRange={angleRange}
+          startAngle={startAngle}
+          color={barColor}
+          roundedBars={roundedBars}
+          spotlightStroke={`url(#${spotlightGradientId})`}
+          glowFilter={`url(#${glowFilterId})`}
+        />
+      );
+    }
+
+    // These elements are only added for first value / bar
+
+    if (barIndex === 0) {
+      if (glowBar) {
+        defs.push(<GlowGradient id={glowFilterId} radius={dimensions.radius} />);
+      }
+
+      if (glowCenter) {
+        graphics.push(<MiddleCircleGlow gaugeId={gaugeId} color={color} dimensions={dimensions} />);
+      }
+
+      graphics.push(
+        <RadialText
+          vizCount={vizCount}
+          textMode={textMode}
+          displayValue={displayValue.display}
+          dimensions={dimensions}
+          theme={theme}
+          shape={shape}
+        />
+      );
+
+      if (displayValue.sparkline) {
+        sparklineElement = (
+          <RadialSparkline
+            sparkline={displayValue.sparkline}
+            dimensions={dimensions}
+            theme={theme}
+            color={color}
+            shape={shape}
+          />
+        );
+      }
+    }
+  }
 
   return (
     <div className={styles.vizWrapper} style={{ width, height }}>
       <svg width={width} height={height}>
-        <defs>
-          {values.map((displayValue, barIndex) => (
-            <GradientDef
-              key={barIndex}
-              fieldDisplay={displayValue}
-              index={barIndex}
-              theme={theme}
-              gaugeId={gaugeId}
-              gradient={gradient}
-              dimensions={dimensions}
-              shape={shape}
-            />
-          ))}
-          {spotlight && (
-            <SpotlightGradient
-              angle={angle + startAngle}
-              gaugeId={gaugeId}
-              dimensions={dimensions}
-              roundedBars={roundedBars}
-              theme={theme}
-            />
-          )}
-          {glowBar && <GlowGradient gaugeId={gaugeId} radius={dimensions.radius} />}
-          {glowCenter && <CenterGlowGradient gaugeId={gaugeId} color={color} />}
-        </defs>
-        <g>
-          {values.map((displayValue, barIndex) => {
-            const barColor = getColorForBar(displayValue.display, barIndex, gradient, gaugeId);
-            //const barSize = dimensions.radius - (barWidth * 2 + 8) * barIndex;
-
-            let displayProcessor = getDisplayProcessor();
-
-            if (displayValue.view && isNumber(displayValue.colIndex)) {
-              displayProcessor = displayValue.view.getFieldDisplayProcessor(displayValue.colIndex) ?? displayProcessor;
-            }
-
-            if (segmentCount > 1) {
-              return (
-                <RadialBarSegmented
-                  dimensions={dimensions}
-                  key={barIndex}
-                  gaugeId={gaugeId}
-                  fieldDisplay={displayValue}
-                  startAngle={startAngle}
-                  endAngle={endAngle}
-                  color={barColor}
-                  spotlight={spotlight}
-                  glow={glowBar}
-                  segmentCount={segmentCount}
-                  segmentSpacing={segmentSpacing}
-                  displayProcessor={displayProcessor}
-                  gradient={gradient}
-                />
-              );
-            }
-
-            return (
-              <RadialBar
-                dimensions={dimensions}
-                key={barIndex}
-                gaugeId={gaugeId}
-                fieldDisplay={displayValue}
-                startAngle={startAngle}
-                endAngle={endAngle}
-                color={barColor}
-                roundedBars={roundedBars}
-                spotlight={spotlight}
-                glow={glowBar}
-              />
-            );
-          })}
-        </g>
-        <g>
-          {glowCenter && <MiddleCircle fill={`url(#circle-glow-${gaugeId})`} dimensions={dimensions} />}
-          {primaryValue && (
-            <RadialText
-              vizCount={vizCount}
-              textMode={textMode}
-              displayValue={primaryValue.display}
-              dimensions={dimensions}
-              theme={theme}
-              shape={shape}
-            />
-          )}
-        </g>
+        <defs>{defs}</defs>
+        {graphics}
       </svg>
-      {primaryValue && primaryValue.sparkline && (
-        <RadialSparkline
-          sparkline={primaryValue.sparkline}
-          dimensions={dimensions}
-          theme={theme}
-          color={color}
-          shape={shape}
-        />
-      )}
+      {sparklineElement}
     </div>
-  );
-}
-
-function getColorForBar(displayValue: DisplayValue, barIndex: number, gradient: RadialGradientMode, gaugeId: string) {
-  if (gradient === 'none') {
-    return displayValue.color ?? 'gray';
-  }
-
-  return `url(#${getGradientId(gaugeId, barIndex)})`;
-}
-
-export interface MiddleCircleProps {
-  dimensions: GaugeDimensions;
-  fill?: string;
-  className?: string;
-}
-
-export function MiddleCircle({ dimensions, fill, className }: MiddleCircleProps) {
-  return (
-    <circle cx={dimensions.centerX} cy={dimensions.centerY} r={dimensions.radius} fill={fill} className={className} />
   );
 }
 

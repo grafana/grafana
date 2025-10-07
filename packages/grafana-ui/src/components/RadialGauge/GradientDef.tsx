@@ -7,15 +7,14 @@ import { GaugeDimensions } from './utils';
 
 interface GradientDefProps {
   fieldDisplay: FieldDisplay;
-  index: number;
+  id: string;
   theme: GrafanaTheme2;
-  gaugeId: string;
   gradient: RadialGradientMode;
   dimensions: GaugeDimensions;
   shape: RadialShape;
 }
 
-export function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient, dimensions, shape }: GradientDefProps) {
+export function GradientDef({ fieldDisplay, id, theme, gradient, dimensions, shape }: GradientDefProps) {
   const colorModeId = fieldDisplay.field.color?.mode;
   const valuePercent = fieldDisplay.display.percent ?? 0;
   const colorMode = getFieldColorMode(colorModeId);
@@ -39,7 +38,7 @@ export function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient, dim
           y1="0"
           x2={x2}
           y2={y2}
-          id={getGradientId(gaugeId, index)}
+          id={id}
           gradientUnits="userSpaceOnUse"
           gradientTransform={transform}
         >
@@ -59,7 +58,7 @@ export function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient, dim
           y1="0"
           x2={x2}
           y2={y2}
-          id={getGradientId(gaugeId, index)}
+          id={id}
           gradientUnits="userSpaceOnUse"
           gradientTransform={transform}
         >
@@ -83,7 +82,7 @@ export function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient, dim
         const count = colors.length;
 
         return (
-          <linearGradient x1="0" y1="1" x2={1 / valuePercent} y2="1" id={getGradientId(gaugeId, index)}>
+          <linearGradient x1="0" y1="1" x2={1 / valuePercent} y2="1" id={id}>
             {colors.map((stopColor, i) => (
               <stop key={i} offset={`${(i / (count - 1)).toFixed(2)}`} stopColor={stopColor} stopOpacity={1} />
             ))}
@@ -91,7 +90,7 @@ export function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient, dim
         );
       } else {
         return (
-          <linearGradient x1="0" y1="1" x2={0} y2="1" id={getGradientId(gaugeId, index)}>
+          <linearGradient x1="0" y1="1" x2={0} y2="1" id={id}>
             <stop stopColor={fieldDisplay.display.color ?? 'gray'} stopOpacity={1} />
           </linearGradient>
         );
@@ -116,8 +115,4 @@ export function GradientDef({ fieldDisplay, index, theme, gaugeId, gradient, dim
   }
 
   return null;
-}
-
-export function getGradientId(gaugeId: string, index: number) {
-  return `radial-gauge-${gaugeId}-${index}`;
 }

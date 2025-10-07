@@ -1,17 +1,17 @@
 import { FieldDisplay } from '@grafana/data';
 
 export function getValueAngleForValue(fieldDisplay: FieldDisplay, startAngle: number, endAngle: number) {
-  const range = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
+  const angleRange = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
   const min = fieldDisplay.field.min ?? 0;
   const max = fieldDisplay.field.max ?? 100;
 
-  let angle = ((fieldDisplay.display.numeric - min) / (max - min)) * range;
+  let angle = ((fieldDisplay.display.numeric - min) / (max - min)) * angleRange;
 
-  if (angle > range) {
-    angle = range;
+  if (angle > angleRange) {
+    angle = angleRange;
   }
 
-  return { range, angle };
+  return { angleRange, angle };
 }
 
 /**
@@ -31,6 +31,7 @@ export interface GaugeDimensions {
   centerY: number;
   barWidth: number;
   endAngle?: number;
+  barIndex: number;
 }
 
 export function calculateDimensions(
@@ -38,9 +39,9 @@ export function calculateDimensions(
   height: number,
   endAngle: number,
   glow: boolean,
-  spotlight: boolean,
   roundedBars: boolean,
-  barWidthFactor: number
+  barWidthFactor: number,
+  barIndex: number
 ): GaugeDimensions {
   const yMaxAngle = endAngle > 180 ? 180 : endAngle;
   let margin = 0;
@@ -67,9 +68,14 @@ export function calculateDimensions(
     outerRadius -= (margin * 2) / (1 + heightRatioV);
   }
 
-  const innerRadius = outerRadius - barWidth / 2;
+  let innerRadius = outerRadius - barWidth / 2;
+
   const centerX = width / 2;
   const centerY = outerRadius + margin;
 
-  return { margin, radius: innerRadius, centerX, centerY, barWidth };
+  if (barIndex > 0) {
+    innerRadius = innerRadius - (barWidth + 4) * barIndex;
+  }
+
+  return { margin, radius: innerRadius, centerX, centerY, barWidth, barIndex };
 }
