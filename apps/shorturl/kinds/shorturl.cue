@@ -20,6 +20,7 @@ shorturl: {
 				response: {
 					url: string
 				}
+				responseMetadata: typeMeta: false
 			}
 		}
 	}

@@ -424,7 +424,7 @@ const (
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
 
 	// FlagAlertingSaveStateCompressed
-	// Enables the compressed protobuf-based alert state storage
+	// Enables the compressed protobuf-based alert state storage. Default is enabled.
 	FlagAlertingSaveStateCompressed = "alertingSaveStateCompressed"
 
 	// FlagScopeApi
@@ -434,6 +434,10 @@ const (
 	// FlagUseScopeSingleNodeEndpoint
 	// Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
 	FlagUseScopeSingleNodeEndpoint = "useScopeSingleNodeEndpoint"
+
+	// FlagUseMultipleScopeNodesEndpoint
+	// Makes the frontend use the &#39;names&#39; param for fetching multiple scope nodes at once
+	FlagUseMultipleScopeNodesEndpoint = "useMultipleScopeNodesEndpoint"
 
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
@@ -799,6 +803,9 @@ const (
 	// Enables the new Jira integration for contact points in cloud alert managers.
 	FlagAlertingJiraIntegration = "alertingJiraIntegration"
 
+	// FlagAlertingUseNewSimplifiedRoutingHashAlgorithm
+	FlagAlertingUseNewSimplifiedRoutingHashAlgorithm = "alertingUseNewSimplifiedRoutingHashAlgorithm"
+
 	// FlagUseScopesNavigationEndpoint
 	// Use the scopes navigation endpoint instead of the dashboardbindings endpoint
 	FlagUseScopesNavigationEndpoint = "useScopesNavigationEndpoint"
@@ -870,10 +877,6 @@ const (
 	// FlagMultiTenantTempCredentials
 	// use multi-tenant path for awsTempCredentials
 	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
-
-	// FlagLocalizationForPlugins
-	// Enables localization for plugins
-	FlagLocalizationForPlugins = "localizationForPlugins"
 
 	// FlagUnifiedNavbars
 	// Enables unified navbars
@@ -1070,4 +1073,8 @@ const (
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
+
+	// FlagCdnPluginsUrls
+	// Enable loading plugins via declarative URLs
+	FlagCdnPluginsUrls = "cdnPluginsUrls"
 )
