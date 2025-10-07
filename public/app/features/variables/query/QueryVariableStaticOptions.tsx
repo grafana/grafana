@@ -67,7 +67,6 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
               {areStaticOptionsEnabled && (
                 <VariableStaticOptionsForm
                   allowEmptyValue
-                  width={60}
                   options={staticOptions ?? []}
                   onChange={onStaticOptionsChange}
                 />

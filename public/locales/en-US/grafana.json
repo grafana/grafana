@@ -4747,13 +4747,8 @@
       "variable": {
         "custom-options": {
           "close": "Close",
-          "editor-type": {
-            "builder": "Builder",
-            "static": "Static"
-          },
           "modal-title": "Custom Variable",
-          "values": "Values separated by comma",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "values": "Values separated by comma"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -14135,11 +14130,13 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Add option",
+      "add-option-button-label": "Add new option",
       "description": "Add custom options in addition to query results",
       "drag-and-drop": "Drag and drop to reorder",
-      "label-placeholder": "Label, defaults to value",
+      "label-header": "Display text",
+      "label-placeholder": "Defaults to value",
       "remove-option-button-label": "Remove option",
+      "value-header": "Value",
       "value-placeholder": "Value"
     },
     "query-variable-static-options-sort-select": {

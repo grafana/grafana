@@ -1,6 +1,9 @@
+import { css } from '@emotion/css';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 
-import { Stack } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { useStyles2 } from '@grafana/ui';
 
 import {
   VariableStaticOptionsFormItem,
@@ -10,10 +13,11 @@ import {
 interface VariableStaticOptionsFormProps {
   items: VariableStaticOptionsFormItem[];
   onChange: (items: VariableStaticOptionsFormItem[]) => void;
-  width?: number;
 }
 
-export function VariableStaticOptionsFormItems({ items, onChange, width }: VariableStaticOptionsFormProps) {
+export function VariableStaticOptionsFormItems({ items, onChange }: VariableStaticOptionsFormProps) {
+  const styles = useStyles2(getStyles);
+
   const handleReorder = (result: DropResult) => {
     if (!result || !result.destination) {
       return;
@@ -50,29 +54,64 @@ export function VariableStaticOptionsFormItems({ items, onChange, width }: Varia
   };
 
   return (
-    <DragDropContext onDragEnd={handleReorder}>
-      <Droppable droppableId="static-options-list" direction="vertical">
-        {(droppableProvided) => (
-          <Stack
-            direction="column"
-            gap={2}
-            width={width}
-            ref={droppableProvided.innerRef}
-            {...droppableProvided.droppableProps}
-          >
-            {items.map((item, idx) => (
-              <VariableStaticOptionsFormItemEditor
-                item={item}
-                index={idx}
-                onChange={handleChange}
-                onRemove={handleRemove}
-                key={item.id}
-              />
-            ))}
-            {droppableProvided.placeholder}
-          </Stack>
-        )}
-      </Droppable>
-    </DragDropContext>
+    <table className={styles.table}>
+      <thead>
+        <tr>
+          <th className={styles.headerIconColumn} />
+          <th className={styles.headerInputColumn}>
+            <Trans i18nKey="variables.query-variable-static-options.value-header">Value</Trans>
+          </th>
+          <th className={styles.headerInputColumn}>
+            <Trans i18nKey="variables.query-variable-static-options.label-header">Display text</Trans>
+          </th>
+          <th className={styles.headerIconColumn} />
+        </tr>
+      </thead>
+      <DragDropContext onDragEnd={handleReorder}>
+        <Droppable droppableId="static-options-list" direction="vertical">
+          {(droppableProvided) => (
+            <tbody ref={droppableProvided.innerRef} {...droppableProvided.droppableProps}>
+              {items.map((item, idx) => (
+                <VariableStaticOptionsFormItemEditor
+                  item={item}
+                  index={idx}
+                  onChange={handleChange}
+                  onRemove={handleRemove}
+                  key={item.id}
+                />
+              ))}
+              {droppableProvided.placeholder}
+            </tbody>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </table>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  table: css({
+    'tbody tr': css({
+      position: 'relative',
+    }),
+
+    'tbody tr:hover': css({
+      background: theme.colors.action.hover,
+    }),
+
+    'th, td': {
+      padding: theme.spacing(1),
+      width: '49%',
+    },
+
+    'th:first-child, td:first-child, th:last-child, td:last-child': css({
+      width: '1%',
+    }),
+  }),
+  headerIconColumn: css({
+    width: '1%',
+  }),
+  headerInputColumn: css({
+    width: '49%',
+  }),
+});

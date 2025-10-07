@@ -5,7 +5,7 @@ import { ChangeEventHandler } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Button, Icon, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, Input, Stack, useStyles2 } from '@grafana/ui';
 
 export interface VariableStaticOptionsFormItem {
   id: string;
@@ -45,47 +45,54 @@ export function VariableStaticOptionsFormItemEditor({
   return (
     <Draggable draggableId={item.id} index={index}>
       {(draggableProvided) => (
-        <Stack
+        <tr
           ref={draggableProvided.innerRef}
-          direction="row"
-          alignItems="center"
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsRow}
           {...draggableProvided.draggableProps}
         >
-          <div {...draggableProvided.dragHandleProps}>
-            <Icon
-              title={t('variables.query-variable-static-options.drag-and-drop', 'Drag and drop to reorder')}
-              name="draggabledots"
-              size="lg"
-              className={styles.dragIcon}
+          <td>
+            <Stack direction="row" alignItems="center" {...draggableProvided.dragHandleProps}>
+              <Icon
+                title={t('variables.query-variable-static-options.drag-and-drop', 'Drag and drop to reorder')}
+                name="draggabledots"
+                size="lg"
+                className={styles.dragIcon}
+              />
+            </Stack>
+          </td>
+          <td>
+            <Input
+              value={item.value}
+              placeholder={t('variables.query-variable-static-options.value-placeholder', 'Value')}
+              onChange={handleValueChange}
+              data-testid={
+                selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsValueInput
+              }
             />
-          </div>
-          <Input
-            value={item.value}
-            placeholder={t('variables.query-variable-static-options.value-placeholder', 'Value')}
-            onChange={handleValueChange}
-            data-testid={
-              selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsValueInput
-            }
-          />
-          <Input
-            value={item.label}
-            placeholder={t('variables.query-variable-static-options.label-placeholder', 'Label, defaults to value')}
-            onChange={handleLabelChange}
-            data-testid={
-              selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsLabelInput
-            }
-          />
-          <Button
-            icon="times"
-            variant="secondary"
-            aria-label={t('variables.query-variable-static-options.remove-option-button-label', 'Remove option')}
-            onClick={handleRemove}
-            data-testid={
-              selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsDeleteButton
-            }
-          />
-        </Stack>
+          </td>
+          <td>
+            <Input
+              value={item.label}
+              placeholder={t('variables.query-variable-static-options.label-placeholder', 'Defaults to value')}
+              onChange={handleLabelChange}
+              data-testid={
+                selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsLabelInput
+              }
+            />
+          </td>
+          <td>
+            <Stack direction="row" alignItems="center">
+              <IconButton
+                name="trash-alt"
+                aria-label={t('variables.query-variable-static-options.remove-option-button-label', 'Remove option')}
+                onClick={handleRemove}
+                data-testid={
+                  selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsDeleteButton
+                }
+              />
+            </Stack>
+          </td>
+        </tr>
       )}
     </Draggable>
   );
@@ -94,10 +101,18 @@ export function VariableStaticOptionsFormItemEditor({
 const getStyles = (theme: GrafanaTheme2) => ({
   dragIcon: css({
     cursor: 'grab',
-    color: theme.colors.text.disabled,
 
-    '&:hover': {
-      color: theme.colors.text.primary,
+    // create a focus ring around the whole row when the drag handle is tab-focused
+    // needs position: relative on the drag row to work correctly
+    '&:focus-visible&:after': {
+      bottom: 0,
+      content: '""',
+      left: 0,
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      outline: `2px solid ${theme.colors.primary.main}`,
+      outlineOffset: '-2px',
     },
   }),
 });
