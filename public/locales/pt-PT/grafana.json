@@ -4142,6 +4142,13 @@
       "body": "Experimente o novo Consultor para descobrir possíveis problemas com as suas origens de dados e plugins.",
       "go-to-advisor": "Ir para o Consultor"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4190,6 +4197,20 @@
         "unknown-datasource": "Origem de dados desconhecida"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Escolha um tipo de origem de dados"
@@ -4219,6 +4240,13 @@
         },
         "subtitle": "Faça a gestão das suas ligações de origem de dados num só lugar. Use esta página para adicionar uma nova origem de dados ou gerir as suas ligações existentes."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Pesquisar tudo",
@@ -13657,6 +13685,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "e",
       "placeholder-from": "",

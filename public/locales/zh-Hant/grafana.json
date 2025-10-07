@@ -4122,6 +4122,13 @@
       "body": "試試新的 Advisor，以便發現資料來源和外掛程式的潛在問題。",
       "go-to-advisor": "前往 Advisor"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4170,6 +4177,20 @@
         "unknown-datasource": "未知的資料來源"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "選擇資料來源類型"
@@ -4199,6 +4220,13 @@
         },
         "subtitle": "集中一處管理您的資料來源連線。使用此頁面新增資料來源或管理現有連線。"
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "搜尋所有",
@@ -13612,6 +13640,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "和",
       "placeholder-from": "",
