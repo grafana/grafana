@@ -12,6 +12,8 @@ export const changeQuery = createAction<ElasticsearchDataQuery['query']>('change
 
 export const changeAliasPattern = createAction<ElasticsearchDataQuery['alias']>('change_alias_pattern');
 
+export const changeRawQuery = createAction<ElasticsearchDataQuery['rawQuery']>('change_raw_query');
+
 export const queryReducer = (prevQuery: ElasticsearchDataQuery['query'], action: Action) => {
   if (changeQuery.match(action)) {
     return action.payload;
@@ -34,4 +36,16 @@ export const aliasPatternReducer = (prevAliasPattern: ElasticsearchDataQuery['al
   }
 
   return prevAliasPattern;
+};
+
+export const rawQueryReducer = (prevRawQuery: ElasticsearchDataQuery['rawQuery'], action: Action) => {
+  if (changeRawQuery.match(action)) {
+    return action.payload;
+  }
+
+  if (initQuery.match(action)) {
+    return prevRawQuery || '';
+  }
+
+  return prevRawQuery;
 };

@@ -14,6 +14,7 @@ const OPTIONS: Array<SelectableValue<QueryType>> = [
   { value: 'logs', label: 'Logs' },
   { value: 'raw_data', label: 'Raw Data' },
   { value: 'raw_document', label: 'Raw Document' },
+  { value: 'raw_dsl', label: 'Raw Query DSL' },
 ];
 
 function queryTypeToMetricType(type: QueryType): MetricAggregation['type'] {
@@ -21,6 +22,7 @@ function queryTypeToMetricType(type: QueryType): MetricAggregation['type'] {
     case 'logs':
     case 'raw_data':
     case 'raw_document':
+    case 'raw_dsl':
       return type;
     case 'metrics':
       return 'count';

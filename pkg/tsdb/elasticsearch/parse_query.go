@@ -21,6 +21,13 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 		// please do not create a new field with that name, to avoid potential problems with old, persisted queries.
 
 		rawQuery := model.Get("query").MustString()
+		rawDSLQuery := model.Get("rawDslQuery").MustString("")
+		rawDSL := model.Get("rawDsl").MustBool(false)
+
+		// For backward compatibility, also check if rawDslQuery field is populated
+		if rawDSLQuery != "" {
+			rawDSL = true
+		}
 		bucketAggs, err := parseBucketAggs(model)
 		if err != nil {
 			logger.Error("Failed to parse bucket aggs in query", "error", err, "model", string(q.JSON))
@@ -45,6 +52,8 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 			RefID:         q.RefID,
 			MaxDataPoints: q.MaxDataPoints,
 			TimeRange:     q.TimeRange,
+			RawDSL:        rawDSL,
+			RawDSLQuery:   rawDSLQuery,
 		})
 	}
 

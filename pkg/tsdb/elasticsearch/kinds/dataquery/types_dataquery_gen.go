@@ -135,11 +135,11 @@ func NewNested() *Nested {
 	}
 }
 
-type MetricAggregation = CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics
+type MetricAggregation = CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics
 
 // NewMetricAggregation creates a new MetricAggregation object.
 func NewMetricAggregation() *MetricAggregation {
-	return NewCountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics()
+	return NewCountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics()
 }
 
 type Count struct {
@@ -171,6 +171,7 @@ const (
 	MetricAggregationTypeLogs          MetricAggregationType = "logs"
 	MetricAggregationTypeRate          MetricAggregationType = "rate"
 	MetricAggregationTypeTopMetrics    MetricAggregationType = "top_metrics"
+	MetricAggregationTypeRawDsl        MetricAggregationType = "raw_dsl"
 	MetricAggregationTypeMovingAvg     MetricAggregationType = "moving_avg"
 	MetricAggregationTypeMovingFn      MetricAggregationType = "moving_fn"
 	MetricAggregationTypeDerivative    MetricAggregationType = "derivative"
@@ -278,11 +279,11 @@ func NewInlineScript() *InlineScript {
 	return NewStringOrDataqueryInlineScript()
 }
 
-type MetricAggregationWithSettings = BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics
+type MetricAggregationWithSettings = BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics
 
 // NewMetricAggregationWithSettings creates a new MetricAggregationWithSettings object.
 func NewMetricAggregationWithSettings() *MetricAggregationWithSettings {
-	return NewBucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics()
+	return NewBucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics()
 }
 
 type SerialDiff struct {
@@ -462,6 +463,20 @@ type Logs struct {
 func NewLogs() *Logs {
 	return &Logs{
 		Type: MetricAggregationTypeLogs,
+	}
+}
+
+type RawDSL struct {
+	Type     MetricAggregationType `json:"type"`
+	Id       string                `json:"id"`
+	Settings any                   `json:"settings,omitempty"`
+	Hide     *bool                 `json:"hide,omitempty"`
+}
+
+// NewRawDSL creates a new RawDSL object.
+func NewRawDSL() *RawDSL {
+	return &RawDSL{
+		Type: MetricAggregationTypeRawDsl,
 	}
 }
 
@@ -775,6 +790,8 @@ type ElasticsearchDataQuery struct {
 	Alias *string `json:"alias,omitempty"`
 	// Lucene query
 	Query *string `json:"query,omitempty"`
+	// Raw Elasticsearch Query DSL JSON
+	RawQuery *string `json:"rawQuery,omitempty"`
 	// Name of time field
 	TimeField *string `json:"timeField,omitempty"`
 	// List of bucket aggregations
@@ -1191,7 +1208,7 @@ func (resource *DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested) U
 	return nil
 }
 
-type CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics struct {
+type CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics struct {
 	Count          *Count          `json:"Count,omitempty"`
 	MovingAverage  *MovingAverage  `json:"MovingAverage,omitempty"`
 	Derivative     *Derivative     `json:"Derivative,omitempty"`
@@ -1209,17 +1226,18 @@ type CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOr
 	Average        *Average        `json:"Average,omitempty"`
 	MovingFunction *MovingFunction `json:"MovingFunction,omitempty"`
 	Logs           *Logs           `json:"Logs,omitempty"`
+	RawDSL         *RawDSL         `json:"RawDSL,omitempty"`
 	Rate           *Rate           `json:"Rate,omitempty"`
 	TopMetrics     *TopMetrics     `json:"TopMetrics,omitempty"`
 }
 
-// NewCountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics creates a new CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics object.
-func NewCountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics() *CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics {
-	return &CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics{}
+// NewCountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics creates a new CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics object.
+func NewCountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics() *CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics {
+	return &CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics` as JSON.
-func (resource CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics` as JSON.
+func (resource CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics) MarshalJSON() ([]byte, error) {
 	if resource.Count != nil {
 		return json.Marshal(resource.Count)
 	}
@@ -1271,6 +1289,9 @@ func (resource CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSe
 	if resource.Logs != nil {
 		return json.Marshal(resource.Logs)
 	}
+	if resource.RawDSL != nil {
+		return json.Marshal(resource.RawDSL)
+	}
 	if resource.Rate != nil {
 		return json.Marshal(resource.Rate)
 	}
@@ -1281,8 +1302,8 @@ func (resource CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSe
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics` from JSON.
-func (resource *CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics` from JSON.
+func (resource *CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -1426,6 +1447,14 @@ func (resource *CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrS
 		}
 
 		resource.RawDocument = &rawDocument
+		return nil
+	case "raw_dsl":
+		var rawDSL RawDSL
+		if err := json.Unmarshal(raw, &rawDSL); err != nil {
+			return err
+		}
+
+		resource.RawDSL = &rawDSL
 		return nil
 	case "serial_diff":
 		var serialDiff SerialDiff
@@ -1596,7 +1625,7 @@ func (resource *StringOrDataqueryInlineScript) UnmarshalJSON(raw []byte) error {
 	return errors.Join(errList...)
 }
 
-type BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics struct {
+type BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics struct {
 	BucketScript   *BucketScript   `json:"BucketScript,omitempty"`
 	CumulativeSum  *CumulativeSum  `json:"CumulativeSum,omitempty"`
 	Derivative     *Derivative     `json:"Derivative,omitempty"`
@@ -1613,17 +1642,18 @@ type BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOr
 	MovingAverage  *MovingAverage  `json:"MovingAverage,omitempty"`
 	MovingFunction *MovingFunction `json:"MovingFunction,omitempty"`
 	Logs           *Logs           `json:"Logs,omitempty"`
+	RawDSL         *RawDSL         `json:"RawDSL,omitempty"`
 	Rate           *Rate           `json:"Rate,omitempty"`
 	TopMetrics     *TopMetrics     `json:"TopMetrics,omitempty"`
 }
 
-// NewBucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics creates a new BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics object.
-func NewBucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics() *BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics {
-	return &BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics{}
+// NewBucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics creates a new BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics object.
+func NewBucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics() *BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics {
+	return &BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics` as JSON.
-func (resource BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics` as JSON.
+func (resource BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics) MarshalJSON() ([]byte, error) {
 	if resource.BucketScript != nil {
 		return json.Marshal(resource.BucketScript)
 	}
@@ -1672,6 +1702,9 @@ func (resource BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRaw
 	if resource.Logs != nil {
 		return json.Marshal(resource.Logs)
 	}
+	if resource.RawDSL != nil {
+		return json.Marshal(resource.RawDSL)
+	}
 	if resource.Rate != nil {
 		return json.Marshal(resource.Rate)
 	}
@@ -1682,8 +1715,8 @@ func (resource BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRaw
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics` from JSON.
-func (resource *BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics` from JSON.
+func (resource *BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRawDSLOrRateOrTopMetrics) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -1819,6 +1852,14 @@ func (resource *BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRa
 		}
 
 		resource.RawDocument = &rawDocument
+		return nil
+	case "raw_dsl":
+		var rawDSL RawDSL
+		if err := json.Unmarshal(raw, &rawDSL); err != nil {
+			return err
+		}
+
+		resource.RawDSL = &rawDSL
 		return nil
 	case "serial_diff":
 		var serialDiff SerialDiff

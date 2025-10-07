@@ -117,7 +117,7 @@ export interface GeoHashGridSettings {
 
 export type PipelineMetricAggregationType = ('moving_avg' | 'moving_fn' | 'derivative' | 'serial_diff' | 'cumulative_sum' | 'bucket_script');
 
-export type MetricAggregationType = ('count' | 'avg' | 'sum' | 'min' | 'max' | 'extended_stats' | 'percentiles' | 'cardinality' | 'raw_document' | 'raw_data' | 'logs' | 'rate' | 'top_metrics' | PipelineMetricAggregationType);
+export type MetricAggregationType = ('count' | 'avg' | 'sum' | 'min' | 'max' | 'extended_stats' | 'percentiles' | 'cardinality' | 'raw_document' | 'raw_data' | 'logs' | 'rate' | 'top_metrics' | 'raw_dsl' | PipelineMetricAggregationType);
 
 export interface BaseMetricAggregation {
   hide?: boolean;
@@ -247,6 +247,11 @@ export interface Logs extends BaseMetricAggregation {
   type: 'logs';
 }
 
+export interface RawDSL extends BaseMetricAggregation {
+  settings?: Record<string, unknown>;
+  type: 'raw_dsl';
+}
+
 export interface Rate extends MetricAggregationWithField {
   settings?: {
     unit?: string;
@@ -374,7 +379,7 @@ export interface TopMetrics extends BaseMetricAggregation {
 
 export type PipelineMetricAggregation = (MovingAverage | Derivative | CumulativeSum | BucketScript);
 
-export type MetricAggregationWithSettings = (BucketScript | CumulativeSum | Derivative | SerialDiff | RawData | RawDocument | UniqueCount | Percentiles | ExtendedStats | Min | Max | Sum | Average | MovingAverage | MovingFunction | Logs | Rate | TopMetrics);
+export type MetricAggregationWithSettings = (BucketScript | CumulativeSum | Derivative | SerialDiff | RawData | RawDocument | UniqueCount | Percentiles | ExtendedStats | Min | Max | Sum | Average | MovingAverage | MovingFunction | Logs | RawDSL | Rate | TopMetrics);
 
 export interface ElasticsearchDataQuery extends common.DataQuery {
   /**
@@ -393,6 +398,10 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    * Lucene query
    */
   query?: string;
+  /**
+   * Raw Elasticsearch Query DSL JSON
+   */
+  rawQuery?: string;
   /**
    * Name of time field
    */

@@ -18,6 +18,10 @@ type Query struct {
 	RefID         string
 	MaxDataPoints int64
 	TimeRange     backend.TimeRange
+	// RawDSL indicates whether this query uses raw Elasticsearch Query DSL
+	RawDSL bool `json:"rawDsl"`
+	// RawDSLQuery contains the raw Elasticsearch Query DSL JSON string
+	RawDSLQuery string `json:"rawDslQuery"`
 }
 
 // BucketAgg represents a bucket aggregation of the time series query model of the datasource
@@ -60,6 +64,7 @@ var metricAggType = map[string]string{
 	"raw_data":       "Raw Data",
 	"rate":           "Rate",
 	"logs":           "Logs",
+	"raw_dsl":        "Raw DSL",
 }
 
 var extendedStats = map[string]string{

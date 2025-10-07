@@ -1904,3 +1904,100 @@ func executeElasticsearchDataQuery(c es.Client, body string, from, to time.Time)
 	query := newElasticsearchDataQuery(context.Background(), c, &dataRequest, log.New())
 	return query.execute()
 }
+
+func TestRawDSLQuery(t *testing.T) {
+	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+
+	t.Run("With raw DSL query", func(t *testing.T) {
+		t.Run("Basic raw DSL query with aggregations", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"rawDsl": true,
+				"rawDslQuery": "{\"query\":{\"bool\":{\"filter\":[{\"range\":{\"@timestamp\":{\"gte\":1526405400000,\"lte\":1526405700000,\"format\":\"epoch_millis\"}}}]}},\"aggs\":{\"date_histogram\":{\"date_histogram\":{\"field\":\"@timestamp\",\"interval\":\"1m\"}}},\"size\":0}"
+			}`, from, to)
+			require.NoError(t, err)
+			require.Len(t, c.multisearchRequests, 1)
+			require.Len(t, c.multisearchRequests[0].Requests, 1)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			// Verify RawBody contains the entire DSL query
+			require.NotNil(t, sr.RawBody)
+			require.Contains(t, sr.RawBody, "query")
+			require.Contains(t, sr.RawBody, "aggs")
+
+			// Verify size from raw body
+			size, ok := sr.RawBody["size"].(float64)
+			require.True(t, ok)
+			require.Equal(t, float64(0), size)
+		})
+
+		t.Run("Raw DSL query with query_string", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"rawDsl": true,
+				"rawDslQuery": "{\"query\":{\"query_string\":{\"query\":\"status:200\",\"analyze_wildcard\":true}},\"size\":100}"
+			}`, from, to)
+			require.NoError(t, err)
+			require.Len(t, c.multisearchRequests, 1)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			// Verify RawBody contains the entire DSL query
+			require.NotNil(t, sr.RawBody)
+			require.Contains(t, sr.RawBody, "query")
+
+			// Verify size from raw body
+			size, ok := sr.RawBody["size"].(float64)
+			require.True(t, ok)
+			require.Equal(t, float64(100), size)
+
+			// Verify query object exists in raw body
+			query, ok := sr.RawBody["query"].(map[string]any)
+			require.True(t, ok)
+			require.Contains(t, query, "query_string")
+		})
+
+		t.Run("Raw DSL query with sort", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"rawDsl": true,
+				"rawDslQuery": "{\"query\":{\"match_all\":{}},\"sort\":[{\"@timestamp\":{\"order\":\"desc\"}}],\"size\":50}"
+			}`, from, to)
+			require.NoError(t, err)
+			require.Len(t, c.multisearchRequests, 1)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			// Verify RawBody contains the entire DSL query
+			require.NotNil(t, sr.RawBody)
+			require.Contains(t, sr.RawBody, "query")
+			require.Contains(t, sr.RawBody, "sort")
+
+			// Verify sort in raw body
+			sort, ok := sr.RawBody["sort"].([]any)
+			require.True(t, ok)
+			require.NotEmpty(t, sort)
+		})
+
+		t.Run("Empty raw DSL query returns error", func(t *testing.T) {
+			c := newFakeClient()
+			response, err := executeElasticsearchDataQuery(c, `{
+				"rawDsl": true,
+				"rawDslQuery": ""
+			}`, from, to)
+			require.NoError(t, err)
+			require.NotNil(t, response.Responses["A"].Error)
+			require.Contains(t, response.Responses["A"].Error.Error(), "raw DSL query is empty")
+		})
+
+		t.Run("Invalid JSON in raw DSL query returns error", func(t *testing.T) {
+			c := newFakeClient()
+			response, err := executeElasticsearchDataQuery(c, `{
+				"rawDsl": true,
+				"rawDslQuery": "{ invalid json }"
+			}`, from, to)
+			require.NoError(t, err)
+			require.NotNil(t, response.Responses["A"].Error)
+			require.Contains(t, response.Responses["A"].Error.Error(), "invalid raw DSL query JSON")
+		})
+	})
+}
