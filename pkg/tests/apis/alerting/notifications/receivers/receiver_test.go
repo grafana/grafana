@@ -1320,7 +1320,8 @@ func TestIntegrationCRUD(t *testing.T) {
 					typeSchema, ok := notify.GetSchemaVersionForIntegration(integrationType, schema.V1)
 					require.True(t, ok)
 					secretFields := typeSchema.GetSecretFieldsPaths()
-					for _, field := range secretFields {
+					for _, fieldPath := range secretFields {
+						field := fieldPath.String()
 						if _, ok := fields[field]; !ok { // skip field that is not in the original setting
 							continue
 						}
