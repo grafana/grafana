@@ -385,6 +385,7 @@ func TestValidateOnBindingCreate(t *testing.T) {
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
 						Name: "test-team",
 					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
 				},
 			},
 			want: apierrors.NewBadRequest("subject is required"),
@@ -403,6 +404,7 @@ func TestValidateOnBindingCreate(t *testing.T) {
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
 						Name: "",
 					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
 				},
 			},
 			want: apierrors.NewBadRequest("teamRef is required"),
