@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,16 +11,14 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import { useOnAddVisualization, useOnAddLibraryPanel, useOnImportDashboard } from './DashboardEmptyHooks';
 
-export interface Props {
-  dashboard: DashboardModel | DashboardScene;
-  canCreate: boolean;
+interface InternalProps {
+  onAddVisualization?: () => void;
+  onAddLibraryPanel?: () => void;
+  onImportDashboard?: () => void;
 }
 
-const InternalDashboardEmpty = ({ dashboard, canCreate }: Props) => {
+const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImportDashboard }: InternalProps) => {
   const styles = useStyles2(getStyles);
-  const onAddVisualization = useOnAddVisualization({ dashboard, canCreate });
-  const onAddLibraryPanel = useOnAddLibraryPanel({ dashboard, canCreate });
-  const onImportDashboard = useOnImportDashboard({ dashboard, canCreate });
 
   return (
     <Stack alignItems="center" justifyContent="center">
@@ -109,6 +108,11 @@ const InternalDashboardEmpty = ({ dashboard, canCreate }: Props) => {
   );
 };
 
+export interface Props {
+  dashboard: DashboardModel | DashboardScene;
+  canCreate: boolean;
+}
+
 // We pass the default empty UI through to the extension point so that the extension can conditionally render it if needed.
 // For example, an extension might want to render custom UI for a specific experiment cohort, and the default UI for everyone else.
 const DashboardEmpty = (props: Props) => {
@@ -118,7 +122,16 @@ const DashboardEmpty = (props: Props) => {
 
   return (
     <DashboardEmptyExtensionPoint
-      renderDefaultUI={() => <InternalDashboardEmpty {...props} />}
+      renderDefaultUI={useCallback(
+        () => (
+          <InternalDashboardEmpty
+            onAddVisualization={onAddVisualization}
+            onAddLibraryPanel={onAddLibraryPanel}
+            onImportDashboard={onImportDashboard}
+          />
+        ),
+        [onAddVisualization, onAddLibraryPanel, onImportDashboard]
+      )}
       onAddVisualization={onAddVisualization}
       onAddLibraryPanel={onAddLibraryPanel}
       onImportDashboard={onImportDashboard}
