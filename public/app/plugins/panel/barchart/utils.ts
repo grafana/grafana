@@ -1,5 +1,6 @@
 import uPlot, { Padding } from 'uplot';
 
+
 import {
   DataFrame,
   Field,
@@ -39,11 +40,10 @@ import { AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/
 
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 
-import { BarsOptions, getConfig} from './bars';
 import { singleBarMarker } from './barmarkers';
+import { BarsOptions, getConfig} from './bars';
+import { PreparedMarker, Marker } from './markerTypes';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
-import { ResolvedMarker, PreparedMarker, Marker } from './markerTypes';
-import Series from 'uplot';
 
 
 
@@ -269,6 +269,8 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       };
     }
   }
+
+
   
   const opts: BarsOptions = {
     xOri: vizOrientation.xOri,
@@ -361,8 +363,8 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   // const legendOrdered = isLegendOrdered(legend);
 
   //Calculate min and max marker values
-  var markerMin = 0;
-  var markerMax = 0;
+  let markerMin = 0;
+  let markerMax = 0;
   for(let i = 0; i < markerData.length; i++) {
 
     const vals = markerData[i].values.toArray().filter(v => v != null);
@@ -612,9 +614,9 @@ function getScaleOrientation(orientation: VizOrientation) {
   
 }
 
-export function prepareMarkers(vizFields: Field[], allFields: Field[], markers: Marker[], stacking: StackingMode ): PreparedMarker[] {
+export function prepareMarkers(vizFields: Field[], markerFields: Field[], markers: Marker[], stacking: StackingMode ): PreparedMarker[] {
   
-  var prepMarkerList = [];
+  let prepMarkerList = [];
   
   switch(stacking) {
     
@@ -622,19 +624,18 @@ export function prepareMarkers(vizFields: Field[], allFields: Field[], markers: 
       {
       for (const m of markers ?? []) {
 
-        const i = allFields.findIndex((f) => f.name === m.dataField);
+        const i = markerFields.findIndex((f) => f.name === m.dataField);
 
-        if(i === -1) continue; 
+        if(i === -1) {continue;} 
 
-        const fi = allFields[i];
+        const fi = markerFields[i];
 
         const targetIdx = vizFields.findIndex((f) => f.name === m.targetField);
         
 
         for(let j=0; j< fi.values.length; j++){
           
-          const pm : PreparedMarker = {
-            id: m.id * fi.values.length + j,
+          const pm: PreparedMarker = {
             groupIdx: j,
             yValue: fi.values[j],
             seriesIdx: targetIdx, 
@@ -653,21 +654,20 @@ export function prepareMarkers(vizFields: Field[], allFields: Field[], markers: 
 
       for (let a =0; a < markers.length; a++) {
 
-        const i = allFields.findIndex((f) => f.name === markers[a].dataField);
+        const i = markerFields.findIndex((f) => f.name === markers[a].dataField);
 
-        if(i === -1) continue; 
+        if(i === -1) {continue;} 
 
-        const fi = allFields[i];
+        const fi = markerFields[i];
 
         const targetIdx = vizFields.findIndex((f) => f.name === markers[a].targetField);
 
         for(let j=0; j< fi.values.length; j++){
-          var yTotal = 0;
+          let yTotal = 0;
             for(let k=1; k < targetIdx; k++) {
               yTotal += vizFields[k].values[j];
             }
-          const pm : PreparedMarker = {
-            id: markers[a].id * fi.values.length + j,
+          const pm: PreparedMarker = {
             groupIdx: j,
             yValue: yTotal + fi.values[j],
             seriesIdx: targetIdx, 
@@ -685,61 +685,56 @@ export function prepareMarkers(vizFields: Field[], allFields: Field[], markers: 
     case StackingMode.Percent:{
       for (let a =0; a < markers.length; a++) {
 
-      const i = allFields.findIndex((f) => f.name === markers[a].dataField);
+        const i = markerFields.findIndex((f) => f.name === markers[a].dataField);
 
-      if(i === -1) continue; 
+        if(i === -1) {continue;} 
 
-      const fi = allFields[i];
+        const fi = markerFields[i];
+        const targetIdx = vizFields.findIndex((f) => f.name === markers[a].targetField);
 
-      const targetIdx = vizFields.findIndex((f) => f.name === markers[a].targetField);
-
-      
-
-      for(let j=0; j< fi.values.length; j++){
-        var yTotal = 0;
-        var yBase = 0;
-        for(let k=1; k < vizFields.length; k++) {
-          yTotal += vizFields[k].values[j];
-          
-          if(k === targetIdx - 1){ 
-            yBase = yTotal;
+        for(let j=0; j< fi.values.length; j++){
+          let yTotal = 0;
+          let yBase = 0;
+          for(let k=1; k < vizFields.length; k++) {
+            yTotal += vizFields[k].values[j];
+            
+            if(k === targetIdx - 1){ 
+              yBase = yTotal;
+            }
           }
-        }
 
-      const val = fi.values[j] + yBase;
+        const val = fi.values[j] + yBase;
 
-      const pm : PreparedMarker = {
-        id: markers[a].id * fi.values.length + j,
-        groupIdx: j,
-        yValue: val === 0 ? 0 :  val/yTotal,
-        seriesIdx: targetIdx, 
-        yScaleKey: fi.config.unit || FIXED_UNIT,
-        opts: markers[a].opts ,
-        dataIdx: i,
-      };
+        const pm: PreparedMarker = {
+          groupIdx: j,
+          yValue: val === 0 ? 0 :  val/yTotal,
+          seriesIdx: targetIdx, 
+          yScaleKey: fi.config.unit || FIXED_UNIT,
+          opts: markers[a].opts ,
+          dataIdx: i,
+        };
 
-          prepMarkerList.push(pm);
+        prepMarkerList.push(pm);
+
         }  
-      }
+      };
       return prepMarkerList;
-    };
+    }
   }
 }
 
-export function hideMarkerSeries(data: PanelData, markers: Marker[]): {barData : PanelData, markerData: Field[]} {
-  const barData = deepCopy(data);
+export function hideMarkerSeries(data: PanelData, markers: Marker[]): {barData: PanelData, markerData: Field[]} {
+  const barData = deepCopy(data); //deepCopy to ensure useMemo works correctly
   const markerData: Field[] = [];
   for (const m of markers ?? []) {
 
     const i = barData.series[0].fields.findIndex((f) => f.name === m.dataField);
 
-    if(i === -1) continue; 
-    var fi = null;
-    if(true){fi = barData.series[0].fields.splice(i,1)[0];}
-    else{
-      fi = barData.series[0].fields[i];
-      barData.series[0].fields[i].config.custom.hideFrom = {legend: false, tooltip: false, viz: true};
-    }
+    if(i === -1) {continue;} 
+    
+    let fi = null
+    fi = barData.series[0].fields.splice(i,1)[0];
+
     markerData.push(fi);
     
   }

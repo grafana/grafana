@@ -1,4 +1,3 @@
-import data from '../../../features/alerting/unified/components/rules/central-state-history/__fixtures__/alert-state-history';
 
 
 export type BarMarkerOpts = {
@@ -22,11 +21,10 @@ export interface Marker {
  * Keep this file stable so it can be imported without touching generated files.
  */
 export interface PreparedMarker {
-  id: number;
   // optional direct index into aligned x (dataIdx)
   groupIdx?: number | null;
   yScaleKey?: string;
-  yValue? : number | null;
+  yValue?: number | null;
   dataIdx?: number | null; // needed for tooltip lookup
   seriesIdx?: number | null;
   opts: BarMarkerOpts 
@@ -37,7 +35,7 @@ export interface PreparedMarker {
  * and cached for the draw hook.
  */
 export interface ResolvedMarker {
-  id: number;
+
   x: number
   y:  number
   opts: BarMarkerOpts | null;

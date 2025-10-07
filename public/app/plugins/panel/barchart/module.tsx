@@ -1,9 +1,7 @@
 import {
   DataFrame,
-  Field,
   FieldColorModeId,
   FieldConfigProperty,
-  FieldOverrideContext,
   FieldType,
   identityOverrideProcessor,
   PanelPlugin,
@@ -17,11 +15,11 @@ import { optsWithHideZeros } from '@grafana/ui/internal';
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 
 import { BarChartPanel } from './BarChartPanel';
+import { BarMarkersEditor } from './BarMarkersEditor';
 import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
-import { BarMarkersEditor } from './BarMarkersEditor';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
   .setPanelChangeHandler(changeToBarChartPanelMigrationHandler)

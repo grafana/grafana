@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2, StandardEditorProps} from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { Button, Field, InlineField, Input, Label, Combobox,  useStyles2, ComboboxOption, useTheme2, Slider } from '@grafana/ui';
 import { useState } from 'react';
+
+import {  StandardEditorProps} from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Button, Field, InlineField, Input, Label, Combobox, ComboboxOption, useTheme2, Slider } from '@grafana/ui';
+
 import { ColorPicker } from '../../../../../packages/grafana-ui/src/components/ColorPicker/ColorPicker';
+import { hoverColor } from '../../../../../packages/grafana-ui/src/themes/mixins';
+
 import { BarMarkerOpts, Marker} from './markerTypes';
 
-import { hoverColor } from '../../../../../packages/grafana-ui/src/themes/mixins';
 
 
 export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
@@ -14,7 +17,7 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
 
 const theme = useTheme2();
 
-var [markers, setMarkers] = useState<Marker[]>(props.value || []);
+let [markers, setMarkers] = useState<Marker[]>(props.value || []);
 
     // Remove a marker from the list
   const handleRemoveMarker = (id: number) => {
@@ -61,15 +64,15 @@ var [markers, setMarkers] = useState<Marker[]>(props.value || []);
   
     const fields =  props.context?.data[0]?.fields ?? [];
     const xAxis = props.context?.options?.xField;
-    var xFieldIdx = 0;
+    let xFieldIdx = 0;
     if(xAxis){
       xFieldIdx = fields.findIndex(f => f.name === xAxis);
     }
-    var yFieldOptions: Array<ComboboxOption<string | number>> = [];
+    let yFieldOptions: Array<ComboboxOption<string | number>> = [];
     for (let i = 0; i < fields.length; i++) {
       if (i === xFieldIdx){continue;}
       if(fields)
-      yFieldOptions.push({ label: fields[i].name ?? `Field ${i}`, value: fields[i].name ?? i });
+      {yFieldOptions.push({ label: fields[i].name ?? `Field ${i}`, value: fields[i].name ?? i });}
     }
 
   

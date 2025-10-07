@@ -10,19 +10,13 @@ import {
   VizLegendOptions,
 } from '@grafana/schema';
 import { measureText } from '@grafana/ui';
-import { timeUnitSize, StackingGroup, preparePlotData2, optsWithHideZeros } from '@grafana/ui/internal';
-
+import { timeUnitSize, StackingGroup, preparePlotData2 } from '@grafana/ui/internal';
 
 const intervals = systemDateFormats.interval;
 
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 import { PreparedMarker, ResolvedMarker } from './markerTypes';
-import { Builder } from '@react-awesome-query-builder/ui';
-import { format, resolve } from 'path';
-import { reset } from 'ol/transform';
-import { group } from 'console';
-import { data } from 'jquery';
+import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
 
 const groupDistr = SPACE_BETWEEN;
@@ -476,31 +470,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
               //Calculate marker positions and fill markerList to prepare drawing
           const m = populateMarkerList(markers ?? [], dataIdx, seriesIdx, labels, xOri, lft, top, wid, hgt, u, barRect.x + u.bbox.left, barRect.y + u.bbox.top);
 
-          resolvedMarkers.push(...m);
-          
-          for (const o of m) {
-            if(o.opts?.shape === 'line') {
-              qt.add({
-                x: o.x - u.bbox.left - ( o.opts?.width)/2,
-                y: o.y - u.bbox.top - ( o.opts?.width/16 + 2)/2,
-                w: o.opts?.width ? o.opts.width : 50,
-                h:  (o.opts?.width/16 + 2), 
-                sidx: o.sidx ?? -1,
-                didx: dataIdx
-              });
-            } else {
-              qt.add({
-                x: o.x - u.bbox.left - (o.opts?.width ? o.opts.width : 25) / 2,
-                y: o.y - u.bbox.top - (o.opts?.width ? o.opts.width : 25) / 2,
-                w: o.opts?.width ? o.opts.width : 25,
-                h: o.opts?.width ? o.opts.width : 25,
-                sidx: o.sidx ?? -1,
-                didx: dataIdx
-              });
-            }
-          }
-
-          
+          resolvedMarkers.push(...m);  
               
         }
       }
@@ -550,11 +520,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     points: {
       fill: 'rgba(255,255,255,0.4)',
       bbox: (u, seriesIdx) => {
-        var hRect2 = hovered[seriesIdx];
-        var isHovered = hRect2 != null;
+        let hRect2 = hovered[seriesIdx];
+        let isHovered = hRect2 != null;
 
         if(seriesIdx === u.data.length -1 && ! isHovered){
-          for(const mData of opts.markerData ?? []){
+          for (let i = 0; i < (opts.markerData?.length ?? 0); i++) {
             seriesIdx++
             hRect2 = hovered[seriesIdx]
             isHovered = hRect2 != null;
@@ -596,8 +566,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     if (isStacked) {
       barsPctLayout = [null, ...distrOne(u.data[0].length, u.data.length - 1)];
     } else {
-      barsPctLayout = [null, ...distrTwo(u.data[0].length, u.data.length - 1)];
-      // Calculate BarMarker positions
+      barsPctLayout = [null, ...distrTwo(u.data[0].length, u.data.length - 1)];  
     }
 
     if (useMappedColors) {
@@ -743,12 +712,11 @@ function populateMarkerList(markers: PreparedMarker[], dataIdx: number, seriesId
    xOri: ScaleOrientation, lft: number, top: number, wid: number, hgt: number, u: uPlot, barX: number, barY: number){ 
     
   const resolvedMarkerList: ResolvedMarker[] = [];
-  // Match markers to bars and compute marker positions
   if (markers) {
     for (const marker of markers) {
 
       if (
-      (marker.groupIdx  === dataIdx && seriesIdx === marker.seriesIdx) 
+      (marker.groupIdx  === dataIdx && seriesIdx === marker.seriesIdx) //match to bar
         ) {
         if(xOri === ScaleOrientation.Horizontal) {
           
@@ -758,16 +726,15 @@ function populateMarkerList(markers: PreparedMarker[], dataIdx: number, seriesId
           const markerY = (marker.yValue);
 
           let resolvedY: number;
-          if (markerY != null && marker.yScaleKey != '' && marker.yScaleKey != null) {
+          if (markerY != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
             resolvedY = u.valToPos(markerY, marker.yScaleKey, true);
           } else {
             resolvedY = Infinity;
           }
           const m: ResolvedMarker = {
-            id: marker.id,
             x: markerX!,
             y: resolvedY,
-            opts:{ ...marker.opts, isRotated: false,  width: marker.opts.width ? marker.opts.width * wid : wid},
+            opts:{ ...marker.opts, isRotated: false,  width: marker.opts.width * wid },
             sidx: marker.dataIdx ?? -1,
           };
           resolvedMarkerList.push(m);
@@ -777,16 +744,15 @@ function populateMarkerList(markers: PreparedMarker[], dataIdx: number, seriesId
             const markerX = (marker.yValue);
 
             let resolvedX: number;
-            if (markerX != null && marker.yScaleKey != '' && marker.yScaleKey != null) {
+            if (markerX != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
               resolvedX = u.valToPos(markerX, marker.yScaleKey, true);
             } else {
               resolvedX = Infinity;
             }
             const m: ResolvedMarker = {
-              id: marker.id,
               x: resolvedX!,
               y: markerY!,
-              opts: { ...marker.opts, isRotated: true,  width: marker.opts.width ? marker.opts.width * hgt : hgt},
+              opts: { ...marker.opts, isRotated: true,  width: marker.opts.width * hgt },
             };
             resolvedMarkerList.push({...m, sidx: marker.dataIdx ? marker.dataIdx - 1 : -1, didx: dataIdx});
           }

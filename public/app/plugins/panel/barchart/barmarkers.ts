@@ -1,6 +1,8 @@
 
-import { UPlotConfigBuilder } from '@grafana/ui';
 import uPlot from 'uplot';
+
+import { UPlotConfigBuilder } from '@grafana/ui';
+
 import { ResolvedMarker, BarMarkerOpts } from './markerTypes';
 
 
