@@ -21,7 +21,7 @@ export interface DependencyGraphControls {
  * URL parameter utilities for dependency graph controls
  */
 const URL_PARAMS = {
-  API_MODE: 'apiMode',
+  API_MODE: 'view',
   CONTENT_PROVIDERS: 'contentProviders',
   CONTENT_CONSUMERS: 'contentConsumers',
   EXTENSION_POINTS: 'extensionPoints',
@@ -133,7 +133,7 @@ export function useDependencyGraphControls(): DependencyGraphControls {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       setVisualizationModeState(mode as VisualizationMode);
     } else {
-      // Default to 'add' mode when no apiMode parameter is present
+      // Default to 'add' mode when no view parameter is present
       setVisualizationModeState('add');
     }
 
@@ -148,8 +148,8 @@ export function useDependencyGraphControls(): DependencyGraphControls {
   }, [searchParams]);
 
   const modeOptions = [
-    { label: t('extensions.api-mode.add', 'Add'), value: 'add' as const },
-    { label: t('extensions.api-mode.expose', 'Expose'), value: 'expose' as const },
+    { label: t('extensions.view.add', 'Add'), value: 'add' as const },
+    { label: t('extensions.view.expose', 'Expose'), value: 'expose' as const },
   ];
 
   return {

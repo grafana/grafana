@@ -7567,12 +7567,7 @@
     }
   },
   "extensions": {
-    "api-mode": {
-      "add": "Add",
-      "expose": "Expose",
-      "label": "API Mode"
-    },
-    "back-to-add-api-mode": "Back to Add API mode",
+    "back-to-add-view": "Back to Add View",
     "content-consumer": {
       "label": "Content consumer",
       "placeholder": "Select content consumers to display (active consumers by default)"
@@ -7585,6 +7580,7 @@
       "add-mode": "Add Mode (Extensions)",
       "component-extension-color": "Component Extension Color",
       "component-extension-color-description": "Color for component extension points",
+      "component-extensions": "Component extensions",
       "configure-data-source": "Configure your data source to provide plugin relationships",
       "consumes-components": "Consumes exposed components from other plugins",
       "content-consumers": "Content Consumers",
@@ -7604,9 +7600,11 @@
       "extensionpoint-mode": "Extension Point Mode",
       "function-extension-color": "Function Extension Color",
       "function-extension-color-description": "Color for function extension points (addedFunctions)",
+      "function-extensions": "Function extensions",
       "grafana-core": "Grafana Core",
       "link-extension-color": "Link Extension Color",
       "link-extension-color-description": "Color for link extension points",
+      "link-extensions": "Link extensions",
       "no-data": "No plugin dependency data available",
       "provides-and-consumes": "Provides and consumes extension content",
       "provides-content": "Provides content to extension points",
@@ -7624,6 +7622,11 @@
     "tabs": {
       "dependency-graph": "Dependency Graph",
       "log-viewer": "Log Viewer"
+    },
+    "view": {
+      "add": "Add",
+      "expose": "Expose",
+      "label": "View"
     }
   },
   "folder-filter": {

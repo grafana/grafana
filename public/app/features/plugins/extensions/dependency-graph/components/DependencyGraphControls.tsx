@@ -12,7 +12,7 @@ interface DependencyGraphControlsProps {
 }
 
 /**
- * Reusable component for dependency graph controls (API Mode, Content Provider, Content Consumer)
+ * Reusable component for dependency graph controls (View, Content Provider, Content Consumer)
  */
 export function DependencyGraphControlsComponent({ controls }: DependencyGraphControlsProps): JSX.Element {
   const {
@@ -72,7 +72,7 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
     <>
       <InlineFieldRow>
         {visualizationMode !== 'extensionpoint' && (
-          <InlineField label={t('extensions.api-mode.label', 'API Mode')}>
+          <InlineField label={t('extensions.view.label', 'View')}>
             <Combobox<VisualizationMode>
               options={modeOptions}
               value={visualizationMode}
@@ -122,13 +122,13 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
           icon="arrow-left"
           onClick={() => {
             const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.delete('apiMode');
+            currentUrl.searchParams.delete('view');
             currentUrl.searchParams.delete('extensionPoints');
             locationService.push(currentUrl.pathname + currentUrl.search);
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         >
-          <Trans i18nKey="extensions.back-to-add-api-mode">Back to Add API mode</Trans>
+          <Trans i18nKey="extensions.back-to-add-view">Back to Add View</Trans>
         </Button>
       )}
     </>

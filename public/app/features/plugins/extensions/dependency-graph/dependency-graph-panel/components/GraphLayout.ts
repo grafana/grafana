@@ -133,9 +133,6 @@ const calculateExposeLayout = (
         }
       });
 
-      const sectionConsumerArray = Array.from(sectionConsumers);
-      const consumerSpacing = componentSpacing; // Match component spacing exactly
-
       // Calculate group height based on components only - consumers will align with component height
       const groupHeight = 80 + (componentIds.length - 1) * componentSpacing + 50; // Header space + components + 50px bottom padding
       const groupCenterY = currentGroupY + groupHeight / 2;

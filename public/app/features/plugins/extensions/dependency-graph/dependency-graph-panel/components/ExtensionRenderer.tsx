@@ -658,7 +658,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                             onClick={() => {
                               // Navigate to extension point mode with this specific extension point selected
                               const currentUrl = new URL(window.location.href);
-                              currentUrl.searchParams.set('apiMode', 'extensionpoint');
+                              currentUrl.searchParams.set('view', 'extensionpoint');
                               currentUrl.searchParams.set('extensionPoints', epId);
                               locationService.push(currentUrl.pathname + currentUrl.search);
 
