@@ -4142,6 +4142,13 @@
       "body": "Experimente o novo Assistente para encontrar possíveis problemas com suas fontes de dados e plug-ins.",
       "go-to-advisor": "Ir para o Assistente"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4190,6 +4197,20 @@
         "unknown-datasource": "Fonte de dados desconhecida"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Escolha um tipo de fonte de dados"
@@ -4219,6 +4240,13 @@
         },
         "subtitle": "Gerencie suas conexões de fonte de dados em um só lugar. Use esta página para adicionar uma nova fonte de dados ou gerenciar as conexões existentes."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Buscar tudo",
@@ -13657,6 +13685,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "e",
       "placeholder-from": "",

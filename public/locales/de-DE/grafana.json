@@ -4142,6 +4142,13 @@
       "body": "Probieren Sie den neuen Advisor aus, um mögliche Probleme mit Ihren Datenquellen und Plugins zu erkennen.",
       "go-to-advisor": "Zu Advisor"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4190,6 +4197,20 @@
         "unknown-datasource": "Unbekannte Datenquelle"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Wählen Sie einen Datenquellentyp"
@@ -4219,6 +4240,13 @@
         },
         "subtitle": "Verwalten Sie Ihre Datenquellenverbindungen an einem Ort. Nutzen Sie diese Seite, um eine neue Datenquelle hinzuzufügen oder Ihre vorhandenen Verbindungen zu verwalten."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Alle durchsuchen",
@@ -13657,6 +13685,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "und",
       "placeholder-from": "",

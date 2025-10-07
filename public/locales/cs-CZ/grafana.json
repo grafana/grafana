@@ -4182,6 +4182,13 @@
       "body": "Vyzkoušejte nového poradce a odhalte potenciální problémy se zdroji dat a pluginy.",
       "go-to-advisor": "Přejít na poradce"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4230,6 +4237,20 @@
         "unknown-datasource": "Neznámý zdroj dat"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Vyberte typ zdroje dat"
@@ -4259,6 +4280,13 @@
         },
         "subtitle": "Spravujte připojení zdrojů dat na jednom místě. Na této stránce můžete přidat nový zdroj dat nebo spravovat stávající připojení."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Hledat vše",
@@ -13747,6 +13775,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "a",
       "placeholder-from": "",

@@ -4122,6 +4122,13 @@
       "body": "新しいアドバイザーを試して、データソースとプラグインの潜在的な問題を発見しましょう。",
       "go-to-advisor": "アドバイザーへ移動"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4170,6 +4177,20 @@
         "unknown-datasource": "不明なデータソース"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "データソースの種類を選択"
@@ -4199,6 +4220,13 @@
         },
         "subtitle": "データソース接続を一元管理できます。このページを使用して、新規データソースの追加や、既存の接続の管理を行います。"
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "すべて検索",
@@ -13612,6 +13640,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "と",
       "placeholder-from": "",
