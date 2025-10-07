@@ -150,7 +150,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: check if lister could list too many repositories or resources
-	all, err := b.getRepositoriesInNamespace(request.WithNamespace(r.Context(), u.GetNamespace()))
+	all, err := GetRepositoriesInNamespace(request.WithNamespace(r.Context(), u.GetNamespace()), b.store)
 	if err != nil {
 		errhttp.Write(r.Context(), err, w)
 		return
@@ -167,6 +167,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		// FIXME: this shouldn't be here in provisioning but at the dual writer or something about the storage
 		LegacyStorage:            legacyStorage,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
+		AllowImageRendering:      b.allowImageRendering,
 	}
 
 	for i, val := range all {

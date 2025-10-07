@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
@@ -355,7 +354,6 @@ func setupLiveService(cfg *setting.Cfg, t *testing.T) (*GrafanaLive, error) {
 		featuremgmt.WithFeatures(),
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		&dashboards.FakeDashboardService{},
-		annotationstest.NewFakeAnnotationsRepo(),
 		nil, nil)
 }
 

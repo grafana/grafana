@@ -63,7 +63,11 @@ export const getNotFoundForFilterClear = () => screen.getByTestId(selectors.dash
 
 export const getTreeSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search);
 export const getTreeHeadline = () => screen.getByTestId(selectors.tree.headline);
+
 export const getResultApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
+export const findResultApplicationsExpand = async () =>
+  await screen.findByTestId(selectors.tree.expand('applications'));
+
 export const queryResultApplicationsGrafanaSelect = () =>
   screen.queryByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
 export const getResultApplicationsGrafanaSelect = () =>

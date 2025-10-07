@@ -26,7 +26,7 @@ const commonTestIgnores = [
   '**/__mocks__/**',
   '**/mocks/**/*.{ts,tsx}',
   '**/public/test/**',
-  '**/mocks.{ts,tsx}',
+  '**/{mocks,test-utils}.{ts,tsx}',
   '**/*.mock.{ts,tsx}',
   '**/{test-helpers,testHelpers}.{ts,tsx}',
   '**/{spec,test-helpers}/**/*.{ts,tsx}',
@@ -361,7 +361,10 @@ module.exports = [
       '**/mock*.{ts,tsx}',
     ],
     rules: {
-      '@grafana/i18n/no-untranslated-strings': ['error', { calleesToIgnore: ['^css$', 'use[A-Z].*'] }],
+      '@grafana/i18n/no-untranslated-strings': [
+        'error',
+        { calleesToIgnore: ['^css$', 'use[A-Z].*'], basePaths: ['public/app/features'] },
+      ],
       '@grafana/i18n/no-translation-top-level': 'error',
     },
   },

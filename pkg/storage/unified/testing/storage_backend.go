@@ -124,13 +124,13 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 	})
 
 	t.Run("Update item2", func(t *testing.T) {
-		rv4, err = writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+		rv4, err = writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv2))
 		require.NoError(t, err)
 		require.Greater(t, rv4, rv3)
 	})
 
 	t.Run("Delete item1", func(t *testing.T) {
-		rv5, err = writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+		rv5, err = writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv1))
 		require.NoError(t, err)
 		require.Greater(t, rv5, rv4)
 	})
@@ -352,10 +352,10 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 	rv5, err := writeEvent(ctx, backend, "item5", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rv5, rv4)
-	rv6, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	rv6, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv2))
 	require.NoError(t, err)
 	require.Greater(t, rv6, rv5)
-	rv7, err := writeEvent(ctx, backend, "item3", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	rv7, err := writeEvent(ctx, backend, "item3", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv3))
 	require.NoError(t, err)
 	require.Greater(t, rv7, rv6)
 	rv8, err := writeEvent(ctx, backend, "item6", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
@@ -490,10 +490,10 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 	ns := nsPrefix + "-history-ns"
 	rvCreated, _ := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 	require.Greater(t, rvCreated, int64(0))
-	rvUpdated, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	rvUpdated, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvCreated))
 	require.NoError(t, err)
 	require.Greater(t, rvUpdated, rvCreated)
-	rvDeleted, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	rvDeleted, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rvUpdated))
 	require.NoError(t, err)
 	require.Greater(t, rvDeleted, rvUpdated)
 
@@ -610,19 +610,19 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 	require.Greater(t, rv1, int64(0))
 
 	// add 5 events for item1 - should be saved to history
-	rvHistory1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	rvHistory1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv1))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory1, rv1)
-	rvHistory2, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	rvHistory2, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvHistory1))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory2, rvHistory1)
-	rvHistory3, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	rvHistory3, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvHistory2))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory3, rvHistory2)
-	rvHistory4, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	rvHistory4, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvHistory3))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory4, rvHistory3)
-	rvHistory5, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	rvHistory5, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvHistory4))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory5, rvHistory4)
 
@@ -804,8 +804,9 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		resourceVersions = append(resourceVersions, initialRV)
 
 		// Create 9 more versions with modifications
+		rv := initialRV
 		for i := 0; i < 9; i++ {
-			rv, err := writeEvent(ctx, backend, "paged-item", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns2))
+			rv, err = writeEvent(ctx, backend, "paged-item", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns2, rv))
 			require.NoError(t, err)
 			resourceVersions = append(resourceVersions, rv)
 		}
@@ -907,7 +908,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		// Create a resource and delete it
 		rv, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 		require.NoError(t, err)
-		rvDeleted, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+		rvDeleted, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv))
 		require.NoError(t, err)
 		require.Greater(t, rvDeleted, rv)
 
@@ -932,7 +933,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		// Create a resource and delete it
 		rv, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 		require.NoError(t, err)
-		rvDeleted, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+		rvDeleted, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv))
 		require.NoError(t, err)
 		require.Greater(t, rvDeleted, rv)
 
@@ -940,7 +941,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		rv1, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 		require.NoError(t, err)
 		require.Greater(t, rv1, rvDeleted)
-		rv2, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+		rv2, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv1))
 		require.NoError(t, err)
 		require.Greater(t, rv2, rv1)
 
@@ -983,8 +984,8 @@ func runTestIntegrationBackendListHistoryErrorReporting(t *testing.T, backend re
 
 	const events = 500
 	prevRv := origRv
-	for i := 0; i < events; i++ {
-		rv, err := writeEvent(ctx, backend, name, resourcepb.WatchEvent_MODIFIED, WithNamespace(ns), WithGroup(group), WithResource(resourceName))
+	for range events {
+		rv, err := writeEvent(ctx, backend, name, resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, prevRv), WithGroup(group), WithResource(resourceName))
 		require.NoError(t, err)
 		require.Greater(t, rv, prevRv)
 		prevRv = rv
@@ -1029,9 +1030,9 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 	t.Run("put and fetch blob", func(t *testing.T) {
 		key := &resourcepb.ResourceKey{
 			Namespace: ns,
-			Group:     "g",
-			Resource:  "r",
-			Name:      "n",
+			Group:     "ggg",
+			Resource:  "rrr",
+			Name:      "nnn",
 		}
 		b1, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
 			Resource:    key,
@@ -1132,6 +1133,14 @@ func runTestIntegrationBackendCreateNewResource(t *testing.T, backend resource.S
 type WriteEventOption func(*WriteEventOptions)
 
 // WithNamespace sets the namespace for the write event
+func WithNamespaceAndRV(namespace string, rv int64) WriteEventOption {
+	return func(o *WriteEventOptions) {
+		o.Namespace = namespace
+		o.PreviousRV = rv
+	}
+}
+
+// WithNamespace sets the namespace for the write event
 func WithNamespace(namespace string) WriteEventOption {
 	return func(o *WriteEventOptions) {
 		o.Namespace = namespace
@@ -1180,11 +1189,12 @@ func WithValue(value string) WriteEventOption {
 }
 
 type WriteEventOptions struct {
-	Namespace string
-	Group     string
-	Resource  string
-	Folder    string
-	Value     []byte
+	Namespace  string
+	Group      string
+	Resource   string
+	Folder     string
+	Value      []byte
+	PreviousRV int64
 }
 
 func writeEvent(ctx context.Context, store resource.StorageBackend, name string, action resourcepb.WatchEvent_Type, opts ...WriteEventOption) (int64, error) {
@@ -1236,6 +1246,7 @@ func writeEvent(ctx context.Context, store resource.StorageBackend, name string,
 			Resource:  options.Resource,
 			Name:      name,
 		},
+		PreviousRV: options.PreviousRV,
 	}
 	switch action {
 	case resourcepb.WatchEvent_DELETED:
@@ -1285,18 +1296,15 @@ func runTestIntegrationBackendTrash(t *testing.T, backend resource.StorageBacken
 	rv1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rv1, int64(0))
-	rvDelete1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	rvDelete1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv1))
 	require.NoError(t, err)
 	require.Greater(t, rvDelete1, rv1)
-	rvDelete2, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
-	require.NoError(t, err)
-	require.Greater(t, rvDelete2, rvDelete1)
 
 	// item2 deleted and recreated, should not be returned in trash
 	rv2, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rv2, int64(0))
-	rvDelete3, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	rvDelete3, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv2))
 	require.NoError(t, err)
 	require.Greater(t, rvDelete3, rv2)
 	rv3, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
@@ -1325,10 +1333,10 @@ func runTestIntegrationBackendTrash(t *testing.T, backend resource.StorageBacken
 					},
 				},
 			},
-			expectedVersions:   []int64{rvDelete2},
+			expectedVersions:   []int64{rvDelete1},
 			expectedValues:     []string{"item1 DELETED"},
-			minExpectedHeadRV:  rvDelete2,
-			expectedContinueRV: rvDelete2,
+			minExpectedHeadRV:  rvDelete1,
+			expectedContinueRV: rvDelete1,
 			expectedSortAsc:    false,
 		},
 		{

@@ -267,7 +267,7 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 			supportBundleNode := &navtree.NavLink{
 				Text:       "Support bundles",
 				Id:         "support-bundles",
-				Url:        "/support-bundles",
+				Url:        s.cfg.AppSubURL + "/support-bundles",
 				Icon:       "wrench",
 				SortWeight: navtree.WeightHelp,
 			}

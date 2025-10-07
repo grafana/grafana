@@ -2,7 +2,7 @@ import { RuleTester } from 'eslint';
 
 import noUntranslatedStrings from './no-untranslated-strings.cjs';
 
-const filename = 'public/app/features/some-feature/nested/SomeFile.tsx';
+const filename = 'src/some-feature/nested/SomeFile.tsx';
 
 const packageName = '@grafana/i18n';
 
@@ -797,7 +797,7 @@ const Foo = () => {
       name: 'Auto fixes when options are configured',
       code: `const Foo = () => <div>test</div>`,
       filename,
-      options: [{ forceFix: ['public/app/features/some-feature'] }],
+      options: [{ forceFix: ['src/some-feature'] }],
       output: `${TRANS_IMPORT}
 const Foo = () => <div><Trans i18nKey="some-feature.foo.test">test</Trans></div>`,
       errors: [
@@ -821,7 +821,7 @@ const Foo = () => {
   return <div title="foo" />
 }`,
       filename,
-      options: [{ forceFix: ['public/app/features/some-feature'] }],
+      options: [{ forceFix: ['src/some-feature'] }],
       output: `
 ${T_IMPORT}
 const Foo = () => {
@@ -853,7 +853,94 @@ const Foo = () => {
   }
 }`,
       filename,
-      options: [{ forceFix: ['public/app/features/some-feature'] }],
+      options: [{ forceFix: ['src/some-feature'] }],
+      output: `
+${T_IMPORT}
+const Foo = () => {
+  return {
+    label: t("some-feature.foo.label.test", "test"),
+  }
+}`,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProperties',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => {
+  return {
+    label: t("some-feature.foo.label.test", "test"),
+  }
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Auto fixes when options are configured for a different basePath',
+      code: `const Foo = () => <div>test</div>`,
+      filename: 'public/app/features/some-feature/nested/SomeFile.tsx',
+      options: [{ forceFix: ['public/app/features/some-feature'], basePaths: ['public/app/features'] }],
+      output: `${TRANS_IMPORT}
+const Foo = () => <div><Trans i18nKey="some-feature.foo.test">test</Trans></div>`,
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithTrans',
+              output: `${TRANS_IMPORT}
+const Foo = () => <div><Trans i18nKey="some-feature.foo.test">test</Trans></div>`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Auto fixes when options are configured for a different basePath - prop',
+      code: `
+const Foo = () => {
+  return <div title="foo" />
+}`,
+      filename: 'public/app/features/some-feature/nested/SomeFile.tsx',
+      options: [{ forceFix: ['public/app/features/some-feature'], basePaths: ['public/app/features'] }],
+      output: `
+${T_IMPORT}
+const Foo = () => {
+  return <div title={t("some-feature.foo.title-foo", "foo")} />
+}`,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => {
+  return <div title={t("some-feature.foo.title-foo", "foo")} />
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Auto fixes object property for a different basePath',
+      code: `
+const Foo = () => {
+  return {
+    label: 'test',
+  }
+}`,
+      filename: 'public/app/features/some-feature/nested/SomeFile.tsx',
+      options: [{ forceFix: ['public/app/features/some-feature'], basePaths: ['public/app/features'] }],
       output: `
 ${T_IMPORT}
 const Foo = () => {

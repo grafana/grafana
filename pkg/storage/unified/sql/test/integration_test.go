@@ -2,7 +2,6 @@ package test
 
 import (
 	"context"
-	"os"
 	"sync"
 	"testing"
 	"time"
@@ -98,19 +97,14 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 
 	ctx := context.Background()
 
-	tempDir := t.TempDir()
-	t.Cleanup(func() {
-		_ = os.RemoveAll(tempDir)
-	})
 	// Create a new bleve backend
 	search, err := search.NewBleveBackend(search.BleveOptions{
 		FileThreshold: 0,
-		Root:          tempDir,
+		Root:          t.TempDir(),
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, search)
-
-	t.Cleanup(search.CloseAllIndexes)
+	t.Cleanup(search.Stop)
 
 	// Create a new resource backend
 	storage := newTestBackend(t, false, 0)
@@ -134,7 +128,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{})
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil)
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 
