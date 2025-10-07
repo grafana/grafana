@@ -20,8 +20,6 @@ type RBACSettings struct {
 	// run the zanzana reconciliation loop.
 	ZanzanaReconciliationInterval time.Duration
 
-	OnlyStoreAccessActionSets bool
-
 	// set of resources that should generate managed permissions when created
 	resourcesWithPermissionsOnCreation map[string]struct{}
 
@@ -37,7 +35,6 @@ func (cfg *Cfg) readRBACSettings() {
 	s.PermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	s.ResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
 	s.SingleOrganization = rbac.Key("single_organization").MustBool(false)
-	s.OnlyStoreAccessActionSets = rbac.Key("only_store_access_action_sets").MustBool(false)
 
 	// List of resources to generate managed permissions for upon resource creation (dashboard, folder, service-account, datasource)
 	resources := util.SplitString(rbac.Key("resources_with_managed_permissions_on_creation").MustString("dashboard, folder, service-account, datasource"))

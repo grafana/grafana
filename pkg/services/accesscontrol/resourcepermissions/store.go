@@ -697,10 +697,8 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 	resourceID := cmd.ResourceID
 	resourceAttribute := cmd.ResourceAttribute
 	permission := cmd.Permission
-	/*
-		Add ACTION SET of managed permissions to in-memory store
-	*/
-	if s.shouldStoreActionSet(resource, permission) {
+
+	if s.hasActionSet(resource, permission) {
 		actionSetName := GetActionSetName(resource, permission)
 		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
@@ -712,13 +710,13 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 
 	// If there are no missing actions for the resource (in case of access level downgrade or resource removal), we don't need to insert any actions
 	// we still want to add the action set (when permission != "")
-	if len(missingActions) == 0 && !s.shouldStoreActionSet(resource, permission) {
+	if len(missingActions) == 0 && !s.hasActionSet(resource, permission) {
 		return nil
 	}
 
-	// if we have actionset feature enabled and are only working with action sets
+	// if the resource has action sets (currently only specified for dashboards and folders) and we're only storing action sets
 	// skip adding the missing actions to the permissions table
-	if !s.shouldStoreActionSet(resource, permission) || !s.cfg.RBAC.OnlyStoreAccessActionSets {
+	if !s.hasActionSet(resource, permission) || !s.features.IsEnabledGlobally(featuremgmt.FlagOnlyStoreActionSets) {
 		for action := range missingActions {
 			p := managedPermission(action, resource, resourceID, resourceAttribute)
 			p.RoleID = roleID
@@ -735,7 +733,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 	return nil
 }
 
-func (s *store) shouldStoreActionSet(resource, permission string) bool {
+func (s *store) hasActionSet(resource, permission string) bool {
 	if permission == "" {
 		return false
 	}

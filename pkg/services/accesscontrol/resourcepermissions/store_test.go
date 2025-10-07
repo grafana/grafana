@@ -736,6 +736,111 @@ func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
 	}
 }
 
+func TestIntegrationStore_setResourcePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	type setResourcePermissionTest struct {
+		desc                string
+		orgID               int64
+		userID              int64
+		actions             []string
+		permission          string
+		resource            string
+		resourceID          string
+		resourceAttribute   string
+		seeds               []SetResourcePermissionCommand
+		expectedPermissions []orgPermission
+	}
+
+	tests := []setResourcePermissionTest{
+		{
+			desc:              "should set only action set permissions for folder when user doesn't have any resource permissions yet",
+			userID:            1,
+			actions:           []string{"folder:"},
+			resource:          "datasources",
+			resourceID:        "1",
+			resourceAttribute: "uid",
+		},
+		{
+			desc:              "should remove resource permission for user",
+			orgID:             1,
+			userID:            1,
+			actions:           []string{},
+			resource:          "datasources",
+			resourceID:        "1",
+			resourceAttribute: "uid",
+			seeds: []SetResourcePermissionCommand{
+				{
+					Actions:    []string{"datasources:query"},
+					Resource:   "datasources",
+					ResourceID: "1",
+				},
+			},
+		},
+		{
+			desc:              "should add new resource permission for user",
+			orgID:             1,
+			userID:            1,
+			actions:           []string{"datasources:query", "datasources:write"},
+			resource:          "datasources",
+			resourceID:        "1",
+			resourceAttribute: "uid",
+			seeds: []SetResourcePermissionCommand{
+				{
+					Actions:    []string{"datasources:write"},
+					Resource:   "datasources",
+					ResourceID: "1",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			store, _, _ := setupTestEnv(t)
+
+			for _, s := range test.seeds {
+				_, err := store.SetUserResourcePermission(context.Background(), test.orgID, accesscontrol.User{ID: test.userID}, s, nil)
+				require.NoError(t, err)
+			}
+
+			err := store.sql.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
+				_, _ = store.setResourcePermission(sess, test.orgID, accesscontrol.ManagedUserRoleName(test.userID), store.userAdder(sess, test.orgID, test.userID), SetResourcePermissionCommand{
+					Actions:           test.actions,
+					Resource:          test.resource,
+					ResourceID:        test.resourceID,
+					ResourceAttribute: test.resourceAttribute,
+					Permission:        "some-permission",
+				})
+				return nil
+			},
+			)
+			require.NoError(t, err)
+
+			// Get permissions directly from DB to verify
+			permissions := retrievePermissionsHelper(store, t)
+			fmt.Println(permissions)
+
+			require.Equal(t, test.expectedPermissions, permissions)
+
+			//added, err := store.SetUserResourcePermission(context.Background(), test.userID, accesscontrol.User{ID: test.userID}, SetResourcePermissionCommand{
+			//	Actions:           test.actions,
+			//	Resource:          test.resource,
+			//	ResourceID:        test.resourceID,
+			//	ResourceAttribute: test.resourceAttribute,
+			//}, nil)
+			//
+			//require.NoError(t, err)
+			//if len(test.actions) == 0 {
+			//	assert.Equal(t, accesscontrol.ResourcePermission{}, *added)
+			//} else {
+			//	assert.Len(t, added.Actions, len(test.actions))
+			//	assert.Equal(t, accesscontrol.Scope(test.resource, test.resourceAttribute, test.resourceID), added.Scope)
+			//}
+		})
+	}
+}
+
 func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 	permissions := []orgPermission{}
 	err := store.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
