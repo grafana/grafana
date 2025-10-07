@@ -70,8 +70,10 @@ export function calculateDimensions(
 
   let innerRadius = outerRadius - barWidth / 2;
 
+  const maxY = outerRadius * Math.sin(toRad(yMaxAngle)) + outerRadius;
+  const rest = height - maxY - margin * 2;
   const centerX = width / 2;
-  const centerY = outerRadius + margin;
+  const centerY = outerRadius + margin + rest / 2;
 
   if (barIndex > 0) {
     innerRadius = innerRadius - (barWidth + 4) * barIndex;

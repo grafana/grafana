@@ -55,6 +55,7 @@ export function RadialBarSegmented({
 
     segments.push(
       <RadialSegmentArcPath
+        key={i}
         angle={segmentAngle}
         dimensions={dimensions}
         color={segmentColor}

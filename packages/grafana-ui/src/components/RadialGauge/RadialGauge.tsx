@@ -130,6 +130,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     if (segmentCount > 1) {
       graphics.push(
         <RadialBarSegmented
+          key={`radial-bar-segmented-${barIndex}-${gaugeId}`}
           dimensions={dimensions}
           fieldDisplay={displayValue}
           angleRange={angleRange}
@@ -145,8 +146,8 @@ export function RadialGauge(props: RadialGaugeProps) {
     } else {
       graphics.push(
         <RadialBar
+          key={`radial-bar-${barIndex}-${gaugeId}`}
           dimensions={dimensions}
-          key={barIndex}
           angle={angle}
           angleRange={angleRange}
           startAngle={startAngle}
@@ -162,15 +163,16 @@ export function RadialGauge(props: RadialGaugeProps) {
 
     if (barIndex === 0) {
       if (glowBar) {
-        defs.push(<GlowGradient id={glowFilterId} radius={dimensions.radius} />);
+        defs.push(<GlowGradient key="glow-filter" id={glowFilterId} radius={dimensions.radius} />);
       }
 
       if (glowCenter) {
-        graphics.push(<MiddleCircleGlow gaugeId={gaugeId} color={color} dimensions={dimensions} />);
+        graphics.push(<MiddleCircleGlow key="center-glow" gaugeId={gaugeId} color={color} dimensions={dimensions} />);
       }
 
       graphics.push(
         <RadialText
+          key="radial-text"
           vizCount={vizCount}
           textMode={textMode}
           displayValue={displayValue.display}
