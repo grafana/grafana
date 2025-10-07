@@ -2,6 +2,7 @@
 
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
+const { access } = require('node:fs/promises');
 
 const { CODEOWNERS_FILE_PATH, CODEOWNERS_MANIFEST_DIR, RAW_AUDIT_JSONL_PATH } = require('./constants.js');
 
@@ -11,8 +12,9 @@ const { CODEOWNERS_FILE_PATH, CODEOWNERS_MANIFEST_DIR, RAW_AUDIT_JSONL_PATH } = 
  * @param {string} outputPath - Path to write audit JSONL file
  */
 async function generateCodeownersRawAudit(codeownersPath, outputPath) {
-  const hasCodeowners = fs.existsSync(codeownersPath);
-  if (!hasCodeowners) {
+  try {
+    await access(codeownersPath);
+  } catch (error) {
     throw new Error(`CODEOWNERS file not found at: ${codeownersPath}`);
   }
 
