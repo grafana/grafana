@@ -763,7 +763,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		ok = false
 		if !req.Options.SkipCache {
 			tree, ok = s.getCachedFolderTree(ctx, req.Namespace)
-			cacheHit = true
+			cacheHit = ok
 		}
 		if !ok {
 			tree, err = s.buildFolderTree(ctx, req.Namespace)
