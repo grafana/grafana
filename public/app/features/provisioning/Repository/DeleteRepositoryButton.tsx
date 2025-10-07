@@ -51,6 +51,7 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
       repositoryType: repository?.spec?.type ?? 'unknown',
       deleteAction: selectedAction,
       target: repository?.spec?.sync?.target ?? 'unknown',
+      workflows: repository?.spec?.workflows ?? [],
     });
 
     deleteRepository({ name });
