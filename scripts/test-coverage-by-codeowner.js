@@ -23,7 +23,21 @@ async function runTestCoverageByCodeowner(codeownerName, codeownersPath, jestCon
 
   process.env.TEAM_NAME = codeownerName;
 
-  cp.spawn('jest', [`--config=${jestConfigPath}`], { stdio: 'inherit', shell: true });
+  return new Promise((resolve, reject) => {
+    const child = cp.spawn('jest', [`--config=${jestConfigPath}`], { stdio: 'inherit', shell: true });
+
+    child.on('error', (error) => {
+      reject(new Error(`Failed to start Jest: ${error.message}`));
+    });
+
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Jest exited with code ${code}`));
+      }
+    });
+  });
 }
 
 if (require.main === module) {
