@@ -82,20 +82,9 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, isPinned, onCl
           </div>
           {(canEdit || canDelete || isPinned) && (
             <div className={styles.controls}>
-              {isPinned && (
-                <IconButton
-                  name={'times'}
-                  size={'sm'}
-                  onClick={(e) => {
-                    // Don't trigger onClick
-                    e.stopPropagation();
-                    onClose();
-                  }}
-                  tooltip={t('timeseries.annotation-tooltip2.tooltip-close', 'Close')}
-                />
-              )}
               {canEdit && (
                 <IconButton
+                  ref={focusRef}
                   name={'pen'}
                   size={'sm'}
                   onClick={onEdit}
@@ -104,10 +93,24 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, isPinned, onCl
               )}
               {canDelete && (
                 <IconButton
+                  ref={canEdit ? null : focusRef}
                   name={'trash-alt'}
                   size={'sm'}
                   onClick={() => onAnnotationDelete(annoId)}
                   tooltip={t('timeseries.annotation-tooltip2.tooltip-delete', 'Delete')}
+                />
+              )}
+              {isPinned && (
+                <IconButton
+                  ref={canEdit || canDelete ? null : focusRef}
+                  name={'times'}
+                  size={'sm'}
+                  onClick={(e) => {
+                    // Don't trigger onClick
+                    e.stopPropagation();
+                    onClose();
+                  }}
+                  tooltip={t('timeseries.annotation-tooltip2.tooltip-close', 'Close')}
                 />
               )}
             </div>
