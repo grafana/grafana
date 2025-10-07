@@ -170,6 +170,18 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		})
 	}
 
+	// Verify all collection request keys are valid
+	for _, k := range settings.Collection {
+		if r := verifyRequestKeyCollection(k); r != nil {
+			return sendAndClose(&resourcepb.BulkResponse{
+				Error: &resourcepb.ErrorResult{
+					Message: fmt.Sprintf("invalid request key: %s", r.Message),
+					Code:    http.StatusBadRequest,
+				},
+			})
+		}
+	}
+
 	if settings.RebuildCollection {
 		for _, k := range settings.Collection {
 			// Can we delete the whole collection
@@ -178,7 +190,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 				Group:     k.Group,
 				Resource:  k.Resource,
 				Verb:      utils.VerbDeleteCollection,
-			})
+			}, "")
 			if err != nil || !rsp.Allowed {
 				return sendAndClose(&resourcepb.BulkResponse{
 					Error: &resourcepb.ErrorResult{

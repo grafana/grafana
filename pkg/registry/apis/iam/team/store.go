@@ -74,12 +74,90 @@ func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation res
 
 // Delete implements rest.GracefulDeleter.
 func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+	if !s.enableAuthnMutation {
+		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	toBeDeleted, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if deleteValidation != nil {
+		if err := deleteValidation(ctx, toBeDeleted); err != nil {
+			return nil, false, err
+		}
+	}
+
+	err = s.store.DeleteTeam(ctx, ns, legacy.DeleteTeamCommand{
+		UID: name,
+	})
+
+	if err != nil {
+		return nil, false, err
+	}
+
+	return &iamv0alpha1.Team{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns.Value,
+		},
+	}, true, nil
 }
 
 // Update implements rest.Updater.
 func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+	if !s.enableAuthnMutation {
+		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	oldObj, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return oldObj, false, err
+	}
+
+	obj, err := objInfo.UpdatedObject(ctx, oldObj)
+	if err != nil {
+		return oldObj, false, err
+	}
+
+	teamObj, ok := obj.(*iamv0alpha1.Team)
+	if !ok {
+		return nil, false, fmt.Errorf("expected Team object, got %T", obj)
+	}
+
+	if updateValidation != nil {
+		if err := updateValidation(ctx, obj, oldObj); err != nil {
+			return oldObj, false, err
+		}
+	}
+
+	updateCmd := legacy.UpdateTeamCommand{
+		UID:           teamObj.Name,
+		Name:          teamObj.Spec.Title,
+		Email:         teamObj.Spec.Email,
+		IsProvisioned: teamObj.Spec.Provisioned,
+		ExternalUID:   teamObj.Spec.ExternalUID,
+	}
+
+	result, err := s.store.UpdateTeam(ctx, ns, updateCmd)
+	if err != nil {
+		return oldObj, false, err
+	}
+
+	iamTeam := toTeamObject(result.Team, ns)
+
+	return &iamTeam, false, nil
 }
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {

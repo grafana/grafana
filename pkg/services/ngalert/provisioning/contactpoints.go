@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -17,7 +18,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -247,11 +247,12 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
-	secretKeys, err := channels_config.GetSecretKeysForContactPointType(contactPoint.Type, channels_config.V1)
-	if err != nil {
-		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+	typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(schema.IntegrationType(contactPoint.Type), schema.V1)
+	if !ok {
+		return fmt.Errorf("%w: failed to get secret keys for contact point type %s", ErrValidation, contactPoint.Type)
 	}
-	for _, secretKey := range secretKeys {
+	for _, secretPath := range typeSchema.GetSecretFieldsPaths() {
+		secretKey := secretPath.String()
 		secretValue := contactPoint.Settings.Get(secretKey).MustString()
 		if secretValue == apimodels.RedactedValue {
 			contactPoint.Settings.Set(secretKey, rawContactPoint.Settings.Get(secretKey).MustString())
@@ -522,11 +523,12 @@ func ValidateContactPoint(ctx context.Context, e apimodels.EmbeddedContactPoint,
 // RemoveSecretsForContactPoint removes all secrets from the contact point's settings and returns them as a map. Returns error if contact point type is not known.
 func RemoveSecretsForContactPoint(e *apimodels.EmbeddedContactPoint) (map[string]string, error) {
 	s := map[string]string{}
-	secretKeys, err := channels_config.GetSecretKeysForContactPointType(e.Type, channels_config.V1)
-	if err != nil {
-		return nil, err
+	typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(schema.IntegrationType(e.Type), schema.V1)
+	if !ok {
+		return nil, fmt.Errorf("failed to get secret keys for contact point type %s", e.Type)
 	}
-	for _, secretKey := range secretKeys {
+	for _, secretPath := range typeSchema.GetSecretFieldsPaths() {
+		secretKey := secretPath.String()
 		secretValue, err := extractCaseInsensitive(e.Settings, secretKey)
 		if err != nil {
 			return nil, err

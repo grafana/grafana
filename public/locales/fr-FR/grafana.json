@@ -81,20 +81,6 @@
         "title-access-denied": "Accès refusé"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Certaines fonctionnalités sont stables (GA) et activées par défaut, tandis que d’autres sont actuellement dans leur phase bêta préliminaire, disponibles pour une adoption précoce.",
-      "confirm-modal-body-2": "Nous vous conseillons de comprendre les implications de chaque changement de fonctionnalité avant d’apporter des modifications.",
-      "confirmText-save-changes": "Enregistrer les modifications",
-      "get-stage-cell": {
-        "beta": "Bêta",
-        "content-general-availability": "Disponibilité générale",
-        "deprecated": "Obsolète",
-        "ga": "GA"
-      },
-      "save-changes": "Enregistrer les modifications",
-      "saving": "Enregistrement en cours...",
-      "title-apply-feature-toggle-changes": "Appliquer les modifications de basculement de fonctionnalité"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Supprimer l’organisation",
       "confirmText-delete": "Supprimer",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Mises à jour des paramètres au moment de l’exécution",
       "title-sort-dashboards-by-popularity-in-search": "Trier les tableaux de bord par popularité dans la recherche",
       "title-team-sync": "Synchronisation d’équipe"
-    },
-    "feature-toggles": {
-      "restart-pending": "Un redémarrage est en attente pour que votre instance Grafana applique les dernières modifications de basculement de fonctionnalité",
-      "restart-required": "L’enregistrement des modifications de basculement de fonctionnalité entraînera un redémarrage de l’instance, ce qui peut prendre quelques minutes",
-      "sub-title": "Afficher et modifier les commutateurs de fonctionnalités. Pour en savoir plus sur les commutateurs de fonctionnalités, consultez <2>grafana.com</2>."
     },
     "get-enterprise": {
       "contact-us": "Contactez-nous et profitez d'un essai gratuit",
@@ -1671,6 +1652,10 @@
     "inspector-yaml-tab": {
       "apply": "Appliquer"
     },
+    "instance-match": {
+      "non-matching-labels": "",
+      "notification-policy": ""
+    },
     "irm-integration": {
       "connection-method": "Comment se connecter à IRM",
       "disabled-description": "Activer IRM via une intégration Webhook",
@@ -1812,6 +1797,10 @@
           "use-notification-policy": "Utiliser la politique de notification"
         }
       }
+    },
+    "match-details": {
+      "matched": "",
+      "no-matchers-matched": ""
     },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "Filtrer les alertes à l'aide de la méthode de recherche d'étiquettes sans accolades, par exemple :",
@@ -1975,8 +1964,10 @@
       "label-notification-policies": "Politiques de notification",
       "label-time-intervals": "Intervalles de temps"
     },
+    "notification-policy-drawer": {
+      "view-notification-policy-tree": ""
+    },
     "notification-policy-matchers": {
-      "default-policy": "Politique par défaut",
       "no-matchers": "Aucun correspondant"
     },
     "notification-preview": {
@@ -1993,22 +1984,12 @@
     },
     "notification-route": {
       "no-labels": "Pas d’étiquettes",
-      "no-matching-labels": "Pas d’étiquettes correspondantes"
-    },
-    "notification-route-details-modal": {
-      "alert-instances-routed-follows": "Vos instances d’alerte sont acheminées comme suit.",
-      "close": "Fermer",
-      "contact-point": "Point de contact",
-      "default-policy": "Politique par défaut",
-      "notification-policy-path": "Chemin de la politique de notification",
-      "see-details-link": "Afficher les détails",
-      "title-routing-details": "Détails de l’acheminement"
+      "notification-policy": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Développer le chemin de la politique",
-      "delivered-to": "@ Livré à",
-      "notification-policy": "Politique de notification",
-      "see-details": "Afficher les détails"
+      "delivered-to": "",
+      "instances": ""
     },
     "notification-templates": {
       "duplicate": {
@@ -2129,17 +2110,13 @@
         "suffix": "Actualisez la page, puis réessayez.",
         "title": "Échec lors de l’ajout ou de la mise à jour de la politique de notification"
       },
-      "n-more-policies_one": "{{count}} politiques supplémentaires",
-      "n-more-policies_other": "{{count}} politiques supplémentaires"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nouvelle politique enfant",
       "label-new-sibling-above": "Nouvel élément frère au-dessus",
       "label-new-sibling-below": "Nouvel élément frère au-dessous"
-    },
-    "policy-path": {
-      "default-policy": "Politique par défaut",
-      "no-matchers": "Aucun correspondant"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Impossible d'afficher l'aperçu de la requête. Certaines des sources de données utilisées dans les requêtes ne sont pas disponibles.",
@@ -2185,7 +2162,6 @@
       "body-queries-expressions-configured": "Créer au moins une requête ou une expression pour laquelle une alerte doit être émise",
       "confirmText-deactivate": "Désactiver",
       "expressions": "Expressions",
-      "loading-data-sources": "Chargement des sources de données…",
       "manipulate-returned-queries-other-operations": "Manipulez les données renvoyées par les requêtes avec des opérations mathématiques et autres.",
       "message": {
         "a-valid-expression-is-required": "Une expression valide est obligatoire"
@@ -3264,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Définir les ID des équipes autorisées",
       "display-name-description": "Sera affiché sur la page de connexion comme « Se connecter avec... ». Utile si vous utilisez plusieurs fournisseurs d’identité ou protocoles SSO.",
       "display-name-label": "Pseudo",
-      "domain-hint-description": "Paramètre permettant d’indiquer le domaine de l’utilisateur dans le locataire Azure AD/Entra ID pour simplifier le processus de connexion.",
+      "domain-hint-description": "",
       "domain-hint-label": "Indice de domaine",
       "domain-hint-valid-domain": "Ce champ doit contenir un domaine valide.",
       "email-attribute-name-description": "Nom de la clé à utiliser pour la recherche d’e-mail de l’utilisateur dans la carte d’attributs du jeton d’identification OAuth2.",
@@ -3520,6 +3496,7 @@
       "move-modal-field-label": "Nom du dossier",
       "move-modal-text": "Cette action déplacera le contenu suivant :",
       "move-modal-title": "Déplacer",
+      "move-provisioned-folder": "",
       "moving": "Déplacement...",
       "new-folder-name-required-phrase": "Vous devez saisir le nom du dossier.",
       "selected-mix-resources-modal-text": "Vous avez sélectionné à la fois des ressources provisionnées et non provisionnées. Ces deux types ne peuvent être traités simultanément. Veuillez sélectionner uniquement des ressources provisionnées ou uniquement des ressources non provisionnées, puis réessayer.",
@@ -4165,6 +4142,13 @@
       "body": "Essayez le nouveau conseiller pour découvrir les problèmes potentiels concernant vos sources de données et plugins.",
       "go-to-advisor": "Accéder au conseiller"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4213,6 +4197,20 @@
         "unknown-datasource": "Source de données inconnue"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Choisir un type de source de données"
@@ -4242,6 +4240,13 @@
         },
         "subtitle": "Centralisez la gestion de vos connexions aux sources de données : ajoutez-en de nouvelles ou modifiez celles existantes."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Rechercher tout",
@@ -8720,6 +8725,9 @@
       "tooltip-hide": "Masquer le mot de passe",
       "tooltip-show": "Afficher le mot de passe"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Développer la ligne",
       "collapse": "Réduire la ligne",
@@ -8747,6 +8755,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Utiliser l'axe y droit"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Chargement en cours"
@@ -9347,6 +9358,7 @@
     },
     "share-panel": {
       "config-description": "Créez un lien direct personnalisé pour partager votre panneau au sein de votre organisation, avec les paramètres de personnalisation suivants :",
+      "copy-image-link": "",
       "download-image": "Télécharger l'image",
       "render-image": "Générer l'image"
     }
@@ -10189,7 +10201,7 @@
       "title": "Sources de données"
     },
     "databases": {
-      "title": "Bases de données"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Ajouter et configurer des sources de données",
@@ -10651,6 +10663,14 @@
     }
   },
   "panel": {
+    "dashlist": {
+      "empty-state-message": "",
+      "mark-as-starred": "",
+      "recently-viewed-dashboards": "",
+      "search": "",
+      "starred-dashboards": "",
+      "unmark-as-starred": ""
+    },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
         "label": {
@@ -11327,6 +11347,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Configurer les basculements de fonctionnalité requis"
       },
+      "learn-more-documentation": "",
       "manage-dashboards-provision-updates-automatically": "Gérez les tableaux de bord as code sur Git et approvisionnez automatiquement les mises à jour",
       "manage-your-dashboards-with-remote-provisioning": "Commencer avec Git Sync",
       "store-dashboards-in-version-controlled-storage": "Stockez les tableaux de bord dans un espace de stockage à gestion des versions pour une meilleure organisation et un meilleur suivi de l’historique"
@@ -11516,8 +11537,16 @@
         "subtitle": "Utilisez cette option si vous souhaitez synchroniser et gérer l’ensemble de votre instance Grafana via un stockage externe."
       }
     },
-    "read-only-local-tooltip": "Ce dossier est en lecture seule et provisionné via des fichiers. Pour apporter des modifications dans le dossier, mettez à jour le référentiel de fichiers connecté. Pour modifier les paramètres du dossier, accédez à Administration > Provisionnement > Référentiels.",
-    "read-only-remote-tooltip": "Ce dossier est en lecture seule et provisionné via Git. Pour apporter des modifications dans le dossier, mettez à jour le référentiel connecté. Pour modifier les paramètres du dossier, accédez à Administration > Provisionnement > Référentiels.",
+    "provisioning-wizard": {
+      "on-submit": {
+        "title": {
+          "repository-connection-failed": "",
+          "repository-request-failed": ""
+        }
+      }
+    },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "missions actives",
       "column-action": "Action",
@@ -11631,6 +11660,7 @@
         "removed-from-repo-test-ui": "supprimé de l’interface utilisateur de test de référentiel",
         "updated-from-repo-test-ui": "mis à jour à partir de l’interface utilisateur de test de référentiel"
       },
+      "read-only-repo-tooltip": "",
       "repository": "Référentiel",
       "tab-info": {
         "label": {
@@ -11667,6 +11697,8 @@
       "tooltip-unhealthy-repository": "Impossible de fusionner un référentiel en mauvais état"
     },
     "synchronize-step": {
+      "repository-error": "",
+      "repository-error-message": "",
       "repository-unhealthy": "",
       "synchronization-description": "Inclure les commits pour chaque valeur historique",
       "synchronization-options": "Options de synchronisation"
@@ -11695,6 +11727,8 @@
       "button-cancelling": "",
       "button-next": "Terminer",
       "button-start": "Commencer la synchronisation",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Cette action supprimera la configuration du dépôt et vous perdrez toutes vos modifications. Voulez-vous vraiment annuler vos modifications ?",
         "confirm": "Oui, annuler",
@@ -11954,10 +11988,10 @@
       "restore-button": "Restaurer",
       "restore-loading": "Restauration...",
       "title": "Restaurer les tableaux de bord",
-      "folder-picker-text_one": "Veuillez choisir un dossier dans lequel vos tableaux de bord seront restaurés.",
-      "folder-picker-text_other": "Veuillez choisir un dossier dans lequel vos tableaux de bord seront restaurés.",
-      "text_one": "Cette action restaurera {{numberOfDashboards}} tableaux de bord.",
-      "text_other": "Cette action restaurera {{numberOfDashboards}} tableaux de bord."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {
@@ -12073,8 +12107,8 @@
       "title": "Sélectionner les portées"
     },
     "tree": {
-      "collapse": "Réduire",
-      "expand": "Développer",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Aucun résultat n'a été trouvé pour votre requête",
         "recommended": "Recommandé",
@@ -13651,6 +13685,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "et",
       "placeholder-from": "",

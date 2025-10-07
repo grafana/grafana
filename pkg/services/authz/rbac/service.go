@@ -232,12 +232,18 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	}
 
 	resp, err := s.listPermission(ctx, permissions, listReq)
-	if cacheHit && time.Duration(time.Now().Unix()-resp.Zookie.Timestamp) < s.settings.CacheTTL {
-		resp.Zookie = &authzv1.Zookie{Timestamp: time.Now().Add(-s.settings.CacheTTL).Unix()}
+	s.metrics.requestCount.WithLabelValues(strconv.FormatBool(err != nil), "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+	if err != nil {
+		return nil, err
 	}
 
-	s.metrics.requestCount.WithLabelValues(strconv.FormatBool(err != nil), "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
-	return resp, err
+	if resp != nil && resp.Zookie != nil {
+		if cacheHit && time.Duration(time.Now().Unix()-resp.Zookie.Timestamp) < s.settings.CacheTTL {
+			resp.Zookie = &authzv1.Zookie{Timestamp: time.Now().Add(-s.settings.CacheTTL).Unix()}
+		}
+	}
+
+	return resp, nil
 }
 
 func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRequest) (*checkRequest, error) {
@@ -754,12 +760,10 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	cacheHit := false
 	if t.HasFolderSupport() {
 		var err error
-		ok = false
 		if !req.Options.SkipCache {
-			tree, ok = s.getCachedFolderTree(ctx, req.Namespace)
-			cacheHit = true
+			tree, cacheHit = s.getCachedFolderTree(ctx, req.Namespace)
 		}
-		if !ok {
+		if !cacheHit {
 			tree, err = s.buildFolderTree(ctx, req.Namespace)
 			if err != nil {
 				ctxLogger.Error("could not build folder and dashboard tree", "error", err)
