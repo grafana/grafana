@@ -114,11 +114,9 @@ const calculateExposeLayout = (
     const rightMargin = getRightMargin(width);
     const consumerX = width - rightMargin - getResponsiveNodeWidth(width) / 2;
 
-    // Component spacing
+    // Component spacing - always add extra spacing for descriptions in expose mode
     let componentSpacing = 70; // Fixed spacing to match other functions
-    if (options.showDescriptions) {
-      componentSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
-    }
+    componentSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
 
     const groupSpacing = getResponsiveGroupSpacing(height) + 30; // Extra space for dotted lines
     let currentGroupY = margin + LAYOUT_CONSTANTS.HEADER_LINE_Y_OFFSET + 10; // Start extremely close to headers and dotted lines
@@ -407,9 +405,8 @@ export const getExposedComponentPositions = (
   const margin = getResponsiveMargin(width);
 
   let componentSpacing = 70; // Adequate spacing between components (60px height + 10px margin)
-  if (options.showDescriptions) {
-    componentSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
-  }
+  // Always add extra spacing for descriptions in expose mode
+  componentSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
 
   const groupSpacing = getResponsiveGroupSpacing(height) + 30; // Extra space for dotted lines
 
@@ -487,9 +484,8 @@ export const getExtensionPositions = (
   const margin = getResponsiveMargin(width);
 
   let extensionSpacing = 70;
-  if (options.showDescriptions) {
-    extensionSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
-  }
+  // Always add extra spacing for descriptions in extension point mode
+  extensionSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
 
   const groupSpacing = getResponsiveGroupSpacing(height) + 30;
   const leftSideX = margin + 20; // Position on the left side
@@ -498,12 +494,14 @@ export const getExtensionPositions = (
 
   // Process each app section
   Array.from(extensionGroups.entries()).forEach(([providingPlugin, extensionIds]) => {
-    const groupHeight = extensionIds.length * extensionSpacing + 50;
+    const groupHeight = extensionIds.length * extensionSpacing + 40;
+
+    let currentY = currentGroupY + 80;
 
     extensionIds.forEach((extId, index) => {
       positions.set(extId, {
         x: leftSideX,
-        y: currentGroupY + 70 + index * extensionSpacing,
+        y: currentY + index * extensionSpacing,
         groupY: currentGroupY,
         groupHeight: groupHeight,
       });
@@ -565,9 +563,8 @@ export const getExtensionPointModePositions = (
   const margin = getResponsiveMargin(width);
 
   let extensionPointSpacing = 70;
-  if (options.showDescriptions) {
-    extensionPointSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
-  }
+  // Always add extra spacing for descriptions in extension point mode
+  extensionPointSpacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
 
   const groupSpacing = getResponsiveGroupSpacing(height) + 30;
   const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
@@ -578,7 +575,7 @@ export const getExtensionPointModePositions = (
   // Process each defining plugin section
   Array.from(extensionPointGroups.entries()).forEach(([definingPlugin, typeGroups]) => {
     // Calculate total height for this plugin group (no header spacing in extension point mode)
-    let totalGroupHeight = 50; // Base group height
+    let totalGroupHeight = 20; // Base group height
     const typeOrder = ['function', 'component', 'link'];
 
     typeOrder.forEach((type) => {
@@ -639,7 +636,10 @@ export const calculateContentHeight = (
   const margin = getResponsiveMargin(width);
   let spacing = 70; // Fixed spacing to match component spacing
 
-  if (options.showDescriptions) {
+  // Always add extra spacing for descriptions in expose mode
+  if (isExposeMode) {
+    spacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
+  } else if (options.showDescriptions) {
     spacing += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
   }
 
@@ -659,7 +659,7 @@ export const calculateContentHeight = (
     });
 
     Array.from(extensionGroups.entries()).forEach(([providingPlugin, extensionIds]) => {
-      const groupHeight = extensionIds.length * spacing + 50;
+      const groupHeight = extensionIds.length * spacing + 40;
       totalHeight += groupHeight + groupSpacing;
     });
   } else if (isExposeMode && data.exposedComponents && data.exposedComponents.length > 0) {
@@ -709,7 +709,7 @@ export const calculateContentHeight = (
     });
 
     Array.from(extensionPointGroups.entries()).forEach(([_, typeGroups]) => {
-      let groupHeight = 50; // Base group height
+      let groupHeight = 20; // Base group height
       const typeHeaderSpacing = 40; // Space for type headers
       const typeOrder = ['function', 'component', 'link'];
 

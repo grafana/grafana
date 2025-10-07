@@ -89,9 +89,8 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
     const originalComponentHeight = 60; // Fixed height to match our constants
     let componentBoxHeight = originalComponentHeight;
 
-    if (options.showDescriptions) {
-      componentBoxHeight += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
-    }
+    // Always add extra height for descriptions in expose mode since we always show them
+    componentBoxHeight += LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING;
 
     return (
       <g>
@@ -178,19 +177,18 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       {exposedComponent.id}
                     </text>
 
-                    {/* Description text underneath component ID */}
-                    {options.showDescriptions &&
-                      exposedComponent?.description &&
-                      exposedComponent.description.trim() !== '' && (
-                        <text
-                          x={compPos.x + componentBoxWidth / 2}
-                          y={compPos.y + 30}
-                          textAnchor="middle"
-                          fill={theme.colors.getContrastText(theme.colors.warning.main)}
-                        >
-                          {exposedComponent.description}
-                        </text>
-                      )}
+                    {/* Description text underneath component ID - always show in expose mode */}
+                    {exposedComponent?.description && exposedComponent.description.trim() !== '' && (
+                      <text
+                        x={compPos.x + componentBoxWidth / 2}
+                        y={compPos.y + 30}
+                        textAnchor="middle"
+                        fill={theme.colors.getContrastText(theme.colors.warning.main)}
+                        style={{ fontSize: '10px', pointerEvents: 'none' }}
+                      >
+                        {exposedComponent.description}
+                      </text>
+                    )}
                   </g>
                 );
               })}
@@ -257,7 +255,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
     });
 
     const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
-    const extensionBoxHeight = 60;
+    const extensionBoxHeight = 60 + LAYOUT_CONSTANTS.DESCRIPTION_EXTRA_SPACING; // Add space for descriptions
 
     return (
       <g>
@@ -311,23 +309,32 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
                     />
 
-                    {/* Extension title */}
-                    <text
-                      x={extPos.x + extensionBoxWidth / 2}
-                      y={extPos.y - 5}
-                      textAnchor="middle"
-                      fill={theme.colors.getContrastText(extensionColor)}
-                    >
-                      {extension.title || extension.id}
-                    </text>
+                    {/* Extension title - position dynamically based on description presence */}
+                    {(() => {
+                      const hasDescription = extension.description && extension.description.trim() !== '';
+                      const titleY = hasDescription ? extPos.y - 5 : extPos.y;
 
-                    {/* Extension description */}
-                    {options.showDescriptions && extension.description && extension.description.trim() !== '' && (
+                      return (
+                        <text
+                          x={extPos.x + extensionBoxWidth / 2}
+                          y={titleY}
+                          textAnchor="middle"
+                          dominantBaseline={hasDescription ? undefined : 'middle'}
+                          fill={theme.colors.getContrastText(extensionColor)}
+                        >
+                          {extension.title || extension.id}
+                        </text>
+                      );
+                    })()}
+
+                    {/* Extension description - always show in extension point mode */}
+                    {extension.description && extension.description.trim() !== '' && (
                       <text
                         x={extPos.x + extensionBoxWidth / 2}
                         y={extPos.y + 15}
                         textAnchor="middle"
                         fill={theme.colors.getContrastText(extensionColor)}
+                        style={{ fontSize: '10px', pointerEvents: 'none' }}
                       >
                         {extension.description}
                       </text>
