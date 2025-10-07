@@ -33,7 +33,6 @@ func NewSQLKeeper(
 	reg prometheus.Registerer,
 	cfg *setting.Cfg,
 ) (*SQLKeeper, error) {
-
 	// Only run the migration if running as an MT api server
 	if cfg.StackID == "" {
 		// Run the encrypted value store migration before anything else, otherwise operations may fail

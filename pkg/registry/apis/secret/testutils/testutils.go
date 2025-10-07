@@ -130,7 +130,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	require.NoError(t, err)
 
 	// Initialize a noop migration executor for the sql keeper so it doesn't interfere with initialization, or use the one provided
-	var fakeMigrationExecutor contracts.EncryptedValueMigrationExecutor = setupCfg.DataKeyMigrationExecutor
+	fakeMigrationExecutor := setupCfg.DataKeyMigrationExecutor
 	if fakeMigrationExecutor == nil {
 		fakeMigrationExecutor = &NoopMigrationExecutor{}
 	}
