@@ -88,6 +88,7 @@
 /apps/preferences/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/shorturl/ @grafana/sharing-squad
 /apps/secret/ @grafana/grafana-operator-experience-squad
+/apps/scope/ @grafana/grafana-operator-experience-squad
 /apps/investigations/ @fcjack @matryer @svennergr
 /apps/advisor/ @grafana/plugins-platform-backend
 /apps/iam/ @grafana/access-squad
@@ -629,6 +630,7 @@
 /packages/grafana-runtime/rollup.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/index.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-runtime/src/internal/index.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
+/packages/grafana-runtime/src/internal/openFeature @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/unstable.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-runtime/tsconfig.build.json @grafana/grafana-frontend-platform
 /packages/grafana-runtime/tsconfig.json @grafana/grafana-frontend-platform
@@ -1281,6 +1283,7 @@ embed.go @grafana/grafana-as-code
 /.github/license_finder.yaml @bergquist
 /.github/actionlint.yaml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-test-docker.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/update-schema-types.yml @grafana/plugins-platform-frontend
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
