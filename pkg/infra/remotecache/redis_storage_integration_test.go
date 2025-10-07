@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/redis/go-redis/v9"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/redis/go-redis/v9"
 )
 
 func TestIntegrationRedisCacheStorage(t *testing.T) {

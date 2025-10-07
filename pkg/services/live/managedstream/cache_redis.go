@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/redis/go-redis/v9"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 )

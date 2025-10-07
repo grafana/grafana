@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/redis/go-redis/v9"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
 )
 
