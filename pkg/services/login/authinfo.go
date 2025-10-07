@@ -4,6 +4,7 @@ import (
 	"context"
 )
 
+//go:generate mockery --name AuthInfoService --structname MockAuthInfoService --outpkg authinfotest --filename auth_info_service_mock.go --output ./authinfotest/
 type AuthInfoService interface {
 	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) (*UserAuth, error)
 	GetUserLabels(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
