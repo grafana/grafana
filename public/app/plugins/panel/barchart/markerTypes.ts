@@ -1,5 +1,4 @@
 
-
 export type BarMarkerOpts = {
   label: string;
   width: number;
@@ -11,7 +10,6 @@ export type BarMarkerOpts = {
 
 export interface Marker {
   id: number;
-  // optional direct index into aligned x (dataIdx)
   targetField: string;
   dataField: string;
   opts: BarMarkerOpts 
@@ -25,7 +23,6 @@ export interface PreparedMarker {
   groupIdx?: number | null;
   yScaleKey?: string;
   yValue?: number | null;
-  dataIdx?: number | null; // needed for tooltip lookup
   seriesIdx?: number | null;
   opts: BarMarkerOpts 
 }
@@ -35,12 +32,9 @@ export interface PreparedMarker {
  * and cached for the draw hook.
  */
 export interface ResolvedMarker {
-
   x: number
   y:  number
   opts: BarMarkerOpts | null;
-  sidx?: number
-  didx?: number
 }
 
 export default {};

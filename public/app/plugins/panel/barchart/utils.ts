@@ -40,12 +40,11 @@ import { AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/
 
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 
-import { singleBarMarker } from './barmarkers';
+import { drawBarMarkers } from './barmarkers';
 import { BarsOptions, getConfig} from './bars';
 import { PreparedMarker, Marker } from './markerTypes';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
-
-
+// import isLegendOrdered from './utils';
 
 interface BarSeries {
   series: DataFrame[];
@@ -308,7 +307,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   builder.addHook('drawClear', config.drawClear);
 
 
-  builder.addHook('draw', singleBarMarker(builder, config.resolvedMarkers));
+  builder.addHook('draw', drawBarMarkers(builder, config.resolvedMarkers));
 
 
 
@@ -468,9 +467,6 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       max: field.config.max,
       softMin,
       softMax,
-      // range: (u: uPlot, dataMin: number, dataMax: number) => {
-      //   return [-50, 50];
-      // },
       centeredZero: customConfig.axisCenteredZero,
       orientation: vizOrientation.yOri,
       direction: vizOrientation.yDir,
@@ -641,7 +637,6 @@ export function prepareMarkers(vizFields: Field[], markerFields: Field[], marker
             seriesIdx: targetIdx, 
             yScaleKey: fi.config.unit || FIXED_UNIT,
             opts: m.opts ,
-            dataIdx: i,
           };
 
           prepMarkerList.push(pm);
@@ -673,7 +668,6 @@ export function prepareMarkers(vizFields: Field[], markerFields: Field[], marker
             seriesIdx: targetIdx, 
             yScaleKey: fi.config.unit || FIXED_UNIT,
             opts: markers[a].opts ,
-            dataIdx: i,
           };
 
           prepMarkerList.push(pm);
@@ -711,7 +705,6 @@ export function prepareMarkers(vizFields: Field[], markerFields: Field[], marker
           seriesIdx: targetIdx, 
           yScaleKey: fi.config.unit || FIXED_UNIT,
           opts: markers[a].opts ,
-          dataIdx: i,
         };
 
         prepMarkerList.push(pm);

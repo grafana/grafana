@@ -1,4 +1,3 @@
-
 import uPlot from 'uplot';
 
 import { UPlotConfigBuilder } from '@grafana/ui';
@@ -6,26 +5,14 @@ import { UPlotConfigBuilder } from '@grafana/ui';
 import { ResolvedMarker, BarMarkerOpts } from './markerTypes';
 
 
-// Minimal, plugin-scoped marker drawing utilities.
-// This module exports a factory `singleBarMarker(builder)` that returns a `draw` hook
-// for uPlot. The hook currently draws demo horizontal ticks; later we'll resolve
-// positions from prepData and panel options.
-
-
-
-
 export type BarMarker = {
   opts: BarMarkerOpts;
-  y: number; // pixel y position (demo only)
-  x: string | number | null; // canonical x value to resolve at draw time
+  y: number; // pixel y position 
+  x: number; // pixel x position
 };
 
 
-/**
- * Return a `draw` hook that paints demo markers. The hook signature matches uPlot's
- * draw hook: (u: uPlot) => void.
- */
-export function singleBarMarker(_builder: UPlotConfigBuilder, markers: ResolvedMarker[]) {
+export function drawBarMarkers(_builder: UPlotConfigBuilder, markers: ResolvedMarker[]) {
   return function drawMarkers(u: uPlot) {
     
     const ctx = u.ctx;
@@ -35,11 +22,8 @@ export function singleBarMarker(_builder: UPlotConfigBuilder, markers: ResolvedM
     }
 
     ctx.save();
-    
-
     const markersToDraw: ResolvedMarker[] = [];
 
-    // prefer persisted markers if provided
     if (markers && Array.isArray(markers) && markers.length > 0) {
       for (const m of markers) {
         markersToDraw.push(m);

@@ -27,8 +27,7 @@ const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
 const toRads = Math.PI / 180;
 
 export const BarChartPanel = (props: PanelProps<Options>) => {
-  const { options, fieldConfig, width, height, timeZone, id, replaceVariables } = props;
-  const { data } = props;
+  const { data, options, fieldConfig, width, height, timeZone, id, replaceVariables } = props;
 
   // will need this if joining on time to re-create data links
   // const { dataLinkPostProcessor } = usePanelContext();
@@ -107,7 +106,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       
       return xGroupsCount === 0
         ? { builder: null, prepData: null }
-        : prepConfig({ series: vizSeries, totalSeries: totalSeries + 1, color: info.color, orientation, options, timeZone, theme,preparedMarkers, markerData });
+        : prepConfig({ series: vizSeries, totalSeries: totalSeries, color: info.color, orientation, options, timeZone, theme,preparedMarkers, markerData });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -185,8 +184,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
                 // Check if the field supports filtering
                 // We only show filters on filterable fields (xField.config.filterable).
-                // Fields will have been marked as filterat adhoc fible by the data source if that data source supports adhoc filtering
-                // (eg. Prom or Loki) and the field types supporltering (eg. string or number - depending on the data source).
+                // Fields will have been marked as filterable by the data source if that data source supports adhoc filtering
+                // (eg. Prom or Loki) and the field types support adhoc filtering (eg. string or number - depending on the data source).
                 // Fields may later be marked as not filterable. For example, fields created from Grafana Transforms that
                 // are derived from a data source, but are not present in the data source.
                 // We choose `xField` here because it contains the label-value pair, rather than `field` which is the numeric Value.
@@ -233,8 +232,6 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
               }}
             />
           )}
-          
-
         </UPlotChart>
       )}
     </VizLayout>

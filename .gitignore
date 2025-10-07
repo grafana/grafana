@@ -244,4 +244,3 @@ public/mockServiceWorker.js
 
 /e2e-playwright/test-plugins/*/dist
 /apps/provisioning/cmd/job-controller/bin/
-.github/copilot-instructions.md

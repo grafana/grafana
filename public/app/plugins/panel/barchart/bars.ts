@@ -18,7 +18,6 @@ import { distribute, SPACE_BETWEEN } from './distribute';
 import { PreparedMarker, ResolvedMarker } from './markerTypes';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
-
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
 // min.max font size for value label
@@ -32,7 +31,6 @@ const LABEL_OFFSET_FACTOR_HZ = 0.15;
 // max distance
 const LABEL_OFFSET_MAX_VT = 5;
 const LABEL_OFFSET_MAX_HZ = 10;
-
 
 // text baseline middle runs through the middle of lowercase letters
 // since bar values are numbers and uppercase-like, we want the middle of uppercase
@@ -149,7 +147,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   let qt: Quadtree;
   const numSeries = 30; // !!
-  const hovered: Array<Rect | null> = Array(numSeries + 1).fill(null);
+  const hovered: Array<Rect | null> = Array(numSeries).fill(null);
   let hRect: Rect | null;
   let resolvedMarkers: ResolvedMarker[] = [];
 
@@ -299,7 +297,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     : {};
 
   let barsBuilder = uPlot.paths.bars!({
-    
     radius: pctStacked
       ? 0
       : !isStacked
@@ -322,12 +319,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     // collect rendered bar geometry
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
 
-    // for (const marker of opts.markers ?? []) {
-    //     if(seriesIdx === marker.dataIdx) {
-    //       return;
-    //   }
-    // }
-      
       // we get back raw canvas coords (included axes & padding)
       // translate to the plotting area origin
       lft -= u.bbox.left;
@@ -343,8 +334,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         hSpace = Math.min(hSpace, val < 0 ? lft : u.bbox.width - (lft + wid));
       }
 
-
-    
       let barRect = { x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx };
 
       if (!isStacked && opts.fullHighlight) {
@@ -356,7 +345,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           barRect.w = u.bbox.width;
         }
       }
-      
       
       qt.add(barRect);
 
@@ -467,7 +455,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             h: (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor,
           };
           
-              //Calculate marker positions and fill markerList to prepare drawing
+          //Calculate marker positions and fill markerList to prepare drawing
           const m = populateMarkerList(markers ?? [], dataIdx, seriesIdx, labels, xOri, lft, top, wid, hgt, u, barRect.x + u.bbox.left, barRect.y + u.bbox.top);
 
           resolvedMarkers.push(...m);  
@@ -523,25 +511,13 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         let hRect2 = hovered[seriesIdx];
         let isHovered = hRect2 != null;
 
-        if(seriesIdx === u.data.length -1 && ! isHovered){
-          for (let i = 0; i < (opts.markerData?.length ?? 0); i++) {
-            seriesIdx++
-            hRect2 = hovered[seriesIdx]
-            isHovered = hRect2 != null;
-            if(isHovered){
-              break;
-            }
-          }
-        }
-
         return {
           left: isHovered ? hRect2!.x / uPlot.pxRatio : -10,
           top: isHovered ? hRect2!.y / uPlot.pxRatio : -10,
           width: isHovered ? hRect2!.w / uPlot.pxRatio : 0,
           height: isHovered ? hRect2!.h / uPlot.pxRatio : 0,
         };
-      }
-      
+      },
     },
     focus: {
       prox: 1e3,
@@ -705,9 +681,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   };
 }
 
-
-
-
 function populateMarkerList(markers: PreparedMarker[], dataIdx: number, seriesIdx: number, labels: ValueLabelTable,
    xOri: ScaleOrientation, lft: number, top: number, wid: number, hgt: number, u: uPlot, barX: number, barY: number){ 
     
@@ -735,7 +708,6 @@ function populateMarkerList(markers: PreparedMarker[], dataIdx: number, seriesId
             x: markerX!,
             y: resolvedY,
             opts:{ ...marker.opts, isRotated: false,  width: marker.opts.width * wid },
-            sidx: marker.dataIdx ?? -1,
           };
           resolvedMarkerList.push(m);
           }
@@ -754,7 +726,7 @@ function populateMarkerList(markers: PreparedMarker[], dataIdx: number, seriesId
               y: markerY!,
               opts: { ...marker.opts, isRotated: true,  width: marker.opts.width * hgt },
             };
-            resolvedMarkerList.push({...m, sidx: marker.dataIdx ? marker.dataIdx - 1 : -1, didx: dataIdx});
+            resolvedMarkerList.push(m);
           }
       }
     }
