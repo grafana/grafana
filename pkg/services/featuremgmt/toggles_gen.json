@@ -2265,6 +2265,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesLogsDrilldown",
+        "resourceVersion": "1759865168805",
+        "creationTimestamp": "2025-10-07T19:26:08Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes logs drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesShortURLs",
         "resourceVersion": "1756914263808",
         "creationTimestamp": "2025-08-04T12:12:12Z",
