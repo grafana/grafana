@@ -174,7 +174,7 @@ resource "grafana_role" "my_new_role" {
   description = "My test role"
   version = 1
   uid = "newroleuid"
-  global = true
+  global = false
 
   permissions {
     action = "org.users:add"
