@@ -414,8 +414,8 @@ func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo
 }
 
 type ListTeamBindingsQuery struct {
-	// UID is team uid to list bindings for. If not set store should list bindings for all teams
-	UID        string
+	TeamID     int64
+	UserID     int64
 	OrgID      int64
 	Pagination common.Pagination
 }
@@ -432,6 +432,7 @@ type TeamMember struct {
 	TeamUID    string
 	UserID     int64
 	UserUID    string
+	OrgID      int64
 	Name       string
 	Email      string
 	Username   string
@@ -486,7 +487,7 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 	req := newListTeamBindings(sql, &query)
 	q, err := sqltemplate.Execute(sqlQueryTeamBindingsTemplate, req)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamsTemplate.Name(), err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamBindingsTemplate.Name(), err)
 	}
 
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
@@ -508,7 +509,7 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 
 	for rows.Next() {
 		m := TeamMember{}
-		err = rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.Created, &m.Updated, &m.Permission)
+		err = rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Created, &m.Updated, &m.Permission)
 		if err != nil {
 			return res, err
 		}
@@ -522,16 +523,15 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 		}
 	}
 
-	if query.UID == "" {
-		res.RV, err = sql.GetResourceVersion(ctx, "team_member", "updated")
-	}
-
 	return res, err
 }
 
 type CreateTeamMemberCommand struct {
 	TeamID     int64
+	TeamUID    string
 	UserID     int64
+	UserUID    string
+	OrgID      int64
 	Created    DBTime
 	Updated    DBTime
 	External   bool
@@ -566,6 +566,11 @@ func (s *legacySQLStore) CreateTeamMember(ctx context.Context, ns claims.Namespa
 	now := time.Now().UTC().Truncate(time.Second)
 	cmd.Created = NewDBTime(now)
 	cmd.Updated = NewDBTime(now)
+	cmd.OrgID = ns.OrgID
+
+	if cmd.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
 
 	sql, err := s.sql(ctx)
 	if err != nil {
@@ -589,7 +594,10 @@ func (s *legacySQLStore) CreateTeamMember(ctx context.Context, ns claims.Namespa
 		createdTeamMember = TeamMember{
 			ID:         teamMemberID,
 			TeamID:     cmd.TeamID,
+			TeamUID:    cmd.TeamUID,
 			UserID:     cmd.UserID,
+			UserUID:    cmd.UserUID,
+			OrgID:      cmd.OrgID,
 			Created:    cmd.Created.Time,
 			Updated:    cmd.Updated.Time,
 			External:   cmd.External,
