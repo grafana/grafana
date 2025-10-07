@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	logsdrilldownv0alpha1 "github.com/grafana/grafana/apps/logsdrilldown/pkg/apis/logsdrilldown/v1alpha1"
+	logsdrilldownv1alpha1 "github.com/grafana/grafana/apps/logsdrilldown/pkg/apis/logsdrilldown/v1alpha1"
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -26,7 +26,7 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind: logsdrilldownv0alpha1.Kind(),
+				Kind: logsdrilldownv1alpha1.LogsDrilldownKind(),
 			},
 		},
 	}
@@ -46,10 +46,10 @@ func New(cfg app.Config) (app.App, error) {
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	gv := schema.GroupVersion{
-		Group:   logsdrilldownv0alpha1.Kind().Group(),
-		Version: logsdrilldownv0alpha1.Kind().Version(),
+		Group:   logsdrilldownv1alpha1.LogsDrilldownKind().Group(),
+		Version: logsdrilldownv1alpha1.LogsDrilldownKind().Version(),
 	}
 	return map[schema.GroupVersion][]resource.Kind{
-		gv: {logsdrilldownv0alpha1.Kind()},
+		gv: {logsdrilldownv1alpha1.LogsDrilldownKind()},
 	}
 }
