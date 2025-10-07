@@ -2,6 +2,7 @@ package appregistry
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
@@ -24,4 +25,6 @@ var WireSet = wire.NewSet(
 	correlations.RegisterAppInstaller,
 	rules.RegisterAppInstaller,
 	notifications.RegisterAppInstaller,
+	plugins.ProvideClientRegistry,
+	wire.Bind(new(resource.ClientGenerator), new(*plugins.ClientRegistry)),
 )

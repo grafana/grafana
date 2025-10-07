@@ -3,6 +3,8 @@ package pipeline
 import (
 	"context"
 
+	"github.com/grafana/grafana-app-sdk/resource"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
@@ -70,6 +72,7 @@ func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Ser
 	pm process.Manager, externalServiceRegistry auth.ExternalServiceRegistry,
 	roleRegistry pluginaccesscontrol.RoleRegistry, actionSetRegistry pluginaccesscontrol.ActionSetRegistry,
 	pluginEnvProvider envvars.Provider, tracer tracing.Tracer, provisionedPluginsManager provisionedplugins.Manager,
+	clientGenerator resource.ClientGenerator,
 ) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
@@ -83,6 +86,7 @@ func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Ser
 			ReportFSMetrics,
 			ReportCloudProvisioningMetrics(provisionedPluginsManager),
 			initialization.PluginRegistrationStep(pr),
+			initialization.PluginInstallResourceStep(clientGenerator),
 		},
 	})
 }
