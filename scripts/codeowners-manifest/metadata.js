@@ -20,7 +20,11 @@ const { CODEOWNERS_FILE_PATH, CODEOWNERS_MANIFEST_DIR, METADATA_JSON_PATH } = re
  * @returns {CodeownersMetadata} Metadata object with hashes
  */
 function generateCodeownersMetadata(codeownersFilePath, manifestDir, metadataFilename) {
-  const [filesHash] = execSync('git ls-files | sort | sha256sum', { encoding: 'utf8' }).trim().split(' ');
+  const [filesHash] = execSync('git ls-files --cached --others --exclude-standard | sort | sha256sum', {
+    encoding: 'utf8',
+  })
+    .trim()
+    .split(' ');
 
   const [codeownersHash] = execSync(`sha256sum "${codeownersFilePath}"`, { encoding: 'utf8' }).trim().split(' ');
 
