@@ -24,7 +24,6 @@ import {
 } from '../../utils/datasource';
 
 import { groupFilter, ruleFilter } from './filters';
-import { useK8sRulesGenerator } from './k8sRulesGenerator';
 import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
 
 export type RuleWithOrigin = PromRuleWithOrigin | GrafanaRuleWithOrigin;
@@ -51,16 +50,11 @@ interface GetIteratorResult {
   abortController: AbortController;
 }
 
-// Feature flag to enable K8s API for rules fetching
-// TODO: Replace with proper feature flag from config.featureToggles
-const USE_K8S_RULES_API = false;
-
 export function useFilteredRulesIteratorProvider() {
   const allExternalRulesSources = getExternalRulesSources();
 
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ limitAlerts: 0 });
-  const k8sRulesGenerator = useK8sRulesGenerator();
 
   const getFilteredRulesIterable = (filterState: RulesFilter, groupLimit: number): GetIteratorResult => {
     /* this is the abort controller that allows us to stop an AsyncIterable */
@@ -83,39 +77,32 @@ export function useFilteredRulesIteratorProvider() {
       }
     }
 
-    // Use K8s API if feature flag is enabled
-    const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = USE_K8S_RULES_API
-      ? from(k8sRulesGenerator()).pipe(
-          withAbort(abortController.signal),
-          concatMap((rules) => rules.filter(({ rule }) => ruleFilter(rule, normalizedFilterState))),
-          catchError(() => empty())
-        )
-      : from(
-          grafanaGroupsGenerator(groupLimit, {
-            contactPoint: filterState.contactPoint ?? undefined,
-            health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
-            state: filterState.ruleState ? [filterState.ruleState] : [],
-            type: filterState.ruleType,
-            labels: filterState.labels,
-            hidePlugins: filterState.plugins === 'hide',
-            namespace: filterState.namespace, // Backend does case-insensitive substring match on folder name
-            groupName: filterState.groupName, // Backend does case-insensitive substring match on group name
-            ruleName: filterState.ruleName, // Backend does case-insensitive substring match on rule name
-            dashboardUid: filterState.dashboardUid,
-            datasourceUids: datasourceUids.length > 0 ? datasourceUids : undefined,
-            // Backend caching + backend substring filtering + frontend fuzzy filtering gives best performance
-          })
-        ).pipe(
-          withAbort(abortController.signal),
-          concatMap((groups) =>
-            groups
-              .filter((group) => groupFilter(group, normalizedFilterState))
-              .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
-              .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
-              .map(({ group, rule }) => mapGrafanaRuleToRuleWithOrigin(group, rule))
-          ),
-          catchError(() => empty())
-        );
+    const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
+      grafanaGroupsGenerator(groupLimit, {
+        contactPoint: filterState.contactPoint ?? undefined,
+        health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
+        state: filterState.ruleState ? [filterState.ruleState] : [],
+        type: filterState.ruleType,
+        labels: filterState.labels,
+        hidePlugins: filterState.plugins === 'hide',
+        namespace: filterState.namespace, // Backend does case-insensitive substring match on folder name
+        groupName: filterState.groupName, // Backend does case-insensitive substring match on group name
+        ruleName: filterState.ruleName, // Backend does case-insensitive substring match on rule name
+        dashboardUid: filterState.dashboardUid,
+        datasourceUids: datasourceUids.length > 0 ? datasourceUids : undefined,
+        // Backend caching + backend substring filtering + frontend fuzzy filtering gives best performance
+      })
+    ).pipe(
+      withAbort(abortController.signal),
+      concatMap((groups) =>
+        groups
+          .filter((group) => groupFilter(group, normalizedFilterState))
+          .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
+          .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
+          .map(({ group, rule }) => mapGrafanaRuleToRuleWithOrigin(group, rule))
+      ),
+      catchError(() => empty())
+    );
 
     // Determine which data sources to use
     const externalRulesSourcesToFetchFrom = hasDataSourceFilterActive
