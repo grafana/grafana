@@ -47,7 +47,6 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 
     const resources = collectSelectedItems(selectedItems);
 
-    // Track bulk delete submission
     const folderCount = Object.keys(selectedItems.folder || {}).length;
     const dashboardCount = Object.keys(selectedItems.dashboard || {}).length;
     reportInteraction('grafana_provisioning_bulk_delete_submitted', {

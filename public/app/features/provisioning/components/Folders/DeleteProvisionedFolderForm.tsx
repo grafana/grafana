@@ -61,12 +61,10 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
       return;
     }
 
-    // Track folder delete submission
     reportInteraction('grafana_provisioning_folder_delete_submitted', {
       workflow,
       repositoryName: repo,
       repositoryType: repository?.type ?? 'unknown',
-      hasDescendants: Boolean(parentFolder),
     });
 
     // Branch workflow: use /files API for direct file operations

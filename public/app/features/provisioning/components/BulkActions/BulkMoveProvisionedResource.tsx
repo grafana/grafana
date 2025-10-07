@@ -87,7 +87,6 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
       return;
     }
 
-    // Track bulk move submission
     reportInteraction('grafana_provisioning_bulk_move_submitted', {
       workflow: data.workflow,
       repositoryName: repository.name ?? 'unknown',

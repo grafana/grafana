@@ -80,7 +80,6 @@ export function DeleteProvisionedDashboardForm({
       return;
     }
 
-    // Track dashboard delete submission
     reportInteraction('grafana_provisioning_dashboard_delete_submitted', {
       workflow,
       repositoryName: repo,

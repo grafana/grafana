@@ -115,12 +115,10 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
       ref = undefined;
     }
 
-    // Track folder creation submission
     reportInteraction('grafana_provisioning_folder_create_submitted', {
       workflow,
       repositoryName: repoName,
       repositoryType: repository?.type ?? 'unknown',
-      folderNameLength: title.length,
     });
 
     create({

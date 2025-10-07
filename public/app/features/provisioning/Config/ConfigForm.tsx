@@ -120,14 +120,10 @@ export function ConfigForm({ data }: ConfigFormProps) {
     if (request.isSuccess) {
       const formData = getValues();
 
-      // Track repository configuration update
       reportInteraction('grafana_provisioning_repository_updated', {
         repositoryName: repositoryName ?? 'unknown',
         repositoryType: formData.type,
-        isEdit: isEdit,
-        syncEnabled: formData.sync?.enabled ?? false,
         target: formData.sync?.target ?? 'unknown',
-        changedFields: isDirty ? Object.keys(formData) : [],
       });
 
       reset(formData);
@@ -135,7 +131,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
         navigate('/admin/provisioning');
       }, 300);
     }
-  }, [request.isSuccess, reset, getValues, navigate, repositoryName, isDirty, isEdit]);
+  }, [request.isSuccess, reset, getValues, navigate, repositoryName]);
 
   const onSubmit = async (form: RepositoryFormData) => {
     setIsLoading(true);

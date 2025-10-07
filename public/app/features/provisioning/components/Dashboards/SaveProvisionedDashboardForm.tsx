@@ -163,13 +163,10 @@ export function SaveProvisionedDashboardForm({
       copyTags: true,
     });
 
-    // Track dashboard save submission
     reportInteraction('grafana_provisioning_dashboard_save_submitted', {
       workflow,
       repositoryName: repo,
       repositoryType: repository?.type ?? 'unknown',
-      hasChanges: isDirty,
-      editingPanel: Boolean(panelEditor),
     });
 
     createOrUpdateFile({

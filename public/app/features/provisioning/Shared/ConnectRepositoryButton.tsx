@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1/endpoints.gen';
@@ -35,11 +34,6 @@ export function ConnectRepositoryButton({ items }: Props) {
                 icon={config.icon}
                 label={config.label}
                 onClick={() => {
-                  reportInteraction('grafana_provisioning_repository_type_selected', {
-                    repositoryType: config.type,
-                    existingRepoCount: items?.length ?? 0,
-                    hasInstanceRepo: state.instanceConnected,
-                  });
                   navigate(`${CONNECT_URL}/${config.type}`);
                 }}
               />

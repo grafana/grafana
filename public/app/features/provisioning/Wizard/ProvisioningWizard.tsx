@@ -209,10 +209,8 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
   const handleConfirmCancel = () => {
     setShowCancelConfirmation(false);
-    const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
     reportInteraction('grafana_provisioning_wizard_cancelled', {
       cancelledAtStep: activeStep,
-      stepIndex: currentStepIndex,
       repositoryType: repoType,
     });
     handleRepositoryDeletion(repoName);
@@ -260,15 +258,12 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
     // Only navigate to provisioning URL if we're on the actual last step
     if (isLastStep) {
-      // Track repository creation success
       const formData = getValues();
       reportInteraction('grafana_provisioning_repository_created', {
         repositoryType: repoType,
         target: syncTarget,
         syncEnabled: formData.repository.sync?.enabled ?? false,
         workflowsEnabled: getWorkflows(formData.repository),
-        syncSkipped: shouldSkipSync,
-        requiresMigration: requiresMigration,
       });
       navigate(PROVISIONING_URL);
     } else {
@@ -290,12 +285,9 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
         return;
       }
 
-      // Track step completion
       reportInteraction('grafana_provisioning_wizard_step_completed', {
         step: activeStep,
-        stepIndex: currentStepIndex,
         repositoryType: repoType,
-        syncSkipped: canSkipSync && activeStep === 'bootstrap',
         target: syncTarget,
       });
 

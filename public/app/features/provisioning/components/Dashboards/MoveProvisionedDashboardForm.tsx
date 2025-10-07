@@ -123,7 +123,6 @@ export function MoveProvisionedDashboardForm({
       return;
     }
 
-    // Track dashboard move submission
     reportInteraction('grafana_provisioning_dashboard_move_submitted', {
       workflow,
       repositoryName: repo,
