@@ -178,7 +178,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                 options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
               }
               getDataLinks={(seriesIdx, dataIdx) =>
-                vizSeries[seriesIdx].fields[dataIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                vizSeries[0].fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
               }
               getAdHocFilters={(_seriesIdx, dataIdx) => {
                 const xField = vizSeries[0].fields[0];

@@ -20,7 +20,6 @@ import {
 
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
 import { prepSeries, prepConfig, PrepConfigOpts } from './utils';
-
 const fieldConfig: FieldConfigSource = {
   defaults: {},
   overrides: [],
@@ -122,7 +121,10 @@ describe('BarChart utils', () => {
           valueSize: 10,
         },
         fullHighlight: false,
+        markers: [],
       },
+      preparedMarkers: [],
+      markerData: [],
     };
 
     it.each([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical])('orientation', (v) => {
