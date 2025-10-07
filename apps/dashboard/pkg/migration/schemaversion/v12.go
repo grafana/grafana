@@ -57,11 +57,8 @@ func V12(_ context.Context, dashboard map[string]interface{}) error {
 		// hideVariable takes priority over hideLabel
 		if GetBoolValue(variable, "hideVariable") {
 			variable["hide"] = 2
-			delete(variable, "hideVariable")
-			delete(variable, "hideLabel") // Remove both properties when hideVariable is true
 		} else if GetBoolValue(variable, "hideLabel") {
 			variable["hide"] = 1
-			delete(variable, "hideLabel")
 		}
 	}
 
