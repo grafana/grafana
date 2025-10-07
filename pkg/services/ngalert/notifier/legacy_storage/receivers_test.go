@@ -469,8 +469,10 @@ func TestRenameReceiverInRoutes(t *testing.T) {
 	})
 }
 
-func getConfigRevisionForTest() *ConfigRevision {
-	return &ConfigRevision{
+type opt func(*ConfigRevision)
+
+func getConfigRevisionForTest(opts ...opt) *ConfigRevision {
+	r := &ConfigRevision{
 		Config: &definitions.PostableUserConfig{
 			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
@@ -519,4 +521,8 @@ func getConfigRevisionForTest() *ConfigRevision {
 			},
 		},
 	}
+	for _, o := range opts {
+		o(r)
+	}
+	return r
 }
