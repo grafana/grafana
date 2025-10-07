@@ -93,8 +93,8 @@ export class ErrorBoundary extends PureComponent<Props, State> {
  * @public
  */
 export interface ErrorBoundaryAlertProps {
-  /** Unique identifier for the error boundary. Used when reporting errors in Faro. */
-  id?: string;
+  /** Name of the error boundary. Used when reporting errors in Faro. */
+  boundaryName?: string;
 
   /** Title for the error boundary alert */
   title?: string;
@@ -118,10 +118,10 @@ export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryAlertProps> {
   };
 
   render() {
-    const { title, children, style, dependencies, errorLogger, id } = this.props;
+    const { title, children, style, dependencies, errorLogger, boundaryName } = this.props;
 
     return (
-      <ErrorBoundary dependencies={dependencies} errorLogger={errorLogger} id={id}>
+      <ErrorBoundary dependencies={dependencies} errorLogger={errorLogger} boundaryName={boundaryName}>
         {({ error, errorInfo }) => {
           if (!errorInfo) {
             return children;
