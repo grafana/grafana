@@ -4,6 +4,7 @@ import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialGradientMode } from './RadialGauge';
 import { GaugeDimensions } from './utils';
+import { RadialArcPath } from './RadialArcPath';
 
 export interface RadialBarSegmentedProps {
   fieldDisplay: FieldDisplay;
@@ -33,10 +34,11 @@ export function RadialBarSegmented({
   const theme = useTheme2();
 
   const segmentCountAdjusted = getOptimalSegmentCount(dimensions, segmentSpacing, segmentCount, angleRange);
-
   const min = fieldDisplay.field.min ?? 0;
   const max = fieldDisplay.field.max ?? 100;
   const value = fieldDisplay.display.numeric;
+  const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing, dimensions.radius);
+  const segmentArcLengthDeg = angleRange / segmentCountAdjusted - angleBetweenSegments;
 
   const getColorForValue = (value: number) => {
     if (gradient === 'scheme') {
@@ -54,14 +56,13 @@ export function RadialBarSegmented({
     const segmentColor = angleValue > value ? theme.colors.action.hover : angleColor;
 
     segments.push(
-      <RadialSegmentArcPath
+      <RadialArcPath
         key={i}
-        angle={segmentAngle}
+        startAngle={segmentAngle}
         dimensions={dimensions}
         color={segmentColor}
         glowFilter={glowFilter}
-        segmentSpacing={segmentSpacing}
-        arcLengthDeg={angleRange / segmentCountAdjusted}
+        arcLengthDeg={segmentArcLengthDeg}
       />
     );
   }
@@ -69,58 +70,7 @@ export function RadialBarSegmented({
   return <g>{segments}</g>;
 }
 
-export interface RadialSegmentProps {
-  angle: number;
-  dimensions: GaugeDimensions;
-  color: string;
-  glowFilter?: string;
-  segmentSpacing: number;
-  arcLengthDeg: number;
-}
-
-export function RadialSegmentArcPath({
-  angle,
-  dimensions,
-  color,
-  glowFilter,
-  segmentSpacing,
-  arcLengthDeg,
-}: RadialSegmentProps) {
-  const { radius, centerX, centerY, barWidth } = dimensions;
-  const spacingAngle = getAngleBetweenSegments(segmentSpacing, radius);
-
-  const startRadians = (Math.PI * (angle - 90)) / 180;
-  let endRadians = (Math.PI * (angle + arcLengthDeg - 90 - spacingAngle)) / 180;
-
-  if (endRadians - startRadians < 0.02) {
-    endRadians = startRadians + 0.01;
-  }
-
-  let x1 = centerX + radius * Math.cos(startRadians);
-  let y1 = centerY + radius * Math.sin(startRadians);
-  let x2 = centerX + radius * Math.cos(endRadians);
-  let y2 = centerY + radius * Math.sin(endRadians);
-
-  const largeArc = 0;
-
-  const path = ['M', x1, y1, 'A', radius, radius, 0, largeArc, 1, x2, y2].join(' ');
-
-  return (
-    <path
-      d={path}
-      fill="none"
-      fillOpacity="1"
-      stroke={color}
-      strokeOpacity="1"
-      strokeLinecap={'butt'}
-      strokeWidth={barWidth}
-      strokeDasharray="0"
-      filter={glowFilter}
-    />
-  );
-}
-
-function getAngleBetweenSegments(segmentSpacing: number, radius: number) {
+export function getAngleBetweenSegments(segmentSpacing: number, radius: number) {
   return segmentSpacing * 6 + 100 / (radius * 2);
 }
 

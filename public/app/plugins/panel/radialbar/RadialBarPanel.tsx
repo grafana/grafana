@@ -1,6 +1,6 @@
 import { FieldDisplay, getFieldDisplayValues, PanelProps } from '@grafana/data';
-import { DataLinksContextMenu, RadialGauge, Stack, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
-import { DataLinksContextMenuApi } from '@grafana/ui/internal';
+import { DataLinksContextMenu, Stack, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
+import { DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
 import { config } from 'app/core/config';
 
 import { Options } from './panelcfg.gen';
