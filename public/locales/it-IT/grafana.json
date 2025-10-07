@@ -3240,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Definisci gli ID dei team consentiti",
       "display-name-description": "Verrà visualizzato nella pagina di accesso come \"Accedi con...\". Utile se utilizzi più di un provider di identità o protocolli SSO.",
       "display-name-label": "Visualizza nome",
-      "domain-hint-description": "Parametro per indicare il dominio dell'utente nel tenant Azure AD/Entra ID e semplificare il processo di accesso.",
+      "domain-hint-description": "",
       "domain-hint-label": "Suggerimento dominio",
       "domain-hint-valid-domain": "Questo campo deve essere un dominio valido.",
       "email-attribute-name-description": "Nome della chiave da utilizzare per la ricerca dell'e-mail dell'utente all'interno della mappa degli attributi del token ID di OAuth2.",
@@ -3496,6 +3496,7 @@
       "move-modal-field-label": "Nome cartella",
       "move-modal-text": "Questa azione sposterà il seguente contenuto:",
       "move-modal-title": "Sposta",
+      "move-provisioned-folder": "",
       "moving": "Spostamento in corso...",
       "new-folder-name-required-phrase": "Il nome della cartella è obbligatorio.",
       "selected-mix-resources-modal-text": "Hai selezionato sia risorse sottoposte a provisioning che risorse non sottoposte a provisioning. Non possono essere elaborate insieme. Seleziona solo risorse sottoposte a provisioning o solo risorse non sottoposte a provisioning e riprova.",
@@ -4141,6 +4142,13 @@
       "body": "Prova il nuovo Advisor per scoprire potenziali problemi con le tue origini dei dati e i tuoi componenti aggiuntivi.",
       "go-to-advisor": "Vai ad Advisor"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4189,6 +4197,20 @@
         "unknown-datasource": "Origine dati sconosciuta"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Scegli un tipo di sorgente dati"
@@ -4218,6 +4240,13 @@
         },
         "subtitle": "Gestisci le connessioni alle origini dati in un unico posto. Utilizza questa pagina per aggiungere una nuova origine dati o gestire le connessioni esistenti."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Cerca tutto",
@@ -8696,6 +8725,9 @@
       "tooltip-hide": "Nascondi password",
       "tooltip-show": "Mostra password"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Espandi riga",
       "collapse": "Riduci riga",
@@ -8723,6 +8755,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Usa l'asse y destro"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Caricamento"
@@ -13650,6 +13685,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "e",
       "placeholder-from": "",

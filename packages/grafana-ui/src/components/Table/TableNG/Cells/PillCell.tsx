@@ -67,6 +67,10 @@ export function inferPills(rawValue: TableCellValue): unknown[] {
     return [];
   }
 
+  if (Array.isArray(rawValue)) {
+    return rawValue.filter((v) => v != null).map((v) => String(v).trim());
+  }
+
   const value = String(rawValue);
 
   if (value[0] === '[') {

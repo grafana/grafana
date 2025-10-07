@@ -31,7 +31,7 @@ type MockResourceIndex struct {
 	updateIndexError error
 
 	updateIndexMu    sync.Mutex
-	updateIndexCalls []string
+	updateIndexCalls int
 
 	buildInfo IndexBuildInfo
 }
@@ -65,11 +65,11 @@ func (m *MockResourceIndex) ListManagedObjects(ctx context.Context, req *resourc
 	return args.Get(0).(*resourcepb.ListManagedObjectsResponse), args.Error(1)
 }
 
-func (m *MockResourceIndex) UpdateIndex(ctx context.Context, reason string) (int64, error) {
+func (m *MockResourceIndex) UpdateIndex(_ context.Context) (int64, error) {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
 
-	m.updateIndexCalls = append(m.updateIndexCalls, reason)
+	m.updateIndexCalls++
 	return 0, m.updateIndexError
 }
 
@@ -144,10 +144,10 @@ type buildIndexCall struct {
 	fields SearchableDocumentFields
 }
 
-func (m *mockSearchBackend) GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
+func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.cache[key], nil
+	return m.cache[key]
 }
 
 func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool) (ResourceIndex, error) {
@@ -271,24 +271,24 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	idx, err := support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "initial call")
 	require.NoError(t, err)
 	require.NotNil(t, idx)
-	checkMockIndexUpdateCalls(t, idx, []string{"initial call"})
+	checkMockIndexUpdateCalls(t, idx, 1)
 
 	idx, err = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "second call")
 	require.NoError(t, err)
 	require.NotNil(t, idx)
-	checkMockIndexUpdateCalls(t, idx, []string{"initial call", "second call"})
+	checkMockIndexUpdateCalls(t, idx, 2)
 
 	idx, err = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "bad"}, "call to bad index")
 	require.ErrorIs(t, err, failedErr)
 	require.Nil(t, idx)
 }
 
-func checkMockIndexUpdateCalls(t *testing.T, idx ResourceIndex, strings []string) {
+func checkMockIndexUpdateCalls(t *testing.T, idx ResourceIndex, calls int) {
 	mi, ok := idx.(*MockResourceIndex)
 	require.True(t, ok)
 	mi.updateIndexMu.Lock()
 	defer mi.updateIndexMu.Unlock()
-	require.Equal(t, strings, mi.updateIndexCalls)
+	require.Equal(t, calls, mi.updateIndexCalls)
 }
 
 func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
@@ -333,8 +333,8 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 
 	// Wait until new index is put into cache.
 	require.Eventually(t, func() bool {
-		idx, err := support.search.GetIndex(ctx, key)
-		return err == nil && idx != nil
+		idx := support.search.GetIndex(key)
+		return idx != nil
 	}, 1*time.Second, 100*time.Millisecond, "Indexing finishes despite context cancellation")
 
 	// Second call to getOrCreateIndex returns index immediately, even if context is canceled, as the index is now ready and cached.
@@ -347,10 +347,10 @@ type slowSearchBackendWithCache struct {
 	wg sync.WaitGroup
 }
 
-func (m *slowSearchBackendWithCache) GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
+func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIndex {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.cache[key], nil
+	return m.cache[key]
 }
 
 func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool) (ResourceIndex, error) {
@@ -573,14 +573,14 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
-	support.findIndexesToRebuild(context.Background(), now)
+	support.findIndexesToRebuild(now)
 	require.Equal(t, 6, support.rebuildQueue.Len())
 
 	now5m := now.Add(5 * time.Minute)
 
 	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
-	support.findIndexesToRebuild(context.Background(), now5m)
+	support.findIndexesToRebuild(now5m)
 	require.Equal(t, 6, support.rebuildQueue.Len())
 
 	// Values that we expect to find in rebuild requests.
@@ -692,8 +692,7 @@ func TestRebuildIndexes(t *testing.T) {
 func checkRebuildIndex(t *testing.T, support *searchSupport, req rebuildRequest, indexExists, expectedRebuild bool) {
 	ctx := context.Background()
 
-	idxBefore, err := support.search.GetIndex(ctx, req.NamespacedResource)
-	require.NoError(t, err)
+	idxBefore := support.search.GetIndex(req.NamespacedResource)
 	if indexExists {
 		require.NotNil(t, idxBefore, "index should exist before rebuildIndex")
 	} else {
@@ -702,8 +701,7 @@ func checkRebuildIndex(t *testing.T, support *searchSupport, req rebuildRequest,
 
 	support.rebuildIndex(ctx, req)
 
-	idxAfter, err := support.search.GetIndex(ctx, req.NamespacedResource)
-	require.NoError(t, err)
+	idxAfter := support.search.GetIndex(req.NamespacedResource)
 
 	if indexExists {
 		require.NotNil(t, idxAfter, "index should exist after rebuildIndex")

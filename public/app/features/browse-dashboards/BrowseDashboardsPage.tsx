@@ -206,7 +206,13 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
                   searchStateManager={stateManager}
                 />
               ) : (
-                <BrowseView permissions={permissions} width={width} height={height} folderUID={folderUID} />
+                <BrowseView
+                  permissions={permissions}
+                  width={width}
+                  height={height}
+                  folderUID={folderUID}
+                  isReadOnlyRepo={isReadOnlyRepo}
+                />
               )
             }
           </AutoSizer>
