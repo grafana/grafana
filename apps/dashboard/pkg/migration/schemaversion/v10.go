@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V10 migration removes the first threshold value from table panel styles when they have 3 or more thresholds.
 // This migration aligns with the frontend schema version 10 changes that addressed aliasYAxis changes
 // specifically for table panels with threshold configurations.
@@ -45,7 +47,7 @@ package schemaversion
 //   ]
 // }
 
-func V10(dashboard map[string]interface{}) error {
+func V10(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 10
 
 	panels, ok := dashboard["panels"].([]interface{})

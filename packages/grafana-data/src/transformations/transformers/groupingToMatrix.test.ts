@@ -333,4 +333,31 @@ describe('Grouping to Matrix', () => {
       `);
     });
   });
+
+  it('generates Matrix ignoring special value when value type is frame', async () => {
+    const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
+      id: DataTransformerID.groupingToMatrix,
+      options: {
+        columnField: 'Column',
+        rowField: 'Row',
+        valueField: 'Temp',
+        emptyValue: SpecialValue.Zero,
+      },
+    };
+
+    const seriesA = toDataFrame({
+      name: 'C',
+      fields: [
+        { name: 'Column', type: FieldType.string, values: ['C1', 'C1', 'C2'] },
+        { name: 'Row', type: FieldType.string, values: ['R1', 'R2', 'R1'] },
+        { name: 'Temp', type: FieldType.frame, values: [{}, null, {}] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed[0].fields).toMatchSnapshot();
+    });
+  });
 });

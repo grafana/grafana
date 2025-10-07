@@ -71,6 +71,8 @@ export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistI
 
 export function getDefaultPlaylist(): Playlist {
   return {
+    apiVersion: 'playlist.grafana.app/v0alpha1',
+    kind: 'Playlist',
     spec: {
       items: [],
       interval: '5m',

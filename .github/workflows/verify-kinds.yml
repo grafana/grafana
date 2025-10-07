@@ -6,12 +6,16 @@ on:
     paths:
       - '**/*.cue'
 
+permissions: {}
+
 jobs:
   main:
     runs-on: "ubuntu-latest"
+    permissions:
+      contents: read # clone repository
     steps:
       - name: "Checkout Grafana repo"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v5"
         with:
           fetch-depth: 0
           persist-credentials: false

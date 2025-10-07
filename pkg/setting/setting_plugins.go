@@ -110,6 +110,26 @@ func (cfg *Cfg) processPreinstallPlugins(rawInstallPlugins []string, preinstallP
 	}
 }
 
+// readPluginAPIRestrictionsSection reads a plugin API restrictions section and returns a map of API names to plugin lists
+func readPluginAPIRestrictionsSection(iniFile *ini.File, sectionName string) map[string][]string {
+	result := make(map[string][]string)
+
+	if !iniFile.HasSection(sectionName) {
+		return result
+	}
+
+	section := iniFile.Section(sectionName)
+	for _, key := range section.Keys() {
+		apiName := key.Name()
+		pluginList := util.SplitString(key.MustString(""))
+		if len(pluginList) > 0 {
+			result[apiName] = pluginList
+		}
+	}
+
+	return result
+}
+
 func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	pluginsSection := iniFile.Section("plugins")
 
@@ -121,7 +141,6 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 
 	cfg.PluginsAllowUnsigned = util.SplitString(pluginsSection.Key("allow_loading_unsigned_plugins").MustString(""))
 	cfg.DisablePlugins = util.SplitString(pluginsSection.Key("disable_plugins").MustString(""))
-	cfg.HideAngularDeprecation = util.SplitString(pluginsSection.Key("hide_angular_deprecation").MustString(""))
 	cfg.ForwardHostEnvVars = util.SplitString(pluginsSection.Key("forward_host_env_vars").MustString(""))
 	disablePreinstall := pluginsSection.Key("preinstall_disabled").MustBool(false)
 	if !disablePreinstall {
@@ -178,6 +197,10 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginLogBackendRequests = pluginsSection.Key("log_backend_requests").MustBool(false)
 
 	cfg.PluginUpdateStrategy = pluginsSection.Key("update_strategy").In(PluginUpdateStrategyLatest, []string{PluginUpdateStrategyLatest, PluginUpdateStrategyMinor})
+
+	// Plugin API restrictions - read from sections
+	cfg.PluginRestrictedAPIsAllowList = readPluginAPIRestrictionsSection(iniFile, "plugins.restricted_apis_allowlist")
+	cfg.PluginRestrictedAPIsBlockList = readPluginAPIRestrictionsSection(iniFile, "plugins.restricted_apis_blocklist")
 
 	return nil
 }

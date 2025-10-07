@@ -188,6 +188,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <NavLandingPage navId="testing-and-synthetics" />,
     },
     {
+      path: '/adaptive-telemetry',
+      component: () => <NavLandingPage navId="adaptive-telemetry" />,
+    },
+    {
       path: '/monitoring',
       component: () => <Navigate replace to="/observability" />,
     },
@@ -359,14 +363,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminEditOrgPage" */ 'app/features/admin/AdminEditOrgPage')
       ),
-    },
-    {
-      path: '/admin/featuretoggles',
-      component: config.featureToggles.featureToggleAdminPage
-        ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "AdminFeatureTogglesPage" */ 'app/features/admin/AdminFeatureTogglesPage')
-          )
-        : () => <Navigate replace to="/admin" />,
     },
     {
       path: '/admin/stats',

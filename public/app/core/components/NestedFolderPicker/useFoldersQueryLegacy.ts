@@ -7,10 +7,10 @@ import { ListFolderQueryArgs, browseDashboardsAPI } from 'app/features/browse-da
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { PermissionLevelString } from 'app/types/acl';
 import { FolderListItemDTO } from 'app/types/folders';
 import { useDispatch, useSelector } from 'app/types/store';
 
+import { UseFoldersQueryProps } from './useFoldersQuery';
 import { getRootFolderItem } from './utils';
 
 type ListFoldersQuery = ReturnType<ReturnType<typeof browseDashboardsAPI.endpoints.listFolders.select>>;
@@ -45,15 +45,21 @@ function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undef
 /**
  * Returns a loaded folder hierarchy as a flat list and a function to load more pages.
  */
-export function useFoldersQueryLegacy(
-  isBrowsing: boolean,
-  openFolders: Record<string, boolean>,
-  permission?: PermissionLevelString
-) {
+export function useFoldersQueryLegacy({
+  isBrowsing,
+  openFolders,
+  permission,
+  /* rootFolderUID: configure which folder to start browsing from */
+  rootFolderUID,
+  rootFolderItem,
+}: UseFoldersQueryProps) {
   const dispatch = useDispatch();
 
   // Keep a list of all request subscriptions so we can unsubscribe from them when the component is unmounted
   const requestsRef = useRef<ListFoldersRequest[]>([]);
+
+  // Set of UIDs for which children were requested but were empty.
+  const [emptyFolders, setEmptyFolders] = useState<Set<string>>(new Set());
 
   // Keep a list of selectors for dynamic state selection
   const [selectors, setSelectors] = useState<
@@ -157,12 +163,20 @@ export function useFoldersQueryLegacy(
               title: item.title,
               uid: item.uid,
               managedBy: item.managedBy,
+              parentUID: item.parentUid,
             },
           };
 
           const childPages = folderIsOpen && state.pagesByParent[item.uid];
+
           if (childPages) {
             const childFlatItems = createFlatList(item.uid, childPages, level + 1);
+
+            // If we finished loading and there are no children add to empty list
+            if (childPages[0] && childPages[0].status !== PENDING_STATUS && childFlatItems.length === 0) {
+              setEmptyFolders((prev) => new Set(prev).add(item.uid));
+            }
+
             return [flatItem, ...childFlatItems];
           }
 
@@ -178,13 +192,16 @@ export function useFoldersQueryLegacy(
       return flatList;
     }
 
-    const rootFlatTree = createFlatList(undefined, state.rootPages, 1);
-    rootFlatTree.unshift(getRootFolderItem());
+    const startingPages = rootFolderUID ? state.pagesByParent[rootFolderUID] : state.rootPages;
+
+    const rootFlatTree = createFlatList(rootFolderUID ?? undefined, startingPages ?? [], 1);
+    rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders]);
+  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
 
   return {
+    emptyFolders,
     items: treeList,
     isLoading: state.isLoading,
     requestNextPage,

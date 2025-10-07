@@ -4,18 +4,7 @@ import { useForm } from 'react-hook-form';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Button,
-  ClipboardButton,
-  Field,
-  HorizontalGroup,
-  Input,
-  Stack,
-  Label,
-  ModalsController,
-  Switch,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, ClipboardButton, Field, Input, Stack, Label, ModalsController, Switch, useStyles2 } from '@grafana/ui';
 import {
   useDeletePublicDashboardMutation,
   usePauseOrResumePublicDashboardMutation,
@@ -213,7 +202,7 @@ export function ConfigPublicDashboardBase({
         justifyContent={isDesktop ? 'flex-end' : 'flex-start'}
         alignItems={isDesktop ? 'center' : 'stretch'}
       >
-        <HorizontalGroup justify="flex-end">
+        <Stack justifyContent="flex-end">
           <Button
             title={t('public-dashboard.config.revoke-public-URL-button-title', 'Revoke public URL')}
             onClick={onRevoke}
@@ -225,7 +214,7 @@ export function ConfigPublicDashboardBase({
           >
             <Trans i18nKey="public-dashboard.config.revoke-public-URL-button">Revoke public URL</Trans>
           </Button>
-        </HorizontalGroup>
+        </Stack>
       </Stack>
     </div>
   );

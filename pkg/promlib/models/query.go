@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	glog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 )
 
@@ -80,10 +82,8 @@ type PrometheusQueryProperties struct {
 type ScopeSpec struct {
 	Name        string        `json:"name"` // This is the identifier from metadata.name of the scope model.
 	Title       string        `json:"title"`
-	Type        string        `json:"type"`
-	Description string        `json:"description"`
-	Category    string        `json:"category"`
-	Filters     []ScopeFilter `json:"filters"`
+	DefaultPath []string      `json:"defaultPath,omitempty"`
+	Filters     []ScopeFilter `json:"filters,omitempty"`
 }
 
 // ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go
@@ -192,7 +192,7 @@ type internalQueryModel struct {
 	Interval     string `json:"interval,omitempty"`
 }
 
-func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool, enableScope bool) (*Query, error) {
+func Parse(ctx context.Context, log glog.Logger, span trace.Span, query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool, enableScope bool) (*Query, error) {
 	model := &internalQueryModel{}
 	if err := json.Unmarshal(query.JSON, model); err != nil {
 		return nil, err
@@ -243,6 +243,7 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 		}
 
 		if len(scopeFilters) > 0 || len(model.AdhocFilters) > 0 || len(model.GroupByKeys) > 0 {
+			log.Info("Applying scope filters", "scopeFiltersCount", len(scopeFilters), "adhocFiltersCount", len(model.AdhocFilters), "groupByKeysCount", len(model.GroupByKeys))
 			expr, err = ApplyFiltersAndGroupBy(expr, scopeFilters, model.AdhocFilters, model.GroupByKeys)
 			if err != nil {
 				return nil, err

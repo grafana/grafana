@@ -114,7 +114,7 @@ interface LogsPanelProps extends PanelProps<Options> {
    * controlsStorageKey?: string
    *
    * If controls are enabled, this function is called when a change is made in one of the options from the controls.
-   * onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
+   * onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
    *
    * When the feature toggle newLogsPanel is enabled, you can pass extra options to the LogLineMenu component.
    * These options are an array of items with { label, onClick } or { divider: true } for dividers.
@@ -606,9 +606,11 @@ export const LogsPanel = ({
               onOpenContext={onOpenContext}
               onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
               permalinkedLogId={getLogsPanelState()?.logs?.id ?? undefined}
+              prettifyJSON={prettifyLogMessage}
               setDisplayedFields={setDisplayedFieldsFn}
               showControls={Boolean(showControls)}
               showTime={showTime}
+              showUniqueLabels={showLabels}
               sortOrder={sortOrder}
               logOptionsStorageKey={storageKey}
               syntaxHighlighting={syntaxHighlighting}
@@ -672,6 +674,7 @@ export const LogsPanel = ({
                 logRowMenuIconsAfter={isReactNodeArray(logRowMenuIconsAfter) ? logRowMenuIconsAfter : undefined}
                 // Ascending order causes scroll to stick to the bottom, so previewing is futile
                 renderPreview={isAscending ? false : true}
+                timeRange={data.timeRange}
               />
             </InfiniteScroll>
             {showCommonLabels && isAscending && renderCommonLabels()}
@@ -725,6 +728,7 @@ export const LogsPanel = ({
             logOptionsStorageKey={controlsStorageKey}
             // Ascending order causes scroll to stick to the bottom, so previewing is futile
             renderPreview={isAscending ? false : true}
+            timeRange={data.timeRange}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>

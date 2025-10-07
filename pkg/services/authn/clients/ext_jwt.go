@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/go-jose/go-jose/v3/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"go.opentelemetry.io/otel/trace"
 
 	authlib "github.com/grafana/authlib/authn"
@@ -215,7 +216,7 @@ func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 
-	parsedToken, err := jwt.ParseSigned(rawToken)
+	parsedToken, err := jwt.ParseSigned(rawToken, []jose.SignatureAlgorithm{jose.ES256})
 	if err != nil {
 		return false
 	}
