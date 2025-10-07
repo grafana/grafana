@@ -253,3 +253,4 @@ public/mockServiceWorker.js
 
 # Ignore unified storage kv store files
 /grafana-kv-data
+.hippo
