@@ -94,6 +94,15 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
   onExposedComponentClick,
   styles,
 }) => {
+  // Function to count extensions for each extension point
+  const getExtensionCountForExtensionPoint = (extensionPointId: string): number => {
+    if (!data.dependencies) {
+      return 0;
+    }
+
+    // Count dependencies that target this extension point
+    return data.dependencies.filter((dep) => dep.target === extensionPointId).length;
+  };
   if (isExposeMode) {
     return (
       <g>
@@ -586,6 +595,8 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                         return null;
                       }
 
+                      const extensionCount = getExtensionCountForExtensionPoint(epId);
+
                       return (
                         <g key={epId}>
                           {/* Extension point box */}
@@ -599,6 +610,32 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                             strokeWidth={VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH}
                             rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
                           />
+
+                          {/* Extension count badge */}
+                          {extensionCount > 0 && (
+                            <g>
+                              {/* Badge background circle */}
+                              <circle
+                                cx={epPos.x + extensionBoxWidth - 12}
+                                cy={epPos.y - extensionBoxHeight / 2 + 12}
+                                r={8}
+                                fill="#ffd700"
+                              />
+                              {/* Badge text */}
+                              <text
+                                x={epPos.x + extensionBoxWidth - 12}
+                                y={epPos.y - extensionBoxHeight / 2 + 12}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fill="#000000"
+                                fontSize="10"
+                                fontWeight="bold"
+                                style={{ pointerEvents: 'none' }}
+                              >
+                                {extensionCount}
+                              </text>
+                            </g>
+                          )}
 
                           {/* Extension point ID */}
                           <text
@@ -795,6 +832,8 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       const extensionType = extensionPoint?.extensionType || 'link';
                       const extensionColor = getExtensionColor(extensionType);
 
+                      const extensionCount = getExtensionCountForExtensionPoint(epId);
+
                       return (
                         <g key={epId}>
                           {/* Extension point box with type-specific color */}
@@ -819,6 +858,32 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                             }}
                             style={{ cursor: 'pointer' }}
                           />
+
+                          {/* Extension count badge */}
+                          {extensionCount > 0 && (
+                            <g>
+                              {/* Badge background circle */}
+                              <circle
+                                cx={epPos.x + extensionBoxWidth - 12}
+                                cy={epPos.y - extensionBoxHeight / 2 + 12}
+                                r={8}
+                                fill="#ffd700"
+                              />
+                              {/* Badge text */}
+                              <text
+                                x={epPos.x + extensionBoxWidth - 12}
+                                y={epPos.y - extensionBoxHeight / 2 + 12}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fill="#000000"
+                                fontSize="10"
+                                fontWeight="bold"
+                                style={{ pointerEvents: 'none' }}
+                              >
+                                {extensionCount}
+                              </text>
+                            </g>
+                          )}
 
                           {/* Extension point ID - first line */}
                           {(() => {
