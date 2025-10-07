@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	gojson "github.com/goccy/go-json"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -659,28 +660,73 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		groupedRules = groupedRules[startIdx:endIdx]
 	}
 
-	rulesTotals := make(map[string]int64, len(groupedRules))
-	for _, rg := range groupedRules {
-		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)
-		ruleGroup.Totals = totals
-		for k, v := range totals {
+	// PERFORMANCE OPTIMIZATION: Process rule groups in parallel to overlap state manager I/O
+	// Use worker pool to limit concurrency
+	type groupResult struct {
+		ruleGroup *apimodels.RuleGroup
+		totals    map[string]int64
+		index     int
+	}
+
+	workerCount := 8 // Tune based on CPU cores and state manager capacity
+	resultsChan := make(chan groupResult, len(groupedRules))
+	semaphore := make(chan struct{}, workerCount)
+	var wg sync.WaitGroup
+
+	for i, rg := range groupedRules {
+		wg.Add(1)
+		semaphore <- struct{}{} // Acquire
+		go func(idx int, rg *ruleGroup) {
+			defer wg.Done()
+			defer func() { <-semaphore }() // Release
+
+			ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)
+			ruleGroup.Totals = totals
+
+			if len(stateFilterSet) > 0 {
+				filterRulesByState(ruleGroup, stateFilterSet)
+			}
+
+			if len(healthFilterSet) > 0 {
+				filterRulesByHealth(ruleGroup, healthFilterSet)
+			}
+
+			if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
+				ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
+			}
+
+			if len(ruleGroup.Rules) > 0 {
+				resultsChan <- groupResult{
+					ruleGroup: ruleGroup,
+					totals:    totals,
+					index:     idx,
+				}
+			}
+		}(i, rg)
+	}
+
+	go func() {
+		wg.Wait()
+		close(resultsChan)
+	}()
+
+	// Collect results in order
+	results := make([]groupResult, 0, len(groupedRules))
+	for result := range resultsChan {
+		results = append(results, result)
+	}
+
+	// Sort by original index to maintain order
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].index < results[j].index
+	})
+
+	// Build final response
+	rulesTotals := make(map[string]int64)
+	for _, result := range results {
+		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *result.ruleGroup)
+		for k, v := range result.totals {
 			rulesTotals[k] += v
-		}
-
-		if len(stateFilterSet) > 0 {
-			filterRulesByState(ruleGroup, stateFilterSet)
-		}
-
-		if len(healthFilterSet) > 0 {
-			filterRulesByHealth(ruleGroup, healthFilterSet)
-		}
-
-		if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
-			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
-		}
-
-		if len(ruleGroup.Rules) > 0 {
-			ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
 		}
 	}
 

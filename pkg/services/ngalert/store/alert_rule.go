@@ -1074,7 +1074,6 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 		}()
 
 		// Use batched conversion: overlaps DB I/O with JSON unmarshaling
-		// Producer goroutine fetches rows while consumer unmarshals previous batch
 		alertRules := st.convertAlertRulesBatched(rows, query, groupsSet, expectedSize)
 
 		// Combined duration includes both row scanning and conversion (overlapped)
