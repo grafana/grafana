@@ -19,11 +19,9 @@ import {
 import {
   DataHoverClearEvent,
   DataHoverEvent,
-  DecimalCount,
   FALLBACK_COLOR,
   Field,
   FieldType,
-  formattedValueToString,
   getDisplayProcessor,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
