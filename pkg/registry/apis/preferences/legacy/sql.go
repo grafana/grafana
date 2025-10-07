@@ -12,6 +12,7 @@ import (
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -58,13 +59,16 @@ func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user str
 
 	req := newStarQueryReq(sql, user, orgId)
 
-	q, err := sqltemplate.Execute(sqlStarsQuery, req)
+	q, err := sqltemplate.Execute(sqlDashboardStarsQuery, req)
 	if err != nil {
-		return nil, 0, fmt.Errorf("execute template %q: %w", sqlStarsQuery.Name(), err)
+		return nil, 0, fmt.Errorf("execute template %q: %w", sqlDashboardStarsQuery.Name(), err)
 	}
 
 	sess := sql.DB.GetSqlxSession()
 	rows, err := sess.Query(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return nil, 0, err
+	}
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
@@ -111,7 +115,7 @@ func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user str
 	// Find the RV unless it is a user query
 	if userUID == "" {
 		req.Reset()
-		q, err = sqltemplate.Execute(sqlStarsRV, req)
+		q, err = sqltemplate.Execute(sqlDashboardStarsRV, req)
 		if err != nil {
 			return nil, 0, fmt.Errorf("execute template %q: %w", sqlPreferencesRV.Name(), err)
 		}
@@ -130,6 +134,90 @@ func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user str
 	}
 
 	return stars, updated.UnixMilli(), err
+}
+
+func (s *LegacySQL) getHistoryStars(ctx context.Context, orgId int64, user string) (map[string][]string, error) {
+	sql, err := s.db(ctx)
+	if err != nil {
+		return nil, err
+	}
+	req := newStarQueryReq(sql, user, orgId)
+
+	q, err := sqltemplate.Execute(sqlHistoryStarsQuery, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlHistoryStarsQuery.Name(), err)
+	}
+
+	sess := sql.DB.GetSqlxSession()
+	rows, err := sess.Query(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+
+	last := user
+	res := make(map[string][]string)
+	buffer := make([]string, 0, 10)
+	var uid string
+
+	for rows.Next() {
+		err := rows.Scan(&uid, &user)
+		if err != nil {
+			return nil, err
+		}
+		if user != last && len(buffer) > 0 {
+			res[last] = buffer
+			buffer = make([]string, 0, 10)
+		}
+		buffer = append(buffer, uid)
+		last = user
+	}
+	res[last] = buffer
+	return res, nil
+}
+
+func (s *LegacySQL) removeHistoryStar(ctx context.Context, user *user.User, stars []string) error {
+	sql, err := s.db(ctx)
+	if err != nil {
+		return err
+	}
+	req := newStarQueryReq(sql, "", user.OrgID)
+	req.UserID = user.ID
+	if len(stars) > 0 {
+		req.QueryUIDs = stars
+	}
+
+	q, err := sqltemplate.Execute(sqlHistoryStarsDelete, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlHistoryStarsDelete.Name(), err)
+	}
+
+	sess := sql.DB.GetSqlxSession()
+	_, err = sess.Exec(ctx, q, req.GetArgs()...)
+	return err
+}
+
+func (s *LegacySQL) addHistoryStar(ctx context.Context, user *user.User, star string) error {
+	sql, err := s.db(ctx)
+	if err != nil {
+		return err
+	}
+	req := newStarQueryReq(sql, "", user.OrgID)
+	req.UserID = user.ID
+	req.QueryUID = star
+
+	q, err := sqltemplate.Execute(sqlHistoryStarsDelete, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlHistoryStarsDelete.Name(), err)
+	}
+
+	sess := sql.DB.GetSqlxSession()
+	_, err = sess.Exec(ctx, q, req.GetArgs()...)
+	return err
 }
 
 // List all defined preferences in an org (valid for admin users only)

@@ -833,16 +833,6 @@
       "count": 13
     }
   },
-  "packages/grafana-ui/src/components/Slider/RangeSlider.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Slider/Slider.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Table/Cells/TableCell.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 3
@@ -1863,11 +1853,6 @@
   },
   "public/app/features/browse-dashboards/components/NewFolderForm.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/commandPalette/actions/recentScopesActions.ts": {
-    "react-hooks/rules-of-hooks": {
       "count": 1
     }
   },
@@ -3393,11 +3378,6 @@
       "count": 1
     }
   },
-  "public/app/features/transformers/editors/GroupByTransformerEditor.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/transformers/editors/GroupToNestedTableTransformerEditor.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -4559,11 +4539,6 @@
   },
   "public/app/plugins/panel/live/LivePanel.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/logs/types.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
