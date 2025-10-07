@@ -132,6 +132,7 @@ const (
 	EnricherTypeAsserts         EnricherType = "asserts"
 	EnricherTypeExplain         EnricherType = "explain"
 	EnricherTypeLoop            EnricherType = "loop"
+	EnricherTypeAssistant       EnricherType = "assistant"
 )
 
 // EnricherConfig is a discriminated union of enricher configurations.
@@ -145,6 +146,7 @@ type EnricherConfig struct {
 	Asserts    *AssertsEnricher    `json:"asserts,omitempty" yaml:"asserts,omitempty" jsonschema:"description=Asserts enricher settings"`
 	Explain    *ExplainEnricher    `json:"explain,omitempty" yaml:"explain,omitempty" jsonschema:"description=Explain enricher settings"`
 	Loop       *LoopEnricher       `json:"loop,omitempty" yaml:"loop,omitempty" jsonschema:"description=Loop enricher settings"`
+	Assistant  *AssistantEnricher  `json:"assistant,omitempty" yaml:"assistant,omitempty" jsonschema:"description=Assistant enricher settings"`
 }
 
 // AssignEnricher configures an enricher which assigns annotations.
@@ -224,10 +226,15 @@ type AssertsEnricher struct {
 
 // ExplainEnricher uses LLM to generate explanations for alerts.
 type ExplainEnricher struct {
-	Annotation string `json:"annotation" yaml:"annotation" jsonschema:"description=Annotation name to set the explanation in, by default 'ai_explanation'"`
+	Annotation string `json:"annotation" yaml:"annotation" jsonschema:"description=Annotation name to set the explanation in, by default '__enriched_ai_explanation'"`
 }
 
 // LoopEnricher configures an enricher which calls into Loop.
 type LoopEnricher struct {
+	// In the future, there may be configuration options.
+}
+
+// AssistantEnricher configures an enricher which calls into Assistant.
+type AssistantEnricher struct {
 	// In the future, there may be configuration options.
 }

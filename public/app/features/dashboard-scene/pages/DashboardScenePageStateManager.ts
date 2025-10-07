@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { BASE_URL } from 'app/api/clients/provisioning/v0alpha1/baseAPI';
+import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
@@ -20,8 +20,10 @@ import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
-import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
+import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ProvisioningPreview } from 'app/features/provisioning/types';
+import { dispatch } from 'app/store/store';
 import {
   DashboardDataDTO,
   DashboardDTO,
@@ -177,26 +179,46 @@ abstract class DashboardScenePageStateManagerBase<T>
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref') ?? undefined; // commit hash or branch
 
-    const url = `${BASE_URL}/repositories/${repo}/files/${path}`;
-    return getBackendSrv()
-      .get(url, ref ? { ref } : undefined)
-      .then((v) => {
-        // Load the results from dryRun
-        const dryRun = v.resource.dryRun;
-        if (!dryRun) {
-          return Promise.reject('failed to read provisioned dashboard');
-        }
+    const loadWithRef = async (refParam: string | undefined) => {
+      const result = await dispatch(
+        provisioningAPIv0alpha1.endpoints.getRepositoryFilesWithPath.initiate({
+          name: repo,
+          path: path,
+          ref: refParam,
+        })
+      );
 
-        if (!dryRun.apiVersion.startsWith('dashboard.grafana.app')) {
-          return Promise.reject('unexpected resource type: ' + dryRun.apiVersion);
-        }
+      if (result && 'error' in result) {
+        throw result.error;
+      }
 
-        return this.processDashboardFromProvisioning(repo, path, dryRun, {
-          file: url,
-          ref: ref,
-          repo: repo,
-        });
+      const v: GetRepositoryFilesWithPathApiResponse = structuredClone(result.data);
+      // Load the results from dryRun
+      const dryRun = v.resource.dryRun;
+      if (!dryRun) {
+        return Promise.reject('failed to read provisioned dashboard');
+      }
+
+      if (!dryRun.apiVersion.startsWith('dashboard.grafana.app')) {
+        return Promise.reject('unexpected resource type: ' + dryRun.apiVersion);
+      }
+
+      return this.processDashboardFromProvisioning(repo, path, dryRun, {
+        file: v.path ?? '',
+        ref: refParam,
+        repo: repo,
       });
+    };
+
+    try {
+      return await loadWithRef(ref);
+    } catch (err) {
+      // If ref is not found (404), retry without ref to default to the main branch
+      if (ref && isFetchError(err) && err.status === 404) {
+        return await loadWithRef(undefined);
+      }
+      throw err;
+    }
   }
 
   private processDashboardFromProvisioning(
@@ -479,7 +501,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           }
       }
 
-      if (rsp.meta.url && route === DashboardRoutes.Normal) {
+      // Fix outdated URLs (e.g., old slugs from title changes) but skip during playlist navigation
+      // Playlists manage their own URL generation and redirects would break the navigation flow
+      if (rsp.meta.url && route === DashboardRoutes.Normal && !playlistSrv.state.isPlaying) {
         const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
         const currentPath = locationService.getLocation().pathname;
 
@@ -662,7 +686,9 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
             rsp.metadata.annotations[AnnoKeyEmbedded] = 'embedded';
           }
       }
-      if (rsp.access.url && route === DashboardRoutes.Normal) {
+      // Fix outdated URLs (e.g., old slugs from title changes) but skip during playlist navigation
+      // Playlists manage their own URL generation and redirects would break the navigation flow
+      if (rsp.access.url && route === DashboardRoutes.Normal && !playlistSrv.state.isPlaying) {
         const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.access.url);
         const currentPath = locationService.getLocation().pathname;
         if (dashboardUrl !== currentPath) {

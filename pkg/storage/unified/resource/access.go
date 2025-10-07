@@ -107,7 +107,7 @@ func NewAuthzLimitedClient(client claims.AccessClient, opts AuthzOptions) claims
 }
 
 // Check implements claims.AccessClient.
-func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req claims.CheckRequest) (claims.CheckResponse, error) {
+func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req claims.CheckRequest, folder string) (claims.CheckResponse, error) {
 	t := time.Now()
 	ctx, span := c.tracer.Start(ctx, "authzLimitedClient.Check", trace.WithAttributes(
 		attribute.String("group", req.Group),
@@ -115,7 +115,7 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		attribute.String("namespace", req.Namespace),
 		attribute.String("name", req.Name),
 		attribute.String("verb", req.Verb),
-		attribute.String("folder", req.Folder),
+		attribute.String("folder", folder),
 		attribute.Bool("fallback_used", FallbackUsed(ctx)),
 	))
 	defer span.End()
@@ -145,7 +145,7 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		span.SetAttributes(attribute.Bool("allowed", true))
 		return claims.CheckResponse{Allowed: true}, nil
 	}
-	resp, err := c.client.Check(ctx, id, req)
+	resp, err := c.client.Check(ctx, id, req, folder)
 	if err != nil {
 		c.logger.Error("Check", "group", req.Group, "resource", req.Resource, "error", err, "duration", time.Since(t), "traceid", trace.SpanContextFromContext(ctx).TraceID().String())
 		c.metrics.errorsTotal.WithLabelValues(req.Group, req.Resource, req.Verb).Inc()
@@ -159,7 +159,7 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 }
 
 // Compile implements claims.AccessClient.
-func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req claims.ListRequest) (claims.ItemChecker, error) {
+func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
 	t := time.Now()
 	fallbackUsed := FallbackUsed(ctx)
 	ctx, span := c.tracer.Start(ctx, "authzLimitedClient.Compile", trace.WithAttributes(
@@ -177,34 +177,34 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 			span.SetStatus(codes.Error, "Namespace empty")
 			err := fmt.Errorf("namespace empty")
 			span.RecordError(err)
-			return nil, err
+			return nil, claims.NoopZookie{}, err
 		}
 		return func(name, folder string) bool {
 			return true
-		}, nil
+		}, claims.NoopZookie{}, nil
 	}
 	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
 		span.SetAttributes(attribute.Bool("allowed", false))
 		span.SetStatus(codes.Error, "Namespace mismatch")
 		span.RecordError(claims.ErrNamespaceMismatch)
-		return nil, claims.ErrNamespaceMismatch
+		return nil, claims.NoopZookie{}, claims.ErrNamespaceMismatch
 	}
 
 	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
 		return func(name, folder string) bool {
 			return true
-		}, nil
+		}, claims.NoopZookie{}, nil
 	}
-	checker, err := c.client.Compile(ctx, id, req)
+	checker, zookie, err := c.client.Compile(ctx, id, req)
 	if err != nil {
 		c.logger.Error("Compile", "group", req.Group, "resource", req.Resource, "error", err, "traceid", trace.SpanContextFromContext(ctx).TraceID().String())
 		c.metrics.errorsTotal.WithLabelValues(req.Group, req.Resource, req.Verb).Inc()
 		span.SetStatus(codes.Error, fmt.Sprintf("compile failed: %v", err))
 		span.RecordError(err)
-		return nil, err
+		return nil, zookie, err
 	}
 	c.metrics.compileDuration.WithLabelValues(req.Group, req.Resource, req.Verb).Observe(time.Since(t).Seconds())
-	return checker, nil
+	return checker, zookie, nil
 }
 
 func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
