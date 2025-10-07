@@ -1,4 +1,4 @@
-import { api } from './baseAPI';
+import { api } from './api';
 export const addTagTypes = ['API Discovery', 'AlertRule', 'RecordingRule'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
@@ -313,7 +313,7 @@ const injectedRtkApi = api
     }),
     overrideExisting: false,
   });
-export { injectedRtkApi as generatedAPI };
+export { injectedRtkApi as rulesAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
 export type ListAlertRuleApiResponse = /** status 200 OK */ AlertRuleList;
