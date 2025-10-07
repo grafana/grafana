@@ -38,7 +38,7 @@ export const formatEndpoints = () => (endpointsInput: string | string[]) => {
 export const getFilesToFormat = (groupName: string, version: string, isEnterprise = false) => {
   const apiClientBasePath = isEnterprise
     ? 'public/app/extensions/api/clients'
-    : 'packages/grafana-api-clients/src/clients';
+    : 'packages/grafana-api-clients/src/clients/rtkq';
   const generateScriptPath = isEnterprise
     ? 'local/generate-enterprise-apis.ts'
     : 'packages/grafana-api-clients/src/scripts/generate-rtk-apis.ts';

@@ -2996,6 +2996,8 @@ __metadata:
   resolution: "@grafana/api-clients@workspace:packages/grafana-api-clients"
   dependencies:
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
+    "@types/inquirer-autocomplete-prompt": "npm:^3.0.3"
+    inquirer-autocomplete-prompt: "npm:^3.0.1"
     openapi-types: "npm:^12.1.3"
     plop: "npm:^4.0.1"
     rollup: "npm:^4.22.4"
@@ -9571,6 +9573,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/inquirer-autocomplete-prompt@npm:^3.0.3":
+  version: 3.0.3
+  resolution: "@types/inquirer-autocomplete-prompt@npm:3.0.3"
+  dependencies:
+    "@types/inquirer": "npm:*"
+  checksum: 10/252e4c684bed4a45b8511008f742979a44dd8f1aa301b7b021b1176517c62c62822f6fa89dabd19811a29504c71b88341acafe203942733d7665b325f14ea95f
+  languageName: node
+  linkType: hard
+
+"@types/inquirer@npm:*":
+  version: 9.0.9
+  resolution: "@types/inquirer@npm:9.0.9"
+  dependencies:
+    "@types/through": "npm:*"
+    rxjs: "npm:^7.2.0"
+  checksum: 10/015ee6fa65d1d79c070c889906be3eceedd77aa08a4aea3d17b188c9d169b459994244525f054b60de0e28fe9c492df75527a7b63da16e06fcc09e54039ac652
+  languageName: node
+  linkType: hard
+
 "@types/inquirer@npm:^9.0.3":
   version: 9.0.7
   resolution: "@types/inquirer@npm:9.0.7"
@@ -16059,7 +16080,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"escape-string-regexp@npm:5.0.0":
+"escape-string-regexp@npm:5.0.0, escape-string-regexp@npm:^5.0.0":
   version: 5.0.0
   resolution: "escape-string-regexp@npm:5.0.0"
   checksum: 10/20daabe197f3cb198ec28546deebcf24b3dbb1a5a269184381b3116d12f0532e06007f4bc8da25669d6a7f8efb68db0758df4cd981f57bc5b57f521a3e12c59e
@@ -17010,6 +17031,16 @@ __metadata:
   dependencies:
     escape-string-regexp: "npm:^1.0.5"
   checksum: 10/a3bf94e001be51d3770500789157f067218d4bc681a65e1f69d482de15120bcac822dceb1a7b3803f32e4e3a61a46df44f7f2c8ba95d6375e7491502e0dd3d97
+  languageName: node
+  linkType: hard
+
+"figures@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "figures@npm:5.0.0"
+  dependencies:
+    escape-string-regexp: "npm:^5.0.0"
+    is-unicode-supported: "npm:^1.2.0"
+  checksum: 10/951d18be2f450c90462c484eff9bda705293319bc2f17b250194a0cf1a291600db4cb283a6ce199d49380c95b08d85d822ce4b18d2f9242663fd5895476d667c
   languageName: node
   linkType: hard
 
@@ -19617,6 +19648,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"inquirer-autocomplete-prompt@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "inquirer-autocomplete-prompt@npm:3.0.1"
+  dependencies:
+    ansi-escapes: "npm:^6.0.0"
+    figures: "npm:^5.0.0"
+    picocolors: "npm:^1.0.0"
+    run-async: "npm:^2.4.1"
+    rxjs: "npm:^7.5.6"
+  peerDependencies:
+    inquirer: ^9.1.0
+  checksum: 10/758eb9a4487ffcd02fb6ea95a2751fa7aeac0d6a45f06ada07b2733406a693eb1f545f5d14dd2d688ddb84492ac5bb3a6cc70024cfbd8081e6660351c5a8c78e
+  languageName: node
+  linkType: hard
+
 "inquirer@npm:^8.2.4":
   version: 8.2.6
   resolution: "inquirer@npm:8.2.6"
@@ -20297,7 +20343,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-unicode-supported@npm:^1.3.0":
+"is-unicode-supported@npm:^1.2.0, is-unicode-supported@npm:^1.3.0":
   version: 1.3.0
   resolution: "is-unicode-supported@npm:1.3.0"
   checksum: 10/20a1fc161afafaf49243551a5ac33b6c4cf0bbcce369fcd8f2951fbdd000c30698ce320de3ee6830497310a8f41880f8066d440aa3eb0a853e2aa4836dd89abc
@@ -28611,7 +28657,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"run-async@npm:^2.4.0":
+"run-async@npm:^2.4.0, run-async@npm:^2.4.1":
   version: 2.4.1
   resolution: "run-async@npm:2.4.1"
   checksum: 10/c79551224dafa26ecc281cb1efad3510c82c79116aaf681f8a931ce70fdf4ca880d58f97d3b930a38992c7aad7955a08e065b32ec194e1dd49d7790c874ece50
@@ -28650,7 +28696,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rxjs@npm:7.8.2, rxjs@npm:^7.2.0, rxjs@npm:^7.5.1, rxjs@npm:^7.5.5, rxjs@npm:^7.8.1":
+"rxjs@npm:7.8.2, rxjs@npm:^7.2.0, rxjs@npm:^7.5.1, rxjs@npm:^7.5.5, rxjs@npm:^7.5.6, rxjs@npm:^7.8.1":
   version: 7.8.2
   resolution: "rxjs@npm:7.8.2"
   dependencies:
