@@ -364,6 +364,7 @@ func TestService_mapping(t *testing.T) {
 			},
 			output: &checkRequest{
 				Action:       "folders:create",
+				ActionSets:   []string{"folders:edit", "folders:admin"},
 				Group:        "folder.grafana.app",
 				Resource:     "folders",
 				Name:         "aaa",
