@@ -141,7 +141,6 @@ The Grafana AWS account then makes a Security Token Service (STS) request to gen
 
 For more information, refer to the [AWS documentation on external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html).
 
-
 To use the Grafana Assume Role:
 
 1. Create a new CloudWatch data source (or update an existing one) and select **Grafana Assume Role** as an authentication provider.
