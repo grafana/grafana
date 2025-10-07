@@ -25,15 +25,15 @@ You can sign up to the private preview using the [Git Sync early access form](ht
 
 {{< /admonition >}}
 
+Git Sync in Grafana lets you manage your dashboards as code as JSON files stored in GitHub. You and your team can version control, collaborate, and automate deployments efficiently.
+
 Using Git Sync, you can:
 
+- Manage dashboard configuration outside of Grafana instances using Git
 - Introduce a review process for creating and modifying dashboards
-- Manage dashboard configuration outside of Grafana instances
 - Replicate dashboards across multiple instances
 
 ## How it works
-
-Because dashboards are defined in JSON files, you can enable as-code workflows where the JSON file is an output from Go, TypeScript, or another coding language in the format of a dashboard schema. To learn more about creating dashboards in a coding language to provision them for Git Sync, refer to the [Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/foundation-sdk) documentation.
 
 Git Sync is bidirectional and works both with changes done directly in GitHub as well as in the Grafana UI.
 
@@ -41,7 +41,7 @@ Git Sync is bidirectional and works both with changes done directly in GitHub as
 
 Whenever you modify a dashboard directly from the UI, Grafana can commit changes to Git upon saving. You can configure settings to either enforce PR approvals before merging in your repository, or allow direct commits.
 
-Grafana periodically polls GitHub at a regular internal to synchronize any changes. The default polling interval is 60 seconds.
+Grafana periodically polls GitHub at a regular internal to synchronize any changes. The default polling interval is 60 seconds, and you can change this setting in the Grafana UI.
 
 - If you enable the [webhooks feature](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering), repository notifications appear almost immediately.
 - Without webhooks, Grafana polls for changes at the specified interval.
@@ -54,14 +54,14 @@ With Git Sync, you can make changes in your provisioned files in GitHub and see 
 
 Git Sync is under development and the following limitations apply:
 
-- You can only authenticate using your GitHub token.
-- Support for native Git and other providers, such as GitLab or Bitbucket, is scheduled.
+- You can only authenticate in GitHub using your Personal Access Token token.
+- Support for native Git, Git app, and other providers, such as GitLab or Bitbucket, is on the roadmap.
 - If you're using Git Sync in Grafana Cloud you can only sync specific folders for the moment. Git Sync will be available for your full instance soon.
 - Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
 
 ## Common use cases
 
-Git Sync in Grafana lets you manage your dashboards as code as JSON files stored in GitHub. You and your team can version control, collaborate, and automate deployments efficiently.
+You can use Git Sync in the following scenarios.
 
 ### Version control and auditing
 
@@ -93,3 +93,9 @@ By using Git Sync, teams can automate deployments across environments, eliminati
 By continuously syncing dashboards to GitHub, organizations can create an always-updated backup, ensuring dashboards are never lost due to accidental deletion or system failures.
 
 If an issue arises, such as a corrupted dashboard, unintended modification, or a system crash, teams can quickly restore the latest functional version from the Git repository. This not only minimizes downtime but also adds a layer of resilience to Grafana monitoring setups, ensuring critical dashboards remain available when needed.
+
+## Provision dashboards as code
+
+Because dashboards are defined in JSON files, you can enable as-code workflows where the JSON file is an output from Go, TypeScript, or another coding language in the format of a dashboard schema.
+
+To learn more about creating dashboards in a coding language to provision them for Git Sync, refer to the [Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/foundation-sdk) documentation.
