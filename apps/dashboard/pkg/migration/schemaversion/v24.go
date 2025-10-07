@@ -284,7 +284,17 @@ func findNonDefaultStyles(prevOptions map[string]interface{}) []interface{} {
 	if styles, ok := prevOptions["styles"].([]interface{}); ok {
 		for _, style := range styles {
 			if styleMap, ok := style.(map[string]interface{}); ok {
-				if pattern, ok := styleMap["pattern"].(string); ok && pattern != "/.*/" {
+				pattern, hasPattern := styleMap["pattern"].(string)
+
+				// If no pattern is specified, treat it as a named field override
+				// This matches frontend behavior for styles without explicit patterns
+				if !hasPattern {
+					// Generate a pattern based on index or use a generic pattern
+					styleMap["pattern"] = "" // Empty pattern will be handled by migrateTableStyleToOverride
+				}
+
+				// Create override for non-default patterns (anything except "/.*/" or missing pattern with defaults)
+				if !hasPattern || (pattern != "/.*/" && pattern != "") {
 					override := migrateTableStyleToOverride(styleMap)
 					overrides = append(overrides, override)
 				}
@@ -368,11 +378,17 @@ func migrateTableStyleToOverride(style map[string]interface{}) map[string]interf
 		fieldMatcherID = "byRegexp"
 	}
 
+	matcher := map[string]interface{}{
+		"id": fieldMatcherID,
+	}
+
+	// Only add options if pattern is not empty (matches frontend behavior)
+	if pattern != "" {
+		matcher["options"] = pattern
+	}
+
 	override := map[string]interface{}{
-		"matcher": map[string]interface{}{
-			"id":      fieldMatcherID,
-			"options": pattern,
-		},
+		"matcher":    matcher,
 		"properties": []interface{}{},
 	}
 
