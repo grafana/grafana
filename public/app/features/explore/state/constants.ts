@@ -20,6 +20,7 @@ export const DEFAULT_SPAN_FILTERS = {
   fromOperator: '>',
   toOperator: '<',
   tags: [DEFAULT_TAG_FILTERS],
+  adhocFilters: [],
   matchesOnly: false,
   criticalPathOnly: false,
 };

@@ -27,6 +27,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, renderLimitedComponents, usePluginComponents, usePluginLinks } from '@grafana/runtime';
+import { AdHocFiltersComboboxRenderer } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Badge,
@@ -49,7 +50,7 @@ import { getHeaderTags, getTraceName } from '../model/trace-viewer';
 import { Trace, TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
 
-import { SpanFilters } from './SpanFilters/SpanFilters';
+import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController';
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
@@ -77,9 +78,6 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     search,
     setSearch,
     showSpanFilters,
-    setShowSpanFilters,
-    setFocusedSpanIdForSearch,
-    spanFilterMatches,
     datasourceType,
     datasourceName,
     datasourceUid,
@@ -90,6 +88,9 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const theme = useTheme2();
   const notifyApp = useAppNotification();
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
+
+  // Create controller for adhoc filters
+  const controller = useTraceAdHocFiltersController(trace, search, setSearch);
 
   useEffect(() => {
     setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
@@ -351,16 +352,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         )}
       </div>
 
-      <SpanFilters
-        trace={trace}
-        showSpanFilters={showSpanFilters}
-        setShowSpanFilters={setShowSpanFilters}
-        search={search}
-        setSearch={setSearch}
-        spanFilterMatches={spanFilterMatches}
-        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
-        datasourceType={datasourceType}
-      />
+      {controller && <AdHocFiltersComboboxRenderer controller={controller} />}
     </header>
   );
 });
