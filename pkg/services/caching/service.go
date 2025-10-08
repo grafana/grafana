@@ -170,8 +170,7 @@ func ProvideCachingServiceClient(cachingService CachingService, features feature
 // WithQueryDataCaching calls `f` and caches the returned value if `req` has not been cached already.
 // Returns the cached value otherwise.
 func (c *CachingServiceClient) WithQueryDataCaching(ctx context.Context, req *backend.QueryDataRequest, f func() (*backend.QueryDataResponse, error)) (*backend.QueryDataResponse, error) {
-	// panic("TODO: need to ensure cache key takes namespace into account")
-	if req == nil {
+	if c == nil || req == nil {
 		return f()
 	}
 
@@ -231,7 +230,7 @@ func (c *CachingServiceClient) WithQueryDataCaching(ctx context.Context, req *ba
 // WithCallResourceCaching calls `f` and caches the returned value if `req` has not been cached already.
 // Returns the cached value otherwise.
 func (c *CachingServiceClient) WithCallResourceCaching(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, f func(backend.CallResourceResponseSender) error) error {
-	if req == nil {
+	if c == nil || req == nil {
 		return f(sender)
 	}
 

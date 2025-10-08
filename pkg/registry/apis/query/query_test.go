@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
-	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -175,7 +174,6 @@ func TestQueryAPI(t *testing.T) {
 				tracer:                 tracing.InitializeTracerForTest(),
 				log:                    log.New("test"),
 				legacyDatasourceLookup: &mockLegacyDataSourceLookup{},
-				cachingServiceClient:   caching.ProvideCachingServiceClient(caching.NewFakeOSSCachingService(), nil),
 			}
 
 			reqCtx := identity.WithRequester(context.Background(), mockUser{})

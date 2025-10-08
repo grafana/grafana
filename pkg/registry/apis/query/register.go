@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -51,7 +50,6 @@ type QueryAPIBuilder struct {
 	converter              *expr.ResultConverter
 	queryTypes             *query.QueryTypeDefinitionList
 	legacyDatasourceLookup service.LegacyDataSourceLookup
-	cachingServiceClient   *caching.CachingServiceClient
 	connections            DataSourceConnectionProvider
 }
 
@@ -64,7 +62,6 @@ func NewQueryAPIBuilder(
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 	connections DataSourceConnectionProvider,
-	cachingServiceClient *caching.CachingServiceClient,
 ) (*QueryAPIBuilder, error) {
 	// Include well typed query definitions
 	var queryTypes *query.QueryTypeDefinitionList
@@ -97,7 +94,6 @@ func NewQueryAPIBuilder(
 			Tracer:   tracer,
 		},
 		legacyDatasourceLookup: legacyDatasourceLookup,
-		cachingServiceClient:   cachingServiceClient,
 	}, nil
 }
 
@@ -114,7 +110,6 @@ func RegisterAPIService(
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 	exprService *expr.Service,
-	cachingServiceClient *caching.CachingServiceClient,
 ) (*QueryAPIBuilder, error) {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagQueryService,
@@ -146,7 +141,6 @@ func RegisterAPIService(
 		tracer,
 		legacyDatasourceLookup,
 		&connectionsProvider{dsService: dataSourcesService, registry: reg},
-		cachingServiceClient,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err
