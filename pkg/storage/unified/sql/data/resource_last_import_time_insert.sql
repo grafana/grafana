@@ -36,7 +36,7 @@
        {{ .Arg .Namespace }},
        {{ .Arg .LastImportTime }}
     ) ON CONFLICT ({{ .Ident "group" }}, {{ .Ident "resource" }}, {{ .Ident "namespace" }})
-      SET {{ .Ident "last_import_time" }} = {{ .Arg .LastImportTime }}
+      DO UPDATE SET {{ .Ident "last_import_time" }} = {{ .Arg .LastImportTime }}
 
 {{ end }}
 ;

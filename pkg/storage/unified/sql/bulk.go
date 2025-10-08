@@ -282,7 +282,7 @@ func (b *backend) updateLastImportTime(ctx context.Context, tx db.Tx, key *resou
 		Namespace:      key.Namespace,
 		Group:          key.Group,
 		Resource:       key.Resource,
-		LastImportTime: now,
+		LastImportTime: now.UTC(),
 	}); err != nil {
 		return fmt.Errorf("insert resource last import time: %w", err)
 	}
