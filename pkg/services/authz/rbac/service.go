@@ -732,7 +732,7 @@ func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (
 
 		tree := newFolderTree(folders)
 		if len(tree.Nodes) != len(folders) {
-			s.logger.Warn("mismatched folder count when building tree", "expected", len(folders), "got", len(tree.Nodes))
+			s.logger.FromContext(ctx).Warn("mismatched folder count when building tree", "expected", len(folders), "got", len(tree.Nodes))
 		}
 
 		s.folderCache.Set(ctx, folderCacheKey(ns.Value), tree)
