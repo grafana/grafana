@@ -20,7 +20,7 @@ weight: 1200
 
 # Manage multi-team access in a single Grafana instance
 
-If your organization has multiple teams using Grafana, you can use a single Grafana deployment (OSS/Enterprise) or a single Grafana Cloud stack to manage access across teams using roles and folders. This approach reduces complexity, simplifies identity and access management, and facilitates cross-team collaboration.
+If your organization has multiple teams using Grafana, you can use a single Grafana Enterprise deployment or a single Grafana Cloud stack to manage access across teams using roles and folders. This approach reduces complexity, simplifies identity and access management, and facilitates cross-team collaboration.
 
 ## Benefits
 
