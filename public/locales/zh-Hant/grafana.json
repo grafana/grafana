@@ -1530,6 +1530,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "正在刪除群組"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "移除表達式「{{refId}}」"
     },
@@ -1704,6 +1707,9 @@
       },
       "placeholder-key": "key",
       "placeholder-value": "值"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "檢視或建立聯絡點",
@@ -2018,6 +2024,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "所選的 Alertmanager 不再存在，或者您可能沒有存取權限。您可以從下拉式選單中選擇其他的 Alertmanager。",
       "title-selected-alertmanager-not-found": "找不到所選的 Alertmanager。"
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2903,6 +2915,13 @@
         "summary": "將匯入以下警報規則：",
         "title-warning": "警告"
       }
+    },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
     },
     "type-selector-button": {
       "add-expression": "新增表達式"
@@ -9418,6 +9437,7 @@
     "description-enable-infinite-scrolling": "實驗性。捲動至紀錄清單底部，以請求更多結果。",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "顯示控制項以跳至最後或第一個紀錄行，並按紀錄層級篩選",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9465,9 +9485,6 @@
       "collapse": "收闔標籤",
       "expand": "展開標籤"
     },
-    "log-labels-list": {
-      "log-line": "紀錄行"
-    },
     "log-line": {
       "has-error": "有錯誤",
       "is-sampled": "已採樣",
@@ -9507,6 +9524,7 @@
       "inline-mode": "顯示內嵌",
       "link-value-tooltip": "",
       "links-section": "連結",
+      "log-attributes-field": "",
       "log-line-field": "紀錄行",
       "log-line-section": "紀錄行",
       "move-displayed-field-down": "下移",
@@ -9713,6 +9731,7 @@
       "line-contains": "新增為包含篩選條件的行",
       "line-contains-not": "新增為不包含篩選條件的行"
     },
+    "show-log-attributes": "",
     "timestamp-format": "時間戳記解決方案",
     "un-themed-log-details": {
       "aria-label-data-links": "資料連結",

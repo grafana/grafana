@@ -1545,6 +1545,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "Выполняется удаление группы"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Удалить выражение «{{refId}}»"
     },
@@ -1719,6 +1722,9 @@
       },
       "placeholder-key": "ключ",
       "placeholder-value": "значение"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Просмотр или создание точек контакта",
@@ -2036,6 +2042,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Выбранный обработчик оповещений Alertmanager больше не существует или у вас может не быть разрешения на доступ к нему. Вы можете выбрать другой обработчик оповещений из раскрывающегося списка.",
       "title-selected-alertmanager-not-found": "Выбранный обработчик оповещений Alertmanager не найден"
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2939,6 +2951,13 @@
         "summary": "Будут импортированы следующие правила оповещения:",
         "title-warning": "Предупреждение"
       }
+    },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
     },
     "type-selector-button": {
       "add-expression": "Добавить выражение"
@@ -9502,6 +9521,7 @@
     "description-enable-infinite-scrolling": "Экспериментальная функция. Запросите больше результатов, прокрутив список журналов до конца.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Отображать элементы управления для перехода к последней или первой строке журнала и фильтры по уровню журнала",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9558,9 +9578,6 @@
       "collapse": "Свернуть метки",
       "expand": "Развернуть метки"
     },
-    "log-labels-list": {
-      "log-line": "строка журнала"
-    },
     "log-line": {
       "has-error": "Содержит ошибки",
       "is-sampled": "Подвергается выборке",
@@ -9600,6 +9617,7 @@
       "inline-mode": "Показать встроенные",
       "link-value-tooltip": "",
       "links-section": "Ссылки",
+      "log-attributes-field": "",
       "log-line-field": "Строка журнала",
       "log-line-section": "Строка журнала",
       "move-displayed-field-down": "Вниз",
@@ -9806,6 +9824,7 @@
       "line-contains": "Добавить, поскольку строка содержит фильтр",
       "line-contains-not": "Добавить, поскольку строка не содержит фильтр"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Разрешение метки времени",
     "un-themed-log-details": {
       "aria-label-data-links": "Ссылки на данные",
