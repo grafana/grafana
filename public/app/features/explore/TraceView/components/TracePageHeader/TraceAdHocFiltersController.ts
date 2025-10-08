@@ -90,6 +90,7 @@ export class TraceAdHocFiltersController implements AdHocFiltersController {
       allowCustomValue: true,
       supportsMultiValueOperators: false,
       wip: this.wip,
+      inputPlaceholder: 'Filter by attribute or text',
     };
   }
 
@@ -123,6 +124,10 @@ export class TraceAdHocFiltersController implements AdHocFiltersController {
         { label: t('traces.adhocFilters.duration1m', '1m'), value: '1m' },
         { label: t('traces.adhocFilters.duration1h', '1h'), value: '1h' },
       ];
+    }
+
+    if (filter.key === '_textSearch_') {
+      return [{ label: t('traces.adhocFilters.customValue', 'Type a value'), value: 'customValue', isDisabled: true }];
     }
     const values = getTraceTagValues(this.trace, filter.key);
     return values.map(toOption);

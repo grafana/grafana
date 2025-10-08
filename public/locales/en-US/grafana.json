@@ -13064,6 +13064,7 @@
   },
   "traces": {
     "adhocFilters": {
+      "customValue": "Type a value",
       "duration1h": "1h",
       "duration1m": "1m",
       "duration1ms": "1ms",
