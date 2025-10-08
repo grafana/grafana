@@ -15,6 +15,12 @@ labels:
     - enterprise
 title: Manage multi-team access in a single Grafana instance
 weight: 1200
+refs:
+  manage-single-access:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/manage-single-access
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/manage-single-access
 ---
 
 # Manage multi-team access in a single Grafana instance
