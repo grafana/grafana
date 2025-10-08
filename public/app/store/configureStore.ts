@@ -2,7 +2,7 @@ import { configureStore as reduxConfigureStore, createListenerMiddleware } from 
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { Middleware } from 'redux';
 
-import { alertingAPI as alertingPackageAPI } from '@grafana/alerting/unstable';
+import { notificationsAPIv0alpha1, rulesAPIv0alpha1 } from '@grafana/alerting/unstable';
 import { allMiddleware } from '@grafana/api-clients/rtkq';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
@@ -34,8 +34,12 @@ export function configureStore(initialState?: Partial<StoreState>) {
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
         listenerMiddleware.middleware,
+        // older internal alerting API client
         alertingApi.middleware,
-        alertingPackageAPI.middleware,
+        // @grafana/alerting clients for managing (Alertmanager) notification entities and rules
+        notificationsAPIv0alpha1.middleware,
+        rulesAPIv0alpha1.middleware,
+        // other Grafana core APIs
         publicDashboardApi.middleware,
         browseDashboardsAPI.middleware,
         ...allMiddleware,

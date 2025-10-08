@@ -91,7 +91,6 @@ const config: ConfigFile = {
       'replacePlaylist',
     ]),
     ...createAPIConfig('shorturl', 'v1alpha1'),
-    ...createAPIConfig('rules.alerting', 'v0alpha1'),
     ...createAPIConfig('preferences', 'v1alpha1', undefined, { hooks: true }),
     ...createAPIConfig('dashboard', 'v0alpha1', ['getSearch']),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
