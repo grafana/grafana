@@ -105,7 +105,7 @@ For example, users working in [Frontend Observability](https://grafana.com/docs/
 
 ### Scale access management with Terraform and SSO
 
-After you've made sure the model is working, codify it!
+After you've made sure the model is working, you can codify it.
 
 You can add any new users to your Grafana instance with an Identity Provider through SCIM. Use [role sync](../../configure-security/configure-authentication/saml/configure-saml-team-role-mapping/#configure-role-sync-for-saml) to ensure everyone is automatically assigned to the right team based on their membership, including those with the Admin role.
 
