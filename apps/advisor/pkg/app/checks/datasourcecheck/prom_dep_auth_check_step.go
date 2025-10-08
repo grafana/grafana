@@ -41,6 +41,9 @@ func (s *promDepAuthStep) Run(ctx context.Context, log logging.Logger, obj *advi
 	if dataSource.Type != datasources.DS_PROMETHEUS {
 		return nil, nil
 	}
+	if dataSource.JsonData == nil {
+		return nil, nil
+	}
 
 	awsAuthLinks, err := s.checkUsingAWSAuth(ctx, dataSource)
 	if err != nil {
