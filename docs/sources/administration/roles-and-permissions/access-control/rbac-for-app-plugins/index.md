@@ -5,6 +5,7 @@ description: Learn about how to configure access to app plugins using RBAC
 labels:
   products:
     - cloud
+    - enterprise
 menuTitle: RBAC for app plugins
 title: RBAC for app plugins
 weight: 90
