@@ -78,7 +78,6 @@ export const AnnotationsPlugin2 = ({
 
   const annos = useMemo(() => {
     let annos = getAnnotationFrames(annotations);
-    console.log('annotations', { annotations, annos });
 
     if (newRange) {
       let isRegion = newRange.to > newRange.from;
@@ -140,7 +139,6 @@ export const AnnotationsPlugin2 = ({
         let vals = getVals(frame);
 
         if (frame.name === 'xymark') {
-          console.log('xymark');
           // xMin, xMax, yMin, yMax, color, lineWidth, lineStyle, fillOpacity, text
 
           let xKey = config.scales[0].props.scaleKey;
