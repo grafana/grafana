@@ -1535,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "Grup siliniyor"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "\"{{refId}}\" ifadesini kaldır"
     },
@@ -1709,6 +1712,9 @@
       },
       "placeholder-key": "anahtar",
       "placeholder-value": "değer"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "İletişim noktalarını görüntüle veya oluştur",
@@ -2024,6 +2030,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Seçilen Alertmanager artık mevcut değil veya erişim izniniz olmayabilir. Açılır menüden başka bir Alertmanager seçebilirsiniz.",
       "title-selected-alertmanager-not-found": "Seçili Alertmanager bulunamadı."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2915,6 +2927,13 @@
         "summary": "Aşağıdaki uyarı kuralları içe aktarılacak:",
         "title-warning": "Uyarı"
       }
+    },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
     },
     "type-selector-button": {
       "add-expression": "İfade ekle"
@@ -9446,6 +9465,7 @@
     "description-enable-infinite-scrolling": "Deneysel. Günlük listesinin en altına kaydırarak daha fazla sonuç isteyin.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Son veya ilk günlük satırına atlamak için ekran kontrolleri ve günlük düzeyine göre filtreler",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9496,9 +9516,6 @@
       "collapse": "Etiketleri daralt",
       "expand": "Etiketleri genişlet"
     },
-    "log-labels-list": {
-      "log-line": "günlük kaydı satırı"
-    },
     "log-line": {
       "has-error": "Hatalar var",
       "is-sampled": "Örneklendi",
@@ -9538,6 +9555,7 @@
       "inline-mode": "Satır içi görüntüle",
       "link-value-tooltip": "",
       "links-section": "Bağlantılar",
+      "log-attributes-field": "",
       "log-line-field": "Günlük satırı",
       "log-line-section": "Günlük satırı",
       "move-displayed-field-down": "Aşağı taşı",
@@ -9744,6 +9762,7 @@
       "line-contains": "Satır içerir filtresi olarak ekle",
       "line-contains-not": "Satır içermez filtresi olarak ekle"
     },
+    "show-log-attributes": "",
     "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Veri bağlantıları",
