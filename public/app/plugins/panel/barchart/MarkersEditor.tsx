@@ -39,6 +39,17 @@ export const MarkersEditor: React.FC<MarkersEditorProps> = ({ value = [], onChan
     onChange(newMarkers);
   };
 
+  const validateMarker = (marker: BarMarker) => {
+    const issues = [];
+    if (!marker.field) {
+      issues.push('Field is required');
+    }
+    if (marker.size < 2 || marker.size > 20) {
+      issues.push('Size must be between 2 and 20');
+    }
+    return issues;
+  };
+
   return (
     <div>
       {markers.map((marker, index) => (
