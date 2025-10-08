@@ -14,7 +14,8 @@ export function getAnnotationFrames(dataFrames: DataFrame[] = []) {
   return dataFrames.filter(
     (frame) =>
       frame.name !== 'exemplar' &&
-      frame.meta?.dataTopic === DataTopic.Annotations &&
+      // traces drilldown was not setting data topic before (), so for now we'll add backward compatability for xymark frames
+      (frame.meta?.dataTopic === DataTopic.Annotations || frame.name === 'xymark') &&
       frame.length > 0 &&
       frame.fields.some((f) => f.name === 'time')
   );
