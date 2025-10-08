@@ -73,7 +73,7 @@ After you’ve deployed your Grafana instance:
 Next, design a [folder](../../../dashboards/manage-dashboards/#create-a-dashboard-folder) setup that helps users quickly understand where to go, what they can access, and what they can manage. Among other:
 
 - Create an “Everyone” folder for shared items that all teams can manage.
-- For each team create a folder that they can manage and grant them the `fixed:teams:read` [fixed role](../../../administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions). This means they can share items in their team folder with other teams, to encourage collaboration and learning from each other.
+- For each team, create a folder that they can manage and grant them the `fixed:teams:read` [fixed role](../../../administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions). This means they can share items in their team folder with other teams, to encourage collaboration and learning from each other.
 - Create an “Admins” folder (Team C’s folder) for sensitive content only Admins can access.
 - Optionally, create a personal folder for each team member so that they can work on draft content before moving it into their team folder when ready.
 
