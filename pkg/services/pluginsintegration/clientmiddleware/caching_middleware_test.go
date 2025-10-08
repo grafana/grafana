@@ -293,7 +293,7 @@ func TestCachingMiddleware(t *testing.T) {
 			},
 		}
 
-		t.Run("Query caching is skipped", func(t *testing.T) {
+		t.Run("Query caching is not skipped", func(t *testing.T) {
 			t.Cleanup(func() {
 				cs.Reset()
 			})
@@ -304,13 +304,13 @@ func TestCachingMiddleware(t *testing.T) {
 
 			resp, err := cdt.MiddlewareHandler.QueryData(context.Background(), qdr)
 			assert.NoError(t, err)
-			// Cache service is never called
-			cs.AssertCalls(t, "HandleQueryRequest", 0)
+			// Cache service is called
+			cs.AssertCalls(t, "HandleQueryRequest", 1)
 			// Equals nil (returned by the decorator test)
 			assert.Nil(t, resp)
 		})
 
-		t.Run("Resource caching is skipped", func(t *testing.T) {
+		t.Run("Resource caching is not skipped", func(t *testing.T) {
 			t.Cleanup(func() {
 				cs.Reset()
 			})
@@ -322,7 +322,7 @@ func TestCachingMiddleware(t *testing.T) {
 			err := cdt.MiddlewareHandler.CallResource(req.Context(), crr, nopCallResourceSender)
 			assert.NoError(t, err)
 			// Cache service is never called
-			cs.AssertCalls(t, "HandleResourceRequest", 0)
+			cs.AssertCalls(t, "HandleResourceRequest", 1)
 		})
 	})
 }

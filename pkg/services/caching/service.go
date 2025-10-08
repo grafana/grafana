@@ -21,13 +21,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+type CacheStatus string
+
 const (
-	XCacheHeader   = "X-Cache"
-	StatusHit      = "HIT"
-	StatusMiss     = "MISS"
-	StatusBypass   = "BYPASS"
-	StatusError    = "ERROR"
-	StatusDisabled = "DISABLED"
+	XCacheHeader               = "X-Cache"
+	StatusHit      CacheStatus = "HIT"
+	StatusMiss     CacheStatus = "MISS"
+	StatusBypass   CacheStatus = "BYPASS"
+	StatusError    CacheStatus = "ERROR"
+	StatusDisabled CacheStatus = "DISABLED"
 )
 
 // needed to mock the function for testing
@@ -61,22 +63,22 @@ type CachingService interface {
 	// HandleQueryRequest uses a QueryDataRequest to check the cache for any existing results for that query.
 	// If none are found, it should return false and a CachedQueryDataResponse with an UpdateCacheFn which can be used to update the results cache after the fact.
 	// This function may populate any response headers (accessible through the context) with the cache status using the X-Cache header.
-	HandleQueryRequest(context.Context, *backend.QueryDataRequest) (bool, CachedQueryDataResponse)
+	HandleQueryRequest(context.Context, *backend.QueryDataRequest) (bool, CachedQueryDataResponse, CacheStatus)
 	// HandleResourceRequest uses a CallResourceRequest to check the cache for any existing results for that request. If none are found, it should return false.
 	// This function may populate any response headers (accessible through the context) with the cache status using the X-Cache header.
-	HandleResourceRequest(context.Context, *backend.CallResourceRequest) (bool, CachedResourceDataResponse)
+	HandleResourceRequest(context.Context, *backend.CallResourceRequest) (bool, CachedResourceDataResponse, CacheStatus)
 }
 
 // Implementation of interface - does nothing
 type OSSCachingService struct {
 }
 
-func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, req *backend.QueryDataRequest) (bool, CachedQueryDataResponse) {
-	return false, CachedQueryDataResponse{}
+func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, req *backend.QueryDataRequest) (bool, CachedQueryDataResponse, CacheStatus) {
+	return false, CachedQueryDataResponse{}, ""
 }
 
-func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, req *backend.CallResourceRequest) (bool, CachedResourceDataResponse) {
-	return false, CachedResourceDataResponse{}
+func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, req *backend.CallResourceRequest) (bool, CachedResourceDataResponse, CacheStatus) {
+	return false, CachedResourceDataResponse{}, ""
 }
 
 var _ CachingService = &OSSCachingService{}
@@ -168,6 +170,7 @@ func ProvideCachingServiceClient(cachingService CachingService, features feature
 // WithQueryDataCaching calls `f` and caches the returned value if `req` has not been cached already.
 // Returns the cached value otherwise.
 func (c *CachingServiceClient) WithQueryDataCaching(ctx context.Context, req *backend.QueryDataRequest, f func() (*backend.QueryDataResponse, error)) (*backend.QueryDataResponse, error) {
+	// panic("TODO: need to ensure cache key takes namespace into account")
 	if req == nil {
 		return f()
 	}
@@ -178,20 +181,18 @@ func (c *CachingServiceClient) WithQueryDataCaching(ctx context.Context, req *ba
 	start := time.Now()
 
 	// First look in the query cache if enabled
-	hit, cr := c.cachingService.HandleQueryRequest(ctx, req)
+	hit, cr, status := c.cachingService.HandleQueryRequest(ctx, req)
 
 	// record request duration if caching was used
 	if reqCtx != nil {
-		ch := reqCtx.Resp.Header().Get(XCacheHeader)
-		if ch != "" {
-			defer func() {
-				QueryCachingRequestHistogram.With(prometheus.Labels{
-					"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
-					"cache":           ch,
-					"query_type":      getQueryType(reqCtx),
-				}).Observe(time.Since(start).Seconds())
-			}()
-		}
+		reqCtx.Resp.Header().Set(XCacheHeader, string(status))
+		defer func() {
+			QueryCachingRequestHistogram.With(prometheus.Labels{
+				"datasource_type": getDatasourceType(req.PluginContext),
+				"cache":           string(status),
+				"query_type":      getQueryType(reqCtx),
+			}).Observe(time.Since(start).Seconds())
+		}()
 	}
 
 	// Cache hit; return the response
@@ -210,10 +211,9 @@ func (c *CachingServiceClient) WithQueryDataCaching(ctx context.Context, req *ba
 			// time how long shouldCacheQuery takes
 			startShouldCacheQuery := time.Now()
 			shouldCache := ShouldCacheQuery(resp)
-			ch := reqCtx.Resp.Header().Get(XCacheHeader)
 			ShouldCacheQueryHistogram.With(prometheus.Labels{
 				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
-				"cache":           ch,
+				"cache":           string(status),
 				"shouldCache":     strconv.FormatBool(shouldCache),
 				"query_type":      getQueryType(reqCtx),
 			}).Observe(time.Since(startShouldCacheQuery).Seconds())
@@ -236,25 +236,26 @@ func (c *CachingServiceClient) WithCallResourceCaching(ctx context.Context, req 
 	}
 
 	reqCtx := contexthandler.FromContext(ctx)
-	if reqCtx == nil {
-		return f(sender)
-	}
+	// if reqCtx == nil {
+	// 	return f(sender)
+	// }
 
 	// time how long this request takes
 	start := time.Now()
 
 	// First look in the resource cache if enabled
-	hit, cr := c.cachingService.HandleResourceRequest(ctx, req)
+	hit, cr, status := c.cachingService.HandleResourceRequest(ctx, req)
 
-	// record request duration if caching was used
-	if ch := reqCtx.Resp.Header().Get(XCacheHeader); ch != "" {
-		defer func() {
-			ResourceCachingRequestHistogram.With(prometheus.Labels{
-				"plugin_id": req.PluginContext.PluginID,
-				"cache":     ch,
-			}).Observe(time.Since(start).Seconds())
-		}()
+	if reqCtx != nil {
+		reqCtx.Resp.Header().Set(XCacheHeader, string(status))
 	}
+	// record request duration if caching was used
+	defer func() {
+		ResourceCachingRequestHistogram.With(prometheus.Labels{
+			"plugin_id": req.PluginContext.PluginID,
+			"cache":     string(status),
+		}).Observe(time.Since(start).Seconds())
+	}()
 
 	// Cache hit; send the response and return
 	if hit {
@@ -273,4 +274,11 @@ func (c *CachingServiceClient) WithCallResourceCaching(ctx context.Context, req 
 	})
 
 	return f(cacheSender)
+}
+
+func getDatasourceType(pluginCtx backend.PluginContext) string {
+	if pluginCtx.DataSourceInstanceSettings == nil {
+		return "unknown"
+	}
+	return pluginCtx.DataSourceInstanceSettings.Name
 }
