@@ -64,7 +64,7 @@ For guidance on when to use one stack vs. multiple, refer to [Stack architecture
 After you’ve deployed your Grafana instance:
 
 - To follow the example in this doc, create three [Grafana Teams](../../../administration/team-management/configure-grafana-teams/#create-a-grafana-team) and add them to the Grafana instance.
-- Determine the [RBAC strategy](../../../administration/roles-and-permissions/access-control/) for your organization. RBAC extends default Grafana roles, provides more access rights granularity, and simplifies how to grant, modify or revoke user access to Grafana resources, such as users and reports.
+- Determine the [RBAC strategy](../../../administration/roles-and-permissions/access-control/) for your organization. RBAC extends default Grafana roles, provides more granular access rights, and simplifies how to grant, modify, or revoke user access to Grafana resources, such as users and reports.
 - Assign each user to the [relevant team](../../../administration/user-management/manage-org-users/). By default [new users](../../configure-grafana/#auto_assign_org) are granted the **Viewer** role.
 - Assign the [**Admin** role](../../../administration/roles-and-permissions/access-control/assign-rbac-roles/#assign-rbac-roles) to Team C so that they can manage all resources in the instance.
 
