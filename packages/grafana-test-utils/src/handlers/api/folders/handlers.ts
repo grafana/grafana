@@ -37,7 +37,7 @@ const listFoldersHandler = () =>
     const limit = parseInt(url.searchParams.get('limit') ?? '1000', 10);
     const page = parseInt(url.searchParams.get('page') ?? '1', 10);
 
-    const tree = permission === 'Edit' ? mockTreeThatViewersCanEdit : mockTree;
+    const tree = permission?.toLowerCase() === 'edit' ? mockTreeThatViewersCanEdit : mockTree;
 
     // reconstruct a folder API response from the flat tree fixture
     const folders = tree

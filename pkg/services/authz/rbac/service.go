@@ -160,7 +160,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	}
 	s.metrics.permissionCacheUsage.WithLabelValues("false", checkReq.Action).Inc()
 
-	permissions, err := s.getIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
+	permissions, err := s.getIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action, checkReq.ActionSets)
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
 		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
@@ -223,7 +223,7 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	if err != nil || listReq.Options.SkipCache {
 		s.metrics.permissionCacheUsage.WithLabelValues("false", listReq.Action).Inc()
 
-		permissions, err = s.getIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
+		permissions, err = s.getIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action, listReq.ActionSets)
 		if err != nil {
 			ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
 			s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
@@ -260,7 +260,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 		return nil, err
 	}
 
-	action, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
 	if err != nil {
 		return nil, err
 	}
@@ -270,6 +270,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 		UserUID:      userUID,
 		IdentityType: idType,
 		Action:       action,
+		ActionSets:   actionSets,
 		Group:        req.GetGroup(),
 		Resource:     req.GetResource(),
 		Verb:         req.GetVerb(),
@@ -293,7 +294,7 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		return nil, err
 	}
 
-	action, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
 	if err != nil {
 		return nil, err
 	}
@@ -311,6 +312,7 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		UserUID:      userUID,
 		IdentityType: idType,
 		Action:       action,
+		ActionSets:   actionSets,
 		Group:        req.GetGroup(),
 		Resource:     req.GetResource(),
 		Verb:         req.GetVerb(),
@@ -359,33 +361,29 @@ func (s *Service) validateSubject(ctx context.Context, subject string) (string, 
 }
 
 // Find the action for a selected verb
-func (s *Service) validateAction(ctx context.Context, group, resource, verb string) (string, error) {
+func (s *Service) validateAction(ctx context.Context, group, resource, verb string) (string, []string, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
 	t, ok := s.mapper.Get(group, resource)
 	if !ok {
 		ctxLogger.Error("unsupported resource", "group", group, "resource", resource)
-		return "", status.Error(codes.NotFound, "unsupported resource")
+		return "", nil, status.Error(codes.NotFound, "unsupported resource")
 	}
 
 	action, ok := t.Action(verb)
 	if !ok {
 		ctxLogger.Error("unsupported verb", "group", group, "resource", resource, "verb", verb)
-		return "", status.Error(codes.NotFound, "unsupported verb")
+		return "", nil, status.Error(codes.NotFound, "unsupported verb")
 	}
 
-	return action, nil
+	actionSets := t.ActionSets(verb)
+
+	return action, actionSets, nil
 }
 
-func (s *Service) getIdentityPermissions(ctx context.Context, ns types.NamespaceInfo, idType types.IdentityType, userID, action string) (map[string]bool, error) {
+func (s *Service) getIdentityPermissions(ctx context.Context, ns types.NamespaceInfo, idType types.IdentityType, userID, action string, actionSets []string) (map[string]bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getIdentityPermissions")
 	defer span.End()
-
-	// When checking folder creation permissions, also check edit and admin action sets for folder, as the scoped folder create actions aren't stored in the DB separately
-	var actionSets []string
-	if action == "folders:create" {
-		actionSets = append(actionSets, "folders:edit", "folders:admin")
-	}
 
 	switch idType {
 	case types.TypeAnonymous:
@@ -680,6 +678,11 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 			ctxLogger.Error("could not build folder and dashboard tree", "error", err)
 			return false, err
 		}
+		if !s.isFolderInTree(tree, req.ParentFolder) {
+			// Not erroring here as the permission might exist but the folder wasn't synchronized yet
+			// Once in mode 5 we can deny access here
+			ctxLogger.Error("parent folder not found in folder tree", "folder", req.ParentFolder)
+		}
 	}
 
 	if scopeMap["folders:uid:"+req.ParentFolder] {
@@ -726,6 +729,9 @@ func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (
 		span.SetAttributes(attribute.Int("num_folders", len(folders)))
 
 		tree := newFolderTree(folders)
+		if len(tree.Nodes) != len(folders) {
+			s.logger.FromContext(ctx).Warn("mismatched folder count when building tree", "namespace", ns.Value, "expected", len(folders), "got", len(tree.Nodes))
+		}
 
 		s.folderCache.Set(ctx, folderCacheKey(ns.Value), tree)
 		return tree, nil
@@ -760,12 +766,10 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	cacheHit := false
 	if t.HasFolderSupport() {
 		var err error
-		ok = false
 		if !req.Options.SkipCache {
-			tree, ok = s.getCachedFolderTree(ctx, req.Namespace)
-			cacheHit = true
+			tree, cacheHit = s.getCachedFolderTree(ctx, req.Namespace)
 		}
-		if !ok {
+		if !cacheHit {
 			tree, err = s.buildFolderTree(ctx, req.Namespace)
 			if err != nil {
 				ctxLogger.Error("could not build folder and dashboard tree", "error", err)
