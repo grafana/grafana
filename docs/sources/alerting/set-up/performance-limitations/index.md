@@ -64,27 +64,25 @@ By default, Grafana performs one SQL update per alert rule after each evaluation
 
 You can change this behavior by disabling the `alertingSaveStateCompressed` feature flag. In this case, Grafana performs a separate SQL update for each state change of an alert instance. This configuration is rarely recommended, as it can add significant database overhead for alert rules with many instances.
 
-#### Periodic saves for compressed alert state
-
-When using compressed alert state, you can further reduce database load by enabling periodic saves instead of saving after every evaluation. This combines the benefits of compressed storage with periodic writes.
-
-To enable periodic saves for compressed alert state, set the following configuration options:
-
-```ini
-[unified_alerting]
-state_compressed_periodic_save_enabled = true
-state_compressed_periodic_save_interval = 5m
-```
-
-When enabled, Grafana will periodically save all compressed alert states to the database at the specified interval. The system groups alert instances by their alert rule UID, compresses each group, and processes all rules within a single database transaction. This ensures data consistency while maximizing compression efficiency.
-
-The periodic interval can be configured using the `state_compressed_periodic_save_interval` setting. The default value is `5m` (5 minutes).
-
 ### Save state periodically
 
 You can also reduce database load by writing states periodically instead of after every evaluation.
 
-To save state periodically:
+There are two approaches for periodic state saving:
+
+#### Compressed periodic saves
+
+You can combine compressed alert state storage with periodic saves by enabling both `alertingSaveStateCompressed` and `alertingSaveStatePeriodic` feature toggles together.
+
+This approach groups all alert instances by rule UID and compresses them together for efficient storage.
+
+When both feature toggles are enabled, Grafana will save compressed alert states at the interval specified by `state_periodic_save_interval`. Note that in compressed mode, the `state_periodic_save_batch_size` setting is ignored as the system groups instances by rule UID rather than by batch size.
+
+#### Batch-based periodic saves
+
+Alternatively, you can use batch-based periodic saves without compression:
+
+This approach processes individual alert instances in batches of a specified size.
 
 1. Enable the `alertingSaveStatePeriodic` feature toggle.
 1. Disable the `alertingSaveStateCompressed` feature toggle.
@@ -93,7 +91,7 @@ By default, it saves the states every 5 minutes to the database and on each shut
 can also be configured using the `state_periodic_save_interval` configuration flag. During this process, Grafana deletes all existing alert instances from the database and then writes the entire current set of instances back in batches in a single transaction.
 Configure the size of each batch using the `state_periodic_save_batch_size` configuration option.
 
-#### Jitter for periodic saves
+##### Jitter for batch-based periodic saves
 
 To further distribute database load, you can enable jitter for periodic state saves by setting `state_periodic_save_jitter_enabled = true`. When jitter is enabled, instead of saving all batches simultaneously, Grafana spreads the batch writes across a calculated time window of 85% of the save interval.
 
@@ -121,6 +119,7 @@ For 2000 alert instances with 1-minute interval and 100 batch size:
 - Batch writes occur every ~2.68 seconds
 
 This helps reduce database load spikes in environments with high alert cardinality by distributing writes over time rather than concentrating them at the beginning of each save cycle.
+
 
 The time it takes to write to the database periodically can be monitored using the `state_full_sync_duration_seconds` metric
 that is exposed by Grafana.
