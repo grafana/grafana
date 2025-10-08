@@ -14,7 +14,10 @@ const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-investigations-app',
   'grafana-assistant-app',
   'grafana-dash-app',
+  // The docs plugin ID is going to transition from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
+  // Support both until that migration is complete.
   'grafana-grafanadocsplugin-app',
+  'grafana-pathfinder-app',
 ];
 
 export type ExtensionSidebarContextType = {
