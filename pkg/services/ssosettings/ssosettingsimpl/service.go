@@ -135,8 +135,6 @@ func (s *Service) GetForProviderFromCache(ctx context.Context, provider string) 
 				Provider: setting.Provider,
 				Source:   setting.Source,
 				Settings: deepCopyMap(setting.Settings),
-				Created:  setting.Created,
-				Updated:  setting.Updated,
 			}, nil
 		}
 	}
@@ -303,13 +301,13 @@ func (s *Service) Delete(ctx context.Context, provider string) error {
 }
 
 func (s *Service) reload(reloadable ssosettings.Reloadable, provider string, currentSettings models.SSOSettings) {
+	s.updateCachedSSOSettings(provider, &currentSettings)
+
 	err := reloadable.Reload(context.Background(), currentSettings)
 	if err != nil {
 		s.metrics.reloadFailures.WithLabelValues(provider).Inc()
 		s.logger.Error("failed to reload the provider", "provider", provider, "error", err)
 	}
-
-	s.updateCachedSSOSettings(provider, &currentSettings)
 }
 
 func (s *Service) Reload(ctx context.Context, provider string) {
