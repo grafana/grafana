@@ -1530,6 +1530,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "正在删除组"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "移除表达式“{{refId}}”"
     },
@@ -1704,6 +1707,9 @@
       },
       "placeholder-key": "密钥",
       "placeholder-value": "值"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "查看或创建联络点",
@@ -2018,6 +2024,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "所选 Alertmanager 不再存在，或者您可能没有访问它的权限。您可以从下拉列表中选择其他 Alertmanager。",
       "title-selected-alertmanager-not-found": "未找到所选的 Alertmanager。"
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2903,6 +2915,13 @@
         "summary": "将导入以下警报规则：",
         "title-warning": "警告"
       }
+    },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
     },
     "type-selector-button": {
       "add-expression": "添加表达式"
@@ -9418,6 +9437,7 @@
     "description-enable-infinite-scrolling": "实验性。通过滚动到日志列表底部来请求更多结果。",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9465,9 +9485,6 @@
       "collapse": "收起标签",
       "expand": "展开标签"
     },
-    "log-labels-list": {
-      "log-line": "日志行"
-    },
     "log-line": {
       "has-error": "有错误",
       "is-sampled": "已采样",
@@ -9507,6 +9524,7 @@
       "inline-mode": "内联显示",
       "link-value-tooltip": "",
       "links-section": "关联",
+      "log-attributes-field": "",
       "log-line-field": "日志行",
       "log-line-section": "日志行",
       "move-displayed-field-down": "下移",
@@ -9713,6 +9731,7 @@
       "line-contains": "添加为包含筛选器的行",
       "line-contains-not": "添加为不包含筛选器的行"
     },
+    "show-log-attributes": "",
     "timestamp-format": "时间戳分辨率",
     "un-themed-log-details": {
       "aria-label-data-links": "数据关联",
