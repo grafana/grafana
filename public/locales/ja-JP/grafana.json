@@ -1530,6 +1530,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "グループを削除中です"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "式「{{refId}}」を削除"
     },
@@ -1704,6 +1707,9 @@
       },
       "placeholder-key": "キー",
       "placeholder-value": "値"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "連絡先を表示または作成",
@@ -2018,6 +2024,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "選択したAlertmanagerは存在しないか、アクセス権限がない可能性があります。ドロップダウンから別のAlertmanagerを選択できます。",
       "title-selected-alertmanager-not-found": "選択したAlertmanagerが見つかりません。"
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2903,6 +2915,13 @@
         "summary": "次のアラートルールがインポートされます：",
         "title-warning": "警告"
       }
+    },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
     },
     "type-selector-button": {
       "add-expression": "式を追加"
@@ -9418,6 +9437,7 @@
     "description-enable-infinite-scrolling": "実験的機能。ログリストの一番下までスクロールして、さらに結果をリクエストします。",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "最後または最初のログ行にジャンプするコントロールを表示し、ログレベルでフィルタリングします",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9465,9 +9485,6 @@
       "collapse": "ラベルを折りたたむ",
       "expand": "ラベルを展開"
     },
-    "log-labels-list": {
-      "log-line": "ログ行"
-    },
     "log-line": {
       "has-error": "エラーあり",
       "is-sampled": "サンプリング済み",
@@ -9507,6 +9524,7 @@
       "inline-mode": "インラインで表示",
       "link-value-tooltip": "",
       "links-section": "リンク",
+      "log-attributes-field": "",
       "log-line-field": "ログ行",
       "log-line-section": "ログ行",
       "move-displayed-field-down": "下へ移動",
@@ -9713,6 +9731,7 @@
       "line-contains": "行にフィルタが含まれている場合はフィルタとして追加",
       "line-contains-not": "フィルタが含まれていない行として追加"
     },
+    "show-log-attributes": "",
     "timestamp-format": "タイムスタンプの表示形式",
     "un-themed-log-details": {
       "aria-label-data-links": "データリンク",
