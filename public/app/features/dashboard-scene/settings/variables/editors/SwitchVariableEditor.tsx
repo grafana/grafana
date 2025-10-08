@@ -1,4 +1,3 @@
-import { t } from '@grafana/i18n';
 import { SceneVariable, SwitchVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -49,7 +48,6 @@ export function getSwitchVariableOptions(variable: SceneVariable): OptionsPaneIt
 
   return [
     new OptionsPaneItemDescriptor({
-      title: t('dashboard-scene.switch-variable-form.label-value', 'Default value'),
       id: `variable-${variable.state.name}-value`,
       render: () => <SwitchVariableEditor variable={variable} />,
     }),

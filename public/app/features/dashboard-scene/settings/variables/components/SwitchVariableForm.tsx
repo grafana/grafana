@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Field, Combobox, Input, type ComboboxOption } from '@grafana/ui';
+import { Field, Combobox, Input, type ComboboxOption, Stack } from '@grafana/ui';
 
 import { VariableLegend } from './VariableLegend';
 
@@ -62,66 +62,71 @@ export function SwitchVariableForm({
         <Trans i18nKey="dashboard-scene.switch-variable-form.switch-options">Switch options</Trans>
       </VariableLegend>
 
-      <Field
-        label={t('dashboard-scene.switch-variable-form.value-pair-type', 'Value pair type')}
-        description={t(
-          'dashboard-scene.switch-variable-form.value-pair-type-description',
-          'Choose the type of values for the switch states'
+      <Stack gap={2} direction="column">
+        <Field
+          noMargin
+          label={t('dashboard-scene.switch-variable-form.value-pair-type', 'Value pair type')}
+          description={t(
+            'dashboard-scene.switch-variable-form.value-pair-type-description',
+            'Choose the type of values for the switch states'
+          )}
+        >
+          <Combobox
+            width={40}
+            value={isCustomValuePairType ? 'custom' : currentValuePairType}
+            options={VALUE_PAIR_OPTIONS}
+            onChange={onValuePairTypeChange}
+            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.SwitchVariable.valuePairTypeSelect}
+          />
+        </Field>
+
+        {/* Custom value pair type */}
+        {isCustomValuePairType && (
+          <Stack gap={2} direction="column">
+            <Field
+              noMargin
+              label={t('dashboard-scene.switch-variable-form.enabled-value', 'Enabled value')}
+              description={t(
+                'dashboard-scene.switch-variable-form.enabled-value-description',
+                'Value when switch is enabled'
+              )}
+            >
+              <Input
+                width={40}
+                value={enabledValue}
+                onChange={(event) => {
+                  onEnabledValueChange(event.currentTarget.value);
+                }}
+                placeholder={t(
+                  'dashboard-scene.switch-variable-form.enabled-value-placeholder',
+                  'e.g. On, Enabled, Active'
+                )}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.SwitchVariable.enabledValueInput}
+              />
+            </Field>
+
+            <Field
+              noMargin
+              label={t('dashboard-scene.switch-variable-form.disabled-value', 'Disabled value')}
+              description={t(
+                'dashboard-scene.switch-variable-form.disabled-value-description',
+                'Value when switch is disabled'
+              )}
+            >
+              <Input
+                width={40}
+                value={disabledValue}
+                onChange={(event) => onDisabledValueChange(event.currentTarget.value)}
+                placeholder={t(
+                  'dashboard-scene.switch-variable-form.disabled-value-placeholder',
+                  'e.g. Off, Disabled, Inactive'
+                )}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.SwitchVariable.disabledValueInput}
+              />
+            </Field>
+          </Stack>
         )}
-      >
-        <Combobox
-          width={40}
-          value={currentValuePairType}
-          options={VALUE_PAIR_OPTIONS}
-          onChange={onValuePairTypeChange}
-          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.SwitchVariable.valuePairTypeSelect}
-        />
-      </Field>
-
-      {/* Custom value pair type */}
-      {isCustomValuePairType && (
-        <>
-          <Field
-            label={t('dashboard-scene.switch-variable-form.enabled-value', 'Enabled value')}
-            description={t(
-              'dashboard-scene.switch-variable-form.enabled-value-description',
-              'Value when switch is enabled'
-            )}
-          >
-            <Input
-              width={40}
-              value={enabledValue}
-              onChange={(event) => {
-                onEnabledValueChange(event.currentTarget.value);
-              }}
-              placeholder={t(
-                'dashboard-scene.switch-variable-form.enabled-value-placeholder',
-                'e.g. On, Enabled, Active'
-              )}
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.SwitchVariable.enabledValueInput}
-            />
-          </Field>
-
-          <Field
-            label={t('dashboard-scene.switch-variable-form.disabled-value', 'Disabled value')}
-            description={t(
-              'dashboard-scene.switch-variable-form.disabled-value-description',
-              'Value when switch is disabled'
-            )}
-          >
-            <Input
-              width={40}
-              value={disabledValue}
-              onChange={(event) => onDisabledValueChange(event.currentTarget.value)}
-              placeholder={t(
-                'dashboard-scene.switch-variable-form.disabled-value-placeholder',
-                'e.g. Off, Disabled, Inactive'
-              )}
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.SwitchVariable.disabledValueInput}
-            />
-          </Field>
-        </>
-      )}
+      </Stack>
     </>
   );
 }
