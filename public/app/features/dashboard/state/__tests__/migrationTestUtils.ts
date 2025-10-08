@@ -8,8 +8,6 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 import { plugin as tablePanelPlugin } from 'app/plugins/panel/table/module';
 
-import { DashboardModel } from '../DashboardModel';
-
 // Set up the same datasources as backend test provider to ensure consistency
 export const dataSources = {
   default: mockDataSource({
@@ -184,33 +182,3 @@ export function constructLatestVersionOutputFilename(inputFile: string, latestVe
 }
 
 export const pluginVersionForAutoMigrate = '12.1.0';
-
-/**
- * Creates a type-compatible PanelPlugin wrapper for the real panel plugins
- * This ensures the plugin has the correct version set and is compatible with pluginLoaded method
- */
-function getPanelPlugin(pluginId: 'stat' | 'table'): PanelPlugin {
-  const realPlugin = pluginId === 'stat' ? statPanelPlugin : tablePanelPlugin;
-
-  // Create a copy of the plugin to avoid modifying the original
-  const pluginCopy = Object.create(Object.getPrototypeOf(realPlugin));
-  Object.assign(pluginCopy, realPlugin);
-
-  // Ensure meta and info exist
-  if (!pluginCopy.meta.info) {
-    pluginCopy.meta.info = {
-      author: { name: 'Grafana Labs', url: 'https://grafana.com' },
-      description: `${pluginId} panel plugin`,
-      links: [],
-      logos: { small: '', large: '' },
-      screenshots: [],
-      updated: '2024-01-01',
-      version: pluginVersionForAutoMigrate,
-    };
-  } else {
-    // Ensure version is set
-    pluginCopy.meta.info.version = pluginVersionForAutoMigrate;
-  }
-
-  return pluginCopy;
-}
