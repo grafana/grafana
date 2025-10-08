@@ -181,17 +181,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
     const events = this.buildFakeAnnotationEvents(req.range, target.lines ?? 10);
     const dataFrame = new ArrayDataFrame(events);
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
-    if (dataFrame.fields?.[1]) {
-      dataFrame.fields[1].config = {
-        ...dataFrame.fields[1].config,
-        links: [
-          {
-            url: 'https://grafana.com',
-            title: 'Annotation Data link',
-          },
-        ],
-      };
-    }
     return of({ key: target.refId, data: [dataFrame] }).pipe(delay(100));
   }
 
