@@ -91,7 +91,7 @@ However, you may need to protect data in shared resources. For example, all team
 
 #### Team-specific resources
 
-If any of your teams, Team A for example, needs to build and manage their own data sources for product-specific use cases. In this case, grant the `datasources:creator` fixed role so they can create and manage their own data sources independently.
+If any of your teams, Team A for example, need to build and manage their own data sources for product-specific use cases, grant the `datasources:creator` fixed role so they can create and manage their own data sources independently.
 
 {{< figure src="/media/docs/grafana/oac/AccessTeams02.png" max-width="750px" alt="Teams and data sources in the stack, and the related permissions Team A and Team B have been granted" >}}
 
