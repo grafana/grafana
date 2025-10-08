@@ -11,10 +11,9 @@ import (
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/apps/plugins/pkg/apis"
+	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
-	"github.com/grafana/grafana/pkg/plugins/manager"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -34,32 +33,20 @@ type PluginsAppInstaller struct {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	pluginInstaller *manager.PluginInstaller,
-	pluginRegistry registry.Service,
 ) (*PluginsAppInstaller, error) {
 	installer := &PluginsAppInstaller{
 		cfg: cfg,
 	}
 
-	installerAdapter := NewPluginInstallerAdapter(pluginInstaller)
-	registryAdapter := NewPluginRegistryAdapter(pluginRegistry)
-
-	specificConfig := &pluginsapp.PluginsAppConfig{
-		PluginInstaller:  installerAdapter,
-		PluginRegistry:   registryAdapter,
-		InstallClient:    nil, // Will be created by the app from KubeConfig
-		GrafanaVersion:   cfg.BuildVersion,
-		NodeName:         "", // Will be determined from environment
-		EnableReconciler: true,
-	}
+	specificConfig := &pluginsapp.PluginsAppConfig{}
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, pluginsapp.New)
 	appConfig := app.Config{
-		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
+		KubeConfig:     restclient.Config{},
 		ManifestData:   *apis.LocalManifest().ManifestData,
 		SpecificConfig: specificConfig,
 	}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &apis.GoTypeAssociator{})
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, pluginsappapis.NewGoTypeAssociator())
 	if err != nil {
 		return nil, err
 	}

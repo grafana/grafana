@@ -35,6 +35,6 @@ func (c *ClientRegistry) ClientFor(kind resource.Kind) (resource.Client, error) 
 		return nil, err
 	}
 	restConfig.APIPath = "apis"
-	c.registry = k8s.NewClientRegistry(*restConfig, k8s.ClientConfig{})
+	c.registry = k8s.NewClientRegistry(*restConfig, k8s.DefaultClientConfig())
 	return c.registry.ClientFor(kind)
 }

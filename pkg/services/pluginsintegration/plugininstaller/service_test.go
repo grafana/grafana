@@ -32,6 +32,7 @@ func TestService_IsDisabled(t *testing.T) {
 		&fakes.FakePluginRepo{},
 		featuremgmt.WithFeatures(),
 		&pluginchecker.FakePluginUpdateChecker{},
+		nil,
 	)
 	require.NoError(t, err)
 
@@ -204,6 +205,7 @@ func TestService_Run(t *testing.T) {
 					provisionedplugins.NewNoop(),
 					&pluginchecker.FakePluginPreinstall{},
 				),
+				nil,
 			)
 			require.NoError(t, err)
 
