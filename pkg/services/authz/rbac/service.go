@@ -680,6 +680,11 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 			ctxLogger.Error("could not build folder and dashboard tree", "error", err)
 			return false, err
 		}
+		if !s.isFolderInTree(tree, req.ParentFolder) {
+			ctxLogger.Error("parent folder not found in folder tree", "folder", req.ParentFolder)
+			// Parent folder doesn't exist
+			return false, nil
+		}
 	}
 
 	if scopeMap["folders:uid:"+req.ParentFolder] {
@@ -726,6 +731,9 @@ func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (
 		span.SetAttributes(attribute.Int("num_folders", len(folders)))
 
 		tree := newFolderTree(folders)
+		if len(tree.MissingParents) > 0 {
+			s.logger.FromContext(ctx).Warn("found folders with missing parents", "folders", fmt.Sprintf("%v", tree.MissingParents))
+		}
 
 		s.folderCache.Set(ctx, folderCacheKey(ns.Value), tree)
 		return tree, nil
