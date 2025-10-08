@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"google.golang.org/protobuf/types/known/structpb"
@@ -13,25 +14,34 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
-func toZanzanaSubject(kind iamv0.ResourcePermissionSpecPermissionKind, uid string) string {
+var (
+	errEmptyName   = errors.New("name cannot be empty")
+	errUnknownKind = errors.New("unknown permission kind")
+)
+
+func toZanzanaSubject(kind iamv0.ResourcePermissionSpecPermissionKind, name string) (string, error) {
+	if name == "" {
+		return "", errEmptyName
+	}
 	switch kind {
 	case iamv0.ResourcePermissionSpecPermissionKindUser:
-		return zanzana.NewTupleEntry(zanzana.TypeUser, uid, "")
+		return zanzana.NewTupleEntry(zanzana.TypeUser, name, ""), nil
 	case iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
-		return zanzana.NewTupleEntry(zanzana.TypeServiceAccount, uid, "")
+		return zanzana.NewTupleEntry(zanzana.TypeServiceAccount, name, ""), nil
 	case iamv0.ResourcePermissionSpecPermissionKindTeam:
-		return zanzana.NewTupleEntry(zanzana.TypeTeam, uid, "")
+		return zanzana.NewTupleEntry(zanzana.TypeTeam, name, ""), nil
 	case iamv0.ResourcePermissionSpecPermissionKindBasicRole:
 		// e.g role:basic_viewer#assignee
 		return zanzana.NewTupleEntry(
 			zanzana.TypeRole,
-			zanzana.TranslateBasicRole(uid),
+			zanzana.TranslateBasicRole(name),
 			zanzana.RelationAssignee,
-		)
+		), nil
 	}
+
 	// should not happen since we are after create
 	// validation webhook should have caught invalid kinds
-	return ""
+	return "", errUnknownKind
 }
 
 func toZanzanaType(apiGroup string) string {
@@ -41,13 +51,19 @@ func toZanzanaType(apiGroup string) string {
 	return zanzana.TypeResource
 }
 
-func NewResourceTuple(resource iamv0.ResourcePermissionspecResource, perm iamv0.ResourcePermissionspecPermission) *v1.TupleKey {
+func NewResourceTuple(resource iamv0.ResourcePermissionspecResource, perm iamv0.ResourcePermissionspecPermission) (*v1.TupleKey, error) {
 	// Typ is "folder" or "resource"
 	typ := toZanzanaType(resource.ApiGroup)
 
+	// subject
+	subject, err := toZanzanaSubject(perm.Kind, perm.Name)
+	if err != nil {
+		return nil, err
+	}
+
 	key := &v1.TupleKey{
 		// e.g. "user:{uid}", "serviceaccount:{uid}", "team:{uid}", "basicrole:{viewer|editor|admin}"
-		User: toZanzanaSubject(perm.Kind, perm.Name),
+		User: subject,
 		// "view", "edit", "admin"
 		Relation: strings.ToLower(perm.Verb),
 		// e.g. "folder:{name}" or "resource:{apiGroup}/{resource}:{name}"
@@ -69,7 +85,7 @@ func NewResourceTuple(resource iamv0.ResourcePermissionspecResource, perm iamv0.
 		}
 	}
 
-	return key
+	return key, nil
 }
 
 // AfterResourcePermissionCreate is a post-create hook that writes the resource permission to Zanzana (openFGA)
@@ -86,14 +102,26 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 	resource := rp.Spec.Resource
 	permissions := rp.Spec.Permissions
 
+	entry := zanzana.NewObjectEntry(toZanzanaType(resource.ApiGroup), resource.ApiGroup, resource.Resource, "", resource.Name)
+
 	tuples := make([]*v1.TupleKey, 0, len(permissions))
 	for _, p := range permissions {
-		tuples = append(tuples, NewResourceTuple(resource, p))
+		tuple, err := NewResourceTuple(resource, p)
+		if err != nil {
+			b.logger.Error("failed to create resource permission tuple",
+				"namespace", rp.Namespace,
+				"resource", entry,
+				"err", err,
+			)
+
+			continue
+		}
+		tuples = append(tuples, tuple)
 	}
 
 	b.logger.Debug("writing resource permission to zanzana",
 		"namespace", rp.Namespace,
-		"resource", resource.ApiGroup+":"+resource.Resource+":"+resource.Name,
+		"resource", entry,
 		"tuplesCnt", len(tuples),
 	)
 
