@@ -310,7 +310,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		qsDsClientBuilder,
 	)
 
-	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, qsDsClientBuilder, headers)
+	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, b.cachingServiceClient, exprService, mReq, qsDsClientBuilder, headers)
 
 	// tell the `instance` structure that it can now report
 	// metrics that are only reported once during a request
