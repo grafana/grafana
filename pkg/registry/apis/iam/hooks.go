@@ -57,7 +57,7 @@ func toZanzanaType(apiGroup string) string {
 	return zanzana.TypeResource
 }
 
-func NewResourceTuple(resource iamv0.ResourcePermissionspecResource, perm iamv0.ResourcePermissionspecPermission) (*v1.TupleKey, error) {
+func NewResourceTuple(object string, resource iamv0.ResourcePermissionspecResource, perm iamv0.ResourcePermissionspecPermission) (*v1.TupleKey, error) {
 	// Typ is "folder" or "resource"
 	typ := toZanzanaType(resource.ApiGroup)
 
@@ -73,7 +73,7 @@ func NewResourceTuple(resource iamv0.ResourcePermissionspecResource, perm iamv0.
 		// "view", "edit", "admin"
 		Relation: strings.ToLower(perm.Verb),
 		// e.g. "folder:{name}" or "resource:{apiGroup}/{resource}/{name}"
-		Object: zanzana.NewObjectEntry(typ, resource.ApiGroup, resource.Resource, "", resource.Name),
+		Object: object,
 	}
 
 	// For resources we add a condition to filter by apiGroup/resource
@@ -108,15 +108,15 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 	resource := rp.Spec.Resource
 	permissions := rp.Spec.Permissions
 
-	entry := zanzana.NewObjectEntry(toZanzanaType(resource.ApiGroup), resource.ApiGroup, resource.Resource, "", resource.Name)
+	object := zanzana.NewObjectEntry(toZanzanaType(resource.ApiGroup), resource.ApiGroup, resource.Resource, "", resource.Name)
 
 	tuples := make([]*v1.TupleKey, 0, len(permissions))
 	for _, p := range permissions {
-		tuple, err := NewResourceTuple(resource, p)
+		tuple, err := NewResourceTuple(object, resource, p)
 		if err != nil {
 			b.logger.Error("failed to create resource permission tuple",
 				"namespace", rp.Namespace,
-				"resource", entry,
+				"object", object,
 				"err", err,
 			)
 
@@ -127,13 +127,13 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 
 	// Avoid writing if there are no valid tuples
 	if len(tuples) == 0 {
-		b.logger.Warn("no valid tuples to write", "namespace", rp.Namespace, "resource", entry)
+		b.logger.Warn("no valid tuples to write", "namespace", rp.Namespace, "resource", object)
 		return
 	}
 
 	b.logger.Debug("writing resource permission to zanzana",
 		"namespace", rp.Namespace,
-		"resource", entry,
+		"object", object,
 		"tuplesCnt", len(tuples),
 	)
 
@@ -150,7 +150,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 		b.logger.Error("failed to write resource permission to zanzana",
 			"err", err,
 			"namespace", rp.Namespace,
-			"resource", entry,
+			"object", object,
 			"tuplesCnt", len(tuples),
 		)
 	}
