@@ -21,6 +21,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/manage-single-access
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/manage-single-access
+  create-folder:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana//<GRAFANA_VERSION>/dashboards/manage-dashboards/#create-a-dashboard-folder
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#create-a-dashboard-folder
 ---
 
 # Manage multi-team access in a single Grafana instance
@@ -76,7 +81,7 @@ After you’ve deployed your Grafana instance:
 
 ### Design a folder structure to match your access needs
 
-To design a [folder](../../../dashboards/manage-dashboards/#create-a-dashboard-folder) setup that helps users quickly understand where to go, what they can access, and what they can manage:
+To design a [folder](ref:create-folder) setup that helps users quickly understand where to go, what they can access, and what they can manage:
 
 - Create an “Everyone” folder for shared items that all teams can manage.
 - For each team, create a folder that they can manage and grant them the `fixed:teams:read` [fixed role](../../../administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions). This means they can share items in their team folder with other teams, to encourage collaboration and learning from each other.
