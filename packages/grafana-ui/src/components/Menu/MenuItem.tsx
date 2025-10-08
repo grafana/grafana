@@ -6,7 +6,7 @@ import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { getFocusStyles } from '../../themes/mixins';
+import { getFocusStyles, getInternalRadius } from '../../themes/mixins';
 import { IconName } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
@@ -213,6 +213,8 @@ export const MenuItem = React.memo(
 MenuItem.displayName = 'MenuItem';
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const menuPadding = theme.components.menu.padding * theme.spacing.gridSize;
+
   return {
     item: css({
       background: 'none',
@@ -225,7 +227,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
       padding: theme.spacing(0.5, 1.5),
       minHeight: theme.spacing(4),
-      borderRadius: theme.shape.radius.default,
+      borderRadius: getInternalRadius(theme, menuPadding, { parentBorderWidth: 0 }),
       margin: 0,
       border: 'none',
       width: '100%',
@@ -285,7 +287,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
       marginLeft: theme.spacing(2),
       color: theme.colors.text.secondary,
-      opacity: 0.7,
     }),
     description: css({
       ...theme.typography.bodySmall,

@@ -167,9 +167,9 @@ describe('validatePath', () => {
       expect(validatePath(urlWithDots)).toBe(urlWithDots);
     });
 
-    it('should allow query parameters that contain dots', () => {
-      const urlWithDotsInQuery = 'https://api.example.com/search?version=1.2.3&file=../config';
-      expect(validatePath(urlWithDotsInQuery)).toBe(urlWithDotsInQuery);
+    it('should block query parameters that contain path traversal', () => {
+      const urlWithTraversalInQuery = 'https://api.example.com/search?version=1.2.3&file=../config';
+      expect(() => validatePath(urlWithTraversalInQuery)).toThrow(PathValidationError);
     });
 
     it('should handle malformed URLs gracefully', () => {

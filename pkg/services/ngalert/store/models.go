@@ -19,8 +19,8 @@ type alertRule struct {
 	DashboardUID                *string `xorm:"dashboard_uid"`
 	PanelID                     *int64  `xorm:"panel_id"`
 	RuleGroup                   string
-	RuleGroupIndex              int `xorm:"rule_group_idx"`
-	Record                      string
+	RuleGroupIndex              int    `xorm:"rule_group_idx"`
+	Record                      string // FIXME: record is nullable but we don't save it as null when it's nil
 	NoDataState                 string
 	ExecErrState                string
 	For                         time.Duration
@@ -92,7 +92,11 @@ func (a alertRuleVersion) EqualSpec(b alertRuleVersion) bool {
 		a.IsPaused == b.IsPaused &&
 		a.NotificationSettings == b.NotificationSettings &&
 		a.Metadata == b.Metadata &&
-		a.MissingSeriesEvalsToResolve == b.MissingSeriesEvalsToResolve
+		compareInt64Pointer(a.MissingSeriesEvalsToResolve, b.MissingSeriesEvalsToResolve)
+}
+
+func compareInt64Pointer(a, b *int64) bool {
+	return (a == nil && b == nil) || (a != nil && b != nil && *a == *b)
 }
 
 func (a alertRuleVersion) TableName() string {

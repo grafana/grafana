@@ -405,6 +405,7 @@ describe('getPluginExtensions()', () => {
       expect.objectContaining({
         context,
         openModal: expect.any(Function),
+        extensionPointId: extensionPoint2,
       })
     );
   });

@@ -18,8 +18,8 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 21370,
   "links": [],
-  "liveNow": false,
   "panels": [
     {
       "datasource": {
@@ -29,16 +29,16 @@
         "defaults": {
           "color": {
             "fixedColor": "blue",
-            "mode": "fixed"
+            "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "series",
-            "axisLabel": "Torque (NM)",
+            "axisLabel": "",
             "axisPlacement": "auto",
-            "axisSoftMax": 280,
-            "axisSoftMin": 80,
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -47,6 +47,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineStyle": {
               "fill": "solid"
@@ -73,7 +74,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -90,16 +91,8 @@
             },
             "properties": [
               {
-                "id": "custom.axisPlacement",
-                "value": "right"
-              },
-              {
                 "id": "custom.axisLabel",
                 "value": "Power (kW)"
-              },
-              {
-                "id": "custom.axisSoftMax",
-                "value": 120
               },
               {
                 "id": "color",
@@ -107,6 +100,14 @@
                   "fixedColor": "red",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "custom.axisSoftMin",
+                "value": 20
+              },
+              {
+                "id": "custom.axisSoftMax",
+                "value": 120
               }
             ]
           },
@@ -119,6 +120,41 @@
               {
                 "id": "custom.axisLabel",
                 "value": "Speed (RPM)"
+              },
+              {
+                "id": "custom.axisSoftMin",
+                "value": 600
+              },
+              {
+                "id": "custom.axisSoftMax",
+                "value": 6800
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Torque (NM)"
+            },
+            "properties": [
+              {
+                "id": "custom.axisLabel",
+                "value": "Torque (NM)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.axisSoftMin",
+                "value": 80
+              },
+              {
+                "id": "custom.axisSoftMax",
+                "value": 280
               }
             ]
           }
@@ -139,14 +175,16 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         },
         "xField": "Speed (RPM)"
       },
+      "pluginVersion": "12.2.0-pre",
       "targets": [
         {
-          "csvContent": "Speed (RPM),Torque (NM),Power (kW)\n0,,\n500,,\n800,180,20\n1500,215,40\n2000,227,50\n2500,230,62\n3000,233,75\n3500,236,86\n4000,234,92\n4500,230,100\n5000,220,107\n5500,210,110\n6000,178,106\n6500,120,92\n7000,,\n",
+          "csvContent": "Speed (RPM),Torque (NM),Power (kW)\n800,180,20\n1500,215,40\n2000,227,50\n2500,230,62\n3000,233,75\n3500,236,86\n4000,234,92\n4500,230,100\n5000,220,107\n5500,210,110\n6000,178,106\n6500,120,92",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
@@ -158,8 +196,9 @@
       "type": "trend"
     }
   ],
+  "preload": false,
   "refresh": "",
-  "schemaVersion": 38,
+  "schemaVersion": 41,
   "tags": ["gdev", "panel-tests", "graph-ng", "trend"],
   "templating": {
     "list": []
@@ -172,6 +211,5 @@
   "timezone": "",
   "title": "Panel Tests - Trend",
   "uid": "b36b5576-2e3d-4b0c-8dce-e79514d99345",
-  "version": 4,
-  "weekStart": ""
+  "version": 16
 }

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -32,6 +34,22 @@ func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) respon
 	dashUID := c.Query("dashboardUID")
 	panelID := c.QueryInt64("panelID")
 
+	previous := c.Query("previous")
+	if previous != "" {
+		_, err := eval.ParseStateString(previous)
+		if err != nil {
+			return ErrResp(http.StatusBadRequest, fmt.Errorf("invalid previous state filter: %w", err), "")
+		}
+	}
+
+	current := c.Query("current")
+	if current != "" {
+		_, err := eval.ParseStateString(current)
+		if err != nil {
+			return ErrResp(http.StatusBadRequest, fmt.Errorf("invalid current state filter: %w", err), "")
+		}
+	}
+
 	labels := make(map[string]string)
 	for k, v := range c.Req.URL.Query() {
 		if strings.HasPrefix(k, labelQueryPrefix) {
@@ -44,6 +62,8 @@ func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) respon
 		OrgID:        c.GetOrgID(),
 		DashboardUID: dashUID,
 		PanelID:      panelID,
+		Previous:     previous,
+		Current:      current,
 		SignedInUser: c.SignedInUser,
 		From:         time.Unix(from, 0),
 		To:           time.Unix(to, 0),

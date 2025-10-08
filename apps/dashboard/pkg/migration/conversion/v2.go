@@ -57,7 +57,8 @@ func Convert_V2alpha1_to_V2beta1(in *dashv2alpha1.Dashboard, out *dashv2beta1.Da
 				Source:        in,
 			},
 		}
-		return err
+
+		return NewConversionError(err.Error(), "v2alpha1", "v2beta1", "ConvertDashboard_V2alpha1_to_V2beta1")
 	}
 
 	// Set successful conversion status

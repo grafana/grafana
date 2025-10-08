@@ -17,11 +17,11 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -65,6 +65,7 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 		},
 		urls:    urls,
 		clients: clients,
+		config:  config,
 	}, nil
 }
 
@@ -74,6 +75,8 @@ type parser struct {
 
 	// for repositories that have URL support
 	urls repository.RepositoryWithURLs
+
+	config *provisioning.Repository
 
 	// ResourceClients give access to k8s apis
 	clients ResourceClients
@@ -192,6 +195,8 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		dirPath := safepath.Dir(info.Path)
 		if dirPath != "" {
 			parsed.Meta.SetFolder(ParseFolder(dirPath, r.repo.Name).ID)
+		} else {
+			parsed.Meta.SetFolder(RootFolder(r.config))
 		}
 	}
 	obj.SetUID("")             // clear identifiers
@@ -203,7 +208,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	// TODO: catch the not found gvk error to return bad request
-	parsed.Client, parsed.GVR, err = r.clients.ForKind(parsed.GVK)
+	parsed.Client, parsed.GVR, err = r.clients.ForKind(ctx, parsed.GVK)
 	if err != nil {
 		return nil, fmt.Errorf("get client for kind: %w", err)
 	}

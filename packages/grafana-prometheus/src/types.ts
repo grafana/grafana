@@ -49,7 +49,6 @@ export interface PromOptions extends DataSourceJsonData {
   allowAsRecordingRulesTarget?: boolean;
   sigV4Auth?: boolean;
   oauthPassThru?: boolean;
-  codeModeMetricNamesSuggestionLimit?: number;
   seriesEndpoint?: boolean;
   seriesLimit?: number;
 }

@@ -5,8 +5,9 @@ import (
 	"errors"
 	"net/http"
 
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	clientrest "k8s.io/client-go/rest"
+
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
 type RestConfigProvider interface {

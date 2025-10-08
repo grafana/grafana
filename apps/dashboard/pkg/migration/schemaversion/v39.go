@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V39 migrates timeSeriesTable transformation configuration to support extensible per-query options.
 //
 // This migration addresses limitations in the original timeSeriesTable transformation design where
@@ -45,7 +47,7 @@ package schemaversion
 //	    "C": { stat: "last" }
 //	  }
 //	}]
-func V39(dashboard map[string]interface{}) error {
+func V39(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(39)
 
 	panels, ok := dashboard["panels"].([]interface{})
