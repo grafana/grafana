@@ -57,6 +57,19 @@ composableKinds: PanelCfg: {
 					// Enables mode which highlights the entire bar area and shows tooltip when cursor
 					// hovers over highlighted area
 					fullHighlight: bool | *false
+					// Configuration for bar markers that can be displayed on each bar
+					markers?: [...{
+						// Field containing marker values to display
+						field?: string
+						// Shape of the marker
+						shape: *"circle" | "square" | "diamond" | "triangle"
+						// Color of the marker
+						color?: string
+						// Size of the marker in pixels
+						size: int32 & >=2 & <=20 | *6
+						// Whether to show marker values as labels
+						showValue: bool | *false
+					}] | *[]
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					common.AxisConfig

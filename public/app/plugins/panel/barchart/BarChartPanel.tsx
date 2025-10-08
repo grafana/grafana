@@ -72,8 +72,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
   // TODO: config data links
   const info = useMemo(
-    () => prepSeries(data.series, fieldConfig, stacking, theme, xField, colorByField),
-    [data.series, fieldConfig, stacking, theme, xField, colorByField]
+    () => prepSeries(data.series, fieldConfig, stacking, theme, xField, colorByField, options.markers),
+    [data.series, fieldConfig, stacking, theme, xField, colorByField, options.markers]
   );
 
   const vizSeries = useMemo(
@@ -93,7 +93,16 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     () => {
       return xGroupsCount === 0
         ? { builder: null, prepData: null }
-        : prepConfig({ series: vizSeries, totalSeries, color: info.color, orientation, options, timeZone, theme });
+        : prepConfig({ 
+            series: vizSeries, 
+            totalSeries, 
+            color: info.color, 
+            orientation, 
+            options, 
+            timeZone, 
+            theme,
+            markers: info.markers 
+          });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -118,6 +127,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       fullHighlight,
       xField,
       colorByField,
+      options.markers,
       xTickLabelMaxLength, // maybe not?
       // props.fieldConfig, // usePrevious hideFrom on all fields?
     ]

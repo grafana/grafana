@@ -39,7 +39,7 @@ import { AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 
 import { BarsOptions, getConfig } from './bars';
-import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
+import { FieldConfig, Options, BarMarker, defaultFieldConfig } from './panelcfg.gen';
 // import { isLegendOrdered } from './utils';
 
 interface BarSeries {
@@ -47,6 +47,44 @@ interface BarSeries {
   _rest: Field[];
   color?: Field | null;
   warn?: string | null;
+  markers?: ProcessedMarker[];
+}
+
+interface ProcessedMarker {
+  field: Field;
+  config: BarMarker;
+  values: Array<number | null>;
+}
+
+/**
+ * Process markers configuration and extract marker data from frame fields
+ */
+function processMarkers(frame: DataFrame, markers: BarMarker[]): ProcessedMarker[] {
+  if (!markers || markers.length === 0) {
+    return [];
+  }
+
+  const processedMarkers: ProcessedMarker[] = [];
+
+  for (const marker of markers) {
+    if (!marker.field) {
+      continue;
+    }
+
+    const field = frame.fields.find(
+      (f) => f.state?.displayName === marker.field || f.name === marker.field
+    );
+
+    if (field && field.type === FieldType.number) {
+      processedMarkers.push({
+        field,
+        config: marker,
+        values: field.values.map((v) => (Number.isFinite(v) ? v : null)),
+      });
+    }
+  }
+
+  return processedMarkers;
 }
 
 export function prepSeries(
@@ -55,7 +93,8 @@ export function prepSeries(
   stacking: StackingMode,
   theme: GrafanaTheme2,
   xFieldName?: string,
-  colorFieldName?: string
+  colorFieldName?: string,
+  markers?: BarMarker[]
 ): BarSeries {
   // this allows PanelDataErrorView to show the default noValue message
   if (frames.length === 0 || frames.every((fr) => fr.length === 0)) {
@@ -135,11 +174,15 @@ export function prepSeries(
 
     setClassicPaletteIdxs(series, theme, 0);
 
+    // Process markers
+    const processedMarkers = processMarkers(frame, markers || []);
+
     return {
       series,
       _rest,
       color: colorField,
       warn,
+      markers: processedMarkers,
     };
   }
 
@@ -159,9 +202,10 @@ export interface PrepConfigOpts {
   options: Options;
   timeZone: TimeZone;
   theme: GrafanaTheme2;
+  markers?: ProcessedMarker[];
 }
 
-export const prepConfig = ({ series, totalSeries, color, orientation, options, timeZone, theme }: PrepConfigOpts) => {
+export const prepConfig = ({ series, totalSeries, color, orientation, options, timeZone, theme, markers }: PrepConfigOpts) => {
   let {
     showValue,
     groupWidth,
@@ -283,6 +327,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),
     fullHighlight,
     hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
+    markers,
   };
 
   const config = getConfig(opts, theme);

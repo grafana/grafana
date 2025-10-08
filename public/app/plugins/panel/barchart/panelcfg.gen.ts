@@ -61,6 +61,33 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    * negative values indicate backwards skipping behavior
    */
   xTickLabelSpacing?: number;
+  /**
+   * Configuration for bar markers that can be displayed on each bar
+   */
+  markers?: BarMarker[];
+}
+
+export interface BarMarker {
+  /**
+   * Field containing marker values to display
+   */
+  field?: string;
+  /**
+   * Shape of the marker
+   */
+  shape: 'circle' | 'square' | 'diamond' | 'triangle';
+  /**
+   * Color of the marker
+   */
+  color?: string;
+  /**
+   * Size of the marker in pixels
+   */
+  size: number;
+  /**
+   * Whether to show marker values as labels
+   */
+  showValue: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
@@ -73,6 +100,7 @@ export const defaultOptions: Partial<Options> = {
   stacking: common.StackingMode.None,
   xTickLabelRotation: 0,
   xTickLabelSpacing: 0,
+  markers: [],
 };
 
 export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig {

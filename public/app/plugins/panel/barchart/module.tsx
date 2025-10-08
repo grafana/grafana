@@ -15,6 +15,7 @@ import { optsWithHideZeros } from '@grafana/ui/internal';
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 
 import { BarChartPanel } from './BarChartPanel';
+import { MarkersEditor } from './MarkersEditor';
 import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
@@ -251,6 +252,20 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         'barchart.config.description-color-by-field',
         'Use the color value for a sibling field to color each bar value.'
       ),
+    });
+
+    // Markers configuration section
+    builder.addCustomEditor({
+      id: 'markers',
+      path: 'markers',
+      name: t('barchart.config.name-markers', 'Markers'),
+      description: t(
+        'barchart.config.description-markers',
+        'Add markers to visualize threshold values on individual bars.'
+      ),
+      editor: MarkersEditor,
+      defaultValue: [],
+      category: [t('barchart.config.category-markers', 'Markers')],
     });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, false, optsWithHideZeros);

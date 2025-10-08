@@ -17,6 +17,19 @@ const intervals = systemDateFormats.interval;
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
+// Import types for markers
+interface ProcessedMarker {
+  field: any;
+  config: {
+    field?: string;
+    shape: 'circle' | 'square' | 'diamond' | 'triangle';
+    color?: string;
+    size: number;
+    showValue: boolean;
+  };
+  values: Array<number | null>;
+}
+
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
 // min.max font size for value label
@@ -60,6 +73,7 @@ export interface BarsOptions {
   xTimeAuto?: boolean;
   negY?: boolean[];
   fullHighlight?: boolean;
+  markers?: ProcessedMarker[];
 }
 
 /**
@@ -111,6 +125,134 @@ function calculateFontSizeWithMetrics(
     fontSize: Math.min(optimalSize, maxSize ?? optimalSize),
     textMetrics: textSize,
   };
+}
+
+/**
+ * Draw markers on bars
+ */
+function drawMarkers(
+  u: uPlot,
+  markers: ProcessedMarker[],
+  qt: Quadtree,
+  isXHorizontal: boolean,
+  theme: GrafanaTheme2
+) {
+  if (!markers || markers.length === 0) {
+    return;
+  }
+
+  u.ctx.save();
+
+  // Iterate through all data points to draw markers
+  for (let dataIdx = 0; dataIdx < u.data[0].length; dataIdx++) {
+    markers.forEach((marker) => {
+      const markerValue = marker.values[dataIdx];
+      if (markerValue == null) {
+        return;
+      }
+
+      // Find all bars at this data index
+      const rects = findRects(qt, undefined, dataIdx);
+      
+      rects.forEach((rect) => {
+        const { x: barX, y: barY, w: barW, h: barH } = rect;
+
+        // Calculate marker position based on marker value and bar position
+        let markerX: number, markerY: number;
+
+        if (isXHorizontal) {
+          // Horizontal bars: marker X position based on value, Y position centered on bar
+          markerX = Math.round(u.valToPos(markerValue, 'y', true));
+          markerY = barY + barH / 2;
+        } else {
+          // Vertical bars: marker Y position based on value, X position centered on bar
+          markerY = Math.round(u.valToPos(markerValue, 'y', true));
+          markerX = barX + barW / 2;
+        }
+
+        // Draw marker shape
+        drawMarkerShape(
+          u.ctx,
+          markerX + u.bbox.left,
+          markerY + u.bbox.top,
+          marker.config.shape,
+          marker.config.size,
+          marker.config.color || theme.colors.primary.main
+        );
+
+        // Draw marker value label if enabled
+        if (marker.config.showValue) {
+          u.ctx.fillStyle = theme.colors.text.primary;
+          u.ctx.font = `12px ${theme.typography.fontFamily}`;
+          u.ctx.textAlign = 'center';
+          u.ctx.textBaseline = 'middle';
+          
+          const labelOffset = marker.config.size + 8;
+          const labelX = markerX + u.bbox.left;
+          const labelY = isXHorizontal ? 
+            markerY + u.bbox.top - labelOffset : 
+            markerY + u.bbox.top - labelOffset;
+          
+          u.ctx.fillText(String(markerValue), labelX, labelY);
+        }
+      });
+    });
+  }
+
+  u.ctx.restore();
+}
+
+/**
+ * Draw individual marker shapes
+ */
+function drawMarkerShape(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  shape: 'circle' | 'square' | 'diamond' | 'triangle',
+  size: number,
+  color: string
+) {
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+
+  const radius = size / 2;
+
+  switch (shape) {
+    case 'circle':
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.stroke();
+      break;
+
+    case 'square':
+      ctx.fillRect(x - radius, y - radius, size, size);
+      ctx.strokeRect(x - radius, y - radius, size, size);
+      break;
+
+    case 'diamond':
+      ctx.beginPath();
+      ctx.moveTo(x, y - radius);
+      ctx.lineTo(x + radius, y);
+      ctx.lineTo(x, y + radius);
+      ctx.lineTo(x - radius, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+
+    case 'triangle':
+      ctx.beginPath();
+      ctx.moveTo(x, y - radius);
+      ctx.lineTo(x + radius, y + radius);
+      ctx.lineTo(x - radius, y + radius);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+  }
 }
 
 /**
@@ -631,6 +773,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           !intersectsLabel && u.ctx.fillText(text, x, y);
         }
       }
+    }
+
+    // Draw markers
+    if (opts.markers && opts.markers.length > 0) {
+      drawMarkers(u, opts.markers, qt, isXHorizontal, theme);
     }
 
     u.ctx.restore();
