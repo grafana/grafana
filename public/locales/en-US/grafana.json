@@ -6685,6 +6685,9 @@
       "label-state-name": "State name"
     }
   },
+  "dependency-graph": {
+    "app-version": "{polishVersion(consumerNode.version)}"
+  },
   "dimensions": {
     "background-size-editor": {
       "options": {
@@ -7567,17 +7570,20 @@
     }
   },
   "extensions": {
-    "back-to-add-view": "Back to Add View",
     "content-consumer": {
       "label": "Content consumer",
       "placeholder": "Select content consumers to display (active consumers by default)"
+    },
+    "content-consumers": {
+      "label": "Content consumers",
+      "placeholder": "Select content consumers to display"
     },
     "content-provider": {
       "label": "Content provider",
       "placeholder": "Select content providers to display"
     },
     "dependency-graph": {
-      "add-mode": "Add Mode (Extensions)",
+      "added-links-mode": "Added Links Mode",
       "component-extension-color": "Component Extension Color",
       "component-extension-color-description": "Color for component extension points",
       "component-extensions": "Component extensions",
@@ -7585,30 +7591,44 @@
       "consumes-components": "Consumes exposed components from other plugins",
       "content-consumers": "Content Consumers",
       "content-consumers-description": "Add Mode: plugins that define extension points | Expose Mode: plugins that consume exposed components (right side)",
+      "content-consumers-extension-point": "Content Consumers",
+      "content-consumers-extension-point-description": "Extension Point Mode: select which content consumers (apps with extension points) to display (right side)",
       "content-providers": "Content Providers",
       "content-providers-description": "Add Mode: plugins that add to extension points | Expose Mode: plugins that expose components (left side)",
       "debug-info": "Debug: width={{width}}, height={{height}}, data keys: {{keys}}",
       "defines-extension-points": "Defines extension points",
+      "draw-arrows-from-providers": "Draw arrows from content providers extending this extension point",
       "error-details": "Error details",
       "error-message": "An error occurred while rendering the dependency graph.",
       "error-title": "Dependency Graph Error",
-      "expose-mode": "Expose Mode (Components)",
       "exposed-component": "Exposed component",
+      "exposed-components-mode": "Exposed Components Mode",
       "exposes-components": "Exposes components to other plugins",
       "extension-points": "Extension Points",
       "extension-points-description": "Extension Point Mode: select which extension points to display (right side)",
       "extensionpoint-mode": "Extension Point Mode",
+      "filter-content-consumer": "Filter content consumer by {{appName}}",
+      "filter-content-provider": "Filter content providers by {{appName}}",
+      "filter-extension-point": "Filter on this extension point",
       "function-extension-color": "Function Extension Color",
       "function-extension-color-description": "Color for function extension points (addedFunctions)",
       "function-extensions": "Function extensions",
       "grafana-core": "Grafana Core",
+      "grafana-core-application": "Grafana Core Application",
+      "grafana-core-extension-point": "Grafana core extension point: {{epId}}",
+      "highlight-arrows-associated": "Highlight arrows associated with {{appName}}",
       "link-extension-color": "Link Extension Color",
       "link-extension-color-description": "Color for link extension points",
       "link-extensions": "Link extensions",
       "no-data": "No plugin dependency data available",
       "provides-and-consumes": "Provides and consumes extension content",
       "provides-content": "Provides content to extension points",
+      "remove-content-consumer-filter": "Remove {{appName}} filter",
+      "remove-content-provider-filter": "Remove {{appName}} filter",
+      "remove-extension-point-filter": "Remove {{extensionPointName}} filter",
+      "see-extensions": "See extensions that use this extension point",
       "select-content-consumers": "Select content consumers to display (active consumers by default)",
+      "select-content-consumers-extension-point": "Select content consumers to display",
       "select-content-providers": "Select content providers to display",
       "select-extension-points": "Select extension points to display",
       "show-dependency-types": "Show Dependency Types",
@@ -7619,15 +7639,20 @@
       "visualization-mode": "Visualization Mode",
       "visualization-mode-description": "Choose between Add mode (plugins adding to extension points), Expose mode (plugins exposing components), or Extension Point mode (extensions and extension points)"
     },
+    "extension-points": {
+      "label": "Extension points",
+      "placeholder": "Select extension points to display"
+    },
     "tabs": {
       "dependency-graph": "Dependency Graph",
       "log-viewer": "Log Viewer"
     },
     "view": {
-      "add": "Add",
-      "expose": "Expose",
+      "addedcomponents": "Added components",
+      "addedfunctions": "Added functions",
       "addedlinks": "Added links",
-      "label": "View"
+      "exposedComponents": "Exposed components",
+      "extensionpoints": "Extension points"
     }
   },
   "folder-filter": {
