@@ -629,14 +629,6 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 28 && finalTargetVersion >= 28) {
-      panelUpgrades.push((panel: PanelModel) => {
-        if (panel.type === 'singlestat') {
-          return migrateSinglestat(panel);
-        }
-
-        return panel;
-      });
-
       for (const variable of this.dashboard.templating.list) {
         if (variable.tags) {
           delete variable.tags;
