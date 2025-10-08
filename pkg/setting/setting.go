@@ -577,7 +577,6 @@ type Cfg struct {
 	IndexPath                                  string
 	IndexWorkers                               int
 	IndexRebuildWorkers                        int
-	IndexMaxBatchSize                          int
 	IndexFileThreshold                         int
 	IndexMinCount                              int
 	IndexRebuildInterval                       time.Duration

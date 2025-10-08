@@ -367,6 +367,273 @@ func TestService_GetForProvider(t *testing.T) {
 	}
 }
 
+func TestService_GetForProviderFromCache(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name     string
+		provider string
+		setup    func(env testEnv)
+		want     *models.SSOSettings
+		wantErr  bool
+	}{
+		{
+			name:     "should return successfully from cache",
+			provider: "github",
+			setup: func(env testEnv) {
+				env.service.cachedSSOSettings = []*models.SSOSettings{
+					{
+						Provider: "github",
+						Settings: map[string]any{
+							"enabled":       true,
+							"client_id":     "client_id",
+							"client_secret": "secret",
+						},
+						Source: models.DB,
+					},
+				}
+			},
+			want: &models.SSOSettings{
+				Provider: "github",
+				Settings: map[string]any{
+					"enabled":       true,
+					"client_id":     "client_id",
+					"client_secret": "secret",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:     "should return successfully from database if not in cache",
+			provider: "github",
+			setup: func(env testEnv) {
+				env.service.cachedSSOSettings = []*models.SSOSettings{
+					{
+						Provider: "google",
+						Settings: map[string]any{"enabled": true},
+						Source:   models.DB,
+					},
+				}
+				env.store.ExpectedSSOSetting = &models.SSOSettings{
+					Provider: "github",
+					Settings: map[string]any{
+						"enabled":       true,
+						"client_id":     "client_id",
+						"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
+					},
+					Source: models.DB,
+				}
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
+			},
+			want: &models.SSOSettings{
+				Provider: "github",
+				Settings: map[string]any{
+					"enabled":       true,
+					"client_id":     "client_id",
+					"client_secret": "decrypted-client-secret",
+				},
+				Source: models.DB,
+			},
+			wantErr: false,
+		},
+		{
+			name:     "should return nil if provider is not valid",
+			provider: "invalid",
+			setup: func(env testEnv) {
+				env.service.cachedSSOSettings = []*models.SSOSettings{
+					{
+						Provider: "github",
+						Settings: map[string]any{"enabled": true},
+						Source:   models.DB,
+					},
+				}
+			},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name:     "should return error if store returns an error",
+			provider: "github",
+			setup: func(env testEnv) {
+				env.store.ExpectedError = fmt.Errorf("error")
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
+		// otherwise it would be like a moving pointer while tests run in parallel
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			env := setupTestEnv(t, true, false, true)
+			if tc.setup != nil {
+				tc.setup(env)
+			}
+
+			actual, err := env.service.GetForProviderFromCache(context.Background(), tc.provider)
+
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.want, actual)
+
+			env.secrets.AssertExpectations(t)
+		})
+	}
+
+	t.Run("should return settings from cache after calling List", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, true, false, true)
+		env.store.ExpectedSSOSettings = []*models.SSOSettings{
+			{
+				Provider: "github",
+				Settings: map[string]any{
+					"enabled":       true,
+					"client_id":     "github_client_id",
+					"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
+				},
+				Source: models.DB,
+			},
+			{
+				Provider: "okta",
+				Settings: map[string]any{
+					"enabled":      false,
+					"client_id":    "okta_client_id",
+					"other_secret": base64.RawStdEncoding.EncodeToString([]byte("other_secret")),
+				},
+				Source: models.DB,
+			},
+		}
+		env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
+		env.secrets.On("Decrypt", mock.Anything, []byte("other_secret"), mock.Anything).Return([]byte("decrypted-other-secret"), nil).Once()
+
+		_, err := env.service.List(context.Background())
+		require.NoError(t, err)
+
+		actual, err := env.service.GetForProviderFromCache(context.Background(), "github")
+		require.NoError(t, err)
+		require.Equal(t, "github", actual.Provider)
+		require.Equal(t, map[string]any{
+			"enabled":       true,
+			"client_id":     "github_client_id",
+			"client_secret": "decrypted-client-secret",
+		}, actual.Settings)
+		require.Equal(t, env.store.ExpectedSSOSettings[0].Source, actual.Source)
+
+		actual, err = env.service.GetForProviderFromCache(context.Background(), "okta")
+		require.NoError(t, err)
+		require.Equal(t, "okta", actual.Provider)
+		require.Equal(t, map[string]any{
+			"enabled":      false,
+			"client_id":    "okta_client_id",
+			"other_secret": "decrypted-other-secret",
+		}, actual.Settings)
+		require.Equal(t, env.store.ExpectedSSOSettings[1].Source, actual.Source)
+	})
+
+	testCasesUpsert := []struct {
+		name     string
+		provider string
+		settings []*models.SSOSettings
+	}{
+		{
+			name:     "should return settings from cache after upsert if provider is already in cache",
+			provider: "azuread",
+			settings: []*models.SSOSettings{
+				{
+					Provider: "azuread",
+					Settings: map[string]any{"enabled": true},
+					Source:   models.DB,
+				},
+			},
+		},
+		{
+			name:     "should return settings from cache after upsert if provider is not in cache",
+			provider: "github",
+			settings: []*models.SSOSettings{},
+		},
+	}
+	for _, tc := range testCasesUpsert {
+		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
+		// otherwise it would be like a moving pointer while tests run in parallel
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			env := setupTestEnv(t, false, false, false)
+
+			env.service.cachedSSOSettings = tc.settings
+
+			settings := models.SSOSettings{
+				Provider: tc.provider,
+				Settings: map[string]any{
+					"client_id":     "client-id",
+					"client_secret": "client-secret",
+					"enabled":       true,
+				},
+			}
+
+			var wg sync.WaitGroup
+			wg.Add(1)
+
+			reloadable := ssosettingstests.NewMockReloadable(t)
+			reloadable.On("Validate", mock.Anything, settings, mock.Anything, mock.Anything).Return(nil)
+			reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
+				defer wg.Done()
+				return true
+			})).Return(nil).Maybe()
+			env.reloadables[tc.provider] = reloadable
+
+			env.secrets.On("Encrypt", mock.Anything, []byte("client-secret"), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
+			env.secrets.On("Decrypt", mock.Anything, []byte("encrypted-current-client-secret"), mock.Anything).Return([]byte("current-client-secret"), nil).Once()
+
+			env.store.UpsertFn = func(ctx context.Context, settings *models.SSOSettings) error {
+				currentTime := time.Now()
+				settings.ID = "someid"
+				settings.Created = currentTime
+				settings.Updated = currentTime
+
+				env.store.ActualSSOSettings = *settings
+				return nil
+			}
+
+			env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+				return &models.SSOSettings{
+					ID:       "someid",
+					Provider: provider,
+					Settings: map[string]any{
+						"client_secret": base64.RawStdEncoding.EncodeToString([]byte("encrypted-current-client-secret")),
+					},
+				}, nil
+			}
+
+			err := env.service.Upsert(context.Background(), &settings, &user.SignedInUser{})
+			require.NoError(t, err)
+
+			wg.Wait()
+
+			actual, err := env.service.GetForProviderFromCache(context.Background(), tc.provider)
+			require.NoError(t, err)
+			require.Equal(t, tc.provider, actual.Provider)
+			require.Equal(t, map[string]any{
+				"enabled":       true,
+				"client_id":     "client-id",
+				"client_secret": "client-secret",
+			}, actual.Settings)
+		})
+	}
+}
+
 func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 	t.Parallel()
 
