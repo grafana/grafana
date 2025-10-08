@@ -4,6 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Checkbox,
@@ -118,12 +119,19 @@ export function ConfigForm({ data }: ConfigFormProps) {
   useEffect(() => {
     if (request.isSuccess) {
       const formData = getValues();
+
+      reportInteraction('grafana_provisioning_repository_updated', {
+        repositoryName: repositoryName ?? 'unknown',
+        repositoryType: formData.type,
+        target: formData.sync?.target ?? 'unknown',
+      });
+
       reset(formData);
       setTimeout(() => {
         navigate('/admin/provisioning');
       }, 300);
     }
-  }, [request.isSuccess, reset, getValues, navigate]);
+  }, [request.isSuccess, reset, getValues, navigate, repositoryName]);
 
   const onSubmit = async (form: RepositoryFormData) => {
     setIsLoading(true);

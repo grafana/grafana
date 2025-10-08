@@ -2,7 +2,7 @@ import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryFormData } from '../types';
 
-const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflows'] => {
+export const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflows'] => {
   if (data.readOnly) {
     return [];
   }

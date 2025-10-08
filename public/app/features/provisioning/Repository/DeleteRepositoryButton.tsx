@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
 import {
   Repository,
@@ -44,6 +45,15 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
       };
       await replaceRepository({ name, repository: updatedRepository });
     }
+
+    reportInteraction('grafana_provisioning_repository_deleted', {
+      repositoryName: name,
+      repositoryType: repository?.spec?.type ?? 'unknown',
+      deleteAction: selectedAction,
+      target: repository?.spec?.sync?.target ?? 'unknown',
+      workflows: repository?.spec?.workflows ?? [],
+    });
+
     deleteRepository({ name });
   }, [deleteRepository, replaceRepository, name, selectedAction, repository]);
 
