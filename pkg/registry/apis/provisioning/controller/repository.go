@@ -340,7 +340,6 @@ func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *
 			logger.Info("full sync on interval for non-versioned repository")
 			return &provisioning.SyncJobOptions{}
 		}
-
 		latestRef, err := versioned.LatestRef(ctx)
 		if err != nil {
 			logger.Warn("incremental sync on interval without knowing if ref has actually changed", "error", err)
@@ -353,11 +352,35 @@ func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *
 			return nil
 		}
 
-		logger.Info("incremental sync on interval")
-		return &provisioning.SyncJobOptions{Incremental: true}
+		// Whenever possible, we try to keep it as an incremental sync to keep things performant.
+		// However, if there are any .keep file deletions inside a folder with no other deletions, we need
+		// to do a full sync to see if the folder was deleted as well in git.
+		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef)
+		if err != nil {
+			logger.Warn("unable to compare files for incremental sync, doing full sync", "error", err)
+			return &provisioning.SyncJobOptions{}
+		}
+
+		logger.Info("sync on interval", "incremental", incremental)
+		return &provisioning.SyncJobOptions{Incremental: incremental}
 	default:
 		return nil
 	}
+}
+
+func shouldUseIncrementalSync(ctx context.Context, versioned repository.Versioned, obj *provisioning.Repository, latestRef string) (bool, error) {
+	changes, err := versioned.CompareFiles(ctx, obj.Status.Sync.LastRef, latestRef)
+	if err != nil {
+		return false, err
+	}
+	var deletedPaths []string
+	for _, change := range changes {
+		if change.Action == repository.FileActionDeleted {
+			deletedPaths = append(deletedPaths, change.Path)
+		}
+	}
+
+	return repository.CanUseIncrementalSync(deletedPaths), nil
 }
 
 func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) error {

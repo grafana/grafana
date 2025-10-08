@@ -148,12 +148,15 @@ export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, should
     ...(shouldOverflow && { minHeight: '100%' }),
 
     [getActiveCellSelector()]: {
-      '.table-cell-actions': { display: 'flex' },
       ...(shouldOverflow && {
         zIndex: theme.zIndex.tooltip - 2,
         height: 'fit-content',
         minWidth: 'fit-content',
       }),
+    },
+
+    [getHoverOnlyCellSelector()]: {
+      '.table-cell-actions': { display: 'flex' },
     },
   });
 
@@ -251,4 +254,11 @@ export const getActiveCellSelector = memoize((isNested?: boolean) => {
     selectors.push(ACTIVE_CELL_SELECTORS.hover[isNested ? 'nested' : 'normal']);
   }
   return selectors.join(', ');
+});
+
+export const getHoverOnlyCellSelector = memoize((isNested?: boolean) => {
+  if (IS_SAFARI_26) {
+    return '';
+  }
+  return ACTIVE_CELL_SELECTORS.hover[isNested ? 'nested' : 'normal'];
 });
