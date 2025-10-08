@@ -13,7 +13,6 @@ const (
 type metrics struct {
 	requestCount         *prometheus.CounterVec
 	permissionCacheUsage *prometheus.CounterVec
-	missingFolders       *prometheus.GaugeVec
 }
 
 func newMetrics(reg prometheus.Registerer) *metrics {
