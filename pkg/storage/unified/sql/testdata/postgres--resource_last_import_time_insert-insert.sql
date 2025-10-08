@@ -9,5 +9,5 @@
        'ns',
        '2025-10-07 22:30:05 +0000 UTC'
     ) ON CONFLICT ("group", "resource", "namespace")
-      SET "last_import_time" = '2025-10-07 22:30:05 +0000 UTC'
+      DO UPDATE SET "last_import_time" = '2025-10-07 22:30:05 +0000 UTC'
 ;
