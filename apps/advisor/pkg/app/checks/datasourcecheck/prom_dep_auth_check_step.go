@@ -65,7 +65,6 @@ func (s *promDepAuthStep) Run(ctx context.Context, log logging.Logger, obj *advi
 		errorLinks,
 		fmt.Sprintf("Plugin: %s", dataSource.Type),
 	)}, nil
-
 }
 
 func (s *promDepAuthStep) checkUsingAWSAuth(ctx context.Context, dataSource *datasources.DataSource) ([]advisor.CheckErrorLink, error) {
