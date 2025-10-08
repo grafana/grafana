@@ -51,6 +51,8 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
         (option.value === 'add' ||
           option.value === 'expose' ||
           option.value === 'addedlinks' ||
+          option.value === 'addedcomponents' ||
+          option.value === 'addedfunctions' ||
           option.value === 'extensionpoint')
       ) {
         setVisualizationMode(option.value);

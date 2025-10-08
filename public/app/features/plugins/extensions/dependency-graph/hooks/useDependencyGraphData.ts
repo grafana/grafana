@@ -11,7 +11,13 @@ import {
 } from '../dependency-graph-panel/utils/dataProcessor';
 import { logGraphData } from '../utils/logger';
 
-export type VisualizationMode = 'add' | 'expose' | 'extensionpoint' | 'addedlinks';
+export type VisualizationMode =
+  | 'add'
+  | 'expose'
+  | 'extensionpoint'
+  | 'addedlinks'
+  | 'addedcomponents'
+  | 'addedfunctions';
 
 export interface DependencyGraphOptions {
   visualizationMode: VisualizationMode;

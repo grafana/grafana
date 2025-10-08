@@ -52,7 +52,7 @@ export interface GraphData {
 
 export interface PanelOptions {
   // Visualization mode
-  visualizationMode: 'add' | 'expose' | 'extensionpoint' | 'addedlinks';
+  visualizationMode: 'add' | 'expose' | 'extensionpoint' | 'addedlinks' | 'addedcomponents' | 'addedfunctions';
 
   // Visualization options
   showDependencyTypes: boolean;

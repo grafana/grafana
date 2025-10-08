@@ -405,9 +405,12 @@ export const getExtensionPointPositions = (
 
   const groupSpacing = 40;
   const typeHeaderSpacing =
-    options.visualizationMode === 'addedlinks' || options.visualizationMode === 'add'
+    options.visualizationMode === 'addedlinks' ||
+    options.visualizationMode === 'addedcomponents' ||
+    options.visualizationMode === 'addedfunctions' ||
+    options.visualizationMode === 'add'
       ? 0
-      : GROUPED_BOX_SPACING.TYPE_HEADER_SPACING; // No space for type headers in addedlinks and add modes
+      : GROUPED_BOX_SPACING.TYPE_HEADER_SPACING; // No space for type headers in addedlinks, addedcomponents, addedfunctions and add modes
   const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
   const rightSideX = width - margin - extensionBoxWidth - LAYOUT_CONSTANTS.ARROW_SAFETY_MARGIN;
 

@@ -9,7 +9,14 @@ import { VisualizationMode } from './useDependencyGraphData';
  * Type guard to check if a string is a valid VisualizationMode
  */
 const isValidVisualizationMode = (mode: string | null): mode is VisualizationMode => {
-  return mode === 'add' || mode === 'expose' || mode === 'extensionpoint' || mode === 'addedlinks';
+  return (
+    mode === 'add' ||
+    mode === 'expose' ||
+    mode === 'extensionpoint' ||
+    mode === 'addedlinks' ||
+    mode === 'addedcomponents' ||
+    mode === 'addedfunctions'
+  );
 };
 
 export interface DependencyGraphControls {
@@ -176,6 +183,8 @@ export function useDependencyGraphControls(): DependencyGraphControls {
     { label: t('extensions.view.add', 'Add'), value: 'add' as const },
     { label: t('extensions.view.expose', 'Expose'), value: 'expose' as const },
     { label: t('extensions.view.addedlinks', 'Added links'), value: 'addedlinks' as const },
+    { label: t('extensions.view.addedcomponents', 'Added components'), value: 'addedcomponents' as const },
+    { label: t('extensions.view.addedfunctions', 'Added functions'), value: 'addedfunctions' as const },
     { label: t('extensions.view.extensionpoints', 'Extension points'), value: 'extensionpoint' as const },
   ];
 

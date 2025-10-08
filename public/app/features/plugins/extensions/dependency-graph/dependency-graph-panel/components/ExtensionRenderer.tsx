@@ -809,6 +809,24 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
         {renderContentConsumerContextMenu()}
       </>
     );
+  } else if (options.visualizationMode === 'addedcomponents') {
+    // In "Added components" view, render extension points (which are the consumers)
+    return (
+      <>
+        {renderExtensionPoints()}
+        {renderContextMenu()}
+        {renderContentConsumerContextMenu()}
+      </>
+    );
+  } else if (options.visualizationMode === 'addedfunctions') {
+    // In "Added functions" view, render extension points (which are the consumers)
+    return (
+      <>
+        {renderExtensionPoints()}
+        {renderContextMenu()}
+        {renderContentConsumerContextMenu()}
+      </>
+    );
   } else {
     return (
       <>
@@ -1518,29 +1536,34 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
 
                 return (
                   <g key={`${definingPlugin}-${type}`}>
-                    {/* Type header - hide in addedlinks and add modes since all extensions are link extensions */}
-                    {options.visualizationMode !== 'addedlinks' && options.visualizationMode !== 'add' && (
-                      <text
-                        x={firstEpPos.x}
-                        y={headerY}
-                        textAnchor="start"
-                        fill={theme.colors.text.primary}
-                        fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
-                        fontWeight="normal"
-                        style={{
-                          pointerEvents: 'none',
-                          zIndex: 1000,
-                        }}
-                      >
-                        {type === 'function' ? (
-                          <Trans i18nKey="extensions.dependency-graph.function-extensions">Function extensions</Trans>
-                        ) : type === 'component' ? (
-                          <Trans i18nKey="extensions.dependency-graph.component-extensions">Component extensions</Trans>
-                        ) : (
-                          <Trans i18nKey="extensions.dependency-graph.link-extensions">Link extensions</Trans>
-                        )}
-                      </text>
-                    )}
+                    {/* Type header - hide in addedlinks, addedcomponents, addedfunctions and add modes since all extensions are of the same type */}
+                    {options.visualizationMode !== 'addedlinks' &&
+                      options.visualizationMode !== 'addedcomponents' &&
+                      options.visualizationMode !== 'addedfunctions' &&
+                      options.visualizationMode !== 'add' && (
+                        <text
+                          x={firstEpPos.x}
+                          y={headerY}
+                          textAnchor="start"
+                          fill={theme.colors.text.primary}
+                          fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
+                          fontWeight="normal"
+                          style={{
+                            pointerEvents: 'none',
+                            zIndex: 1000,
+                          }}
+                        >
+                          {type === 'function' ? (
+                            <Trans i18nKey="extensions.dependency-graph.function-extensions">Function extensions</Trans>
+                          ) : type === 'component' ? (
+                            <Trans i18nKey="extensions.dependency-graph.component-extensions">
+                              Component extensions
+                            </Trans>
+                          ) : (
+                            <Trans i18nKey="extensions.dependency-graph.link-extensions">Link extensions</Trans>
+                          )}
+                        </text>
+                      )}
 
                     {/* Extension points for this type */}
                     {extensionPointIds.map((epId) => {
