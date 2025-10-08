@@ -214,39 +214,3 @@ function getPanelPlugin(pluginId: 'stat' | 'table'): PanelPlugin {
 
   return pluginCopy;
 }
-
-export async function handleAngularPanelMigration(
-  frontendModel: DashboardModel,
-  sourceVersion: number,
-  targetVersion: number
-): Promise<void> {
-  /* 
-    Migration from schema V27 involves migrating angular singlestat panels to stat panels
-    These panels are auto migrated where PanelModel.restoreModel() is called in the constructor,
-    and the autoMigrateFrom is set and type is set to "stat". So this logic will not run.
-    if (oldVersion < 28) {
-      panelUpgrades.push((panel: PanelModel) => {
-        if (panel.type === 'singlestat') {
-          return migrateSinglestat(panel);
-        }
-      });
-    }
-  
-    Furthermore, the PanelModel.pluginLoaded is run in the old architecture through a redux action so it will not run in this test.
-    In the scenes architecture the angular migration logic runs through a migration handler inside transformSaveModelToScene.ts
-     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
-    We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly. 
-    which means that the actual migration logic is not run.
-    We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly.
-  */
-  for (const panel of frontendModel.panels) {
-    // if (panel.type === 'stat' && panel.autoMigrateFrom && targetVersion >= 28 && sourceVersion < 28) {
-    //   const statPlugin = getPanelPlugin('stat');
-    //   await panel.pluginLoaded(statPlugin);
-    // }
-    if (panel.type === 'table' && panel.autoMigrateFrom === 'table-old' && targetVersion >= 24 && sourceVersion < 24) {
-      const tablePlugin = getPanelPlugin('table');
-      await panel.pluginLoaded(tablePlugin);
-    }
-  }
-}
