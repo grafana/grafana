@@ -22,113 +22,138 @@ func (s *promDepAuthStep) Title() string {
 }
 
 func (s *promDepAuthStep) Description() string {
-	return "Check if Prometheus data sources are using deprecated authentication methods (Azure and AWS)"
+	return "Check if Prometheus data sources are using deprecated authentication methods (Azure auth and SigV4)"
 }
 
 func (s *promDepAuthStep) Resolution() string {
-	return "Enable the feature flag for 'prometheusTypeMigration'. If the feature flag is enabled and the migration is failing, make sure to install 'Azure Monitor Managed Service for Prometheus' and/or 'Amazon Managed Service for Prometheus'."
+	return "Enable the feature toggle for 'prometheusTypeMigration'. If this feature toggle is already enabled, install 'Azure Monitor Managed Service for Prometheus' and/or 'Amazon Managed Service for Prometheus' data sources."
 }
 
 func (s *promDepAuthStep) ID() string {
 	return PromDepAuthStepID
 }
 
-func (s *promDepAuthStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) ([]advisor.CheckReportFailure, error) {
-	ds, ok := i.(*datasources.DataSource)
+func (s *promDepAuthStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, item any) ([]advisor.CheckReportFailure, error) {
+	dataSource, ok := item.(*datasources.DataSource)
 	if !ok {
-		return nil, fmt.Errorf("invalid item type %T", i)
+		return nil, fmt.Errorf("invalid item type %T", item)
 	}
-	if ds.Type != datasources.DS_PROMETHEUS {
+	if dataSource.Type != datasources.DS_PROMETHEUS {
 		return nil, nil
 	}
 
-	links := []advisor.CheckErrorLink{}
-
-	awsLink, err := s.checkUsingAWSAuth(ctx, ds)
+	awsAuthLinks, err := s.checkUsingAWSAuth(ctx, dataSource)
 	if err != nil {
 		return nil, err
 	}
-	if awsLink != nil {
-		links = append(links, *awsLink)
-	}
-
-	azureLink, err := s.checkUsingAzureAuth(ctx, ds)
+	azureAuthLinks, err := s.checkUsingAzureAuth(ctx, dataSource)
 	if err != nil {
 		return nil, err
 	}
-	if azureLink != nil {
-		links = append(links, *azureLink)
-	}
 
-	if awsLink == nil && azureLink == nil {
+	errorLinks := append(awsAuthLinks, azureAuthLinks...)
+
+	if len(errorLinks) == 0 {
 		return nil, nil
 	}
 
 	return []advisor.CheckReportFailure{checks.NewCheckReportFailureWithMoreInfo(
 		advisor.CheckReportFailureSeverityHigh,
 		s.ID(),
-		ds.Name,
-		ds.UID,
-		links,
-		fmt.Sprintf("Plugin: %s", ds.Type),
+		dataSource.Name,
+		dataSource.UID,
+		errorLinks,
+		fmt.Sprintf("Plugin: %s", dataSource.Type),
 	)}, nil
 
 }
 
-func (s *promDepAuthStep) checkUsingAWSAuth(ctx context.Context, ds *datasources.DataSource) (*advisor.CheckErrorLink, error) {
-	if sigV4Auth, found := ds.JsonData.CheckGet("sigV4Auth"); found {
+func (s *promDepAuthStep) checkUsingAWSAuth(ctx context.Context, dataSource *datasources.DataSource) ([]advisor.CheckErrorLink, error) {
+	var errorLinks []advisor.CheckErrorLink
+	if sigV4Auth, found := dataSource.JsonData.CheckGet("sigV4Auth"); found {
 		if enabled, err := sigV4Auth.Bool(); err != nil || !enabled {
 			return nil, err
 		}
-		ro, err := checkReadOnly(ds)
-		if err != nil || ro != nil {
-			return ro, err
-		}
-		return s.linkDataSource(ctx, datasources.DS_AMAZON_PROMETHEUS)
-	}
-	return nil, nil
-}
-
-func (s *promDepAuthStep) checkUsingAzureAuth(ctx context.Context, ds *datasources.DataSource) (*advisor.CheckErrorLink, error) {
-	if azureAuth, found := ds.JsonData.CheckGet("azureCredentials"); found {
-		if val, err := azureAuth.Value(); err != nil || val == nil {
+		readOnlyLink, err := checkReadOnly(dataSource)
+		if err != nil {
 			return nil, err
 		}
-		ro, err := checkReadOnly(ds)
-		if err != nil || ro != nil {
-			return ro, err
+
+		if readOnlyLink != nil {
+			errorLinks = append(errorLinks, *readOnlyLink)
 		}
-		return s.linkDataSource(ctx, datasources.DS_AZURE_PROMETHEUS)
+
+		errorLinks = append(errorLinks,
+			advisor.CheckErrorLink{
+				Message: "View SigV4 docs",
+				Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/",
+			})
+		pluginLink, err := s.linkDataSource(ctx, datasources.DS_AMAZON_PROMETHEUS)
+		if err != nil {
+			return nil, err
+		}
+		if pluginLink != nil {
+			errorLinks = append(errorLinks, *pluginLink)
+		}
 	}
-	return nil, nil
+	return errorLinks, nil
 }
 
-func checkReadOnly(ds *datasources.DataSource) (*advisor.CheckErrorLink, error) {
-	if readOnly, found := ds.JsonData.CheckGet("readonly"); found {
+func (s *promDepAuthStep) checkUsingAzureAuth(ctx context.Context, dataSource *datasources.DataSource) ([]advisor.CheckErrorLink, error) {
+	var errorLinks []advisor.CheckErrorLink
+	if azureAuth, found := dataSource.JsonData.CheckGet("azureCredentials"); found {
+		if _, err := azureAuth.Value(); err != nil {
+			return nil, err
+		}
+		readOnlyLink, err := checkReadOnly(dataSource)
+		if err != nil {
+			return nil, err
+		}
+		if readOnlyLink != nil {
+			errorLinks = append(errorLinks, *readOnlyLink)
+		}
+		errorLinks = append(errorLinks,
+			advisor.CheckErrorLink{
+				Message: "View Azure auth docs",
+				Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/",
+			})
+		pluginLink, err := s.linkDataSource(ctx, datasources.DS_AZURE_PROMETHEUS)
+		if err != nil {
+			return errorLinks, err
+		}
+		if pluginLink != nil {
+			errorLinks = append(errorLinks, *pluginLink)
+		}
+	}
+	return errorLinks, nil
+}
+
+func checkReadOnly(dataSource *datasources.DataSource) (*advisor.CheckErrorLink, error) {
+	if readOnly, found := dataSource.JsonData.CheckGet("readonly"); found {
 		if enabled, err := readOnly.Bool(); err != nil || !enabled {
 			return nil, err
 		}
 		return &advisor.CheckErrorLink{
 			Message: "Plugin is ReadOnly",
-			Url:     fmt.Sprintf("/plugins/%s", ds.Type),
+			Url:     fmt.Sprintf("/plugins/%s", dataSource.Type),
 		}, nil
 	}
 	return nil, nil
 }
 
-func (s *promDepAuthStep) linkDataSource(ctx context.Context, dataSourceType string) (*advisor.CheckErrorLink, error) {
-	plugins, err := s.PluginRepo.GetPluginsInfo(ctx, repo.GetPluginsInfoOptions{
+func (s *promDepAuthStep) linkDataSource(ctx context.Context, pluginType string) (*advisor.CheckErrorLink, error) {
+	availablePlugins, err := s.PluginRepo.GetPluginsInfo(ctx, repo.GetPluginsInfoOptions{
 		IncludeDeprecated: true,
-		Plugins:           []string{dataSourceType},
+		Plugins:           []string{pluginType},
 	}, repo.NewCompatOpts(s.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH))
 	if err != nil {
 		return nil, err
 	}
-	if len(plugins) > 0 {
+	if len(availablePlugins) > 0 {
 		// Plugin is available in the repo
 		return &advisor.CheckErrorLink{
 			Message: "View plugin",
-			Url:     fmt.Sprintf("/plugins/%s", dataSourceType),
+			Url:     fmt.Sprintf("/plugins/%s", pluginType),
 		}, nil
 	}
 	return nil, nil
