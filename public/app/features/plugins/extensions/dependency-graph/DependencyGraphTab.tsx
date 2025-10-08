@@ -19,13 +19,12 @@ export function DependencyGraphTab(): JSX.Element {
   return (
     <DependencyGraphErrorBoundary>
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: LAYOUT_CONSTANTS.PADDING }}>
+        <div style={{ marginTop: LAYOUT_CONSTANTS.PADDING }}>
           <DependencyGraphHeader controls={controls} />
 
           {/* Controls Section */}
-          <div style={{ marginTop: LAYOUT_CONSTANTS.PADDING, marginBottom: LAYOUT_CONSTANTS.PADDING }}>
-            <DependencyGraphControlsComponent controls={controls} />
-          </div>
+
+          <DependencyGraphControlsComponent controls={controls} />
         </div>
 
         {/* Visualization Section */}

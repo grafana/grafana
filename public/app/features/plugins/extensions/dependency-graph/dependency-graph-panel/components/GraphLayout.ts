@@ -760,7 +760,7 @@ export const calculateContentHeight = (
   const isExtensionPointMode = options.visualizationMode === 'extensionpoint';
 
   if (isExtensionPointMode && data.extensions && data.extensions.length > 0) {
-    // Group extensions by their providing plugin (app)
+    // Group extensions by their providing plugin (app) - LEFT SIDE
     const extensionGroups = new Map<string, string[]>();
     data.extensions.forEach((ext) => {
       if (!extensionGroups.has(ext.providingPlugin)) {
@@ -769,10 +769,31 @@ export const calculateContentHeight = (
       extensionGroups.get(ext.providingPlugin)!.push(ext.id);
     });
 
+    let leftSideHeight = 0;
     Array.from(extensionGroups.entries()).forEach(([providingPlugin, extensionIds]) => {
       const groupHeight = extensionIds.length * spacing + 30;
-      totalHeight += groupHeight + groupSpacing;
+      leftSideHeight += groupHeight + groupSpacing;
     });
+
+    // Group extension points by their defining plugin - RIGHT SIDE
+    let rightSideHeight = 0;
+    if (data.extensionPoints && data.extensionPoints.length > 0) {
+      const extensionPointGroups = new Map<string, string[]>();
+      data.extensionPoints.forEach((ep) => {
+        if (!extensionPointGroups.has(ep.definingPlugin)) {
+          extensionPointGroups.set(ep.definingPlugin, []);
+        }
+        extensionPointGroups.get(ep.definingPlugin)!.push(ep.id);
+      });
+
+      Array.from(extensionPointGroups.entries()).forEach(([definingPlugin, extensionPointIds]) => {
+        const groupHeight = extensionPointIds.length * spacing + 30;
+        rightSideHeight += groupHeight + groupSpacing;
+      });
+    }
+
+    // Use the maximum height from both sides
+    totalHeight += Math.max(leftSideHeight, rightSideHeight);
   } else if (isExposeMode && data.exposedComponents && data.exposedComponents.length > 0) {
     // Group exposed components by their providing plugin
     const exposedComponentGroups = new Map<string, string[]>();
@@ -838,5 +859,15 @@ export const calculateContentHeight = (
     return height; // Use panel height as minimum if no content
   }
 
-  return Math.max(totalHeight, height); // Use at least the panel height
+  const finalHeight = Math.max(totalHeight, height); // Use at least the panel height
+  console.log('calculateContentHeight result:', {
+    totalHeight,
+    panelHeight: height,
+    finalHeight,
+    isExtensionPointMode,
+    isExposeMode,
+    extensionsCount: data.extensions?.length,
+    extensionPointsCount: data.extensionPoints?.length,
+  });
+  return finalHeight;
 };

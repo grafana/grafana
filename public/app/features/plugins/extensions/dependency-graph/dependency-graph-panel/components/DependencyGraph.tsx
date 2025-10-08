@@ -52,6 +52,15 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
     const calculatedHeight = calculateContentHeight(data, options, width, height, isExposeMode || isExtensionPointMode);
     // For full height behavior, use the calculated height if it's larger than the available height
     // This allows the content to expand beyond the viewport and make the page scrollable
+    console.log('Content height calculation:', {
+      calculatedHeight,
+      panelHeight: height,
+      dataNodes: data.nodes?.length,
+      dataExtensions: data.extensions?.length,
+      dataExtensionPoints: data.extensionPoints?.length,
+      isExposeMode,
+      isExtensionPointMode,
+    });
     return calculatedHeight;
   }, [data, options, width, height, isExposeMode, isExtensionPointMode]);
 

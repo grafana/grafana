@@ -4,11 +4,6 @@
  * Renders section headers and divider lines for the dependency graph.
  */
 
-import { SerializedStyles } from '@emotion/react';
-import React from 'react';
-
-import { GrafanaTheme2 } from '@grafana/data';
-
 import {
   LAYOUT_CONSTANTS,
   MODE_LABELS,
@@ -16,6 +11,10 @@ import {
   getResponsiveNodeWidth,
   getRightMargin,
 } from '../constants';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import React from 'react';
+import { SerializedStyles } from '@emotion/react';
 
 interface HeaderRendererProps {
   theme: GrafanaTheme2;
@@ -40,17 +39,6 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({
   if (isExposeMode) {
     return (
       <g>
-        {/* Main mode heading - centered "Expose APIs" */}
-        <text
-          x={width / 2}
-          y={LAYOUT_CONSTANTS.HEADER_Y_OFFSET}
-          textAnchor="middle"
-          fill={theme.colors.text.primary}
-          style={{ fontSize: '18px', fontWeight: 'bold' }}
-        >
-          {MODE_LABELS.EXPOSE_MODE}
-        </text>
-
         {/* Content Provider Header (left in expose mode) */}
         <text
           x={margin + nodeWidth / 2}
@@ -90,17 +78,6 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({
   if (isExtensionPointMode) {
     return (
       <g>
-        {/* Main mode heading - centered "Extension Point Usage" */}
-        <text
-          x={width / 2}
-          y={LAYOUT_CONSTANTS.HEADER_Y_OFFSET}
-          textAnchor="middle"
-          fill={theme.colors.text.primary}
-          style={{ fontSize: '18px', fontWeight: 'bold' }}
-        >
-          {MODE_LABELS.EXTENSION_POINT_MODE}
-        </text>
-
         {/* Extensions Header (left in extension point mode) */}
         <text
           x={margin + 220} // Position over extension boxes on the left
@@ -139,17 +116,6 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({
 
   return (
     <g>
-      {/* Main mode heading - centered "Add APIs" */}
-      <text
-        x={width / 2}
-        y={LAYOUT_CONSTANTS.HEADER_Y_OFFSET}
-        textAnchor="middle"
-        fill={theme.colors.text.primary}
-        style={{ fontSize: '18px', fontWeight: 'bold' }}
-      >
-        {MODE_LABELS.ADD_MODE}
-      </text>
-
       {/* Content Provider Header */}
       <text
         x={margin + 113} // Centered over boxes at new position
