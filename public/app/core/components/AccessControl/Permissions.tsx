@@ -61,7 +61,7 @@ export const Permissions = ({
       items = getWarnings(items);
     }
     return items;
-  }, [resource, resourceId]);
+  }, [resource, getWarnings]);
 
   useEffect(() => {
     getDescription(resource).then((r) => {
