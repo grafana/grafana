@@ -456,7 +456,8 @@ func (b *DashboardsAPIBuilder) validateFolderManagedBySameManager(folder *unstru
 		manager, ok := dashboardAccessor.GetManagerProperties()
 		if !ok {
 			return fmt.Errorf("folder is managed by a repository, but the dashboard is not managed")
-		} else if manager.Kind != utils.ManagerKindRepo || manager.Identity != folderManager.Identity {
+		}
+		if manager.Kind != utils.ManagerKindRepo || manager.Identity != folderManager.Identity {
 			return fmt.Errorf("folder is managed by a repository, but the dashboard is not managed by the same manager")
 		}
 	}
