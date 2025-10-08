@@ -91,11 +91,23 @@ function isExtensionObject(
  * @returns Plugin data object
  */
 const getPluginData = (): Record<string, AppPluginConfig> => {
-  // Temporarily use data.json directly instead of window.grafanaBootData.settings.apps
-  if (ENABLE_DEBUG_LOGS) {
-    console.log('Using data.json directly', Object.keys(pluginDataFallback).length, 'plugins');
+  // Use window.grafanaBootData.settings.apps if available, otherwise fallback to data.json
+  if (typeof window !== 'undefined' && window.grafanaBootData?.settings?.apps) {
+    if (ENABLE_DEBUG_LOGS) {
+      console.log(
+        'Using window.grafanaBootData.settings.apps',
+        Object.keys(window.grafanaBootData.settings.apps).length,
+        'plugins'
+      );
+    }
+    return window.grafanaBootData.settings.apps;
   }
-  // Type assertion to handle the temporary switch to data.json
+
+  // Fallback to data.json
+  if (ENABLE_DEBUG_LOGS) {
+    console.log('Using data.json fallback', Object.keys(pluginDataFallback).length, 'plugins');
+  }
+  // Type assertion to handle the fallback to data.json
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return pluginDataFallback as unknown as Record<string, AppPluginConfig>;
 };

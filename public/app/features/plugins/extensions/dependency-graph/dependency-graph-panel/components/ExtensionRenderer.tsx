@@ -929,7 +929,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       fill={theme.colors.text.secondary}
                       fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
                     >
-                      <Trans i18nKey="dependency-graph.app-version">{polishVersion(appNode.version)}</Trans>
+                      {polishVersion(appNode.version)}
                     </text>
                   );
                 }
@@ -1206,7 +1206,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
                       style={{ pointerEvents: 'none' }}
                     >
-                      <Trans i18nKey="dependency-graph.app-version">{polishVersion(appNode.version)}</Trans>
+                      {polishVersion(appNode.version)}
                     </text>
                   );
                 }
@@ -1385,7 +1385,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
                       style={{ pointerEvents: 'none' }}
                     >
-                      <Trans i18nKey="dependency-graph.app-version">{polishVersion(appNode.version)}</Trans>
+                      {polishVersion(appNode.version)}
                     </text>
                   );
                 }
@@ -1682,7 +1682,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
                       style={{ pointerEvents: 'none' }}
                     >
-                      <Trans i18nKey="dependency-graph.app-version">{polishVersion(appNode.version)}</Trans>
+                      {polishVersion(appNode.version)}
                     </text>
                   );
                 }
