@@ -1535,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "Gruppen raderas"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Ta bort uttryck ”{{refId}}”"
     },
@@ -1709,6 +1712,9 @@
       },
       "placeholder-key": "nyckel",
       "placeholder-value": "värde"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Visa eller skapa kontaktpunkter",
@@ -2024,6 +2030,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Vald Alertmanager finns inte längre eller så kanske du inte har behörighet att komma åt den. Du kan välja en annan larmhanterare i rullgardinsmenyn.",
       "title-selected-alertmanager-not-found": "Vald Alertmanager hittades inte."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2915,6 +2927,13 @@
         "summary": "Följande larmregler kommer att importeras:",
         "title-warning": "Varning"
       }
+    },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
     },
     "type-selector-button": {
       "add-expression": "Lägg till uttryck"
@@ -9446,6 +9465,7 @@
     "description-enable-infinite-scrolling": "Experimentellt. Begär fler resultat genom att bläddra till längst ner i logglistan.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Visa kontroller för att hoppa till den sista eller första loggraden och filtrera efter loggnivå",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9496,9 +9516,6 @@
       "collapse": "Dölj etiketter",
       "expand": "Expandera etiketter"
     },
-    "log-labels-list": {
-      "log-line": "loggrad"
-    },
     "log-line": {
       "has-error": "Innehåller fel",
       "is-sampled": "Är samplad",
@@ -9538,6 +9555,7 @@
       "inline-mode": "Visa inline",
       "link-value-tooltip": "",
       "links-section": "Länkar",
+      "log-attributes-field": "",
       "log-line-field": "Loggrad",
       "log-line-section": "Loggrad",
       "move-displayed-field-down": "Flytta ner",
@@ -9744,6 +9762,7 @@
       "line-contains": "Lägg till som rad innehåller filter",
       "line-contains-not": "Lägg till som rad innehåller inte filter"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Tidsstämpelupplösning",
     "un-themed-log-details": {
       "aria-label-data-links": "Datalänkar",

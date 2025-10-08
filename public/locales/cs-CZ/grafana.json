@@ -1545,6 +1545,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "Probíhá odstranění skupiny"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Odebrat výraz „{{refId}}“"
     },
@@ -1719,6 +1722,9 @@
       },
       "placeholder-key": "klíč",
       "placeholder-value": "hodnota"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Zobrazit nebo vytvořit kontaktní body",
@@ -2036,6 +2042,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Vybraný správce výstrah již neexistuje nebo nemáte potřebná oprávnění. Vyberte jiného správce výstrah z rozevíracího seznamu.",
       "title-selected-alertmanager-not-found": "Vybraný správce výstrah nebyl nalezen."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2939,6 +2951,13 @@
         "summary": "Budou importována následující pravidla výstrahy:",
         "title-warning": "Varování"
       }
+    },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
     },
     "type-selector-button": {
       "add-expression": "Přidat výraz"
@@ -9502,6 +9521,7 @@
     "description-enable-infinite-scrolling": "Experimentální. Požádejte o další výsledky posunutím do dolní části seznamu protokolů.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Zobrazit ovládací prvky pro přechod na poslední nebo první řádek protokolu a filtry podle úrovně protokolu",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9558,9 +9578,6 @@
       "collapse": "Sbalit štítky",
       "expand": "Rozbalit štítky"
     },
-    "log-labels-list": {
-      "log-line": "řádek protokolu"
-    },
     "log-line": {
       "has-error": "Obsahuje chyby",
       "is-sampled": "Je vzorkováno",
@@ -9600,6 +9617,7 @@
       "inline-mode": "Zobrazit v řádku",
       "link-value-tooltip": "",
       "links-section": "Odkazy",
+      "log-attributes-field": "",
       "log-line-field": "Řádek protokolu",
       "log-line-section": "Řádek protokolu",
       "move-displayed-field-down": "Přesunout dolů",
@@ -9806,6 +9824,7 @@
       "line-contains": "Přidat jako řádek obsahuje filtr",
       "line-contains-not": "Přidat jako řádek neobsahuje filtr"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Rozlišení časového razítka",
     "un-themed-log-details": {
       "aria-label-data-links": "Propojení dat",

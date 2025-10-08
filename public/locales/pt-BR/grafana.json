@@ -1535,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "O grupo está sendo excluído"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Remover expressão \"{{refId}}\""
     },
@@ -1709,6 +1712,9 @@
       },
       "placeholder-key": "chave",
       "placeholder-value": "valor"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Visualizar ou criar pontos de contato",
@@ -2024,6 +2030,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "O Alertmanager selecionado não existe mais ou talvez você não tenha permissão para acessá-lo. Você pode selecionar um Alertmanager diferente no menu suspenso.",
       "title-selected-alertmanager-not-found": "Alertmanager selecionado não encontrado."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2915,6 +2927,13 @@
         "summary": "As seguintes regras de alerta serão importadas:",
         "title-warning": "Aviso"
       }
+    },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
     },
     "type-selector-button": {
       "add-expression": "Adicionar expressão"
@@ -9446,6 +9465,7 @@
     "description-enable-infinite-scrolling": "Experimental. Solicite mais resultados ao descer até a parte inferior da lista de logs.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Exibir controles para pular para a última ou primeira linha do log e filtros por nível de log",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9496,9 +9516,6 @@
       "collapse": "Recolher rótulos",
       "expand": "Expandir rótulos"
     },
-    "log-labels-list": {
-      "log-line": "linha de log"
-    },
     "log-line": {
       "has-error": "Contém erros",
       "is-sampled": "É amostrado",
@@ -9538,6 +9555,7 @@
       "inline-mode": "Exibir em linha",
       "link-value-tooltip": "",
       "links-section": "Links",
+      "log-attributes-field": "",
       "log-line-field": "Linha de registro",
       "log-line-section": "Linha de log",
       "move-displayed-field-down": "Mover para baixo",
@@ -9744,6 +9762,7 @@
       "line-contains": "Adicionar como linha contém filtro",
       "line-contains-not": "Adicionar como linha não contém filtro"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Resolução de data e hora",
     "un-themed-log-details": {
       "aria-label-data-links": "Links de dados",

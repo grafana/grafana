@@ -1530,6 +1530,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "Grup sedang dihapus"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Hapus ekspresi \"{{refId}}\""
     },
@@ -1704,6 +1707,9 @@
       },
       "placeholder-key": "kunci",
       "placeholder-value": "nilai"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Lihat atau buat titik kontak",
@@ -2018,6 +2024,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Alertmanager yang dipilih tidak ada lagi atau Anda mungkin tidak memiliki izin untuk mengaksesnya. Anda dapat memilih Alertmanager lain dari menu dropdown.",
       "title-selected-alertmanager-not-found": "Alertmanager yang dipilih tidak ditemukan."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2903,6 +2915,13 @@
         "summary": "Aturan peringatan berikut akan diimpor:",
         "title-warning": "PERINGATAN"
       }
+    },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
     },
     "type-selector-button": {
       "add-expression": "Tambah pola"
@@ -9418,6 +9437,7 @@
     "description-enable-infinite-scrolling": "Eksperimental. Minta lebih banyak hasil dengan menggulir ke bagian bawah daftar log.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Tampilkan kontrol untuk melompat ke baris log terakhir atau pertama, dan filter berdasarkan level log",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9465,9 +9485,6 @@
       "collapse": "Ciutkan label",
       "expand": "Perbesar label"
     },
-    "log-labels-list": {
-      "log-line": "baris log"
-    },
     "log-line": {
       "has-error": "Memiliki kesalahan",
       "is-sampled": "Diambil sampelnya",
@@ -9507,6 +9524,7 @@
       "inline-mode": "Tampilkan sebaris",
       "link-value-tooltip": "",
       "links-section": "Tautan",
+      "log-attributes-field": "",
       "log-line-field": "Baris log",
       "log-line-section": "Baris log",
       "move-displayed-field-down": "Pindahkan ke bawah",
@@ -9713,6 +9731,7 @@
       "line-contains": "Tambahkan sebagai baris berisi filter",
       "line-contains-not": "Tambahkan sebagai baris tidak berisi filter"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Resolusi stempel waktu",
     "un-themed-log-details": {
       "aria-label-data-links": "Tautan data",
