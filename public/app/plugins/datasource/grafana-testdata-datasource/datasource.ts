@@ -18,9 +18,6 @@ import {
   AnnotationQuery,
   getSearchFilterScopedVar,
   FieldType,
-  ActionType,
-  HttpRequestMethod,
-  ActionVariableType,
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
@@ -184,46 +181,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
     const events = this.buildFakeAnnotationEvents(req.range, target.lines ?? 10);
     const dataFrame = new ArrayDataFrame(events);
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
-    if (dataFrame.fields?.[1]) {
-      dataFrame.fields[1].config = {
-        links: [
-          {
-            url: 'https://grafana.com',
-            title: 'Annotation Data link',
-          },
-        ],
-        actions: [
-          {
-            type: ActionType.Fetch,
-            fetch: {
-              headers: [
-                ['Content-Type', 'application/json'],
-                ['Accept', 'application/json'],
-              ],
-              method: HttpRequestMethod.POST,
-              url: '/api/annotations',
-              body: `{"dashboardUID":"$dashboardUID","isRegion":true,"panelId":$panelID,"time":$__from,"timeEnd":$__to,"text":"Annotation Description"}`,
-            },
-            variables: [
-              {
-                key: 'dashboardUID',
-                name: 'dashboardUID',
-                type: ActionVariableType.String,
-              },
-              {
-                key: 'panelID',
-                name: 'panelID',
-                type: ActionVariableType.String,
-              },
-            ],
-            title: 'Add annotation to panel for this time range',
-            confirmation:
-              'Are you sure you want to add annotation for this time range? Note: requires actions_allow_post_url config to include "/api/annotations".',
-          },
-        ],
-        ...dataFrame.fields[1].config,
-      };
-    }
     return of({ key: target.refId, data: [dataFrame] }).pipe(delay(100));
   }
 
