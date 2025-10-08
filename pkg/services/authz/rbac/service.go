@@ -294,7 +294,7 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		return nil, err
 	}
 
-	action, actionSet, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +312,7 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		UserUID:      userUID,
 		IdentityType: idType,
 		Action:       action,
-		ActionSets:   actionSet,
+		ActionSets:   actionSets,
 		Group:        req.GetGroup(),
 		Resource:     req.GetResource(),
 		Verb:         req.GetVerb(),
