@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +18,8 @@ import (
 var (
 	errEmptyName   = errors.New("name cannot be empty")
 	errUnknownKind = errors.New("unknown permission kind")
+
+	defaultWriteTimeout = 15 * time.Second
 )
 
 func toZanzanaSubject(kind iamv0.ResourcePermissionSpecPermissionKind, name string) (string, error) {
@@ -125,13 +128,21 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 		"tuplesCnt", len(tuples),
 	)
 
-	err := b.zClient.Write(context.Background(), &v1.WriteRequest{
+	ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+	defer cancel()
+
+	err := b.zClient.Write(ctx, &v1.WriteRequest{
 		Namespace: rp.Namespace,
 		Writes: &v1.WriteRequestWrites{
 			TupleKeys: tuples,
 		},
 	})
 	if err != nil {
-		b.logger.Error("failed to write resource permission to zanzana", "err", err)
+		b.logger.Error("failed to write resource permission to zanzana",
+			"err", err,
+			"namespace", rp.Namespace,
+			"resource", entry,
+			"tuplesCnt", len(tuples),
+		)
 	}
 }
