@@ -64,6 +64,7 @@ export interface PanelOptions {
   // Filtering options
   selectedContentProviders: string[];
   selectedContentConsumers: string[];
+  selectedContentConsumersForExtensionPoint: string[]; // For filtering content consumers in extension point mode
   selectedExtensionPoints: string[];
 
   // Color options for extension types

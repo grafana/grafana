@@ -18,11 +18,13 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
     visualizationMode,
     selectedContentProviders,
     selectedContentConsumers,
+    selectedContentConsumersForExtensionPoint,
     selectedExtensionPoints,
     selectedExtensions,
     setVisualizationMode,
     setSelectedContentProviders,
     setSelectedContentConsumers,
+    setSelectedContentConsumersForExtensionPoint,
     setSelectedExtensionPoints,
     modeOptions,
   } = controls;
@@ -32,14 +34,17 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
     activeConsumers,
     contentProviderOptions,
     contentConsumerOptions,
+    contentConsumerForExtensionPointOptions,
     extensionPointOptions,
     selectedProviderValues,
     selectedConsumerValues,
+    selectedConsumerForExtensionPointValues,
     selectedExtensionPointValues,
   } = useDependencyGraphData({
     visualizationMode,
     selectedContentProviders,
     selectedContentConsumers,
+    selectedContentConsumersForExtensionPoint,
     selectedExtensionPoints,
     selectedExtensions,
   });
@@ -81,6 +86,15 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
     [activeConsumers, setSelectedContentConsumers]
   );
 
+  const handleConsumerForExtensionPointChange = useCallback(
+    (selected: Array<{ value?: string }>) => {
+      const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
+      const newValue = selectedValues.length === contentConsumerForExtensionPointOptions.length ? [] : selectedValues;
+      setSelectedContentConsumersForExtensionPoint(newValue);
+    },
+    [contentConsumerForExtensionPointOptions.length, setSelectedContentConsumersForExtensionPoint]
+  );
+
   const handleExtensionPointChange = useCallback(
     (selected: Array<{ value?: string }>) => {
       const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
@@ -93,13 +107,12 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
   return (
     <>
       <InlineFieldRow>
-        <InlineField label={t('extensions.view.label', 'View')}>
+        <InlineField>
           <Combobox<VisualizationMode>
             options={modeOptions}
             value={visualizationMode}
             onChange={handleModeChange}
-            width="auto"
-            minWidth={12}
+            width={22}
           />
         </InlineField>
         {visualizationMode !== 'extensionpoint' && (
@@ -141,6 +154,18 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
                 value={selectedProviderValues}
                 onChange={handleProviderChange}
                 placeholder={t('extensions.content-provider.placeholder', 'Select content providers to display')}
+                width="auto"
+                enableAllOption
+                minWidth={20}
+                maxWidth={30}
+              />
+            </InlineField>
+            <InlineField label={t('extensions.content-consumers.label', 'Content consumers')}>
+              <MultiCombobox
+                options={contentConsumerForExtensionPointOptions}
+                value={selectedConsumerForExtensionPointValues}
+                onChange={handleConsumerForExtensionPointChange}
+                placeholder={t('extensions.content-consumers.placeholder', 'Select content consumers to display')}
                 width="auto"
                 enableAllOption
                 minWidth={20}

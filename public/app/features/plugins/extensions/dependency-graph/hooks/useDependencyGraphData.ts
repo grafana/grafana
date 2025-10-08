@@ -22,6 +22,7 @@ export interface DependencyGraphOptions {
   visualizationMode: VisualizationMode;
   selectedContentProviders: string[];
   selectedContentConsumers: string[];
+  selectedContentConsumersForExtensionPoint?: string[];
   selectedExtensionPoints?: string[];
   selectedExtensions?: string[];
 }
@@ -35,10 +36,12 @@ export interface DependencyGraphData {
   activeConsumers: string[];
   contentProviderOptions: Array<{ label: string; value: string }>;
   contentConsumerOptions: Array<{ label: string; value: string }>;
+  contentConsumerForExtensionPointOptions: Array<{ label: string; value: string }>;
   extensionPointOptions: Array<{ label: string; value: string }>;
   extensionOptions: Array<{ label: string; value: string }>;
   selectedProviderValues: string[];
   selectedConsumerValues: string[];
+  selectedConsumerForExtensionPointValues: string[];
   selectedExtensionPointValues: string[];
   selectedExtensionValues: string[];
 }
@@ -50,6 +53,7 @@ export function useDependencyGraphData({
   visualizationMode,
   selectedContentProviders,
   selectedContentConsumers,
+  selectedContentConsumersForExtensionPoint,
   selectedExtensionPoints,
   selectedExtensions,
 }: DependencyGraphOptions): DependencyGraphData {
@@ -83,14 +87,45 @@ export function useDependencyGraphData({
     [availableConsumers]
   );
 
-  const extensionPointOptions = useMemo(
-    () =>
-      availableExtensionPoints.map((extensionPoint) => ({
+  const contentConsumerForExtensionPointOptions = useMemo(() => {
+    const consumers = getAvailableContentConsumers('extensionpoint');
+    return consumers.map((consumer) => ({
+      label: consumer === 'grafana-core' ? 'Grafana Core' : consumer,
+      value: consumer,
+    }));
+  }, []);
+
+  const extensionPointOptions = useMemo(() => {
+    // If content consumer filtering is enabled, only show extension points from selected consumers
+    if (selectedContentConsumersForExtensionPoint && selectedContentConsumersForExtensionPoint.length > 0) {
+      // Filter extension points to only include those from selected content consumers
+      const filteredExtensionPoints = availableExtensionPoints.filter((extensionPoint) => {
+        // Check if this extension point belongs to one of the selected content consumers
+        return selectedContentConsumersForExtensionPoint.some((consumer) => {
+          // For grafana-core extension points
+          if (consumer === 'grafana-core' && extensionPoint.startsWith('grafana/')) {
+            return true;
+          }
+          // For plugin extension points
+          if (extensionPoint.startsWith(`${consumer}/`)) {
+            return true;
+          }
+          return false;
+        });
+      });
+
+      return filteredExtensionPoints.map((extensionPoint) => ({
         label: extensionPoint,
         value: extensionPoint,
-      })),
-    [availableExtensionPoints]
-  );
+      }));
+    }
+
+    // If no content consumer filtering, show all extension points
+    return availableExtensionPoints.map((extensionPoint) => ({
+      label: extensionPoint,
+      value: extensionPoint,
+    }));
+  }, [availableExtensionPoints, selectedContentConsumersForExtensionPoint]);
 
   const extensionOptions = useMemo(
     () =>
@@ -116,13 +151,36 @@ export function useDependencyGraphData({
     [selectedContentConsumers, activeConsumers]
   );
 
-  const selectedExtensionPointValues = useMemo(
-    () =>
-      !selectedExtensionPoints || selectedExtensionPoints.length === 0
-        ? availableExtensionPoints
-        : selectedExtensionPoints,
-    [selectedExtensionPoints, availableExtensionPoints]
-  );
+  const selectedConsumerForExtensionPointValues = useMemo(() => {
+    const consumers = getAvailableContentConsumers('extensionpoint');
+    return !selectedContentConsumersForExtensionPoint || selectedContentConsumersForExtensionPoint.length === 0
+      ? consumers
+      : selectedContentConsumersForExtensionPoint;
+  }, [selectedContentConsumersForExtensionPoint]);
+
+  const selectedExtensionPointValues = useMemo(() => {
+    // Get the filtered extension points (same logic as extensionPointOptions)
+    const filteredExtensionPoints = (() => {
+      if (selectedContentConsumersForExtensionPoint && selectedContentConsumersForExtensionPoint.length > 0) {
+        return availableExtensionPoints.filter((extensionPoint) => {
+          return selectedContentConsumersForExtensionPoint.some((consumer) => {
+            if (consumer === 'grafana-core' && extensionPoint.startsWith('grafana/')) {
+              return true;
+            }
+            if (extensionPoint.startsWith(`${consumer}/`)) {
+              return true;
+            }
+            return false;
+          });
+        });
+      }
+      return availableExtensionPoints;
+    })();
+
+    return !selectedExtensionPoints || selectedExtensionPoints.length === 0
+      ? filteredExtensionPoints
+      : selectedExtensionPoints;
+  }, [selectedExtensionPoints, availableExtensionPoints, selectedContentConsumersForExtensionPoint]);
 
   const selectedExtensionValues = useMemo(
     () => (!selectedExtensions || selectedExtensions.length === 0 ? availableExtensions : selectedExtensions),
@@ -144,6 +202,7 @@ export function useDependencyGraphData({
       showDescriptions: false,
       selectedContentProviders,
       selectedContentConsumers,
+      selectedContentConsumersForExtensionPoint: selectedContentConsumersForExtensionPoint || [],
       selectedExtensionPoints: effectiveSelectedExtensionPoints,
       linkExtensionColor: '#37872d',
       componentExtensionColor: '#ff9900',
@@ -156,6 +215,7 @@ export function useDependencyGraphData({
     visualizationMode,
     selectedContentProviders,
     selectedContentConsumers,
+    selectedContentConsumersForExtensionPoint,
     selectedExtensionPoints,
     availableExtensionPoints,
   ]);
@@ -169,10 +229,12 @@ export function useDependencyGraphData({
     activeConsumers,
     contentProviderOptions,
     contentConsumerOptions,
+    contentConsumerForExtensionPointOptions,
     extensionPointOptions,
     extensionOptions,
     selectedProviderValues,
     selectedConsumerValues,
+    selectedConsumerForExtensionPointValues,
     selectedExtensionPointValues,
     selectedExtensionValues,
   };

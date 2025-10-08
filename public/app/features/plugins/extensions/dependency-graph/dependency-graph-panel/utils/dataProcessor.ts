@@ -126,6 +126,7 @@ const getCacheKey = (options: PanelOptions): string => {
     providers: options.selectedContentProviders?.slice().sort(), // slice to avoid mutating original
     consumers: options.selectedContentConsumers?.slice().sort(),
     extensionPoints: options.selectedExtensionPoints?.slice().sort(), // Add extension points to cache key
+    contentConsumersForExtensionPoint: options.selectedContentConsumersForExtensionPoint?.slice().sort(), // Add content consumers for extension point to cache key
   });
 };
 
@@ -1102,14 +1103,24 @@ export const processPluginDataToExtensionPointGraph = (
   // Get filter options
   const selectedExtensionPoints = options.selectedExtensionPoints || [];
   const selectedContentProviders = options.selectedContentProviders || [];
+  const selectedContentConsumersForExtensionPoint = options.selectedContentConsumersForExtensionPoint || [];
   const shouldFilterExtensionPoints = selectedExtensionPoints.length > 0;
   const shouldFilterContentProviders = selectedContentProviders.length > 0;
+  const shouldFilterContentConsumersForExtensionPoint = selectedContentConsumersForExtensionPoint.length > 0;
 
   if (ENABLE_DEBUG_LOGS) {
     console.log('processPluginDataToExtensionPointGraph - selectedExtensionPoints:', selectedExtensionPoints);
     console.log('processPluginDataToExtensionPointGraph - selectedContentProviders:', selectedContentProviders);
+    console.log(
+      'processPluginDataToExtensionPointGraph - selectedContentConsumersForExtensionPoint:',
+      selectedContentConsumersForExtensionPoint
+    );
     console.log('processPluginDataToExtensionPointGraph - shouldFilterExtensionPoints:', shouldFilterExtensionPoints);
     console.log('processPluginDataToExtensionPointGraph - shouldFilterContentProviders:', shouldFilterContentProviders);
+    console.log(
+      'processPluginDataToExtensionPointGraph - shouldFilterContentConsumersForExtensionPoint:',
+      shouldFilterContentConsumersForExtensionPoint
+    );
   }
 
   // Collect explicitly defined extension points
@@ -1272,7 +1283,89 @@ export const processPluginDataToExtensionPointGraph = (
     }
   });
 
-  // Apply content provider filtering to extension points
+  // Add Grafana core extension points since they're not declared in data.json
+  const grafanaCoreExtensionPoints = [
+    'grafana/alerting/instance/action',
+    'grafana/alerting/home',
+    'grafana/alerting/alertingrule/action',
+    'grafana/alerting/recordingrule/action',
+    'grafana/alerting/alertingrule/queryeditor',
+    'grafana/commandpalette/action',
+    'grafana/dashboard/panel/menu',
+    'grafana/datasources/config',
+    'grafana/datasources/config/actions',
+    'grafana/datasources/config/error-status',
+    'grafana/datasources/config/status',
+    'grafana/explore/toolbar/action',
+    'grafana/user/profile/tab',
+    'grafana/traceview/details',
+    'grafana/traceview/header/actions',
+    'grafana/query-editor-row/adaptivetelemetry/v1',
+    'grafana/traceview/resource-attributes',
+    'grafana/logsview/resource-attributes',
+    'grafana/app/chrome/v1',
+    'grafana/extension-sidebar/v0-alpha',
+  ];
+
+  grafanaCoreExtensionPoints.forEach((epId) => {
+    // Only add if not already present and if filtering allows it
+    if (!extensionPoints.has(epId)) {
+      // Check if this extension point should be included based on filtering
+      let shouldInclude = true;
+
+      if (shouldFilterExtensionPoints && !selectedExtensionPoints.includes(epId)) {
+        shouldInclude = false;
+      }
+
+      if (
+        shouldFilterContentConsumersForExtensionPoint &&
+        !selectedContentConsumersForExtensionPoint.includes('grafana-core')
+      ) {
+        shouldInclude = false;
+      }
+
+      if (shouldInclude) {
+        extensionPoints.set(epId, {
+          id: epId,
+          definingPlugin: 'grafana-core',
+          providers: [], // Will be populated later
+          extensionType: determineExtensionPointType(epId, pluginData),
+          title: epId.replace('grafana/', '').replace(/\//g, ' '),
+          description: t(
+            'extensions.dependency-graph.grafana-core-extension-point',
+            'Grafana core extension point: {{epId}}',
+            { epId }
+          ),
+        });
+      }
+    }
+  });
+
+  // Apply content consumer filtering for extension point mode FIRST
+  if (shouldFilterContentConsumersForExtensionPoint) {
+    // Filter extension points to only include those defined by selected content consumers
+    const filteredExtensionPoints = new Map<string, ExtensionPoint>();
+    extensionPoints.forEach((ep, epId) => {
+      if (selectedContentConsumersForExtensionPoint.includes(ep.definingPlugin)) {
+        filteredExtensionPoints.set(epId, ep);
+      }
+    });
+    extensionPoints.clear();
+    filteredExtensionPoints.forEach((ep, epId) => extensionPoints.set(epId, ep));
+
+    // Filter extensions to only include those targeting remaining extension points
+    const remainingExtensionPointIds = new Set(Array.from(extensionPoints.keys()));
+    const filteredExtensions = new Map<string, Extension>();
+    extensions.forEach((ext, extId) => {
+      if (remainingExtensionPointIds.has(ext.targetExtensionPoint)) {
+        filteredExtensions.set(extId, ext);
+      }
+    });
+    extensions.clear();
+    filteredExtensions.forEach((ext, extId) => extensions.set(extId, ext));
+  }
+
+  // Apply content provider filtering to extension points AFTER content consumer filtering
   // If content provider filtering is enabled, only show extension points that have extensions from selected providers
   // BUT if extension point filtering is also enabled, show the intersection
   if (shouldFilterContentProviders && shouldFilterExtensionPoints) {
@@ -1297,13 +1390,24 @@ export const processPluginDataToExtensionPointGraph = (
   }
   // If only content provider filter is applied (no extension point filter), keep all extension points
   // This ensures we show all defined extension points even if they don't have extensions from selected providers
+
   // The content provider filtering will only affect which extensions are shown, not which extension points are shown
 
   // Third pass: create plugin nodes for all plugins that have extensions or extension points
   // Always include selected content providers as nodes, even if they don't have extensions
   const allPluginIds = new Set<string>();
-  extensions.forEach((extension) => allPluginIds.add(extension.providingPlugin));
-  extensionPoints.forEach((ep) => allPluginIds.add(ep.definingPlugin));
+
+  if (shouldFilterContentConsumersForExtensionPoint) {
+    // When filtering by content consumers, only include:
+    // 1. Defining plugins of the remaining extension points (after filtering)
+    // 2. Providers that have extensions targeting those extension points
+    extensionPoints.forEach((ep) => allPluginIds.add(ep.definingPlugin));
+    extensions.forEach((extension) => allPluginIds.add(extension.providingPlugin));
+  } else {
+    // Normal behavior: include all plugins that have extensions or extension points
+    extensions.forEach((extension) => allPluginIds.add(extension.providingPlugin));
+    extensionPoints.forEach((ep) => allPluginIds.add(ep.definingPlugin));
+  }
 
   // If content provider filtering is enabled, always include the selected providers as nodes
   if (shouldFilterContentProviders) {
@@ -1313,15 +1417,26 @@ export const processPluginDataToExtensionPointGraph = (
   }
 
   allPluginIds.forEach((pluginId) => {
-    const pluginInfo = pluginData[pluginId];
-    if (pluginInfo) {
+    if (pluginId === 'grafana-core') {
+      // Special case for grafana-core since it's not in pluginData
       nodes.set(pluginId, {
         id: pluginId,
         name: pluginId,
         type: 'app',
-        version: pluginInfo.version,
-        description: hasDescriptionProperty(pluginInfo) ? pluginInfo.description : '',
+        version: 'core',
+        description: t('extensions.dependency-graph.grafana-core-application', 'Grafana Core Application'),
       });
+    } else {
+      const pluginInfo = pluginData[pluginId];
+      if (pluginInfo) {
+        nodes.set(pluginId, {
+          id: pluginId,
+          name: pluginId,
+          type: 'app',
+          version: pluginInfo.version,
+          description: hasDescriptionProperty(pluginInfo) ? pluginInfo.description : '',
+        });
+      }
     }
   });
 
@@ -1339,8 +1454,10 @@ export const processPluginDataToExtensionPointGraph = (
     console.log('processPluginDataToExtensionPointGraph - filtering applied:', {
       shouldFilterExtensionPoints,
       shouldFilterContentProviders,
+      shouldFilterContentConsumersForExtensionPoint,
       selectedExtensionPoints,
       selectedContentProviders,
+      selectedContentConsumersForExtensionPoint,
     });
     console.log(
       'processPluginDataToExtensionPointGraph - extensions:',
@@ -1791,8 +1908,10 @@ export const getAvailableContentConsumers = (
     });
   }
 
-  // FOR TESTING: Add grafana-core to both modes to verify mechanism works
-  contentConsumers.add('grafana-core');
+  // Add grafana-core for extension point mode since it's not declared in data.json
+  if (mode === 'extensionpoint') {
+    contentConsumers.add('grafana-core');
+  }
 
   const result = Array.from(contentConsumers).sort();
   availableConsumersCache.set(mode, result);
@@ -1850,6 +1969,7 @@ export const getActiveContentConsumers = (
           visualizationMode: 'exposedComponents',
           selectedContentProviders: [],
           selectedContentConsumers: [],
+          selectedContentConsumersForExtensionPoint: [],
           selectedExtensionPoints: [],
           showDependencyTypes: true,
           showDescriptions: false,
@@ -2004,6 +2124,32 @@ export const getAvailableExtensionPoints = (): string[] => {
     }
   });
 
+  // Add Grafana core extension points since they're not declared in data.json
+  const grafanaCoreExtensionPoints = [
+    'grafana/alerting/instance/action',
+    'grafana/alerting/home',
+    'grafana/alerting/alertingrule/action',
+    'grafana/alerting/recordingrule/action',
+    'grafana/alerting/alertingrule/queryeditor',
+    'grafana/commandpalette/action',
+    'grafana/dashboard/panel/menu',
+    'grafana/datasources/config',
+    'grafana/datasources/config/actions',
+    'grafana/datasources/config/error-status',
+    'grafana/datasources/config/status',
+    'grafana/explore/toolbar/action',
+    'grafana/user/profile/tab',
+    'grafana/traceview/details',
+    'grafana/traceview/header/actions',
+    'grafana/query-editor-row/adaptivetelemetry/v1',
+    'grafana/traceview/resource-attributes',
+    'grafana/logsview/resource-attributes',
+    'grafana/app/chrome/v1',
+    'grafana/extension-sidebar/v0-alpha',
+  ];
+
+  grafanaCoreExtensionPoints.forEach((ep) => extensionPoints.add(ep));
+
   const result = Array.from(extensionPoints).sort();
   availableExtensionPointsCache.set('extensionpoint', result);
   return result;
@@ -2105,6 +2251,7 @@ export const getDefaultOptions = (): PanelOptions => ({
   // Filtering options
   selectedContentProviders: [], // Empty array means all providers are selected
   selectedContentConsumers: [], // Empty array means all consumers are selected
+  selectedContentConsumersForExtensionPoint: [], // Empty array means all content consumers are selected in extension point mode
   selectedExtensionPoints: [], // Will be populated with all available extension points by default
 
   // Color options for extension types

@@ -22,11 +22,13 @@ export interface DependencyGraphControls {
   visualizationMode: VisualizationMode;
   selectedContentProviders: string[];
   selectedContentConsumers: string[];
+  selectedContentConsumersForExtensionPoint: string[];
   selectedExtensionPoints: string[];
   selectedExtensions: string[];
   setVisualizationMode: (mode: VisualizationMode) => void;
   setSelectedContentProviders: (providers: string[]) => void;
   setSelectedContentConsumers: (consumers: string[]) => void;
+  setSelectedContentConsumersForExtensionPoint: (consumers: string[]) => void;
   setSelectedExtensionPoints: (extensionPoints: string[]) => void;
   setSelectedExtensions: (extensions: string[]) => void;
   modeOptions: Array<{ label: string; value: VisualizationMode }>;
@@ -39,6 +41,7 @@ const URL_PARAMS = {
   API_MODE: 'view',
   CONTENT_PROVIDERS: 'contentProviders',
   CONTENT_CONSUMERS: 'contentConsumers',
+  CONTENT_CONSUMERS_FOR_EXTENSION_POINT: 'contentConsumersForExtensionPoint',
   EXTENSION_POINTS: 'extensionPoints',
   EXTENSIONS: 'extensions',
 } as const;
@@ -78,6 +81,12 @@ export function useDependencyGraphControls(): DependencyGraphControls {
 
   const [selectedContentConsumers, setSelectedContentConsumersState] = useState<string[]>(() => {
     return parseArrayParam(searchParams.get(URL_PARAMS.CONTENT_CONSUMERS));
+  });
+
+  const [selectedContentConsumersForExtensionPoint, setSelectedContentConsumersForExtensionPointState] = useState<
+    string[]
+  >(() => {
+    return parseArrayParam(searchParams.get(URL_PARAMS.CONTENT_CONSUMERS_FOR_EXTENSION_POINT));
   });
 
   const [selectedExtensionPoints, setSelectedExtensionPointsState] = useState<string[]>(() => {
@@ -135,6 +144,17 @@ export function useDependencyGraphControls(): DependencyGraphControls {
     [updateUrlParams]
   );
 
+  const setSelectedContentConsumersForExtensionPoint = useCallback(
+    (consumers: string[]) => {
+      setSelectedContentConsumersForExtensionPointState(consumers);
+      updateUrlParams({
+        [URL_PARAMS.CONTENT_CONSUMERS_FOR_EXTENSION_POINT]:
+          consumers.length > 0 ? serializeArrayParam(consumers) : null,
+      });
+    },
+    [updateUrlParams]
+  );
+
   const setSelectedExtensionPoints = useCallback(
     (extensionPoints: string[]) => {
       setSelectedExtensionPointsState(extensionPoints);
@@ -171,6 +191,11 @@ export function useDependencyGraphControls(): DependencyGraphControls {
     const consumers = parseArrayParam(searchParams.get(URL_PARAMS.CONTENT_CONSUMERS));
     setSelectedContentConsumersState(consumers);
 
+    const consumersForExtensionPoint = parseArrayParam(
+      searchParams.get(URL_PARAMS.CONTENT_CONSUMERS_FOR_EXTENSION_POINT)
+    );
+    setSelectedContentConsumersForExtensionPointState(consumersForExtensionPoint);
+
     const extensionPoints = parseArrayParam(searchParams.get(URL_PARAMS.EXTENSION_POINTS));
     setSelectedExtensionPointsState(extensionPoints);
 
@@ -190,11 +215,13 @@ export function useDependencyGraphControls(): DependencyGraphControls {
     visualizationMode,
     selectedContentProviders,
     selectedContentConsumers,
+    selectedContentConsumersForExtensionPoint,
     selectedExtensionPoints,
     selectedExtensions,
     setVisualizationMode,
     setSelectedContentProviders,
     setSelectedContentConsumers,
+    setSelectedContentConsumersForExtensionPoint,
     setSelectedExtensionPoints,
     setSelectedExtensions,
     modeOptions,

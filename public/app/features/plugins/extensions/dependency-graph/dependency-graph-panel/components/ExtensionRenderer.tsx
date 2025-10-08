@@ -230,7 +230,6 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
 
   // Individual extension context menu handlers (for extension point mode left side)
   const [extensionContextMenuOpen, setExtensionContextMenuOpen] = useState(false);
-  const [extensionContextMenuPosition, setExtensionContextMenuPosition] = useState({ x: 0, y: 0 });
   const [selectedExtensionId, setSelectedExtensionId] = useState<string | null>(null);
 
   const handleContentProviderContextMenu = (event: React.MouseEvent, contentProviderId: string) => {
@@ -384,51 +383,10 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
   };
 
   // Individual extension context menu handlers
-  const handleExtensionContextMenu = (event: React.MouseEvent, extensionId: string) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Immediately clear any existing highlighting/selections
-    onContentProviderClick(null);
-    onContentConsumerClick(null);
-    onHighlightedExtensionPointChange(null);
-
-    setSelectedExtensionId(extensionId);
-    setExtensionContextMenuPosition({ x: event.clientX, y: event.clientY });
-    setExtensionContextMenuOpen(true);
-  };
-
-  const handleExtensionLeftClick = (event: React.MouseEvent, extensionId: string) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Immediately clear any existing highlighting/selections
-    onContentProviderClick(null);
-    onContentConsumerClick(null);
-    onHighlightedExtensionPointChange(null);
-
-    setSelectedExtensionId(extensionId);
-    setExtensionContextMenuPosition({ x: event.clientX, y: event.clientY });
-    setExtensionContextMenuOpen(true);
-  };
 
   const handleExtensionContextMenuClose = () => {
     setExtensionContextMenuOpen(false);
     setSelectedExtensionId(null);
-  };
-
-  const handleFilterOnExtension = () => {
-    if (selectedExtensionId) {
-      // Find the extension point that this extension targets
-      const extension = data.extensions?.find((ext) => ext.id === selectedExtensionId);
-      if (extension) {
-        // Update URL parameter to filter on extension point
-        const currentUrl = new URL(window.location.href);
-        currentUrl.searchParams.set('extensionPoints', extension.targetExtensionPoint);
-        locationService.push(currentUrl.pathname + currentUrl.search);
-      }
-    }
-    handleExtensionContextMenuClose();
   };
 
   const handleRemoveExtensionFilter = () => {
@@ -748,8 +706,8 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
 
     return (
       <ContextMenu
-        x={extensionContextMenuPosition.x}
-        y={extensionContextMenuPosition.y}
+        x={0}
+        y={0}
         onClose={handleExtensionContextMenuClose}
         renderMenuItems={() => (
           <>
@@ -798,6 +756,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
         {renderContentConsumerContextMenu()}
         {renderContentProviderContextMenu()}
         {renderExtensionPointContextMenu()}
+        {renderExtensionContextMenu()}
       </>
     );
   } else if (options.visualizationMode === 'addedlinks') {

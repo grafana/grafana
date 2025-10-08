@@ -20,49 +20,85 @@ const LAYOUT_CONSTANTS = {
  * Reusable component for rendering the dependency graph visualization
  */
 export function DependencyGraphVisualization({ controls }: DependencyGraphVisualizationProps): JSX.Element {
-  const { visualizationMode, selectedContentProviders, selectedContentConsumers, selectedExtensionPoints } = controls;
+  const {
+    visualizationMode,
+    selectedContentProviders,
+    selectedContentConsumers,
+    selectedContentConsumersForExtensionPoint,
+    selectedExtensionPoints,
+  } = controls;
 
   const { graphData } = useDependencyGraphData({
     visualizationMode,
     selectedContentProviders,
     selectedContentConsumers,
+    selectedContentConsumersForExtensionPoint,
     selectedExtensionPoints,
   });
 
   return (
     <div style={{ flex: 1, overflow: 'visible', minHeight: LAYOUT_CONSTANTS.MIN_HEIGHT, width: '100%' }}>
-      <AutoSizer disableHeight={visualizationMode !== 'extensionpoint'}>
-        {({ width, height }) => {
-          const effectiveWidth = width || LAYOUT_CONSTANTS.FALLBACK_WIDTH;
-          // For extension point mode, use dynamic height. For other modes, use a large fixed height
-          const effectiveHeight =
-            visualizationMode === 'extensionpoint'
-              ? height || LAYOUT_CONSTANTS.MIN_HEIGHT
-              : LAYOUT_CONSTANTS.LARGE_HEIGHT;
-          logAutoSizer(effectiveWidth, effectiveHeight);
-          return (
-            <div style={{ width: effectiveWidth, height: effectiveHeight }}>
-              <DependencyGraph
-                data={graphData}
-                options={{
-                  visualizationMode,
-                  showDependencyTypes: true,
-                  showDescriptions: false,
-                  selectedContentProviders,
-                  selectedContentConsumers,
-                  selectedExtensionPoints,
-                  linkExtensionColor: '#37872d',
-                  componentExtensionColor: '#ff9900',
-                  functionExtensionColor: '#e02f44',
-                  layoutType: 'hierarchical',
-                }}
-                width={effectiveWidth}
-                height={effectiveHeight}
-              />
-            </div>
-          );
-        }}
-      </AutoSizer>
+      {visualizationMode === 'extensionpoint' ? (
+        <AutoSizer>
+          {({ width, height }: { width: number; height: number }) => {
+            const effectiveWidth = width || LAYOUT_CONSTANTS.FALLBACK_WIDTH;
+            const effectiveHeight = height || LAYOUT_CONSTANTS.MIN_HEIGHT;
+            logAutoSizer(effectiveWidth, effectiveHeight);
+            return (
+              <div style={{ width: effectiveWidth, height: effectiveHeight }}>
+                <DependencyGraph
+                  data={graphData}
+                  options={{
+                    visualizationMode,
+                    showDependencyTypes: true,
+                    showDescriptions: false,
+                    selectedContentProviders,
+                    selectedContentConsumers,
+                    selectedContentConsumersForExtensionPoint,
+                    selectedExtensionPoints,
+                    linkExtensionColor: '#37872d',
+                    componentExtensionColor: '#ff9900',
+                    functionExtensionColor: '#e02f44',
+                    layoutType: 'hierarchical',
+                  }}
+                  width={effectiveWidth}
+                  height={effectiveHeight}
+                />
+              </div>
+            );
+          }}
+        </AutoSizer>
+      ) : (
+        <AutoSizer disableHeight>
+          {({ width }: { width: number }) => {
+            const effectiveWidth = width || LAYOUT_CONSTANTS.FALLBACK_WIDTH;
+            const effectiveHeight = LAYOUT_CONSTANTS.LARGE_HEIGHT;
+            logAutoSizer(effectiveWidth, effectiveHeight);
+            return (
+              <div style={{ width: effectiveWidth, height: effectiveHeight }}>
+                <DependencyGraph
+                  data={graphData}
+                  options={{
+                    visualizationMode,
+                    showDependencyTypes: true,
+                    showDescriptions: false,
+                    selectedContentProviders,
+                    selectedContentConsumers,
+                    selectedContentConsumersForExtensionPoint,
+                    selectedExtensionPoints,
+                    linkExtensionColor: '#37872d',
+                    componentExtensionColor: '#ff9900',
+                    functionExtensionColor: '#e02f44',
+                    layoutType: 'hierarchical',
+                  }}
+                  width={effectiveWidth}
+                  height={effectiveHeight}
+                />
+              </div>
+            );
+          }}
+        </AutoSizer>
+      )}
     </div>
   );
 }

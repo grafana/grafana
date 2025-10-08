@@ -80,6 +80,49 @@ const ContentConsumerMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ v
   );
 };
 
+// Custom multiselect editor for content consumers in extension point mode
+const ContentConsumerForExtensionPointMultiSelect: React.FC<StandardEditorProps<string[]>> = ({
+  value,
+  onChange,
+  context,
+}) => {
+  console.log('ContentConsumerForExtensionPointMultiSelect component called');
+  const availableContentConsumers = getAvailableContentConsumers('extensionpoint');
+
+  // Debug logging
+  console.log('ContentConsumerForExtensionPointMultiSelect rendered', {
+    availableContentConsumers,
+    value,
+    context: context?.options?.visualizationMode,
+  });
+
+  const options = availableContentConsumers.map((consumer) => ({
+    label: consumer === 'grafana-core' ? 'Grafana Core' : consumer,
+    value: consumer,
+  }));
+
+  // Use the actual value, but show all options as selected when value is empty (meaning "show all")
+  const selectedValues = value && value.length > 0 ? value : availableContentConsumers;
+
+  return (
+    <MultiCombobox
+      options={options}
+      value={selectedValues}
+      onChange={(selected) => {
+        // Extract values from SelectableValue objects
+        const selectedValues = selected.map((item) => item.value).filter((value): value is string => Boolean(value));
+        // If all content consumers are selected, store empty array to indicate "show all"
+        const newValue = selectedValues.length === availableContentConsumers.length ? [] : selectedValues;
+        onChange(newValue);
+      }}
+      placeholder={t(
+        'extensions.dependency-graph.select-content-consumers-extension-point',
+        'Select content consumers to display'
+      )}
+    />
+  );
+};
+
 // Custom multiselect editor for extension points
 const ExtensionPointMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ value, onChange, context }) => {
   const availableExtensionPoints = getAvailableExtensionPoints();
@@ -109,6 +152,7 @@ const ExtensionPointMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ va
 };
 
 export const plugin = new PanelPlugin<PanelOptions>(PluginDependencyGraphPanel).setPanelOptions((builder) => {
+  console.log('Panel options builder called');
   return (
     builder
       .addSelect({
@@ -208,6 +252,27 @@ export const plugin = new PanelPlugin<PanelOptions>(PluginDependencyGraphPanel).
         editor: ContentConsumerMultiSelect,
         category: ['Filtering'],
         showIf: (currentConfig: PanelOptions) => currentConfig.visualizationMode !== 'extensionpoint',
+      })
+      .addCustomEditor({
+        id: 'contentConsumerForExtensionPointFilter',
+        path: 'selectedContentConsumersForExtensionPoint',
+        name: t('extensions.dependency-graph.content-consumers-extension-point', 'Content Consumers'),
+        description: t(
+          'extensions.dependency-graph.content-consumers-extension-point-description',
+          'Extension Point Mode: select which content consumers (apps with extension points) to display (right side)'
+        ),
+        editor: ContentConsumerForExtensionPointMultiSelect,
+        category: ['Filtering'],
+        showIf: (currentConfig: PanelOptions) => {
+          const shouldShow = currentConfig.visualizationMode === 'extensionpoint';
+          console.log('ContentConsumerForExtensionPointMultiSelect showIf check', {
+            visualizationMode: currentConfig.visualizationMode,
+            shouldShow,
+            currentConfig: currentConfig,
+          });
+          return shouldShow;
+        },
+        defaultValue: [], // Default to empty array (show all)
       })
       .addCustomEditor({
         id: 'extensionPointFilter',
