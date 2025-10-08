@@ -12,20 +12,16 @@ import (
 )
 
 type SyncRuleStatePersister struct {
-	log              log.Logger
-	store            InstanceStore
-	fullSyncEnabled  bool
-	fullSyncInterval time.Duration
-	ticker           *clock.Ticker
+	log    log.Logger
+	store  InstanceStore
+	ticker *clock.Ticker
 }
 
 func NewSyncRuleStatePersisiter(log log.Logger, ticker *clock.Ticker, cfg ManagerCfg) StatePersister {
 	return &SyncRuleStatePersister{
-		log:              log,
-		store:            cfg.InstanceStore,
-		fullSyncEnabled:  cfg.StateCompressedPeriodicSaveEnabled,
-		fullSyncInterval: cfg.StateCompressedPeriodicSaveInterval,
-		ticker:           ticker,
+		log:    log,
+		store:  cfg.InstanceStore,
+		ticker: ticker,
 	}
 }
 
