@@ -35,7 +35,7 @@ By using a single Grafana instance to manage access, you can:
 
 ## Example: Three teams, one stack
 
-Let’s imagine a setup with three teams:
+Consider the following setup of three teams:
 
 - Team A builds product features and needs autonomy with their own dashboards and data sources.
 - Team B handles data engineering and needs autonomy with their own dashboards.
