@@ -13,7 +13,6 @@ labels:
   products:
     - cloud
     - enterprise
-    - oss
 title: Manage multi-team access in a single Grafana instance
 weight: 1200
 ---
