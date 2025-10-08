@@ -30,7 +30,7 @@ export {
   type UsePluginFunctionsOptions,
   type UsePluginFunctionsResult,
 } from './pluginExtensions/usePluginFunctions';
-export { setHelpNavItemHook, useHelpNavItem, type UseHelpNavItem } from './helpNode/useHelpNode';
+export { setHelpNavItemHook, useHelpNavItem, type UseHelpNavItem } from './navigation/useHelpNavItem';
 export { getObservablePluginLinks } from './pluginExtensions/getObservablePluginLinks';
 export { getObservablePluginComponents } from './pluginExtensions/getObservablePluginComponents';
 export {
