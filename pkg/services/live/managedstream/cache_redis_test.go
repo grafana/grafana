@@ -1,6 +1,7 @@
 package managedstream
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -53,6 +54,11 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 
 func redisCleanup(t *testing.T, redisClient *redis.Client, prefix string) func() {
 	return func() {
+		ctx := t.Context()
+		ctx = context.WithoutCancel(ctx)
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
 		keys, err := redisClient.Keys(t.Context(), prefix+"*").Result()
 		if err != nil {
 			require.NoError(t, err)
