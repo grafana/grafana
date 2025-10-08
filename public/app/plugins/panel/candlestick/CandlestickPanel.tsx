@@ -314,7 +314,6 @@ export const CandlestickPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       canExecuteActions={userCanExecuteActions}
-                      visualizationType="candlestick"
                     />
                   );
                 }}
