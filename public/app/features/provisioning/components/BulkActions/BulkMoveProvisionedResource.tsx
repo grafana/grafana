@@ -202,11 +202,12 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
   const workflowOptions = getWorkflowOptions(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
   const timestamp = generateTimestamp();
+  const defaultWorkflow = getDefaultWorkflow(repository);
 
   const initialValues = {
     comment: '',
-    ref: `bulk-move/${timestamp}`,
-    workflow: getDefaultWorkflow(repository),
+    ref: defaultWorkflow === 'branch' ? `bulk-move/${timestamp}` : (repository?.branch ?? ''),
+    workflow: defaultWorkflow,
   };
 
   if (!repository || isReadOnlyRepo) {
