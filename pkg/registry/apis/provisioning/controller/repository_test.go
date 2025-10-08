@@ -303,3 +303,38 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 		})
 	}
 }
+
+func TestShouldUseIncrementalSync(t *testing.T) {
+	versioned := repository.NewMockVersioned(t)
+	obj := &provisioning.Repository{
+		Status: provisioning.RepositoryStatus{
+			Sync: provisioning.SyncStatus{
+				LastRef: "123",
+			},
+		},
+	}
+	latestRef := "456"
+	t.Run("should use incremental sync", func(t *testing.T) {
+		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return([]repository.VersionedFileChange{
+			{
+				Action: repository.FileActionDeleted,
+				Path:   "test.json",
+			},
+		}, nil).Once()
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef)
+		assert.NoError(t, err)
+		assert.True(t, got)
+	})
+
+	t.Run("should not use incremental sync", func(t *testing.T) {
+		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return([]repository.VersionedFileChange{
+			{
+				Action: repository.FileActionDeleted,
+				Path:   "test/.keep",
+			},
+		}, nil).Once()
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef)
+		assert.NoError(t, err)
+		assert.False(t, got)
+	})
+}

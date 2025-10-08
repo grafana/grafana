@@ -345,3 +345,58 @@ func TestIsWriteAllowed(t *testing.T) {
 		})
 	}
 }
+
+func TestCanUseIncrementalSync(t *testing.T) {
+	tests := []struct {
+		name         string
+		deletedPaths []string
+		want         bool
+	}{
+		{
+			name:         "no deleted paths",
+			deletedPaths: []string{},
+			want:         true,
+		},
+		{
+			name:         "no keep file deletions",
+			deletedPaths: []string{"test.json"},
+			want:         true,
+		},
+		{
+			name:         "keep file deletion at root without other deletions",
+			deletedPaths: []string{".keep"},
+			want:         false,
+		},
+		{
+			name:         "keep file deletion with other deletions in same folder",
+			deletedPaths: []string{"test/.keep", "test/test.json"},
+			want:         true,
+		},
+		{
+			name:         "multiple keep files in different folders without other deletions",
+			deletedPaths: []string{"folder1/.keep", "folder2/.keep"},
+			want:         false,
+		},
+		{
+			name:         "nested folder with only keep file deleted",
+			deletedPaths: []string{"parent/child/.keep"},
+			want:         false,
+		},
+		{
+			name:         "some folders with only keep, some with other files",
+			deletedPaths: []string{"folder1/.keep", "folder2/.keep", "folder2/dashboard.json"},
+			want:         false,
+		},
+		{
+			name:         "only regular files deleted from multiple folders",
+			deletedPaths: []string{"folder1/file1.json", "folder2/file2.json", "folder3/file3.json"},
+			want:         true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := CanUseIncrementalSync(tt.deletedPaths)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
