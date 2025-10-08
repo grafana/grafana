@@ -28,7 +28,7 @@ By using a single Grafana instance to manage access, you can:
 
 - Implement a unified SSO, establishing clear permissions.
 - Reduce setup and maintenance work, avoiding multi-stack complexity.
-- Centralize configuration and plugin management.
+- Centralize plugin configuration and management.
 - Ensure teams can access the right dashboards and data, avoiding stepping on or overwriting each other’s work.
 - Enable collaboration across teams. Teams are not isolated in silos and can discover and collaborate with each other’s work.
 - Optimize resource management. With shared spaces, like an “Everyone” folder, you can publish executive dashboards or cross-team metrics that all groups can benefit from, without duplicating it across stacks.
