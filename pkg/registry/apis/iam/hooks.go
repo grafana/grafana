@@ -69,7 +69,7 @@ func NewResourceTuple(resource iamv0.ResourcePermissionspecResource, perm iamv0.
 		User: subject,
 		// "view", "edit", "admin"
 		Relation: strings.ToLower(perm.Verb),
-		// e.g. "folder:{name}" or "resource:{apiGroup}/{resource}:{name}"
+		// e.g. "folder:{name}" or "resource:{apiGroup}/{resource}/{name}"
 		Object: zanzana.NewObjectEntry(typ, resource.ApiGroup, resource.Resource, "", resource.Name),
 	}
 
