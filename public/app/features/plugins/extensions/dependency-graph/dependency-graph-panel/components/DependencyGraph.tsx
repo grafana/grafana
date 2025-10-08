@@ -36,7 +36,7 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
   const [selectedContentProvider, setSelectedContentProvider] = useState<string | null>(null);
   const [highlightedExtensionPointId, setHighlightedExtensionPointId] = useState<string | null>(null);
 
-  const isExposeMode = options.visualizationMode === 'expose';
+  const isExposeMode = options.visualizationMode === 'exposedComponents';
   const isExtensionPointMode = options.visualizationMode === 'extensionpoint';
   const styles = getGraphStyles(theme);
 

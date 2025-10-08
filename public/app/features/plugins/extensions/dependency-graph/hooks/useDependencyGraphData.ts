@@ -12,8 +12,7 @@ import {
 import { logGraphData } from '../utils/logger';
 
 export type VisualizationMode =
-  | 'add'
-  | 'expose'
+  | 'exposedComponents'
   | 'extensionpoint'
   | 'addedlinks'
   | 'addedcomponents'

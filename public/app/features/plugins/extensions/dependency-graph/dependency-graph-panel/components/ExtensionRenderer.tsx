@@ -1536,11 +1536,10 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
 
                 return (
                   <g key={`${definingPlugin}-${type}`}>
-                    {/* Type header - hide in addedlinks, addedcomponents, addedfunctions and add modes since all extensions are of the same type */}
+                    {/* Type header - hide in addedlinks, addedcomponents, and addedfunctions modes since all extensions are of the same type */}
                     {options.visualizationMode !== 'addedlinks' &&
                       options.visualizationMode !== 'addedcomponents' &&
-                      options.visualizationMode !== 'addedfunctions' &&
-                      options.visualizationMode !== 'add' && (
+                      options.visualizationMode !== 'addedfunctions' && (
                         <text
                           x={firstEpPos.x}
                           y={headerY}

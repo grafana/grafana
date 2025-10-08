@@ -10,8 +10,7 @@ import { VisualizationMode } from './useDependencyGraphData';
  */
 const isValidVisualizationMode = (mode: string | null): mode is VisualizationMode => {
   return (
-    mode === 'add' ||
-    mode === 'expose' ||
+    mode === 'exposedComponents' ||
     mode === 'extensionpoint' ||
     mode === 'addedlinks' ||
     mode === 'addedcomponents' ||
@@ -70,7 +69,7 @@ export function useDependencyGraphControls(): DependencyGraphControls {
   // Initialize state from URL parameters
   const [visualizationMode, setVisualizationModeState] = useState<VisualizationMode>(() => {
     const mode = searchParams.get(URL_PARAMS.API_MODE);
-    return isValidVisualizationMode(mode) ? mode : 'add';
+    return isValidVisualizationMode(mode) ? mode : 'addedlinks';
   });
 
   const [selectedContentProviders, setSelectedContentProvidersState] = useState<string[]>(() => {
@@ -162,8 +161,8 @@ export function useDependencyGraphControls(): DependencyGraphControls {
     if (isValidVisualizationMode(mode)) {
       setVisualizationModeState(mode);
     } else {
-      // Default to 'add' mode when no view parameter is present
-      setVisualizationModeState('add');
+      // Default to 'addedlinks' mode when no view parameter is present
+      setVisualizationModeState('addedlinks');
     }
 
     const providers = parseArrayParam(searchParams.get(URL_PARAMS.CONTENT_PROVIDERS));
@@ -180,11 +179,10 @@ export function useDependencyGraphControls(): DependencyGraphControls {
   }, [searchParams]);
 
   const modeOptions = [
-    { label: t('extensions.view.add', 'Add'), value: 'add' as const },
-    { label: t('extensions.view.expose', 'Expose'), value: 'expose' as const },
     { label: t('extensions.view.addedlinks', 'Added links'), value: 'addedlinks' as const },
     { label: t('extensions.view.addedcomponents', 'Added components'), value: 'addedcomponents' as const },
     { label: t('extensions.view.addedfunctions', 'Added functions'), value: 'addedfunctions' as const },
+    { label: t('extensions.view.exposedComponents', 'Exposed components'), value: 'exposedComponents' as const },
     { label: t('extensions.view.extensionpoints', 'Extension points'), value: 'extensionpoint' as const },
   ];
 

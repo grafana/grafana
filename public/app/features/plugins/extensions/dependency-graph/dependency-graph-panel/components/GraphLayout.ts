@@ -128,7 +128,7 @@ export const calculateLayout = (
 
   const margin = getResponsiveMargin(width);
   const nodeSpacing = getResponsiveNodeSpacing(height);
-  const isExposeMode = options.visualizationMode === 'expose';
+  const isExposeMode = options.visualizationMode === 'exposedComponents';
   const isExtensionPointMode = options.visualizationMode === 'extensionpoint';
 
   if (isExposeMode) {
@@ -407,10 +407,9 @@ export const getExtensionPointPositions = (
   const typeHeaderSpacing =
     options.visualizationMode === 'addedlinks' ||
     options.visualizationMode === 'addedcomponents' ||
-    options.visualizationMode === 'addedfunctions' ||
-    options.visualizationMode === 'add'
+    options.visualizationMode === 'addedfunctions'
       ? 0
-      : GROUPED_BOX_SPACING.TYPE_HEADER_SPACING; // No space for type headers in addedlinks, addedcomponents, addedfunctions and add modes
+      : GROUPED_BOX_SPACING.TYPE_HEADER_SPACING; // No space for type headers in addedlinks, addedcomponents, and addedfunctions modes
   const extensionBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
   const rightSideX = width - margin - extensionBoxWidth - LAYOUT_CONSTANTS.ARROW_SAFETY_MARGIN;
 

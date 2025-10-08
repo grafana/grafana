@@ -16,7 +16,7 @@ import {
 // Custom multiselect editor for content providers
 const ContentProviderMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ value, onChange, context }) => {
   // Get visualization mode from panel options
-  const visualizationMode = context.options?.visualizationMode || 'add';
+  const visualizationMode = context.options?.visualizationMode || 'addedlinks';
   const availableProviders = getAvailableContentProviders(visualizationMode);
 
   const options = availableProviders.map((provider) => ({
@@ -46,7 +46,7 @@ const ContentProviderMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ v
 // Custom multiselect editor for content consumers
 const ContentConsumerMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ value, onChange, context }) => {
   // Get visualization mode from panel options
-  const visualizationMode = context.options?.visualizationMode || 'add';
+  const visualizationMode = context.options?.visualizationMode || 'addedlinks';
   const availableConsumers = getAvailableContentConsumers(visualizationMode);
   const activeConsumers = getActiveContentConsumers(visualizationMode);
 
@@ -118,11 +118,14 @@ export const plugin = new PanelPlugin<PanelOptions>(PluginDependencyGraphPanel).
           'extensions.dependency-graph.visualization-mode-description',
           'Choose between Add mode (plugins adding to extension points), Expose mode (plugins exposing components), or Extension Point mode (extensions and extension points)'
         ),
-        defaultValue: 'add',
+        defaultValue: 'addedlinks',
         settings: {
           options: [
-            { label: t('extensions.dependency-graph.add-mode', 'Add Mode (Extensions)'), value: 'add' },
-            { label: t('extensions.dependency-graph.expose-mode', 'Expose Mode (Components)'), value: 'expose' },
+            { label: t('extensions.dependency-graph.added-links-mode', 'Added Links Mode'), value: 'addedlinks' },
+            {
+              label: t('extensions.dependency-graph.exposed-components-mode', 'Exposed Components Mode'),
+              value: 'exposedComponents',
+            },
             {
               label: t('extensions.dependency-graph.extensionpoint-mode', 'Extension Point Mode'),
               value: 'extensionpoint',

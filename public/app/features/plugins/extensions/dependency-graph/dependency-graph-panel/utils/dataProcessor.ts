@@ -142,7 +142,7 @@ const getCacheKey = (options: PanelOptions): string => {
  * @example
  * ```typescript
  * const options: PanelOptions = {
- *   visualizationMode: 'add',
+ *   visualizationMode: 'addedlinks',
  *   selectedContentProviders: [],
  *   selectedContentConsumers: []
  * };
@@ -170,9 +170,9 @@ export const processPluginDataToGraph = (options: PanelOptions): GraphData => {
 
   // Route to the appropriate processor based on visualization mode
   let result: GraphData;
-  if (options.visualizationMode === 'expose') {
+  if (options.visualizationMode === 'exposedComponents') {
     if (ENABLE_DEBUG_LOGS) {
-      console.log('processPluginDataToGraph - routing to expose mode');
+      console.log('processPluginDataToGraph - routing to exposed components mode');
     }
     result = processPluginDataToExposeGraph(options, pluginData);
   } else if (options.visualizationMode === 'extensionpoint') {
@@ -197,279 +197,13 @@ export const processPluginDataToGraph = (options: PanelOptions): GraphData => {
     result = processPluginDataToAddedFunctionsGraph(options, pluginData);
   } else {
     if (ENABLE_DEBUG_LOGS) {
-      console.log('processPluginDataToGraph - routing to add mode');
+      console.log('processPluginDataToGraph - routing to added links mode');
     }
-    result = processPluginDataToAddGraph(options, pluginData);
+    result = processPluginDataToAddedLinksGraph(options, pluginData);
   }
 
   // Cache the result
   cache.set(cacheKey, result);
-  return result;
-};
-
-/**
- * Processes plugin data for "add" mode visualization.
- *
- * In add mode, the visualization shows:
- * - Content providers (left side): Plugins that add extensions to extension points
- * - Extension points (right side): Grouped by the plugin that defines them
- * - Dependencies: Show which providers add to which extension points
- *
- * @param options - Panel options containing filtering settings
- * @returns GraphData with nodes, dependencies, and extension points for add mode
- */
-const processPluginDataToAddGraph = (options: PanelOptions, pluginData: Record<string, AppPluginConfig>): GraphData => {
-  const nodes: Map<string, PluginNode> = new Map();
-  const dependencies: PluginDependency[] = [];
-  const extensionPoints: Map<string, ExtensionPoint> = new Map();
-
-  // Pre-compute plugin entries for better performance
-  const pluginEntries = Object.entries(pluginData);
-
-  // Process each plugin from data.json
-  pluginEntries.forEach(([pluginId, pluginInfo]) => {
-    const extensions = pluginInfo.extensions;
-
-    // Check if this plugin is a content provider (has addedLinks, addedComponents, or addedFunctions)
-    const isContentProvider =
-      (extensions.addedLinks && extensions.addedLinks.length > 0) ||
-      (extensions.addedComponents && extensions.addedComponents.length > 0) ||
-      (extensions.addedFunctions && extensions.addedFunctions.length > 0);
-
-    // Check if this plugin is a content consumer (has extensionPoints)
-    const isContentConsumer = extensions.extensionPoints && extensions.extensionPoints.length > 0;
-
-    // Add plugin node if it's either a provider or consumer
-    if (isContentProvider || isContentConsumer) {
-      if (!nodes.has(pluginId)) {
-        nodes.set(pluginId, {
-          id: pluginId,
-          name: getDisplayName(pluginId),
-          type: getPluginType(pluginId),
-          version: pluginInfo.version,
-          description:
-            isContentProvider && isContentConsumer
-              ? t('extensions.dependency-graph.provides-and-consumes', 'Provides and consumes extension content')
-              : isContentProvider
-                ? t('extensions.dependency-graph.provides-content', 'Provides content to extension points')
-                : t('extensions.dependency-graph.defines-extension-points', 'Defines extension points'),
-        });
-      }
-    }
-
-    // Process extension points that this plugin defines
-    if (isContentConsumer) {
-      if (ENABLE_DEBUG_LOGS) {
-        console.log(`Processing extension points for plugin ${pluginId}:`, extensions.extensionPoints);
-      }
-      extensions.extensionPoints.forEach((extensionPoint, index) => {
-        if (ENABLE_DEBUG_LOGS) {
-          console.log(`Extension point ${index} raw data:`, extensionPoint);
-        }
-        if (!extensionPoints.has(extensionPoint.id)) {
-          const extensionType = determineExtensionPointType(extensionPoint.id, pluginData);
-          const processedExtensionPoint = {
-            id: extensionPoint.id,
-            definingPlugin: pluginId,
-            providers: [],
-            extensionType: extensionType,
-            title: extensionPoint.title,
-            description: extensionPoint.description,
-          };
-          if (ENABLE_DEBUG_LOGS) {
-            console.log(`Processed extension point:`, processedExtensionPoint);
-          }
-          extensionPoints.set(extensionPoint.id, processedExtensionPoint);
-        }
-      });
-    }
-
-    // Process content that this plugin provides
-    if (isContentProvider) {
-      // Process addedLinks
-      extensions.addedLinks?.forEach((link) => {
-        (Array.isArray(link.targets) ? link.targets : [link.targets]).forEach((target: string) => {
-          // Create dependency from this plugin to the target extension point
-          dependencies.push({
-            source: pluginId,
-            target: target,
-            type: 'extends',
-            description: `${getDisplayName(pluginId)} provides link to ${target}`,
-          });
-
-          // Find the defining plugin for this target extension point
-          const extensionDetails = findExtensionPointDetails(target, pluginData);
-          if (extensionDetails.definingPlugin && !extensionPoints.has(target)) {
-            // Create extension point if it doesn't exist
-            extensionPoints.set(target, {
-              id: target,
-              definingPlugin: extensionDetails.definingPlugin,
-              providers: [],
-              extensionType: 'link',
-              title: extensionDetails.title,
-              description: extensionDetails.description,
-            });
-          }
-
-          // Add this plugin as a provider to the extension point
-          const extensionPoint = extensionPoints.get(target);
-          if (extensionPoint && !extensionPoint.providers.includes(pluginId)) {
-            extensionPoint.providers.push(pluginId);
-          }
-        });
-      });
-
-      // Process addedComponents
-      extensions.addedComponents?.forEach((component) => {
-        (Array.isArray(component.targets) ? component.targets : [component.targets]).forEach((target: string) => {
-          dependencies.push({
-            source: pluginId,
-            target: target,
-            type: 'extends',
-            description: `${getDisplayName(pluginId)} provides component to ${target}`,
-          });
-
-          const extensionDetails = findExtensionPointDetails(target, pluginData);
-          if (extensionDetails.definingPlugin && !extensionPoints.has(target)) {
-            extensionPoints.set(target, {
-              id: target,
-              definingPlugin: extensionDetails.definingPlugin,
-              providers: [],
-              extensionType: 'component',
-              title: extensionDetails.title,
-              description: extensionDetails.description,
-            });
-          }
-
-          const extensionPoint = extensionPoints.get(target);
-          if (extensionPoint && !extensionPoint.providers.includes(pluginId)) {
-            extensionPoint.providers.push(pluginId);
-          }
-        });
-      });
-
-      // Process addedFunctions
-      extensions.addedFunctions?.forEach((func) => {
-        (Array.isArray(func.targets) ? func.targets : [func.targets]).forEach((target: string) => {
-          dependencies.push({
-            source: pluginId,
-            target: target,
-            type: 'extends',
-            description: `${getDisplayName(pluginId)} provides function to ${target}`,
-          });
-
-          const extensionDetails = findExtensionPointDetails(target, pluginData);
-          if (extensionDetails.definingPlugin && !extensionPoints.has(target)) {
-            extensionPoints.set(target, {
-              id: target,
-              definingPlugin: extensionDetails.definingPlugin,
-              providers: [],
-              extensionType: 'function',
-              title: extensionDetails.title,
-              description: extensionDetails.description,
-            });
-          }
-
-          const extensionPoint = extensionPoints.get(target);
-          if (extensionPoint && !extensionPoint.providers.includes(pluginId)) {
-            extensionPoint.providers.push(pluginId);
-          }
-        });
-      });
-    }
-  });
-
-  // Add defining plugin nodes for extension points
-  extensionPoints.forEach((extensionPoint) => {
-    if (!nodes.has(extensionPoint.definingPlugin)) {
-      const definingPlugin = extensionPoint.definingPlugin;
-      nodes.set(definingPlugin, {
-        id: definingPlugin,
-        name: getDisplayName(definingPlugin),
-        type: getPluginType(definingPlugin),
-        description: t('extensions.dependency-graph.defines-extension-points', 'Defines extension points'),
-      });
-    }
-  });
-
-  // Apply filtering logic similar to the original function
-  let filteredDependencies = dependencies;
-  let filteredExtensionPoints = Array.from(extensionPoints.values());
-  let filteredNodes = Array.from(nodes.values());
-
-  if (options.selectedContentProviders && options.selectedContentProviders.length > 0) {
-    // Filter dependencies to only include selected content providers
-    filteredDependencies = dependencies.filter((dep) => options.selectedContentProviders.includes(dep.source));
-
-    // Update extension points to only include those that still have providers after filtering
-    filteredExtensionPoints = filteredExtensionPoints
-      .map((ep) => ({
-        ...ep,
-        providers: ep.providers.filter((provider) => options.selectedContentProviders.includes(provider)),
-      }))
-      .filter((ep) => ep.providers.length > 0);
-
-    // Get set of defining plugins that still have extension points
-    const activeDefiningPlugins = new Set(filteredExtensionPoints.map((ep) => ep.definingPlugin));
-
-    // Get set of selected content providers
-    const selectedProviders = new Set(options.selectedContentProviders);
-
-    // Filter nodes to only include selected content providers and active defining plugins
-    filteredNodes = filteredNodes.filter(
-      (node) => selectedProviders.has(node.id) || activeDefiningPlugins.has(node.id)
-    );
-  }
-
-  // Apply filtering based on selectedContentConsumers
-  let consumersToShow: Set<string>;
-  if (!options.selectedContentConsumers || options.selectedContentConsumers.length === 0) {
-    // Default: show only consumers that have providers extending to them
-    const activeConsumers = new Set<string>();
-    filteredDependencies.forEach((dep) => {
-      const extensionPoint = filteredExtensionPoints.find((ep) => ep.id === dep.target);
-      if (extensionPoint) {
-        activeConsumers.add(extensionPoint.definingPlugin);
-      }
-    });
-    consumersToShow = activeConsumers;
-  } else {
-    consumersToShow = new Set(options.selectedContentConsumers);
-  }
-
-  // Filter extension points to only include those defined by selected consumers
-  filteredExtensionPoints = filteredExtensionPoints.filter((ep) => consumersToShow.has(ep.definingPlugin));
-
-  // Filter dependencies to only include those targeting remaining extension points
-  const remainingExtensionPointIds = new Set(filteredExtensionPoints.map((ep) => ep.id));
-  filteredDependencies = filteredDependencies.filter((dep) => remainingExtensionPointIds.has(dep.target));
-
-  // Get set of content providers that still have valid dependencies
-  const activeContentProviders = new Set(filteredDependencies.map((dep) => dep.source));
-
-  // Filter nodes to only include selected consumers and active content providers
-  filteredNodes = filteredNodes.filter((node) => consumersToShow.has(node.id) || activeContentProviders.has(node.id));
-
-  const result = {
-    nodes: filteredNodes,
-    dependencies: filteredDependencies,
-    extensionPoints: filteredExtensionPoints,
-  };
-
-  if (ENABLE_DEBUG_LOGS) {
-    console.log('processPluginDataToAddGraph - final result:', result);
-    console.log('Final extension points count:', result.extensionPoints.length);
-    result.extensionPoints.forEach((ep, index) => {
-      console.log(`Final extension point ${index}:`, {
-        id: ep.id,
-        title: ep.title,
-        description: ep.description,
-        definingPlugin: ep.definingPlugin,
-        extensionType: ep.extensionType,
-      });
-    });
-  }
-
   return result;
 };
 
@@ -1140,7 +874,7 @@ const processPluginDataToAddedFunctionsGraph = (
 };
 
 /**
- * Processes plugin data for "expose" mode visualization.
+ * Processes plugin data for "exposedComponents" mode visualization.
  *
  * In expose mode, the visualization shows:
  * - Content providers (left side): Plugins that expose components/APIs
@@ -1818,11 +1552,11 @@ const availableExtensionsCache = new Map<string, string[]>();
 /**
  * Gets all available content provider plugin IDs for the specified visualization mode.
  *
- * @param mode - Visualization mode: 'add' (plugins that add extensions), 'expose' (plugins that expose components), or 'extensionpoint' (plugins that provide extensions)
+ * @param mode - Visualization mode: 'exposedComponents' (plugins that expose components), 'extensionpoint' (plugins that provide extensions), 'addedlinks' (plugins that add link extensions), 'addedcomponents' (plugins that add component extensions), or 'addedfunctions' (plugins that add function extensions)
  * @returns Sorted array of plugin IDs that act as content providers
  */
 export const getAvailableContentProviders = (
-  mode: 'add' | 'expose' | 'extensionpoint' | 'addedlinks' | 'addedcomponents' | 'addedfunctions' = 'add'
+  mode: 'exposedComponents' | 'extensionpoint' | 'addedlinks' | 'addedcomponents' | 'addedfunctions' = 'addedlinks'
 ): string[] => {
   if (availableProvidersCache.has(mode)) {
     return availableProvidersCache.get(mode)!;
@@ -1834,7 +1568,7 @@ export const getAvailableContentProviders = (
   Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {
     const extensions = pluginInfo.extensions;
 
-    if (mode === 'expose') {
+    if (mode === 'exposedComponents') {
       // In expose mode, content providers are plugins that expose components
       const exposesComponents =
         extensions.exposedComponents &&
@@ -1875,16 +1609,6 @@ export const getAvailableContentProviders = (
       if (addsFunctions) {
         contentProviders.add(pluginId);
       }
-    } else {
-      // In add mode, content providers are plugins that add extensions
-      const isContentProvider =
-        (extensions.addedLinks && extensions.addedLinks.length > 0) ||
-        (extensions.addedComponents && extensions.addedComponents.length > 0) ||
-        (extensions.addedFunctions && extensions.addedFunctions.length > 0);
-
-      if (isContentProvider) {
-        contentProviders.add(pluginId);
-      }
     }
   });
 
@@ -1896,11 +1620,11 @@ export const getAvailableContentProviders = (
 /**
  * Gets all available content consumer plugin IDs for the specified visualization mode.
  *
- * @param mode - Visualization mode: 'add' (plugins that define extension points) or 'expose' (plugins that consume exposed components)
+ * @param mode - Visualization mode: 'exposedComponents' (plugins that consume exposed components), 'extensionpoint' (plugins that define extension points), 'addedlinks' (plugins that define extension points targeted by link extensions), 'addedcomponents' (plugins that define extension points targeted by component extensions), or 'addedfunctions' (plugins that define extension points targeted by function extensions)
  * @returns Sorted array of plugin IDs that act as content consumers
  */
 export const getAvailableContentConsumers = (
-  mode: 'add' | 'expose' | 'extensionpoint' | 'addedlinks' | 'addedcomponents' | 'addedfunctions' = 'add'
+  mode: 'exposedComponents' | 'extensionpoint' | 'addedlinks' | 'addedcomponents' | 'addedfunctions' = 'addedlinks'
 ): string[] => {
   if (availableConsumersCache.has(mode)) {
     return availableConsumersCache.get(mode)!;
@@ -1910,7 +1634,7 @@ export const getAvailableContentConsumers = (
   const pluginData = getPluginData();
 
   Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {
-    if (mode === 'expose') {
+    if (mode === 'exposedComponents') {
       // In expose mode, content consumers are plugins that depend on exposed components
       const pluginDependencies = pluginInfo.dependencies;
       const dependsOnExposedComponents =
@@ -1987,24 +1711,12 @@ export const getAvailableContentConsumers = (
           contentConsumers.add(pluginId);
         }
       }
-    } else {
-      // In add mode, content consumers are plugins that define extension points
-      const extensions = pluginInfo.extensions;
-      if (extensions.extensionPoints && extensions.extensionPoints.length > 0) {
-        contentConsumers.add(pluginId);
-      }
     }
   });
 
   // For both modes, also check if grafana-core is referenced anywhere and add it
   // This handles cases where grafana-core might be referenced but not defined as a plugin
-  if (
-    mode === 'add' ||
-    mode === 'extensionpoint' ||
-    mode === 'addedlinks' ||
-    mode === 'addedcomponents' ||
-    mode === 'addedfunctions'
-  ) {
+  if (mode === 'extensionpoint' || mode === 'addedlinks' || mode === 'addedcomponents' || mode === 'addedfunctions') {
     // Check if grafana-core is referenced as a target in any dependencies or extension points
     Object.values(pluginData).forEach((pluginInfo) => {
       // Check extension point targets
@@ -2035,8 +1747,8 @@ export const getAvailableContentConsumers = (
     });
   }
 
-  // In expose mode, also include all consumers found in the processed graph data
-  if (mode === 'expose') {
+  // In exposed components mode, also include all consumers found in the processed graph data
+  if (mode === 'exposedComponents') {
     // To get all actual consumers (including those like grafana-core that might not be in pluginData),
     // we need to temporarily process the graph and collect all consumer IDs
     const tempExposedComponents = new Map<string, ExposedComponent>();
@@ -2093,11 +1805,11 @@ export const getAvailableContentConsumers = (
  * Unlike getAvailableContentConsumers, this only returns consumers that actually
  * have content providers connecting to them, making it useful for default selections.
  *
- * @param mode - Visualization mode: 'add' or 'expose'
+ * @param mode - Visualization mode: 'exposedComponents', 'extensionpoint', 'addedlinks', 'addedcomponents', or 'addedfunctions'
  * @returns Sorted array of plugin IDs that are active content consumers
  */
 export const getActiveContentConsumers = (
-  mode: 'add' | 'expose' | 'extensionpoint' | 'addedlinks' | 'addedcomponents' | 'addedfunctions' = 'add'
+  mode: 'exposedComponents' | 'extensionpoint' | 'addedlinks' | 'addedcomponents' | 'addedfunctions' = 'addedlinks'
 ): string[] => {
   if (activeConsumersCache.has(mode)) {
     return activeConsumersCache.get(mode)!;
@@ -2106,8 +1818,8 @@ export const getActiveContentConsumers = (
   const activeConsumers = new Set<string>();
   const pluginData = getPluginData();
 
-  if (mode === 'expose') {
-    // In expose mode, active consumers are plugins that actually depend on components that exist
+  if (mode === 'exposedComponents') {
+    // In exposed components mode, active consumers are plugins that actually depend on components that exist
     Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {
       const pluginDependencies = pluginInfo.dependencies;
 
@@ -2135,7 +1847,7 @@ export const getActiveContentConsumers = (
     try {
       const tempGraphData = processPluginDataToExposeGraph(
         {
-          visualizationMode: 'expose',
+          visualizationMode: 'exposedComponents',
           selectedContentProviders: [],
           selectedContentConsumers: [],
           selectedExtensionPoints: [],
@@ -2384,7 +2096,7 @@ export const createSampleData = (): GraphData => {
 
 export const getDefaultOptions = (): PanelOptions => ({
   // Visualization mode
-  visualizationMode: 'add', // Default to 'add' mode
+  visualizationMode: 'addedlinks', // Default to 'addedlinks' mode
 
   showDependencyTypes: true,
   showDescriptions: false, // Hidden by default

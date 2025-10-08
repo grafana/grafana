@@ -48,8 +48,7 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
     (option: { value?: VisualizationMode }) => {
       if (
         option.value &&
-        (option.value === 'add' ||
-          option.value === 'expose' ||
+        (option.value === 'exposedComponents' ||
           option.value === 'addedlinks' ||
           option.value === 'addedcomponents' ||
           option.value === 'addedfunctions' ||
