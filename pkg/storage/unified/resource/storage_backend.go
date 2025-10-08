@@ -1079,7 +1079,7 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, namespace strin
 
 func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return func(yield func(ResourceLastImportTime, error) bool) {
-		yield(ResourceLastImportTime{}, fmt.Errorf("Not implemented"))
+		yield(ResourceLastImportTime{}, fmt.Errorf("not implemented"))
 	}
 }
 
