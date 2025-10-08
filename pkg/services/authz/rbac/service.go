@@ -731,7 +731,8 @@ func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (
 		span.SetAttributes(attribute.Int("num_folders", len(folders)))
 
 		tree := newFolderTree(folders)
-		s.metrics.missingParentFolders.WithLabelValues(ns.Value).Set(float64(len(tree.MissingParents)))
+		// Count missing parent folders (shouldn't happen, but just in case)
+		s.metrics.missingFolders.WithLabelValues(ns.Value).Set(float64(len(tree.Nodes) - len(folders)))
 
 		s.folderCache.Set(ctx, folderCacheKey(ns.Value), tree)
 		return tree, nil

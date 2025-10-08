@@ -8,9 +8,8 @@ import (
 
 func newFolderTree(folders []store.Folder) folderTree {
 	t := folderTree{
-		Index:          make(map[string]int, len(folders)),
-		Nodes:          make([]folderNode, 0, len(folders)),
-		MissingParents: make(map[string]bool, 8),
+		Index: make(map[string]int, len(folders)),
+		Nodes: make([]folderNode, 0, len(folders)),
 	}
 
 	for _, f := range folders {
@@ -25,9 +24,6 @@ type folderTree struct {
 	Nodes []folderNode
 	// Index is a map of folderNode UID to its positons in Nodes.
 	Index map[string]int
-	// MissingParents is a map of folder UIDs that are referenced as parents
-	// but not present in the input list of folders.
-	MissingParents map[string]bool
 }
 
 type folderNode struct {
@@ -47,7 +43,6 @@ func (t *folderTree) Insert(uid string, parentUID *string) int {
 		if !ok {
 			// insert parent if it don't exists yet
 			i = t.Insert(*parentUID, nil)
-			t.MissingParents[*parentUID] = true
 		}
 		parent = i
 	}
@@ -61,8 +56,6 @@ func (t *folderTree) Insert(uid string, parentUID *string) int {
 			UID:    uid,
 			Parent: parent,
 		})
-		// delete from missingParents if it was added as a parent before
-		delete(t.MissingParents, uid)
 	} else {
 		// if a node is added as a parent node first, its parent will not be set, so we make sure to do it now
 		t.Nodes[i].Parent = parent

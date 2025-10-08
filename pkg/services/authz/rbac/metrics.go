@@ -13,7 +13,7 @@ const (
 type metrics struct {
 	requestCount         *prometheus.CounterVec
 	permissionCacheUsage *prometheus.CounterVec
-	missingParentFolders *prometheus.GaugeVec
+	missingFolders       *prometheus.GaugeVec
 }
 
 func newMetrics(reg prometheus.Registerer) *metrics {
@@ -36,10 +36,11 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			},
 			[]string{"cache_hit", "action"},
 		),
-		missingParentFolders: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "grafana",
-			Name:      "authz_rbac_missing_parent_folders",
-			Help:      "Number of folders that reference missing parent folders",
+		missingFolders: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubSystem,
+			Name:      "missing_folders",
+			Help:      "Number of folders in the tree that were not returned by the folder api",
 		}, []string{"namespace"}),
 	}
 }
