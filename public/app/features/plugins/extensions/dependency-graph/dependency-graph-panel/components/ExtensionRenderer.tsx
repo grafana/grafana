@@ -5,12 +5,13 @@
  */
 
 import { SerializedStyles } from '@emotion/react';
-import React from 'react';
+import React, { useState } from 'react';
 import semver from 'semver';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { ContextMenu, Menu } from '@grafana/ui';
 
 import {
   COLOR_DEFAULTS,
@@ -94,6 +95,47 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
   onExposedComponentClick,
   styles,
 }) => {
+  // Context menu state
+  const [contextMenuOpen, setContextMenuOpen] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [selectedExtensionPointId, setSelectedExtensionPointId] = useState<string | null>(null);
+
+  // Context menu handlers
+  const handleContextMenu = (event: React.MouseEvent, extensionPointId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setSelectedExtensionPointId(extensionPointId);
+    setContextMenuPosition({ x: event.clientX, y: event.clientY });
+    setContextMenuOpen(true);
+  };
+
+  const handleLeftClick = (event: React.MouseEvent, extensionPointId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setSelectedExtensionPointId(extensionPointId);
+    setContextMenuPosition({ x: event.clientX, y: event.clientY });
+    setContextMenuOpen(true);
+  };
+
+  const handleContextMenuClose = () => {
+    setContextMenuOpen(false);
+    setSelectedExtensionPointId(null);
+  };
+
+  const handleNavigateToExtensionPoint = () => {
+    if (selectedExtensionPointId) {
+      // Navigate to extension point mode with this specific extension point selected
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('view', 'extensionpoint');
+      currentUrl.searchParams.set('extensionPoints', selectedExtensionPointId);
+      locationService.push(currentUrl.pathname + currentUrl.search);
+
+      // Scroll to top of the page after navigation
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    handleContextMenuClose();
+  };
+
   // Function to count extensions for each extension point
   const getExtensionCountForExtensionPoint = (extensionPointId: string): number => {
     if (!data.dependencies) {
@@ -103,20 +145,59 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
     // Count dependencies that target this extension point
     return data.dependencies.filter((dep) => dep.target === extensionPointId).length;
   };
+  const renderContextMenu = () => {
+    if (!contextMenuOpen) {
+      return null;
+    }
+
+    return (
+      <ContextMenu
+        x={contextMenuPosition.x}
+        y={contextMenuPosition.y}
+        onClose={handleContextMenuClose}
+        renderMenuItems={() => (
+          <Menu.Item
+            label={t('extensions.dependency-graph.see-extensions', 'See extensions that use this extension point')}
+            onClick={handleNavigateToExtensionPoint}
+            icon="external-link-alt"
+          />
+        )}
+      />
+    );
+  };
+
   if (isExposeMode) {
     return (
-      <g>
-        {renderExposedComponents()}
-        {renderContentConsumers()}
-      </g>
+      <>
+        <g>
+          {renderExposedComponents()}
+          {renderContentConsumers()}
+        </g>
+        {renderContextMenu()}
+      </>
     );
   } else if (isExtensionPointMode) {
-    return renderExtensionPointMode();
+    return (
+      <>
+        {renderExtensionPointMode()}
+        {renderContextMenu()}
+      </>
+    );
   } else if (options.visualizationMode === 'addedlinks') {
     // In "Added links" view, render extension points (which are the consumers)
-    return renderExtensionPoints();
+    return (
+      <>
+        {renderExtensionPoints()}
+        {renderContextMenu()}
+      </>
+    );
   } else {
-    return renderExtensionPoints();
+    return (
+      <>
+        {renderExtensionPoints()}
+        {renderContextMenu()}
+      </>
+    );
   }
 
   function renderExposedComponents() {
@@ -846,16 +927,8 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                             stroke={theme.colors.border.strong}
                             strokeWidth={VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH}
                             rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
-                            onClick={() => {
-                              // Navigate to extension point mode with this specific extension point selected
-                              const currentUrl = new URL(window.location.href);
-                              currentUrl.searchParams.set('view', 'extensionpoint');
-                              currentUrl.searchParams.set('extensionPoints', epId);
-                              locationService.push(currentUrl.pathname + currentUrl.search);
-
-                              // Scroll to top of the page after navigation
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
+                            onClick={(event) => handleLeftClick(event, epId)}
+                            onContextMenu={(event) => handleContextMenu(event, epId)}
                             style={{ cursor: 'pointer' }}
                           />
 
