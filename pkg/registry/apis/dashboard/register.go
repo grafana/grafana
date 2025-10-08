@@ -336,7 +336,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		}
 
 		if err := b.validateFolderManagedBySameManager(folder, accessor); err != nil {
-			return err
+			return apierrors.NewBadRequest(err.Error())
 		}
 	}
 
