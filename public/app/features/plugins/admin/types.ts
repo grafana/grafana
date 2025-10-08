@@ -330,7 +330,7 @@ export type RemotePluginResponse = { plugins: RemotePlugin[]; error?: Error };
 export type RequestInfo = {
   status: RequestStatus;
   // The whole error object
-  error?: Error;
+  error?: any;
   // An optional error message
   errorMessage?: string;
 };

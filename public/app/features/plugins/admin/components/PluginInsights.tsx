@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Stack, Text, Box, CollapsableSection, Tooltip, Icon, ColorPicker } from '@grafana/ui';
+import { Stack, Text, CollapsableSection, Tooltip, Icon, ColorPicker, useStyles2 } from '@grafana/ui';
 
 import { CatalogPluginInsights, ScoreLevel } from '../types';
 
@@ -45,7 +45,7 @@ const tooltipInfo = (
 
 export function PluginInsights(props: Props): React.ReactElement | null {
   const { pluginInsights } = props;
-
+  const styles = useStyles2(getStyles);
   const getColor = (level: ScoreLevel) => {
     switch (level) {
       case 'Excellent':
@@ -64,50 +64,48 @@ export function PluginInsights(props: Props): React.ReactElement | null {
   return (
     <>
       <Stack direction="column" gap={0.5} shrink={0} grow={0} data-testid="plugin-insights">
-        <Box padding={2} borderColor="medium" borderStyle="solid">
-          <Stack direction="column" gap={1}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Text color="secondary" variant="body">
-                <Trans i18nKey="plugins.details.labels.pluginInsights">Plugin insights</Trans>
-              </Text>
-              <Tooltip content={tooltipInfo} placement="right-end">
-                <Icon name="info-circle" size="xs" />
-              </Tooltip>
-            </Stack>
-            {pluginInsights?.insights.map((insightItem, index) => {
-              return (
-                <Stack key={index} wrap direction="column" gap={0.5}>
-                  <CollapsableSection
-                    isOpen={false}
-                    label={
-                      <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <ColorPicker color={getColor(insightItem.scoreLevel)} onChange={() => {}} />
-                        <Text color="primary" variant="body">
-                          <Trans i18nKey="plugins.details.labels.pluginInsights">{insightItem.name}</Trans>
-                        </Text>
-                      </Stack>
-                    }
-                  >
-                    <Stack direction="column" gap={0.5}>
-                      {insightItem.items.map((item, idx) => (
-                        <li key={idx}>
-                          <Text color="secondary" variant="body">
-                            <Trans i18nKey="plugins.details.labels.item">{item.description}</Trans>
-                          </Text>
-                        </li>
-                      ))}
-                    </Stack>
-                  </CollapsableSection>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Text color="secondary" variant="body">
+            <Trans i18nKey="plugins.details.labels.pluginInsights">Plugin insights</Trans>
+          </Text>
+          <Tooltip content={tooltipInfo} placement="right-end">
+            <Icon name="info-circle" size="xs" />
+          </Tooltip>
+        </Stack>
+        {pluginInsights?.insights.map((insightItem, index) => {
+          return (
+            <Stack key={index} wrap direction="column" gap={0.5}>
+              <CollapsableSection
+                isOpen={false}
+                label={
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <ColorPicker color={getColor(insightItem.scoreLevel)} onChange={() => {}} />
+                    <Text color="primary" variant="body">
+                      <Trans i18nKey="plugins.details.labels.pluginInsights">{insightItem.name}</Trans>
+                    </Text>
+                  </Stack>
+                }
+                contentClassName={styles.pluginInsightsItems}
+              >
+                <Stack direction="column" gap={0.5}>
+                  {insightItem.items.map((item, idx) => (
+                    <Text color="secondary" variant="body" key={idx} element="li">
+                      <Trans i18nKey="plugins.details.labels.item">{item.name}</Trans>
+                    </Text>
+                  ))}
                 </Stack>
-              );
-            })}
-          </Stack>
-        </Box>
+              </CollapsableSection>
+            </Stack>
+          );
+        })}
       </Stack>
     </>
   );
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
-  return { pluginVersionDetails: css({ wordBreak: 'break-word' }) };
+  return {
+    pluginVersionDetails: css({ wordBreak: 'break-word' }),
+    pluginInsightsItems: css({ paddingLeft: theme.spacing(2) }),
+  };
 };

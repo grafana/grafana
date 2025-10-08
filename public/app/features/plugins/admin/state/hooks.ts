@@ -164,6 +164,7 @@ export const useFetchDetails = (id: string) => {
 };
 
 export const useFetchPluginInsights = (id: string) => {
+  console.log('useFetchPluginInsights', id);
   const dispatch = useDispatch();
   const plugin = useSelector((state) => selectById(state, id));
   const isNotFetching = !useSelector(selectIsRequestPending(fetchPluginInsights.typePrefix));

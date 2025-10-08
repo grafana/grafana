@@ -266,7 +266,7 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
 // (Originally in "public/app/features/plugins/state/actions.ts")
 // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
 export const loadPluginDashboards = createAsyncThunk(`${STATE_PREFIX}/loadPluginDashboards`, async (_, thunkApi) => {
-  const state = thunkApi.getState();
+  const state = thunkApi.getState() as StoreState;
   const dataSourceType = state.dataSources.dataSource.type;
   const url = `api/plugins/${dataSourceType}/dashboards`;
 
