@@ -31,6 +31,11 @@ const (
 	SharedWithMeFolderUID = "sharedwithme"
 )
 
+func IsRootFolder(obj utils.GrafanaMetaAccessor) bool {
+	f := obj.GetFolder()
+	return f == "" || f == GeneralFolderUID
+}
+
 var ErrFolderNotFound = errutil.NotFound("folder.notFound")
 
 type Folder struct {
