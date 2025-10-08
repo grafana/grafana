@@ -136,6 +136,9 @@ func (UnstructuredSpec) OpenAPIDefinition() openapi.OpenAPIDefinition {
 	s := schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(func(path string) spec.Ref {
 		return spec.MustCreateRef(path)
 	})
+	jsonData := spec.MapProperty(nil)
+	jsonData.AdditionalProperties = &spec.SchemaOrBool{Allows: true}
+	s.Schema.Properties["jsonData"] = *jsonData
 	s.Schema.AdditionalProperties = &spec.SchemaOrBool{
 		Allows: true,
 	}
