@@ -254,7 +254,7 @@ func addBuiltInAnnotationQuery(dashboard map[string]interface{}) {
 		}
 	}
 
-	// Add built-in annotation (matches frontend DashboardModel.addBuiltInAnnotationQuery behavior)
+	// Add built-in annotation
 	builtInAnnotation := map[string]interface{}{
 		"datasource": map[string]interface{}{
 			"uid":  "-- Grafana --",
@@ -268,7 +268,7 @@ func addBuiltInAnnotationQuery(dashboard map[string]interface{}) {
 		"builtIn":   float64(1),
 	}
 
-	// Insert at the beginning (unshift behavior)
+	// Insert at the beginning
 	annotations["list"] = append([]interface{}{builtInAnnotation}, list...)
 }
 
