@@ -200,6 +200,24 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
     handleContentConsumerContextMenuClose();
   };
 
+  const handleRemoveContentConsumerFilter = () => {
+    if (selectedContentConsumerId) {
+      // Remove the content consumer from URL parameters
+      const currentUrl = new URL(window.location.href);
+      const currentConsumers = currentUrl.searchParams.get('contentConsumers')?.split(',').filter(Boolean) || [];
+      const updatedConsumers = currentConsumers.filter((consumer) => consumer !== selectedContentConsumerId);
+
+      if (updatedConsumers.length > 0) {
+        currentUrl.searchParams.set('contentConsumers', updatedConsumers.join(','));
+      } else {
+        currentUrl.searchParams.delete('contentConsumers');
+      }
+
+      locationService.push(currentUrl.pathname + currentUrl.search);
+    }
+    handleContentConsumerContextMenuClose();
+  };
+
   // Content provider context menu handlers (for expose mode left side)
   const [contentProviderContextMenuOpen, setContentProviderContextMenuOpen] = useState(false);
   const [contentProviderContextMenuPosition, setContentProviderContextMenuPosition] = useState({ x: 0, y: 0 });
@@ -253,6 +271,37 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
       locationService.push(currentUrl.pathname + currentUrl.search);
     }
     handleContentProviderContextMenuClose();
+  };
+
+  const handleRemoveContentProviderFilter = () => {
+    if (selectedContentProviderId) {
+      // Remove the content provider from URL parameters
+      const currentUrl = new URL(window.location.href);
+      const currentProviders = currentUrl.searchParams.get('contentProviders')?.split(',').filter(Boolean) || [];
+      const updatedProviders = currentProviders.filter((provider) => provider !== selectedContentProviderId);
+
+      if (updatedProviders.length > 0) {
+        currentUrl.searchParams.set('contentProviders', updatedProviders.join(','));
+      } else {
+        currentUrl.searchParams.delete('contentProviders');
+      }
+
+      locationService.push(currentUrl.pathname + currentUrl.search);
+    }
+    handleContentProviderContextMenuClose();
+  };
+
+  // Helper functions to check if an app is already filtered
+  const isContentConsumerFiltered = (consumerId: string): boolean => {
+    const currentUrl = new URL(window.location.href);
+    const currentConsumers = currentUrl.searchParams.get('contentConsumers')?.split(',').filter(Boolean) || [];
+    return currentConsumers.includes(consumerId);
+  };
+
+  const isContentProviderFiltered = (providerId: string): boolean => {
+    const currentUrl = new URL(window.location.href);
+    const currentProviders = currentUrl.searchParams.get('contentProviders')?.split(',').filter(Boolean) || [];
+    return currentProviders.includes(providerId);
   };
 
   const handleNavigateToExtensionPoint = () => {
@@ -345,17 +394,33 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
               icon="arrow-right"
             />
             {!isExtensionPointMode && (
-              <Menu.Item
-                label={t(
-                  'extensions.dependency-graph.filter-on-content-consumer',
-                  'Filter on content consumer by {{appName}}',
-                  {
-                    appName,
-                  }
+              <>
+                {isContentConsumerFiltered(selectedContentConsumerId) ? (
+                  <Menu.Item
+                    label={t(
+                      'extensions.dependency-graph.remove-content-consumer-filter',
+                      'Remove {{appName}} filter',
+                      {
+                        appName,
+                      }
+                    )}
+                    onClick={handleRemoveContentConsumerFilter}
+                    icon="times"
+                  />
+                ) : (
+                  <Menu.Item
+                    label={t(
+                      'extensions.dependency-graph.filter-content-consumer',
+                      'Filter content consumer by {{appName}}',
+                      {
+                        appName,
+                      }
+                    )}
+                    onClick={handleFilterOnContentConsumer}
+                    icon="filter"
+                  />
                 )}
-                onClick={handleFilterOnContentConsumer}
-                icon="filter"
-              />
+              </>
             )}
           </>
         )}
@@ -389,17 +454,33 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
               icon="arrow-right"
             />
             {!isExtensionPointMode && (
-              <Menu.Item
-                label={t(
-                  'extensions.dependency-graph.filter-on-content-provider',
-                  'Filter on content providers by {{appName}}',
-                  {
-                    appName,
-                  }
+              <>
+                {isContentProviderFiltered(selectedContentProviderId) ? (
+                  <Menu.Item
+                    label={t(
+                      'extensions.dependency-graph.remove-content-provider-filter',
+                      'Remove {{appName}} filter',
+                      {
+                        appName,
+                      }
+                    )}
+                    onClick={handleRemoveContentProviderFilter}
+                    icon="times"
+                  />
+                ) : (
+                  <Menu.Item
+                    label={t(
+                      'extensions.dependency-graph.filter-content-provider',
+                      'Filter content providers by {{appName}}',
+                      {
+                        appName,
+                      }
+                    )}
+                    onClick={handleFilterOnContentProvider}
+                    icon="filter"
+                  />
                 )}
-                onClick={handleFilterOnContentProvider}
-                icon="filter"
-              />
+              </>
             )}
           </>
         )}

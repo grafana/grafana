@@ -112,6 +112,31 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
     handleContentProviderContextMenuClose();
   };
 
+  const handleRemoveContentProviderFilter = () => {
+    if (selectedContentProviderId) {
+      // Remove the content provider from URL parameters
+      const currentUrl = new URL(window.location.href);
+      const currentProviders = currentUrl.searchParams.get('contentProviders')?.split(',').filter(Boolean) || [];
+      const updatedProviders = currentProviders.filter((provider) => provider !== selectedContentProviderId);
+
+      if (updatedProviders.length > 0) {
+        currentUrl.searchParams.set('contentProviders', updatedProviders.join(','));
+      } else {
+        currentUrl.searchParams.delete('contentProviders');
+      }
+
+      locationService.push(currentUrl.pathname + currentUrl.search);
+    }
+    handleContentProviderContextMenuClose();
+  };
+
+  // Helper function to check if a content provider is already filtered
+  const isContentProviderFiltered = (providerId: string): boolean => {
+    const currentUrl = new URL(window.location.href);
+    const currentProviders = currentUrl.searchParams.get('contentProviders')?.split(',').filter(Boolean) || [];
+    return currentProviders.includes(providerId);
+  };
+
   const renderContentProviderContextMenu = () => {
     if (!contentProviderContextMenuOpen || !selectedContentProviderId) {
       return null;
@@ -138,17 +163,33 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
               icon="arrow-right"
             />
             {!isExtensionPointMode && (
-              <Menu.Item
-                label={t(
-                  'extensions.dependency-graph.filter-on-content-provider',
-                  'Filter on content providers by {{appName}}',
-                  {
-                    appName,
-                  }
+              <>
+                {isContentProviderFiltered(selectedContentProviderId) ? (
+                  <Menu.Item
+                    label={t(
+                      'extensions.dependency-graph.remove-content-provider-filter',
+                      'Remove {{appName}} filter',
+                      {
+                        appName,
+                      }
+                    )}
+                    onClick={handleRemoveContentProviderFilter}
+                    icon="times"
+                  />
+                ) : (
+                  <Menu.Item
+                    label={t(
+                      'extensions.dependency-graph.filter-content-provider',
+                      'Filter content providers by {{appName}}',
+                      {
+                        appName,
+                      }
+                    )}
+                    onClick={handleFilterOnContentProvider}
+                    icon="filter"
+                  />
                 )}
-                onClick={handleFilterOnContentProvider}
-                icon="filter"
-              />
+              </>
             )}
           </>
         )}
