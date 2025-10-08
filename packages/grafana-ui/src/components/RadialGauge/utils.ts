@@ -32,6 +32,8 @@ export interface GaugeDimensions {
   barWidth: number;
   endAngle?: number;
   barIndex: number;
+  thresholdsBarWidth: number;
+  thresholdsBarSpacing: number;
 }
 
 export function calculateDimensions(
@@ -46,23 +48,29 @@ export function calculateDimensions(
 ): GaugeDimensions {
   const yMaxAngle = endAngle > 180 ? 180 : endAngle;
   let margin = 0;
-  let thresholdsWidth = thresholdBar ? 16 : 0;
 
   // Max radius based on width
-  let maxRadiusH = width / 2 - margin - thresholdsWidth;
+  let maxRadiusH = width / 2 - margin;
 
   // Max radius based on height
   let heightRatioV = Math.sin(toRad(yMaxAngle));
   let outerRadiusV = (height - margin * 2) / (1 + heightRatioV);
 
-  let maxRadiusV = outerRadiusV - thresholdsWidth;
+  let maxRadiusV = outerRadiusV;
   let outerRadius = Math.min(maxRadiusH, maxRadiusV);
 
   const barWidth = Math.max(barWidthFactor * (outerRadius / 3.5), 2);
+  const thresholdsToBarWidth = 1 / 5;
+  const thresholdsBarWidth = thresholdBar ? Math.min(Math.max(barWidth * thresholdsToBarWidth, 4), 12) : 0;
+  const thresholdsBarSpacing = Math.min(Math.max(thresholdsBarWidth / 2, 2), 12);
 
   // If rounded bars is enabled they need a bit more vertical space
   if (yMaxAngle < 180 && roundedBars) {
     outerRadius -= barWidth / 4;
+  }
+
+  if (thresholdsBarWidth > 0) {
+    outerRadius = outerRadius - thresholdsBarWidth - thresholdsBarSpacing;
   }
 
   if (glow) {
@@ -81,5 +89,14 @@ export function calculateDimensions(
     innerRadius = innerRadius - (barWidth + 4) * barIndex;
   }
 
-  return { margin, radius: innerRadius, centerX, centerY, barWidth, barIndex };
+  return {
+    margin,
+    radius: innerRadius,
+    centerX,
+    centerY,
+    barWidth,
+    barIndex,
+    thresholdsBarWidth,
+    thresholdsBarSpacing,
+  };
 }

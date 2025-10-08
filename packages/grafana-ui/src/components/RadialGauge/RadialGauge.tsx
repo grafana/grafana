@@ -11,9 +11,9 @@ import { RadialBar } from './RadialBar';
 import { RadialBarSegmented } from './RadialBarSegmented';
 import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
+import { ThresholdsBar } from './ThresholdsBar';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { calculateDimensions, getValueAngleForValue } from './utils';
-import { ThresholdsBar } from './ThresholdsBar';
 
 export interface RadialGaugeProps {
   values: FieldDisplay[];
@@ -103,12 +103,9 @@ export function RadialGauge(props: RadialGaugeProps) {
       thresholdsBar
     );
 
-    let displayProcessor = getDisplayProcessor();
+    console.log('dimensions', dimensions);
 
-    if (displayValue.view && isNumber(displayValue.colIndex)) {
-      displayProcessor = displayValue.view.getFieldDisplayProcessor(displayValue.colIndex) ?? displayProcessor;
-    }
-
+    const displayProcessor = getFieldDisplayProcessor(displayValue);
     const spotlightGradientId = `spotlight-${barIndex}-${gaugeId}`;
     const glowFilterId = `glow-${gaugeId}`;
     const colorGradientId = `bar-color-${barIndex}-${gaugeId}`;
@@ -226,12 +223,23 @@ export function RadialGauge(props: RadialGaugeProps) {
   return (
     <div className={styles.vizWrapper} style={{ width, height }}>
       <svg width={width} height={height}>
-        <defs>{defs}</defs>
+        <defs> {defs}</defs>
         {graphics}
       </svg>
       {sparklineElement}
     </div>
   );
+}
+
+function getFieldDisplayProcessor(displayValue: FieldDisplay) {
+  if (displayValue.view && isNumber(displayValue.colIndex)) {
+    const dp = displayValue.view.getFieldDisplayProcessor(displayValue.colIndex);
+    if (dp) {
+      return dp;
+    }
+  }
+
+  return getDisplayProcessor();
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -241,9 +249,10 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-    }),
-    innerShadow: css({
-      filter: `drop-shadow(0px 0px 5px black);`,
+      // Adds subtle shadow in light themes to help bar stand out
+      '.radial-arc-path': {
+        filter: theme.isLight ? `drop-shadow(0px 0px 1px #888);` : '',
+      },
     }),
   };
 }

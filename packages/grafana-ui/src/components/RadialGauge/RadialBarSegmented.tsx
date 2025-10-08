@@ -2,9 +2,9 @@ import { DisplayProcessor, FieldDisplay } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
+import { RadialArcPath } from './RadialArcPath';
 import { RadialGradientMode } from './RadialGauge';
 import { GaugeDimensions } from './utils';
-import { RadialArcPath } from './RadialArcPath';
 
 export interface RadialBarSegmentedProps {
   fieldDisplay: FieldDisplay;
@@ -37,7 +37,7 @@ export function RadialBarSegmented({
   const min = fieldDisplay.field.min ?? 0;
   const max = fieldDisplay.field.max ?? 100;
   const value = fieldDisplay.display.numeric;
-  const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing, dimensions.radius);
+  const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing);
   const segmentArcLengthDeg = angleRange / segmentCountAdjusted - angleBetweenSegments;
 
   const getColorForValue = (value: number) => {
@@ -70,8 +70,12 @@ export function RadialBarSegmented({
   return <g>{segments}</g>;
 }
 
-export function getAngleBetweenSegments(segmentSpacing: number, radius: number) {
-  return segmentSpacing * 6 + 100 / (radius * 2);
+export function getAngleBetweenSegments(segmentSpacing: number) {
+  // Max spacing is 8 degrees between segments
+  // Changing this constant could be considered a breaking change
+  const maxAngleBetweenSegments = 8;
+
+  return segmentSpacing * maxAngleBetweenSegments;
 }
 
 function getOptimalSegmentCount(
@@ -80,7 +84,7 @@ function getOptimalSegmentCount(
   segmentCount: number,
   range: number
 ) {
-  const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing, dimensions.radius);
+  const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing);
 
   const innerRadius = dimensions.radius - dimensions.barWidth / 2;
   const circumference = Math.PI * innerRadius * 2 * (range / 360);

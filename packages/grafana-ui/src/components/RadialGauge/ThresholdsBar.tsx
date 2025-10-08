@@ -1,10 +1,10 @@
 import { FieldDisplay } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-
-import { GaugeDimensions } from './utils';
-import { RadialArcPath } from './RadialArcPath';
 import { getFormattedThresholds } from '../Gauge/utils';
+
+import { RadialArcPath } from './RadialArcPath';
+import { GaugeDimensions } from './utils';
 
 export interface Props {
   dimensions: GaugeDimensions;
@@ -23,13 +23,11 @@ export function ThresholdsBar({ dimensions, fieldDisplay, startAngle, angleRange
   const max = fieldConfig.max ?? 100;
   const thresholds = getFormattedThresholds(decimals, fieldConfig, fieldDisplay.display, theme);
 
-  const barWidth = dimensions.barWidth / 5;
-  const spaceBetweenBars = 16 - barWidth;
-  const radius = dimensions.radius + barWidth + spaceBetweenBars; // 4px gap from main bar
+  const outerRadius = dimensions.radius + dimensions.barWidth / 2;
   const thresholdDimensions = {
     ...dimensions,
-    barWidth,
-    radius,
+    barWidth: dimensions.thresholdsBarWidth,
+    radius: outerRadius + dimensions.thresholdsBarWidth / 2 + dimensions.thresholdsBarSpacing,
   };
 
   let currentStart = startAngle;

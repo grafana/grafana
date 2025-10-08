@@ -41,13 +41,21 @@ export function SpotlightGradient({
   let x2 = dimensions.centerX + dimensions.radius * Math.cos(angleRadian);
   let y2 = dimensions.centerY + dimensions.radius * Math.sin(angleRadian);
 
-  const color = theme.colors.text.maxContrast;
+  if (theme.isLight) {
+    return (
+      <linearGradient x1={x1} y1={y1} x2={x2} y2={y2} id={id} gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor={'black'} stopOpacity={0.0} />
+        <stop offset="90%" stopColor={'black'} stopOpacity={0.0} />
+        <stop offset="91%" stopColor={'black'} stopOpacity={1} />
+      </linearGradient>
+    );
+  }
 
   return (
     <linearGradient x1={x1} y1={y1} x2={x2} y2={y2} id={id} gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stopColor={color} stopOpacity={0.0} />
-      <stop offset="95%" stopColor={color} stopOpacity={0.5} />
-      {roundedBars && <stop offset="100%" stopColor={color} stopOpacity={roundedBars ? 0.7 : 1} />}
+      <stop offset="0%" stopColor={'white'} stopOpacity={0.0} />
+      <stop offset="95%" stopColor={'white'} stopOpacity={0.5} />
+      {roundedBars && <stop offset="100%" stopColor={'white'} stopOpacity={roundedBars ? 0.7 : 1} />}
     </linearGradient>
   );
 }

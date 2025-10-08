@@ -46,6 +46,7 @@ export function RadialArcPath({
       strokeDasharray="0"
       filter={glowFilter}
       strokeLinecap={roundedBars ? 'round' : 'butt'}
+      className="radial-arc-path"
     />
   );
 }
