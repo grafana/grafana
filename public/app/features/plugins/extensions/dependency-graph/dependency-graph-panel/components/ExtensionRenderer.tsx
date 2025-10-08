@@ -190,6 +190,16 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
     handleContentConsumerContextMenuClose();
   };
 
+  const handleFilterOnContentConsumer = () => {
+    if (selectedContentConsumerId) {
+      // Update URL parameter to filter on content consumer
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('contentConsumers', selectedContentConsumerId);
+      locationService.push(currentUrl.pathname + currentUrl.search);
+    }
+    handleContentConsumerContextMenuClose();
+  };
+
   // Content provider context menu handlers (for expose mode left side)
   const [contentProviderContextMenuOpen, setContentProviderContextMenuOpen] = useState(false);
   const [contentProviderContextMenuPosition, setContentProviderContextMenuPosition] = useState({ x: 0, y: 0 });
@@ -231,6 +241,16 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
   const handleHighlightArrowsToContentProvider = () => {
     if (selectedContentProviderId) {
       onContentProviderClick(selectedContentProviderId);
+    }
+    handleContentProviderContextMenuClose();
+  };
+
+  const handleFilterOnContentProvider = () => {
+    if (selectedContentProviderId) {
+      // Update URL parameter to filter on content provider
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('contentProviders', selectedContentProviderId);
+      locationService.push(currentUrl.pathname + currentUrl.search);
     }
     handleContentProviderContextMenuClose();
   };
@@ -312,17 +332,32 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
         y={contentConsumerContextMenuPosition.y}
         onClose={handleContentConsumerContextMenuClose}
         renderMenuItems={() => (
-          <Menu.Item
-            label={t(
-              'extensions.dependency-graph.highlight-arrows-associated',
-              'Highlight arrows associated with {{appName}}',
-              {
-                appName,
-              }
+          <>
+            <Menu.Item
+              label={t(
+                'extensions.dependency-graph.highlight-arrows-associated',
+                'Highlight arrows associated with {{appName}}',
+                {
+                  appName,
+                }
+              )}
+              onClick={handleHighlightArrowsToContentConsumer}
+              icon="arrow-right"
+            />
+            {!isExtensionPointMode && (
+              <Menu.Item
+                label={t(
+                  'extensions.dependency-graph.filter-on-content-consumer',
+                  'Filter on content consumer by {{appName}}',
+                  {
+                    appName,
+                  }
+                )}
+                onClick={handleFilterOnContentConsumer}
+                icon="filter"
+              />
             )}
-            onClick={handleHighlightArrowsToContentConsumer}
-            icon="arrow-right"
-          />
+          </>
         )}
       />
     );
@@ -341,17 +376,32 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
         y={contentProviderContextMenuPosition.y}
         onClose={handleContentProviderContextMenuClose}
         renderMenuItems={() => (
-          <Menu.Item
-            label={t(
-              'extensions.dependency-graph.highlight-arrows-associated',
-              'Highlight arrows associated with {{appName}}',
-              {
-                appName,
-              }
+          <>
+            <Menu.Item
+              label={t(
+                'extensions.dependency-graph.highlight-arrows-associated',
+                'Highlight arrows associated with {{appName}}',
+                {
+                  appName,
+                }
+              )}
+              onClick={handleHighlightArrowsToContentProvider}
+              icon="arrow-right"
+            />
+            {!isExtensionPointMode && (
+              <Menu.Item
+                label={t(
+                  'extensions.dependency-graph.filter-on-content-provider',
+                  'Filter on content providers by {{appName}}',
+                  {
+                    appName,
+                  }
+                )}
+                onClick={handleFilterOnContentProvider}
+                icon="filter"
+              />
             )}
-            onClick={handleHighlightArrowsToContentProvider}
-            icon="arrow-right"
-          />
+          </>
         )}
       />
     );

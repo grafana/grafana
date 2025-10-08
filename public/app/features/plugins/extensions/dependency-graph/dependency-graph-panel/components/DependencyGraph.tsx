@@ -105,12 +105,15 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
   };
 
   const handleSvgClick = (event: React.MouseEvent) => {
-    // Clear highlighted extension point and selected content consumer when clicking on the SVG background
+    // Clear highlighted extension point, selected content consumer, and selected content provider when clicking on the SVG background
     if (highlightedExtensionPointId) {
       setHighlightedExtensionPointId(null);
     }
     if (selectedContentConsumer) {
       setSelectedContentConsumer(null);
+    }
+    if (selectedContentProvider) {
+      setSelectedContentProvider(null);
     }
   };
 
@@ -160,6 +163,7 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
           width={width}
           height={height}
           isExposeMode={isExposeMode}
+          isExtensionPointMode={isExtensionPointMode}
           selectedContentConsumer={selectedContentConsumer}
           selectedContentProvider={selectedContentProvider}
           onContentConsumerClick={handleContentConsumerClick}

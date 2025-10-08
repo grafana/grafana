@@ -5,10 +5,13 @@
  */
 
 import { SerializedStyles } from '@emotion/react';
-import React from 'react';
+import React, { useState } from 'react';
 import semver from 'semver';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
+import { ContextMenu, Menu } from '@grafana/ui';
 
 import {
   DISPLAY_NAMES,
@@ -29,6 +32,7 @@ interface NodeRendererProps {
   width: number;
   height: number;
   isExposeMode: boolean;
+  isExtensionPointMode: boolean;
   selectedContentConsumer: string | null;
   selectedContentProvider: string | null;
   onContentConsumerClick: (id: string | null) => void;
@@ -47,12 +51,111 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
   width,
   height,
   isExposeMode,
+  isExtensionPointMode,
   selectedContentConsumer,
   selectedContentProvider,
   onContentConsumerClick,
   onContentProviderClick,
   styles,
 }) => {
+  // Context menu state for content provider boxes
+  const [contentProviderContextMenuOpen, setContentProviderContextMenuOpen] = useState(false);
+  const [contentProviderContextMenuPosition, setContentProviderContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [selectedContentProviderId, setSelectedContentProviderId] = useState<string | null>(null);
+
+  // Context menu handlers for content provider boxes
+  const handleContentProviderContextMenu = (event: React.MouseEvent, contentProviderId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Immediately clear any existing highlighting/selections
+    onContentConsumerClick(null);
+    onContentProviderClick(null);
+
+    setSelectedContentProviderId(contentProviderId);
+    setContentProviderContextMenuPosition({ x: event.clientX, y: event.clientY });
+    setContentProviderContextMenuOpen(true);
+  };
+
+  const handleContentProviderLeftClick = (event: React.MouseEvent, contentProviderId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Immediately clear any existing highlighting/selections
+    onContentConsumerClick(null);
+    onContentProviderClick(null);
+
+    setSelectedContentProviderId(contentProviderId);
+    setContentProviderContextMenuPosition({ x: event.clientX, y: event.clientY });
+    setContentProviderContextMenuOpen(true);
+  };
+
+  const handleContentProviderContextMenuClose = () => {
+    setContentProviderContextMenuOpen(false);
+    setSelectedContentProviderId(null);
+  };
+
+  const handleHighlightArrowsToContentProvider = () => {
+    if (selectedContentProviderId) {
+      onContentProviderClick(selectedContentProviderId);
+    }
+    handleContentProviderContextMenuClose();
+  };
+
+  const handleFilterOnContentProvider = () => {
+    if (selectedContentProviderId) {
+      // Update URL parameter to filter on content provider
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('contentProviders', selectedContentProviderId);
+      locationService.push(currentUrl.pathname + currentUrl.search);
+    }
+    handleContentProviderContextMenuClose();
+  };
+
+  const renderContentProviderContextMenu = () => {
+    if (!contentProviderContextMenuOpen || !selectedContentProviderId) {
+      return null;
+    }
+
+    const appName = selectedContentProviderId === 'grafana-core' ? 'Grafana Core' : selectedContentProviderId;
+
+    return (
+      <ContextMenu
+        x={contentProviderContextMenuPosition.x}
+        y={contentProviderContextMenuPosition.y}
+        onClose={handleContentProviderContextMenuClose}
+        renderMenuItems={() => (
+          <>
+            <Menu.Item
+              label={t(
+                'extensions.dependency-graph.highlight-arrows-associated',
+                'Highlight arrows associated with {{appName}}',
+                {
+                  appName,
+                }
+              )}
+              onClick={handleHighlightArrowsToContentProvider}
+              icon="arrow-right"
+            />
+            {!isExtensionPointMode && (
+              <Menu.Item
+                label={t(
+                  'extensions.dependency-graph.filter-on-content-provider',
+                  'Filter on content providers by {{appName}}',
+                  {
+                    appName,
+                  }
+                )}
+                onClick={handleFilterOnContentProvider}
+                icon="filter"
+              />
+            )}
+          </>
+        )}
+      />
+    );
+  };
+
   let nodesToRender: NodeWithPosition[];
 
   if (isExposeMode) {
@@ -74,116 +177,114 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
   const nodeHeight = getResponsiveNodeHeight(height);
 
   return (
-    <g>
-      {nodesToRender.map((node) => {
-        // For non-expose mode (Added links view), render consumer-style boxes
-        if (!isExposeMode) {
-          const consumerBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
-          const consumerBoxHeight = 50;
+    <>
+      <g>
+        {nodesToRender.map((node) => {
+          // For non-expose mode (Added links view), render consumer-style boxes
+          if (!isExposeMode) {
+            const consumerBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
+            const consumerBoxHeight = 50;
 
-          // Position the box so it fits within the panel boundaries
-          const boxX = node.x - consumerBoxWidth / 2;
+            // Position the box so it fits within the panel boundaries
+            const boxX = node.x - consumerBoxWidth / 2;
 
-          return (
-            <g key={node.id}>
-              {/* Consumer-style box */}
-              <rect
-                x={boxX}
-                y={node.y - consumerBoxHeight / 2}
-                width={consumerBoxWidth}
-                height={consumerBoxHeight}
-                fill={theme.colors.background.secondary}
-                stroke={selectedContentProvider === node.id ? theme.colors.primary.border : theme.colors.border.strong}
-                strokeWidth={
-                  selectedContentProvider === node.id
-                    ? VISUAL_CONSTANTS.THICK_STROKE_WIDTH
-                    : VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH
-                }
-                rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
+            return (
+              <g key={node.id}>
+                {/* Consumer-style box */}
+                <rect
+                  x={boxX}
+                  y={node.y - consumerBoxHeight / 2}
+                  width={consumerBoxWidth}
+                  height={consumerBoxHeight}
+                  fill={theme.colors.background.secondary}
+                  stroke={
+                    selectedContentProvider === node.id ? theme.colors.primary.border : theme.colors.border.strong
+                  }
+                  strokeWidth={
+                    selectedContentProvider === node.id
+                      ? VISUAL_CONSTANTS.THICK_STROKE_WIDTH
+                      : VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH
+                  }
+                  rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
+                  onClick={(event) => handleContentProviderLeftClick(event, node.id)}
+                  onContextMenu={(event) => handleContentProviderContextMenu(event, node.id)}
+                  style={{ cursor: 'pointer' }}
+                  pointerEvents="all"
+                />
 
-                  // Immediately clear any existing highlighting/selections
-                  onContentConsumerClick(null);
-
-                  onContentProviderClick(selectedContentProvider === node.id ? null : node.id);
-                }}
-                style={{ cursor: 'pointer' }}
-                pointerEvents="all"
-              />
-
-              {/* App name as header */}
-              <text
-                x={boxX + 10}
-                y={node.y + 5}
-                textAnchor="start"
-                fill={theme.colors.text.primary}
-                fontSize={TYPOGRAPHY_CONSTANTS.SECTION_HEADER_SIZE}
-                fontWeight="bold"
-                style={{ pointerEvents: 'none' }}
-              >
-                {getDisplayName(node.id)}
-              </text>
-
-              {/* App version */}
-              {node.version && (
+                {/* App name as header */}
                 <text
-                  x={boxX + consumerBoxWidth - 10}
+                  x={boxX + 10}
                   y={node.y + 5}
-                  textAnchor="end"
+                  textAnchor="start"
                   fill={theme.colors.text.primary}
-                  fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
+                  fontSize={TYPOGRAPHY_CONSTANTS.SECTION_HEADER_SIZE}
+                  fontWeight="bold"
                   style={{ pointerEvents: 'none' }}
                 >
-                  {polishVersion(node.version)}
+                  {getDisplayName(node.id)}
                 </text>
-              )}
+
+                {/* App version */}
+                {node.version && (
+                  <text
+                    x={boxX + consumerBoxWidth - 10}
+                    y={node.y + 5}
+                    textAnchor="end"
+                    fill={theme.colors.text.primary}
+                    fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    {polishVersion(node.version)}
+                  </text>
+                )}
+              </g>
+            );
+          }
+
+          // For expose mode, render the original blue boxes (though this shouldn't be called in expose mode)
+          return (
+            <g key={node.id} transform={`translate(${node.x - nodeWidth / 2}, ${node.y - nodeHeight / 2})`}>
+              {/* Main app box */}
+              <rect
+                width={nodeWidth}
+                height={nodeHeight}
+                fill={theme.colors.primary.main}
+                stroke={
+                  selectedContentConsumer === (node.originalId || node.id)
+                    ? theme.colors.primary.border
+                    : theme.colors.border.strong
+                }
+                strokeWidth={
+                  selectedContentConsumer === (node.originalId || node.id)
+                    ? VISUAL_CONSTANTS.THICK_STROKE_WIDTH
+                    : VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH
+                }
+                rx={VISUAL_CONSTANTS.NODE_BORDER_RADIUS}
+                onClick={() => {
+                  onContentConsumerClick(
+                    selectedContentConsumer === (node.originalId || node.id) ? null : node.originalId || node.id
+                  );
+                }}
+                style={{ cursor: 'pointer' }}
+              />
+
+              {/* App ID label */}
+              <text
+                x={nodeWidth / 2}
+                y={nodeHeight / 2}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill={theme.colors.getContrastText(theme.colors.primary.main)}
+              >
+                {node.originalId || node.id}
+              </text>
             </g>
           );
-        }
-
-        // For expose mode, render the original blue boxes (though this shouldn't be called in expose mode)
-        return (
-          <g key={node.id} transform={`translate(${node.x - nodeWidth / 2}, ${node.y - nodeHeight / 2})`}>
-            {/* Main app box */}
-            <rect
-              width={nodeWidth}
-              height={nodeHeight}
-              fill={theme.colors.primary.main}
-              stroke={
-                selectedContentConsumer === (node.originalId || node.id)
-                  ? theme.colors.primary.border
-                  : theme.colors.border.strong
-              }
-              strokeWidth={
-                selectedContentConsumer === (node.originalId || node.id)
-                  ? VISUAL_CONSTANTS.THICK_STROKE_WIDTH
-                  : VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH
-              }
-              rx={VISUAL_CONSTANTS.NODE_BORDER_RADIUS}
-              onClick={() => {
-                onContentConsumerClick(
-                  selectedContentConsumer === (node.originalId || node.id) ? null : node.originalId || node.id
-                );
-              }}
-              style={{ cursor: 'pointer' }}
-            />
-
-            {/* App ID label */}
-            <text
-              x={nodeWidth / 2}
-              y={nodeHeight / 2}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill={theme.colors.getContrastText(theme.colors.primary.main)}
-            >
-              {node.originalId || node.id}
-            </text>
-          </g>
-        );
-      })}
-    </g>
+        })}
+      </g>
+      {renderContentProviderContextMenu()}
+    </>
   );
 };
 
