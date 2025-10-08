@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/apimachinery
 
-go 1.24.6
+go 1.25.2
 
 require (
 	github.com/go-jose/go-jose/v3 v3.0.4 // @grafana/identity-access-team

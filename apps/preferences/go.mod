@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/preferences
 
-go 1.24.6
+go 1.25.2
 
 require (
 	github.com/grafana/grafana-app-sdk v0.40.3
