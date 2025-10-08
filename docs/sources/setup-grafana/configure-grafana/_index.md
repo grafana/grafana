@@ -1915,7 +1915,40 @@ The timeout string is a possibly signed sequence of decimal numbers, followed by
 
 #### `max_attempts`
 
-Sets a maximum number of times Grafana attempts to evaluate an alert rule before giving up on that evaluation. The default value is `3`.
+The maximum number of times Grafana retries evaluating an alert rule before giving up on that evaluation. Default is `3`.
+
+The retry mechanism:
+
+- Adds jitter to retry delays to prevent thundering herd problems when multiple rules fail simultaneously.
+- Stops when either `max_attempts` is reached or the rule’s evaluation interval is exceeded.
+
+You can customize retry behaviour with `initial_retry_delay`, `max_retry_delay`, and `randomization_factor`.
+
+#### `initial_retry_delay`
+
+The initial delay before retrying a failed alert evaluation. Default is `1s`.
+
+This value is the starting point for exponential backoff.
+
+#### `max_retry_delay`
+
+The maximum delay between retries during exponential backoff. Default is `4s`.
+
+After the retry delay reaches `max_retry_delay`, all subsequent retries use this delay.
+
+To avoid overlapping retries with scheduled evaluations, `max_retry_delay` must be less than the rule’s evaluation interval.
+
+#### `randomization_factor`
+
+The randomization factor for exponential backoff retries. Default is `0.1`.
+
+The value must be between `0` and `1`.
+
+The actual retry delay is chosen randomly between:
+
+```
+[current_delay*(1-randomization_factor), current_delay*(1+randomization_factor)]
+```
 
 #### `min_interval`
 

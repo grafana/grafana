@@ -81,20 +81,6 @@
         "title-access-denied": "Toegang geweigerd"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Sommige functies zijn stabiel (GA) en standaard ingeschakeld, terwijl sommige zich momenteel in de voorlopige bètafase bevinden en beschikbaar zijn voor vroege adoptie.",
-      "confirm-modal-body-2": "We raden aan om de implicaties van elke functiewijziging te begrijpen voordat je wijzigingen aanbrengt.",
-      "confirmText-save-changes": "Wijzigingen opslaan",
-      "get-stage-cell": {
-        "beta": "Bèta",
-        "content-general-availability": "Algemene beschikbaarheid",
-        "deprecated": "Verouderd",
-        "ga": "GA"
-      },
-      "save-changes": "Wijzigingen opslaan",
-      "saving": "Aan het opslaan ...",
-      "title-apply-feature-toggle-changes": "Wijzigingen voor functieschakelaars toepassen"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Organisatie verwijderen",
       "confirmText-delete": "Verwijderen",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Instellingen voor updates tijdens runtime",
       "title-sort-dashboards-by-popularity-in-search": "Dashboards sorteren op populariteit in zoekopdrachten",
       "title-team-sync": "Team synchroniseren"
-    },
-    "feature-toggles": {
-      "restart-pending": "Er is een herstart in afwachting van je Grafana-instantie om de nieuwste wijzigingen in de functieschakelaar toe te passen",
-      "restart-required": "Als je wijzigingen in de functieschakelaar opslaat, wordt de instantie opnieuw gestart, wat een paar minuten kan duren",
-      "sub-title": "Bekijk en bewerk functieschakelaars. Lees meer over functieschakelaars op <2>grafana.com </2>."
     },
     "get-enterprise": {
       "contact-us": "Neem contact met ons op en ontvang een gratis proefperiode",
@@ -2181,7 +2162,6 @@
       "body-queries-expressions-configured": "Maak ten minste één query of expressie om te worden gewaarschuwd",
       "confirmText-deactivate": "Deactiveren",
       "expressions": "Expressie",
-      "loading-data-sources": "Gegevensbronnen laden...",
       "manipulate-returned-queries-other-operations": "Manipuleer gegevens die worden geretourneerd uit query's met wiskundige en andere bewerkingen.",
       "message": {
         "a-valid-expression-is-required": "Een geldige expressie is vereist"
@@ -3260,7 +3240,7 @@
       "define-allowed-teams-ids-label": "Toegestane team-id's definiëren",
       "display-name-description": "Wordt weergegeven op de inlogpagina als 'Aanmelden met ...'. Handig als je meer dan één identiteitsprovider of SSO-protocol gebruikt.",
       "display-name-label": "Weergavenaam",
-      "domain-hint-description": "Parameter om het domein van de gebruiker in de Azure AD/Entra ID-tenant aan te geven en het inlogproces te stroomlijnen.",
+      "domain-hint-description": "",
       "domain-hint-label": "Domeinhint",
       "domain-hint-valid-domain": "Dit veld moet een geldig domein zijn.",
       "email-attribute-name-description": "Naam van de sleutel die moet worden gebruikt voor het opzoeken van gebruikers-e-mails in de attribuutkaart van het OAuth2 ID-token.",
@@ -3516,6 +3496,7 @@
       "move-modal-field-label": "Mapnaam",
       "move-modal-text": "Met deze actie wordt de volgende inhoud verplaatst:",
       "move-modal-title": "Verplaatsen",
+      "move-provisioned-folder": "",
       "moving": "Bezig met verplaatsen ...",
       "new-folder-name-required-phrase": "Mapnaam is vereist.",
       "selected-mix-resources-modal-text": "Je hebt zowel toegewezen als niet-toegewezen bronnen geselecteerd. Deze kunnen niet samen worden verwerkt. Selecteer alleen toegewezen bronnen of alleen niet-toegewezen bronnen en probeer het opnieuw.",
@@ -4161,6 +4142,13 @@
       "body": "Probeer de nieuwe Advisor om potentiële problemen met je gegevensbronnen en plug-ins te ontdekken.",
       "go-to-advisor": "Ga naar Advisor"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4209,6 +4197,20 @@
         "unknown-datasource": "Onbekende gegevensbron"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Kies een type gegevensbron"
@@ -4238,6 +4240,13 @@
         },
         "subtitle": "Beheer je gegevensbronverbindingen op één plek. Gebruik deze pagina om een nieuwe gegevensbron toe te voegen of je bestaande verbindingen te beheren."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Alles doorzoeken",
@@ -8716,6 +8725,9 @@
       "tooltip-hide": "Wachtwoord verbergen",
       "tooltip-show": "Wachtwoord weergeven"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Rij uitvouwen",
       "collapse": "Rij samenvouwen",
@@ -8743,6 +8755,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Rechter y-as gebruiken"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Bezig met laden"
@@ -10186,7 +10201,7 @@
       "title": "Gegevensbronnen"
     },
     "databases": {
-      "title": "Databases"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Gegevensbronnen toevoegen en configureren",
@@ -11712,6 +11727,8 @@
       "button-cancelling": "",
       "button-next": "Voltooien",
       "button-start": "Synchronisatie starten",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Hiermee wordt de repository-configuratie verwijderd en verlies je alle voortgang. Weet je zeker dat je je wijzigingen wilt negeren?",
         "confirm": "Ja, verwijderen",
@@ -12090,8 +12107,8 @@
       "title": "Scopes selecteren"
     },
     "tree": {
-      "collapse": "Samenvouwen",
-      "expand": "Uitvouwen",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Geen resultaten gevonden voor je zoekopdracht",
         "recommended": "Aanbevolen",
@@ -13668,6 +13685,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "en",
       "placeholder-from": "",

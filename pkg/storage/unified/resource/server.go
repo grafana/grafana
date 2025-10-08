@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -21,7 +22,6 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
-	"github.com/grafana/dskit/ring"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
@@ -179,15 +179,26 @@ type SearchOptions struct {
 	Resources DocumentBuilderSupplier
 
 	// How many threads should build indexes
-	WorkerThreads int
+	InitWorkerThreads int
 
 	// Skip building index on startup for small indexes
 	InitMinCount int
 
-	// Interval for periodic index rebuilds (0 disables periodic rebuilds)
-	RebuildInterval time.Duration
+	// How often to rebuild dashboard index. 0 disables periodic rebuilds.
+	DashboardIndexMaxAge time.Duration
 
-	Ring *ring.Ring
+	// Maximum age of file-based index that can be reused. Ignored if zero.
+	MaxIndexAge time.Duration
+
+	// Minimum build version for reusing file-based indexes. Ignored if nil.
+	MinBuildVersion *semver.Version
+
+	// Number of workers to use for index rebuilds.
+	IndexRebuildWorkers int
+
+	// Minimum time between index updates. This is also used as a delay after a successful write operation, to guarantee
+	// that subsequent search will observe the effect of the writing.
+	IndexMinUpdateInterval time.Duration
 }
 
 type ResourceServerOptions struct {
@@ -330,6 +341,8 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
+
+		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
 
 	if opts.Search.Resources != nil {
@@ -380,6 +393,11 @@ type server struct {
 	reg              prometheus.Registerer
 	queue            QOSEnqueuer
 	queueConfig      QueueConfig
+
+	// This value is used by storage server to artificially delay returning response after successful
+	// write operations to make sure that subsequent search by the same client will return up-to-date results.
+	// Set from SearchOptions.IndexMinUpdateInterval.
+	artificialSuccessfulWriteDelay time.Duration
 }
 
 // Init implements ResourceServer.
@@ -420,6 +438,10 @@ func (s *server) Stop(ctx context.Context) error {
 			stopFailed = true
 			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
 		}
+	}
+
+	if s.search != nil {
+		s.search.stop()
 	}
 
 	// Stops the streaming
@@ -547,8 +569,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 			check.Name = key.Name
 		}
 
-		check.Folder = obj.GetFolder()
-		a, err := s.access.Check(ctx, user, check)
+		a, err := s.access.Check(ctx, user, check, obj.GetFolder())
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
@@ -585,10 +606,9 @@ func (s *server) checkFolderMovePermissions(ctx context.Context, user claims.Aut
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
 		Name:      key.Name,
-		Folder:    oldFolder,
 	}
 
-	a, err := s.access.Check(ctx, user, updateCheck)
+	a, err := s.access.Check(ctx, user, updateCheck, oldFolder)
 	if err != nil {
 		return AsErrorResult(err)
 	}
@@ -605,10 +625,10 @@ func (s *server) checkFolderMovePermissions(ctx context.Context, user claims.Aut
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
-		Folder:    newFolder,
+		Name:      key.Name,
 	}
 
-	a, err = s.access.Check(ctx, user, createCheck)
+	a, err = s.access.Check(ctx, user, createCheck, newFolder)
 	if err != nil {
 		return AsErrorResult(err)
 	}
@@ -653,6 +673,8 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		})
 	}
 
+	s.sleepAfterSuccessfulWriteOperation(res, err)
+
 	return res, err
 }
 
@@ -674,6 +696,37 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 	}
 	s.log.Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
 	return rsp, nil
+}
+
+type responseWithErrorResult interface {
+	GetError() *resourcepb.ErrorResult
+}
+
+// sleepAfterSuccessfulWriteOperation will sleep for a specified time if the operation was successful.
+// Returns boolean indicating whether the sleep was performed or not (used in testing).
+//
+// This sleep is performed to guarantee search-after-write consistency, when rate-limiting updates to search index.
+func (s *server) sleepAfterSuccessfulWriteOperation(res responseWithErrorResult, err error) bool {
+	if s.artificialSuccessfulWriteDelay <= 0 {
+		return false
+	}
+
+	if err != nil {
+		// No sleep necessary if operation failed.
+		return false
+	}
+
+	// We expect that non-nil interface values with typed nils can still handle GetError() call.
+	if res != nil {
+		errRes := res.GetError()
+		if errRes != nil {
+			// No sleep necessary if operation failed.
+			return false
+		}
+	}
+
+	time.Sleep(s.artificialSuccessfulWriteDelay)
+	return true
 }
 
 func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
@@ -707,6 +760,8 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		})
 	}
 
+	s.sleepAfterSuccessfulWriteOperation(res, err)
+
 	return res, err
 }
 
@@ -723,8 +778,12 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 
+	// TODO: once we know the client is always sending the RV, require ResourceVersion > 0
+	// See: https://github.com/grafana/grafana/pull/111866
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
-		return nil, ErrOptimisticLockingFailed
+		return &resourcepb.UpdateResponse{
+			Error: &ErrOptimisticLockingFailed,
+		}, nil
 	}
 
 	event, e := s.newEvent(ctx, user, req.Key, req.Value, latest.Value)
@@ -775,6 +834,8 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		})
 	}
 
+	s.sleepAfterSuccessfulWriteOperation(res, err)
+
 	return res, err
 }
 
@@ -788,7 +849,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
-		rsp.Error = AsErrorResult(ErrOptimisticLockingFailed)
+		rsp.Error = &ErrOptimisticLockingFailed
 		return rsp, nil
 	}
 
@@ -798,8 +859,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		Resource:  req.Key.Resource,
 		Namespace: req.Key.Namespace,
 		Name:      req.Key.Name,
-		Folder:    latest.Folder,
-	})
+	}, latest.Folder)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
@@ -865,10 +925,6 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 			}}, nil
 	}
 
-	// if req.Key.Group == "" {
-	// 	status, _ := AsErrorResult(apierrors.NewBadRequest("missing group"))
-	// 	return &ReadResponse{Status: status}, nil
-	// }
 	if req.Key.Resource == "" {
 		return &resourcepb.ReadResponse{Error: NewBadRequestError("missing resource")}, nil
 	}
@@ -901,8 +957,7 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 		Resource:  req.Key.Resource,
 		Namespace: req.Key.Namespace,
 		Name:      req.Key.Name,
-		Folder:    rsp.Folder,
-	})
+	}, rsp.Folder)
 	if err != nil {
 		return &resourcepb.ReadResponse{Error: AsErrorResult(err)}, nil
 	}
