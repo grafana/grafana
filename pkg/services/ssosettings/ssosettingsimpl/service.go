@@ -5,7 +5,9 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -43,6 +45,8 @@ type Service struct {
 	providersList         []string
 	configurableProviders map[string]bool
 	reloadables           map[string]ssosettings.Reloadable
+	cachedSSOSettings     []*models.SSOSettings
+	cacheMutex            sync.RWMutex
 }
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
@@ -86,6 +90,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		configurableProviders: configurableProviders,
 		reloadables:           make(map[string]ssosettings.Reloadable),
 		settingsProvider:      settingsProvider,
+		cachedSSOSettings:     make([]*models.SSOSettings, 0),
 	}
 
 	usageStats.RegisterMetricsFunc(svc.getUsageStats)
@@ -118,6 +123,28 @@ func (s *Service) GetForProvider(ctx context.Context, provider string) (*models.
 	}
 
 	return s.mergeSSOSettings(dbSettings, systemSettings), nil
+}
+
+func (s *Service) GetForProviderFromCache(ctx context.Context, provider string) (*models.SSOSettings, error) {
+	s.cacheMutex.RLock()
+	defer s.cacheMutex.RUnlock()
+
+	for _, setting := range s.cachedSSOSettings {
+		if setting.Provider == provider {
+			return &models.SSOSettings{
+				Provider: setting.Provider,
+				Source:   setting.Source,
+				Settings: deepCopyMap(setting.Settings),
+			}, nil
+		}
+	}
+
+	// If settings are not in the cache, we return them from the database if the provider is valid
+	if slices.Contains(s.providersList, provider) {
+		return s.GetForProvider(ctx, provider)
+	}
+
+	return nil, nil
 }
 
 func (s *Service) GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error) {
@@ -159,6 +186,8 @@ func (s *Service) List(ctx context.Context) ([]*models.SSOSettings, error) {
 
 		result = append(result, s.mergeSSOSettings(dbSettings, fallbackSettings))
 	}
+
+	s.setCachedSSOSettings(result)
 
 	return result, nil
 }
@@ -272,6 +301,8 @@ func (s *Service) Delete(ctx context.Context, provider string) error {
 }
 
 func (s *Service) reload(reloadable ssosettings.Reloadable, provider string, currentSettings models.SSOSettings) {
+	s.updateCachedSSOSettings(provider, &currentSettings)
+
 	err := reloadable.Reload(context.Background(), currentSettings)
 	if err != nil {
 		s.metrics.reloadFailures.WithLabelValues(provider).Inc()
@@ -628,4 +659,26 @@ func deepCopySlice(s []any) []any {
 	}
 
 	return newSlice
+}
+
+func (s *Service) setCachedSSOSettings(settings []*models.SSOSettings) {
+	s.cacheMutex.Lock()
+	defer s.cacheMutex.Unlock()
+
+	s.cachedSSOSettings = settings
+}
+
+func (s *Service) updateCachedSSOSettings(provider string, settings *models.SSOSettings) {
+	s.cacheMutex.Lock()
+	defer s.cacheMutex.Unlock()
+
+	for i := range s.cachedSSOSettings {
+		if s.cachedSSOSettings[i].Provider == provider {
+			s.cachedSSOSettings[i] = settings
+			return
+		}
+	}
+
+	// Provider not found, append new settings
+	s.cachedSSOSettings = append(s.cachedSSOSettings, settings)
 }
