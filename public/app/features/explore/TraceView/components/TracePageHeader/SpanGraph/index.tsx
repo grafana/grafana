@@ -25,9 +25,7 @@ import ViewingLayer from './ViewingLayer';
 
 const getStyles = () => {
   return {
-    container: css({
-      padding: '0 0.5rem 0.5rem 0.5rem',
-    }),
+    container: css({}),
     canvasContainer: css({
       position: 'relative',
     }),

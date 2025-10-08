@@ -34,8 +34,10 @@ import {
   BadgeColor,
   Button,
   ButtonGroup,
+  CollapsableSection,
   Dropdown,
   Icon,
+  Label,
   LinkButton,
   Menu,
   Tooltip,
@@ -46,10 +48,12 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { config } from '../../../../../core/config';
 import { downloadTraceAsJson } from '../../../../inspector/utils/download';
+import { ViewRangeTimeUpdate, TUpdateViewRangeTimeFunction, ViewRange } from '../TraceTimelineViewer/types';
 import { getHeaderTags, getTraceName } from '../model/trace-viewer';
 import { Trace, TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
 
+import SpanGraph from './SpanGraph';
 import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController';
 
 export type TracePageHeaderProps = {
@@ -67,6 +71,9 @@ export type TracePageHeaderProps = {
   datasourceName: string;
   datasourceUid: string;
   setHeaderHeight: (height: number) => void;
+  updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
+  updateViewRangeTime: TUpdateViewRangeTimeFunction;
+  viewRange: ViewRange;
 };
 
 export const TracePageHeader = memo((props: TracePageHeaderProps) => {
@@ -82,12 +89,16 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     datasourceName,
     datasourceUid,
     setHeaderHeight,
+    updateNextViewRangeTime,
+    updateViewRangeTime,
+    viewRange,
   } = props;
 
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const notifyApp = useAppNotification();
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
+  const [isOverviewOpen, setIsOverviewOpen] = useState(true);
 
   // Create controller for adhoc filters
   const controller = useTraceAdHocFiltersController(trace, search, setSearch);
@@ -352,7 +363,25 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         )}
       </div>
 
-      {controller && <AdHocFiltersComboboxRenderer controller={controller} />}
+      <CollapsableSection
+        label={<span className={styles.overviewLabel}>{t('explore.trace-page-header.overview', 'Overview')}</span>}
+        isOpen={isOverviewOpen}
+        onToggle={setIsOverviewOpen}
+        className={styles.overviewCollapsableSection}
+        contentClassName={styles.overviewCollapsableSectionContent}
+      >
+        <SpanGraph
+          trace={trace}
+          viewRange={viewRange}
+          updateNextViewRangeTime={updateNextViewRangeTime}
+          updateViewRangeTime={updateViewRangeTime}
+        />
+      </CollapsableSection>
+
+      <div className={styles.filtersContainer}>
+        <Label>{t('explore.trace-page-header.filters', 'Filters')}</Label>
+        {controller && <AdHocFiltersComboboxRenderer controller={controller} />}
+      </div>
     </header>
   );
 });
@@ -479,6 +508,28 @@ const getStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
       display: 'inline-block',
       color: theme.colors.text.primary,
+    }),
+    overviewLabel: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.text.primary,
+
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    overviewCollapsableSection: css({
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      gap: theme.spacing(0.5),
+    }),
+    overviewCollapsableSectionContent: css({
+      padding: 0,
+      marginBottom: theme.spacing(2),
+    }),
+    filtersContainer: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.5),
     }),
   };
 };
