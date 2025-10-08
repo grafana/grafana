@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 
@@ -15,7 +17,9 @@ import (
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -256,4 +260,133 @@ func (m *mockFeatureToggles) GetEnabled(ctx context.Context) map[string]bool {
 	}
 
 	return res
+}
+
+func TestDashboardAPIBuilder_validateFolderManagedBySameManager(t *testing.T) {
+	tests := []struct {
+		name             string
+		folderManager    *utils.ManagerProperties
+		dashboardManager *utils.ManagerProperties
+		expectedError    bool
+	}{
+		{
+			name:             "folder not managed by repository",
+			folderManager:    nil,
+			dashboardManager: nil,
+			expectedError:    false,
+		},
+		{
+			name:          "folder not managed by repository, dashboard managed",
+			folderManager: nil,
+			dashboardManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			expectedError: false,
+		},
+		{
+			name: "folder managed by plugin",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindPlugin,
+				Identity: "plugin-1",
+			},
+			dashboardManager: nil,
+			expectedError:    false,
+		},
+		{
+			name: "folder and dashboard managed by same repository",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			dashboardManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			expectedError: false,
+		},
+		{
+			name: "folder managed by repository, dashboard is not managed",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			dashboardManager: nil,
+			expectedError:    true,
+		},
+		{
+			name: "folder and dashboard managed by different repositories",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			dashboardManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-2",
+			},
+			expectedError: true,
+		},
+		{
+			name: "folder managed by repository, dashboard managed by plugin",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			dashboardManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindPlugin,
+				Identity: "plugin-1",
+			},
+			expectedError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			folder := &folderv1.Folder{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Folder",
+					APIVersion: "folder.grafana.app/v1beta1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "folder-1",
+					Namespace: "default",
+				},
+			}
+			if tt.folderManager != nil {
+				folderAccessor, err := utils.MetaAccessor(folder)
+				require.NoError(t, err)
+				folderAccessor.SetManagerProperties(*tt.folderManager)
+			}
+			folderUnstructured := &unstructured.Unstructured{}
+			folderMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(folder)
+			require.NoError(t, err)
+			folderUnstructured.Object = folderMap
+
+			dashboard := &dashv1.Dashboard{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Dashboard",
+					APIVersion: "dashboard.grafana.app/v1beta1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "dashboard-1",
+					Namespace: "default",
+				},
+			}
+			if tt.dashboardManager != nil {
+				dashboardAccessor, err := utils.MetaAccessor(dashboard)
+				require.NoError(t, err)
+				dashboardAccessor.SetManagerProperties(*tt.dashboardManager)
+			}
+			dashboardAccessor, err := utils.MetaAccessor(dashboard)
+			require.NoError(t, err)
+
+			builder := &DashboardsAPIBuilder{}
+			err = builder.validateFolderManagedBySameManager(folderUnstructured, dashboardAccessor)
+			if tt.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
