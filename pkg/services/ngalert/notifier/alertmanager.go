@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/nfstatus"
 	"github.com/prometheus/alertmanager/config"
@@ -365,7 +366,7 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 		return false, nil
 	}
 
-	receivers := PostableApiAlertingConfigToApiReceivers(amConfig)
+	receivers := alertingNotify.PostableAPIReceiversToAPIReceivers(amConfig.Receivers)
 	for _, recv := range receivers {
 		err = patchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.decryptFn)
 		if err != nil {
@@ -406,7 +407,7 @@ func patchNewSecureFields(ctx context.Context, api *alertingNotify.APIReceiver, 
 	return nil
 }
 
-func patchSettingsFromSecureSettings(ctx context.Context, integration *alertingNotify.GrafanaIntegrationConfig, key string, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
+func patchSettingsFromSecureSettings(ctx context.Context, integration *models.IntegrationConfig, key string, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
 	if _, ok := integration.SecureSettings[key]; !ok {
 		return nil
 	}

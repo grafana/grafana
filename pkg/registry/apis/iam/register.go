@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"fmt"
 	"maps"
 	"strings"
 
@@ -353,6 +354,12 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 		switch typedObj := a.GetObject().(type) {
 		case *iamv0.ResourcePermission:
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
+		case *iamv0.Team:
+			oldTeamObj, ok := a.GetOldObject().(*iamv0.Team)
+			if !ok {
+				return fmt.Errorf("expected old object to be a Team, got %T", oldTeamObj)
+			}
+			return team.ValidateOnUpdate(ctx, typedObj, oldTeamObj)
 		}
 		return nil
 	case admission.Delete:

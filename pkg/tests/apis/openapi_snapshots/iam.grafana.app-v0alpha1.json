@@ -3737,20 +3737,23 @@
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingSpec": {
         "type": "object",
         "required": [
-          "subjects",
-          "teamRef"
+          "subject",
+          "teamRef",
+          "permission"
         ],
         "properties": {
-          "subjects": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingspecSubject"
-                }
-              ]
-            }
+          "permission": {
+            "description": "permission of the identity in the team",
+            "type": "string",
+            "default": ""
+          },
+          "subject": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingspecSubject"
+              }
+            ]
           },
           "teamRef": {
             "default": {},
@@ -3778,17 +3781,11 @@
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingspecSubject": {
         "type": "object",
         "required": [
-          "name",
-          "permission"
+          "name"
         ],
         "properties": {
           "name": {
             "description": "uid of the identity",
-            "type": "string",
-            "default": ""
-          },
-          "permission": {
-            "description": "permission of the identity in the team",
             "type": "string",
             "default": ""
           }
@@ -5594,15 +5591,18 @@
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingSpec": {
         "type": "object",
         "required": [
-          "subjects",
-          "teamRef"
+          "subject",
+          "teamRef",
+          "permission"
         ],
         "properties": {
-          "subjects": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
+          "permission": {
+            "description": "permission of the identity in the team",
+            "type": "string",
+            "default": ""
+          },
+          "subject": {
+            "default": {}
           },
           "teamRef": {
             "default": {}
@@ -5644,17 +5644,11 @@
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingspecSubject": {
         "type": "object",
         "required": [
-          "name",
-          "permission"
+          "name"
         ],
         "properties": {
           "name": {
             "description": "uid of the identity",
-            "type": "string",
-            "default": ""
-          },
-          "permission": {
-            "description": "permission of the identity in the team",
             "type": "string",
             "default": ""
           }
