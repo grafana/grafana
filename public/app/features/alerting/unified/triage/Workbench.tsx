@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { take } from 'lodash';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -8,7 +8,6 @@ import { t } from '@grafana/i18n';
 import { SceneQueryRunner } from '@grafana/scenes';
 import { ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { EditorColumnHeader } from '../components/EditorColumnHeader';
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
@@ -19,7 +18,6 @@ import { AlertRuleRow } from './rows/AlertRuleRow';
 import { FolderGroupRow } from './rows/FolderGroupRow';
 import { GroupRow } from './rows/GroupRow';
 import { generateRowKey } from './rows/utils';
-import { RuleDetailsDrawer } from './rule-details/RuleDetailsDrawer';
 import { GenericRowSkeleton } from './scene/AlertRuleInstances';
 import { SummaryChartReact } from './scene/SummaryChart';
 import { SummaryStatsReact } from './scene/SummaryStats';
@@ -107,8 +105,6 @@ function renderWorkbenchRow(
 export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
-  const [queryParams, updateQueryParams] = useQueryParams();
-
   const isLoading = !queryRunner.isDataReadyToDisplay();
   const [pageIndex, setPageIndex] = useState<number>(1);
   // splitter for template and payload editor
@@ -127,64 +123,52 @@ export function Workbench({ domain, data, queryRunner }: WorkbenchProps) {
   const dataSlice = take(data, itemsToRender);
   const hasMore = data.length > itemsToRender;
 
-  // this code will handle the ruleUID drawer
-  const handleDrawerClose = () => {
-    updateQueryParams({ ruleUID: undefined });
-  };
-
-  const ruleUID = useMemo(() => {
-    return typeof queryParams?.ruleUID === 'string' ? queryParams.ruleUID : undefined;
-  }, [queryParams.ruleUID]);
-
   return (
-    <>
-      <div style={{ position: 'relative', display: 'flex', flexGrow: 1, width: '100%', height: '100%' }}>
-        {/* dummy splitter to handle flex width of group items */}
-        <div {...splitter.containerProps}>
-          <div {...splitter.primaryProps}>
-            <div ref={ref} className={cx(styles.flexFull, styles.minColumnWidth)} />
-          </div>
-          <div {...splitter.splitterProps} />
-          <div {...splitter.secondaryProps}>
-            <div className={cx(styles.flexFull, styles.minColumnWidth)} />
-          </div>
+    <div style={{ position: 'relative', display: 'flex', flexGrow: 1, width: '100%', height: '100%' }}>
+      {/* dummy splitter to handle flex width of group items */}
+      <div {...splitter.containerProps}>
+        <div {...splitter.primaryProps}>
+          <div ref={ref} className={cx(styles.flexFull, styles.minColumnWidth)} />
         </div>
-        {/* content goes here */}
-        <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
-          <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
-            <SummaryStatsReact />
-            <SummaryChartReact />
-          </div>
-          <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.headerContainer)}>
-            <EditorColumnHeader label={t('alerting.left-column.label-instances', 'Instances')} />
-            <EditorColumnHeader>
-              <TimelineHeader domain={domain} />
-            </EditorColumnHeader>
-          </div>
-          {/* Render actual data */}
-          <div className={styles.virtualizedContainer}>
-            <WorkbenchProvider leftColumnWidth={leftColumnWidth} domain={domain} queryRunner={queryRunner}>
-              <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators>
-                {isLoading ? (
-                  <>
-                    <GenericRowSkeleton key="skeleton-1" width={leftColumnWidth} depth={0} />
-                    <GenericRowSkeleton key="skeleton-2" width={leftColumnWidth} depth={0} />
-                    <GenericRowSkeleton key="skeleton-3" width={leftColumnWidth} depth={0} />
-                  </>
-                ) : (
-                  dataSlice.map((row, index) => {
-                    const rowKey = generateRowKey(row, index);
-                    return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey);
-                  })
-                )}
-                {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
-              </ScrollContainer>
-            </WorkbenchProvider>
-          </div>
+        <div {...splitter.splitterProps} />
+        <div {...splitter.secondaryProps}>
+          <div className={cx(styles.flexFull, styles.minColumnWidth)} />
         </div>
       </div>
-      {ruleUID && <RuleDetailsDrawer ruleUID={ruleUID} onClose={handleDrawerClose} />}
-    </>
+      {/* content goes here */}
+      <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
+        <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
+          <SummaryStatsReact />
+          <SummaryChartReact />
+        </div>
+        <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.headerContainer)}>
+          <EditorColumnHeader label={t('alerting.left-column.label-instances', 'Instances')} />
+          <EditorColumnHeader>
+            <TimelineHeader domain={domain} />
+          </EditorColumnHeader>
+        </div>
+        {/* Render actual data */}
+        <div className={styles.virtualizedContainer}>
+          <WorkbenchProvider leftColumnWidth={leftColumnWidth} domain={domain} queryRunner={queryRunner}>
+            <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators>
+              {isLoading ? (
+                <>
+                  <GenericRowSkeleton key="skeleton-1" width={leftColumnWidth} depth={0} />
+                  <GenericRowSkeleton key="skeleton-2" width={leftColumnWidth} depth={0} />
+                  <GenericRowSkeleton key="skeleton-3" width={leftColumnWidth} depth={0} />
+                </>
+              ) : (
+                dataSlice.map((row, index) => {
+                  const rowKey = generateRowKey(row, index);
+                  return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey);
+                })
+              )}
+              {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
+            </ScrollContainer>
+          </WorkbenchProvider>
+        </div>
+      </div>
+    </div>
   );
 }
 

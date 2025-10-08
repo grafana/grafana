@@ -3,6 +3,7 @@ import { orderBy } from 'lodash';
 import { Fragment, useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
@@ -12,7 +13,6 @@ import { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dt
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { stateHistoryApi } from '../../api/stateHistoryApi';
-import { AlertLabels } from '../../components/AlertLabels';
 import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
 import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
