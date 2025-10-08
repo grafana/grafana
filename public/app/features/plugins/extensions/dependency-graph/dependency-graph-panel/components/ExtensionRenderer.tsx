@@ -223,6 +223,16 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
   const [contentProviderContextMenuPosition, setContentProviderContextMenuPosition] = useState({ x: 0, y: 0 });
   const [selectedContentProviderId, setSelectedContentProviderId] = useState<string | null>(null);
 
+  // Extension point context menu handlers (for extension point mode right side)
+  const [extensionPointContextMenuOpen, setExtensionPointContextMenuOpen] = useState(false);
+  const [extensionPointContextMenuPosition, setExtensionPointContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [selectedExtensionPointForFilter, setSelectedExtensionPointForFilter] = useState<string | null>(null);
+
+  // Individual extension context menu handlers (for extension point mode left side)
+  const [extensionContextMenuOpen, setExtensionContextMenuOpen] = useState(false);
+  const [extensionContextMenuPosition, setExtensionContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [selectedExtensionId, setSelectedExtensionId] = useState<string | null>(null);
+
   const handleContentProviderContextMenu = (event: React.MouseEvent, contentProviderId: string) => {
     event.preventDefault();
     event.stopPropagation();
@@ -302,6 +312,156 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
     const currentUrl = new URL(window.location.href);
     const currentProviders = currentUrl.searchParams.get('contentProviders')?.split(',').filter(Boolean) || [];
     return currentProviders.includes(providerId);
+  };
+
+  // Extension point context menu handlers
+  const handleExtensionPointContextMenu = (event: React.MouseEvent, extensionPointId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Immediately clear any existing highlighting/selections
+    onContentProviderClick(null);
+    onContentConsumerClick(null);
+    onHighlightedExtensionPointChange(null);
+
+    setSelectedExtensionPointForFilter(extensionPointId);
+    setExtensionPointContextMenuPosition({ x: event.clientX, y: event.clientY });
+    setExtensionPointContextMenuOpen(true);
+  };
+
+  const handleExtensionPointLeftClick = (event: React.MouseEvent, extensionPointId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Immediately clear any existing highlighting/selections
+    onContentProviderClick(null);
+    onContentConsumerClick(null);
+    onHighlightedExtensionPointChange(null);
+
+    setSelectedExtensionPointForFilter(extensionPointId);
+    setExtensionPointContextMenuPosition({ x: event.clientX, y: event.clientY });
+    setExtensionPointContextMenuOpen(true);
+  };
+
+  const handleExtensionPointContextMenuClose = () => {
+    setExtensionPointContextMenuOpen(false);
+    setSelectedExtensionPointForFilter(null);
+  };
+
+  const handleFilterOnExtensionPoint = () => {
+    if (selectedExtensionPointForFilter) {
+      // Update URL parameter to filter on extension point
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('extensionPoints', selectedExtensionPointForFilter);
+      locationService.push(currentUrl.pathname + currentUrl.search);
+    }
+    handleExtensionPointContextMenuClose();
+  };
+
+  const handleRemoveExtensionPointFilter = () => {
+    if (selectedExtensionPointForFilter) {
+      // Remove the extension point from URL parameters
+      const currentUrl = new URL(window.location.href);
+      const currentExtensionPoints = currentUrl.searchParams.get('extensionPoints')?.split(',').filter(Boolean) || [];
+      const updatedExtensionPoints = currentExtensionPoints.filter((ep) => ep !== selectedExtensionPointForFilter);
+
+      if (updatedExtensionPoints.length > 0) {
+        currentUrl.searchParams.set('extensionPoints', updatedExtensionPoints.join(','));
+      } else {
+        currentUrl.searchParams.delete('extensionPoints');
+      }
+
+      locationService.push(currentUrl.pathname + currentUrl.search);
+    }
+    handleExtensionPointContextMenuClose();
+  };
+
+  // Helper function to check if an extension point is already filtered
+  const isExtensionPointFiltered = (extensionPointId: string): boolean => {
+    const currentUrl = new URL(window.location.href);
+    const currentExtensionPoints = currentUrl.searchParams.get('extensionPoints')?.split(',').filter(Boolean) || [];
+    return currentExtensionPoints.includes(extensionPointId);
+  };
+
+  // Individual extension context menu handlers
+  const handleExtensionContextMenu = (event: React.MouseEvent, extensionId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Immediately clear any existing highlighting/selections
+    onContentProviderClick(null);
+    onContentConsumerClick(null);
+    onHighlightedExtensionPointChange(null);
+
+    setSelectedExtensionId(extensionId);
+    setExtensionContextMenuPosition({ x: event.clientX, y: event.clientY });
+    setExtensionContextMenuOpen(true);
+  };
+
+  const handleExtensionLeftClick = (event: React.MouseEvent, extensionId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Immediately clear any existing highlighting/selections
+    onContentProviderClick(null);
+    onContentConsumerClick(null);
+    onHighlightedExtensionPointChange(null);
+
+    setSelectedExtensionId(extensionId);
+    setExtensionContextMenuPosition({ x: event.clientX, y: event.clientY });
+    setExtensionContextMenuOpen(true);
+  };
+
+  const handleExtensionContextMenuClose = () => {
+    setExtensionContextMenuOpen(false);
+    setSelectedExtensionId(null);
+  };
+
+  const handleFilterOnExtension = () => {
+    if (selectedExtensionId) {
+      // Find the extension point that this extension targets
+      const extension = data.extensions?.find((ext) => ext.id === selectedExtensionId);
+      if (extension) {
+        // Update URL parameter to filter on extension point
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('extensionPoints', extension.targetExtensionPoint);
+        locationService.push(currentUrl.pathname + currentUrl.search);
+      }
+    }
+    handleExtensionContextMenuClose();
+  };
+
+  const handleRemoveExtensionFilter = () => {
+    if (selectedExtensionId) {
+      // Find the extension point that this extension targets
+      const extension = data.extensions?.find((ext) => ext.id === selectedExtensionId);
+      if (extension) {
+        // Remove the extension point from URL parameters
+        const currentUrl = new URL(window.location.href);
+        const currentExtensionPoints = currentUrl.searchParams.get('extensionPoints')?.split(',').filter(Boolean) || [];
+        const updatedExtensionPoints = currentExtensionPoints.filter((ep) => ep !== extension.targetExtensionPoint);
+
+        if (updatedExtensionPoints.length > 0) {
+          currentUrl.searchParams.set('extensionPoints', updatedExtensionPoints.join(','));
+        } else {
+          currentUrl.searchParams.delete('extensionPoints');
+        }
+
+        locationService.push(currentUrl.pathname + currentUrl.search);
+      }
+    }
+    handleExtensionContextMenuClose();
+  };
+
+  // Helper function to check if an extension's target extension point is already filtered
+  const isExtensionFiltered = (extensionId: string): boolean => {
+    const extension = data.extensions?.find((ext) => ext.id === extensionId);
+    if (!extension) {
+      return false;
+    }
+    const currentUrl = new URL(window.location.href);
+    const currentExtensionPoints = currentUrl.searchParams.get('extensionPoints')?.split(',').filter(Boolean) || [];
+    return currentExtensionPoints.includes(extension.targetExtensionPoint);
   };
 
   const handleNavigateToExtensionPoint = () => {
@@ -482,6 +642,136 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 )}
               </>
             )}
+            {isExtensionPointMode && (
+              <>
+                {isContentProviderFiltered(selectedContentProviderId) ? (
+                  <Menu.Item
+                    label={t(
+                      'extensions.dependency-graph.remove-content-provider-filter',
+                      'Remove {{appName}} filter',
+                      {
+                        appName,
+                      }
+                    )}
+                    onClick={handleRemoveContentProviderFilter}
+                    icon="times"
+                  />
+                ) : (
+                  <Menu.Item
+                    label={t(
+                      'extensions.dependency-graph.filter-content-provider',
+                      'Filter content providers by {{appName}}',
+                      {
+                        appName,
+                      }
+                    )}
+                    onClick={handleFilterOnContentProvider}
+                    icon="filter"
+                  />
+                )}
+              </>
+            )}
+          </>
+        )}
+      />
+    );
+  };
+
+  const renderExtensionPointContextMenu = () => {
+    if (!extensionPointContextMenuOpen || !selectedExtensionPointForFilter) {
+      return null;
+    }
+
+    // Shorten the extension point ID for display
+    const getShortExtensionPointName = (fullId: string): string => {
+      const parts = fullId.split('/');
+      if (parts.length >= 2) {
+        return `${parts[0]}/${parts[parts.length - 1]}`;
+      }
+      return fullId;
+    };
+
+    const extensionPointName = getShortExtensionPointName(selectedExtensionPointForFilter);
+
+    return (
+      <ContextMenu
+        x={extensionPointContextMenuPosition.x}
+        y={extensionPointContextMenuPosition.y}
+        onClose={handleExtensionPointContextMenuClose}
+        renderMenuItems={() => (
+          <>
+            {isExtensionPointFiltered(selectedExtensionPointForFilter) ? (
+              <Menu.Item
+                label={t(
+                  'extensions.dependency-graph.remove-extension-point-filter',
+                  'Remove {{extensionPointName}} filter',
+                  {
+                    extensionPointName,
+                  }
+                )}
+                onClick={handleRemoveExtensionPointFilter}
+                icon="times"
+              />
+            ) : (
+              <Menu.Item
+                label={t('extensions.dependency-graph.filter-extension-point', 'Filter on this extension point')}
+                onClick={handleFilterOnExtensionPoint}
+                icon="filter"
+              />
+            )}
+          </>
+        )}
+      />
+    );
+  };
+
+  const renderExtensionContextMenu = () => {
+    if (!extensionContextMenuOpen || !selectedExtensionId) {
+      return null;
+    }
+
+    const extension = data.extensions?.find((ext) => ext.id === selectedExtensionId);
+    if (!extension) {
+      return null;
+    }
+
+    // Shorten the extension point ID for display
+    const getShortExtensionPointName = (fullId: string): string => {
+      const parts = fullId.split('/');
+      if (parts.length >= 2) {
+        return `${parts[0]}/${parts[parts.length - 1]}`;
+      }
+      return fullId;
+    };
+
+    const extensionPointName = getShortExtensionPointName(extension.targetExtensionPoint);
+
+    return (
+      <ContextMenu
+        x={extensionContextMenuPosition.x}
+        y={extensionContextMenuPosition.y}
+        onClose={handleExtensionContextMenuClose}
+        renderMenuItems={() => (
+          <>
+            {isExtensionFiltered(selectedExtensionId) ? (
+              <Menu.Item
+                label={t(
+                  'extensions.dependency-graph.remove-extension-point-filter',
+                  'Remove {{extensionPointName}} filter',
+                  {
+                    extensionPointName,
+                  }
+                )}
+                onClick={handleRemoveExtensionFilter}
+                icon="times"
+              />
+            ) : (
+              <Menu.Item
+                label={t('extensions.dependency-graph.filter-extension-point', 'Filter on this extension point')}
+                onClick={handleFilterOnExtensionPoint}
+                icon="filter"
+              />
+            )}
           </>
         )}
       />
@@ -506,6 +796,8 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
         {renderExtensionPointMode()}
         {renderContextMenu()}
         {renderContentConsumerContextMenu()}
+        {renderContentProviderContextMenu()}
+        {renderExtensionPointContextMenu()}
       </>
     );
   } else if (options.visualizationMode === 'addedlinks') {
@@ -849,8 +1141,8 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 stroke={theme.colors.border.strong}
                 strokeWidth={VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
                 rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
-                onClick={(event) => handleContentConsumerLeftClick(event, providingPlugin)}
-                onContextMenu={(event) => handleContentConsumerContextMenu(event, providingPlugin)}
+                onClick={(event) => handleContentProviderLeftClick(event, providingPlugin)}
+                onContextMenu={(event) => handleContentProviderContextMenu(event, providingPlugin)}
                 style={{ cursor: 'pointer' }}
                 pointerEvents="all"
               />
@@ -881,6 +1173,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       stroke={theme.colors.border.strong}
                       strokeWidth={VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH}
                       rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
+                      style={{ pointerEvents: 'none' }}
                     />
 
                     {/* Extension title */}
@@ -889,6 +1182,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       y={extPos.y - 5}
                       textAnchor="middle"
                       fill={theme.colors.getContrastText(extensionColor)}
+                      style={{ pointerEvents: 'none' }}
                     >
                       {extension.title || extension.id}
                     </text>
@@ -917,6 +1211,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 fill={theme.colors.text.primary}
                 fontSize={TYPOGRAPHY_CONSTANTS.SECTION_HEADER_SIZE}
                 fontWeight="bold"
+                style={{ pointerEvents: 'none' }}
               >
                 {getDisplayName(providingPlugin)}
               </text>
@@ -932,6 +1227,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       textAnchor="end"
                       fill={theme.colors.text.secondary}
                       fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
+                      style={{ pointerEvents: 'none' }}
                     >
                       <Trans i18nKey="dependency-graph.app-version">{polishVersion(appNode.version)}</Trans>
                     </text>
@@ -1033,6 +1329,10 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                             stroke={theme.colors.border.strong}
                             strokeWidth={VISUAL_CONSTANTS.DEFAULT_STROKE_WIDTH}
                             rx={VISUAL_CONSTANTS.EXTENSION_BORDER_RADIUS}
+                            onClick={(event) => handleExtensionPointLeftClick(event, epId)}
+                            onContextMenu={(event) => handleExtensionPointContextMenu(event, epId)}
+                            style={{ cursor: 'pointer' }}
+                            pointerEvents="all"
                           />
 
                           {/* Extension count badge */}
@@ -1090,6 +1390,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 fill={theme.colors.text.primary}
                 fontSize={TYPOGRAPHY_CONSTANTS.SECTION_HEADER_SIZE}
                 fontWeight="bold"
+                style={{ pointerEvents: 'none' }}
               >
                 {getDisplayName(definingPlugin)}
               </text>
@@ -1105,6 +1406,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       textAnchor="end"
                       fill={theme.colors.text.secondary}
                       fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
+                      style={{ pointerEvents: 'none' }}
                     >
                       <Trans i18nKey="dependency-graph.app-version">{polishVersion(appNode.version)}</Trans>
                     </text>
@@ -1268,6 +1570,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                             onClick={(event) => handleLeftClick(event, epId)}
                             onContextMenu={(event) => handleContextMenu(event, epId)}
                             style={{ cursor: 'pointer' }}
+                            pointerEvents="all"
                           />
 
                           {/* Extension count badge */}
@@ -1380,6 +1683,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 fill={theme.colors.text.primary}
                 fontSize={TYPOGRAPHY_CONSTANTS.SECTION_HEADER_SIZE}
                 fontWeight="bold"
+                style={{ pointerEvents: 'none' }}
               >
                 {getDisplayName(definingPlugin)}
               </text>
@@ -1395,6 +1699,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       textAnchor="end"
                       fill={theme.colors.text.secondary}
                       fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
+                      style={{ pointerEvents: 'none' }}
                     >
                       <Trans i18nKey="dependency-graph.app-version">{polishVersion(appNode.version)}</Trans>
                     </text>

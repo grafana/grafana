@@ -5,15 +5,24 @@ import { t } from '@grafana/i18n';
 
 import { VisualizationMode } from './useDependencyGraphData';
 
+/**
+ * Type guard to check if a string is a valid VisualizationMode
+ */
+const isValidVisualizationMode = (mode: string | null): mode is VisualizationMode => {
+  return mode === 'add' || mode === 'expose' || mode === 'extensionpoint' || mode === 'addedlinks';
+};
+
 export interface DependencyGraphControls {
   visualizationMode: VisualizationMode;
   selectedContentProviders: string[];
   selectedContentConsumers: string[];
   selectedExtensionPoints: string[];
+  selectedExtensions: string[];
   setVisualizationMode: (mode: VisualizationMode) => void;
   setSelectedContentProviders: (providers: string[]) => void;
   setSelectedContentConsumers: (consumers: string[]) => void;
   setSelectedExtensionPoints: (extensionPoints: string[]) => void;
+  setSelectedExtensions: (extensions: string[]) => void;
   modeOptions: Array<{ label: string; value: VisualizationMode }>;
 }
 
@@ -25,6 +34,7 @@ const URL_PARAMS = {
   CONTENT_PROVIDERS: 'contentProviders',
   CONTENT_CONSUMERS: 'contentConsumers',
   EXTENSION_POINTS: 'extensionPoints',
+  EXTENSIONS: 'extensions',
 } as const;
 
 /**
@@ -53,10 +63,7 @@ export function useDependencyGraphControls(): DependencyGraphControls {
   // Initialize state from URL parameters
   const [visualizationMode, setVisualizationModeState] = useState<VisualizationMode>(() => {
     const mode = searchParams.get(URL_PARAMS.API_MODE);
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return mode === 'add' || mode === 'expose' || mode === 'extensionpoint' || mode === 'addedlinks'
-      ? (mode as VisualizationMode)
-      : 'add';
+    return isValidVisualizationMode(mode) ? mode : 'add';
   });
 
   const [selectedContentProviders, setSelectedContentProvidersState] = useState<string[]>(() => {
@@ -69,6 +76,10 @@ export function useDependencyGraphControls(): DependencyGraphControls {
 
   const [selectedExtensionPoints, setSelectedExtensionPointsState] = useState<string[]>(() => {
     return parseArrayParam(searchParams.get(URL_PARAMS.EXTENSION_POINTS));
+  });
+
+  const [selectedExtensions, setSelectedExtensionsState] = useState<string[]>(() => {
+    return parseArrayParam(searchParams.get(URL_PARAMS.EXTENSIONS));
   });
 
   // Update URL parameters when state changes
@@ -128,12 +139,21 @@ export function useDependencyGraphControls(): DependencyGraphControls {
     [updateUrlParams]
   );
 
+  const setSelectedExtensions = useCallback(
+    (extensions: string[]) => {
+      setSelectedExtensionsState(extensions);
+      updateUrlParams({
+        [URL_PARAMS.EXTENSIONS]: extensions.length > 0 ? serializeArrayParam(extensions) : null,
+      });
+    },
+    [updateUrlParams]
+  );
+
   // Sync state with URL parameters when they change externally
   useEffect(() => {
     const mode = searchParams.get(URL_PARAMS.API_MODE);
-    if (mode === 'add' || mode === 'expose' || mode === 'extensionpoint' || mode === 'addedlinks') {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      setVisualizationModeState(mode as VisualizationMode);
+    if (isValidVisualizationMode(mode)) {
+      setVisualizationModeState(mode);
     } else {
       // Default to 'add' mode when no view parameter is present
       setVisualizationModeState('add');
@@ -147,12 +167,16 @@ export function useDependencyGraphControls(): DependencyGraphControls {
 
     const extensionPoints = parseArrayParam(searchParams.get(URL_PARAMS.EXTENSION_POINTS));
     setSelectedExtensionPointsState(extensionPoints);
+
+    const extensions = parseArrayParam(searchParams.get(URL_PARAMS.EXTENSIONS));
+    setSelectedExtensionsState(extensions);
   }, [searchParams]);
 
   const modeOptions = [
     { label: t('extensions.view.add', 'Add'), value: 'add' as const },
     { label: t('extensions.view.expose', 'Expose'), value: 'expose' as const },
     { label: t('extensions.view.addedlinks', 'Added links'), value: 'addedlinks' as const },
+    { label: t('extensions.view.extensionpoints', 'Extension points'), value: 'extensionpoint' as const },
   ];
 
   return {
@@ -160,10 +184,12 @@ export function useDependencyGraphControls(): DependencyGraphControls {
     selectedContentProviders,
     selectedContentConsumers,
     selectedExtensionPoints,
+    selectedExtensions,
     setVisualizationMode,
     setSelectedContentProviders,
     setSelectedContentConsumers,
     setSelectedExtensionPoints,
+    setSelectedExtensions,
     modeOptions,
   };
 }

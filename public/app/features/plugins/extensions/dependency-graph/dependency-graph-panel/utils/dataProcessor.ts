@@ -911,13 +911,17 @@ export const processPluginDataToExtensionPointGraph = (
   const extensionPoints: Map<string, ExtensionPoint> = new Map();
   const extensions: Map<string, Extension> = new Map();
 
-  // First pass: collect all extension points (filtered by selectedExtensionPoints if specified)
+  // Get filter options
   const selectedExtensionPoints = options.selectedExtensionPoints || [];
+  const selectedContentProviders = options.selectedContentProviders || [];
   const shouldFilterExtensionPoints = selectedExtensionPoints.length > 0;
+  const shouldFilterContentProviders = selectedContentProviders.length > 0;
 
   if (ENABLE_DEBUG_LOGS) {
     console.log('processPluginDataToExtensionPointGraph - selectedExtensionPoints:', selectedExtensionPoints);
+    console.log('processPluginDataToExtensionPointGraph - selectedContentProviders:', selectedContentProviders);
     console.log('processPluginDataToExtensionPointGraph - shouldFilterExtensionPoints:', shouldFilterExtensionPoints);
+    console.log('processPluginDataToExtensionPointGraph - shouldFilterContentProviders:', shouldFilterContentProviders);
   }
 
   // Collect explicitly defined extension points
@@ -968,6 +972,11 @@ export const processPluginDataToExtensionPointGraph = (
   Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {
     const pluginExtensions = pluginInfo.extensions;
     if (!pluginExtensions) {
+      return;
+    }
+
+    // Skip this plugin if content provider filtering is enabled and this plugin is not selected
+    if (shouldFilterContentProviders && !selectedContentProviders.includes(pluginId)) {
       return;
     }
 
@@ -1075,11 +1084,45 @@ export const processPluginDataToExtensionPointGraph = (
     }
   });
 
+  // Apply content provider filtering to extension points
+  // If content provider filtering is enabled, only show extension points that have extensions from selected providers
+  // BUT if extension point filtering is also enabled, show the intersection
+  if (shouldFilterContentProviders && shouldFilterExtensionPoints) {
+    // Both filters are applied: show intersection
+    // Extension points are already filtered by selectedExtensionPoints, so we just need to ensure
+    // they have extensions from selected providers
+    const extensionPointIdsWithExtensions = new Set<string>();
+    extensions.forEach((extension) => {
+      extensionPointIdsWithExtensions.add(extension.targetExtensionPoint);
+    });
+
+    // Filter extension points to only include those that have extensions from selected providers
+    const filteredExtensionPointsArray = Array.from(extensionPoints.values()).filter((ep) =>
+      extensionPointIdsWithExtensions.has(ep.id)
+    );
+
+    // Clear and repopulate extension points map with filtered results
+    extensionPoints.clear();
+    filteredExtensionPointsArray.forEach((ep) => {
+      extensionPoints.set(ep.id, ep);
+    });
+  }
+  // If only content provider filter is applied (no extension point filter), keep all extension points
+  // This ensures we show all defined extension points even if they don't have extensions from selected providers
+  // The content provider filtering will only affect which extensions are shown, not which extension points are shown
+
   // Third pass: create plugin nodes for all plugins that have extensions or extension points
-  // Only include plugins that have extensions/extension points that are actually in the filtered results
+  // Always include selected content providers as nodes, even if they don't have extensions
   const allPluginIds = new Set<string>();
   extensions.forEach((extension) => allPluginIds.add(extension.providingPlugin));
   extensionPoints.forEach((ep) => allPluginIds.add(ep.definingPlugin));
+
+  // If content provider filtering is enabled, always include the selected providers as nodes
+  if (shouldFilterContentProviders) {
+    selectedContentProviders.forEach((providerId) => {
+      allPluginIds.add(providerId);
+    });
+  }
 
   allPluginIds.forEach((pluginId) => {
     const pluginInfo = pluginData[pluginId];
@@ -1104,6 +1147,13 @@ export const processPluginDataToExtensionPointGraph = (
   if (ENABLE_DEBUG_LOGS) {
     console.log('processPluginDataToExtensionPointGraph - final result:', result);
     console.log('processPluginDataToExtensionPointGraph - extensions count:', extensions.size);
+    console.log('processPluginDataToExtensionPointGraph - extension points count:', extensionPoints.size);
+    console.log('processPluginDataToExtensionPointGraph - filtering applied:', {
+      shouldFilterExtensionPoints,
+      shouldFilterContentProviders,
+      selectedExtensionPoints,
+      selectedContentProviders,
+    });
     console.log(
       'processPluginDataToExtensionPointGraph - extensions:',
       Array.from(extensions.values()).map((e) => ({
@@ -1111,6 +1161,14 @@ export const processPluginDataToExtensionPointGraph = (
         title: e.title,
         plugin: e.providingPlugin,
         target: e.targetExtensionPoint,
+      }))
+    );
+    console.log(
+      'processPluginDataToExtensionPointGraph - extension points:',
+      Array.from(extensionPoints.values()).map((ep) => ({
+        id: ep.id,
+        title: ep.title,
+        definingPlugin: ep.definingPlugin,
       }))
     );
   }
@@ -1301,6 +1359,7 @@ const availableProvidersCache = new Map<string, string[]>();
 const availableConsumersCache = new Map<string, string[]>();
 const activeConsumersCache = new Map<string, string[]>();
 const availableExtensionPointsCache = new Map<string, string[]>();
+const availableExtensionsCache = new Map<string, string[]>();
 
 /**
  * Gets all available content provider plugin IDs for the specified visualization mode.
@@ -1671,6 +1730,85 @@ export const getAvailableExtensionPoints = (): string[] => {
 
   const result = Array.from(extensionPoints).sort();
   availableExtensionPointsCache.set('extensionpoint', result);
+  return result;
+};
+
+/**
+ * Gets all available extension IDs for the extension point mode.
+ *
+ * @returns Sorted array of extension IDs
+ */
+export const getAvailableExtensions = (): string[] => {
+  if (availableExtensionsCache.has('extensionpoint')) {
+    return availableExtensionsCache.get('extensionpoint')!;
+  }
+
+  const extensions = new Set<string>();
+  const pluginData = getPluginData();
+
+  Object.entries(pluginData).forEach(([pluginId, pluginInfo]) => {
+    const pluginExtensions = pluginInfo.extensions;
+    if (!pluginExtensions) {
+      return;
+    }
+
+    // Check added links
+    if (hasAddedLinksProperty(pluginExtensions) && pluginExtensions.addedLinks.length > 0) {
+      pluginExtensions.addedLinks.forEach((link) => {
+        if (isExtensionObject(link) && link.targets) {
+          const targets = Array.isArray(link.targets) ? link.targets : [link.targets];
+          targets.forEach((target: string) => {
+            if (target && target.trim() !== '') {
+              const extensionId = `${pluginId}-link-${target}-${link.title || 'Link Extension'}`.replace(
+                /[^a-zA-Z0-9-]/g,
+                '-'
+              );
+              extensions.add(extensionId);
+            }
+          });
+        }
+      });
+    }
+
+    // Check added components
+    if (hasAddedComponentsProperty(pluginExtensions) && pluginExtensions.addedComponents.length > 0) {
+      pluginExtensions.addedComponents.forEach((component) => {
+        if (isExtensionObject(component) && component.targets) {
+          const targets = Array.isArray(component.targets) ? component.targets : [component.targets];
+          targets.forEach((target: string) => {
+            if (target && target.trim() !== '') {
+              const extensionId = `${pluginId}-component-${target}-${component.title || 'Component Extension'}`.replace(
+                /[^a-zA-Z0-9-]/g,
+                '-'
+              );
+              extensions.add(extensionId);
+            }
+          });
+        }
+      });
+    }
+
+    // Check added functions
+    if (hasAddedFunctionsProperty(pluginExtensions) && pluginExtensions.addedFunctions.length > 0) {
+      pluginExtensions.addedFunctions.forEach((func) => {
+        if (isExtensionObject(func) && func.targets) {
+          const targets = Array.isArray(func.targets) ? func.targets : [func.targets];
+          targets.forEach((target: string) => {
+            if (target && target.trim() !== '') {
+              const extensionId = `${pluginId}-function-${target}-${func.title || 'Function Extension'}`.replace(
+                /[^a-zA-Z0-9-]/g,
+                '-'
+              );
+              extensions.add(extensionId);
+            }
+          });
+        }
+      });
+    }
+  });
+
+  const result = Array.from(extensions).sort();
+  availableExtensionsCache.set('extensionpoint', result);
   return result;
 };
 

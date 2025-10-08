@@ -5,6 +5,7 @@ import {
   getAvailableContentConsumers,
   getAvailableContentProviders,
   getAvailableExtensionPoints,
+  getAvailableExtensions,
   getDefaultOptions,
   processPluginDataToGraph,
 } from '../dependency-graph-panel/utils/dataProcessor';
@@ -17,6 +18,7 @@ export interface DependencyGraphOptions {
   selectedContentProviders: string[];
   selectedContentConsumers: string[];
   selectedExtensionPoints?: string[];
+  selectedExtensions?: string[];
 }
 
 export interface DependencyGraphData {
@@ -24,13 +26,16 @@ export interface DependencyGraphData {
   availableProviders: string[];
   availableConsumers: string[];
   availableExtensionPoints: string[];
+  availableExtensions: string[];
   activeConsumers: string[];
   contentProviderOptions: Array<{ label: string; value: string }>;
   contentConsumerOptions: Array<{ label: string; value: string }>;
   extensionPointOptions: Array<{ label: string; value: string }>;
+  extensionOptions: Array<{ label: string; value: string }>;
   selectedProviderValues: string[];
   selectedConsumerValues: string[];
   selectedExtensionPointValues: string[];
+  selectedExtensionValues: string[];
 }
 
 /**
@@ -41,6 +46,7 @@ export function useDependencyGraphData({
   selectedContentProviders,
   selectedContentConsumers,
   selectedExtensionPoints,
+  selectedExtensions,
 }: DependencyGraphOptions): DependencyGraphData {
   // Get available providers and consumers based on visualization mode
   const availableProviders = useMemo(() => getAvailableContentProviders(visualizationMode), [visualizationMode]);
@@ -48,6 +54,8 @@ export function useDependencyGraphData({
   const availableConsumers = useMemo(() => getAvailableContentConsumers(visualizationMode), [visualizationMode]);
 
   const availableExtensionPoints = useMemo(() => getAvailableExtensionPoints(), []);
+
+  const availableExtensions = useMemo(() => getAvailableExtensions(), []);
 
   const activeConsumers = useMemo(() => getActiveContentConsumers(visualizationMode), [visualizationMode]);
 
@@ -79,6 +87,15 @@ export function useDependencyGraphData({
     [availableExtensionPoints]
   );
 
+  const extensionOptions = useMemo(
+    () =>
+      availableExtensions.map((extension) => ({
+        label: extension,
+        value: extension,
+      })),
+    [availableExtensions]
+  );
+
   // Calculate selected values for display
   const selectedProviderValues = useMemo(
     () =>
@@ -100,6 +117,11 @@ export function useDependencyGraphData({
         ? availableExtensionPoints
         : selectedExtensionPoints,
     [selectedExtensionPoints, availableExtensionPoints]
+  );
+
+  const selectedExtensionValues = useMemo(
+    () => (!selectedExtensions || selectedExtensions.length === 0 ? availableExtensions : selectedExtensions),
+    [selectedExtensions, availableExtensions]
   );
 
   // Process the plugin data for the dependency graph
@@ -138,12 +160,15 @@ export function useDependencyGraphData({
     availableProviders,
     availableConsumers,
     availableExtensionPoints,
+    availableExtensions,
     activeConsumers,
     contentProviderOptions,
     contentConsumerOptions,
     extensionPointOptions,
+    extensionOptions,
     selectedProviderValues,
     selectedConsumerValues,
     selectedExtensionPointValues,
+    selectedExtensionValues,
   };
 }

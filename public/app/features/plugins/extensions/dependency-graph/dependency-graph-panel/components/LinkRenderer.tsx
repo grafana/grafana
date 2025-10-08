@@ -337,7 +337,8 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
       const extensionPoint = data.extensionPoints?.find((ep) => ep.id === extension.targetExtensionPoint);
       const isArrowHighlighted =
         selectedContentConsumer === extension.providingPlugin ||
-        selectedContentConsumer === extensionPoint?.definingPlugin;
+        selectedContentConsumer === extensionPoint?.definingPlugin ||
+        selectedContentProvider === extension.providingPlugin;
 
       arrows.push(
         <g key={`${extension.id}-${extension.targetExtensionPoint}`}>
