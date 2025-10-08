@@ -1,4 +1,4 @@
-import { RoutingTreeMatcher } from '../api/v0alpha1/api.gen';
+import { RoutingTreeMatcher } from '../api/notifications/v0alpha1/notifications.api.gen';
 
 export type Label = [string, string];
 
