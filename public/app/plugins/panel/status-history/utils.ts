@@ -34,16 +34,9 @@ export const getFieldActions = (
   const actionLookup = new Set<string>();
 
   if (field.state?.scopedVars) {
-    const actionsModel = getActions(
-      dataFrame,
-      field,
-      field.state!.scopedVars!,
-      replaceVars,
-      field.config.actions ?? [],
-      {
-        valueRowIndex: rowIndex,
-      }
-    );
+    const actionsModel = getActions(dataFrame, field, field.state.scopedVars, replaceVars, field.config.actions ?? [], {
+      valueRowIndex: rowIndex,
+    });
 
     actionsModel.forEach((action) => {
       const key = `${action.title}`;
@@ -53,7 +46,7 @@ export const getFieldActions = (
       }
     });
   } else {
-    console.warn('no scoped vars!', field);
+    console.warn(`Unable to get actions for field: ${field.name}, in frame: ${dataFrame.name}`);
   }
 
   return actions;

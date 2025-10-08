@@ -277,12 +277,10 @@ export const AnnotationsPlugin2 = ({
             links.push(...getDataLinks(field, i));
 
             // Get actions
-            if (userCanExecuteActions) {
+            if (userCanExecuteActions && field.state?.scopedVars) {
               actions.push(...getFieldActions(frame, field, replaceVariables, i));
             }
           });
-
-          console.log('actions', actions, frame);
 
           markers.push(
             <AnnotationMarker2

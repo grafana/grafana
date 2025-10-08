@@ -194,32 +194,17 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
             title: 'Annotation Data link',
           },
         ],
-        // The API call doesn't actually succeed, it appears to be impossible to call an internal Grafana API from an action at this time
         actions: [
           {
-            // type: ActionType.Infinity,
-            // infinity: {
-            //   headers: [['Content-Type', 'application/json'], ['Accept', 'application/json, text/plain, */*'], ['Authorization', 'Bearer $serviceToken']],
-            //   method: HttpRequestMethod.POST,
-            //   url: '/api/annotations',
-            //   body: `{"dashboardUID":"$dashboardUID","isRegion":true,"panelId":$panelID,"time":$__from,"timeEnd":$__to,"tags":["tag1","tag2"],"text":"Annotation Description"}`,
-            //   // DatasourceUid does not interpolate variables so there's also no way to use the infinity action type with a grafana api either
-            //   datasourceUid: '$infinityDatasourceUID',
-            // },
-
             type: ActionType.Fetch,
             fetch: {
-              // For some reason x-grafana-action is defined on all fetch requests but it causes all internal API calls to fail. Removing it would work, except defining it here doesn't remove the value, it appends to the existing value, so there's no way to get a fetch request to call a Grafana API within an action.
-              // If you copy this request as cURL from the browser and then drop into insomnia/postman and remove the `x-grafana-action` header then this call succeeds
               headers: [
                 ['Content-Type', 'application/json'],
-                ['Accept', 'application/json, text/plain, */*'],
-                ['Authorization', 'Bearer $serviceToken'],
-                ['x-grafana-action', ''],
+                ['Accept', 'application/json'],
               ],
               method: HttpRequestMethod.POST,
               url: '/api/annotations',
-              body: `{"dashboardUID":"$dashboardUID","isRegion":true,"panelId":$panelID,"time":$__from,"timeEnd":$__to,"tags":["tag1","tag2"],"text":"Annotation Description"}`,
+              body: `{"dashboardUID":"$dashboardUID","isRegion":true,"panelId":$panelID,"time":$__from,"timeEnd":$__to,"text":"Annotation Description"}`,
             },
             variables: [
               {
@@ -232,18 +217,10 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
                 name: 'panelID',
                 type: ActionVariableType.String,
               },
-              {
-                key: 'serviceToken',
-                name: 'serviceToken',
-                type: ActionVariableType.String,
-              },
-              // {
-              //   key: 'infinityDatasourceUID',
-              //   name: 'infinityDatasourceUID',
-              //   type: ActionVariableType.String,
-              // }
             ],
             title: 'Add annotation to panel for this time range',
+            confirmation:
+              'Are you sure you want to add annotation for this time range? Note: requires actions_allow_post_url config to include "/api/annotations".',
           },
         ],
         ...dataFrame.fields[1].config,
