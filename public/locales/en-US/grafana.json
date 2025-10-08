@@ -13063,6 +13063,15 @@
     }
   },
   "traces": {
+    "adhocFilters": {
+      "duration1h": "1h",
+      "duration1m": "1m",
+      "duration1ms": "1ms",
+      "duration1s": "1s",
+      "durationLabel": "duration",
+      "textSearchDescription": "Search for text in the trace",
+      "textSearchLabel": "Text search"
+    },
     "category-span-filters": "Span filters",
     "name-critical-path-only": "Show critical path only",
     "name-find-in-trace": "Find in trace",

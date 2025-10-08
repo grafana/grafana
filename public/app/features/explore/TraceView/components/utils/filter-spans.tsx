@@ -56,6 +56,10 @@ const getAdhocFilterMatches = (spans: TraceSpan[], adhocFilters: Array<Selectabl
         return matchField(span.operationName, operator, value);
       }
 
+      if (key === 'duration') {
+        return matchTimeField(span.duration, operator, value);
+      }
+
       // Handle tag filters (same logic as getTagMatches)
       const tagFilter: TraceSearchTag = {
         id: '', // Not needed for matching
@@ -89,6 +93,23 @@ const matchField = (fieldValue: string, operator: string, expectedValue: string)
     return fieldValue.includes(expectedValue);
   } else if (operator === '!~') {
     return !fieldValue.includes(expectedValue);
+  }
+  return false;
+};
+
+/**
+ * Match a field value against an operator and expected value.
+ */
+const matchTimeField = (fieldValue: number, operator: string, expectedValue: string): boolean => {
+  const timeFilter = convertTimeFilter(expectedValue);
+
+  if (!timeFilter) {
+    return false;
+  }
+  if (operator === '>=') {
+    return fieldValue >= timeFilter;
+  } else if (operator === '<=') {
+    return fieldValue <= timeFilter;
   }
   return false;
 };

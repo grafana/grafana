@@ -13,7 +13,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import { isEqual } from 'lodash';
+
 import { SelectableValue, toOption, TraceSearchProps } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { AdHocFiltersController, AdHocFiltersControllerState, AdHocFilterWithLabels } from '@grafana/scenes';
 
 import { getTraceTagKeys, getTraceTagValues } from '../../utils/tags';
@@ -95,7 +98,15 @@ export class TraceAdHocFiltersController implements AdHocFiltersController {
    */
   async getKeys(currentKey: string | null): Promise<Array<SelectableValue<string>>> {
     const keys = getTraceTagKeys(this.trace);
-    return keys.map(toOption);
+    return [
+      {
+        label: t('traces.adhocFilters.textSearchLabel', 'Text search'),
+        value: '_textSearch_',
+        description: t('traces.adhocFilters.textSearchDescription', 'Search for text in the trace'),
+      },
+      { label: t('traces.adhocFilters.durationLabel', 'duration'), value: 'duration' },
+      ...keys.map(toOption),
+    ];
   }
 
   /**
@@ -105,6 +116,14 @@ export class TraceAdHocFiltersController implements AdHocFiltersController {
     if (!filter.key) {
       return [];
     }
+    if (filter.key === 'duration') {
+      return [
+        { label: t('traces.adhocFilters.duration1ms', '1ms'), value: '1ms' },
+        { label: t('traces.adhocFilters.duration1s', '1s'), value: '1s' },
+        { label: t('traces.adhocFilters.duration1m', '1m'), value: '1m' },
+        { label: t('traces.adhocFilters.duration1h', '1h'), value: '1h' },
+      ];
+    }
     const values = getTraceTagValues(this.trace, filter.key);
     return values.map(toOption);
   }
@@ -113,6 +132,15 @@ export class TraceAdHocFiltersController implements AdHocFiltersController {
    * Get available operators.
    */
   getOperators(): Array<SelectableValue<string>> {
+    if (this.wip?.key === '_textSearch_') {
+      return [{ label: '=~', value: '=~' }];
+    }
+    if (this.wip?.key === 'duration') {
+      return [
+        { label: '>=', value: '>=' },
+        { label: '<=', value: '<=' },
+      ];
+    }
     return TRACE_OPERATORS;
   }
 
@@ -138,7 +166,7 @@ export class TraceAdHocFiltersController implements AdHocFiltersController {
     }
 
     const updatedFilters = filters.map((f) => {
-      return f === filter ? { ...f, ...update } : f;
+      return isEqual(f, filter) ? { ...f, ...update } : f;
     });
 
     this.setSearch({
@@ -165,9 +193,7 @@ export class TraceAdHocFiltersController implements AdHocFiltersController {
     const items = this.search.adhocFilters || [];
     const filters = items.map(toAdHocFilterWithLabels);
 
-    const updatedFilters = filters.filter(
-      (f) => !(f.key === filter.key && f.operator === filter.operator && f.value === filter.value)
-    );
+    const updatedFilters = filters.filter((f) => !isEqual(f, filter));
 
     this.setSearch({
       ...this.search,
@@ -196,9 +222,7 @@ export class TraceAdHocFiltersController implements AdHocFiltersController {
     const items = this.search.adhocFilters || [];
     const filters = items.map(toAdHocFilterWithLabels);
 
-    const index = filters.findIndex(
-      (f) => f.key === filter.key && f.operator === filter.operator && f.value === filter.value
-    );
+    const index = filters.findIndex((f) => isEqual(f, filter));
 
     if (index > 0) {
       // Focus previous filter by setting forceEdit
