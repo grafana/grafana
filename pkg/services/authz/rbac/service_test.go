@@ -1115,10 +1115,10 @@ func TestService_Check(t *testing.T) {
 				Resource:  "dashboards",
 				Verb:      "get",
 				Name:      "dash1",
-				Folder:    "some_folder",
+				Folder:    "fold1",
 			},
 			permissions: []accesscontrol.Permission{
-				{Action: "folders:edit", Scope: "folders:uid:some_folder"},
+				{Action: "folders:edit", Scope: "folders:uid:fold1"},
 			},
 			expected: true,
 		},
@@ -1130,11 +1130,11 @@ func TestService_Check(t *testing.T) {
 				Group:     "folder.grafana.app",
 				Resource:  "folders",
 				Verb:      "delete",
-				Name:      "folder1",
+				Name:      "fold1",
 			},
 			permissions: []accesscontrol.Permission{
-				{Action: "folders:view", Scope: "folders:uid:folder1"},
-				{Action: "folders:edit", Scope: "folders:uid:other_folder"},
+				{Action: "folders:view", Scope: "folders:uid:fold1"},
+				{Action: "folders:edit", Scope: "folders:uid:fold2"},
 			},
 			expected: false,
 		},
@@ -1164,14 +1164,17 @@ func TestService_Check(t *testing.T) {
 				s := setupService()
 				ctx := types.WithAuthInfo(context.Background(), callingService)
 				userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
-				store := &fakeStore{
+				fStore := &fakeStore{
 					userID:          userID,
 					userPermissions: tc.permissions,
 				}
-				s.store = store
-				s.permissionStore = store
+				s.store = fStore
+				s.permissionStore = fStore
 				s.identityStore = &fakeIdentityStore{
 					teams: []team.Team{{ID: 1, UID: "t1", OrgID: 1}},
+				}
+				s.folderStore = &fakeStore{
+					folders: []store.Folder{{UID: "fold1"}},
 				}
 
 				resp, err := s.Check(ctx, tc.req)
