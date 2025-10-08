@@ -859,7 +859,8 @@ export const calculateContentHeight = (
     return height; // Use panel height as minimum if no content
   }
 
-  const finalHeight = Math.max(totalHeight, height); // Use at least the panel height
+  // Add extra bottom padding to ensure content is fully visible
+  const finalHeight = Math.max(totalHeight + 100, height); // Use at least the panel height + 100px padding
   console.log('calculateContentHeight result:', {
     totalHeight,
     panelHeight: height,

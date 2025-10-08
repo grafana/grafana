@@ -18,7 +18,7 @@ export function DependencyGraphTab(): JSX.Element {
 
   return (
     <DependencyGraphErrorBoundary>
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
         <div style={{ marginTop: LAYOUT_CONSTANTS.PADDING }}>
           <DependencyGraphHeader controls={controls} />
 

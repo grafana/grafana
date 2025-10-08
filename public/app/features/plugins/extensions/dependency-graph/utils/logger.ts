@@ -80,11 +80,11 @@ export const logGraphData = (data: unknown) => {
   });
 };
 
-export const logAutoSizer = (width: number) => {
-  logger.debug('AutoSizer width calculated', {
+export const logAutoSizer = (width: number, height?: number) => {
+  logger.debug('AutoSizer dimensions calculated', {
     component: 'AutoSizer',
-    action: 'widthCalculation',
-    data: { width },
+    action: 'dimensionCalculation',
+    data: { width, height },
   });
 };
 

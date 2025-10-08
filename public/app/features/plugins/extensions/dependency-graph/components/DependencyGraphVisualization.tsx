@@ -1,9 +1,8 @@
 import AutoSizer from 'react-virtualized-auto-sizer';
-
 import { DependencyGraph } from '../dependency-graph-panel/components/DependencyGraph';
 import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
-import { useDependencyGraphData } from '../hooks/useDependencyGraphData';
 import { logAutoSizer } from '../utils/logger';
+import { useDependencyGraphData } from '../hooks/useDependencyGraphData';
 
 interface DependencyGraphVisualizationProps {
   controls: DependencyGraphControls;
@@ -31,12 +30,17 @@ export function DependencyGraphVisualization({ controls }: DependencyGraphVisual
 
   return (
     <div style={{ flex: 1, overflow: 'visible', minHeight: LAYOUT_CONSTANTS.MIN_HEIGHT, width: '100%' }}>
-      <AutoSizer disableHeight>
-        {({ width }) => {
+      <AutoSizer disableHeight={visualizationMode !== 'extensionpoint'}>
+        {({ width, height }) => {
           const effectiveWidth = width || LAYOUT_CONSTANTS.FALLBACK_WIDTH;
-          logAutoSizer(effectiveWidth);
+          // For extension point mode, use dynamic height. For other modes, use a large fixed height
+          const effectiveHeight =
+            visualizationMode === 'extensionpoint'
+              ? height || LAYOUT_CONSTANTS.MIN_HEIGHT
+              : LAYOUT_CONSTANTS.LARGE_HEIGHT;
+          logAutoSizer(effectiveWidth, effectiveHeight);
           return (
-            <div style={{ width: effectiveWidth, minHeight: LAYOUT_CONSTANTS.MIN_HEIGHT }}>
+            <div style={{ width: effectiveWidth, height: effectiveHeight }}>
               <DependencyGraph
                 data={graphData}
                 options={{
@@ -52,7 +56,7 @@ export function DependencyGraphVisualization({ controls }: DependencyGraphVisual
                   layoutType: 'hierarchical',
                 }}
                 width={effectiveWidth}
-                height={LAYOUT_CONSTANTS.LARGE_HEIGHT}
+                height={effectiveHeight}
               />
             </div>
           );
