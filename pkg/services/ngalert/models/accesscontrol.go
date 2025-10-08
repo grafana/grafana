@@ -1,6 +1,7 @@
 package models
 
 import (
+	// #nosec G505 Used only for shortening the uid, not for security purposes.
 	"crypto/sha1"
 	"encoding/hex"
 
