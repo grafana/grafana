@@ -260,8 +260,11 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 		treeRoot.AddSection(helpNode)
 
 		ctx := c.Req.Context()
-		_, grafanaPathfinderInstalled := s.pluginStore.Plugin(ctx, "grafana-grafanadocsplugin-app")
-		if grafanaPathfinderInstalled {
+		// The docs plugin ID is going to transition from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
+		// Support both until that migration is complete.
+		_, oldPathfinderInstalled := s.pluginStore.Plugin(ctx, "grafana-grafanadocsplugin-app")
+		_, newPathfinderInstalled := s.pluginStore.Plugin(ctx, "grafana-pathfinder-app")
+		if oldPathfinderInstalled || newPathfinderInstalled {
 			// Add a custom property to indicate this should open Grafana Pathfinder.
 			helpNode.HideFromTabs = true
 		}

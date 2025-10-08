@@ -17,17 +17,17 @@ type Props = {
 };
 
 const compactAllowedComponents = ['grafana-assistant-app'];
+const pathfinderPluginIds = ['grafana-pathfinder-app', 'grafana-grafanadocsplugin-app'];
 
 export function ExtensionToolbarItem({ compact }: Props) {
   const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
 
-  if (availableComponents.size === 0) {
-    return null;
-  }
-
-  // Don't render the toolbar if the only available plugin is Grafana Pathfinder.
+  // Don't render the toolbar if the only available plugins are Grafana Pathfinder.
   // It's opened by the help menu.
-  if (availableComponents.size === 1 && availableComponents.has('grafana-grafanadocsplugin-app')) {
+  const nonPathfinderPlugins = Array.from(availableComponents.keys()).filter(
+    (pluginId) => !pathfinderPluginIds.includes(pluginId)
+  );
+  if (nonPathfinderPlugins.length === 0) {
     return null;
   }
 
@@ -36,7 +36,7 @@ export function ExtensionToolbarItem({ compact }: Props) {
   const renderPluginButton = (pluginId: string, components: ComponentWithPluginId[]) => {
     // Don't render the Grafana Pathfinder button.
     // It's opened by the help menu button.
-    if (pluginId === 'grafana-grafanadocsplugin-app') {
+    if (pathfinderPluginIds.includes(pluginId)) {
       return null;
     }
 

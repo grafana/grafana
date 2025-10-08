@@ -252,3 +252,18 @@ export function getComponentMetaFromComponentId(
     return undefined;
   }
 }
+
+// The docs plugin ID is going to transition from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
+// Support both until that migration is complete.
+// Prioritize the new plugin ID (grafana-pathfinder-app).
+export function getPathfinderPluginId(availableComponents: ExtensionPointPluginMeta): string | undefined {
+  if (availableComponents.has('grafana-pathfinder-app')) {
+    return 'grafana-pathfinder-app';
+  }
+
+  if (availableComponents.has('grafana-grafanadocsplugin-app')) {
+    return 'grafana-grafanadocsplugin-app';
+  }
+
+  return undefined;
+}

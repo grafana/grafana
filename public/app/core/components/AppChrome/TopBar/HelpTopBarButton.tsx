@@ -10,6 +10,7 @@ import { OpenExtensionSidebarEvent } from 'app/types/events';
 import {
   useExtensionSidebarContext,
   getComponentIdFromComponentMeta,
+  getPathfinderPluginId,
 } from '../ExtensionSidebar/ExtensionSidebarProvider';
 
 import { TopNavBarMenu } from './TopNavBarMenu';
@@ -28,7 +29,9 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
     return null;
   }
 
-  if (isSmallScreen || !enrichedHelpNode.hideFromTabs || !availableComponents.has('grafana-grafanadocsplugin-app')) {
+  const pathfinderPluginId = getPathfinderPluginId(availableComponents);
+
+  if (isSmallScreen || !enrichedHelpNode.hideFromTabs || pathfinderPluginId === undefined) {
     return (
       <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
         <ToolbarButton iconOnly icon="question-circle" aria-label={t('navigation.help.aria-label', 'Help')} />
@@ -36,7 +39,7 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
     );
   }
 
-  const componentId = getComponentIdFromComponentMeta('grafana-grafanadocsplugin-app', 'Grafana Pathfinder');
+  const componentId = getComponentIdFromComponentMeta(pathfinderPluginId, 'Grafana Pathfinder');
   const isOpen = dockedComponentId === componentId;
 
   return (
@@ -52,7 +55,7 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
           const appEvents = getAppEvents();
           appEvents.publish(
             new OpenExtensionSidebarEvent({
-              pluginId: 'grafana-grafanadocsplugin-app',
+              pluginId: pathfinderPluginId,
               componentTitle: 'Grafana Pathfinder',
             })
           );
