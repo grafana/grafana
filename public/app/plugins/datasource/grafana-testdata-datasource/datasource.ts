@@ -24,7 +24,6 @@ import {
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-// eslint-disable-next-line import/no-restricted-paths
 import { Scenario, TestDataDataQuery, TestDataQueryType } from './dataquery';
 import { queryMetricTree } from './metricTree';
 import { generateRandomEdges, generateRandomNodes, generateShowcaseData, savedNodesResponse } from './nodeGraphUtils';
@@ -183,7 +182,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
     req: DataQueryRequest<TestDataDataQuery>
   ): Observable<DataQueryResponse> {
     const events = this.buildFakeAnnotationEvents(req.range, target.lines ?? 10);
-
     const dataFrame = new ArrayDataFrame(events);
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
     if (dataFrame.fields?.[1]) {
