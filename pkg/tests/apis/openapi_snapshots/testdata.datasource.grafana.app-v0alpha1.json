@@ -779,7 +779,8 @@
           },
           "jsonData": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": true,
+            "x-kubernetes-preserve-unknown-fields": true
           },
           "readOnly": {
             "type": "boolean"
