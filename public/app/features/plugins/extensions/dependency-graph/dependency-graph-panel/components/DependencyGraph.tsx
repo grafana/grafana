@@ -34,6 +34,7 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
   const [selectedExposedComponent, setSelectedExposedComponent] = useState<string | null>(null);
   const [selectedContentConsumer, setSelectedContentConsumer] = useState<string | null>(null);
   const [selectedContentProvider, setSelectedContentProvider] = useState<string | null>(null);
+  const [highlightedExtensionPointId, setHighlightedExtensionPointId] = useState<string | null>(null);
 
   const isExposeMode = options.visualizationMode === 'expose';
   const isExtensionPointMode = options.visualizationMode === 'extensionpoint';
@@ -99,6 +100,20 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
     setSelectedContentProvider(selectedContentProvider === id ? null : id);
   };
 
+  const handleHighlightedExtensionPointChange = (id: string | null) => {
+    setHighlightedExtensionPointId(id);
+  };
+
+  const handleSvgClick = (event: React.MouseEvent) => {
+    // Clear highlighted extension point and selected content consumer when clicking on the SVG background
+    if (highlightedExtensionPointId) {
+      setHighlightedExtensionPointId(null);
+    }
+    if (selectedContentConsumer) {
+      setSelectedContentConsumer(null);
+    }
+  };
+
   // Empty state check
   if (!data.nodes.length) {
     return (
@@ -127,7 +142,7 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
 
   return (
     <div className={styles.container.toString()}>
-      <svg width={width} height={contentHeight}>
+      <svg width={width} height={contentHeight} onClick={handleSvgClick}>
         <ArrowMarkers theme={theme} />
 
         <HeaderRenderer
@@ -166,8 +181,11 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
           extensionPointModePositions={extensionPointModePositions}
           selectedExposedComponent={selectedExposedComponent}
           selectedContentConsumer={selectedContentConsumer}
+          highlightedExtensionPointId={highlightedExtensionPointId}
           onExposedComponentClick={handleExposedComponentClick}
           onContentConsumerClick={handleContentConsumerClick}
+          onContentProviderClick={handleContentProviderClick}
+          onHighlightedExtensionPointChange={handleHighlightedExtensionPointChange}
           styles={styles}
         />
 
@@ -185,6 +203,7 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
           selectedExposedComponent={selectedExposedComponent}
           selectedContentConsumer={selectedContentConsumer}
           selectedContentProvider={selectedContentProvider}
+          highlightedExtensionPointId={highlightedExtensionPointId}
           styles={styles}
         />
       </svg>

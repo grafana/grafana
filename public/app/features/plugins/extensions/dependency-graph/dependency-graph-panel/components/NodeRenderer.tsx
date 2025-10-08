@@ -103,6 +103,10 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
                 onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
+
+                  // Immediately clear any existing highlighting/selections
+                  onContentConsumerClick(null);
+
                   onContentProviderClick(selectedContentProvider === node.id ? null : node.id);
                 }}
                 style={{ cursor: 'pointer' }}

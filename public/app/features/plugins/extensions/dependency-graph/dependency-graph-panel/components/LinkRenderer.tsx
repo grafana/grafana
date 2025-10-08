@@ -28,6 +28,7 @@ interface LinkRendererProps {
   selectedExposedComponent: string | null;
   selectedContentConsumer: string | null;
   selectedContentProvider: string | null;
+  highlightedExtensionPointId: string | null;
   styles: {
     link: SerializedStyles;
     linkHighlighted: SerializedStyles;
@@ -48,6 +49,7 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
   selectedExposedComponent,
   selectedContentConsumer,
   selectedContentProvider,
+  highlightedExtensionPointId,
   styles,
 }) => {
   if (isExposeMode) {
@@ -121,6 +123,7 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
 
         // Check if this arrow should be highlighted
         // Highlight if: 1) source is selected content provider, OR 2) target (definingPlugin) is selected content consumer
+        // Note: We don't highlight existing arrows for extension points - we'll draw new ones instead
         const isHighlighted = selectedContentProvider === sourceId || selectedContentConsumer === definingPlugin;
 
         arrows.push(
@@ -133,7 +136,7 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
               strokeWidth={isHighlighted ? VISUAL_CONSTANTS.THICK_STROKE_WIDTH : VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
               markerEnd={isHighlighted ? 'url(#arrowhead-highlighted)' : 'url(#arrowhead)'}
               opacity={
-                (selectedContentProvider || selectedContentConsumer) && !isHighlighted
+                (selectedContentProvider || selectedContentConsumer || highlightedExtensionPointId) && !isHighlighted
                   ? VISUAL_CONSTANTS.UNSELECTED_OPACITY
                   : VISUAL_CONSTANTS.SELECTED_OPACITY
               }
@@ -144,6 +147,55 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
         arrowIndex++;
       });
     });
+
+    // Add new arrows that point directly to the highlighted extension point
+    if (highlightedExtensionPointId) {
+      const highlightedExtensionPoint = data.extensionPoints?.find((ep) => ep.id === highlightedExtensionPointId);
+      if (highlightedExtensionPoint) {
+        const extensionPointPos = extensionPointPositions.get(highlightedExtensionPointId);
+        if (extensionPointPos) {
+          // Find all content providers that extend this extension point
+          const contentProviders =
+            data.dependencies?.filter((dep) => dep.target === highlightedExtensionPointId).map((dep) => dep.source) ||
+            [];
+
+          contentProviders.forEach((providerId) => {
+            const providerNode = nodes.find((n) => n.id === providerId);
+            if (providerNode) {
+              // Calculate positions for the new arrow
+              const consumerBoxWidth = LAYOUT_CONSTANTS.EXTENSION_BOX_WIDTH;
+              const startX = providerNode.x + consumerBoxWidth / 2; // Right edge of provider box
+              const startY = providerNode.y;
+
+              // Point directly to the extension point box
+              const endX = extensionPointPos.x;
+              const endY = extensionPointPos.y;
+
+              // Calculate control points for a curved path
+              const midX = (startX + endX) / 2;
+              const controlX1 = startX + (midX - startX) * 0.6;
+              const controlX2 = endX - (endX - midX) * 0.6;
+
+              const pathData = `M ${startX} ${startY} C ${controlX1} ${startY}, ${controlX2} ${endY}, ${endX} ${endY}`;
+
+              arrows.push(
+                <g key={`highlighted-${providerId}-${highlightedExtensionPointId}-${arrowIndex}`}>
+                  <path
+                    d={pathData}
+                    fill="none"
+                    stroke={theme.colors.success.main}
+                    strokeWidth={VISUAL_CONSTANTS.THICK_STROKE_WIDTH}
+                    markerEnd="url(#arrowhead-highlighted)"
+                    opacity={VISUAL_CONSTANTS.SELECTED_OPACITY}
+                  />
+                </g>
+              );
+              arrowIndex++;
+            }
+          });
+        }
+      }
+    }
 
     return <g>{arrows}</g>;
   }
@@ -165,8 +217,14 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
       // Arrows: Consumer → Component (pointing to the right side of the component box)
       exposedComponent.consumers.forEach((consumerId) => {
         // Check if this specific arrow should be highlighted
+        // Only highlight if:
+        // 1. The specific component is selected
+        // 2. The specific consumer (right side) is selected
+        // 3. The selected content provider (left side) is the providing plugin AND this component belongs to that provider
         const isConsumerArrowHighlighted =
-          selectedExposedComponent === exposedComponent.id || selectedContentConsumer === consumerId;
+          selectedExposedComponent === exposedComponent.id ||
+          selectedContentConsumer === consumerId ||
+          selectedContentProvider === exposedComponent.providingPlugin;
 
         // Calculate consumer box position (right side of the graph) - use same logic as ExtensionRenderer
         const rightMargin = getRightMargin(width);
@@ -228,7 +286,8 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
             }
             markerEnd={isConsumerArrowHighlighted ? 'url(#arrowhead-highlighted)' : 'url(#arrowhead)'}
             opacity={
-              (selectedExposedComponent || selectedContentConsumer) && !isConsumerArrowHighlighted
+              (selectedExposedComponent || selectedContentConsumer || selectedContentProvider) &&
+              !isConsumerArrowHighlighted
                 ? VISUAL_CONSTANTS.UNSELECTED_OPACITY
                 : VISUAL_CONSTANTS.SELECTED_OPACITY
             }
@@ -274,14 +333,27 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
 
       const pathData = `M ${startX} ${startY} C ${controlX1} ${startY}, ${controlX2} ${endY}, ${endX} ${endY}`;
 
+      // Check if this arrow should be highlighted
+      const extensionPoint = data.extensionPoints?.find((ep) => ep.id === extension.targetExtensionPoint);
+      const isArrowHighlighted =
+        selectedContentConsumer === extension.providingPlugin ||
+        selectedContentConsumer === extensionPoint?.definingPlugin;
+
       arrows.push(
         <g key={`${extension.id}-${extension.targetExtensionPoint}`}>
           <path
             d={pathData}
             fill="none"
-            stroke={theme.colors.primary.main}
-            strokeWidth={VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
-            markerEnd="url(#arrowhead)"
+            stroke={isArrowHighlighted ? theme.colors.success.main : theme.colors.primary.main}
+            strokeWidth={
+              isArrowHighlighted ? VISUAL_CONSTANTS.THICK_STROKE_WIDTH : VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH
+            }
+            markerEnd={isArrowHighlighted ? 'url(#arrowhead-highlighted)' : 'url(#arrowhead)'}
+            opacity={
+              selectedContentConsumer && !isArrowHighlighted
+                ? VISUAL_CONSTANTS.UNSELECTED_OPACITY
+                : VISUAL_CONSTANTS.SELECTED_OPACITY
+            }
           />
         </g>
       );

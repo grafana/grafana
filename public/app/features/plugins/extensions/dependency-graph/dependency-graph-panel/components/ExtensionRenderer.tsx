@@ -69,8 +69,11 @@ interface ExtensionRendererProps {
   extensionPointModePositions: Map<string, PositionInfo>;
   selectedExposedComponent: string | null;
   selectedContentConsumer: string | null;
+  highlightedExtensionPointId: string | null;
   onExposedComponentClick: (id: string | null) => void;
   onContentConsumerClick: (id: string | null) => void;
+  onContentProviderClick: (id: string | null) => void;
+  onHighlightedExtensionPointChange: (id: string | null) => void;
   styles: {
     extensionGroupBox: SerializedStyles;
     extensionPointBox: SerializedStyles;
@@ -95,8 +98,11 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
   extensionPointModePositions,
   selectedExposedComponent,
   selectedContentConsumer,
+  highlightedExtensionPointId,
   onExposedComponentClick,
   onContentConsumerClick,
+  onContentProviderClick,
+  onHighlightedExtensionPointChange,
   styles,
 }) => {
   // Context menu state
@@ -104,10 +110,21 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [selectedExtensionPointId, setSelectedExtensionPointId] = useState<string | null>(null);
 
+  // Content consumer context menu state
+  const [contentConsumerContextMenuOpen, setContentConsumerContextMenuOpen] = useState(false);
+  const [contentConsumerContextMenuPosition, setContentConsumerContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [selectedContentConsumerId, setSelectedContentConsumerId] = useState<string | null>(null);
+
   // Context menu handlers
   const handleContextMenu = (event: React.MouseEvent, extensionPointId: string) => {
     event.preventDefault();
     event.stopPropagation();
+
+    // Immediately clear any existing highlighting/selections
+    onContentProviderClick(null);
+    onContentConsumerClick(null);
+    onHighlightedExtensionPointChange(null);
+
     setSelectedExtensionPointId(extensionPointId);
     setContextMenuPosition({ x: event.clientX, y: event.clientY });
     setContextMenuOpen(true);
@@ -116,6 +133,12 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
   const handleLeftClick = (event: React.MouseEvent, extensionPointId: string) => {
     event.preventDefault();
     event.stopPropagation();
+
+    // Immediately clear any existing highlighting/selections
+    onContentProviderClick(null);
+    onContentConsumerClick(null);
+    onHighlightedExtensionPointChange(null);
+
     setSelectedExtensionPointId(extensionPointId);
     setContextMenuPosition({ x: event.clientX, y: event.clientY });
     setContextMenuOpen(true);
@@ -124,6 +147,92 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
   const handleContextMenuClose = () => {
     setContextMenuOpen(false);
     setSelectedExtensionPointId(null);
+  };
+
+  // Content consumer context menu handlers
+  const handleContentConsumerContextMenu = (event: React.MouseEvent, contentConsumerId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Immediately clear any existing highlighting/selections
+    onContentProviderClick(null);
+    onContentConsumerClick(null);
+    onHighlightedExtensionPointChange(null);
+
+    setSelectedContentConsumerId(contentConsumerId);
+    setContentConsumerContextMenuPosition({ x: event.clientX, y: event.clientY });
+    setContentConsumerContextMenuOpen(true);
+  };
+
+  const handleContentConsumerLeftClick = (event: React.MouseEvent, contentConsumerId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Immediately clear any existing highlighting/selections
+    onContentProviderClick(null);
+    onContentConsumerClick(null);
+    onHighlightedExtensionPointChange(null);
+
+    setSelectedContentConsumerId(contentConsumerId);
+    setContentConsumerContextMenuPosition({ x: event.clientX, y: event.clientY });
+    setContentConsumerContextMenuOpen(true);
+  };
+
+  const handleContentConsumerContextMenuClose = () => {
+    setContentConsumerContextMenuOpen(false);
+    setSelectedContentConsumerId(null);
+  };
+
+  const handleHighlightArrowsToContentConsumer = () => {
+    if (selectedContentConsumerId) {
+      onContentConsumerClick(selectedContentConsumerId);
+    }
+    handleContentConsumerContextMenuClose();
+  };
+
+  // Content provider context menu handlers (for expose mode left side)
+  const [contentProviderContextMenuOpen, setContentProviderContextMenuOpen] = useState(false);
+  const [contentProviderContextMenuPosition, setContentProviderContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [selectedContentProviderId, setSelectedContentProviderId] = useState<string | null>(null);
+
+  const handleContentProviderContextMenu = (event: React.MouseEvent, contentProviderId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Immediately clear any existing highlighting/selections
+    onContentProviderClick(null);
+    onContentConsumerClick(null);
+    onHighlightedExtensionPointChange(null);
+
+    setSelectedContentProviderId(contentProviderId);
+    setContentProviderContextMenuPosition({ x: event.clientX, y: event.clientY });
+    setContentProviderContextMenuOpen(true);
+  };
+
+  const handleContentProviderLeftClick = (event: React.MouseEvent, contentProviderId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Immediately clear any existing highlighting/selections
+    onContentProviderClick(null);
+    onContentConsumerClick(null);
+    onHighlightedExtensionPointChange(null);
+
+    setSelectedContentProviderId(contentProviderId);
+    setContentProviderContextMenuPosition({ x: event.clientX, y: event.clientY });
+    setContentProviderContextMenuOpen(true);
+  };
+
+  const handleContentProviderContextMenuClose = () => {
+    setContentProviderContextMenuOpen(false);
+    setSelectedContentProviderId(null);
+  };
+
+  const handleHighlightArrowsToContentProvider = () => {
+    if (selectedContentProviderId) {
+      onContentProviderClick(selectedContentProviderId);
+    }
+    handleContentProviderContextMenuClose();
   };
 
   const handleNavigateToExtensionPoint = () => {
@@ -136,6 +245,16 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
 
       // Scroll to top of the page after navigation
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    handleContextMenuClose();
+  };
+
+  const handleHighlightArrows = () => {
+    if (selectedExtensionPointId) {
+      // Toggle highlighting - if already highlighted, turn off; otherwise highlight
+      onHighlightedExtensionPointChange(
+        highlightedExtensionPointId === selectedExtensionPointId ? null : selectedExtensionPointId
+      );
     }
     handleContextMenuClose();
   };
@@ -160,10 +279,78 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
         y={contextMenuPosition.y}
         onClose={handleContextMenuClose}
         renderMenuItems={() => (
+          <>
+            <Menu.Item
+              label={t('extensions.dependency-graph.see-extensions', 'See extensions that use this extension point')}
+              onClick={handleNavigateToExtensionPoint}
+              icon="external-link-alt"
+            />
+            <Menu.Item
+              label={t(
+                'extensions.dependency-graph.draw-arrows-from-providers',
+                'Draw arrows from content providers extending this extension point'
+              )}
+              onClick={handleHighlightArrows}
+              icon="arrow-right"
+            />
+          </>
+        )}
+      />
+    );
+  };
+
+  const renderContentConsumerContextMenu = () => {
+    if (!contentConsumerContextMenuOpen || !selectedContentConsumerId) {
+      return null;
+    }
+
+    const appName = selectedContentConsumerId === 'grafana-core' ? 'Grafana Core' : selectedContentConsumerId;
+
+    return (
+      <ContextMenu
+        x={contentConsumerContextMenuPosition.x}
+        y={contentConsumerContextMenuPosition.y}
+        onClose={handleContentConsumerContextMenuClose}
+        renderMenuItems={() => (
           <Menu.Item
-            label={t('extensions.dependency-graph.see-extensions', 'See extensions that use this extension point')}
-            onClick={handleNavigateToExtensionPoint}
-            icon="external-link-alt"
+            label={t(
+              'extensions.dependency-graph.highlight-arrows-associated',
+              'Highlight arrows associated with {{appName}}',
+              {
+                appName,
+              }
+            )}
+            onClick={handleHighlightArrowsToContentConsumer}
+            icon="arrow-right"
+          />
+        )}
+      />
+    );
+  };
+
+  const renderContentProviderContextMenu = () => {
+    if (!contentProviderContextMenuOpen || !selectedContentProviderId) {
+      return null;
+    }
+
+    const appName = selectedContentProviderId === 'grafana-core' ? 'Grafana Core' : selectedContentProviderId;
+
+    return (
+      <ContextMenu
+        x={contentProviderContextMenuPosition.x}
+        y={contentProviderContextMenuPosition.y}
+        onClose={handleContentProviderContextMenuClose}
+        renderMenuItems={() => (
+          <Menu.Item
+            label={t(
+              'extensions.dependency-graph.highlight-arrows-associated',
+              'Highlight arrows associated with {{appName}}',
+              {
+                appName,
+              }
+            )}
+            onClick={handleHighlightArrowsToContentProvider}
+            icon="arrow-right"
           />
         )}
       />
@@ -178,6 +365,8 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
           {renderContentConsumers()}
         </g>
         {renderContextMenu()}
+        {renderContentConsumerContextMenu()}
+        {renderContentProviderContextMenu()}
       </>
     );
   } else if (isExtensionPointMode) {
@@ -185,6 +374,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
       <>
         {renderExtensionPointMode()}
         {renderContextMenu()}
+        {renderContentConsumerContextMenu()}
       </>
     );
   } else if (options.visualizationMode === 'addedlinks') {
@@ -193,6 +383,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
       <>
         {renderExtensionPoints()}
         {renderContextMenu()}
+        {renderContentConsumerContextMenu()}
       </>
     );
   } else {
@@ -200,6 +391,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
       <>
         {renderExtensionPoints()}
         {renderContextMenu()}
+        {renderContentConsumerContextMenu()}
       </>
     );
   }
@@ -243,6 +435,10 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 stroke={theme.colors.border.strong}
                 strokeWidth={VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
                 rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
+                onClick={(event) => handleContentProviderLeftClick(event, providingPlugin)}
+                onContextMenu={(event) => handleContentProviderContextMenu(event, providingPlugin)}
+                style={{ cursor: 'pointer' }}
+                pointerEvents="all"
               />
 
               {/* Exposed components inside provider box */}
@@ -427,6 +623,10 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                       stroke={theme.colors.border.strong}
                       strokeWidth={VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
                       rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
+                      onClick={(event) => handleContentConsumerLeftClick(event, consumerId)}
+                      onContextMenu={(event) => handleContentConsumerContextMenu(event, consumerId)}
+                      style={{ cursor: 'pointer' }}
+                      pointerEvents="all"
                     />
 
                     {/* Consumer app name as header */}
@@ -518,6 +718,10 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 stroke={theme.colors.border.strong}
                 strokeWidth={VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
                 rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
+                onClick={(event) => handleContentConsumerLeftClick(event, providingPlugin)}
+                onContextMenu={(event) => handleContentConsumerContextMenu(event, providingPlugin)}
+                style={{ cursor: 'pointer' }}
+                pointerEvents="all"
               />
 
               {/* Extensions inside app section */}
@@ -657,6 +861,10 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 stroke={theme.colors.border.strong}
                 strokeWidth={VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
                 rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
+                onClick={(event) => handleContentConsumerLeftClick(event, definingPlugin)}
+                onContextMenu={(event) => handleContentConsumerContextMenu(event, definingPlugin)}
+                style={{ cursor: 'pointer' }}
+                pointerEvents="all"
               />
 
               {/* Render extension points by type (no headers in extension point mode) */}
@@ -833,11 +1041,8 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                     : VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH
                 }
                 rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onContentConsumerClick(selectedContentConsumer === definingPlugin ? null : definingPlugin);
-                }}
+                onClick={(event) => handleContentConsumerLeftClick(event, definingPlugin)}
+                onContextMenu={(event) => handleContentConsumerContextMenu(event, definingPlugin)}
                 style={{ cursor: 'pointer' }}
                 pointerEvents="all"
               />
