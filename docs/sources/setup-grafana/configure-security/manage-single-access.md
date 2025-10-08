@@ -74,7 +74,7 @@ To design a [folder](../../../dashboards/manage-dashboards/#create-a-dashboard-f
 
 - Create an “Everyone” folder for shared items that all teams can manage.
 - For each team, create a folder that they can manage and grant them the `fixed:teams:read` [fixed role](../../../administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions). This means they can share items in their team folder with other teams, to encourage collaboration and learning from each other.
-- Create an “Admins” folder (Team C’s folder) for sensitive content only Admins can access.
+- For Team C, create an “Admins” folder for sensitive content only Admins can access.
 - Optionally, create a personal folder for each team member so that they can work on draft content before moving it into their team folder when ready.
 
 {{< figure src="/media/docs/grafana/oac/AccessTeams01.png" max-width="750px" alt="Teams and folders in the stack, and the related admin permissions Team A and Team B have been granted" >}}
