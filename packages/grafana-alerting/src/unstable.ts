@@ -3,7 +3,7 @@
  */
 
 // Contact Points
-export * from './grafana/api/v0alpha1/types';
+export * from './grafana/api/notifications/v0alpha1/types';
 export { useListContactPoints } from './grafana/contactPoints/hooks/v0alpha1/useContactPoints';
 export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector';
 export { getContactPointDescription } from './grafana/contactPoints/utils';
@@ -36,5 +36,6 @@ export { AlertLabels, type AlertLabelsProps } from './grafana/rules/components/l
 export { type LabelMatcher, type Label } from './grafana/matchers/types';
 export { matchLabelsSet, matchLabels, isLabelMatch, type LabelMatchDetails } from './grafana/matchers/utils';
 
-// Low-level API hooks
-export { alertingAPI } from './grafana/api/v0alpha1/api.gen';
+// API endpoints
+export { notificationsAPI as notificationsAPIv0alpha1 } from './grafana/api/notifications/v0alpha1/notifications.api.gen';
+export { rulesAPI as rulesAPIv0alpha1 } from './grafana/api/rules/v0alpha1/rules.api.gen';
