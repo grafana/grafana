@@ -306,13 +306,13 @@ type RelativeTimeRangeExport struct {
 type AlertRuleNotificationSettingsExport struct {
 	// Field name mismatches with Terraform provider schema are noted where applicable.
 
-	Receiver            string   `yaml:"receiver,omitempty" json:"receiver,omitempty" hcl:"contact_point"` // TF -> `contact_point`
-	GroupBy             []string `yaml:"group_by,omitempty" json:"group_by,omitempty" hcl:"group_by"`
-	GroupWait           *string  `yaml:"group_wait,omitempty" json:"group_wait,omitempty" hcl:"group_wait,optional"`
-	GroupInterval       *string  `yaml:"group_interval,omitempty" json:"group_interval,omitempty" hcl:"group_interval,optional"`
-	RepeatInterval      *string  `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty" hcl:"repeat_interval,optional"`
-	MuteTimeIntervals   []string `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty" hcl:"mute_timings"`       // TF -> `mute_timings`
-	ActiveTimeIntervals []string `yaml:"active_time_intervals,omitempty" json:"active_time_intervals,omitempty" hcl:"active_timings"` // TF -> `active_timings`
+	Receiver            string    `yaml:"receiver,omitempty" json:"receiver,omitempty" hcl:"contact_point"` // TF -> `contact_point`
+	GroupBy             *[]string `yaml:"group_by,omitempty" json:"group_by,omitempty" hcl:"group_by,optional"`
+	GroupWait           *string   `yaml:"group_wait,omitempty" json:"group_wait,omitempty" hcl:"group_wait,optional"`
+	GroupInterval       *string   `yaml:"group_interval,omitempty" json:"group_interval,omitempty" hcl:"group_interval,optional"`
+	RepeatInterval      *string   `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty" hcl:"repeat_interval,optional"`
+	MuteTimeIntervals   *[]string `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty" hcl:"mute_timings,optional"`       // TF -> `mute_timings`
+	ActiveTimeIntervals *[]string `yaml:"active_time_intervals,omitempty" json:"active_time_intervals,omitempty" hcl:"active_timings,optional"` // TF -> `active_timings`
 }
 
 // Record is the provisioned export of models.Record.

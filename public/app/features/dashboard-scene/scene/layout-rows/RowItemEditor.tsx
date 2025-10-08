@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react';
+import { useId, useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -9,14 +9,16 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
+import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { getQueryRunnerFor, useDashboard } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { RowItem } from './RowItem';
 
-export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+  const model = this;
   const { layout } = model.useState();
 
   const rowCategory = useMemo(
@@ -44,7 +46,7 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
             render: (descriptor) => <RowHeaderSwitch id={descriptor.props.id} row={model} />,
           })
         ),
-    [model, isNewElement]
+    [isNewElement, model]
   );
 
   const repeatCategory = useMemo(
@@ -56,7 +58,7 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Repeat by variable'),
-          id: `dash-row-repeat-by-variable`,
+          id: 'dash-row-repeat-by-variable',
           description: t(
             'dashboard.rows-layout.row-options.repeat.variable.description',
             'Repeat this row for each value in the selected variable.'
@@ -85,6 +87,7 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
 
 function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: boolean }) {
   const { title } = row.useState();
+  const prevTitle = useRef('');
 
   const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = row.hasUniqueTitle();
@@ -102,6 +105,8 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
         ref={ref}
         title={t('dashboard.rows-layout.row-options.title-option', 'Title')}
         value={title}
+        onFocus={() => (prevTitle.current = title || '')}
+        onBlur={() => editRowTitleAction(row, title || '', prevTitle.current || '')}
         onChange={(e) => row.onChangeTitle(e.currentTarget.value)}
       />
     </Field>
@@ -167,4 +172,17 @@ function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
       ) : undefined}
     </>
   );
+}
+
+function editRowTitleAction(row: RowItem, title: string, prevTitle: string) {
+  if (title === prevTitle) {
+    return;
+  }
+
+  dashboardEditActions.edit({
+    description: t('dashboard.edit-actions.row-title', 'Change row title'),
+    source: row,
+    perform: () => row.onChangeTitle(title),
+    undo: () => row.onChangeTitle(prevTitle),
+  });
 }

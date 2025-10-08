@@ -95,9 +95,11 @@ COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
 COPY apps/plugins apps/plugins
 COPY apps/shorturl apps/shorturl
+COPY apps/correlations apps/correlations
 COPY apps/preferences apps/preferences
 COPY apps/provisioning apps/provisioning
 COPY apps/secret apps/secret
+COPY apps/scope apps/scope
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
@@ -106,7 +108,9 @@ COPY apps/preferences apps/preferences
 COPY apps/iam apps/iam
 COPY apps apps
 COPY kindsv2 kindsv2
+COPY apps/alerting/alertenrichment apps/alerting/alertenrichment
 COPY apps/alerting/notifications apps/alerting/notifications
+COPY apps/alerting/rules apps/alerting/rules
 COPY pkg/codegen pkg/codegen
 COPY pkg/plugins/codegen pkg/plugins/codegen
 

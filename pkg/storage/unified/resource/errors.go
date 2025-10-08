@@ -18,8 +18,7 @@ import (
 
 // Package-level errors.
 var (
-	ErrOptimisticLockingFailed = errors.New("optimistic locking failed")
-	ErrNotImplementedYet       = errors.New("not implemented yet")
+	ErrNotImplementedYet = errors.New("not implemented yet")
 )
 
 var (
@@ -30,6 +29,12 @@ var (
 			Message: "the resource already exists",
 			Code:    http.StatusConflict,
 		},
+	}
+
+	ErrOptimisticLockingFailed = resourcepb.ErrorResult{
+		Code:    http.StatusConflict,
+		Reason:  "optimistic locking failed",
+		Message: "requested RV does not match saved RV",
 	}
 )
 

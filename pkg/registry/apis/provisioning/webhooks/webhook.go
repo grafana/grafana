@@ -15,10 +15,11 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type WebhookRepository interface {
@@ -34,6 +35,8 @@ type webhookConnector struct {
 	webhooksEnabled bool
 	core            *provisioningapis.APIBuilder
 	renderer        pullrequest.ScreenshotRenderer
+	registry        prometheus.Registerer
+	metrics         webhookMetrics
 }
 
 func NewWebhookConnector(
@@ -41,11 +44,15 @@ func NewWebhookConnector(
 	// TODO: use interface for this
 	core *provisioningapis.APIBuilder,
 	renderer pullrequest.ScreenshotRenderer,
+	registry prometheus.Registerer,
 ) *webhookConnector {
+	metrics := registerWebhookMetrics(registry)
 	return &webhookConnector{
 		webhooksEnabled: webhooksEnabled,
 		core:            core,
 		renderer:        renderer,
+		registry:        registry,
+		metrics:         metrics,
 	}
 }
 
@@ -147,10 +154,17 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			logger.Error("failed to update last event", "error", err)
 		}
 
+		actionTaken := "none"
+		defer func() {
+			s.metrics.recordEventProcessed(actionTaken)
+		}()
+
 		if rsp.Job != nil {
 			rsp.Job.Repository = name
+			actionTaken = string(rsp.Job.Action)
 			job, err := s.core.GetJobQueue().Insert(ctx, namespace, *rsp.Job)
 			if err != nil {
+				logger.Error("failed to insert job", "error", err)
 				responder.Error(err)
 				return
 			}

@@ -62,7 +62,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     alertHeight: css({
-      width: '100px',
+      height: '100px',
     }),
   };
 };

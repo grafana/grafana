@@ -267,7 +267,7 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 			supportBundleNode := &navtree.NavLink{
 				Text:       "Support bundles",
 				Id:         "support-bundles",
-				Url:        "/support-bundles",
+				Url:        s.cfg.AppSubURL + "/support-bundles",
 				Icon:       "wrench",
 				SortWeight: navtree.WeightHelp,
 			}
@@ -427,6 +427,14 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
+
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) {
+		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text: "Triage", SubTitle: "Triage alerts", Id: "alert-triage", Url: s.cfg.AppSubURL + "/alerting/triage", Icon: "medkit",
+			})
+		}
+	}
 
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{

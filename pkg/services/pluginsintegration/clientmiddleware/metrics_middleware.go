@@ -2,10 +2,13 @@ package clientmiddleware
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -15,10 +18,11 @@ import (
 
 // pluginMetrics contains the prometheus metrics used by the MetricsMiddleware.
 type pluginMetrics struct {
-	pluginRequestCounter         *prometheus.CounterVec
-	pluginRequestDuration        *prometheus.HistogramVec
-	pluginRequestSize            *prometheus.HistogramVec
-	pluginRequestDurationSeconds *prometheus.HistogramVec
+	pluginRequestCounter                      *prometheus.CounterVec
+	pluginRequestDuration                     *prometheus.HistogramVec
+	pluginRequestSize                         *prometheus.HistogramVec
+	pluginRequestDurationSeconds              *prometheus.HistogramVec
+	pluginRequestConnectionUnavailableCounter *prometheus.CounterVec
 }
 
 // MetricsMiddleware is a middleware that instruments plugin requests.
@@ -56,18 +60,26 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 		Help:      "Plugin request duration in seconds",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25},
 	}, append([]string{"source", "plugin_id", "endpoint", "status", "target", "plugin_version"}, additionalLabels...))
+	pluginRequestConnectionUnavailableCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace:   "grafana",
+		Name:        "plugin_request_connection_unavailable_total",
+		Help:        "The total amount of plugin request connection unavailable errors.",
+		ConstLabels: nil,
+	}, append([]string{"plugin_id", "endpoint", "status", "target", "plugin_version"}, additionalLabels...))
 	promRegisterer.MustRegister(
 		pluginRequestCounter,
 		pluginRequestDuration,
 		pluginRequestSize,
 		pluginRequestDurationSeconds,
+		pluginRequestConnectionUnavailableCounter,
 	)
 	return &MetricsMiddleware{
 		pluginMetrics: pluginMetrics{
-			pluginRequestCounter:         pluginRequestCounter,
-			pluginRequestDuration:        pluginRequestDuration,
-			pluginRequestSize:            pluginRequestSize,
-			pluginRequestDurationSeconds: pluginRequestDurationSeconds,
+			pluginRequestCounter:                      pluginRequestCounter,
+			pluginRequestDuration:                     pluginRequestDuration,
+			pluginRequestSize:                         pluginRequestSize,
+			pluginRequestDurationSeconds:              pluginRequestDurationSeconds,
+			pluginRequestConnectionUnavailableCounter: pluginRequestConnectionUnavailableCounter,
 		},
 		pluginRegistry: pluginRegistry,
 	}
@@ -119,6 +131,12 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 
 	statusSource := backend.ErrorSourceFromContext(ctx)
 	endpoint := backend.EndpointFromContext(ctx)
+
+	if err != nil {
+		if grpcstatus.Code(err) == codes.Unavailable || errors.Is(err, plugins.ErrPluginGrpcConnectionUnavailableBaseFn(ctx)) {
+			m.pluginRequestConnectionUnavailableCounter.WithLabelValues(pluginCtx.PluginID, string(endpoint), status.String(), target, pluginCtx.PluginVersion, string(statusSource))
+		}
+	}
 
 	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, string(endpoint), target, pluginCtx.PluginVersion, string(statusSource))
 	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, string(endpoint), status.String(), target, pluginCtx.PluginVersion, string(statusSource))

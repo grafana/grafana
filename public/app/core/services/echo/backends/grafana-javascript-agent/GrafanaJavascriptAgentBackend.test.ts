@@ -4,6 +4,7 @@ import { Faro, Instrumentation } from '@grafana/faro-core';
 import * as faroWebSdkModule from '@grafana/faro-web-sdk';
 import { BrowserConfig, FetchTransport, SessionInstrumentation } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
+import { config } from '@grafana/runtime';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import {
@@ -46,6 +47,8 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
       instrumentations: mockedInstrumentations,
       internalLogger: mockedInternalLogger,
     });
+
+    config.featureToggles.filterOutBotsFromFrontendLogs = false;
   });
 
   afterEach(() => {
@@ -152,6 +155,13 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     expect(initializeFaroMock.mock.calls[1][0].instrumentations?.length).toEqual(2);
     expect(initializeFaroMock.mock.calls[1][0].instrumentations?.[0]).toBeInstanceOf(TracingInstrumentation);
     expect(initializeFaroMock.mock.calls[1][0].instrumentations?.[1]).toBeInstanceOf(SessionInstrumentation);
+  });
+
+  it('should use a beforeSend handler', () => {
+    new GrafanaJavascriptAgentBackend(options);
+
+    expect(initializeFaroMock).toHaveBeenCalledTimes(1);
+    expect(initializeFaroMock.mock.calls[0][0].beforeSend).toBeDefined();
   });
 
   //@FIXME - make integration test work
