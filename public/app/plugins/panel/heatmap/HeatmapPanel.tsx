@@ -230,6 +230,7 @@ export const HeatmapPanel = ({
               />
             )}
             <AnnotationsPlugin2
+              replaceVariables={replaceVariables}
               annotations={data.annotations ?? []}
               config={builder}
               timeZone={timeZone}
