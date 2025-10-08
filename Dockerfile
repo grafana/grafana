@@ -16,7 +16,7 @@ ARG JS_SRC=js-builder
 # By using FROM instructions we can delegate dependency updates to dependabot
 FROM alpine:3.21.3 AS alpine-base
 FROM ubuntu:22.04 AS ubuntu-base
-FROM golang:1.24.6-alpine AS go-builder-base
+FROM golang:1.25.2-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:22-alpine AS js-builder-base
 
 # Javascript build stage
@@ -67,13 +67,7 @@ WORKDIR /tmp/grafana
 
 COPY go.* ./
 COPY .bingo .bingo
-COPY .citools/bra .citools/bra
-COPY .citools/cue .citools/cue
-COPY .citools/cog .citools/cog
-COPY .citools/lefthook .citools/lefthook
-COPY .citools/jb .citools/jb
-COPY .citools/golangci-lint .citools/golangci-lint
-COPY .citools/swagger .citools/swagger
+COPY .citools .citools
 
 # Include vendored dependencies
 COPY pkg/util/xorm pkg/util/xorm
