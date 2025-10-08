@@ -1516,9 +1516,12 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 		}
 
 		// Verify case-sensitive alphabetical ordering
-		// Expected order: "TEST", "Test", "test" (uppercase comes before lowercase in ASCII)
-		expectedOrder := []string{"TEST", "Test", "test"}
-		require.Equal(t, expectedOrder, groupOrder, "groups should be ordered case-sensitively")
+		// different databases may sort uppercase before lowercase or vice versa depending on character set, the important part is that the order is consistent and case-sensitive
+		expectedOrder := []string{"test", "Test", "TEST"}
+		alternateExpectedOrder := []string{"TEST", "Test", "test"}
+		if !slices.Equal(groupOrder, expectedOrder) && !slices.Equal(groupOrder, alternateExpectedOrder) {
+			t.Fatalf("groups are not ordered case-sensitively as expected. got: %v, want: %v or %v", groupOrder, expectedOrder, alternateExpectedOrder)
+		}
 
 		// Verify each group contains the correct rules
 		groupRules := make(map[string][]*models.AlertRule)
@@ -1551,7 +1554,12 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 
 		// Should get first 2 groups in case-sensitive order: "TEST", "Test" or "test", "Test"
 		expectedLimitedOrder := []string{"TEST", "Test"}
-		require.Equal(t, expectedLimitedOrder, limitedGroupOrder, "limited result should contain first 2 groups in case-sensitive order")
+		alternateExpectedOrder := []string{"test", "Test"}
+		matchesDescLexOrder := slices.Equal(limitedGroupOrder, expectedLimitedOrder)
+		matchesAscLexOrder := slices.Equal(limitedGroupOrder, alternateExpectedOrder)
+		if !matchesDescLexOrder && !matchesAscLexOrder {
+			t.Fatalf("limited groups are not ordered case-sensitively as expected. got: %v, want: %v or %v", limitedGroupOrder, expectedLimitedOrder, alternateExpectedOrder)
+		}
 
 		// Continue from token to get remaining groups
 		remainingResult, nextToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
@@ -1562,9 +1570,14 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 		require.Len(t, remainingResult, 2, "should return 2 rules from remaining group")
 		require.Empty(t, nextToken, "should not have continue token when all groups are fetched")
 
+		lastGroup := "test"
+		if matchesAscLexOrder {
+			lastGroup = "TEST"
+		}
+
 		// Verify the remaining group is "test"
 		for _, rule := range remainingResult {
-			require.Equal(t, "test", rule.RuleGroup, "remaining group should be 'test'")
+			require.Equal(t, lastGroup, rule.RuleGroup, "remaining group should be 'test'")
 		}
 	})
 
@@ -1577,9 +1590,14 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 		require.Len(t, result, 2, "should return 2 rules from first group")
 		require.NotEmpty(t, continueToken, "should have continue token")
 
-		// Should only get the first group "TEST"
+		// Should only get the first group which can be "TEST" or "test" depending on charset
+		expectedGroup := "TEST"
+		if result[0].RuleGroup == "test" {
+			expectedGroup = "test"
+		}
+
 		for _, rule := range result {
-			require.Equal(t, "TEST", rule.RuleGroup, "should only return rules from TEST group")
+			require.Equal(t, expectedGroup, rule.RuleGroup, "all rules should be from the first group")
 		}
 	})
 }
