@@ -678,4 +678,7 @@ func (s *Service) updateCachedSSOSettings(provider string, settings *models.SSOS
 			return
 		}
 	}
+
+	// Provider not found, append new settings
+	s.cachedSSOSettings = append(s.cachedSSOSettings, settings)
 }

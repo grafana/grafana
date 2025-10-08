@@ -540,77 +540,98 @@ func TestService_GetForProviderFromCache(t *testing.T) {
 		require.Equal(t, env.store.ExpectedSSOSettings[1].Source, actual.Source)
 	})
 
-	t.Run("should return settings from cache after upsert", func(t *testing.T) {
-		t.Parallel()
-
-		env := setupTestEnv(t, false, false, false)
-
-		provider := "azuread"
-		env.service.cachedSSOSettings = []*models.SSOSettings{
-			{
-				Provider: provider,
-				Settings: map[string]any{"enabled": true},
-				Source:   models.DB,
+	testCasesUpsert := []struct {
+		name     string
+		provider string
+		settings []*models.SSOSettings
+	}{
+		{
+			name:     "should return settings from cache after upsert if provider is already in cache",
+			provider: "azuread",
+			settings: []*models.SSOSettings{
+				{
+					Provider: "azuread",
+					Settings: map[string]any{"enabled": true},
+					Source:   models.DB,
+				},
 			},
-		}
+		},
+		{
+			name:     "should return settings from cache after upsert if provider is not in cache",
+			provider: "github",
+			settings: []*models.SSOSettings{},
+		},
+	}
+	for _, tc := range testCasesUpsert {
+		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
+		// otherwise it would be like a moving pointer while tests run in parallel
+		tc := tc
 
-		settings := models.SSOSettings{
-			Provider: provider,
-			Settings: map[string]any{
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			env := setupTestEnv(t, false, false, false)
+
+			env.service.cachedSSOSettings = tc.settings
+
+			settings := models.SSOSettings{
+				Provider: tc.provider,
+				Settings: map[string]any{
+					"client_id":     "client-id",
+					"client_secret": "client-secret",
+					"enabled":       true,
+				},
+			}
+
+			var wg sync.WaitGroup
+			wg.Add(1)
+
+			reloadable := ssosettingstests.NewMockReloadable(t)
+			reloadable.On("Validate", mock.Anything, settings, mock.Anything, mock.Anything).Return(nil)
+			reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
+				defer wg.Done()
+				return true
+			})).Return(nil).Maybe()
+			env.reloadables[tc.provider] = reloadable
+
+			env.secrets.On("Encrypt", mock.Anything, []byte("client-secret"), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
+			env.secrets.On("Decrypt", mock.Anything, []byte("encrypted-current-client-secret"), mock.Anything).Return([]byte("current-client-secret"), nil).Once()
+
+			env.store.UpsertFn = func(ctx context.Context, settings *models.SSOSettings) error {
+				currentTime := time.Now()
+				settings.ID = "someid"
+				settings.Created = currentTime
+				settings.Updated = currentTime
+
+				env.store.ActualSSOSettings = *settings
+				return nil
+			}
+
+			env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+				return &models.SSOSettings{
+					ID:       "someid",
+					Provider: provider,
+					Settings: map[string]any{
+						"client_secret": base64.RawStdEncoding.EncodeToString([]byte("encrypted-current-client-secret")),
+					},
+				}, nil
+			}
+
+			err := env.service.Upsert(context.Background(), &settings, &user.SignedInUser{})
+			require.NoError(t, err)
+
+			wg.Wait()
+
+			actual, err := env.service.GetForProviderFromCache(context.Background(), tc.provider)
+			require.NoError(t, err)
+			require.Equal(t, tc.provider, actual.Provider)
+			require.Equal(t, map[string]any{
+				"enabled":       true,
 				"client_id":     "client-id",
 				"client_secret": "client-secret",
-				"enabled":       true,
-			},
-		}
-
-		var wg sync.WaitGroup
-		wg.Add(1)
-
-		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings, mock.Anything, mock.Anything).Return(nil)
-		reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
-			defer wg.Done()
-			return true
-		})).Return(nil).Maybe()
-		env.reloadables[provider] = reloadable
-
-		env.secrets.On("Encrypt", mock.Anything, []byte("client-secret"), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
-		env.secrets.On("Decrypt", mock.Anything, []byte("encrypted-current-client-secret"), mock.Anything).Return([]byte("current-client-secret"), nil).Once()
-
-		env.store.UpsertFn = func(ctx context.Context, settings *models.SSOSettings) error {
-			currentTime := time.Now()
-			settings.ID = "someid"
-			settings.Created = currentTime
-			settings.Updated = currentTime
-
-			env.store.ActualSSOSettings = *settings
-			return nil
-		}
-
-		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
-			return &models.SSOSettings{
-				ID:       "someid",
-				Provider: provider,
-				Settings: map[string]any{
-					"client_secret": base64.RawStdEncoding.EncodeToString([]byte("encrypted-current-client-secret")),
-				},
-			}, nil
-		}
-
-		err := env.service.Upsert(context.Background(), &settings, &user.SignedInUser{})
-		require.NoError(t, err)
-
-		wg.Wait()
-
-		actual, err := env.service.GetForProviderFromCache(context.Background(), provider)
-		require.NoError(t, err)
-		require.Equal(t, provider, actual.Provider)
-		require.Equal(t, map[string]any{
-			"enabled":       true,
-			"client_id":     "client-id",
-			"client_secret": "client-secret",
-		}, actual.Settings)
-	})
+			}, actual.Settings)
+		})
+	}
 }
 
 func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
