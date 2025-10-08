@@ -54,7 +54,7 @@ Follow these suggested steps to structure, configure, and set permissions to acc
 For more information on how to install a Grafana instance:
 
 - If you’re using self-managed Grafana Enterprise, refer to [Configure Grafana](../../configure-grafana/).
-- If you’re using Grafana Cloud, see [Your Grafana Cloud stack](https://grafana.com/docs/grafana-cloud/security-and-account-management/cloud-stacks).
+- If you’re using Grafana Cloud, refer to [Your Grafana Cloud stack](https://grafana.com/docs/grafana-cloud/security-and-account-management/cloud-stacks).
 
 {{< admonition type="note" >}}
 For guidance on when to use one stack vs. multiple, see [Stack architecture guidance](https://grafana.com/docs/grafana-cloud/security-and-account-management/cloud-stacks/stack-architecture-guidance/).
