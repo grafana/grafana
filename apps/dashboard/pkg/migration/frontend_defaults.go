@@ -66,7 +66,6 @@ func applyFrontendDefaults(dashboard map[string]interface{}) {
 	sortPanelsByGridPos(dashboard)
 
 	// Built-in components
-	addBuiltInAnnotationQuery(dashboard)
 	initMeta(dashboard)
 
 	// Variable cleanup
@@ -255,7 +254,7 @@ func addBuiltInAnnotationQuery(dashboard map[string]interface{}) {
 		}
 	}
 
-	// Add built-in annotation
+	// Add built-in annotation (matches frontend DashboardModel.addBuiltInAnnotationQuery behavior)
 	builtInAnnotation := map[string]interface{}{
 		"datasource": map[string]interface{}{
 			"uid":  "-- Grafana --",
@@ -269,7 +268,7 @@ func addBuiltInAnnotationQuery(dashboard map[string]interface{}) {
 		"builtIn":   float64(1),
 	}
 
-	// Insert at the beginning
+	// Insert at the beginning (unshift behavior)
 	annotations["list"] = append([]interface{}{builtInAnnotation}, list...)
 }
 
@@ -1019,7 +1018,8 @@ func cleanupDashboardDefaults(dashboard map[string]interface{}) {
 	// These properties are lost during frontend's property copying loop in getSaveModelCloneOld()
 	delete(dashboard, "preload")   // Transient dashboard loading state
 	delete(dashboard, "iteration") // Template variable iteration timestamp
-	delete(dashboard, "nav")
+	delete(dashboard, "nav")       // Removed after V7 migration
+	delete(dashboard, "pulldowns") // Removed after V6 migration - frontend doesn't have this property
 }
 
 // cleanupFieldConfigDefaults removes properties that frontend considers as defaults and omits
