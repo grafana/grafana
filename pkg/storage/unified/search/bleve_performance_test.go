@@ -20,7 +20,7 @@ func setupIndex(b testing.TB, useFullNgram bool) resource.ResourceIndex {
 	// batchSize := 10000 // faster 5s  (for 200k documents) - 27s (for 1M documents)
 	batchSize := 100000 // fasterer 3.5s  (for 200k documents) - 27s  (for 1M documents)
 	writer := newTestWriter(size, batchSize)
-	return newTestDashboardsIndex(b, 1, int64(size), int64(batchSize), writer, useFullNgram)
+	return newTestDashboardsIndex(b, 1, int64(size), writer, useFullNgram)
 }
 
 const maxAllowedTime = 20 * time.Millisecond // Reasonable (can vary per env) performance threshold per query (e.g., 20ms)
