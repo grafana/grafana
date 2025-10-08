@@ -551,6 +551,7 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 
 	// Clean up internal markers
 	delete(panel, "_originallyHadTransformations")
+	delete(panel, "_originallyHadFieldConfigCustom")
 }
 
 // filterDefaultValues removes properties that match the default values (matches frontend's isEqual logic)
@@ -602,8 +603,21 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 	for prop, defaultValue := range defaults {
 		if panelValue, exists := panel[prop]; exists {
 			if isEqual(panelValue, defaultValue) {
-				// Special case: fieldConfig is always removed if it matches defaults (frontend getSaveModel behavior)
+				// Special case: fieldConfig - handle preservation of original custom object first
 				if prop == "fieldConfig" {
+					// Check if we need to preserve the custom object before removing fieldConfig
+					if panel["_originallyHadFieldConfigCustom"] == true {
+						// Ensure fieldConfig structure exists with custom object
+						if fieldConfig, ok := panelValue.(map[string]interface{}); ok {
+							if defaults, ok := fieldConfig["defaults"].(map[string]interface{}); ok {
+								if _, hasCustom := defaults["custom"]; !hasCustom {
+									defaults["custom"] = map[string]interface{}{}
+								}
+								// Don't remove fieldConfig if we added custom back
+								continue
+							}
+						}
+					}
 					delete(panel, prop)
 				} else {
 					// Only remove if it wasn't originally present in the input
@@ -618,12 +632,32 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 	// Remove empty targets arrays (frontend removes them in cleanup)
 	removeIfDefaultValue(panel, "targets", []interface{}{})
 
+	// Handle case where fieldConfig was removed but originally had custom object
+	if panel["_originallyHadFieldConfigCustom"] == true {
+		if _, hasFieldConfig := panel["fieldConfig"]; !hasFieldConfig {
+			// Recreate fieldConfig with custom object
+			panel["fieldConfig"] = map[string]interface{}{
+				"defaults": map[string]interface{}{
+					"custom": map[string]interface{}{},
+				},
+				"overrides": []interface{}{},
+			}
+		}
+	}
+
 	// Clean up fieldConfig to match frontend behavior
 	if fieldConfig, exists := panel["fieldConfig"].(map[string]interface{}); exists {
 		// Clean up fieldConfig defaults to match frontend behavior
 		if defaults, hasDefaults := fieldConfig["defaults"].(map[string]interface{}); hasDefaults {
 			// Remove properties that frontend considers as defaults and omits
 			cleanupFieldConfigDefaults(defaults, panel)
+
+			// Preserve custom object if it was originally present, even if empty
+			if panel["_originallyHadFieldConfigCustom"] == true {
+				if _, hasCustom := defaults["custom"]; !hasCustom {
+					defaults["custom"] = map[string]interface{}{}
+				}
+			}
 		}
 	}
 }
@@ -1085,6 +1119,39 @@ func trackPanelOriginalTransformations(panel map[string]interface{}) {
 		for _, nestedPanelInterface := range nestedPanels {
 			if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
 				trackPanelOriginalTransformations(nestedPanel)
+			}
+		}
+	}
+}
+
+// trackOriginalFieldConfigCustom marks panels that had fieldConfig.defaults.custom in the original input
+// This is needed to match frontend hasOwnProperty behavior and preserve empty custom objects
+func trackOriginalFieldConfigCustom(dashboard map[string]interface{}) {
+	if panels, ok := dashboard["panels"].([]interface{}); ok {
+		for _, panelInterface := range panels {
+			if panel, ok := panelInterface.(map[string]interface{}); ok {
+				trackPanelOriginalFieldConfigCustom(panel)
+			}
+		}
+	}
+}
+
+// trackPanelOriginalFieldConfigCustom recursively tracks fieldConfig.defaults.custom in panels and nested panels
+func trackPanelOriginalFieldConfigCustom(panel map[string]interface{}) {
+	// Mark if this panel had fieldConfig.defaults.custom in original input
+	if fieldConfig, ok := panel["fieldConfig"].(map[string]interface{}); ok {
+		if defaults, ok := fieldConfig["defaults"].(map[string]interface{}); ok {
+			if _, hasCustom := defaults["custom"]; hasCustom {
+				panel["_originallyHadFieldConfigCustom"] = true
+			}
+		}
+	}
+
+	// Handle nested panels in row panels
+	if nestedPanels, ok := panel["panels"].([]interface{}); ok {
+		for _, nestedPanelInterface := range nestedPanels {
+			if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
+				trackPanelOriginalFieldConfigCustom(nestedPanel)
 			}
 		}
 	}
