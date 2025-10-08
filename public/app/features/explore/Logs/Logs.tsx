@@ -1259,6 +1259,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     }),
     logRowsWrapper: css({
       width: '100%',
+      maxHeight: '80vh',
     }),
     visualisationType: css({
       display: 'flex',
