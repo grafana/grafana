@@ -176,6 +176,11 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
       if (previousStepIndex >= 0) {
         const previousStep = steps[previousStepIndex];
+        reportInteraction('grafana_provisioning_wizard_previous_clicked', {
+          fromStep: activeStep,
+          toStep: previousStep.id,
+          repositoryType: repoType,
+        });
         setActiveStep(previousStep.id);
         // Remove current step from completed steps when going back
         setCompletedSteps((prev) => prev.filter((step) => step !== activeStep));
