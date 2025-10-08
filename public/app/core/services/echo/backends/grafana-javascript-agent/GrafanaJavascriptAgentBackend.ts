@@ -1,5 +1,5 @@
 import { BuildInfo, escapeRegex } from '@grafana/data';
-import { BaseTransport, defaultInternalLoggerLevel, type InternalLoggerLevel } from '@grafana/faro-core';
+import { BaseTransport, defaultInternalLoggerLevel, InternalLoggerLevel } from '@grafana/faro-core';
 import {
   initializeFaro,
   BrowserConfig,
@@ -106,7 +106,7 @@ export class GrafanaJavascriptAgentBackend
         persistent: true,
       },
       batching: {
-        sendTimeout: 1000, // [FIXME] increase timeout (to 5s)?
+        sendTimeout: 1000,
       },
       beforeSend: beforeSendHandler,
       internalLoggerLevel: options.internalLoggerLevel ?? defaultInternalLoggerLevel,
