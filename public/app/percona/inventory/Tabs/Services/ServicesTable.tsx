@@ -148,7 +148,7 @@ const ServicesTable: FC<ServicesTableProps> = ({
         accessor: 'agentsStatus',
         width: '70px',
         Cell: ({ value, row }) => (
-          <StatusLink type="services" strippedId={row.original.serviceId} agentsStatus={value} />
+          <StatusLink type="services" strippedId={row.original.serviceId} agentsStatus={value as MonitoringStatus} />
         ),
         type: FilterFieldTypes.RADIO_BUTTON,
         options: [

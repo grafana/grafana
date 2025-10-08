@@ -73,6 +73,7 @@ export interface DbAgent {
   status?: ServiceAgentStatus;
   agentType?: string;
   isConnected?: boolean;
+  disabled?: boolean;
 }
 
 export interface DbService {

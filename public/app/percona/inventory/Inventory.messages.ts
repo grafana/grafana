@@ -55,6 +55,9 @@ export const Messages = {
     details: {
       properties: 'Properties',
     },
+    status: {
+      done: 'Done',
+    },
   },
   nodes: {
     forceConfirmation: 'Force mode is going to delete all agents and services associated with the nodes',
