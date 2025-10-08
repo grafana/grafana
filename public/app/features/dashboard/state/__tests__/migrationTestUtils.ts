@@ -240,10 +240,10 @@ export async function handleAngularPanelMigration(
     We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly.
   */
   for (const panel of frontendModel.panels) {
-    if (panel.type === 'stat' && panel.autoMigrateFrom && targetVersion >= 28 && sourceVersion < 28) {
-      const statPlugin = getPanelPlugin('stat');
-      await panel.pluginLoaded(statPlugin);
-    }
+    // if (panel.type === 'stat' && panel.autoMigrateFrom && targetVersion >= 28 && sourceVersion < 28) {
+    //   const statPlugin = getPanelPlugin('stat');
+    //   await panel.pluginLoaded(statPlugin);
+    // }
     if (panel.type === 'table' && panel.autoMigrateFrom === 'table-old' && targetVersion >= 24 && sourceVersion < 24) {
       const tablePlugin = getPanelPlugin('table');
       await panel.pluginLoaded(tablePlugin);
