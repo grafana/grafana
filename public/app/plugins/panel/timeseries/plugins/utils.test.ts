@@ -1,4 +1,4 @@
-import { createDataFrame, DataFrame, DataTopic, FieldType } from '@grafana/data';
+import { arrayToDataFrame, createDataFrame, DataFrame, DataTopic, FieldType } from '@grafana/data';
 
 import { getAnnotationFrames } from './utils';
 
@@ -151,5 +151,28 @@ describe('getAnnotationFrames', () => {
 
   it('should filter non-annotation frames', () => {
     expect(getAnnotationFrames(frames)).toEqual([annotationRegionFrame, annotationFrame]);
+  });
+
+  // Adding to ensure backward compatability for traces drilldown xymark frame which was not including data topic in the frame meta
+  it('should return xymark frames', () => {
+    const xymark = arrayToDataFrame([
+      {
+        time: 0,
+        xMin: 0,
+        xMax: 0,
+        timeEnd: 0,
+        yMin: 0,
+        yMax: 100,
+        isRegion: true,
+        fillOpacity: 0.15,
+        lineWidth: 1,
+        lineStyle: 'solid',
+        color: '#FF9930',
+        text: 'Comparison selection',
+      },
+    ]);
+    xymark.name = 'xymark';
+    const framesWithxymark = [...frames, xymark];
+    expect(getAnnotationFrames(framesWithxymark)).toEqual([annotationRegionFrame, annotationFrame, xymark]);
   });
 });
