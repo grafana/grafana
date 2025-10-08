@@ -4,6 +4,8 @@ import { CustomVariableModel } from '@grafana/data';
 import { monacoTypes } from '@grafana/ui';
 
 import { setupMockedTemplateService, logGroupNamesVariable } from '../../../mocks/CloudWatchDataSource';
+import { logsTestDataDiffModifierQuery } from '../../../mocks/cloudwatch-logs-test-data/diffModifierQuery';
+import { logsTestDataDiffQuery } from '../../../mocks/cloudwatch-logs-test-data/diffQuery';
 import { logsTestDataEmptyQuery } from '../../../mocks/cloudwatch-logs-test-data/empty';
 import { logsTestDataFilterQuery } from '../../../mocks/cloudwatch-logs-test-data/filterQuery';
 import { logsTestDataNewCommandQuery } from '../../../mocks/cloudwatch-logs-test-data/newCommandQuery';
@@ -12,7 +14,7 @@ import { ResourcesAPI } from '../../../resources/ResourcesAPI';
 import { ResourceResponse } from '../../../resources/types';
 import { LogGroup, LogGroupField } from '../../../types';
 import cloudWatchLogsLanguageDefinition, { CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID } from '../definition';
-import { LOGS_COMMANDS, LOGS_FUNCTION_OPERATORS, SORT_DIRECTION_KEYWORDS, language } from '../language';
+import { DIFF_MODIFIERS, LOGS_COMMANDS, LOGS_FUNCTION_OPERATORS, SORT_DIRECTION_KEYWORDS, language } from '../language';
 
 import { LogsCompletionItemProvider } from './CompletionItemProvider';
 
@@ -79,6 +81,21 @@ describe('LogsCompletionItemProvider', () => {
       const suggestions = await getSuggestions(logsTestDataSortQuery.query, logsTestDataSortQuery.position);
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining(LOGS_FUNCTION_OPERATORS));
+    });
+
+    it('returns diff modifiers after the diff keyword', async () => {
+      const suggestions = await getSuggestions(logsTestDataDiffQuery.query, logsTestDataDiffQuery.position);
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(DIFF_MODIFIERS));
+    });
+
+    it('returns diff modifiers when partially typed', async () => {
+      const suggestions = await getSuggestions(
+        logsTestDataDiffModifierQuery.query,
+        logsTestDataDiffModifierQuery.position
+      );
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(DIFF_MODIFIERS));
     });
 
     it('returns `in []` snippet for the `in` keyword', async () => {
