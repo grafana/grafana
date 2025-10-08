@@ -1193,40 +1193,6 @@ function updateVariablesSyntax(text: string) {
   });
 }
 
-function migrateSinglestat(panel: PanelModel) {
-  // If   'grafana-singlestat-panel' exists, move to that
-  if (config.panels['grafana-singlestat-panel']) {
-    panel.type = 'grafana-singlestat-panel';
-    return panel;
-  }
-
-  let returnSaveModel = false;
-
-  if (!panel.changePlugin) {
-    returnSaveModel = true;
-    panel = new PanelModel(panel);
-  }
-
-  // To make sure PanelModel.isAngularPlugin logic thinks the current panel is angular
-  // And since this plugin no longer exist we just fake it here
-  panel.plugin = { angularPanelCtrl: {} } as PanelPlugin;
-
-  // Otheriwse use gauge or stat panel
-  if ((panel as any).gauge?.show) {
-    gaugePanelPlugin.meta = config.panels['gauge'];
-    panel.changePlugin(gaugePanelPlugin);
-  } else {
-    statPanelPlugin.meta = config.panels['stat'];
-    panel.changePlugin(statPanelPlugin);
-  }
-
-  if (returnSaveModel) {
-    return panel.getSaveModel();
-  }
-
-  return panel;
-}
-
 interface MigrateDatasourceNameOptions {
   returnDefaultAsNull: boolean;
 }
