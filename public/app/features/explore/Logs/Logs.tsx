@@ -1003,7 +1003,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           {(!config.featureToggles.newLogsPanel || visualisationType === 'table') &&
             config.featureToggles.logsPanelControls &&
             hasData && (
-              <div className={styles.logRowsWrapper} data-testid="logRows">
+              <div className={styles.controlledLogRowsWrapper} data-testid="logRows">
                 <ControlledLogRows
                   ref={logsContainerRef}
                   logsTableFrames={props.logsFrames}
@@ -1257,9 +1257,12 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       overflowY: 'visible',
       width: '100%',
     }),
-    logRowsWrapper: css({
+    controlledLogRowsWrapper: css({
       width: '100%',
       maxHeight: '80vh',
+    }),
+    logRowsWrapper: css({
+      width: '100%',
     }),
     visualisationType: css({
       display: 'flex',
