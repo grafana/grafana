@@ -139,6 +139,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		Logger:   logger,
 		Password: cfg.BasicAuthPassword,
 		TenantID: cfg.TenantID,
+		Timeout:  cfg.Timeout,
 		URL:      u,
 	}
 	mc, err := remoteClient.New(mcCfg, metrics, tracer)
