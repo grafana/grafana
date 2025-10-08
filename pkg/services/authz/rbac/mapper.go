@@ -113,8 +113,8 @@ func newResourceTranslation(resource string, attribute string, folderSupport, sk
 }
 
 // newDashboardTranslation creates a translation for dashboards and also maps the actions to action sets
-func newDashboardTranslation(resource string, attribute string, folderSupport, skipScopeOnCreate bool) translation {
-	dashTranslation := newResourceTranslation(resource, attribute, folderSupport, skipScopeOnCreate)
+func newDashboardTranslation() translation {
+	dashTranslation := newResourceTranslation("dashboards", "uid", true, false)
 
 	actionSetMapping := make(map[string][]string)
 	for verb, rbacAction := range dashTranslation.verbMapping {
@@ -139,8 +139,8 @@ func newDashboardTranslation(resource string, attribute string, folderSupport, s
 }
 
 // newFolderTranslation creates a translation for folders and also maps the actions to action sets
-func newFolderTranslation(resource string, attribute string, folderSupport, skipScopeOnCreate bool) translation {
-	folderTranslation := newResourceTranslation(resource, attribute, folderSupport, skipScopeOnCreate)
+func newFolderTranslation() translation {
+	folderTranslation := newResourceTranslation("folders", "uid", true, false)
 
 	actionSetMapping := make(map[string][]string)
 	for verb, rbacAction := range folderTranslation.verbMapping {
@@ -169,10 +169,10 @@ func newFolderTranslation(resource string, attribute string, folderSupport, skip
 func NewMapperRegistry() MapperRegistry {
 	mapper := mapper(map[string]map[string]translation{
 		"dashboard.grafana.app": {
-			"dashboards": newDashboardTranslation("dashboards", "uid", true, false),
+			"dashboards": newDashboardTranslation(),
 		},
 		"folder.grafana.app": {
-			"folders": newFolderTranslation("folders", "uid", true, false),
+			"folders": newFolderTranslation(),
 		},
 		"iam.grafana.app": {
 			// Users is a special case. We translate user permissions from id to uid based.
