@@ -10,7 +10,6 @@ import { generatedAPI as playlistAPIv0alpha1 } from './clients/rtkq/playlist/v0a
 import { generatedAPI as preferencesUserAPI } from './clients/rtkq/preferences/user';
 import { generatedAPI as preferencesAPIv1alpha1 } from './clients/rtkq/preferences/v1alpha1';
 import { generatedAPI as provisioningAPIv0alpha1 } from './clients/rtkq/provisioning/v0alpha1';
-import { generatedAPI as rulesAPIv0alpha1 } from './clients/rtkq/rules.alerting/v0alpha1';
 import { generatedAPI as shortURLAPIv1alpha1 } from './clients/rtkq/shorturl/v1alpha1';
 // PLOP_INJECT_IMPORT
 
@@ -25,7 +24,6 @@ export const allMiddleware = [
   preferencesAPIv1alpha1.middleware,
   preferencesUserAPI.middleware,
   provisioningAPIv0alpha1.middleware,
-  rulesAPIv0alpha1.middleware,
   shortURLAPIv1alpha1.middleware,
   // PLOP_INJECT_MIDDLEWARE
 ] as const;
@@ -41,7 +39,6 @@ export const allReducers = {
   [preferencesAPIv1alpha1.reducerPath]: preferencesAPIv1alpha1.reducer,
   [preferencesUserAPI.reducerPath]: preferencesUserAPI.reducer,
   [provisioningAPIv0alpha1.reducerPath]: provisioningAPIv0alpha1.reducer,
-  [rulesAPIv0alpha1.reducerPath]: rulesAPIv0alpha1.reducer,
   [shortURLAPIv1alpha1.reducerPath]: shortURLAPIv1alpha1.reducer,
   // PLOP_INJECT_REDUCER
 };
