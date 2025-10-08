@@ -7,6 +7,7 @@ interface CloudWatchLogsLanguage extends monacoType.languages.IMonarchLanguage {
   builtinFunctions: string[];
 }
 
+export const DIFF = 'diff';
 export const DISPLAY = 'display';
 export const FIELDS = 'fields';
 export const FILTER = 'filter';
@@ -16,7 +17,7 @@ export const SORT = 'sort';
 export const LIMIT = 'limit';
 export const PARSE = 'parse';
 export const DEDUP = 'dedup';
-export const LOGS_COMMANDS = [DISPLAY, FIELDS, FILTER, PATTERN, STATS, SORT, LIMIT, PARSE, DEDUP];
+export const LOGS_COMMANDS = [DISPLAY, FIELDS, FILTER, PATTERN, STATS, SORT, LIMIT, PARSE, DEDUP, DIFF];
 
 export const LOGS_LOGIC_OPERATORS = ['and', 'or', 'not'];
 
@@ -77,7 +78,8 @@ export const LOGS_FUNCTION_OPERATORS = [
 ];
 
 export const SORT_DIRECTION_KEYWORDS = ['asc', 'desc'];
-export const LOGS_KEYWORDS = ['like', 'by', 'in', 'as', ...SORT_DIRECTION_KEYWORDS];
+export const DIFF_MODIFIERS = ['previousDay', 'previousWeek', 'previousMonth'];
+export const LOGS_KEYWORDS = ['like', 'by', 'in', 'as', ...SORT_DIRECTION_KEYWORDS, ...DIFF_MODIFIERS];
 
 export const language: CloudWatchLogsLanguage = {
   defaultToken: 'invalid',

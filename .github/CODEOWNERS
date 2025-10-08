@@ -88,6 +88,7 @@
 /apps/preferences/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/shorturl/ @grafana/sharing-squad
 /apps/secret/ @grafana/grafana-operator-experience-squad
+/apps/scope/ @grafana/grafana-operator-experience-squad
 /apps/investigations/ @fcjack @matryer @svennergr
 /apps/advisor/ @grafana/plugins-platform-backend
 /apps/iam/ @grafana/access-squad
@@ -1056,6 +1057,10 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/levitate-show-affected-plugins.js @grafana/plugins-platform-frontend
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
 /scripts/rtk-client-generator/ @grafana/grafana-search-navigate-organise
+
+/scripts/codeowners-manifest/ @grafana/dataviz-squad
+/scripts/test-coverage-by-codeowner.js @grafana/dataviz-squad
+/jest.config.codeowner.js @grafana/dataviz-squad
 
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
