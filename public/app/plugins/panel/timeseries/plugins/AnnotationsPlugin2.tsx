@@ -78,6 +78,7 @@ export const AnnotationsPlugin2 = ({
 
   const annos = useMemo(() => {
     let annos = getAnnotationFrames(annotations);
+    console.log('annotations', { annotations, annos });
 
     if (newRange) {
       let isRegion = newRange.to > newRange.from;
@@ -134,41 +135,43 @@ export const AnnotationsPlugin2 = ({
       ctx.clip();
 
       // Multi-lane annotations do not support vertical lines or shaded regions
-      if (!annotationsConfig?.multiLane) {
-        annos.forEach((frame) => {
-          let vals = getVals(frame);
 
-          if (frame.name === 'xymark') {
-            // xMin, xMax, yMin, yMax, color, lineWidth, lineStyle, fillOpacity, text
+      annos.forEach((frame) => {
+        let vals = getVals(frame);
 
-            let xKey = config.scales[0].props.scaleKey;
-            let yKey = config.scales[1].props.scaleKey;
+        if (frame.name === 'xymark') {
+          console.log('xymark');
+          // xMin, xMax, yMin, yMax, color, lineWidth, lineStyle, fillOpacity, text
 
-            for (let i = 0; i < frame.length; i++) {
-              let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
+          let xKey = config.scales[0].props.scaleKey;
+          let yKey = config.scales[1].props.scaleKey;
 
-              let x0 = u.valToPos(vals.xMin[i], xKey, true);
-              let x1 = u.valToPos(vals.xMax[i], xKey, true);
-              let y0 = u.valToPos(vals.yMax[i], yKey, true);
-              let y1 = u.valToPos(vals.yMin[i], yKey, true);
+          for (let i = 0; i < frame.length; i++) {
+            let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
-              ctx.fillStyle = colorManipulator.alpha(color, vals.fillOpacity[i]);
-              ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+            let x0 = u.valToPos(vals.xMin[i], xKey, true);
+            let x1 = u.valToPos(vals.xMax[i], xKey, true);
+            let y0 = u.valToPos(vals.yMax[i], yKey, true);
+            let y1 = u.valToPos(vals.yMin[i], yKey, true);
 
-              ctx.lineWidth = Math.round(vals.lineWidth[i] * uPlot.pxRatio);
+            ctx.fillStyle = colorManipulator.alpha(color, vals.fillOpacity[i]);
+            ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
 
-              if (vals.lineStyle[i] === 'dash') {
-                // maybe extract this to vals.lineDash[i] in future?
-                ctx.setLineDash([5, 5]);
-              } else {
-                // solid
-                ctx.setLineDash([]);
-              }
+            ctx.lineWidth = Math.round(vals.lineWidth[i] * uPlot.pxRatio);
 
-              ctx.strokeStyle = color;
-              ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+            if (vals.lineStyle[i] === 'dash') {
+              // maybe extract this to vals.lineDash[i] in future?
+              ctx.setLineDash([5, 5]);
+            } else {
+              // solid
+              ctx.setLineDash([]);
             }
-          } else {
+
+            ctx.strokeStyle = color;
+            ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+          }
+        } else {
+          if (!annotationsConfig?.multiLane) {
             let y0 = u.bbox.top;
             let y1 = y0 + u.bbox.height;
 
@@ -194,8 +197,8 @@ export const AnnotationsPlugin2 = ({
               }
             }
           }
-        });
-      }
+        }
+      });
 
       ctx.restore();
     });
