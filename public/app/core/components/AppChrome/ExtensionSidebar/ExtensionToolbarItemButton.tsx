@@ -14,7 +14,7 @@ interface ToolbarItemButtonProps {
 
 function getPluginIcon(pluginId?: string): string {
   switch (pluginId) {
-    case 'grafana-grafanadocsplugin-app':
+    case 'grafana-pathfinder-app':
       return 'book';
     case 'grafana-investigations-app':
       return 'eye';
