@@ -122,6 +122,12 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 		tuples = append(tuples, tuple)
 	}
 
+	// Avoid writing if there are no valid tuples
+	if len(tuples) == 0 {
+		b.logger.Warn("no valid tuples to write", "namespace", rp.Namespace, "resource", entry)
+		return
+	}
+
 	b.logger.Debug("writing resource permission to zanzana",
 		"namespace", rp.Namespace,
 		"resource", entry,
