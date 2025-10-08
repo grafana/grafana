@@ -100,10 +100,13 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
                     : VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH
                 }
                 rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
-                onClick={() => {
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
                   onContentProviderClick(selectedContentProvider === node.id ? null : node.id);
                 }}
                 style={{ cursor: 'pointer' }}
+                pointerEvents="all"
               />
 
               {/* App name as header */}
@@ -114,6 +117,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
                 fill={theme.colors.text.primary}
                 fontSize={TYPOGRAPHY_CONSTANTS.SECTION_HEADER_SIZE}
                 fontWeight="bold"
+                style={{ pointerEvents: 'none' }}
               >
                 {getDisplayName(node.id)}
               </text>
@@ -126,6 +130,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
                   textAnchor="end"
                   fill={theme.colors.text.primary}
                   fontSize={TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}
+                  style={{ pointerEvents: 'none' }}
                 >
                   {polishVersion(node.version)}
                 </text>

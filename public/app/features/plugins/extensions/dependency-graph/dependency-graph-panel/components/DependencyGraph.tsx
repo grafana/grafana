@@ -165,7 +165,9 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
           extensionPositions={extensionPositions}
           extensionPointModePositions={extensionPointModePositions}
           selectedExposedComponent={selectedExposedComponent}
+          selectedContentConsumer={selectedContentConsumer}
           onExposedComponentClick={handleExposedComponentClick}
+          onContentConsumerClick={handleContentConsumerClick}
           styles={styles}
         />
 

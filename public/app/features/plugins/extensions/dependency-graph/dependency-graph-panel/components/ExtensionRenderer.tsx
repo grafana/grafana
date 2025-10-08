@@ -68,7 +68,9 @@ interface ExtensionRendererProps {
   extensionPositions: Map<string, PositionInfo>;
   extensionPointModePositions: Map<string, PositionInfo>;
   selectedExposedComponent: string | null;
+  selectedContentConsumer: string | null;
   onExposedComponentClick: (id: string | null) => void;
+  onContentConsumerClick: (id: string | null) => void;
   styles: {
     extensionGroupBox: SerializedStyles;
     extensionPointBox: SerializedStyles;
@@ -92,7 +94,9 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
   extensionPositions,
   extensionPointModePositions,
   selectedExposedComponent,
+  selectedContentConsumer,
   onExposedComponentClick,
+  onContentConsumerClick,
   styles,
 }) => {
   // Context menu state
@@ -811,17 +815,6 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
 
           const groupHeight = firstEpPos.groupHeight;
 
-          // Debug: Log all type groups for this plugin
-          console.log(`=== RENDERING ${definingPlugin} ===`);
-          console.log(
-            `Type groups:`,
-            Array.from(typeGroups.entries()).map(([type, ids]) => `${type}: ${ids.length} items`)
-          );
-          console.log(
-            `Extension point positions available:`,
-            Array.from(extensionPointPositions.keys()).filter((key) => key.includes(definingPlugin))
-          );
-
           return (
             <g key={definingPlugin}>
               {/* Defining plugin group box */}
@@ -831,19 +824,28 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
                 width={extensionBoxWidth + 20}
                 height={groupHeight}
                 fill={theme.colors.background.secondary}
-                stroke={theme.colors.border.strong}
-                strokeWidth={VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
+                stroke={
+                  selectedContentConsumer === definingPlugin ? theme.colors.primary.border : theme.colors.border.strong
+                }
+                strokeWidth={
+                  selectedContentConsumer === definingPlugin
+                    ? VISUAL_CONSTANTS.THICK_STROKE_WIDTH
+                    : VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH
+                }
                 rx={VISUAL_CONSTANTS.GROUP_BORDER_RADIUS}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onContentConsumerClick(selectedContentConsumer === definingPlugin ? null : definingPlugin);
+                }}
+                style={{ cursor: 'pointer' }}
+                pointerEvents="all"
               />
 
               {/* Render extension points by type with headers */}
               {['function', 'component', 'link'].map((type) => {
                 const extensionPointIds = typeGroups.get(type);
-                console.log(
-                  `CHECKING TYPE ${type} for ${definingPlugin}: ${extensionPointIds ? extensionPointIds.length : 0} extension points`
-                );
                 if (!extensionPointIds || extensionPointIds.length === 0) {
-                  console.log(`SKIPPING TYPE ${type} for ${definingPlugin} - no extension points`);
                   return null;
                 }
 

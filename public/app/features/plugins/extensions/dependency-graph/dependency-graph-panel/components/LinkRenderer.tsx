@@ -120,7 +120,8 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
         const pathData = `M ${startX} ${startY} C ${controlX1} ${startY}, ${controlX2} ${endY}, ${endX} ${endY}`;
 
         // Check if this arrow should be highlighted
-        const isHighlighted = selectedContentProvider === sourceId;
+        // Highlight if: 1) source is selected content provider, OR 2) target (definingPlugin) is selected content consumer
+        const isHighlighted = selectedContentProvider === sourceId || selectedContentConsumer === definingPlugin;
 
         arrows.push(
           <g key={`${sourceId}-${definingPlugin}-${arrowIndex}`}>
@@ -132,7 +133,7 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
               strokeWidth={isHighlighted ? VISUAL_CONSTANTS.THICK_STROKE_WIDTH : VISUAL_CONSTANTS.SELECTED_STROKE_WIDTH}
               markerEnd={isHighlighted ? 'url(#arrowhead-highlighted)' : 'url(#arrowhead)'}
               opacity={
-                selectedContentProvider && !isHighlighted
+                (selectedContentProvider || selectedContentConsumer) && !isHighlighted
                   ? VISUAL_CONSTANTS.UNSELECTED_OPACITY
                   : VISUAL_CONSTANTS.SELECTED_OPACITY
               }
