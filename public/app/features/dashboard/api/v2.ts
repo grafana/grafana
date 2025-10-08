@@ -4,7 +4,6 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
-import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   AnnoKeyFolder,
@@ -76,12 +75,6 @@ export class K8sDashboardV2API
         dashboard.metadata.annotations[AnnoKeyFolder] = '';
       }
 
-      // Ensure a consistent dashboard slug
-      if (!dashboard.access?.slug) {
-        dashboard.access = dashboard.access ?? {};
-        dashboard.access.slug = kbn.slugifyForUrl(dashboard.spec.title.trim());
-      }
-
       return dashboard;
     } catch (e) {
       const status = getStatusFromError(e);
@@ -130,7 +123,7 @@ export class K8sDashboardV2API
     }
 
     // add folder annotation
-    if (options.folderUid) {
+    if (options.folderUid !== undefined) {
       // remove frontend folder annotations
       delete obj.metadata.annotations?.[AnnoKeyFolderTitle];
       delete obj.metadata.annotations?.[AnnoKeyFolderUrl];
@@ -154,7 +147,8 @@ export class K8sDashboardV2API
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardV2Spec>): SaveDashboardResponseDTO {
-    const slug = kbn.slugifyForUrl(v.spec.title.trim());
+    //TODO: use slug from response once implemented
+    const slug = '';
 
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({

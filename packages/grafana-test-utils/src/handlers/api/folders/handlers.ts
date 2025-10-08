@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 
 import { treeViewersCanEdit, wellFormedTree } from '../../../fixtures/folders';
 
-const [mockTree] = wellFormedTree();
+const [mockTree, { folderB }] = wellFormedTree();
 const [mockTreeThatViewersCanEdit] = treeViewersCanEdit();
 const collator = new Intl.Collator();
 
@@ -37,7 +37,7 @@ const listFoldersHandler = () =>
     const limit = parseInt(url.searchParams.get('limit') ?? '1000', 10);
     const page = parseInt(url.searchParams.get('page') ?? '1', 10);
 
-    const tree = permission === 'Edit' ? mockTreeThatViewersCanEdit : mockTree;
+    const tree = permission?.toLowerCase() === 'edit' ? mockTreeThatViewersCanEdit : mockTree;
 
     // reconstruct a folder API response from the flat tree fixture
     const folders = tree
@@ -122,6 +122,38 @@ const saveFolderHandler = () =>
     return HttpResponse.json({ ...folder.item, title: body.title });
   });
 
-const handlers = [listFoldersHandler(), getFolderHandler(), createFolderHandler(), saveFolderHandler()];
+const getMockFolderCounts = (folder: number, dashboard: number, librarypanel: number, alertrule: number) => {
+  return {
+    folder,
+    dashboard,
+    librarypanel,
+    alertrule,
+  };
+};
+
+const folderCountsHandler = () =>
+  http.get<{ uid: string }, { title: string; version: number }>('/api/folders/:uid/counts', async ({ params }) => {
+    const { uid } = params;
+    const folder = mockTree.find((v) => v.item.uid === uid);
+
+    if (!folder) {
+      // The legacy API returns 0's for a folder that doesn't exist 🤷‍♂️
+      return HttpResponse.json(getMockFolderCounts(0, 0, 0, 0));
+    }
+
+    if (uid === folderB.item.uid) {
+      return HttpResponse.json({}, { status: 500 });
+    }
+
+    return HttpResponse.json(getMockFolderCounts(1, 1, 1, 1));
+  });
+
+const handlers = [
+  listFoldersHandler(),
+  getFolderHandler(),
+  createFolderHandler(),
+  saveFolderHandler(),
+  folderCountsHandler(),
+];
 
 export default handlers;

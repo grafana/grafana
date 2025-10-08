@@ -36,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/util/cmputil"
@@ -140,6 +139,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		Logger:   logger,
 		Password: cfg.BasicAuthPassword,
 		TenantID: cfg.TenantID,
+		Timeout:  cfg.Timeout,
 		URL:      u,
 	}
 	mc, err := remoteClient.New(mcCfg, metrics, tracer)
@@ -315,7 +315,7 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 	}
 
 	// Decrypt the receivers in the configuration.
-	decryptedReceivers, err := legacy_storage.DecryptedReceivers(c.AlertmanagerConfig.Receivers, decrypter(ctx, am.crypto))
+	decryptedReceivers, err := notifier.DecryptedReceivers(c.AlertmanagerConfig.Receivers, decrypter(ctx, am.crypto))
 	if err != nil {
 		return remoteClient.UserGrafanaConfig{}, fmt.Errorf("unable to decrypt receivers: %w", err)
 	}
@@ -605,15 +605,12 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver,
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
-	decryptedReceivers, err := legacy_storage.DecryptedReceivers(c.Receivers, decrypter(ctx, am.crypto))
+	decryptedReceivers, err := notifier.DecryptedReceivers(c.Receivers, decrypter(ctx, am.crypto))
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to decrypt receivers: %w", err)
 	}
 
-	apiReceivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
-	for _, r := range decryptedReceivers {
-		apiReceivers = append(apiReceivers, notifier.PostableApiReceiverToApiReceiver(r))
-	}
+	apiReceivers := alertingNotify.PostableAPIReceiversToAPIReceivers(decryptedReceivers)
 	var alert *alertingNotify.TestReceiversConfigAlertParams
 	if c.Alert != nil {
 		alert = &alertingNotify.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}

@@ -35,12 +35,13 @@ func IsUniqueConstraintViolation(err error) bool {
 }
 
 func ErrorMessage(err error) string {
-	if err == nil {
-		return ""
-	}
 	var sqliteErr sqlite3.Error
 	if errors.As(err, &sqliteErr) {
 		return sqliteErr.Error()
 	}
 	return err.Error()
+}
+
+func DriverType() string {
+	return "mattn/go-sqlite3 (CGO enabled)"
 }
