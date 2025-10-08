@@ -1535,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "A csoport törlése folyamatban van"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "„{{refId}}” kifejezés eltávolítása"
     },
@@ -1709,6 +1712,9 @@
       },
       "placeholder-key": "kulcs",
       "placeholder-value": "érték"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Kapcsolattartási pontok megtekintése vagy létrehozása",
@@ -2024,6 +2030,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "A kijelölt riasztáskezelő már nem létezik, vagy előfordulhat, hogy nincs hozzáférési joga. A legördülő menüből választhat másik riasztáskezelőt.",
       "title-selected-alertmanager-not-found": "A kiválasztott riasztáskezelő nem található."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2915,6 +2927,13 @@
         "summary": "A következő riasztási szabályok lesznek importálva:",
         "title-warning": "Figyelmeztetés"
       }
+    },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
     },
     "type-selector-button": {
       "add-expression": "Kifejezés hozzáadása"
@@ -9446,6 +9465,7 @@
     "description-enable-infinite-scrolling": "Kísérleti. További eredmények kéréséhez görgessen a naplók listájának aljára.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Vezérlők megjelenítése az utolsó vagy az első naplósorra ugráshoz és szűrés naplószint szerint",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9496,9 +9516,6 @@
       "collapse": "Címkék összecsukása",
       "expand": "Címkék kibontása"
     },
-    "log-labels-list": {
-      "log-line": "naplósor"
-    },
     "log-line": {
       "has-error": "Hibákat tartalmaz",
       "is-sampled": "Mintavételezett",
@@ -9538,6 +9555,7 @@
       "inline-mode": "Megjelenítés sorban",
       "link-value-tooltip": "",
       "links-section": "Hivatkozások",
+      "log-attributes-field": "",
       "log-line-field": "Naplósor",
       "log-line-section": "Naplósor",
       "move-displayed-field-down": "Mozgatás lefelé",
@@ -9744,6 +9762,7 @@
       "line-contains": "A hozzáadás sorként szűrőt tartalmaz",
       "line-contains-not": "A hozzáadás sorként nem tartalmaz szűrőt"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Időbélyeg felbontása",
     "un-themed-log-details": {
       "aria-label-data-links": "Adathivatkozások",
