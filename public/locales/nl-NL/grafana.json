@@ -1535,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "De groep wordt verwijderd"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Expressie '{{refId}}' verwijderen"
     },
@@ -1709,6 +1712,9 @@
       },
       "placeholder-key": "sleutel",
       "placeholder-value": "waarde"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Contactpunten bekijken of maken",
@@ -2024,6 +2030,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "De geselecteerde waarschuwingsmanager bestaat niet meer of je hebt mogelijk geen toestemming om deze te openen. Je kunt een andere waarschuwingsmanager selecteren in de vervolgkeuzelijst.",
       "title-selected-alertmanager-not-found": "Geselecteerde Alertmanager niet gevonden."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2915,6 +2927,13 @@
         "summary": "De volgende waarschuwingsregels worden geïmporteerd:",
         "title-warning": "Waarschuwing"
       }
+    },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
     },
     "type-selector-button": {
       "add-expression": "Expressie toevoegen"
@@ -4142,6 +4161,13 @@
       "body": "Probeer de nieuwe Advisor om potentiële problemen met je gegevensbronnen en plug-ins te ontdekken.",
       "go-to-advisor": "Ga naar Advisor"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4190,6 +4216,20 @@
         "unknown-datasource": "Onbekende gegevensbron"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Kies een type gegevensbron"
@@ -4219,6 +4259,13 @@
         },
         "subtitle": "Beheer je gegevensbronverbindingen op één plek. Gebruik deze pagina om een nieuwe gegevensbron toe te voegen of je bestaande verbindingen te beheren."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Alles doorzoeken",
@@ -9418,6 +9465,7 @@
     "description-enable-infinite-scrolling": "Experimenteel. Vraag meer resultaten op door naar de onderkant van de loglijst te scrollen.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Weergavebesturingselementen om naar de laatste of eerste logregel te gaan en filters op logniveau",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9468,9 +9516,6 @@
       "collapse": "Labels samenvouwen",
       "expand": "Labels uitvouwen"
     },
-    "log-labels-list": {
-      "log-line": "loglijn"
-    },
     "log-line": {
       "has-error": "Bevat fouten",
       "is-sampled": "Is bemonsterd",
@@ -9510,6 +9555,7 @@
       "inline-mode": "Inline weergave",
       "link-value-tooltip": "",
       "links-section": "Links",
+      "log-attributes-field": "",
       "log-line-field": "Logregel",
       "log-line-section": "Logregel",
       "move-displayed-field-down": "Naar beneden verplaatsen",
@@ -9716,6 +9762,7 @@
       "line-contains": "Toevoegen als regel filter bevat",
       "line-contains-not": "Toevoegen als regel geen filter bevat"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Tijdstempelresolutie",
     "un-themed-log-details": {
       "aria-label-data-links": "Gegevenslinks",
@@ -13657,6 +13704,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "en",
       "placeholder-from": "",
