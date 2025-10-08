@@ -13,137 +13,224 @@ import (
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/queryhistory"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationStars(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false, // required for experimental APIs
-		DisableAnonymous:  true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-		},
-	})
+	for _, mode := range []grafanarest.DualWriterMode{
+		grafanarest.Mode0,
+		grafanarest.Mode2,
+		grafanarest.Mode3,
+		grafanarest.Mode5,
+	} {
+		flags := []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs}
+		if mode > grafanarest.Mode2 {
+			flags = append(flags, featuremgmt.FlagKubernetesStars)
+		}
 
-	t.Run("legacy dashboard stars", func(t *testing.T) {
-		ctx := context.Background()
-		starsClient := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Admin,
-			GVR:  preferences.StarsResourceInfo.GroupVersionResource(),
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false, // required for experimental APIs
+			DisableAnonymous:     true,
+			EnableFeatureToggles: flags,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: mode,
+				},
+				"folders.folder.grafana.app": {
+					DualWriterMode: mode,
+				},
+				"stars.preferences.grafana.app": {
+					DualWriterMode: mode,
+				},
+				"preferences.preferences.grafana.app": {
+					DualWriterMode: mode,
+				},
+			},
 		})
-		dashboardClient := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Admin,
-			GVR:  dashboardV1.DashboardResourceInfo.GroupVersionResource(),
-		})
 
-		// Create 5 dashboards
-		for i := range 5 {
-			_, err := dashboardClient.Resource.Create(context.Background(), &unstructured.Unstructured{
+		t.Run(fmt.Sprintf("test stars (mode:%d)", mode), func(t *testing.T) {
+			ctx := context.Background()
+			starsClient := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  preferences.StarsResourceInfo.GroupVersionResource(),
+			})
+			starsClientViewer := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Viewer,
+				GVR:  preferences.StarsResourceInfo.GroupVersionResource(),
+			})
+			dashboardClient := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+			})
+
+			history := &queryhistory.QueryHistoryResponse{}
+			legacyHistoryResponse := apis.DoRequest(helper, apis.RequestParams{
+				User:   starsClient.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/query-history",
+				Body:   []byte(`{"dataSourceUid":"eez1ebbdn3pq8b","queries":[{"scenarioId":"random_walk","seriesCount":1,"refId":"A","datasource":{"type":"grafana-testdata-datasource","uid":"eez1ebbdn3pq8b","apiVersion":"v0alpha1"}}]}`),
+			}, &history)
+			require.Equal(t, http.StatusOK, legacyHistoryResponse.Response.StatusCode, "add query history")
+			queryHistoryStarUID := history.Result.UID
+			require.NotEmpty(t, queryHistoryStarUID, "expect a query history UID")
+
+			// Create 5 dashboards
+			for i := range 5 {
+				_, err := dashboardClient.Resource.Create(context.Background(), &unstructured.Unstructured{
+					Object: map[string]any{
+						"apiVersion": dashboardV1.DashboardResourceInfo.GroupVersion().String(),
+						"kind":       "Dashboard",
+						"metadata": map[string]any{
+							"name": fmt.Sprintf("test-%d", i),
+						},
+						"spec": map[string]any{
+							"title":         fmt.Sprintf("test %d", i),
+							"schemaVersion": 42, // not really!
+							"panels":        []any{},
+						},
+					},
+				}, metav1.CreateOptions{})
+				require.NoError(t, err)
+			}
+			found, err := dashboardClient.Resource.List(context.Background(), metav1.ListOptions{})
+			require.NoError(t, err)
+			require.Len(t, found.Items, 5, "should be 5 dashboards")
+
+			// List is empty when we start
+			rsp, err := starsClient.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.Empty(t, rsp.Items, "no stars saved yet")
+
+			raw := make(map[string]any)
+			legacyResponse := apis.DoRequest(helper, apis.RequestParams{
+				User:   starsClient.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/user/stars/dashboard/uid/test-2",
+			}, &raw)
+			require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "add dashboard star")
+			legacyResponse = apis.DoRequest(helper, apis.RequestParams{
+				User:   starsClient.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/user/stars/dashboard/uid/test-3",
+			}, &raw)
+			require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "add dashboard star")
+
+			// List values and compare results
+			rsp, err = starsClient.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			stars := typed(t, rsp, &preferences.StarsList{})
+
+			require.Len(t, stars.Items, 1, "user stars should exist")
+			require.Equal(t, "user-"+starsClient.Args.User.Identity.GetIdentifier(),
+				stars.Items[0].GetName(), "star resource for user")
+			resources := stars.Items[0].Spec.Resource
+			require.Len(t, resources, 1)
+			require.Equal(t, "dashboard.grafana.app", resources[0].Group)
+			require.Equal(t, "Dashboard", resources[0].Kind)
+			require.ElementsMatch(t, []string{"test-2", "test-3"}, resources[0].Names)
+
+			// Remove one star
+			legacyResponse = apis.DoRequest(helper, apis.RequestParams{
+				User:   starsClient.Args.User,
+				Method: http.MethodDelete,
+				Path:   "/api/user/stars/dashboard/uid/test-3",
+			}, &raw)
+			require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "removed dashboard star")
+
+			rspObj, err := starsClient.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
+			require.NoError(t, err)
+
+			after := typed(t, rspObj, &preferences.Stars{})
+			resources = after.Spec.Resource
+			require.Len(t, resources, 1)
+			require.Equal(t, "dashboard.grafana.app", resources[0].Group)
+			require.Equal(t, "Dashboard", resources[0].Kind)
+			require.Equal(t, []string{"test-2"}, resources[0].Names)
+
+			// Change stars via k8s update
+			rspObj, err = starsClient.Resource.Update(ctx, &unstructured.Unstructured{
 				Object: map[string]any{
-					"apiVersion": dashboardV1.DashboardResourceInfo.GroupVersion().String(),
-					"kind":       "Dashboard",
 					"metadata": map[string]any{
-						"name": fmt.Sprintf("test-%d", i),
+						"name":      "user-" + starsClient.Args.User.Identity.GetIdentifier(),
+						"namespace": "default",
 					},
 					"spec": map[string]any{
-						"title":         fmt.Sprintf("test %d", i),
-						"schemaVersion": 41, // not really!
-						"panels":        []any{},
-					},
-				},
-			}, metav1.CreateOptions{})
-			require.NoError(t, err)
-		}
-		found, err := dashboardClient.Resource.List(context.Background(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, found.Items, 5, "should be 5 dashboards")
-
-		// List is empty when we start
-		rsp, err := starsClient.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Empty(t, rsp.Items, "no stars saved yet")
-
-		raw := make(map[string]any)
-		legacyResponse := apis.DoRequest(helper, apis.RequestParams{
-			User:   starsClient.Args.User,
-			Method: http.MethodPost,
-			Path:   "/api/user/stars/dashboard/uid/test-2",
-		}, &raw)
-		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "add dashboard star")
-		legacyResponse = apis.DoRequest(helper, apis.RequestParams{
-			User:   starsClient.Args.User,
-			Method: http.MethodPost,
-			Path:   "/api/user/stars/dashboard/uid/test-3",
-		}, &raw)
-		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "add dashboard star")
-
-		// List values and compare results
-		rsp, err = starsClient.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err)
-		stars := typed(t, rsp, &preferences.StarsList{})
-
-		require.Len(t, stars.Items, 1, "user stars should exist")
-		require.Equal(t, "user-"+starsClient.Args.User.Identity.GetIdentifier(),
-			stars.Items[0].GetName(), "star resource for user")
-		resources := stars.Items[0].Spec.Resource
-		require.Len(t, resources, 1)
-		require.Equal(t, "dashboard.grafana.app", resources[0].Group)
-		require.Equal(t, "Dashboard", resources[0].Kind)
-		require.ElementsMatch(t, []string{"test-2", "test-3"}, resources[0].Names)
-
-		// Remove one star
-		legacyResponse = apis.DoRequest(helper, apis.RequestParams{
-			User:   starsClient.Args.User,
-			Method: http.MethodDelete,
-			Path:   "/api/user/stars/dashboard/uid/test-3",
-		}, &raw)
-		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "removed dashboard star")
-
-		rspObj, err := starsClient.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
-		require.NoError(t, err)
-
-		after := typed(t, rspObj, &preferences.Stars{})
-		resources = after.Spec.Resource
-		require.Len(t, resources, 1)
-		require.Equal(t, "dashboard.grafana.app", resources[0].Group)
-		require.Equal(t, "Dashboard", resources[0].Kind)
-		require.Equal(t, []string{"test-2"}, resources[0].Names)
-
-		// Change stars via k8s update
-		rspObj, err = starsClient.Resource.Update(ctx, &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]any{
-					"name":      "user-" + starsClient.Args.User.Identity.GetIdentifier(),
-					"namespace": "default",
-				},
-				"spec": map[string]any{
-					"resource": []map[string]any{
-						{
-							"group": "dashboard.grafana.app",
-							"kind":  "Dashboard",
-							"names": []string{"test-2", "aaa", "bbb"},
+						"resource": []map[string]any{
+							{
+								"group": "dashboard.grafana.app",
+								"kind":  "Dashboard",
+								"names": []string{"test-2", "aaa", "bbb"},
+							},
 						},
 					},
 				},
-			},
-		}, metav1.UpdateOptions{})
-		require.NoError(t, err)
+			}, metav1.UpdateOptions{})
+			require.NoError(t, err)
 
-		after = typed(t, rspObj, &preferences.Stars{})
-		resources = after.Spec.Resource
-		require.Len(t, resources, 1)
-		require.Equal(t, "dashboard.grafana.app", resources[0].Group)
-		require.Equal(t, "Dashboard", resources[0].Kind)
-		require.ElementsMatch(t,
-			[]string{"test-2", "aaa", "bbb"}, // NOTE 2 stays, 3 removed, added aaa+bbb
-			resources[0].Names)
-	})
+			after = typed(t, rspObj, &preferences.Stars{})
+			resources = after.Spec.Resource
+			require.Len(t, resources, 1)
+			require.Equal(t, "dashboard.grafana.app", resources[0].Group)
+			require.Equal(t, "Dashboard", resources[0].Kind)
+			require.ElementsMatch(t,
+				[]string{"aaa", "bbb", "test-2"}, // NOTE 2 stays, 3 removed, added aaa+bbb (and sorted!)
+				resources[0].Names)
+
+			// Query history stars
+			legacyHistoryResponse = apis.DoRequest(helper, apis.RequestParams{
+				User:   starsClient.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/query-history/star/" + queryHistoryStarUID,
+			}, &history)
+			require.Equal(t, http.StatusOK, legacyHistoryResponse.Response.StatusCode, "add query history")
+			require.True(t, history.Result.Starred, "expect the value to be starred")
+
+			rspObj, err = starsClient.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
+			require.NoError(t, err)
+
+			after = typed(t, rspObj, &preferences.Stars{})
+			jj, err := json.MarshalIndent(after.Spec, "", "  ")
+			require.NoError(t, err)
+			require.JSONEq(t, `{
+					"resource": [
+						{
+							"group": "dashboard.grafana.app",
+							"kind": "Dashboard",
+							"names": [
+								"aaa",
+								"bbb",
+								"test-2"
+							]
+						},
+						{
+							"group": "history.grafana.app",
+							"kind": "Query",
+							"names": [
+								"`+queryHistoryStarUID+`"
+							]
+						}
+					]
+				}`, string(jj))
+
+			// Viewer does not have any stars
+			rsp, err = starsClientViewer.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.Empty(t, rsp.Items, "expect empty list")
+
+			// Not allowed to see another user's stars
+			rspObj, err = starsClientViewer.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
+			require.Error(t, err)
+			require.Nil(t, rspObj)
+		})
+	}
 }
 
 func typed[T any](t *testing.T, obj any, out T) T {

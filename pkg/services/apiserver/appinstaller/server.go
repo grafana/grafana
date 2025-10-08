@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emicklei/go-restful/v3"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
@@ -26,7 +27,7 @@ var _ appsdkapiserver.GenericAPIServer = (*serverWrapper)(nil)
 
 type serverWrapper struct {
 	ctx context.Context
-	appsdkapiserver.GenericAPIServer
+	*genericapiserver.GenericAPIServer
 	installer         appsdkapiserver.AppInstaller
 	restOptionsGetter generic.RESTOptionsGetter
 	storageOpts       *grafanaapiserveroptions.StorageOptions
@@ -116,4 +117,11 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 	}
 
 	return storage
+}
+
+func (s *serverWrapper) RegisteredWebServices() []*restful.WebService {
+	if s.Handler != nil && s.Handler.GoRestfulContainer != nil {
+		return s.Handler.GoRestfulContainer.RegisteredWebServices()
+	}
+	return nil
 }

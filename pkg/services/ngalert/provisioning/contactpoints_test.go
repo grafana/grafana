@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -33,12 +34,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationContactPointService(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -365,9 +366,8 @@ func TestIntegrationContactPointService(t *testing.T) {
 }
 
 func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -426,7 +426,7 @@ func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 }
 
 func TestRemoveSecretsForContactPoint(t *testing.T) {
-	overrides := map[string]func(settings map[string]any){
+	overrides := map[schema.IntegrationType]func(settings map[string]any){
 		"webhook": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
 			settings["authorization_credentials"] = "test-authz-creds"
 		},
@@ -438,7 +438,7 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 		},
 	}
 
-	configs := notify.AllKnownConfigsForTesting
+	configs := notifytest.AllKnownV1ConfigsForTesting
 	keys := maps.Keys(configs)
 	slices.Sort(keys)
 	for _, integrationType := range keys {
@@ -448,23 +448,22 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 		}
 		settingsRaw, err := json.Marshal(integration.Settings)
 		require.NoError(t, err)
+		typeSchema, _ := notify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+		expectedFields := typeSchema.GetSecretFieldsPaths()
 
-		expectedFields, err := channels_config.GetSecretKeysForContactPointType(integrationType)
-		require.NoError(t, err)
-
-		t.Run(integrationType, func(t *testing.T) {
+		t.Run(string(integrationType), func(t *testing.T) {
 			cp := definitions.EmbeddedContactPoint{
-				Name:     "integration-" + integrationType,
-				Type:     integrationType,
+				Name:     "integration-" + string(integrationType),
+				Type:     string(integrationType),
 				Settings: simplejson.MustJson(settingsRaw),
 			}
 			secureFields, err := RemoveSecretsForContactPoint(&cp)
 			require.NoError(t, err)
 
 		FIELDS_ASSERT:
-			for _, field := range expectedFields {
+			for _, path := range expectedFields {
+				field := path.String()
 				assert.Contains(t, secureFields, field)
-				path := strings.Split(field, ".")
 				var expectedValue any = integration.Settings
 				for _, segment := range path {
 					v, ok := expectedValue.(map[string]any)

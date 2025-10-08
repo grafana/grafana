@@ -25,11 +25,11 @@ export const getReadOnlyTooltipText = ({ isLocal = false }) => {
   return isLocal
     ? t(
         'provisioning.read-only-local-tooltip',
-        'This folder is read-only and provisioned through file provisioning. To make any changes in the folder, update the connected file repository. To modify the folder settings go to Administration > Provisioning > Repositories.'
+        'This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.'
       )
     : t(
         'provisioning.read-only-remote-tooltip',
-        'This folder is read-only and provisioned through Git. To make any changes in the folder, update the connected repository. To modify the folder settings go to Administration > Provisioning > Repositories.'
+        'This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.'
       );
 };
 

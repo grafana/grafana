@@ -31,7 +31,7 @@ var (
 )
 
 type legacyStorage struct {
-	service        folder.Service
+	service        folder.LegacyService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
@@ -243,6 +243,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, created, fmt.Errorf("expected old object to be a folder also")
 	}
 
+	changed := false
 	mOld, _ := utils.MetaAccessor(old)
 	mNew, _ := utils.MetaAccessor(f)
 	oldParent := mOld.GetFolder()
@@ -257,9 +258,9 @@ func (s *legacyStorage) Update(ctx context.Context,
 		if err != nil {
 			return nil, created, err
 		}
+		changed = true
 	}
 
-	changed := false
 	cmd := &folder.UpdateFolderCommand{
 		SignedInUser: user,
 		UID:          name,

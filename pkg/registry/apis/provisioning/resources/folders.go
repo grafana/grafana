@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 const MaxNumberOfFolders = 10000
@@ -131,6 +132,8 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 	if parent != "" {
 		meta.SetFolder(parent)
+	} else {
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 	}
 	meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
@@ -141,6 +144,28 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 	})
 
 	if _, err := fm.client.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
+		// there is a potential race here where two syncs can be triggered
+		// if we try to create and there is an error, check if it is from another sync
+		// job for this repo that created it
+		if apierrors.IsAlreadyExists(err) || err.Error() == dashboards.ErrFolderVersionMismatch.Error() {
+			obj, err2 := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
+			if err2 != nil {
+				return fmt.Errorf("failed to get folder: %w", err2)
+			} else if obj == nil {
+				return fmt.Errorf("failed to create folder: %w", err)
+			}
+
+			current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
+			if !ok {
+				return fmt.Errorf("target folder is not managed by a repository")
+			}
+			if current != cfg.Name {
+				return fmt.Errorf("target folder is managed by a different repository (%s)", current)
+			}
+
+			return nil
+		}
+
 		return fmt.Errorf("failed to create folder: %w", err)
 	}
 	return nil
@@ -148,6 +173,10 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructured.Unstructured, error) {
 	return fm.client.Get(ctx, name, metav1.GetOptions{})
+}
+
+func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
+	return fm.client.Delete(ctx, name, metav1.DeleteOptions{})
 }
 
 // ReplicateTree replicates the folder tree to the repository.

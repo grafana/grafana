@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -33,9 +34,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationUserDataAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ss, cfg := db.InitTestDBWithCfg(t)
 	cfgProvider, err := configprovider.ProvideService(cfg)
@@ -998,9 +997,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 }
 
 func TestIntegrationUserUpdate(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, cfg)
@@ -1067,9 +1064,8 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 }
 
 func TestIntegrationMetricsUsage(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, setting.NewCfg())
 	cfgProvider, err := configprovider.ProvideService(cfg)

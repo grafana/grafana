@@ -2,8 +2,9 @@ import { createContext, ReactNode, useContext } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+import { SavedQuery } from 'app/features/explore/QueryLibrary/types';
 
-import { OnSelectQueryType, QueryTemplate, QueryLibraryEventsPropertyMap } from './types';
+import { OnSelectQueryType, QueryLibraryEventsPropertyMap } from './types';
 
 export type QueryLibraryDrawerOptions = {
   datasourceFilters?: string[];
@@ -29,7 +30,7 @@ export type QueryLibraryContextType = {
    * @param newQuery New query to be added to the library.
    */
   openDrawer: (options: QueryLibraryDrawerOptions) => void;
-  closeDrawer: () => void;
+  closeDrawer: (isSelectingQuery?: boolean, isEditingQuery?: boolean) => void;
   isDrawerOpen: boolean;
   onSave?: () => void;
 
@@ -70,7 +71,7 @@ export type QueryLibraryContextType = {
     properties?: QueryLibraryEventsPropertyMap,
     contextOverride?: string
   ) => void;
-  setNewQuery: (query?: QueryTemplate) => void;
+  setNewQuery: (query?: SavedQuery) => void;
   onSelectQuery: (query: DataQuery) => void;
 };
 

@@ -56,6 +56,9 @@ func seedApiKeys(t *testing.T, store store, num int) {
 }
 
 func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Helper()
 
 	mockTimeNow()
@@ -188,24 +191,18 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 	t.Run("Testing Get API keys", func(t *testing.T) {
 		tests := []getApiKeysTestCase{
 			{
-				desc: "expect all keys for wildcard scope",
-				user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
-					1: {"apikeys:read": {"apikeys:*"}},
-				}},
+				desc:               "expect all keys for wildcard scope",
+				user:               &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{}},
 				expectedAllNumKeys: 10,
 			},
 			{
-				desc: "expect only api keys that user have scopes for",
-				user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
-					1: {"apikeys:read": {"apikeys:id:1", "apikeys:id:3"}},
-				}},
+				desc:               "expect only api keys that user have scopes for",
+				user:               &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{}},
 				expectedAllNumKeys: 10,
 			},
 			{
-				desc: "expect no keys when user have no scopes",
-				user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
-					1: {"apikeys:read": {}},
-				}},
+				desc:               "expect no keys when user have no scopes",
+				user:               &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{}},
 				expectedAllNumKeys: 10,
 			},
 		}

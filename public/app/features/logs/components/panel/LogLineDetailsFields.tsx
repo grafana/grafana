@@ -12,9 +12,10 @@ import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
 import { LogLabelStats } from '../LogLabelStats';
 import { FieldDef } from '../logParser';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { useLogListContext } from './LogListContext';
-import { LogListModel } from './processing';
+import { LogListModel, getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsFieldsProps {
   disableActions?: boolean;
@@ -103,7 +104,7 @@ const getFieldsStyles = (theme: GrafanaTheme2) => ({
   fieldsTable: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `${theme.spacing(11.5)} minmax(auto, 40%) 1fr`,
+    gridTemplateColumns: `${theme.spacing(11.5)} fit-content(30%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
@@ -148,7 +149,7 @@ export const LogLineDetailsField = ({
     onClickHideField,
     onPinLine,
     pinLineButtonTooltipTitle,
-    syntaxHighlighting,
+    prettifyJSON,
   } = useLogListContext();
 
   const styles = useStyles2(getFieldStyles);
@@ -258,12 +259,14 @@ export const LogLineDetailsField = ({
   const singleKey = keys.length === 1;
   const singleValue = values.length === 1;
 
+  const fieldSupportsFilters = keys[0] !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME;
+
   return (
     <>
       <div className={styles.row}>
         {!disableActions && (
           <div className={styles.actions}>
-            {onClickFilterLabel && (
+            {onClickFilterLabel && fieldSupportsFilters && (
               <AsyncIconButton
                 name="search-plus"
                 onClick={filterLabel}
@@ -272,7 +275,7 @@ export const LogLineDetailsField = ({
                 tooltipSuffix={refIdTooltip}
               />
             )}
-            {onClickFilterOutLabel && (
+            {onClickFilterOutLabel && fieldSupportsFilters && (
               <IconButton
                 name="search-minus"
                 tooltip={
@@ -313,11 +316,13 @@ export const LogLineDetailsField = ({
             />
           </div>
         )}
-        <div className={styles.label}>{singleKey ? keys[0] : <MultipleValue values={keys} />}</div>
+        <div className={styles.label}>
+          {singleKey ? getNormalizedFieldName(keys[0]) : <MultipleValue values={keys} />}
+        </div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
             {singleValue ? (
-              <SingleValue value={values[0]} syntaxHighlighting={syntaxHighlighting} />
+              <SingleValue value={values[0]} prettifyJSON={prettifyJSON} />
             ) : (
               <MultipleValue showCopy={true} values={values} />
             )}
@@ -383,6 +388,7 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
   }),
   label: css({
+    paddingRight: theme.spacing(1),
     overflowWrap: 'break-word',
     wordBreak: 'break-word',
   }),
@@ -418,7 +424,7 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     lineHeight: theme.typography.body.lineHeight,
     whiteSpace: 'pre-wrap',
-    wordBreak: 'break-all',
+    wordBreak: 'break-word',
     maxHeight: '50vh',
     overflow: 'auto',
   }),
@@ -484,15 +490,9 @@ export const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; v
   );
 };
 
-export const SingleValue = ({
-  value: originalValue,
-  syntaxHighlighting,
-}: {
-  value: string;
-  syntaxHighlighting?: boolean;
-}) => {
+export const SingleValue = ({ value: originalValue, prettifyJSON }: { value: string; prettifyJSON?: boolean }) => {
   const value = useMemo(() => {
-    if (!syntaxHighlighting) {
+    if (!prettifyJSON) {
       return originalValue;
     }
     try {
@@ -502,7 +502,7 @@ export const SingleValue = ({
       }
     } catch (error) {}
     return originalValue;
-  }, [originalValue, syntaxHighlighting]);
+  }, [originalValue, prettifyJSON]);
 
   return (
     <>
