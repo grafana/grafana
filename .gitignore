@@ -255,3 +255,5 @@ public/mockServiceWorker.js
 
 # Ignore debug output from test library
 /pkg/storage/secret/metadata/testdata/rapid/TestStateMachine/
+
+/codeowners-manifest/

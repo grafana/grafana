@@ -1856,11 +1856,6 @@
       "count": 1
     }
   },
-  "public/app/features/commandPalette/actions/recentScopesActions.ts": {
-    "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
   "public/app/features/commandPalette/actions/scopeActions.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 4
@@ -4544,11 +4539,6 @@
   },
   "public/app/plugins/panel/live/LivePanel.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/logs/types.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
