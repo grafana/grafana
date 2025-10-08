@@ -23,9 +23,9 @@ function isCrossOriginIframe() {
 }
 
 export interface GrafanaJavascriptAgentBackendOptions {
-  apiKey: string;
-  customEndpoint: string;
-  internalLoggerLevel: InternalLoggerLevel;
+  apiKey?: string;
+  customEndpoint?: string;
+  internalLoggerLevel?: InternalLoggerLevel;
 
   webVitalsAttribution: boolean;
   consoleInstrumentalizationEnabled: boolean;
@@ -63,11 +63,10 @@ export class GrafanaJavascriptAgentBackend
       instrumentations.push(new TracingInstrumentation());
     }
 
-    const ignoreUrls = [
-      new RegExp(`.*${escapeRegex(options.customEndpoint)}.*`),
-      ...TRACKING_URLS,
-      ...options.ignoreUrls,
-    ];
+    const ignoreUrls = [...TRACKING_URLS, ...options.ignoreUrls];
+    if (options.customEndpoint) {
+      ignoreUrls.unshift(new RegExp(`.*${escapeRegex(options.customEndpoint)}.*`));
+    }
 
     const transports: BaseTransport[] = [new EchoSrvTransport({ ignoreUrls })];
 
