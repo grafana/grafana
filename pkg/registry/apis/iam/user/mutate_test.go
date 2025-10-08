@@ -68,7 +68,7 @@ func TestMutateOnCreate_LoginEmail(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := MutateOnCreate(context.Background(), tc.inputUser)
+			err := MutateOnCreateAndUpdate(context.Background(), tc.inputUser)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedLogin, tc.inputUser.Spec.Login)
 			require.Equal(t, tc.expectedEmail, tc.inputUser.Spec.Email)

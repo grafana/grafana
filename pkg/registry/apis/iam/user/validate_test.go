@@ -121,3 +121,189 @@ func TestValidateOnCreate(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateOnUpdate(t *testing.T) {
+	tests := []struct {
+		name          string
+		oldUser       *iamv0alpha1.User
+		newUser       *iamv0alpha1.User
+		requester     *identity.StaticRequester
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name: "grafana admin updates user email",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Email: "old@test.com"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Email: "new@test.com"},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: true,
+			},
+			expectError: false,
+		},
+		{
+			name: "non-admin updates user email",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Email: "old@test.com"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Email: "new@test.com"},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: false,
+			},
+			expectError:   true,
+			errorContains: "only grafana admins can update email, name, or login",
+		},
+		{
+			name: "service user updates provisioned status",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Provisioned: false},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Provisioned: true},
+			},
+			requester: &identity.StaticRequester{
+				Type: types.TypeAccessPolicy,
+			},
+			expectError: false,
+		},
+		{
+			name: "non-service user updates provisioned status",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Provisioned: false},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Provisioned: true},
+			},
+			requester: &identity.StaticRequester{
+				Type: types.TypeUser,
+			},
+			expectError:   true,
+			errorContains: "only service users can update provisioned status",
+		},
+		{
+			name: "no changes",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser"},
+			},
+			requester: &identity.StaticRequester{
+				Type: types.TypeUser,
+			},
+			expectError: false,
+		},
+		{
+			name: "service user verifies email",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{EmailVerified: false},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{EmailVerified: true},
+			},
+			requester: &identity.StaticRequester{
+				Type: types.TypeAccessPolicy,
+			},
+			expectError: false,
+		},
+		{
+			name: "non-service user verifies email",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{EmailVerified: false},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{EmailVerified: true},
+			},
+			requester: &identity.StaticRequester{
+				Type: types.TypeUser,
+			},
+			expectError:   true,
+			errorContains: "only service users can verify email",
+		},
+		{
+			name: "grafana admin disables user",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Disabled: false},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Disabled: true},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: true,
+			},
+			expectError: false,
+		},
+		{
+			name: "non-admin disables user",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Disabled: false},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Disabled: true},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: false,
+			},
+			expectError:   true,
+			errorContains: "only grafana admins can disable or enable a user",
+		},
+		{
+			name: "grafana admin grants admin",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{GrafanaAdmin: false},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{GrafanaAdmin: true},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: true,
+			},
+			expectError: false,
+		},
+		{
+			name: "non-admin grants admin",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{GrafanaAdmin: false},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{GrafanaAdmin: true},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: false,
+			},
+			expectError:   true,
+			errorContains: "only grafana admins can change grafana admin status",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := identity.WithRequester(
+				context.Background(),
+				tt.requester,
+			)
+
+			err := ValidateOnUpdate(ctx, tt.oldUser, tt.newUser)
+
+			if tt.expectError {
+				require.Error(t, err)
+				if tt.errorContains != "" {
+					require.Contains(t, err.Error(), tt.errorContains)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

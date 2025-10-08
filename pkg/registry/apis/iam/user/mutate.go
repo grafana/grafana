@@ -7,7 +7,7 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
 
-func MutateOnCreate(ctx context.Context, obj *iamv0alpha1.User) error {
+func MutateOnCreateAndUpdate(ctx context.Context, obj *iamv0alpha1.User) error {
 	obj.Spec.Email = strings.ToLower(obj.Spec.Email)
 	obj.Spec.Login = strings.ToLower(obj.Spec.Login)
 
