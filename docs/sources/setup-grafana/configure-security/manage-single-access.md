@@ -41,7 +41,7 @@ Consider the following setup of three teams:
 - Team B handles data engineering and needs autonomy with their own dashboards.
 - Team C is the observability team and the admins of the Grafana stack.
 
-Follow these suggested steps to structure, configure and set permissions to access data in your Grafana instance:
+Follow these suggested steps to structure, configure, and set permissions to access data in your Grafana instance:
 
 1. [Before you begin](#before-you-begin)
 1. [Create teams and configure user access](#create-teams-and-configure-user-access)
