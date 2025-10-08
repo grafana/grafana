@@ -3,6 +3,7 @@ package iam
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -16,8 +17,9 @@ import (
 )
 
 var (
-	errEmptyName   = errors.New("name cannot be empty")
-	errUnknownKind = errors.New("unknown permission kind")
+	errEmptyName        = errors.New("name cannot be empty")
+	errInvalidBasicRole = errors.New("invalid basic role name")
+	errUnknownKind      = errors.New("unknown permission kind")
 
 	defaultWriteTimeout = 15 * time.Second
 )
@@ -34,12 +36,13 @@ func toZanzanaSubject(kind iamv0.ResourcePermissionSpecPermissionKind, name stri
 	case iamv0.ResourcePermissionSpecPermissionKindTeam:
 		return zanzana.NewTupleEntry(zanzana.TypeTeam, name, ""), nil
 	case iamv0.ResourcePermissionSpecPermissionKindBasicRole:
+		basicRole := zanzana.TranslateBasicRole(name)
+		if basicRole == "" {
+			return "", fmt.Errorf("%w: %s", errInvalidBasicRole, name)
+		}
+
 		// e.g role:basic_viewer#assignee
-		return zanzana.NewTupleEntry(
-			zanzana.TypeRole,
-			zanzana.TranslateBasicRole(name),
-			zanzana.RelationAssignee,
-		), nil
+		return zanzana.NewTupleEntry(zanzana.TypeRole, basicRole, zanzana.RelationAssignee), nil
 	}
 
 	// should not happen since we are after create
