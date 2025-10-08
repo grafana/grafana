@@ -8,7 +8,7 @@ import { LinkedToken } from '../../monarch/LinkedToken';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
 import { CompletionItem, CompletionItemPriority, StatementPosition, SuggestionKind } from '../../monarch/types';
 import { fetchLogGroupFields } from '../../utils';
-import { LOGS_COMMANDS, LOGS_FUNCTION_OPERATORS, SORT_DIRECTION_KEYWORDS } from '../language';
+import { LOGS_COMMANDS, LOGS_FUNCTION_OPERATORS, SORT_DIRECTION_KEYWORDS, DIFF_MODIFIERS } from '../language';
 
 import { getStatementPosition } from './statementPosition';
 import { getSuggestionKinds } from './suggestionKinds';
@@ -112,6 +112,14 @@ export class LogsCompletionItemProvider extends CompletionItemProvider {
             addSuggestion(direction, {
               sortText: CompletionItemPriority.High,
               kind: monaco.languages.CompletionItemKind.Operator,
+            });
+          });
+          break;
+        case SuggestionKind.DiffModifier:
+          DIFF_MODIFIERS.forEach((modifier) => {
+            addSuggestion(modifier, {
+              sortText: CompletionItemPriority.High,
+              kind: monaco.languages.CompletionItemKind.Keyword,
             });
           });
           break;

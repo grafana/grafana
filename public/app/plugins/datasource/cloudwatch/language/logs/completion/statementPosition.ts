@@ -9,6 +9,7 @@ import {
   LIMIT,
   PARSE,
   DEDUP,
+  DIFF,
   LOGS_COMMANDS,
   LOGS_FUNCTION_OPERATORS,
   LOGS_LOGIC_OPERATORS,
@@ -66,6 +67,8 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
     switch (normalizedCurrentToken) {
       case DEDUP:
         return StatementPosition.DedupKeyword;
+      case DIFF:
+        return StatementPosition.DiffKeyword;
       case DISPLAY:
         return StatementPosition.DisplayKeyword;
       case FIELDS:
@@ -95,6 +98,8 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
     switch (normalizedPreviousNonWhiteSpace) {
       case DEDUP:
         return StatementPosition.AfterDedupKeyword;
+      case DIFF:
+        return StatementPosition.AfterDiffKeyword;
       case DISPLAY:
         return StatementPosition.AfterDisplayKeyword;
       case FIELDS:
@@ -171,6 +176,9 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
       if (nearestKeyword.value === FILTER) {
         return StatementPosition.FilterArg;
       }
+      if (nearestKeyword.value === DIFF) {
+        return StatementPosition.DiffModifierArg;
+      }
       return StatementPosition.CommandArg;
     }
 
@@ -188,6 +196,9 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
         }
         if (nearestKeyword.value === FILTER) {
           return StatementPosition.FilterArg;
+        }
+        if (nearestKeyword.value === DIFF) {
+          return StatementPosition.DiffModifierArg;
         }
         return StatementPosition.CommandArg;
       }
