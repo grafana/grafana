@@ -19,12 +19,13 @@ export function RadialArcPath({
 }: RadialArcPathProps) {
   const { radius, centerX, centerY, barWidth } = dimensions;
 
-  const startRadians = toRad(angle);
-  let endRadians = toRad(angle + arcLengthDeg);
-
-  if (endRadians - startRadians < 0.02) {
-    endRadians = startRadians + 0.01;
+  if (arcLengthDeg === 360) {
+    // For some reason a 100% full arc cannot be rendered
+    arcLengthDeg = 359.99;
   }
+
+  const startRadians = toRad(angle);
+  const endRadians = toRad(angle + arcLengthDeg);
 
   let x1 = centerX + radius * Math.cos(startRadians);
   let y1 = centerY + radius * Math.sin(startRadians);
