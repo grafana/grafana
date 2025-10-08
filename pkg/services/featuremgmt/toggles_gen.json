@@ -2214,6 +2214,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesQueryCaching",
+        "resourceVersion": "1759871513704",
+        "creationTimestamp": "2025-10-07T21:11:53Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes querycaching",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesShortURLs",
         "resourceVersion": "1756914263808",
         "creationTimestamp": "2025-08-04T12:12:12Z",

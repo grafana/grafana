@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
+	"github.com/grafana/grafana/pkg/registry/apps/querycaching"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
 )
 
@@ -24,4 +25,5 @@ var WireSet = wire.NewSet(
 	correlations.RegisterAppInstaller,
 	rules.RegisterAppInstaller,
 	notifications.RegisterAppInstaller,
+	querycaching.RegisterAppInstaller,
 )

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
+	"github.com/grafana/grafana/pkg/registry/apps/querycaching"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -36,6 +37,7 @@ func ProvideAppInstallers(
 	rulesAppInstaller *rules.AlertingRulesAppInstaller,
 	correlationsAppInstaller *correlations.CorrelationsAppInstaller,
 	alertingNotificationAppInstaller *notifications.AlertingNotificationsAppInstaller,
+	queryCachingAppInstaller *querycaching.QueryCachingAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
@@ -52,6 +54,9 @@ func ProvideAppInstallers(
 	}
 	if alertingNotificationAppInstaller != nil {
 		installers = append(installers, alertingNotificationAppInstaller)
+	}
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesQueryCaching) {
+		installers = append(installers, queryCachingAppInstaller)
 	}
 	return installers
 }
