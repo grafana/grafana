@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
-	"github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,9 +26,8 @@ func TestGetAzureSettings(t *testing.T) {
 			},
 		}
 
-		azureAdSettings := &models.SSOSettings{
-			Provider: "azuread",
-			Settings: map[string]any{},
+		azureAdSettings := &pluginsso.Settings{
+			Values: map[string]any{},
 		}
 
 		result := mergeAzureSettings(currSettings, azureAdSettings)
@@ -57,9 +56,8 @@ func TestGetAzureSettings(t *testing.T) {
 			},
 		}
 
-		azureAdSettings := &models.SSOSettings{
-			Provider: "azuread",
-			Settings: map[string]any{
+		azureAdSettings := &pluginsso.Settings{
+			Values: map[string]any{
 				"token_url":                     "sso-token-url",
 				"client_authentication":         "sso-auth",
 				"client_id":                     "sso-client-id",
@@ -97,9 +95,8 @@ func TestGetAzureSettings(t *testing.T) {
 			},
 		}
 
-		azureAdSettings := &models.SSOSettings{
-			Provider: "azuread",
-			Settings: map[string]any{
+		azureAdSettings := &pluginsso.Settings{
+			Values: map[string]any{
 				"token_url":                     "sso-token-url",
 				"client_authentication":         "sso-auth",
 				"client_id":                     "sso-client-id",
@@ -128,9 +125,8 @@ func TestGetAzureSettings(t *testing.T) {
 			},
 		}
 
-		azureAdSettings := &models.SSOSettings{
-			Provider: "azuread",
-			Settings: map[string]any{
+		azureAdSettings := &pluginsso.Settings{
+			Values: map[string]any{
 				"client_authentication": "none",
 			},
 		}
@@ -150,9 +146,8 @@ func TestGetAzureSettings(t *testing.T) {
 			},
 		}
 
-		azureAdSettings := &models.SSOSettings{
-			Provider: "azuread",
-			Settings: map[string]any{
+		azureAdSettings := &pluginsso.Settings{
+			Values: map[string]any{
 				"token_url": 12345,
 				"client_id": []string{"array", "value"},
 			},
@@ -169,9 +164,8 @@ func TestGetAzureSettings(t *testing.T) {
 			UserIdentityTokenEndpoint: nil,
 		}
 
-		azureAdSettings := &models.SSOSettings{
-			Provider: "azuread",
-			Settings: map[string]any{
+		azureAdSettings := &pluginsso.Settings{
+			Values: map[string]any{
 				"token_url": "sso-token-url",
 			},
 		}
@@ -190,9 +184,8 @@ func TestGetAzureSettings(t *testing.T) {
 			},
 		}
 
-		azureAdSettings := &models.SSOSettings{
-			Provider: "azuread",
-			Settings: map[string]any{},
+		azureAdSettings := &pluginsso.Settings{
+			Values: map[string]any{},
 		}
 
 		result := mergeAzureSettings(currSettings, azureAdSettings)
