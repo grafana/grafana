@@ -11,10 +11,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var mockSsoSettingsService = FakeSSOSettingsService{}
+var mockSsoSettingsService = ssosettings.FakeSSOSettingsService{}
 
 func TestRequestConfigProvider_PluginRequestConfig_Defaults(t *testing.T) {
 	cfg := setting.NewCfg()
