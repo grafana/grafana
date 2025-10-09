@@ -4,6 +4,7 @@ import { AlertLabels } from '@grafana/alerting/unstable';
 import { intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
+import { Link } from '@grafana/ui';
 
 import { CollapseToggle } from '../CollapseToggle';
 
@@ -27,6 +28,10 @@ export const SilencedAlertsTableRow = ({ alert, className }: Props) => {
     }
     return name;
   }, '');
+
+  const silenceId = alert.fingerprint; // Using a unique ID (fingerprint) as the link target
+  const shareableUrl = `/alerting/silences/edit?silenceId=${silenceId}`; 
+
   return (
     <>
       <tr className={className}>
@@ -39,7 +44,11 @@ export const SilencedAlertsTableRow = ({ alert, className }: Props) => {
         <td>
           <Trans i18nKey="alerting.silenced-alerts-table-row.silenced-for">for {{ duration }}</Trans>
         </td>
-        <td>{alertName}</td>
+        <td>
+          <Link href={shareableUrl} title="Go to Silence Edit Page">
+            {alertName}
+          </Link>
+        </td>
       </tr>
       {!isCollapsed && (
         <tr className={className}>
