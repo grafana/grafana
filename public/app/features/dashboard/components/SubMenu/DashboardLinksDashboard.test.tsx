@@ -23,6 +23,8 @@ afterEach(() => {
 
 const dashboardUID = '1';
 
+const getDashboardLink = () => screen.findByRole('link', { name: new RegExp(dashbdD.item.title) });
+
 describe.each([
   // App platform APIs
   true,
@@ -55,7 +57,21 @@ describe.each([
       const button = screen.getByRole('button', { name: /some title/i });
       await user.click(button);
       expect(await screen.findByRole('menu')).toBeInTheDocument();
-      expect(await screen.findByRole('link', { name: new RegExp(dashbdD.item.title) })).toBeInTheDocument();
+      expect(await getDashboardLink()).toBeInTheDocument();
+    });
+
+    it('renders dropdown items with target _blank', async () => {
+      const { user } = render(
+        <DashboardLinksDashboard
+          link={{ ...baseLinkProps, targetBlank: true }}
+          dashboardUID={dashboardUID}
+          linkInfo={{ title: 'some title' }}
+        />
+      );
+      const button = screen.getByRole('button', { name: /some title/i });
+      await user.click(button);
+      expect(await screen.findByRole('menu')).toBeInTheDocument();
+      expect(await getDashboardLink()).toHaveAttribute('target', '_blank');
     });
 
     it('handles an empty list of links', async () => {
@@ -80,8 +96,33 @@ describe.each([
           linkInfo={{ title: 'some title' }}
         />
       );
+      const dashboardLink = await getDashboardLink();
+      expect(dashboardLink).toBeInTheDocument();
+      expect(dashboardLink).not.toHaveAttribute('target', '_blank');
+    });
 
-      expect(await screen.findByRole('link', { name: new RegExp(dashbdD.item.title) })).toBeInTheDocument();
+    it('renders a list of links with target _blank', async () => {
+      render(
+        <DashboardLinksDashboard
+          link={{ ...baseLinkProps, asDropdown: false, targetBlank: true }}
+          dashboardUID={dashboardUID}
+          linkInfo={{ title: 'some title' }}
+        />
+      );
+      const dashboardLink = await getDashboardLink();
+      expect(dashboardLink).toHaveAttribute('target', '_blank');
+    });
+
+    it('does not render a link to its own dashboard', async () => {
+      render(
+        <DashboardLinksDashboard
+          link={{ ...baseLinkProps, asDropdown: false }}
+          dashboardUID={dashbdD.item.uid}
+          linkInfo={{ title: 'some title' }}
+        />
+      );
+      await screen.findAllByRole('link');
+      expect(screen.queryByRole('link', { name: new RegExp(dashbdD.item.title) })).not.toBeInTheDocument();
     });
   });
 
