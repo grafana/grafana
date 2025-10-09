@@ -40,9 +40,9 @@ export const getAvailableContentProviders = (
     } else if (mode === 'extensionpoint') {
       // In extension point mode, content providers are plugins that provide extensions
       const providesExtensions =
-        extensions.extensions &&
-        extensions.extensions.length > 0 &&
-        extensions.extensions.some((ext) => ext && ext.id && ext.id.trim() !== '');
+        (extensions.addedLinks && extensions.addedLinks.length > 0) ||
+        (extensions.addedComponents && extensions.addedComponents.length > 0) ||
+        (extensions.addedFunctions && extensions.addedFunctions.length > 0);
 
       if (providesExtensions) {
         contentProviders.add(pluginId);
