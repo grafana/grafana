@@ -16,7 +16,6 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
   const status = repo.status;
   const statusColor = getStatusColor(status?.sync.state);
   const statusIcon = getStatusIcon(status?.sync.state);
-  console.log(repo);
 
   const { url: lastCommitUrl, hasUrl } = getRepoCommitUrl(repo.spec, status?.sync.lastRef);
 
