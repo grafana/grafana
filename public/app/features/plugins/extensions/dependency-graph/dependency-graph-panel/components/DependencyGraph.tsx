@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import { useTheme2 } from '@grafana/ui';
+import { Spinner, useTheme2 } from '@grafana/ui';
 
 import { useDependencyGraphEventHandlers } from '../hooks/useDependencyGraphEventHandlers';
 import { useDependencyGraphPositions } from '../hooks/useDependencyGraphPositions';
@@ -25,6 +25,7 @@ interface DependencyGraphProps {
 export function DependencyGraph({ data, options, width, height }: DependencyGraphProps) {
   const theme = useTheme2();
   const styles = getGraphStyles(theme);
+  const [isLoading, setIsLoading] = useState(true);
 
   const isExposeMode = options.visualizationMode === 'exposedComponents';
   const isExtensionPointMode = options.visualizationMode === 'extensionpoint';
@@ -81,7 +82,23 @@ export function DependencyGraph({ data, options, width, height }: DependencyGrap
 
   useEffect(() => {
     setNodes(layoutNodes);
+    // Simulate loading time for better UX
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
+    return () => clearTimeout(timer);
   }, [layoutNodes, setNodes]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: '400px' }}
+      >
+        <Spinner size="lg" />
+      </div>
+    );
+  }
 
   // Empty state check
   if (!data.nodes.length) {
