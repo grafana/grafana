@@ -158,9 +158,17 @@ ReduceDataOptions: {
 // TODO docs
 VizOrientation: "auto" | "vertical" | "horizontal" @cuetsy(kind="enum")
 
-// Breaks out each annotation frame into multiple lanes on the x-axis
 VizAnnotations: {
+	// Breaks out each annotation frame into multiple lanes on the x-axis
 	multiLane?: bool
+	// Hides shaded area above annotation region marker
+	showRegions?: bool
+	// Sets opacity of shaded annotation region
+	regionOpacity?: number
+	// Toggles showing the dotted line above annotation markers
+	showLine?: bool
+	// @internal: Toggles the display of the annotation marker — for "xymark" annotations
+	hideMarker?: bool
 } @cuetsy(kind="interface")
 
 // TODO docs
