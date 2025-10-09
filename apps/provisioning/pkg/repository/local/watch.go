@@ -30,6 +30,10 @@ type fileWatcher struct {
 	logger   logging.Logger
 }
 
+// File watcher that buffers events for 100ms before actually firing them
+// this is helpful because editing a file may often update the same file many many times
+// for what seems like a single operation.
+// See: https://github.com/fsnotify/fsnotify/blob/main/cmd/fsnotify/dedup.go
 func NewFileWatcher(path string, accept func(string) bool) (FileWatcher, error) {
 	info, _ := os.Stat(path)
 	if !info.IsDir() {
@@ -71,7 +75,7 @@ func NewFileWatcher(path string, accept func(string) bool) (FileWatcher, error) 
 	}, nil
 }
 
-// Start implements FileWatcher.
+// Keep watching for changes until the context is done
 func (f *fileWatcher) Watch(ctx context.Context, events chan<- string) {
 	for {
 		select {

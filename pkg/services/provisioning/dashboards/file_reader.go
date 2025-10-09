@@ -121,7 +121,7 @@ func (fr *FileReader) watchChanges(ctx context.Context) error {
 				return
 			case <-events:
 				changed = true
-			case <-time.After(time.Second * 2):
+			case <-time.After(time.Second * 5): // 5s maximum refresh
 				if changed {
 					if err := fr.walkDisk(ctx); err != nil {
 						fr.log.Error("failed to walk provisioned dashboards", "error", err)
