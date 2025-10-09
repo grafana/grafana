@@ -5,19 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
-	"net/url"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-	api_v2 "github.com/jaegertracing/jaeger-idl/proto-gen/api_v2"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 var logger = backend.NewLoggerWith("logger", "tsdb.jaeger")
@@ -34,7 +27,6 @@ func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 
 type datasourceInfo struct {
 	JaegerClient JaegerClient
-	GrpcClient   api_v2.QueryServiceClient
 }
 
 type datasourceJSONData struct {
@@ -70,52 +62,9 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 		if err != nil {
 			return nil, fmt.Errorf("error creating jaeger client: %w", err)
 		}
-		// // TODO: Ask about these credentials and what to use
-		// conn, err := grpc.NewClient("dns:jaeger-eks:16686", grpc.WithTransportCredentials(credentials.NewTLS(nil)))
-		// backend.Logger.Warn("gRPC connection established", "url", conn.Target())
-		// if err != nil {
-		// 	return nil, fmt.Errorf("error creating grpc client: %w", err)
-		// }
-		grpcJaegerClient, err := newGrpcClient(settings, httpClient)
-		if err != nil {
-			return nil, fmt.Errorf("error creating grpc jaeger client: %w", err)
-		}
-		backend.Logger.Warn("gRPC client created", "client", grpcJaegerClient)
-		return &datasourceInfo{JaegerClient: jaegerClient, GrpcClient: grpcJaegerClient}, err
-	}
-}
 
-func newGrpcClient(settings backend.DataSourceInstanceSettings, httpClient *http.Client) (api_v2.QueryServiceClient, error) {
-	parsedUrl, err := url.Parse(settings.URL)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing URL: %w", err)
+		return &datasourceInfo{JaegerClient: jaegerClient}, err
 	}
-
-	// grpc needs a default port if none is set
-	onlyHost := parsedUrl.Host
-	if !strings.Contains(onlyHost, ":") {
-		onlyHost += ":16685"
-	}
-	connectionTarget := "dns:///jaeger-eks:16686"
-	var creds credentials.TransportCredentials
-	if tr, ok := httpClient.Transport.(*http.Transport); ok && tr.TLSClientConfig != nil {
-		backend.Logger.Warn("gRPC using TLS config from HTTP client")
-		creds = credentials.NewTLS(tr.TLSClientConfig)
-	} else if parsedUrl.Scheme == "https" || parsedUrl.Scheme == "grpcs" {
-		backend.Logger.Warn("gRPC using default TLS config")
-		creds = credentials.NewClientTLSFromCert(nil, "")
-	} else {
-		backend.Logger.Warn("gRPC using insecure credentials")
-		creds = insecure.NewCredentials()
-	}
-
-	conn, err := grpc.NewClient(connectionTarget, grpc.WithTransportCredentials(creds))
-	backend.Logger.Warn("gRPC connection established", "target", conn.Target())
-	if err != nil {
-		return nil, fmt.Errorf("error creating grpc client: %w", err)
-	}
-	grpcJaegerClient := api_v2.NewQueryServiceClient(conn)
-	return grpcJaegerClient, nil
 }
 
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*datasourceInfo, error) {

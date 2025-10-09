@@ -11,7 +11,6 @@ import (
 	"github.com/go-logfmt/logfmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	api_v2 "github.com/jaegertracing/jaeger-idl/proto-gen/api_v2"
 )
 
 type JaegerClient struct {
@@ -82,33 +81,6 @@ func (j *JaegerClient) Services() ([]string, error) {
 	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
 		return services, err
 	}
-
-	services = response.Data
-	return services, err
-}
-
-func (ds *datasourceInfo) GrpcServices(ctx context.Context) ([]string, error) {
-	j := ds.GrpcClient
-	var response ServicesResponse
-	services := []string{}
-
-	// u, err := url.JoinPath(j.url, "/api/services")
-	// if err != nil {
-	// 	return services, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
-	// }
-
-	res, err := j.GetServices(ctx, &api_v2.GetServicesRequest{})
-	if err != nil {
-		backend.Logger.Warn("gRPC GetServices error", "error", err)
-		return services, err
-	}
-
-	data, err := json.Marshal(res.Services)
-	if err != nil {
-		backend.Logger.Warn("gRPC marshal GetServices error", "error", err)
-		return services, err
-	}
-	backend.Logger.Warn("gRPC services", "data", string(data))
 
 	services = response.Data
 	return services, err

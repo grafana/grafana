@@ -32,8 +32,6 @@ func (s *Service) withDatasourceHandlerFunc(getHandler func(d *datasourceInfo) h
 func getServicesHandler(ds *datasourceInfo) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		services, err := ds.JaegerClient.Services()
-		grpcServices, _ := ds.GrpcServices(r.Context())
-		backend.Logger.Warn("gRPC services", "services", strings.Join(grpcServices, ", "))
 		writeResponse(services, err, rw, ds.JaegerClient.logger)
 	}
 }
