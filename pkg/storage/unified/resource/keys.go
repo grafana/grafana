@@ -24,7 +24,7 @@ func verifyRequestKey(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	if err := validation.IsValidGroup(key.Group); err != nil {
 		return NewBadRequestError(err[0])
 	}
-	if err := validation.IsValidateResource(key.Resource); err != nil {
+	if err := validation.IsValidResource(key.Resource); err != nil {
 		return NewBadRequestError(err[0])
 	}
 	if err := validation.IsValidGrafanaName(key.Name); err != nil {

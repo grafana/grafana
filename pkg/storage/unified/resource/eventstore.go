@@ -56,7 +56,7 @@ func (k EventKey) Validate() error {
 	if err := validation.IsValidGroup(k.Group); err != nil {
 		return NewValidationError("group", k.Group, err[0])
 	}
-	if err := validation.IsValidateResource(k.Resource); err != nil {
+	if err := validation.IsValidResource(k.Resource); err != nil {
 		return NewValidationError("resource", k.Resource, err[0])
 	}
 	if err := validation.IsValidGrafanaName(k.Name); err != nil {
