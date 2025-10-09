@@ -8,3 +8,4 @@ spec:
   login: testuser2
   name: Test User 2
   provisioned: false
+  role: Viewer

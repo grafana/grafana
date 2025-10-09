@@ -28,6 +28,23 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.User) error {
 		return apierrors.NewBadRequest("user must have either login or email")
 	}
 
+	err = validateRole(obj)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateRole(obj *iamv0alpha1.User) error {
+	if obj.Spec.Role == "" {
+		return apierrors.NewBadRequest("role is required")
+	}
+
+	if !identity.RoleType(obj.Spec.Role).IsValid() {
+		return apierrors.NewBadRequest(fmt.Sprintf("invalid role '%s'", obj.Spec.Role))
+	}
+
 	return nil
 }
 
@@ -69,6 +86,11 @@ func ValidateOnUpdate(ctx context.Context, oldObj, newObj *iamv0alpha1.User) err
 				newObj.Name,
 				fmt.Errorf("only service users can verify email"))
 		}
+	}
+
+	err = validateRole(newObj)
+	if err != nil {
+		return err
 	}
 
 	return nil

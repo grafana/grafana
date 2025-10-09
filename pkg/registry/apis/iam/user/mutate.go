@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func MutateOnCreateAndUpdate(ctx context.Context, obj *iamv0alpha1.User) error {
@@ -14,6 +16,8 @@ func MutateOnCreateAndUpdate(ctx context.Context, obj *iamv0alpha1.User) error {
 	if obj.Spec.Login == "" {
 		obj.Spec.Login = obj.Spec.Email
 	}
+
+	obj.Spec.Role = cases.Title(language.Und).String(obj.Spec.Role)
 
 	return nil
 }
