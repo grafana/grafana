@@ -103,8 +103,6 @@ export function RadialGauge(props: RadialGaugeProps) {
       thresholdsBar
     );
 
-    console.log('dimensions', dimensions);
-
     const displayProcessor = getFieldDisplayProcessor(displayValue);
     const spotlightGradientId = `spotlight-${barIndex}-${gaugeId}`;
     const glowFilterId = `glow-${gaugeId}`;

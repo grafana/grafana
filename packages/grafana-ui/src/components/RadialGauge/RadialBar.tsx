@@ -2,8 +2,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
-import { GaugeDimensions, toRad } from './utils';
 import { RadialArcPath } from './RadialArcPath';
+import { GaugeDimensions, toRad } from './utils';
 
 export interface RadialBarProps {
   dimensions: GaugeDimensions;
