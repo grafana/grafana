@@ -1,5 +1,5 @@
-import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { css, cx } from '@emotion/css';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -32,11 +32,8 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setInitialDatasource(undefined));
-    };
-  }, [dispatch]);
+  const [searchParams] = useSearchParams();
+  const dashboardLibraryDatasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
 
   // Get repository information to check if it's read-only
   const { isReadOnlyRepo } = useGetResourceRepositoryView({
@@ -70,7 +67,11 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const isProvisioned = dashboard instanceof DashboardScene && dashboard.isManagedRepository();
   return (
     <Stack alignItems="center" justifyContent="center">
-      <div className={styles.wrapper}>
+      <div
+        className={cx(styles.wrapper, {
+          [styles.maxWidthWrapper]: config.featureToggles.dashboardLibrary && dashboardLibraryDatasourceUid,
+        })}
+      >
         <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
           <Box borderColor="strong" borderStyle="dashed" padding={4}>
             <Stack direction="column" alignItems="center" gap={2}>
@@ -167,13 +168,15 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       label: 'dashboard-empty-wrapper',
       flexDirection: 'column',
-      maxWidth: '890px',
       gap: theme.spacing.gridSize * 4,
       paddingTop: theme.spacing(2),
 
       [theme.breakpoints.up('sm')]: {
         paddingTop: theme.spacing(12),
       },
+    }),
+    maxWidthWrapper: css({
+      maxWidth: '890px',
     }),
   };
 }
