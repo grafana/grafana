@@ -601,6 +601,9 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	lastImportTime := now.Add(-10 * time.Minute)
 	importTimes := map[NamespacedResource]time.Time{
 		{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
+
+		// This index was "just" built, and should not be rebuilt.
+		{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
 	}
 
 	support.findIndexesToRebuild(importTimes, now)
