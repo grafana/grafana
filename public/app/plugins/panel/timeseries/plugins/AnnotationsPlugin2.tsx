@@ -130,9 +130,10 @@ export const AnnotationsPlugin2 = ({
       ctx.save();
 
       ctx.beginPath();
-      // @todo rename
-      const additionalHeight = annotationsConfig?.multiLane ? annos.length * ANNOTATION_LANE_SIZE * uPlot.pxRatio : 0;
-      ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height + additionalHeight);
+      const multiLaneRowsHeight = annotationsConfig?.multiLane
+        ? annos.length * ANNOTATION_LANE_SIZE * uPlot.pxRatio
+        : 0;
+      ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height + multiLaneRowsHeight);
       ctx.clip();
 
       // Multi-lane annotations do not support vertical lines or shaded regions
