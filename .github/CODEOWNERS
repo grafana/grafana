@@ -688,7 +688,6 @@
 /packages/grafana-schema/src/**/grafanapyroscope @grafana/observability-traces-and-profiling
 /packages/grafana-schema/src/**/heatmap @grafana/dataviz-squad
 /packages/grafana-schema/src/**/histogram @grafana/dataviz-squad
-/packages/grafana-schema/src/**/librarypanel @grafana/sharing-squad
 /packages/grafana-schema/src/**/logs @grafana/observability-logs
 /packages/grafana-schema/src/**/logsnew @grafana/observability-logs
 /packages/grafana-schema/src/**/loki @grafana/oss-big-tent @grafana/observability-logs
@@ -949,6 +948,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/serviceaccounts/ @grafana/identity-squad
 /public/app/features/teams/ @grafana/access-squad
 /public/app/features/templating/ @grafana/dashboards-squad
+/public/app/features/theme-playground/ @grafana/grafana-frontend-platform
 /public/app/features/trails/ @grafana/observability-metrics
 /public/app/features/transformers/ @grafana/datapro
 /public/app/features/transformers/timeSeriesTable/ @grafana/dataviz-squad @grafana/app-o11y-visualizations
