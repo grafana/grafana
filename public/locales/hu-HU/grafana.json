@@ -1535,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "A csoport törlése folyamatban van"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "„{{refId}}” kifejezés eltávolítása"
     },
@@ -1709,6 +1712,9 @@
       },
       "placeholder-key": "kulcs",
       "placeholder-value": "érték"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Kapcsolattartási pontok megtekintése vagy létrehozása",
@@ -2024,6 +2030,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "A kijelölt riasztáskezelő már nem létezik, vagy előfordulhat, hogy nincs hozzáférési joga. A legördülő menüből választhat másik riasztáskezelőt.",
       "title-selected-alertmanager-not-found": "A kiválasztott riasztáskezelő nem található."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2916,6 +2928,13 @@
         "title-warning": "Figyelmeztetés"
       }
     },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
+    },
     "type-selector-button": {
       "add-expression": "Kifejezés hozzáadása"
     },
@@ -3240,7 +3259,7 @@
       "define-allowed-teams-ids-label": "Engedélyezett csapatazonosítók meghatározása",
       "display-name-description": "A bejelentkezési oldalon „Bejelentkezés ezzel” felirattal jelenik meg. Hasznos, ha egynél több identitásszolgáltatót vagy SSO-protokollt használ.",
       "display-name-label": "Megjelenített név",
-      "domain-hint-description": "Paraméter, amely jelzi a felhasználó tartományát az Azure AD/Entra ID bérlőben, és egyszerűsíti a bejelentkezést.",
+      "domain-hint-description": "",
       "domain-hint-label": "Tipp a domainhez",
       "domain-hint-valid-domain": "Ebben a mezőben csak érvényes domain szerepelhet.",
       "email-attribute-name-description": "Az OAuth2-azonosítótoken attribútumtérképén belül a felhasználói e-mail-kereséshez használandó kulcs neve.",
@@ -3496,6 +3515,7 @@
       "move-modal-field-label": "Mappa neve",
       "move-modal-text": "Ez a művelet áthelyezi a következő tartalmat:",
       "move-modal-title": "Áthelyezés",
+      "move-provisioned-folder": "",
       "moving": "Áthelyezés...",
       "new-folder-name-required-phrase": "A mappa nevének megadása kötelező.",
       "selected-mix-resources-modal-text": "Kiépített és nem kiépített erőforrásokat is kijelölt. Ezeket nem lehet egyszerre feldolgozni. Kérjük, válasszon csak kiépített vagy csak nem kiépített erőforrásokat, majd próbálja újra.",
@@ -4141,6 +4161,13 @@
       "body": "Próbálja ki az új tanácsadót, hogy felfedezze az adatforrásokkal és bővítményekkel kapcsolatos potenciális problémákat.",
       "go-to-advisor": "Tovább a tanácsadóhoz"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4189,6 +4216,20 @@
         "unknown-datasource": "Ismeretlen adatforrás"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Válasszon egy adatforrástípust"
@@ -4218,6 +4259,13 @@
         },
         "subtitle": "Kezelje egy helyen az adatforrás-kapcsolatait. Ezen az oldalon új adatforrást adhat meg, vagy kezelheti a meglévő kapcsolatait."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Keresés mindenhol",
@@ -6576,6 +6624,7 @@
         "service-now-integration-and-data-source": "ServiceNow-integráció és -adatforrás",
         "signal-fx-integration-and-datasource": "SignalFx-integráció és -adatforrás",
         "snowflake-integration-and-data-source": "Snowflake-integráció és -adatforrás",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic-integráció és -adatforrás",
         "visualize-and-explore-dynatrace-data": "Dynatrace-adatok megjelenítése és felfedezése",
         "visualize-and-explore-oracle-sql": "Oracle SQL megjelenítése és felfedezése",
@@ -8696,6 +8745,9 @@
       "tooltip-hide": "Jelszó elrejtése",
       "tooltip-show": "Jelszó megjelenítése"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Sor kibontása",
       "collapse": "Sor összecsukása",
@@ -8723,6 +8775,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Jobb y tengely használata"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Betöltés"
@@ -9411,6 +9466,7 @@
     "description-enable-infinite-scrolling": "Kísérleti. További eredmények kéréséhez görgessen a naplók listájának aljára.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Vezérlők megjelenítése az utolsó vagy az első naplósorra ugráshoz és szűrés naplószint szerint",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9461,9 +9517,6 @@
       "collapse": "Címkék összecsukása",
       "expand": "Címkék kibontása"
     },
-    "log-labels-list": {
-      "log-line": "naplósor"
-    },
     "log-line": {
       "has-error": "Hibákat tartalmaz",
       "is-sampled": "Mintavételezett",
@@ -9503,6 +9556,7 @@
       "inline-mode": "Megjelenítés sorban",
       "link-value-tooltip": "",
       "links-section": "Hivatkozások",
+      "log-attributes-field": "",
       "log-line-field": "Naplósor",
       "log-line-section": "Naplósor",
       "move-displayed-field-down": "Mozgatás lefelé",
@@ -9709,6 +9763,7 @@
       "line-contains": "A hozzáadás sorként szűrőt tartalmaz",
       "line-contains-not": "A hozzáadás sorként nem tartalmaz szűrőt"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Időbélyeg felbontása",
     "un-themed-log-details": {
       "aria-label-data-links": "Adathivatkozások",
@@ -13650,6 +13705,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "és",
       "placeholder-from": "",

@@ -291,6 +291,10 @@ const (
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
 	FlagQueryService = "queryService"
 
+	// FlagQueryServiceWithConnections
+	// Adds datasource connections to the query service
+	FlagQueryServiceWithConnections = "queryServiceWithConnections"
+
 	// FlagQueryServiceRewrite
 	// Rewrite requests targeting /ds/query to the query service
 	FlagQueryServiceRewrite = "queryServiceRewrite"
@@ -424,7 +428,7 @@ const (
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
 
 	// FlagAlertingSaveStateCompressed
-	// Enables the compressed protobuf-based alert state storage
+	// Enables the compressed protobuf-based alert state storage. Default is enabled.
 	FlagAlertingSaveStateCompressed = "alertingSaveStateCompressed"
 
 	// FlagScopeApi
@@ -878,10 +882,6 @@ const (
 	// use multi-tenant path for awsTempCredentials
 	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
 
-	// FlagLocalizationForPlugins
-	// Enables localization for plugins
-	FlagLocalizationForPlugins = "localizationForPlugins"
-
 	// FlagUnifiedNavbars
 	// Enables unified navbars
 	FlagUnifiedNavbars = "unifiedNavbars"
@@ -1077,4 +1077,8 @@ const (
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
+
+	// FlagCdnPluginsUrls
+	// Enable loading plugins via declarative URLs
+	FlagCdnPluginsUrls = "cdnPluginsUrls"
 )

@@ -1,0 +1,16 @@
+{
+  "metadata": {
+    "name": "unique-identifier",
+    "namespace": "org-0",
+    "uid": "YpaSG5GQAdxtLZtF6BqQWCeYXOhbVi5C4Cg4oILnJC0X",
+    "generation": 8,
+    "creationTimestamp": "2002-03-04T01:00:00Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "456"
+    }
+  },
+  "spec": {
+    "jsonData": null,
+    "title": "Display name"
+  }
+}

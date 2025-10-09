@@ -139,6 +139,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		Logger:   logger,
 		Password: cfg.BasicAuthPassword,
 		TenantID: cfg.TenantID,
+		Timeout:  cfg.Timeout,
 		URL:      u,
 	}
 	mc, err := remoteClient.New(mcCfg, metrics, tracer)
@@ -609,10 +610,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		return nil, 0, fmt.Errorf("failed to decrypt receivers: %w", err)
 	}
 
-	apiReceivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
-	for _, r := range decryptedReceivers {
-		apiReceivers = append(apiReceivers, notifier.PostableApiReceiverToApiReceiver(r))
-	}
+	apiReceivers := alertingNotify.PostableAPIReceiversToAPIReceivers(decryptedReceivers)
 	var alert *alertingNotify.TestReceiversConfigAlertParams
 	if c.Alert != nil {
 		alert = &alertingNotify.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}

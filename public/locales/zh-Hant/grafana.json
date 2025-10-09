@@ -1530,6 +1530,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "正在刪除群組"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "移除表達式「{{refId}}」"
     },
@@ -1704,6 +1707,9 @@
       },
       "placeholder-key": "key",
       "placeholder-value": "值"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "檢視或建立聯絡點",
@@ -2018,6 +2024,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "所選的 Alertmanager 不再存在，或者您可能沒有存取權限。您可以從下拉式選單中選擇其他的 Alertmanager。",
       "title-selected-alertmanager-not-found": "找不到所選的 Alertmanager。"
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2904,6 +2916,13 @@
         "title-warning": "警告"
       }
     },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
+    },
     "type-selector-button": {
       "add-expression": "新增表達式"
     },
@@ -3228,7 +3247,7 @@
       "define-allowed-teams-ids-label": "定義允許的團隊 ID",
       "display-name-description": "將在登入頁面上顯示為「使用...登入」。如果您使用多個身分提供者或 SSO 協定，這項功能會很有幫助。",
       "display-name-label": "顯示名稱",
-      "domain-hint-description": "用於指示 Azure AD/Entra ID 租用戶中使用者領域的參數，並簡化登入流程。",
+      "domain-hint-description": "",
       "domain-hint-label": "網域提示",
       "domain-hint-valid-domain": "此欄位必須為有效的網域。",
       "email-attribute-name-description": "設定用來在 OAuth2 ID 權杖的屬性對應中查找使用者電子郵件的金鑰名稱。",
@@ -3484,6 +3503,7 @@
       "move-modal-field-label": "資料夾名稱",
       "move-modal-text": "此動作將移動以下內容：",
       "move-modal-title": "移動",
+      "move-provisioned-folder": "",
       "moving": "正在移動…",
       "new-folder-name-required-phrase": "必須要有資料夾名稱。",
       "selected-mix-resources-modal-text": "您已選取已佈建和非佈建資源。這些資源無法一起處理。請僅選取已佈建的資源或僅選取非佈建資源，然後再試一次。",
@@ -4121,6 +4141,13 @@
       "body": "試試新的 Advisor，以便發現資料來源和外掛程式的潛在問題。",
       "go-to-advisor": "前往 Advisor"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4169,6 +4196,20 @@
         "unknown-datasource": "未知的資料來源"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "選擇資料來源類型"
@@ -4198,6 +4239,13 @@
         },
         "subtitle": "集中一處管理您的資料來源連線。使用此頁面新增資料來源或管理現有連線。"
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "搜尋所有",
@@ -6553,6 +6601,7 @@
         "service-now-integration-and-data-source": "ServiceNow 整合與資料來源",
         "signal-fx-integration-and-datasource": "SignalFx 整合與資料來源",
         "snowflake-integration-and-data-source": "Snowflake 整合與資料來源",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic 整合與資料來源",
         "visualize-and-explore-dynatrace-data": "視覺化並探索 Dynatrace 資料",
         "visualize-and-explore-oracle-sql": "視覺化並探索 Oracle SQL",
@@ -8673,6 +8722,9 @@
       "tooltip-hide": "隱藏密碼",
       "tooltip-show": "顯示密碼"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "展開列",
       "collapse": "收闔列",
@@ -8700,6 +8752,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "使用右 y 軸"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "正在載入"
@@ -9383,6 +9438,7 @@
     "description-enable-infinite-scrolling": "實驗性。捲動至紀錄清單底部，以請求更多結果。",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "顯示控制項以跳至最後或第一個紀錄行，並按紀錄層級篩選",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9430,9 +9486,6 @@
       "collapse": "收闔標籤",
       "expand": "展開標籤"
     },
-    "log-labels-list": {
-      "log-line": "紀錄行"
-    },
     "log-line": {
       "has-error": "有錯誤",
       "is-sampled": "已採樣",
@@ -9472,6 +9525,7 @@
       "inline-mode": "顯示內嵌",
       "link-value-tooltip": "",
       "links-section": "連結",
+      "log-attributes-field": "",
       "log-line-field": "紀錄行",
       "log-line-section": "紀錄行",
       "move-displayed-field-down": "下移",
@@ -9678,6 +9732,7 @@
       "line-contains": "新增為包含篩選條件的行",
       "line-contains-not": "新增為不包含篩選條件的行"
     },
+    "show-log-attributes": "",
     "timestamp-format": "時間戳記解決方案",
     "un-themed-log-details": {
       "aria-label-data-links": "資料連結",
@@ -13605,6 +13660,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "和",
       "placeholder-from": "",
