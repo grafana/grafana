@@ -54,7 +54,7 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 			}
 		}
 
-		_, err = session.Insert(correlation)
+		_, err = session.Omit("source_type", "target_type").Insert(correlation)
 		if err != nil {
 			return err
 		}
@@ -156,7 +156,11 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			}
 		}
 
-		updateCount, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(correlation)
+		updateCount, err := session.
+			Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).
+			Limit(1).
+			Omit("source_type", "target_type").
+			Update(correlation)
 
 		if err != nil {
 			return err

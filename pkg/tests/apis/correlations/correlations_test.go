@@ -94,7 +94,7 @@ func TestIntegrationCorrelations(t *testing.T) {
 				Path:   "/api/datasources/uid/test-A/correlations",
 				Body:   body,
 			}, &correlations.CreateCorrelationResponseBody{})
-			require.Equal(t, http.StatusOK, createAtoB.Response.StatusCode, "add dashboard star")
+			require.Equal(t, http.StatusOK, createAtoB.Response.StatusCode, "create correlation")
 			require.NotEmpty(t, createAtoB.Result.Result.UID, "a to b")
 			uidAtoB := createAtoB.Result.Result.UID
 
