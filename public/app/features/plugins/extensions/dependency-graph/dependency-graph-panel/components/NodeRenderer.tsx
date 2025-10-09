@@ -152,13 +152,9 @@ export function NodeRenderer({
         renderMenuItems={() => (
           <>
             <Menu.Item
-              label={t(
-                'extensions.dependency-graph.highlight-arrows-associated',
-                'Highlight arrows associated with {{appName}}',
-                {
-                  appName,
-                }
-              )}
+              label={t('extensions.dependency-graph.highlight-connections', 'Highlight {{appName}} connections', {
+                appName,
+              })}
               onClick={handleHighlightArrowsToContentProvider}
               icon="arrow-right"
             />
@@ -166,25 +162,17 @@ export function NodeRenderer({
               <>
                 {isContentProviderFiltered(selectedContentProviderId) ? (
                   <Menu.Item
-                    label={t(
-                      'extensions.dependency-graph.remove-content-provider-filter',
-                      'Remove {{appName}} filter',
-                      {
-                        appName,
-                      }
-                    )}
+                    label={t('extensions.dependency-graph.remove-filter', 'Remove filter', {
+                      appName,
+                    })}
                     onClick={handleRemoveContentProviderFilter}
                     icon="times"
                   />
                 ) : (
                   <Menu.Item
-                    label={t(
-                      'extensions.dependency-graph.filter-content-provider',
-                      'Filter content providers by {{appName}}',
-                      {
-                        appName,
-                      }
-                    )}
+                    label={t('extensions.dependency-graph.filter-by', 'Filter by {{appName}}', {
+                      appName,
+                    })}
                     onClick={handleFilterOnContentProvider}
                     icon="filter"
                   />

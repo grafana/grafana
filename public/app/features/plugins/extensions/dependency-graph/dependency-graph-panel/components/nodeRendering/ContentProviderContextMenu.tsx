@@ -42,14 +42,14 @@ export function ContentProviderContextMenu({
   return (
     <ContextMenu x={position.x} y={position.y} onClose={onClose}>
       <Menu.Item
-        label={t('extensions.dependency-graph.highlight-arrows', 'Highlight arrows')}
+        label={t('extensions.dependency-graph.highlight-connections', 'Highlight connections')}
         onClick={onHighlightArrows}
       />
       <Menu.Item
         label={
           isFiltered(selectedContentProviderId)
             ? t('extensions.dependency-graph.remove-filter', 'Remove filter')
-            : t('extensions.dependency-graph.filter-on', 'Filter on {{appName}}', { appName })
+            : t('extensions.dependency-graph.filter-by', 'Filter by {{appName}}', { appName })
         }
         onClick={isFiltered(selectedContentProviderId) ? onRemoveFilter : onFilter}
         icon="filter"

@@ -51,24 +51,24 @@ export function ExtensionContextMenu({
       renderMenuItems={() => (
         <>
           <Menu.Item
-            label={t('extensions.dependency-graph.highlight-arrows', 'Highlight arrows')}
+            label={t('extensions.dependency-graph.highlight-connections', 'Highlight connections')}
             icon="arrow-up"
             onClick={onHighlightArrows}
           />
           <Menu.Item
-            label={t('extensions.dependency-graph.navigate-to-extension-point', 'Navigate to extension point mode')}
+            label={t('extensions.dependency-graph.switch-to-extension-points-view', 'Switch to extension points view')}
             icon="arrow-right"
             onClick={onNavigateToExtensionPoint}
           />
           {isFiltered ? (
             <Menu.Item
-              label={t('extensions.dependency-graph.unfilter-extension-point', 'Unfilter extension point')}
+              label={t('extensions.dependency-graph.remove-filter', 'Remove filter')}
               icon="filter"
               onClick={onUnfilterExtensionPoint}
             />
           ) : (
             <Menu.Item
-              label={t('extensions.dependency-graph.filter-extension-point', 'Filter extension point')}
+              label={t('extensions.dependency-graph.filter-by-extension-point', 'Filter by extension point')}
               icon="filter"
               onClick={onFilterExtensionPoint}
             />
