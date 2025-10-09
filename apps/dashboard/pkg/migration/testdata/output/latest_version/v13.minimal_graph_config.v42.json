@@ -21,36 +21,27 @@
   "links": [],
   "panels": [
     {
-      "autoMigrateFrom": "table-old",
+      "autoMigrateFrom": "graph",
       "datasource": {
-        "apiVersion": "v1",
         "type": "prometheus",
-        "uid": "default-ds-uid"
+        "uid": "gdev-prometheus"
       },
-      "id": 1,
-      "styles": [
-        {
-          "align": "auto",
-          "pattern": "Time",
-          "type": "number"
-        },
-        {
-          "align": "auto",
-          "pattern": "Value",
-          "type": "string"
-        }
-      ],
+      "id": 4,
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
             "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "gdev-prometheus"
           },
+          "editorMode": "builder",
+          "expr": "{\"a.utf8.metric 🤘\", job=\"prometheus-utf8\"}",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
           "refId": "A"
         }
       ],
-      "type": "table"
+      "type": "timeseries"
     }
   ],
   "refresh": "",
@@ -64,7 +55,7 @@
     "to": "now"
   },
   "timepicker": {},
-  "timezone": "",
-  "title": "V22 Table Panel Styles Test",
+  "timezone": "browser",
+  "title": "Dashboard with minimal graph panel settings",
   "weekStart": ""
 }

@@ -66,6 +66,10 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 	// This is needed to match frontend hasOwnProperty behavior
 	trackOriginalTransformations(dash)
 
+	// 1.1. Track which panels had fieldConfig.defaults.custom in original input
+	// This is needed to preserve empty custom objects that were originally present
+	trackOriginalFieldConfigCustom(dash)
+
 	// 2. Apply ALL frontend defaults FIRST (DashboardModel + PanelModel defaults)
 	// This replicates the behavior of the frontend DashboardModel and PanelModel constructors
 	applyFrontendDefaults(dash)

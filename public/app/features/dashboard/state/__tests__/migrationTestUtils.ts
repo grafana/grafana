@@ -1,14 +1,9 @@
 import { readdirSync } from 'fs';
 import path from 'path';
 
-import { PanelPlugin } from '@grafana/data';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
-import { plugin as tablePanelPlugin } from 'app/plugins/panel/table/module';
-
-import { DashboardModel } from '../DashboardModel';
 
 // Set up the same datasources as backend test provider to ensure consistency
 export const dataSources = {
@@ -181,72 +176,4 @@ export function constructBackendOutputFilename(inputFile: string, targetVersion:
 
 export function constructLatestVersionOutputFilename(inputFile: string, latestVersion: number): string {
   return inputFile.replace('.json', `.v${latestVersion}.json`);
-}
-
-export const pluginVersionForAutoMigrate = '12.1.0';
-
-/**
- * Creates a type-compatible PanelPlugin wrapper for the real panel plugins
- * This ensures the plugin has the correct version set and is compatible with pluginLoaded method
- */
-function getPanelPlugin(pluginId: 'stat' | 'table'): PanelPlugin {
-  const realPlugin = pluginId === 'stat' ? statPanelPlugin : tablePanelPlugin;
-
-  // Create a copy of the plugin to avoid modifying the original
-  const pluginCopy = Object.create(Object.getPrototypeOf(realPlugin));
-  Object.assign(pluginCopy, realPlugin);
-
-  // Ensure meta and info exist
-  if (!pluginCopy.meta.info) {
-    pluginCopy.meta.info = {
-      author: { name: 'Grafana Labs', url: 'https://grafana.com' },
-      description: `${pluginId} panel plugin`,
-      links: [],
-      logos: { small: '', large: '' },
-      screenshots: [],
-      updated: '2024-01-01',
-      version: pluginVersionForAutoMigrate,
-    };
-  } else {
-    // Ensure version is set
-    pluginCopy.meta.info.version = pluginVersionForAutoMigrate;
-  }
-
-  return pluginCopy;
-}
-
-export async function handleAngularPanelMigration(
-  frontendModel: DashboardModel,
-  sourceVersion: number,
-  targetVersion: number
-): Promise<void> {
-  /* 
-    Migration from schema V27 involves migrating angular singlestat panels to stat panels
-    These panels are auto migrated where PanelModel.restoreModel() is called in the constructor,
-    and the autoMigrateFrom is set and type is set to "stat". So this logic will not run.
-    if (oldVersion < 28) {
-      panelUpgrades.push((panel: PanelModel) => {
-        if (panel.type === 'singlestat') {
-          return migrateSinglestat(panel);
-        }
-      });
-    }
-  
-    Furthermore, the PanelModel.pluginLoaded is run in the old architecture through a redux action so it will not run in this test.
-    In the scenes architecture the angular migration logic runs through a migration handler inside transformSaveModelToScene.ts
-     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
-    We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly. 
-    which means that the actual migration logic is not run.
-    We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly.
-  */
-  for (const panel of frontendModel.panels) {
-    if (panel.type === 'stat' && panel.autoMigrateFrom && targetVersion >= 28 && sourceVersion < 28) {
-      const statPlugin = getPanelPlugin('stat');
-      await panel.pluginLoaded(statPlugin);
-    }
-    if (panel.type === 'table' && panel.autoMigrateFrom === 'table-old' && targetVersion >= 24 && sourceVersion < 24) {
-      const tablePlugin = getPanelPlugin('table');
-      await panel.pluginLoaded(tablePlugin);
-    }
-  }
 }
