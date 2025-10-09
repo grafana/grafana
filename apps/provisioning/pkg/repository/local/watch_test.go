@@ -58,6 +58,11 @@ func TestWatch_TempFiles(t *testing.T) {
 			tmpdir, sub1, sub2,
 		}, watching)
 
+		// Removing the subfolder should trigger the event again
+		time.Sleep(time.Millisecond * 150)
+		err = os.RemoveAll(sub2)
+		require.NoError(t, err)
+
 		// Finish all the events
 		time.Sleep(time.Millisecond * 250)
 		cancel() // stops the context
@@ -69,5 +74,11 @@ func TestWatch_TempFiles(t *testing.T) {
 	}
 	slices.Sort(received)
 
-	require.Equal(t, []string{"aaa.txt", "bbb.txt", "sub1/ccc.txt", "sub2/ddd.txt"}, received)
+	require.Equal(t, []string{
+		"aaa.txt",
+		"bbb.txt",
+		"sub1/ccc.txt",
+		"sub2/ddd.txt", // first time because we added it
+		"sub2/ddd.txt", // second time because we removed it
+	}, received)
 }
