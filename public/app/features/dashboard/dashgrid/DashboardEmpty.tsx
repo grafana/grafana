@@ -73,7 +73,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
         })}
       >
         <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
-          <Box borderColor="strong" borderStyle="dashed" padding={4}>
+          <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={4}>
             <Stack direction="column" alignItems="center" gap={2}>
               <Text element="h1" textAlignment="center" weight="medium">
                 <Trans i18nKey="dashboard.empty.add-visualization-header">
@@ -101,7 +101,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           </Box>
           {config.featureToggles.dashboardLibrary && <DashboardLibrarySection />}
           <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
-            <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
+            <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
               <Stack direction="column" alignItems="center" gap={1}>
                 <Text element="h3" textAlignment="center" weight="medium">
                   <Trans i18nKey="dashboard.empty.add-library-panel-header">Import panel</Trans>
@@ -124,7 +124,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 </Button>
               </Stack>
             </Box>
-            <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
+            <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
               <Stack direction="column" alignItems="center" gap={1}>
                 <Text element="h3" textAlignment="center" weight="medium">
                   <Trans i18nKey="dashboard.empty.import-a-dashboard-header">Import a dashboard</Trans>
