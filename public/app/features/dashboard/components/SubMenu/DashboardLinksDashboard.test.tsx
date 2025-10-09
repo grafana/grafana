@@ -13,7 +13,6 @@ import { resetGrafanaSearcher } from 'app/features/search/service/searcher';
 import { resolveLinks, searchForTags, DashboardLinksDashboard } from './DashboardLinksDashboard';
 
 const [_, { dashbdD }] = getFolderFixtures();
-
 setBackendSrv(backendSrv);
 setupMockServer();
 
@@ -21,9 +20,37 @@ afterEach(() => {
   resetGrafanaSearcher();
 });
 
+type DeepPartial<T> = T extends object
+  ? {
+      [P in keyof T]?: DeepPartial<T[P]>;
+    }
+  : T;
+
 const dashboardUID = '1';
 
+const baseLinkProps: ComponentProps<typeof DashboardLinksDashboard>['link'] = {
+  asDropdown: true,
+  icon: 'some icon',
+  includeVars: false,
+  keepTime: false,
+  tags: [],
+  targetBlank: false,
+  title: 'some title',
+  tooltip: '',
+  type: 'dashboards',
+};
+
 const getDashboardLink = () => screen.findByRole('link', { name: new RegExp(dashbdD.item.title) });
+
+const renderComponent = (props: DeepPartial<ComponentProps<typeof DashboardLinksDashboard>> = {}) => {
+  return render(
+    <DashboardLinksDashboard
+      link={{ ...baseLinkProps, ...props.link }}
+      dashboardUID={props.dashboardUID || dashboardUID}
+      linkInfo={{ title: 'some title', ...props.linkInfo }}
+    />
+  );
+};
 
 describe.each([
   // App platform APIs
@@ -34,26 +61,8 @@ describe.each([
   testWithFeatureToggles(featureTogglesEnabled ? ['unifiedStorageSearchUI'] : []);
 
   describe('DashboardLinksDashboard', () => {
-    const baseLinkProps: ComponentProps<typeof DashboardLinksDashboard>['link'] = {
-      asDropdown: true,
-      icon: 'some icon',
-      includeVars: false,
-      keepTime: false,
-      tags: [],
-      targetBlank: false,
-      title: 'some title',
-      tooltip: '',
-      type: 'dashboards',
-    };
-
     it('renders a dropdown', async () => {
-      const { user } = render(
-        <DashboardLinksDashboard
-          link={{ ...baseLinkProps }}
-          dashboardUID={dashboardUID}
-          linkInfo={{ title: 'some title' }}
-        />
-      );
+      const { user } = renderComponent();
       const button = screen.getByRole('button', { name: /some title/i });
       await user.click(button);
       expect(await screen.findByRole('menu')).toBeInTheDocument();
@@ -61,13 +70,7 @@ describe.each([
     });
 
     it('renders dropdown items with target _blank', async () => {
-      const { user } = render(
-        <DashboardLinksDashboard
-          link={{ ...baseLinkProps, targetBlank: true }}
-          dashboardUID={dashboardUID}
-          linkInfo={{ title: 'some title' }}
-        />
-      );
+      const { user } = renderComponent({ link: { targetBlank: true } });
       const button = screen.getByRole('button', { name: /some title/i });
       await user.click(button);
       expect(await screen.findByRole('menu')).toBeInTheDocument();
@@ -75,13 +78,7 @@ describe.each([
     });
 
     it('handles an empty list of links', async () => {
-      const { user } = render(
-        <DashboardLinksDashboard
-          link={{ ...baseLinkProps, tags: ['foo-some-tag-of-which-there-are-none'] }}
-          dashboardUID={dashboardUID}
-          linkInfo={{ title: 'some title' }}
-        />
-      );
+      const { user } = renderComponent({ link: { tags: ['foo-some-tag-of-which-there-are-none'] } });
       const button = screen.getByRole('button', { name: /some title/i });
       await user.click(button);
 
@@ -89,38 +86,23 @@ describe.each([
     });
 
     it('renders a list of links', async () => {
-      render(
-        <DashboardLinksDashboard
-          link={{ ...baseLinkProps, asDropdown: false }}
-          dashboardUID={dashboardUID}
-          linkInfo={{ title: 'some title' }}
-        />
-      );
+      renderComponent({ link: { asDropdown: false } });
+
       const dashboardLink = await getDashboardLink();
       expect(dashboardLink).toBeInTheDocument();
       expect(dashboardLink).not.toHaveAttribute('target', '_blank');
     });
 
     it('renders a list of links with target _blank', async () => {
-      render(
-        <DashboardLinksDashboard
-          link={{ ...baseLinkProps, asDropdown: false, targetBlank: true }}
-          dashboardUID={dashboardUID}
-          linkInfo={{ title: 'some title' }}
-        />
-      );
+      renderComponent({ link: { asDropdown: false, targetBlank: true } });
+
       const dashboardLink = await getDashboardLink();
       expect(dashboardLink).toHaveAttribute('target', '_blank');
     });
 
     it('does not render a link to its own dashboard', async () => {
-      render(
-        <DashboardLinksDashboard
-          link={{ ...baseLinkProps, asDropdown: false }}
-          dashboardUID={dashbdD.item.uid}
-          linkInfo={{ title: 'some title' }}
-        />
-      );
+      renderComponent({ link: { asDropdown: false }, dashboardUID: dashbdD.item.uid });
+
       await screen.findAllByRole('link');
       expect(screen.queryByRole('link', { name: new RegExp(dashbdD.item.title) })).not.toBeInTheDocument();
     });
