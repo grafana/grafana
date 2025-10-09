@@ -3,7 +3,6 @@
   "apiVersion": "dashboard.grafana.app/v2beta1",
   "metadata": {
     "name": "annotation-conversions-test",
-    "creationTimestamp": null,
     "labels": {
       "test": "annotation-conversions"
     }
@@ -157,6 +156,7 @@
             "kind": "DataQuery",
             "group": "grafana",
             "version": "v0",
+            "datasource": {},
             "spec": {
               "expr": "static_annotation_query",
               "refId": "Anno"
@@ -274,6 +274,7 @@
             "kind": "DataQuery",
             "group": "grafana",
             "version": "v0",
+            "datasource": {},
             "spec": {}
           },
           "enable": false,
@@ -289,6 +290,7 @@
     ],
     "cursorSync": "Off",
     "description": "Testing annotation transformations",
+    "editable": true,
     "elements": {},
     "layout": {
       "kind": "GridLayout",
@@ -297,13 +299,14 @@
       }
     },
     "links": [],
+    "liveNow": false,
     "preload": false,
     "tags": [
       "test",
       "annotations"
     ],
     "timeSettings": {
-      "timezone": "browser",
+      "timezone": "",
       "from": "now-24h",
       "to": "now",
       "autoRefresh": "",

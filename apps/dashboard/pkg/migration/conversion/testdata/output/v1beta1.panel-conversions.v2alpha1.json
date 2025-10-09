@@ -3,7 +3,6 @@
   "apiVersion": "dashboard.grafana.app/v2alpha1",
   "metadata": {
     "name": "panel-conversions-test",
-    "creationTimestamp": null,
     "labels": {
       "test": "panel-conversions"
     }
@@ -35,7 +34,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "prometheus",
+                      "kind": "DataQuery",
                       "spec": {
                         "expr": "up",
                         "interval": "30s"
@@ -53,7 +52,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "prometheus",
+                      "kind": "DataQuery",
                       "spec": {
                         "expr": "cpu_usage",
                         "interval": "1m"
@@ -96,7 +95,8 @@
                 "legend": {
                   "calcs": [],
                   "displayMode": "list",
-                  "placement": "bottom"
+                  "placement": "bottom",
+                  "showLegend": true
                 },
                 "tooltip": {
                   "mode": "single"
@@ -159,7 +159,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "prometheus",
+                      "kind": "DataQuery",
                       "spec": {
                         "scenarioId": "random_walk"
                       }
@@ -205,7 +205,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "loki",
+                      "kind": "DataQuery",
                       "spec": {
                         "format": "table",
                         "rawSql": "SELECT * FROM metrics"
@@ -260,7 +260,7 @@
                   "kind": "PanelQuery",
                   "spec": {
                     "query": {
-                      "kind": "elasticsearch",
+                      "kind": "DataQuery",
                       "spec": {
                         "bucketAggs": [
                           {
@@ -473,13 +473,14 @@
       }
     },
     "links": [],
+    "liveNow": false,
     "preload": false,
     "tags": [
       "test",
       "panels"
     ],
     "timeSettings": {
-      "timezone": "browser",
+      "timezone": "",
       "from": "now-1h",
       "to": "now",
       "autoRefresh": "",

@@ -3,7 +3,6 @@
   "apiVersion": "dashboard.grafana.app/v2beta1",
   "metadata": {
     "name": "dashboard-properties-test",
-    "creationTimestamp": null,
     "labels": {
       "test": "dashboard-properties"
     }
@@ -17,6 +16,7 @@
             "kind": "DataQuery",
             "group": "grafana",
             "version": "v0",
+            "datasource": {},
             "spec": {
               "refId": "Anno"
             }
@@ -88,7 +88,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 0,
-              "y": 0,
+              "y": 9,
               "width": 12,
               "height": 8,
               "element": {

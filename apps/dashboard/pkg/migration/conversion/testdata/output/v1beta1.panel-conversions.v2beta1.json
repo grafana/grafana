@@ -3,7 +3,6 @@
   "apiVersion": "dashboard.grafana.app/v2beta1",
   "metadata": {
     "name": "panel-conversions-test",
-    "creationTimestamp": null,
     "labels": {
       "test": "panel-conversions"
     }
@@ -99,7 +98,8 @@
                 "legend": {
                   "calcs": [],
                   "displayMode": "list",
-                  "placement": "bottom"
+                  "placement": "bottom",
+                  "showLegend": true
                 },
                 "tooltip": {
                   "mode": "single"
@@ -482,13 +482,14 @@
       }
     },
     "links": [],
+    "liveNow": false,
     "preload": false,
     "tags": [
       "test",
       "panels"
     ],
     "timeSettings": {
-      "timezone": "browser",
+      "timezone": "",
       "from": "now-1h",
       "to": "now",
       "autoRefresh": "",

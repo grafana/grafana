@@ -3,7 +3,6 @@
   "apiVersion": "dashboard.grafana.app/v2beta1",
   "metadata": {
     "name": "variable-conversions-test",
-    "creationTimestamp": null,
     "labels": {
       "test": "variable-conversions"
     }
@@ -12,6 +11,7 @@
     "annotations": [],
     "cursorSync": "Off",
     "description": "Testing all variable types and transformations",
+    "editable": true,
     "elements": {},
     "layout": {
       "kind": "GridLayout",
@@ -20,13 +20,14 @@
       }
     },
     "links": [],
+    "liveNow": false,
     "preload": false,
     "tags": [
       "test",
       "variables"
     ],
     "timeSettings": {
-      "timezone": "browser",
+      "timezone": "",
       "from": "now-6h",
       "to": "now",
       "autoRefresh": "",
@@ -111,6 +112,7 @@
           },
           "regex": "/.*9090.*/",
           "sort": "alphabeticalAsc",
+          "definition": "label_values(up, instance)",
           "options": [
             {
               "selected": false,
@@ -311,7 +313,7 @@
           },
           "label": "Legacy Variable",
           "hide": "dontHide",
-          "refresh": "never",
+          "refresh": "onDashboardLoad",
           "skipUrlSync": false,
           "description": "Variable with legacy string value",
           "query": {
@@ -327,6 +329,7 @@
           },
           "regex": "",
           "sort": "disabled",
+          "definition": "up",
           "options": [],
           "multi": false,
           "includeAll": false,
@@ -375,6 +378,7 @@
           },
           "regex": "/host[0-9]+/",
           "sort": "alphabeticalDesc",
+          "definition": "",
           "options": [],
           "multi": true,
           "includeAll": true,

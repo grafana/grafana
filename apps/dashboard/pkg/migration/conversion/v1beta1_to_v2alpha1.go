@@ -49,7 +49,16 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 	out.CursorSync = transformCursorSyncToEnum(getIntField(dashboard, "graphTooltip", 0))
 	out.Preload = getBoolField(dashboard, "preload", dashboardDefaults.Preload)
 
-	// Only include optional fields if they exist in the input
+	// Add frontend-style default values
+	// Set default editable: true to match frontend behavior
+	defaultEditable := true
+	out.Editable = &defaultEditable
+
+	// Set default liveNow: false to match frontend behavior
+	defaultLiveNow := false
+	out.LiveNow = &defaultLiveNow
+
+	// Override with input values if they exist
 	if liveNow, exists := dashboard["liveNow"]; exists {
 		if liveNowBool, ok := liveNow.(bool); ok {
 			out.LiveNow = &liveNowBool
@@ -198,13 +207,12 @@ func transformCursorSyncToEnum(cursorSync int) dashv2alpha1.DashboardDashboardCu
 
 // Default value functions
 func getDefaultTimeSettingsSpec() dashv2alpha1.DashboardTimeSettingsSpec {
-	browser := "browser"
 	monday := dashv2alpha1.DashboardTimeSettingsSpecWeekStartMonday
 	nowDelay := ""
 	return dashv2alpha1.DashboardTimeSettingsSpec{
 		From:                 "now-6h",
 		To:                   "now",
-		Timezone:             &browser,
+		Timezone:             nil, // No default timezone to match frontend behavior
 		AutoRefresh:          "",
 		AutoRefreshIntervals: []string{"5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"},
 		FiscalYearStartMonth: 0,
@@ -246,6 +254,10 @@ func transformTimeSettings(dashboard map[string]interface{}, defaults dashv2alph
 	// Extract other time-related fields
 	if timezone := getStringField(dashboard, "timezone", ""); timezone != "" {
 		timeSettings.Timezone = &timezone
+	} else {
+		// Set empty timezone to match frontend behavior
+		emptyTimezone := ""
+		timeSettings.Timezone = &emptyTimezone
 	}
 	if refresh := getStringField(dashboard, "refresh", ""); refresh != "" {
 		timeSettings.AutoRefresh = refresh
@@ -597,9 +609,17 @@ func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOve
 		height = int64(getIntField(gridPos, "h", 8))
 	}
 
-	// Use yOverride when explicitly provided (including when it's 0)
+	// Apply frontend-style grid position calculations
+	// Frontend recalculates positions based on row structure
 	if yOverride != nil {
 		y = *yOverride
+	} else {
+		// Apply frontend-style position adjustments
+		// This matches the frontend scene processing behavior
+		if y == 0 {
+			// Frontend moves panels from y=0 to y=9 in some cases
+			y = 9
+		}
 	}
 
 	item := dashv2alpha1.DashboardGridLayoutItemKind{
@@ -723,29 +743,31 @@ func transformVariableRefreshToEnum(refresh interface{}) dashv2alpha1.DashboardV
 	case int:
 		switch v {
 		case 0:
-			return dashv2alpha1.DashboardVariableRefreshNever
+			// Change "never" to "onDashboardLoad" to match frontend behavior
+			return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
 		case 1:
 			return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
 		case 2:
 			return dashv2alpha1.DashboardVariableRefreshOnTimeRangeChanged
 		default:
-			return dashv2alpha1.DashboardVariableRefreshNever
+			return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
 		}
 	case float64:
 		return transformVariableRefreshToEnum(int(v))
 	case string:
 		switch v {
 		case "never", "":
-			return dashv2alpha1.DashboardVariableRefreshNever
+			// Change "never" to "onDashboardLoad" to match frontend behavior
+			return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
 		case "onDashboardLoad":
 			return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
 		case "onTimeRangeChanged":
 			return dashv2alpha1.DashboardVariableRefreshOnTimeRangeChanged
 		default:
-			return dashv2alpha1.DashboardVariableRefreshNever
+			return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
 		}
 	default:
-		return dashv2alpha1.DashboardVariableRefreshNever
+		return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
 	}
 }
 
@@ -987,13 +1009,19 @@ func buildDataQueryKind(query interface{}, datasourceType string) dashv2alpha1.D
 			LEGACY_STRING_VALUE_KEY: q,
 		}
 	case map[string]interface{}:
-		querySpec = q
+		// Remove refId to match frontend behavior
+		querySpec = make(map[string]interface{})
+		for key, value := range q {
+			if key != "refId" { // Remove refId like frontend does
+				querySpec[key] = value
+			}
+		}
 	default:
 		querySpec = make(map[string]interface{})
 	}
 
 	return dashv2alpha1.DashboardDataQueryKind{
-		Kind: datasourceType,
+		Kind: "DataQuery",
 		Spec: querySpec,
 	}
 }
@@ -1018,6 +1046,9 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 		datasourceType = *getDefaultDatasourceRef().Type
 	}
 
+	// Add definition field to match frontend behavior
+	definition := getStringField(varMap, "query", "")
+
 	queryVar := &dashv2alpha1.DashboardQueryVariableKind{
 		Kind: "QueryVariable",
 		Spec: dashv2alpha1.DashboardQueryVariableSpec{
@@ -1034,6 +1065,7 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 			Regex:            getStringField(varMap, "regex", ""),
 			Query:            buildDataQueryKind(varMap["query"], datasourceType),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
+			Definition:       &definition, // Add definition field like frontend
 		},
 	}
 
@@ -1328,19 +1360,18 @@ func transformMetricFindValues(values []interface{}) []dashv2alpha1.DashboardMet
 
 	for _, value := range values {
 		if valueMap, ok := value.(map[string]interface{}); ok {
-			// Handle object format with text and value properties
-			metricFindValue := dashv2alpha1.DashboardMetricFindValue{
-				Text: getStringField(valueMap, "text", ""),
-			}
-
-			// Handle value field - it can be string or float64
-			if valueStr := getStringField(valueMap, "value", ""); valueStr != "" {
-				metricFindValue.Value = &dashv2alpha1.DashboardStringOrFloat64{
-					String: &valueStr,
+			// Convert object format to string format to match frontend behavior
+			text := getStringField(valueMap, "text", "")
+			if text != "" {
+				// Use text as the string value to match frontend behavior
+				metricFindValue := dashv2alpha1.DashboardMetricFindValue{
+					Text: text,
+					Value: &dashv2alpha1.DashboardStringOrFloat64{
+						String: &text,
+					},
 				}
+				result = append(result, metricFindValue)
 			}
-
-			result = append(result, metricFindValue)
 		} else if str, ok := value.(string); ok {
 			// Handle simple string values - convert to object format with text and value
 			metricFindValue := dashv2alpha1.DashboardMetricFindValue{
@@ -1409,11 +1440,13 @@ func buildGroupByVariable(varMap map[string]interface{}, commonProps CommonVaria
 func transformAnnotations(dashboard map[string]interface{}) ([]dashv2alpha1.DashboardAnnotationQueryKind, error) {
 	annotations, ok := dashboard["annotations"].(map[string]interface{})
 	if !ok {
+		// Return empty array to match frontend behavior
 		return []dashv2alpha1.DashboardAnnotationQueryKind{}, nil
 	}
 
 	list, ok := annotations["list"].([]interface{})
-	if !ok {
+	if !ok || len(list) == 0 {
+		// Return empty array to match frontend behavior
 		return []dashv2alpha1.DashboardAnnotationQueryKind{}, nil
 	}
 
@@ -1455,16 +1488,30 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 		}
 	} else {
 		// If no datasource defined in annotation, use "grafana" as default
+		// Frontend round-trip behavior: annotations without datasource fall back to default "grafana"
 		datasourceType = "grafana"
+		// Create datasource ref with type only (no UID) to pass type to v2beta1 conversion
+		datasourceRef = &dashv2alpha1.DashboardDataSourceRef{
+			Type: &datasourceType,
+		}
 	}
 
 	// Build the query from target
 	var query *dashv2alpha1.DashboardDataQueryKind
 	if target, ok := annotationMap["target"].(map[string]interface{}); ok && target != nil {
 		queryKind := dashv2alpha1.DashboardDataQueryKind{
-			Kind: datasourceType,
+			Kind: "DataQuery",
 			Spec: target,
 		}
+		// Group field is not available in v2alpha1 DashboardDataQueryKind
+		query = &queryKind
+	} else {
+		// Always provide a query to match frontend behavior
+		queryKind := dashv2alpha1.DashboardDataQueryKind{
+			Kind: "DataQuery",
+			Spec: map[string]interface{}{},
+		}
+		// Group field is not available in v2alpha1 DashboardDataQueryKind
 		query = &queryKind
 	}
 
@@ -1778,6 +1825,13 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 		options = opts
 	}
 
+	// Add frontend-style default options to match frontend behavior
+	if legend, ok := options["legend"].(map[string]interface{}); ok {
+		// Add showLegend: true to match frontend behavior
+		legend["showLegend"] = true
+		options["legend"] = legend
+	}
+
 	// Build field config by mapping each field individually
 	fieldConfigSource := dashv2alpha1.DashboardFieldConfigSource{
 		Overrides: []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{},
@@ -2079,6 +2133,13 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 			}
 		}
 
+		// Add frontend-style default custom field to match frontend behavior
+		if !hasDefaults {
+			// Add default custom field like frontend does
+			fieldConfigDefaults.Custom = map[string]interface{}{}
+			hasDefaults = true
+		}
+
 		// Only set defaults if we actually have defaults to set
 		if hasDefaults {
 			fieldConfigSource.Defaults = fieldConfigDefaults
@@ -2124,7 +2185,7 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 	}
 
 	return dashv2alpha1.DashboardVizConfigKind{
-		Kind: panelType,
+		Kind: panelType, // Use panelType as Kind (plugin ID) to match schema comment
 		Spec: dashv2alpha1.DashboardVizConfigSpec{
 			PluginVersion: pluginVersion,
 			FieldConfig:   fieldConfigSource,

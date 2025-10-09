@@ -125,21 +125,26 @@ func convertDataQuery_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardDataQueryKin
 	if in == nil {
 		// v2beta1 requires a query even if v2alpha1 had none, so create a default
 		out.Kind = "DataQuery"
-		out.Group = ""
 		out.Version = "v0"
 		out.Spec = make(map[string]interface{})
+		// Don't set group field for manual annotations (no datasource)
 	} else {
 		out.Kind = "DataQuery"
-		out.Group = in.Kind
 		out.Version = "v0"
 		out.Spec = in.Spec
+		// Don't set group field by default - only set if datasource is present
 	}
 
-	// Convert datasource reference
+	// Convert datasource reference and set group from datasource type
 	if datasource != nil {
 		out.Datasource = &dashv2beta1.DashboardV2beta1DataQueryKindDatasource{}
 		if datasource.Uid != nil {
 			out.Datasource.Name = datasource.Uid
+		}
+		// Set group to datasource type to match frontend behavior
+		// Only set group if datasource type is not empty (matches frontend logic)
+		if datasource.Type != nil && *datasource.Type != "" {
+			out.Group = *datasource.Type
 		}
 	}
 
@@ -256,7 +261,7 @@ func convertQueryOptions_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardQueryOpti
 
 func convertVizConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVizConfigKind, out *dashv2beta1.DashboardVizConfigKind) error {
 	out.Kind = "VizConfig"
-	out.Group = in.Kind
+	out.Group = in.Kind // in.Kind is the panel type (e.g., "timeseries", "graph")
 	out.Version = in.Spec.PluginVersion
 	out.Spec = dashv2beta1.DashboardVizConfigSpec{
 		Options: in.Spec.Options,

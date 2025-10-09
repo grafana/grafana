@@ -3,7 +3,6 @@
   "apiVersion": "dashboard.grafana.app/v0alpha1",
   "metadata": {
     "name": "variable-conversions-test",
-    "creationTimestamp": null,
     "labels": {
       "test": "variable-conversions"
     }
