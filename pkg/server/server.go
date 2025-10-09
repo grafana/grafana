@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs/adapter"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -217,4 +218,10 @@ func (s *Server) notifySystemd(state string) {
 	if err != nil {
 		s.log.Warn("Failed to write notification to systemd", "err", err)
 	}
+}
+
+// ProvideBasicRestConfigProvider provides a basic REST config provider for enterprise builds.
+// This function is available in all build modes to support wire generation.
+func ProvideBasicRestConfigProvider() apiserver.RestConfigProvider {
+	return apiserver.WithoutRestConfig
 }
