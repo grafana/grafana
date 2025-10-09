@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 
 import { config } from '@grafana/runtime';
 
@@ -6,64 +6,110 @@ import { ExportAsCode } from './ExportAsCode';
 
 // Mock react-virtualized-auto-sizer
 jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: { children: (props: { width: number; height: number }) => React.ReactNode }) => {
-    return children({ width: 800, height: 600 });
+  return ({
+    children,
+    'data-testid': dataTestId,
+    ...props
+  }: {
+    children: (props: { width: number; height: number }) => React.ReactNode;
+    'data-testid'?: string;
+    [key: string]: unknown;
+  }) => {
+    return (
+      <div data-testid={dataTestId} {...props}>
+        {children({ width: 800, height: 600 })}
+      </div>
+    );
   };
 });
 
 describe('ExportAsCode', () => {
+  let consoleErrorSpy: jest.SpyInstance;
+
   beforeEach(() => {
     config.featureToggles.kubernetesDashboards = false;
+    // Mock console.error to prevent test failures
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   describe('Layout and Dimensions', () => {
-    it('should render with proper container structure', () => {
-      const { container } = render(<ExportAsCodeComponent />);
+    it('should render with proper container structure', async () => {
+      let container: HTMLElement;
+
+      await act(async () => {
+        const result = render(<ExportAsCodeComponent />);
+        container = result.container;
+      });
 
       // Check that the main container is rendered
-      const mainContainer = container.querySelector('[data-testid="data-testid export as json drawer container"]');
+      const mainContainer = container!.querySelector('[data-testid="data-testid export as json drawer container"]');
       expect(mainContainer).toBeInTheDocument();
     });
 
-    it('should use disableWidth on AutoSizer to prevent width=0 issue', () => {
-      const { container } = render(<ExportAsCodeComponent />);
+    it('should use disableWidth on AutoSizer to prevent width=0 issue', async () => {
+      let container: HTMLElement;
+
+      await act(async () => {
+        const result = render(<ExportAsCodeComponent />);
+        container = result.container;
+      });
 
       // Check that AutoSizer has disableWidth attribute
-      const autoSizer = container.querySelector('[data-testid="data-testid export as json code editor"]');
+      const autoSizer = container!.querySelector('[data-testid="data-testid export as json code editor"]');
       expect(autoSizer).toBeInTheDocument();
     });
   });
 
   describe('Export Functionality', () => {
-    it('should render export controls', () => {
-      render(<ExportAsCodeComponent />);
+    it('should render export controls', async () => {
+      await act(async () => {
+        render(<ExportAsCodeComponent />);
+      });
+
       expect(screen.getByText(/copy or download a file containing the definition/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /download file/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /copy to clipboard/i })).toBeInTheDocument();
     });
 
-    it('should show export externally toggle when kubernetes dashboards feature is disabled', () => {
+    it('should show export externally toggle when kubernetes dashboards feature is disabled', async () => {
       config.featureToggles.kubernetesDashboards = false;
-      render(<ExportAsCodeComponent />);
+
+      await act(async () => {
+        render(<ExportAsCodeComponent />);
+      });
+
       expect(
         screen.getByRole('switch', { name: /export the dashboard to use in another instance/i })
       ).toBeInTheDocument();
     });
 
-    it('should show resource export when kubernetes dashboards feature is enabled', () => {
+    it('should show resource export when kubernetes dashboards feature is enabled', async () => {
       config.featureToggles.kubernetesDashboards = true;
-      render(<ExportAsCodeComponent />);
+
+      await act(async () => {
+        render(<ExportAsCodeComponent />);
+      });
+
       expect(screen.getByText(/export for sharing externally/i)).toBeInTheDocument();
     });
   });
 
   describe('Regression Prevention', () => {
-    it('should use disableWidth to prevent width=0 issue', () => {
+    it('should use disableWidth to prevent width=0 issue', async () => {
       // This test ensures the disableWidth solution is applied
-      const { container } = render(<ExportAsCodeComponent />);
+      let container: HTMLElement;
+
+      await act(async () => {
+        const result = render(<ExportAsCodeComponent />);
+        container = result.container;
+      });
 
       // Check that AutoSizer is rendered with the correct data-testid
-      const autoSizer = container.querySelector('[data-testid="data-testid export as json code editor"]');
+      const autoSizer = container!.querySelector('[data-testid="data-testid export as json code editor"]');
       expect(autoSizer).toBeInTheDocument();
 
       // The disableWidth approach prevents width=0 issues by using 100% width
