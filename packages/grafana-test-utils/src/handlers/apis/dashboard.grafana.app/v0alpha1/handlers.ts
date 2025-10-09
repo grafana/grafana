@@ -23,6 +23,7 @@ const getSearchHandler = () =>
     const typeFilter = new URL(request.url).searchParams.get('type') || null;
     const nameFilter = new URL(request.url).searchParams.getAll('name');
     const mappedTypeFilter = typeFilter ? typeFilterMap[typeFilter] || typeFilter : null;
+    const tagFilter = new URL(request.url).searchParams.getAll('tag') || null;
 
     const filtered = mockTree.filter((filterItem) => {
       const filters: FilterArray = [
@@ -37,6 +38,14 @@ const getSearchHandler = () =>
 
       if (typeFilter) {
         filters.push(({ item }) => item.kind === mappedTypeFilter);
+      }
+
+      if (tagFilter && tagFilter.length > 0) {
+        filters.push(({ item }) =>
+          Boolean(
+            (item.kind === 'folder' || item.kind === 'dashboard') && item.tags?.some((tag) => tagFilter.includes(tag))
+          )
+        );
       }
 
       if (folderFilter && folderFilter !== 'general') {
