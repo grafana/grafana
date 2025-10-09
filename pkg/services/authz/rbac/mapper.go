@@ -202,7 +202,7 @@ func NewMapperRegistry() MapperRegistry {
 				resource:  "rolebindings",
 				attribute: "uid",
 				verbMapping: map[string]string{
-					utils.VerbCreate:           "users.roles:write",
+					utils.VerbCreate:           "users.roles:add",
 					utils.VerbGet:              "users.roles:read",
 					utils.VerbUpdate:           "users.roles:add",
 					utils.VerbPatch:            "users.roles:add",
