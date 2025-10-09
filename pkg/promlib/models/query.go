@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -68,46 +69,14 @@ type PrometheusQueryProperties struct {
 	LegendFormat string `json:"legendFormat,omitempty"`
 
 	// A set of filters applied to apply to the query
-	Scopes []ScopeSpec `json:"scopes,omitempty"`
+	Scopes []scope.ScopeSpec `json:"scopes,omitempty"`
 
 	// Additional Ad-hoc filters that take precedence over Scope on conflict.
-	AdhocFilters []ScopeFilter `json:"adhocFilters,omitempty"`
+	AdhocFilters []scope.ScopeFilter `json:"adhocFilters,omitempty"`
 
 	// Group By parameters to apply to aggregate expressions in the query
 	GroupByKeys []string `json:"groupByKeys,omitempty"`
 }
-
-// ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go
-// to avoid import (temp fix). This also has metadata.name inlined.
-type ScopeSpec struct {
-	Name        string        `json:"name"` // This is the identifier from metadata.name of the scope model.
-	Title       string        `json:"title"`
-	DefaultPath []string      `json:"defaultPath,omitempty"`
-	Filters     []ScopeFilter `json:"filters,omitempty"`
-}
-
-// ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go
-// to avoid import (temp fix)
-type ScopeFilter struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-	// Values is used for operators that require multiple values (e.g. one-of and not-one-of).
-	Values   []string       `json:"values,omitempty"`
-	Operator FilterOperator `json:"operator"`
-}
-
-// FilterOperator is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go
-type FilterOperator string
-
-// Hand copy of enum from pkg/apis/scope/v0alpha1/types.go
-const (
-	FilterOperatorEquals        FilterOperator = "equals"
-	FilterOperatorNotEquals     FilterOperator = "not-equals"
-	FilterOperatorRegexMatch    FilterOperator = "regex-match"
-	FilterOperatorRegexNotMatch FilterOperator = "regex-not-match"
-	FilterOperatorOneOf         FilterOperator = "one-of"
-	FilterOperatorNotOneOf      FilterOperator = "not-one-of"
-)
 
 // Internal interval and range variables
 const (
@@ -175,7 +144,7 @@ type Query struct {
 	ExemplarQuery bool
 	UtcOffsetSec  int64
 
-	Scopes []ScopeSpec
+	Scopes []scope.ScopeSpec
 }
 
 // This internal query struct is just like QueryModel, except it does not include:
@@ -217,7 +186,7 @@ func Parse(ctx context.Context, log glog.Logger, span trace.Span, query backend.
 	)
 
 	if enableScope {
-		var scopeFilters []ScopeFilter
+		var scopeFilters []scope.ScopeFilter
 		for _, scope := range model.Scopes {
 			scopeFilters = append(scopeFilters, scope.Filters...)
 		}

@@ -3,7 +3,8 @@ package loki
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/promlib/models"
+	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
+
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
@@ -40,5 +41,5 @@ type lokiQuery struct {
 	End                 time.Time
 	RefID               string
 	SupportingQueryType SupportingQueryType
-	Scopes              []models.ScopeFilter
+	Scopes              []scope.ScopeFilter
 }
