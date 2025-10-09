@@ -688,7 +688,6 @@
 /packages/grafana-schema/src/**/grafanapyroscope @grafana/observability-traces-and-profiling
 /packages/grafana-schema/src/**/heatmap @grafana/dataviz-squad
 /packages/grafana-schema/src/**/histogram @grafana/dataviz-squad
-/packages/grafana-schema/src/**/librarypanel @grafana/sharing-squad
 /packages/grafana-schema/src/**/logs @grafana/observability-logs
 /packages/grafana-schema/src/**/logsnew @grafana/observability-logs
 /packages/grafana-schema/src/**/loki @grafana/oss-big-tent @grafana/observability-logs
