@@ -52,16 +52,15 @@ export const defaultCorrelationType = (): CorrelationType => (CorrelationType.Qu
 export interface Spec {
 	description?: string;
 	label: string;
-	datasource: DataSourceRef;
-	target: DataSourceRef[];
+	source: DataSourceRef;
+	target?: DataSourceRef;
 	config: ConfigSpec;
 	type: CorrelationType;
 }
 
 export const defaultSpec = (): Spec => ({
 	label: "",
-	datasource: defaultDataSourceRef(),
-	target: [],
+	source: defaultDataSourceRef(),
 	config: defaultConfigSpec(),
 	type: CorrelationType.Query,
 });

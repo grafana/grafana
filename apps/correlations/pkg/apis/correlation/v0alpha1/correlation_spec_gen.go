@@ -56,8 +56,8 @@ const (
 type CorrelationSpec struct {
 	Description *string                    `json:"description,omitempty"`
 	Label       string                     `json:"label"`
-	Datasource  CorrelationDataSourceRef   `json:"datasource"`
-	Target      []CorrelationDataSourceRef `json:"target"`
+	Source      CorrelationDataSourceRef   `json:"source"`
+	Target      *CorrelationDataSourceRef  `json:"target,omitempty"`
 	Config      CorrelationConfigSpec      `json:"config"`
 	Type        CorrelationCorrelationType `json:"type"`
 }
@@ -65,9 +65,8 @@ type CorrelationSpec struct {
 // NewCorrelationSpec creates a new CorrelationSpec object.
 func NewCorrelationSpec() *CorrelationSpec {
 	return &CorrelationSpec{
-		Datasource: *NewCorrelationDataSourceRef(),
-		Target:     []CorrelationDataSourceRef{},
-		Config:     *NewCorrelationConfigSpec(),
+		Source: *NewCorrelationDataSourceRef(),
+		Config: *NewCorrelationConfigSpec(),
 	}
 }
 

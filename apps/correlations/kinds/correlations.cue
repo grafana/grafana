@@ -7,8 +7,8 @@ correlationsv0alpha1: {
 		spec: {
 			description?: string
 			label:       string
-			datasource:  DataSourceRef
-			target:  [...DataSourceRef]
+			source:      DataSourceRef
+			target?:      DataSourceRef
 			config:      ConfigSpec
 			type:        CorrelationType
 		}

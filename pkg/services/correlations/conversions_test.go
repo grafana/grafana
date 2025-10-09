@@ -48,14 +48,14 @@ func TestConversion(t *testing.T) {
 					Description: ptr.To("A test correlation"),
 					Label:       "Test Label",
 					Type:        correlationsV0.CorrelationCorrelationTypeQuery,
-					Datasource: correlationsV0.CorrelationDataSourceRef{
+					Source: correlationsV0.CorrelationDataSourceRef{
 						Group: "source-type",
 						Name:  "source",
 					},
-					Target: []correlationsV0.CorrelationDataSourceRef{{
+					Target: &correlationsV0.CorrelationDataSourceRef{
 						Group: "target-type",
 						Name:  "target",
-					}},
+					},
 					Config: correlationsV0.CorrelationConfigSpec{
 						Field: "test-field",
 					},
