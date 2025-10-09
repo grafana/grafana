@@ -12,7 +12,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	correlationsV0 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apps/correlations/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/correlations"
 )
@@ -31,7 +30,6 @@ type legacyStorage struct {
 	service        correlations.Service
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
-	sql            *legacy.LegacySQL
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -79,7 +77,27 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 			}
 		}
 	}
-	return s.sql.List(ctx, orgID, "", uids)
+
+	if options.Continue != "" {
+		return nil, fmt.Errorf("paging not yet supported")
+	}
+
+	rsp, err := s.service.GetCorrelations(ctx, correlations.GetCorrelationsQuery{
+		OrgId:      orgID,
+		Limit:      1000,
+		SourceUIDs: uids,
+	})
+	if err != nil {
+		return nil, err
+	}
+	list := &correlationsV0.CorrelationList{
+		Items: make([]correlationsV0.Correlation, len(rsp.Correlations)),
+	}
+	for i, orig := range rsp.Correlations {
+		c := correlations.ToResource(orig, s.namespacer)
+		list.Items[i] = *c
+	}
+	return list, nil
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -87,14 +105,16 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	if err != nil {
 		return nil, err
 	}
-	res, err := s.sql.List(ctx, orgID, name, nil)
+	c, err := s.service.GetCorrelation(ctx, correlations.GetCorrelationQuery{
+		UID:   name,
+		OrgId: orgID,
+	})
 	if err != nil {
 		return nil, err
 	}
-	if len(res.Items) == 1 {
-		return &res.Items[0], nil
-	}
-	return nil, fmt.Errorf("not found")
+
+	obj := correlations.ToResource(c, s.namespacer)
+	return obj, nil
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -102,31 +122,17 @@ func (s *legacyStorage) Create(ctx context.Context,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	orgID, err := request.OrgIDForList(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	resource, ok := obj.(*correlationsV0.Correlation)
 	if !ok {
 		return nil, fmt.Errorf("expected correlation")
 	}
 
-	tmp, err := correlations.ToCorrelation(resource)
+	cmd, err := correlations.ToCreateCorrelationCommand(resource)
 	if err != nil {
 		return nil, err
 	}
 
-	out, err := s.service.CreateCorrelation(ctx, correlations.CreateCorrelationCommand{
-		OrgId:       orgID,
-		SourceUID:   tmp.SourceUID,
-		TargetUID:   tmp.TargetUID,
-		Label:       tmp.Label,
-		Description: tmp.Description,
-		Config:      tmp.Config,
-		Type:        tmp.Type,
-		Provisioned: tmp.Provisioned,
-	})
+	out, err := s.service.CreateCorrelation(ctx, *cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -141,11 +147,6 @@ func (s *legacyStorage) Update(ctx context.Context,
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	orgID, err := request.OrgIDForList(ctx)
-	if err != nil {
-		return nil, false, err
-	}
-
 	before, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
@@ -160,23 +161,12 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, fmt.Errorf("expected correlation")
 	}
 
-	tmp, err := correlations.ToCorrelation(resource)
+	cmd, err := correlations.ToUpdateCorrelationCommand(resource)
 	if err != nil {
 		return nil, false, err
 	}
 
-	out, err := s.service.UpdateCorrelation(ctx, correlations.UpdateCorrelationCommand{
-		UID:         tmp.UID,
-		OrgId:       orgID,
-		SourceUID:   tmp.SourceUID,
-		Label:       &tmp.Label,
-		Description: &tmp.Description,
-		Type:        &tmp.Type,
-		Config: &correlations.CorrelationConfigUpdateDTO{
-			Field: &tmp.Config.Field,
-			// TODO!!! more (or add a conversion?)
-		},
-	})
+	out, err := s.service.UpdateCorrelation(ctx, *cmd)
 	if err != nil {
 		return nil, false, err
 	}

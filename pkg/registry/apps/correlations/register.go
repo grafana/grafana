@@ -15,14 +15,11 @@ import (
 	correlationsapp "github.com/grafana/grafana/apps/correlations/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/registry/apps/correlations/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var (
@@ -40,7 +37,6 @@ func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	service correlations.Service,
-	db db.DB,
 ) (*AppInstaller, error) {
 	installer := &AppInstaller{}
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, correlationsapp.New)
@@ -59,10 +55,8 @@ func RegisterAppInstaller(
 		installer.legacy = &legacyStorage{
 			service:    service,
 			namespacer: request.GetNamespaceMapper(cfg),
-			sql:        legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db)),
 		}
 	}
-
 	return installer, nil
 }
 

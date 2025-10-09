@@ -14,7 +14,6 @@ import (
 
 func TestConversion(t *testing.T) {
 	namespacer := authlib.OrgNamespaceFormatter
-	lookup := func(uid string) string { return "group-for-" + uid }
 
 	tests := []struct {
 		name   string
@@ -29,7 +28,9 @@ func TestConversion(t *testing.T) {
 				Label:       "Test Label",
 				Type:        query,
 				SourceUID:   "source",
+				SourceType:  ptr.To("source-type"),
 				TargetUID:   ptr.To("target"),
+				TargetType:  ptr.To("target-type"),
 				Description: "A test correlation",
 				Provisioned: true,
 				Config: CorrelationConfig{
@@ -66,7 +67,7 @@ func TestConversion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res := ToResource(tt.input, namespacer, lookup)
+			res := ToResource(tt.input, namespacer)
 			require.Equal(t, &tt.expect, res, "conversion")
 
 			roundtrip, err := ToCorrelation(res)

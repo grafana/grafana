@@ -11,9 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-type DatasourceGroupLookup = func(uid string) string
-
-func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter, lookup DatasourceGroupLookup) *correlationsV0.Correlation {
+func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) *correlationsV0.Correlation {
 	obj := &correlationsV0.Correlation{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      orig.UID,
@@ -23,7 +21,7 @@ func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter, lookup 
 			Label: orig.Label,
 			Type:  correlationsV0.CorrelationCorrelationType(orig.Type),
 			Datasource: correlationsV0.CorrelationDataSourceRef{
-				Group: lookup(orig.SourceUID),
+				Group: ptr.Deref(orig.SourceType, ""),
 				Name:  orig.SourceUID,
 			},
 			Config: ToSpecConfig(orig.Config),
@@ -31,7 +29,7 @@ func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter, lookup 
 	}
 	if orig.TargetUID != nil {
 		obj.Spec.Target = []correlationsV0.CorrelationDataSourceRef{{
-			Group: lookup(*orig.TargetUID),
+			Group: ptr.Deref(orig.TargetType, ""),
 			Name:  *orig.TargetUID,
 		}}
 	}
@@ -85,4 +83,41 @@ func ToConfig(orig correlationsV0.CorrelationConfigSpec) CorrelationConfig {
 		Field: orig.Field,
 		// TODO!!! this is obviously still incomplete
 	}
+}
+
+func ToUpdateCorrelationCommand(obj *correlationsV0.Correlation) (*UpdateCorrelationCommand, error) {
+	tmp, err := ToCorrelation(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UpdateCorrelationCommand{
+		UID:         tmp.UID,
+		OrgId:       tmp.OrgID,
+		SourceUID:   tmp.SourceUID,
+		Label:       &tmp.Label,
+		Description: &tmp.Description,
+		Type:        &tmp.Type,
+		Config: &CorrelationConfigUpdateDTO{
+			Field: &tmp.Config.Field,
+			// TODO!!! more (or add a conversion?)
+		},
+	}, nil
+}
+
+func ToCreateCorrelationCommand(obj *correlationsV0.Correlation) (*CreateCorrelationCommand, error) {
+	tmp, err := ToCorrelation(obj)
+	if err != nil {
+		return nil, err
+	}
+	return &CreateCorrelationCommand{
+		OrgId:       tmp.OrgID,
+		SourceUID:   tmp.SourceUID,
+		TargetUID:   tmp.TargetUID,
+		Label:       tmp.Label,
+		Description: tmp.Description,
+		Config:      tmp.Config,
+		Type:        tmp.Type,
+		Provisioned: tmp.Provisioned,
+	}, nil
 }
