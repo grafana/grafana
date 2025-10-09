@@ -7,6 +7,7 @@ type checkRequest struct {
 	IdentityType claims.IdentityType
 	UserUID      string
 	Action       string // Verb has been mapped into an action
+	ActionSets   []string
 	Group        string
 	Resource     string
 	Verb         string
@@ -22,6 +23,7 @@ type listRequest struct {
 	Resource     string
 	Verb         string
 	Action       string
+	ActionSets   []string
 	Options      *ListRequestOptions
 }
 

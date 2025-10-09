@@ -94,9 +94,7 @@ func TestDeleteReceiver(t *testing.T) {
 
 func TestCreateReceiver(t *testing.T) {
 	rawCfg := notifytest.AllKnownV1ConfigsForTesting[webhook.Type]
-	typeSchema, _ := notify.GetSchemaForIntegration(webhook.Type)
-	cfgSchema, err := models.IntegrationConfigFromSchema(typeSchema, schema.V1)
-	require.NoError(t, err)
+	cfgSchema, _ := notify.GetSchemaVersionForIntegration(webhook.Type, schema.V1)
 	settings := map[string]any{}
 	require.NoError(t, json.Unmarshal([]byte(rawCfg.Config), &settings))
 
@@ -201,9 +199,7 @@ func TestCreateReceiver(t *testing.T) {
 
 func TestUpdateReceiver(t *testing.T) {
 	rawCfg := notifytest.AllKnownV1ConfigsForTesting[webhook.Type]
-	typeSchema, _ := notify.GetSchemaForIntegration(webhook.Type)
-	cfgSchema, err := models.IntegrationConfigFromSchema(typeSchema, schema.V1)
-	require.NoError(t, err)
+	cfgSchema, _ := notify.GetSchemaVersionForIntegration(webhook.Type, schema.V1)
 	settings := map[string]any{}
 	require.NoError(t, json.Unmarshal([]byte(rawCfg.Config), &settings))
 
@@ -302,9 +298,7 @@ func TestUpdateReceiver(t *testing.T) {
 
 func TestGetReceiver(t *testing.T) {
 	rawCfg := notifytest.AllKnownV1ConfigsForTesting[webhook.Type]
-	typeSchema, _ := notify.GetSchemaForIntegration(webhook.Type)
-	cfgSchema, err := models.IntegrationConfigFromSchema(typeSchema, schema.V1)
-	require.NoError(t, err)
+	cfgSchema, _ := notify.GetSchemaVersionForIntegration(webhook.Type, schema.V1)
 	settings := map[string]any{}
 	require.NoError(t, json.Unmarshal([]byte(rawCfg.Config), &settings))
 
