@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/services/caching"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 )
 
 // NewCachingMiddleware creates a new backend.HandlerMiddleware that will
@@ -32,7 +33,15 @@ type CachingMiddleware struct {
 // If data is found, it will return it immediately. Otherwise, it will perform the queries as usual, then write the response to the cache.
 // If the cache service is implemented, we capture the request duration as a metric. The service is expected to write any response headers.
 func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return m.cachingServiceClient.WithQueryDataCaching(ctx, req, func() (*backend.QueryDataResponse, error) {
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx == nil {
+		return m.BaseHandler.QueryData(ctx, req)
+	}
+	ns := reqCtx.GetNamespace()
+	if ns == "" {
+		return m.BaseHandler.QueryData(ctx, req)
+	}
+	return m.cachingServiceClient.WithQueryDataCaching(ctx, ns, req, func() (*backend.QueryDataResponse, error) {
 		return m.BaseHandler.QueryData(ctx, req)
 	})
 }
@@ -41,7 +50,15 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 // If data is found, it will return it immediately. Otherwise, it will perform the request as usual. The caller of CallResource is expected to explicitly update the cache with any responses.
 // If the cache service is implemented, we capture the request duration as a metric. The service is expected to write any response headers.
 func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return m.cachingServiceClient.WithCallResourceCaching(ctx, req, sender, func(sender backend.CallResourceResponseSender) error {
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx == nil {
+		return m.BaseHandler.CallResource(ctx, req, sender)
+	}
+	ns := reqCtx.GetNamespace()
+	if ns == "" {
+		return m.BaseHandler.CallResource(ctx, req, sender)
+	}
+	return m.cachingServiceClient.WithCallResourceCaching(ctx, ns, req, sender, func(sender backend.CallResourceResponseSender) error {
 		return m.BaseHandler.CallResource(ctx, req, sender)
 	})
 }

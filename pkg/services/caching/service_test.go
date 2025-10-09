@@ -18,7 +18,21 @@ func TestWithQueryDataCaching(t *testing.T) {
 		var s *CachingServiceClient
 		req := backend.QueryDataRequest{}
 		fakeResponse := &backend.QueryDataResponse{}
-		response, err := s.WithQueryDataCaching(t.Context(), &req, func() (*backend.QueryDataResponse, error) {
+		response, err := s.WithQueryDataCaching(t.Context(), "ns", &req, func() (*backend.QueryDataResponse, error) {
+			return fakeResponse, nil
+		})
+		require.NoError(t, err)
+		require.Equal(t, fakeResponse, response)
+	})
+
+	t.Run("caching is a no-op when service namespace is not provided", func(t *testing.T) {
+		fakeCachingService := NewFakeOSSCachingService()
+		fakeCachingService.ReturnStatus = StatusMiss
+		client := ProvideCachingServiceClient(fakeCachingService, nil)
+		req := backend.QueryDataRequest{}
+		fakeResponse := &backend.QueryDataResponse{}
+		ns := ""
+		response, err := client.WithQueryDataCaching(t.Context(), ns, &req, func() (*backend.QueryDataResponse, error) {
 			return fakeResponse, nil
 		})
 		require.NoError(t, err)
@@ -39,7 +53,7 @@ func TestWithQueryDataCaching(t *testing.T) {
 		}
 		ctx := context.WithValue(t.Context(), ctxkey.Key{}, reqCtx)
 		fakeResponse := &backend.QueryDataResponse{}
-		response, err := client.WithQueryDataCaching(ctx, &req, func() (*backend.QueryDataResponse, error) {
+		response, err := client.WithQueryDataCaching(ctx, "ns", &req, func() (*backend.QueryDataResponse, error) {
 			return fakeResponse, nil
 		})
 		require.NoError(t, err)
@@ -56,7 +70,7 @@ func TestWithQueryDataCaching(t *testing.T) {
 
 		fakeResponse := &backend.QueryDataResponse{}
 		// Using the default test context, no request context.
-		response, err := client.WithQueryDataCaching(t.Context(), &req, func() (*backend.QueryDataResponse, error) {
+		response, err := client.WithQueryDataCaching(t.Context(), "ns", &req, func() (*backend.QueryDataResponse, error) {
 			return fakeResponse, nil
 		})
 		require.NoError(t, err)
@@ -69,7 +83,20 @@ func TestWithCallResourceCaching(t *testing.T) {
 		var s *CachingServiceClient
 		req := backend.CallResourceRequest{}
 		fakeErr := errors.New("oops")
-		err := s.WithCallResourceCaching(t.Context(), &req, nil, func(backend.CallResourceResponseSender) error {
+		err := s.WithCallResourceCaching(t.Context(), "ns", &req, nil, func(backend.CallResourceResponseSender) error {
+			return fakeErr
+		})
+		require.ErrorIs(t, err, fakeErr)
+	})
+
+	t.Run("caching is a no-op when service namespace is not provided", func(t *testing.T) {
+		fakeCachingService := NewFakeOSSCachingService()
+		fakeCachingService.ReturnStatus = StatusMiss
+		client := ProvideCachingServiceClient(fakeCachingService, nil)
+		req := backend.CallResourceRequest{}
+		fakeErr := errors.New("oops")
+		ns := ""
+		err := client.WithCallResourceCaching(t.Context(), ns, &req, nil, func(backend.CallResourceResponseSender) error {
 			return fakeErr
 		})
 		require.ErrorIs(t, err, fakeErr)
@@ -92,7 +119,7 @@ func TestWithCallResourceCaching(t *testing.T) {
 			return nil
 		}
 		var fakeErr = errors.New("oops")
-		err := client.WithCallResourceCaching(ctx, &req, backend.CallResourceResponseSenderFunc(sender), func(backend.CallResourceResponseSender) error {
+		err := client.WithCallResourceCaching(ctx, "ns", &req, backend.CallResourceResponseSenderFunc(sender), func(backend.CallResourceResponseSender) error {
 			return fakeErr
 		})
 		require.ErrorIs(t, err, fakeErr)
@@ -111,9 +138,20 @@ func TestWithCallResourceCaching(t *testing.T) {
 		}
 		var fakeErr = errors.New("oops")
 		// Using the default test context, no request context.
-		err := client.WithCallResourceCaching(t.Context(), &req, backend.CallResourceResponseSenderFunc(sender), func(_ backend.CallResourceResponseSender) error {
+		err := client.WithCallResourceCaching(t.Context(), "ns", &req, backend.CallResourceResponseSenderFunc(sender), func(_ backend.CallResourceResponseSender) error {
 			return fakeErr
 		})
 		require.ErrorIs(t, err, fakeErr)
 	})
+}
+
+func TestGetDatasourceType(t *testing.T) {
+	t.Parallel()
+
+	require.Equal(t, "unknown", getDatasourceType(backend.PluginContext{}))
+	require.Equal(t, "name", getDatasourceType(backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+			Name: "name",
+		},
+	}))
 }

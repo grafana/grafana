@@ -325,7 +325,7 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		req.PluginContext = pCtx
 		return s.pluginClient.QueryData(ctx, req)
 	} else { // query-service flow (single or multi tenant)
-		return s.cachingServiceClient.WithQueryDataCaching(ctx, req, func() (*backend.QueryDataResponse, error) {
+		return s.cachingServiceClient.WithQueryDataCaching(ctx, user.GetNamespace(), req, func() (*backend.QueryDataResponse, error) {
 			// transform request from backend.QueryDataRequest to k8s request
 			k8sReq, err := expr.ConvertBackendRequestToDataRequest(req)
 			if err != nil {
