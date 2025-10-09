@@ -10,6 +10,7 @@ import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { layoutRegistry } from './layoutRegistry';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;
@@ -18,6 +19,18 @@ export interface Props {
 export function DashboardLayoutSelector({ layoutManager }: Props) {
   const isGridLayout = layoutManager.descriptor.isGridLayout;
   const options = layoutRegistry.list().filter((layout) => layout.isGridLayout === isGridLayout);
+
+  const disableTabs = useMemo(() => {
+    let parent = layoutManager.parent;
+    while (parent) {
+      if (parent instanceof TabsLayoutManager) {
+        return true;
+      }
+      parent = parent.parent;
+    }
+
+    return false;
+  }, [layoutManager]);
 
   const onChangeLayout = useCallback(
     (newLayout: LayoutRegistryItem) => {
@@ -30,17 +43,33 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
     [layoutManager]
   );
 
-  const radioOptions = options.map((opt) => ({
-    value: opt,
-    label: opt.name,
-    icon: opt.icon,
-    description: opt.description,
-    ariaLabel: `layout-selection-option-${opt.name}`,
-  }));
+  const disabledOptions: LayoutRegistryItem[] = [];
+
+  const radioOptions = options.map((opt) => {
+    let description = opt.description;
+    if (disableTabs && opt.id === TabsLayoutManager.descriptor.id) {
+      description = t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs');
+      disabledOptions.push(opt);
+    }
+
+    return {
+      value: opt,
+      label: opt.name,
+      icon: opt.icon,
+      description,
+      ariaLabel: `layout-selection-option-${opt.name}`,
+    };
+  });
 
   return (
     <Box paddingBottom={2} display="flex" grow={1} alignItems="center">
-      <RadioButtonGroup fullWidth value={layoutManager.descriptor} options={radioOptions} onChange={onChangeLayout} />
+      <RadioButtonGroup
+        fullWidth
+        value={layoutManager.descriptor}
+        options={radioOptions}
+        onChange={onChangeLayout}
+        disabledOptions={disabledOptions}
+      />
     </Box>
   );
 }
