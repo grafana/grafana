@@ -5,12 +5,12 @@ correlationsv0alpha1: {
 	pluralName: "Correlations"
 	schema: {
 		spec: {
+			type:         CorrelationType
+			source:       DataSourceRef
+			target?:      DataSourceRef
 			description?: string
-			label:       string
-			datasource:  DataSourceRef
-			target:  [...DataSourceRef]
-			config:      ConfigSpec
-			type:        CorrelationType
+			label:        string
+			config:       ConfigSpec
 		}
 	}
 	selectableFields: [

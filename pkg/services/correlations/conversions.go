@@ -1,8 +1,6 @@
 package correlations
 
 import (
-	"fmt"
-
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
@@ -20,7 +18,7 @@ func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) *correl
 		Spec: correlationsV0.CorrelationSpec{
 			Label: orig.Label,
 			Type:  correlationsV0.CorrelationCorrelationType(orig.Type),
-			Datasource: correlationsV0.CorrelationDataSourceRef{
+			Source: correlationsV0.CorrelationDataSourceRef{
 				Group: ptr.Deref(orig.SourceType, ""),
 				Name:  orig.SourceUID,
 			},
@@ -28,10 +26,10 @@ func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) *correl
 		},
 	}
 	if orig.TargetUID != nil {
-		obj.Spec.Target = []correlationsV0.CorrelationDataSourceRef{{
+		obj.Spec.Target = &correlationsV0.CorrelationDataSourceRef{
 			Group: ptr.Deref(orig.TargetType, ""),
 			Name:  *orig.TargetUID,
-		}}
+		}
 	}
 	if orig.Description != "" {
 		obj.Spec.Description = &orig.Description
@@ -55,20 +53,17 @@ func ToCorrelation(obj *correlationsV0.Correlation) (*Correlation, error) {
 		OrgID:       ns.OrgID,
 		Label:       obj.Spec.Label,
 		Description: ptr.Deref(obj.Spec.Description, ""),
-		SourceUID:   obj.Spec.Datasource.Name,
-		SourceType:  ptr.To(obj.Spec.Datasource.Group),
+		SourceUID:   obj.Spec.Source.Name,
+		SourceType:  ptr.To(obj.Spec.Source.Group),
 		Type:        CorrelationType(obj.Spec.Type),
 		Config:      ToConfig(obj.Spec.Config),
 	}
 	if obj.Annotations[utils.AnnoKeyManagerKind] != "" {
 		result.Provisioned = true
 	}
-	if len(obj.Spec.Target) > 1 {
-		return nil, fmt.Errorf("unable to support multiple targets")
-	}
-	if len(obj.Spec.Target) == 1 {
-		result.TargetUID = &obj.Spec.Target[0].Name
-		result.TargetType = ptr.To(obj.Spec.Target[0].Group)
+	if obj.Spec.Target != nil {
+		result.TargetUID = &obj.Spec.Target.Name
+		result.TargetType = ptr.To(obj.Spec.Target.Group)
 	}
 	return result, nil
 }

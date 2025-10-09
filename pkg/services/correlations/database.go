@@ -121,12 +121,12 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			return ErrSourceDataSourceDoesNotExists
 		}
 
-		found, err := session.Get(&correlation)
-		if !found {
-			return ErrCorrelationNotFound
-		}
+		found, err := session.Omit("source_type", "target_type").Get(&correlation)
 		if err != nil {
 			return err
+		}
+		if !found {
+			return ErrCorrelationNotFound
 		}
 		if correlation.Provisioned {
 			return ErrCorrelationReadOnly
@@ -185,6 +185,15 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 		UID:       cmd.UID,
 		OrgID:     cmd.OrgId,
 		SourceUID: cmd.SourceUID,
+	}
+
+	if cmd.SourceUID != "" {
+		if _, err := s.DataSourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+			UID:   correlation.SourceUID,
+			OrgID: cmd.OrgId,
+		}); err != nil {
+			return Correlation{}, ErrSourceDataSourceDoesNotExists
+		}
 	}
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
@@ -339,7 +348,7 @@ func (s CorrelationsService) createOrUpdateCorrelation(ctx context.Context, cmd 
 
 	found := false
 	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
-		has, err := session.Get(&correlation)
+		has, err := session.Omit("source_type", "target_type").Get(&correlation)
 		found = has
 		return err
 	})
