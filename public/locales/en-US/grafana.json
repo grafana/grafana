@@ -3504,7 +3504,7 @@
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
       "delete-modal-invalid-title": "Cannot delete folder",
-      "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately but the selected dashboards will be marked for deletion in 30 days. Your organization administrator can restore the dashboards anytime before the 30 days expire. Folders cannot be restored.",
+      "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately. Deleted dashboards will be kept in the history for up to 12 months and can be restored by your organization administrator during that time. The history is limited to 1000 dashboards — older ones may be removed sooner if the limit is reached. Folders cannot be restored.",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
       "delete-provisioned-folder": "Delete provisioned folder",
@@ -10368,7 +10368,7 @@
       "title": "Profiles"
     },
     "recently-deleted": {
-      "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
+      "subtitle": "Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.",
       "title": "Recently deleted"
     },
     "recorded-queries": {
@@ -11584,6 +11584,7 @@
       "active-jobs": "active jobs",
       "column-action": "Action",
       "column-duration": "Duration",
+      "column-job-id": "Job ID",
       "column-message": "Message",
       "column-started": "Started",
       "column-status": "Status",
@@ -11602,12 +11603,6 @@
       "settings": "Settings",
       "view": "View"
     },
-    "repository-health": {
-      "details": "Details:",
-      "no-errors-found": "No errors found",
-      "title-repository-is-healthy": "Repository is healthy",
-      "title-repository-is-unhealthy": "Repository is unhealthy"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Compare branch",
@@ -11622,7 +11617,7 @@
     },
     "repository-overview": {
       "checked": "Checked:",
-      "finished": "Finished:",
+      "finished": "Last successful pull:",
       "health": "Health",
       "healthy": "Healthy",
       "job-id": "Job ID:",
@@ -11631,7 +11626,6 @@
       "not-available": "N/A",
       "pull-status": "Pull status",
       "resources": "Resources",
-      "started": "Started:",
       "status": "Status:",
       "unhealthy": "Unhealthy",
       "view-folder": "View Folder",
