@@ -13,7 +13,6 @@ import { useActionSelectionState } from '../state/hooks';
 
 import { RecentlyDeletedActions } from './RecentlyDeletedActions';
 
-// Mock the hooks and dependencies
 jest.mock('../api/useRecentlyDeletedStateManager');
 jest.mock('../state/hooks');
 jest.mock('../../search/service/deletedDashboardsCache');
@@ -32,7 +31,6 @@ describe('RecentlyDeletedActions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Create mock DataFrame using toDataFrame utility
     const mockDataFrame = toDataFrame({
       name: 'DeletedDashboards',
       fields: [
@@ -51,7 +49,6 @@ describe('RecentlyDeletedActions', () => {
 
     const mockView = new DataFrameView<DashboardQueryResult>(mockDataFrame);
 
-    // Create mock state manager
     const mockStateManager = {
       doSearchWithDebounce: mockDoSearchWithDebounce,
       state: {
@@ -67,7 +64,6 @@ describe('RecentlyDeletedActions', () => {
       },
     } as unknown as TrashStateManager;
 
-    // Mock the search state manager
     mockUseRecentlyDeletedStateManager.mockReturnValue([
       {
         query: '',
@@ -90,7 +86,6 @@ describe('RecentlyDeletedActions', () => {
       mockStateManager,
     ]);
 
-    // Mock deleted dashboards cache
     (deletedDashboardsCache.clear as jest.Mock) = jest.fn();
     (deletedDashboardsCache.getAsResourceList as jest.Mock) = jest.fn().mockResolvedValue({
       items: [
