@@ -17,6 +17,7 @@ func Test_CtxAttrs(t *testing.T) {
 			name: "empty config - only default attributes should be present",
 			expected: map[string]string{
 				"grafana_version": "",
+				"namespace":       "default",
 			},
 		},
 		{
@@ -31,6 +32,7 @@ quux = corge`,
 				"baz":             "qux",
 				"quux":            "corge",
 				"grafana_version": "",
+				"namespace":       "default",
 			},
 		},
 		{
@@ -42,6 +44,7 @@ foo = bar`,
 			expected: map[string]string{
 				"grafana_version": "10.0.0",
 				"foo":             "bar",
+				"namespace":       "default",
 			},
 		},
 	}

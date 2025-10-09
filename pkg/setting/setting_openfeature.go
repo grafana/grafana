@@ -24,9 +24,14 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 	config := cfg.Raw.Section("feature_toggles.openfeature")
 	cfg.OpenFeature.APIEnabled = config.Key("enable_api").MustBool(true)
 	cfg.OpenFeature.ProviderType = config.Key("provider").MustString(StaticProviderType)
-	cfg.OpenFeature.TargetingKey = config.Key("targetingKey").MustString(fmt.Sprintf("stacks-%s", cfg.StackID))
-
 	strURL := config.Key("url").MustString("")
+
+	defaultTargetingKey := "default"
+	if cfg.StackID != "" {
+		defaultTargetingKey = fmt.Sprintf("stacks-%s", cfg.StackID)
+	}
+
+	cfg.OpenFeature.TargetingKey = config.Key("targetingKey").MustString(defaultTargetingKey)
 
 	if strURL != "" && cfg.OpenFeature.ProviderType == GOFFProviderType {
 		u, err := url.Parse(strURL)
@@ -46,6 +51,10 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 	// Some default attributes
 	if _, ok := attrs["grafana_version"]; !ok {
 		attrs["grafana_version"] = BuildVersion
+	}
+
+	if _, ok := attrs["namespace"]; !ok {
+		attrs["namespace"] = defaultTargetingKey
 	}
 
 	cfg.OpenFeature.ContextAttrs = attrs
