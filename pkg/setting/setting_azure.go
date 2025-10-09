@@ -73,7 +73,6 @@ func (cfg *Cfg) readAzureSettings() {
 		if val := azureSection.Key("user_identity_client_secret").String(); val != "" {
 			tokenEndpointSettings.ClientSecret = val
 			tokenEndpointSettings.ClientSecretOverride = true
-
 		}
 		if val := azureSection.Key("user_identity_managed_identity_client_id").String(); val != "" {
 			tokenEndpointSettings.ManagedIdentityClientId = val
