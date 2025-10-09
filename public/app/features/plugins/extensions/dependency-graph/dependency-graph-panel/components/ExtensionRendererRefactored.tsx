@@ -36,7 +36,20 @@ interface ExtensionRendererProps {
   onContentConsumerClick: (id: string | null) => void;
   onContentProviderClick: (id: string | null) => void;
   onHighlightedExtensionPointChange: (id: string | null) => void;
-  styles: Record<string, { toString(): string }>;
+  styles: {
+    exposedComponentBox: { toString(): string };
+    exposedComponentLabel: { toString(): string };
+    exposedComponentDescription: { toString(): string };
+    exposedComponentVersion: { toString(): string };
+    exposedComponentProvider: { toString(): string };
+    contentConsumerBox: { toString(): string };
+    contentConsumerLabel: { toString(): string };
+    extensionPointBox: { toString(): string };
+    extensionPointLabel: { toString(): string };
+    extensionPointDescription: { toString(): string };
+    extensionPointVersion: { toString(): string };
+    extensionPointProvider: { toString(): string };
+  };
 }
 
 /**
