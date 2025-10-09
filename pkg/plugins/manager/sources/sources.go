@@ -3,42 +3,94 @@ package sources
 import (
 	"context"
 	"path/filepath"
+	"sync"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Service struct {
-	cfg            *config.PluginManagementCfg
-	staticRootPath string
+	cfgProvider     configprovider.ConfigProvider
+	downloader      PluginDownloader
+	startupComplete bool
 
 	log log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, pCcfg *config.PluginManagementCfg) *Service {
+var metricsRegistered sync.Once
+
+func ProvideService(cfgProvider configprovider.ConfigProvider, pCcfg *config.PluginManagementCfg, downloader PluginDownloader, promReg prometheus.Registerer) (*Service, error) {
+	metricsRegistered.Do(func() {
+		if err := RegisterMetrics(promReg); err != nil {
+			log.New("plugin.sources").Warn("Failed to register preinstall metrics", "error", err)
+		}
+	})
 	return &Service{
-		cfg:            pCcfg,
-		staticRootPath: cfg.StaticRootPath,
-		log:            log.New("plugin.sources"),
-	}
+		cfgProvider:     cfgProvider,
+		downloader:      downloader,
+		startupComplete: false,
+		log:             log.New("plugin.sources"),
+	}, nil
 }
 
-func (s *Service) List(_ context.Context) []plugins.PluginSource {
+func (s *Service) List(ctx context.Context) []plugins.PluginSource {
 	r := []plugins.PluginSource{
 		NewLocalSource(
 			plugins.ClassCore,
 			s.corePluginPaths(),
 		),
 	}
+
+	cfg, err := s.cfgProvider.Get(ctx)
+	if err != nil {
+		s.log.Error("Failed to get config", "error", err)
+		return []plugins.PluginSource{}
+	}
+
+	if len(cfg.PreinstallPluginsSync) > 0 {
+		r = append(r, NewPreinstallSyncSource(
+			cfg.PreinstallPluginsSync,
+			s.downloader,
+			cfg.PluginsPath,
+			s.cfgProvider,
+			cfg.BuildVersion,
+		))
+	}
+
+	// preinstall async plugins are only loaded after startup (first run) is complete
+	if s.startupComplete && len(cfg.PreinstallPluginsAsync) > 0 {
+		r = append(r, NewPreinstallAsyncSource(
+			cfg.PreinstallPluginsAsync,
+			s.downloader,
+			cfg.PluginsPath,
+			s.cfgProvider,
+			cfg.BuildVersion,
+		))
+	}
+
 	r = append(r, s.externalPluginSources()...)
 	r = append(r, s.pluginSettingSources()...)
+
+	s.startupComplete = true
 	return r
 }
 
 func (s *Service) externalPluginSources() []plugins.PluginSource {
-	localSrcs, err := DirAsLocalSources(s.cfg, s.cfg.PluginsPath, plugins.ClassExternal)
+	cfg, err := s.cfgProvider.Get(context.Background())
+	if err != nil {
+		s.log.Error("Failed to get config", "error", err)
+		return []plugins.PluginSource{}
+	}
+
+	pCfg := &config.PluginManagementCfg{
+		PluginsPath: cfg.PluginsPath,
+	}
+
+	localSrcs, err := DirAsLocalSources(pCfg, cfg.PluginsPath, plugins.ClassExternal)
 	if err != nil {
 		s.log.Error("Failed to load external plugins", "error", err)
 		return []plugins.PluginSource{}
@@ -53,13 +105,18 @@ func (s *Service) externalPluginSources() []plugins.PluginSource {
 }
 
 func (s *Service) pluginSettingSources() []plugins.PluginSource {
-	sources := make([]plugins.PluginSource, 0, len(s.cfg.PluginSettings))
-	for _, ps := range s.cfg.PluginSettings {
+	cfg, err := s.cfgProvider.Get(context.Background())
+	if err != nil {
+		s.log.Error("Failed to get config", "error", err)
+		return []plugins.PluginSource{}
+	}
+	sources := make([]plugins.PluginSource, 0, len(cfg.PluginSettings))
+	for _, ps := range cfg.PluginSettings {
 		path, exists := ps["path"]
 		if !exists || path == "" {
 			continue
 		}
-		if s.cfg.DevMode {
+		if cfg.Env == setting.Dev {
 			sources = append(sources, NewUnsafeLocalSource(plugins.ClassExternal, []string{path}))
 		} else {
 			sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{path}))
@@ -71,7 +128,13 @@ func (s *Service) pluginSettingSources() []plugins.PluginSource {
 
 // corePluginPaths provides a list of the Core plugin file system paths
 func (s *Service) corePluginPaths() []string {
-	datasourcePaths := filepath.Join(s.staticRootPath, "app", "plugins", "datasource")
-	panelsPath := filepath.Join(s.staticRootPath, "app", "plugins", "panel")
+	cfg, err := s.cfgProvider.Get(context.Background())
+	if err != nil {
+		s.log.Error("Failed to get config", "error", err)
+		return []string{}
+	}
+	staticRootPath := cfg.StaticRootPath
+	datasourcePaths := filepath.Join(staticRootPath, "app", "plugins", "datasource")
+	panelsPath := filepath.Join(staticRootPath, "app", "plugins", "panel")
 	return []string{datasourcePaths, panelsPath}
 }

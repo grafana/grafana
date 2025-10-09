@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -16,10 +17,6 @@ func TestSources_List(t *testing.T) {
 	t.Run("Plugin sources are populated by default and listed in specific order", func(t *testing.T) {
 		testdata, err := filepath.Abs("../testdata")
 		require.NoError(t, err)
-
-		cfg := &setting.Cfg{
-			StaticRootPath: testdata,
-		}
 
 		pCfg := &config.PluginManagementCfg{
 			PluginsPath: filepath.Join(testdata, "pluginRootWithDist"),
@@ -33,7 +30,8 @@ func TestSources_List(t *testing.T) {
 			},
 		}
 
-		s := ProvideService(cfg, pCfg)
+		s, err := ProvideService(&mockConfigProvider{pCfg: pCfg, staticRootPath: testdata}, pCfg, &mockDownloader{}, prometheus.NewRegistry())
+		require.NoError(t, err)
 		srcs := s.List(context.Background())
 
 		ctx := context.Background()
@@ -96,15 +94,12 @@ func TestSources_List(t *testing.T) {
 		testdata, err := filepath.Abs("../testdata")
 		require.NoError(t, err)
 
-		cfg := &setting.Cfg{
-			StaticRootPath: testdata,
-		}
-
 		pCfg := &config.PluginManagementCfg{
 			PluginsPath: filepath.Join(testdata, "symbolic-plugin-dirs"),
 		}
 
-		s := ProvideService(cfg, pCfg)
+		s, err := ProvideService(&mockConfigProvider{pCfg: pCfg, staticRootPath: testdata}, pCfg, &mockDownloader{}, prometheus.NewRegistry())
+		require.NoError(t, err)
 		ctx := context.Background()
 		srcs := s.List(ctx)
 		uris := map[plugins.Class]map[string]struct{}{}

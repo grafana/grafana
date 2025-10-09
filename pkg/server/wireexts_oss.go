@@ -10,8 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
@@ -132,8 +130,6 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
 	idimpl.ProvideLocalSigner,
 	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
-	manager.ProvideInstaller,
-	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	search2.ProvideDashboardStats,
 	wire.Bind(new(search2.DashboardStats), new(*search2.OssDashboardStats)),
 	search2.ProvideDocumentBuilders,
