@@ -44,7 +44,13 @@ export const getCacheSize = (): number => {
 /**
  * Helper to generate cache keys
  */
-export const getCacheKey = (options: Record<string, unknown>): string => {
+export const getCacheKey = (options: {
+  visualizationMode: string;
+  selectedContentProviders?: string[];
+  selectedContentConsumers?: string[];
+  selectedExtensionPoints?: string[];
+  selectedContentConsumersForExtensionPoint?: string[];
+}): string => {
   return JSON.stringify({
     mode: options.visualizationMode,
     providers: Array.isArray(options.selectedContentProviders) ? options.selectedContentProviders.slice().sort() : [],
