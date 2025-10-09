@@ -1,0 +1,21 @@
+{
+    "title": "V3 No-Op Migration - but tests ensuring panel IDs are unique",
+    "schemaVersion": 2,
+    "panels": [
+        {
+            "id": 1,
+            "type": "timeseries"
+        },
+        {
+            "id": 2,
+            "type": "timeseries"
+        },
+        {
+            "id": 2,
+            "type": "barchart"
+        },
+        {
+            "type": "barchart"
+        }
+    ]
+}
