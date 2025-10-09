@@ -65,7 +65,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             useQueriesAsFilterForOptions: true,
             layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
             supportsMultiValueOperators: Boolean(
-              getDataSourceSrv().getInstanceSettings(v.datasource)?.meta.multiValueFilterOperators
+              getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
             ),
           });
         }
@@ -152,7 +152,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       useQueriesAsFilterForOptions: true,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
       supportsMultiValueOperators: Boolean(
-        getDataSourceSrv().getInstanceSettings(variable.datasource)?.meta.multiValueFilterOperators
+        getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
       ),
     });
   }
