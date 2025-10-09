@@ -22,12 +22,14 @@ export const plugins = [
 ];
 
 // Generates a rollup configuration for commonjs output.
-export function cjsOutput(pkg) {
+export function cjsOutput(pkg, pkgName) {
   return {
     format: 'cjs',
     sourcemap: true,
-    dir: dirname(pkg.publishConfig.main),
+    dir: dirname(pkg.main),
     entryFileNames: '[name].cjs',
+    preserveModules: true,
+    preserveModulesRoot: resolve(projectCwd, `packages/${pkgName}/src`),
     esModule: true,
     interop: 'compat',
   };
@@ -38,7 +40,7 @@ export function esmOutput(pkg, pkgName) {
   return {
     format: 'esm',
     sourcemap: true,
-    dir: dirname(pkg.publishConfig.module),
+    dir: dirname(pkg.module),
     entryFileNames: '[name].mjs',
     preserveModules: true,
     preserveModulesRoot: resolve(projectCwd, `packages/${pkgName}/src`),

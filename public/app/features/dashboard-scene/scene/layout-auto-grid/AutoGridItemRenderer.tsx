@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data/';
+import { GrafanaTheme2 } from '@grafana/data';
 import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 

@@ -8,7 +8,8 @@
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "allowJs": true,
-    "rootDirs": ["."]
+    "rootDirs": ["."],
+    "moduleResolution": "bundler"
   },
   "exclude": ["dist/**/*"],
   "include": ["../../public/test/setupTests.ts", "../../public/app/types/*.d.ts", "src/**/*.ts*"],

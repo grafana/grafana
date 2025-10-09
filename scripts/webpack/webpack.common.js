@@ -22,6 +22,7 @@ module.exports = {
     publicPath: 'public/build/',
   },
   resolve: {
+    conditionNames: ['@grafana-app/source', '...'],
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
     alias: {
       // some of data source plugins use global Prism object to add the language definition
@@ -63,7 +64,7 @@ module.exports = {
   ],
   plugins: [
     new webpack.NormalModuleReplacementPlugin(/^@grafana\/schema\/dist\/esm\/(.*)$/, (resource) => {
-      resource.request = resource.request.replace('@grafana/schema/dist/esm', '@grafana/schema/src');
+      resource.request = resource.request.replace('@grafana/schema/dist/esm', '@grafana/schema');
     }),
     new CorsWorkerPlugin(),
     new webpack.ProvidePlugin({

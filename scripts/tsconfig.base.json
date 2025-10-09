@@ -4,6 +4,7 @@
     "alwaysStrict": true,
     "strict": true,
     "allowSyntheticDefaultImports": true,
+    "customConditions": ["@grafana-app/source"],
     "downlevelIteration": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
