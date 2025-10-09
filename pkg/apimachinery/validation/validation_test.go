@@ -222,7 +222,7 @@ func TestValidation(t *testing.T) {
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				for _, input := range tt.input {
-					output := validation.IsValidateResource(input)
+					output := validation.IsValidResource(input)
 					require.Equal(t, tt.expect, output, "input: %s", input)
 				}
 			})
