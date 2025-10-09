@@ -81,20 +81,6 @@
         "title-access-denied": "Acesso negado"
       }
     },
-    "admin-feature-toggles-table": {
-      "confirm-modal-body-1": "Alguns recursos estão estáveis (GA) e habilitados por padrão, enquanto outros estão atualmente em fase Beta preliminar, disponíveis para acesso antecipado.",
-      "confirm-modal-body-2": "Aconselhamos que você entenda o que cada mudança de recurso pode causar antes de fazer alterações.",
-      "confirmText-save-changes": "Salvar alterações",
-      "get-stage-cell": {
-        "beta": "Beta",
-        "content-general-availability": "Disponibilidade geral",
-        "deprecated": "Descontinuado",
-        "ga": "GA"
-      },
-      "save-changes": "Salvar alterações",
-      "saving": "Salvando...",
-      "title-apply-feature-toggle-changes": "Aplicar alterações de alternância de recursos"
-    },
     "admin-orgs-table": {
       "aria-label-delete-org": "Excluir org.",
       "confirmText-delete": "Excluir",
@@ -139,11 +125,6 @@
       "title-settings-updates-at-runtime": "Atualizações de configurações em tempo de execução",
       "title-sort-dashboards-by-popularity-in-search": "Classificar painéis por popularidade na pesquisa",
       "title-team-sync": "Sincronização de equipe"
-    },
-    "feature-toggles": {
-      "restart-pending": "Há uma reinicialização pendente para que sua instância da Grafana aplique as alterações mais recentes de alternância de recursos",
-      "restart-required": "Salvar as alterações de alternância de recursos solicitará a reinicialização da instância, o que pode levar alguns minutos",
-      "sub-title": "Visualize e edite feature toggles. Leia mais sobre feature toggles em <2>grafana.com</2>."
     },
     "get-enterprise": {
       "contact-us": "Contate-nos e faça uma avaliação grátis",
@@ -1554,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "O grupo está sendo excluído"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Remover expressão \"{{refId}}\""
     },
@@ -1728,6 +1712,9 @@
       },
       "placeholder-key": "chave",
       "placeholder-value": "valor"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Visualizar ou criar pontos de contato",
@@ -2044,6 +2031,12 @@
       "body-selected-alertmanager-not-found": "O Alertmanager selecionado não existe mais ou talvez você não tenha permissão para acessá-lo. Você pode selecionar um Alertmanager diferente no menu suspenso.",
       "title-selected-alertmanager-not-found": "Alertmanager selecionado não encontrado."
     },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
+    },
     "panel-alert-tab-content": {
       "alert": {
         "title-errors-loading-rules": "Erros ao carregar regras"
@@ -2129,8 +2122,8 @@
         "suffix": "Atualize a página e tente novamente.",
         "title": "Falha ao adicionar ou atualizar a política de notificação"
       },
-      "n-more-policies_one": "{{count}} política adicional",
-      "n-more-policies_other": "{{count}} políticas adicionais"
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "policy": {
       "label-new-child-policy": "Nova política secundária",
@@ -2181,7 +2174,6 @@
       "body-queries-expressions-configured": "Crie pelo menos uma consulta ou expressão para receber alertas",
       "confirmText-deactivate": "Desativar",
       "expressions": "Expressões",
-      "loading-data-sources": "Carregando fontes de dados…",
       "manipulate-returned-queries-other-operations": "Manipule os dados que retornaram das consultas usando operações matemáticas e outras operações.",
       "message": {
         "a-valid-expression-is-required": "Uma expressão válida é necessária"
@@ -2936,6 +2928,13 @@
         "title-warning": "Aviso"
       }
     },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
+    },
     "type-selector-button": {
       "add-expression": "Adicionar expressão"
     },
@@ -3260,7 +3259,7 @@
       "define-allowed-teams-ids-label": "Definir IDs das equipes permitidas",
       "display-name-description": "Será exibido na página de login como \"Entrar com...\". É uma opção conveniente caso você use mais de um provedor de identidade ou protocolos SSO.",
       "display-name-label": "Nome de exibição",
-      "domain-hint-description": "Parâmetro para indicar o âmbito do usuário no locatário do Azure AD/Entra ID e agilizar o processo de login.",
+      "domain-hint-description": "",
       "domain-hint-label": "Dica de domínio",
       "domain-hint-valid-domain": "Este campo deve ser um domínio válido.",
       "email-attribute-name-description": "Nome da chave a ser usada para a consulta de e-mail do usuário no mapa de atributos do token de ID OAuth2.",
@@ -3516,6 +3515,7 @@
       "move-modal-field-label": "Nome da pasta",
       "move-modal-text": "Esta ação moverá o seguinte conteúdo:",
       "move-modal-title": "Mover",
+      "move-provisioned-folder": "",
       "moving": "Movendo...",
       "new-folder-name-required-phrase": "O nome da pasta é obrigatório.",
       "selected-mix-resources-modal-text": "Você selecionou recursos provisionados e não provisionados. Não éo possível processá-los juntos. Selecione apenas um dos tipos de recurso e tente novamente.",
@@ -4161,6 +4161,13 @@
       "body": "Experimente o novo Assistente para encontrar possíveis problemas com suas fontes de dados e plug-ins.",
       "go-to-advisor": "Ir para o Assistente"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4209,6 +4216,20 @@
         "unknown-datasource": "Fonte de dados desconhecida"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Escolha um tipo de fonte de dados"
@@ -4238,6 +4259,13 @@
         },
         "subtitle": "Gerencie suas conexões de fonte de dados em um só lugar. Use esta página para adicionar uma nova fonte de dados ou gerenciar as conexões existentes."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Buscar tudo",
@@ -6596,6 +6624,7 @@
         "service-now-integration-and-data-source": "Fonte de dados e integração do ServiceNow",
         "signal-fx-integration-and-datasource": "Fonte de dados e integração do SignalFx",
         "snowflake-integration-and-data-source": "Fonte de dados e integração do Snowflake",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "Fonte de dados e integração do SumoLogic",
         "visualize-and-explore-dynatrace-data": "Visualize e explore dados do Dynatrace",
         "visualize-and-explore-oracle-sql": "Visualize e explore o Oracle SQL",
@@ -8716,6 +8745,9 @@
       "tooltip-hide": "Ocultar senha",
       "tooltip-show": "Exibir senha"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Expandir linha",
       "collapse": "Recolher linha",
@@ -8743,6 +8775,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Usar o eixo y à direita"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Carregando"
@@ -9431,6 +9466,7 @@
     "description-enable-infinite-scrolling": "Experimental. Solicite mais resultados ao descer até a parte inferior da lista de logs.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Exibir controles para pular para a última ou primeira linha do log e filtros por nível de log",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9481,9 +9517,6 @@
       "collapse": "Recolher rótulos",
       "expand": "Expandir rótulos"
     },
-    "log-labels-list": {
-      "log-line": "linha de log"
-    },
     "log-line": {
       "has-error": "Contém erros",
       "is-sampled": "É amostrado",
@@ -9523,6 +9556,7 @@
       "inline-mode": "Exibir em linha",
       "link-value-tooltip": "",
       "links-section": "Links",
+      "log-attributes-field": "",
       "log-line-field": "Linha de registro",
       "log-line-section": "Linha de log",
       "move-displayed-field-down": "Mover para baixo",
@@ -9729,6 +9763,7 @@
       "line-contains": "Adicionar como linha contém filtro",
       "line-contains-not": "Adicionar como linha não contém filtro"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Resolução de data e hora",
     "un-themed-log-details": {
       "aria-label-data-links": "Links de dados",
@@ -10186,7 +10221,7 @@
       "title": "Fontes de dados"
     },
     "databases": {
-      "title": "Bancos de dados"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Adicione e configure fontes de dados",
@@ -11712,6 +11747,8 @@
       "button-cancelling": "",
       "button-next": "Finalizar",
       "button-start": "Iniciar sincronização",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Isso excluirá a configuração do repositório e você perderá todo o progresso. Tem certeza de que deseja descartar suas alterações?",
         "confirm": "Sim, descartar",
@@ -11971,10 +12008,10 @@
       "restore-button": "Restaurar",
       "restore-loading": "Restaurando…",
       "title": "Restaurar painéis de controle",
-      "folder-picker-text_one": "Escolha uma pasta para onde seu painel de controle será restaurado.",
-      "folder-picker-text_other": "Escolha uma pasta para onde seus painéis de controle serão restaurados.",
-      "text_one": "Esta ação restaurará {{numberOfDashboards}} painel de controle.",
-      "text_other": "Esta ação restaurará {{numberOfDashboards}} painéis de controle."
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
+      "text_one": "",
+      "text_other": ""
     }
   },
   "recentlyDeleted": {
@@ -12090,8 +12127,8 @@
       "title": "Selecionar escopos"
     },
     "tree": {
-      "collapse": "Recolher",
-      "expand": "Expandir",
+      "collapse": "",
+      "expand": "",
       "headline": {
         "noResults": "Nenhum resultado encontrado para sua consulta",
         "recommended": "Recomendado",
@@ -13668,6 +13705,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "e",
       "placeholder-from": "",

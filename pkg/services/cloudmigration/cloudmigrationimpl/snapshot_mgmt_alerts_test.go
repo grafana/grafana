@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -45,7 +44,7 @@ func TestGetAlertMuteTimings(t *testing.T) {
 	t.Run("it returns the mute timings", func(t *testing.T) {
 		t.Parallel()
 
-		s := setUpServiceTest(t, false).(*Service)
+		s := setUpServiceTest(t).(*Service)
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
 
 		user := &user.SignedInUser{OrgID: 1}
@@ -69,7 +68,7 @@ func TestGetNotificationTemplates(t *testing.T) {
 	t.Run("it returns the notification templates", func(t *testing.T) {
 		t.Parallel()
 
-		s := setUpServiceTest(t, false).(*Service)
+		s := setUpServiceTest(t).(*Service)
 
 		user := &user.SignedInUser{OrgID: 1}
 
@@ -92,14 +91,14 @@ func TestGetContactPoints(t *testing.T) {
 	t.Run("it returns the contact points", func(t *testing.T) {
 		t.Parallel()
 
-		s := setUpServiceTest(t, false).(*Service)
+		s := setUpServiceTest(t).(*Service)
 
 		user := &user.SignedInUser{
 			OrgID: 1,
 			Permissions: map[int64]map[string][]string{
 				1: {
 					accesscontrol.ActionAlertingNotificationsRead:    nil,
-					accesscontrol.ActionAlertingReceiversReadSecrets: {ac.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversReadSecrets: {models.ScopeReceiversAll},
 				},
 			},
 		}
@@ -115,7 +114,7 @@ func TestGetContactPoints(t *testing.T) {
 	t.Run("it returns an error when user lacks permission to read contact point secrets", func(t *testing.T) {
 		t.Parallel()
 
-		s := setUpServiceTest(t, false).(*Service)
+		s := setUpServiceTest(t).(*Service)
 
 		user := &user.SignedInUser{
 			OrgID: 1,
@@ -144,7 +143,7 @@ func TestGetNotificationPolicies(t *testing.T) {
 	t.Run("it returns the contact points", func(t *testing.T) {
 		t.Parallel()
 
-		s := setUpServiceTest(t, false).(*Service)
+		s := setUpServiceTest(t).(*Service)
 
 		user := &user.SignedInUser{OrgID: 1}
 
@@ -172,7 +171,7 @@ func TestGetAlertRules(t *testing.T) {
 	t.Run("it returns the alert rules", func(t *testing.T) {
 		t.Parallel()
 
-		s := setUpServiceTest(t, false).(*Service)
+		s := setUpServiceTest(t).(*Service)
 
 		user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: alertRulesPermissions}}
 
@@ -191,7 +190,7 @@ func TestGetAlertRules(t *testing.T) {
 			c.CloudMigration.AlertRulesState = setting.GMSAlertRulesPaused
 		}
 
-		s := setUpServiceTest(t, false, alertRulesState).(*Service)
+		s := setUpServiceTest(t, alertRulesState).(*Service)
 
 		user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: alertRulesPermissions}}
 
@@ -218,7 +217,7 @@ func TestGetAlertRuleGroups(t *testing.T) {
 	t.Run("it returns the alert rule groups", func(t *testing.T) {
 		t.Parallel()
 
-		s := setUpServiceTest(t, false).(*Service)
+		s := setUpServiceTest(t).(*Service)
 
 		user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: alertRulesPermissions}}
 
@@ -257,7 +256,7 @@ func TestGetAlertRuleGroups(t *testing.T) {
 			c.CloudMigration.AlertRulesState = setting.GMSAlertRulesPaused
 		}
 
-		s := setUpServiceTest(t, false, alertRulesState).(*Service)
+		s := setUpServiceTest(t, alertRulesState).(*Service)
 
 		user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: alertRulesPermissions}}
 

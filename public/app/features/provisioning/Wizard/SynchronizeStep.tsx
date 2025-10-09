@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { memo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -37,7 +37,15 @@ export const SynchronizeStep = memo(function SynchronizeStep({
     setStepStatusInfo,
   });
   const [job, setJob] = useState<Job>();
-  const repositoryStatusQuery = useGetRepositoryStatusQuery(repoName ? { name: repoName } : skipToken);
+  const [shouldEnablePolling, setShouldEnablePolling] = useState(true);
+
+  const POLLING_INTERVAL_MS = 5000;
+
+  const repositoryStatusQuery = useGetRepositoryStatusQuery(repoName ? { name: repoName } : skipToken, {
+    // Disable polling by setting interval to 0 when we should stop
+    pollingInterval: shouldEnablePolling ? POLLING_INTERVAL_MS : 0,
+    skipPollingIfUnfocused: true,
+  });
 
   const {
     healthy: isRepositoryHealthy,
@@ -45,8 +53,21 @@ export const SynchronizeStep = memo(function SynchronizeStep({
     checked,
   } = repositoryStatusQuery?.data?.status?.health || {};
 
+  // healthStatusNotReady: If the repository is not yet ready (e.g., initial setup), synchronization cannot be started.
+  // User can potentially fail at this step if they click too fast and repo is not ready.
+  const healthStatusNotReady =
+    isRepositoryHealthy === false && repositoryStatusQuery?.data?.status?.observedGeneration === 0;
+
+  // Stop polling when repository becomes healthy
+  useEffect(() => {
+    if (!healthStatusNotReady) {
+      setShouldEnablePolling(false);
+    }
+  }, [healthStatusNotReady]);
+
   const hasError = repositoryStatusQuery.isError;
-  const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false);
+  const isLoading = repositoryStatusQuery.isLoading || repositoryStatusQuery.isFetching;
+  const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false) || healthStatusNotReady;
 
   const startSynchronization = async () => {
     const [history] = getValues(['migrate.history']);
@@ -56,7 +77,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
     }
   };
 
-  if (repositoryStatusQuery.isFetching) {
+  if (isLoading) {
     return <Spinner />;
   }
   if (job) {
@@ -150,21 +171,43 @@ export const SynchronizeStep = memo(function SynchronizeStep({
         </>
       )}
 
-      <Field noMargin>
-        {hasError || isRepositoryHealthy === false ? (
-          <Button variant="destructive" onClick={() => onCancel?.(repoName)} disabled={isCancelling}>
-            {isCancelling ? (
-              <Trans i18nKey="provisioning.wizard.button-cancelling">Cancelling...</Trans>
-            ) : (
-              <Trans i18nKey="provisioning.wizard.button-cancel">Cancel</Trans>
-            )}
-          </Button>
-        ) : (
-          <Button variant="primary" onClick={startSynchronization} disabled={isButtonDisabled}>
-            <Trans i18nKey="provisioning.wizard.button-start">Begin synchronization</Trans>
-          </Button>
-        )}
-      </Field>
+      {healthStatusNotReady ? (
+        <>
+          <Stack>
+            <Trans i18nKey="provisioning.wizard.check-status-message">
+              Repository connecting, synchronize will be ready soon.
+            </Trans>
+          </Stack>
+          <Stack>
+            <Stack>
+              <Button
+                onClick={() => {
+                  repositoryStatusQuery.refetch();
+                }}
+                disabled={isLoading}
+              >
+                <Trans i18nKey="provisioning.wizard.check-status-button">Check repository status</Trans>
+              </Button>
+            </Stack>
+          </Stack>
+        </>
+      ) : (
+        <Field noMargin>
+          {hasError || (checked !== undefined && isRepositoryHealthy === false) ? (
+            <Button variant="destructive" onClick={() => onCancel?.(repoName)} disabled={isCancelling}>
+              {isCancelling ? (
+                <Trans i18nKey="provisioning.wizard.button-cancelling">Cancelling...</Trans>
+              ) : (
+                <Trans i18nKey="provisioning.wizard.button-cancel">Cancel</Trans>
+              )}
+            </Button>
+          ) : (
+            <Button variant="primary" onClick={startSynchronization} disabled={isButtonDisabled}>
+              <Trans i18nKey="provisioning.wizard.button-start">Begin synchronization</Trans>
+            </Button>
+          )}
+        </Field>
+      )}
     </Stack>
   );
 });

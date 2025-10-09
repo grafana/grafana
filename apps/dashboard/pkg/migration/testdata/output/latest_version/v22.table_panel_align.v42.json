@@ -21,69 +21,25 @@
   "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "table-old",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Time"
-            },
-            "properties": [
-              {
-                "id": "custom.align"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value"
-            },
-            "properties": [
-              {
-                "id": "custom.align"
-              }
-            ]
-          }
-        ]
-      },
       "id": 1,
-      "options": {
-        "cellHeight": "sm",
-        "showHeader": true
-      },
-      "pluginVersion": "12.1.0",
+      "styles": [
+        {
+          "align": "auto",
+          "pattern": "Time",
+          "type": "number"
+        },
+        {
+          "align": "auto",
+          "pattern": "Value",
+          "type": "string"
+        }
+      ],
       "targets": [
         {
           "datasource": {

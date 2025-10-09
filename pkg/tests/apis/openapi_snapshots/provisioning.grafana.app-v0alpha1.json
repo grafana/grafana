@@ -3706,13 +3706,13 @@
           "group": {
             "type": "string"
           },
+          "kind": {
+            "type": "string"
+          },
           "noop": {
             "description": "No action required (useful for sync)",
             "type": "integer",
             "format": "int64"
-          },
-          "resource": {
-            "type": "string"
           },
           "total": {
             "type": "integer",
@@ -4218,6 +4218,10 @@
           "webhook"
         ],
         "properties": {
+          "deleteError": {
+            "description": "Error information during repository deletion (if any)",
+            "type": "string"
+          },
           "health": {
             "description": "This will get updated with the current health status (and updated periodically)",
             "default": {},
