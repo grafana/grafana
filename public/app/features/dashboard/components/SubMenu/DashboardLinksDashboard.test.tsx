@@ -45,7 +45,7 @@ const getDashboardLink = () => screen.findByRole('link', { name: new RegExp(dash
 const renderComponent = (props: DeepPartial<ComponentProps<typeof DashboardLinksDashboard>> = {}) => {
   return render(
     <DashboardLinksDashboard
-      link={{ ...baseLinkProps, ...props.link }}
+      link={{ ...baseLinkProps, ...props.link, tags: (props.link?.tags || []) as string[] }}
       dashboardUID={props.dashboardUID || dashboardUID}
       linkInfo={{ title: 'some title', ...props.linkInfo }}
     />
