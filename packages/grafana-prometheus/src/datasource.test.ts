@@ -664,10 +664,6 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('interpolateVariablesInQueries', () => {
-    afterEach(() => {
-      config.featureToggles.promQLScope = undefined;
-    });
-
     it('should call replace function 3 times', () => {
       const query: PromQuery = {
         expr: 'test{job="testjob"}',
@@ -729,10 +725,6 @@ describe('PrometheusDatasource', () => {
   describe('applyTemplateVariables', () => {
     afterAll(() => {
       replaceMock.mockImplementation((a: string, ...rest: unknown[]) => a);
-    });
-
-    afterEach(() => {
-      config.featureToggles.promQLScope = false;
     });
 
     it('should call replace function for legendFormat', () => {
@@ -806,19 +798,13 @@ describe('PrometheusDatasource', () => {
           filters: [
             {
               key: 'bar',
-              operator: 'equals',
+              operator: 'equals' as const,
               value: 'baz',
             },
           ],
         },
       ];
-      const queries = [
-        {
-          refId: 'A',
-          expr: 'rate({bar="baz", job="foo"} [5m]',
-          scopes: scopes,
-        },
-      ];
+
       replaceMock.mockImplementation((a: string) => a);
       const filters = [
         {
@@ -842,12 +828,12 @@ describe('PrometheusDatasource', () => {
       const expectedScopeFilters: ScopeSpecFilter[] = [
         {
           key: 'k1',
-          operator: 'equals',
+          operator: 'equals' as const,
           value: 'v1',
         },
         {
           key: 'k2',
-          operator: 'not-equals',
+          operator: 'not-equals' as const,
           value: 'v2',
         },
       ];
