@@ -2270,7 +2270,8 @@
       "metadata": {
         "name": "localizationForPlugins",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-31T04:38:38Z"
+        "creationTimestamp": "2025-03-31T04:38:38Z",
+        "deletionTimestamp": "2025-09-29T07:10:59Z"
       },
       "spec": {
         "description": "Enables localization for plugins",
@@ -3145,6 +3146,19 @@
       },
       "spec": {
         "description": "Rewrite requests targeting /ds/query to the query service",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryServiceWithConnections",
+        "resourceVersion": "1756367172351",
+        "creationTimestamp": "2025-08-28T07:46:12Z"
+      },
+      "spec": {
+        "description": "Adds datasource connections to the query service",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "requiresRestart": true
