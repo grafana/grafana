@@ -2,27 +2,28 @@
 
 Thank you for your interest in contributing to Grafana! We welcome all people who want to contribute in a healthy and constructive manner within our community. To help us create a safe and positive community experience for all, we require all participants to adhere to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-This document is a guide to help you through the process of contributing to Grafana. Be sure to check out the [Grafana Champions program](https://grafana.com/community/champions/?src=github&camp=community-cross-platform-engagement) as you start to contribute- it’s designed to recognize and empower individuals who are actively contributing to the growth and success of the Grafana ecosystem.
+This document is a guide to help you through the process of contributing to Grafana. Be sure to check out the [Grafana Champions program](https://grafana.com/community/champions/?src=github&camp=community-cross-platform-engagement) as you start to contribute — it’s designed to recognize and empower individuals who are actively contributing to the growth and success of the Grafana ecosystem.
 
-Whether you're a new contributor or a seasoned veteran we hope these resources help you connect with the community:
+Whether you're a new contributor or a seasoned veteran, we hope these resources help you connect with the community.
 
-#### **Interact and be heard:**
+#### Interact and be heard
 
-- Forums: Do you have a problem, question, or curiosity? Visit our [forums](https://gra.fan/fromgithubtoforums) for a reservoir of knowledge- submit your own questions and answers!
-- Meetups: Craving in-person connections without the long journeys? [Join your local Grafana & Friends meetup group](https://gra.fan/githubtomeetup)!
-- Community Slack: Eager for real-time connections with fellow users? Begin a conversation on [Slack](https://gra.fan/githubtoslack).
+- **Forums:** Do you have a problem, question, or curiosity? Visit our [forums](https://gra.fan/fromgithubtoforums) for a reservoir of knowledge — submit your own questions and answers!
+- **Meetups:** Craving in-person connections without the long journeys? [Join your local Grafana & Friends meetup group](https://gra.fan/githubtomeetup)!
+- **Community Slack:** Eager for real-time connections with fellow users? Begin a conversation on [Slack](https://gra.fan/githubtoslack).
 
-  #### **Learn:**
+#### Learn
 
-- YouTube: From getting started to exploring newer projects like Pyroscope and Beyla, the [Grafana YouTube channel](https://gra.fan/githubtoyoutube) has what you need to get started!
+- **YouTube:** From getting started to exploring newer projects like Pyroscope and Beyla, the [Grafana YouTube channel](https://gra.fan/githubtoyoutube) has what you need to get started!
+- **Meetups:** Join a [group near you](https://gra.fan/githubtomeetup) to learn from local experts and ask questions in real time.
 
-  #### **Make technical contributions**:
+#### Make technical contributions
 
 - You can make technical contributions with or without code. Scroll down to see how!
 
-  #### **Share your story:**
+#### Share your story
 
-- Meetups and blogs: We’d love to feature your OSS Grafana Labs use case or story at an upcoming Grafana & Friends meetup or on the Grafana blog! Submit your idea [here](https://gra.fan/githubtocca) and we’ll connect with you on next steps if accepted.
+- **Meetups and blogs:** We’d love to feature your OSS Grafana Labs use case or story at an upcoming Grafana & Friends meetup or on the Grafana blog! Submit your idea [here](https://gra.fan/githubtocca), and we’ll connect with you on next steps if accepted.
 
 ## Choose the right channel
 
