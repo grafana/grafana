@@ -11,8 +11,9 @@ Whether you're a new contributor or a seasoned veteran we hope these resources h
 - Forums: Do you have a problem, question, or curiosity? Visit our [forums](https://gra.fan/fromgithubtoforums) for a reservoir of knowledge- submit your own questions and answers!
 - Meetups: Craving in-person connections without the long journeys? [Join your local Grafana & Friends meetup group](https://gra.fan/githubtomeetup)!
 - Community Slack: Eager for real-time connections with fellow users? Begin a conversation on [Slack](https://gra.fan/githubtoslack).
-  
+
   #### **Learn:**
+
 - YouTube: From getting started to exploring newer projects like Pyroscope and Beyla, the [Grafana YouTube channel](https://gra.fan/githubtoyoutube) has what you need to get started!
 
   #### **Make technical contributions**:
@@ -20,9 +21,8 @@ Whether you're a new contributor or a seasoned veteran we hope these resources h
 - You can make technical contributions with or without code. Scroll down to see how!
 
   #### **Share your story:**
+
 - Meetups and blogs: We’d love to feature your OSS Grafana Labs use case or story at an upcoming Grafana & Friends meetup or on the Grafana blog! Submit your idea [here](https://gra.fan/githubtocca) and we’ll connect with you on next steps if accepted.
-
-
 
 ## Choose the right channel
 
