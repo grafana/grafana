@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,6 +56,7 @@ type ResourcesManager struct {
 	parser          Parser
 	clients         ResourceClients
 	resourcesLookup map[resourceID]string // the path with this k8s name
+	mu              sync.RWMutex
 }
 
 func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser Parser, clients ResourceClients) *ResourcesManager {
@@ -65,6 +67,25 @@ func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, p
 		clients:         clients,
 		resourcesLookup: map[resourceID]string{},
 	}
+}
+
+// findResource checks if a resource exists in the lookup map (read operation)
+func (r *ResourcesManager) findResource(id resourceID) (string, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	path, found := r.resourcesLookup[id]
+	return path, found
+}
+
+func (r *ResourcesManager) addResource(id resourceID, path string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, found := r.resourcesLookup[id]; found {
+		return
+	}
+
+	r.resourcesLookup[id] = path
 }
 
 // CheckResourceOwnership validates that the requesting manager can modify the existing resource
@@ -213,11 +234,11 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 		Resource: parsed.GVR.Resource,
 		Group:    parsed.GVK.Group,
 	}
-	existing, found := r.resourcesLookup[id]
-	if found {
+
+	if existing, found := r.findResource(id); found {
 		return "", parsed.GVK, fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, existing, ErrDuplicateName)
 	}
-	r.resourcesLookup[id] = path
+	r.addResource(id, path)
 
 	// For resources that exist in folders, set the header annotation
 	if slices.Contains(SupportsFolderAnnotation, parsed.GVR.GroupResource()) {
