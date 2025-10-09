@@ -206,7 +206,7 @@ func TestInterpolateDashboardFeatureFlag(t *testing.T) {
 		s := webtest.NewServer(t, routeRegister)
 
 		cmd := &dashboardimport.ImportDashboardRequest{
-			Dashboard: simplejson.New(),
+			PluginId: "test-plugin",
 		}
 		jsonBytes, err := json.Marshal(cmd)
 		require.NoError(t, err)
