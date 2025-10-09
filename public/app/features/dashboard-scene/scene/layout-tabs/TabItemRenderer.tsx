@@ -101,12 +101,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 function IsHiddenSuffix() {
   return (
     <Box paddingLeft={1} display={'inline'}>
-      <Tooltip
-        content={t(
-          'dashboard.conditional-rendering.overlay.tooltip',
-          'Element is hidden due to conditional rendering.'
-        )}
-      >
+      <Tooltip content={t('dashboard.conditional-rendering.overlay.tooltip', 'Element is hidden by show/hide rules.')}>
         <Icon name="eye-slash" />
       </Tooltip>
     </Box>

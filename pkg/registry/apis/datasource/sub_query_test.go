@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -28,7 +27,6 @@ func TestSubQueryConnect(t *testing.T) {
 			},
 			datasources:     mockDatasources{},
 			contextProvider: mockContextProvider{},
-			log:             log.NewNopLogger(),
 		},
 	}
 
@@ -73,7 +71,6 @@ func TestSubQueryConnectWhenDatasourceNotFound(t *testing.T) {
 			},
 			datasources:     mockDatasources{},
 			contextProvider: mockContextProvider{},
-			log:             log.NewNopLogger(),
 		},
 	}
 
