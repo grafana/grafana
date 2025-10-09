@@ -119,6 +119,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		ctxLogger.Debug("Check execution time", "duration", time.Since(start).Milliseconds())
 	}(time.Now())
 
+	allow := &authzv1.CheckResponse{Allowed: true}
 	deny := &authzv1.CheckResponse{Allowed: false}
 
 	checkReq, err := s.validateCheckRequest(ctx, req)
@@ -157,7 +158,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 			s.metrics.permissionCacheUsage.WithLabelValues("true", checkReq.Action).Inc()
 			s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
 			span.SetAttributes(attribute.Bool("allowed", true))
-			return &authzv1.CheckResponse{Allowed: true}, nil
+			return allow, nil
 		}
 	}
 	s.metrics.permissionCacheUsage.WithLabelValues("false", checkReq.Action).Inc()
