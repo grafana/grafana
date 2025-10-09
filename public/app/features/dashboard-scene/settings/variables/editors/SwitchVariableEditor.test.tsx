@@ -90,54 +90,6 @@ describe('SwitchVariableEditor', () => {
     ).toBeInTheDocument();
   });
 
-  // it.only('should update to boolean values when selecting boolean type', async () => {
-  //   const variable = new SwitchVariable({
-  //     name: 'test',
-  //     value: 'true',
-  //     // enabledValue: 'on',
-  //     // disabledValue: 'off',
-  //   });
-  //   const user = userEvent.setup();
-
-  //   render(<SwitchVariableEditor variable={variable} />);
-
-  //   // const combobox = screen.getByTestId(
-  //   //   selectors.pages.Dashboard.Settings.Variables.Edit.SwitchVariable.valuePairTypeSelect
-  //   // );
-  //   const input = screen.getByRole('combobox');
-  //   await user.click(input);
-
-  //   // const booleanOption = await screen.findByText('True / False');
-  //   const item = await screen.findByRole('option', { name: '1 / 0' });
-  //   await user.click(item);
-
-  //   expect(variable.state.enabledValue).toBe('true');
-  //   expect(variable.state.disabledValue).toBe('false');
-  // });
-
-  // it('should update to number values when selecting number type', async () => {
-  //   const variable = new SwitchVariable({
-  //     name: 'test',
-  //     value: 'true',
-  //     enabledValue: 'true',
-  //     disabledValue: 'false',
-  //   });
-  //   const user = userEvent.setup();
-
-  //   render(<SwitchVariableEditor variable={variable} />);
-
-  //   const combobox = screen.getByTestId(
-  //     selectors.pages.Dashboard.Settings.Variables.Edit.SwitchVariable.valuePairTypeSelect
-  //   );
-  //   await user.click(combobox);
-
-  //   const numberOption = screen.getByText('1 / 0');
-  //   await user.click(numberOption);
-
-  //   expect(variable.state.enabledValue).toBe('1');
-  //   expect(variable.state.disabledValue).toBe('0');
-  // });
-
   it('should update enabled value and current value when currently enabled', async () => {
     const variable = new SwitchVariable({
       name: 'test',
