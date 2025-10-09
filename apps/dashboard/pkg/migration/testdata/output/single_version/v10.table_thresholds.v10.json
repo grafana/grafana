@@ -1,0 +1,81 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "styles": [
+        {
+          "thresholds": [
+            "20",
+            "30"
+          ]
+        },
+        {
+          "thresholds": [
+            "200",
+            "300"
+          ]
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "id": 2,
+      "styles": [
+        {
+          "thresholds": [
+            "50",
+            "75"
+          ]
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "autoMigrateFrom": "graph",
+      "id": 3,
+      "styles": [
+        {
+          "thresholds": [
+            "5",
+            "10",
+            "15"
+          ]
+        }
+      ],
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 10,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V10 Table Thresholds Test",
+  "weekStart": ""
+}
