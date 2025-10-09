@@ -2,6 +2,8 @@ package migration
 
 import (
 	"sort"
+
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
 // applyFrontendDefaults applies all DashboardModel constructor defaults
@@ -793,10 +795,12 @@ func cleanupVariable(variable map[string]interface{}) {
 	if variableType, ok := variable["type"].(string); ok {
 		switch variableType {
 		case "query":
-			// Query variables: keep options: [] if refresh !== never
-			// Since refresh is not specified in the input, it defaults to not "never"
-			if _, hasOptions := variable["options"]; !hasOptions {
-				variable["options"] = []interface{}{}
+			// Query variables: keep options: [] if refresh !== never (matches frontend getSaveModel logic)
+			refresh := schemaversion.GetIntValue(variable, "refresh", 1) // Default to 1 (onDashboardLoad) if not specified
+			if refresh != 0 {                                            // 0 = VariableRefreshNever
+				if _, hasOptions := variable["options"]; !hasOptions {
+					variable["options"] = []interface{}{}
+				}
 			}
 		case "constant":
 			// Constant variables: remove options completely
