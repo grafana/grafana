@@ -75,6 +75,12 @@ type cdkBackend struct {
 	stream      chan<- *WrittenEvent
 }
 
+func (s *cdkBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
+	return func(yield func(ResourceLastImportTime, error) bool) {
+		yield(ResourceLastImportTime{}, errors.New("not implemented"))
+	}
+}
+
 func (s *cdkBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
 	return 0, func(yield func(*ModifiedResource, error) bool) {
 		yield(nil, errors.New("not implemented"))

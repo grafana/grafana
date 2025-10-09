@@ -33,12 +33,13 @@ func grpcMetaValueIsTrue(vals []string) bool {
 }
 
 type BulkRequestIterator interface {
+	// Next advances the iterator to the next element if one exists.
 	Next() bool
 
-	// The next event we should process
+	// Request returns the current element. Only valid after Next() returns true.
 	Request() *resourcepb.BulkRequest
 
-	// Rollback requested
+	// RollbackRequested returns true if there was an error advancing the iterator. Checked after Next() returns true.
 	RollbackRequested() bool
 }
 
