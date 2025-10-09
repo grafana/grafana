@@ -199,7 +199,7 @@ interface ErrorContentProps {
 function ErrorContent({ error }: ErrorContentProps) {
   if (isFetchError(error) && error.status === 404) {
     return (
-      <Alert title={t('alerting.triage.rule-not-found', 'Rule not found')} severity="error">
+      <Alert title={t('alerting.triage.rule-not-found.title', 'Rule not found')} severity="error">
         {t('alerting.triage.rule-not-found.description', 'The requested rule could not be found.')}
       </Alert>
     );

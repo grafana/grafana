@@ -48,7 +48,7 @@ export function RuleDetailsDrawer({ ruleUID, onClose }: RuleDetailsDrawerProps) 
 
   if (error) {
     return (
-      <Drawer title={t('alerting.triage.rule-details', 'Rule Details')} onClose={onClose} size="lg">
+      <Drawer title={t('alerting.triage.rule-details.title', 'Rule Details')} onClose={onClose} size="lg">
         <ErrorContent error={error} />
       </Drawer>
     );
@@ -56,7 +56,7 @@ export function RuleDetailsDrawer({ ruleUID, onClose }: RuleDetailsDrawerProps) 
 
   if (loading || !rule) {
     return (
-      <Drawer title={t('alerting.triage.rule-details', 'Rule Details')} onClose={onClose} size="lg">
+      <Drawer title={t('alerting.triage.rule-details.title', 'Rule Details')} onClose={onClose} size="lg">
         <div>{t('alerting.common.loading', 'Loading...')}</div>
       </Drawer>
     );
@@ -135,7 +135,7 @@ interface ErrorContentProps {
 function ErrorContent({ error }: ErrorContentProps) {
   if (isFetchError(error) && error.status === 404) {
     return (
-      <Alert title={t('alerting.triage.rule-not-found', 'Rule not found')} severity="error">
+      <Alert title={t('alerting.triage.rule-not-found.title', 'Rule not found')} severity="error">
         {t('alerting.triage.rule-not-found.description', 'The requested rule could not be found.')}
       </Alert>
     );
