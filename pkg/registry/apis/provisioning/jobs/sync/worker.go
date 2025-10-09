@@ -110,6 +110,10 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	lastRef := repo.Config().Status.Sync.LastRef
 	syncStatus.LastRef = lastRef
 
+	if syncStatus.State == "" {
+		syncStatus.State = provisioning.JobStateWorking
+	}
+
 	// Update sync status at start using JSON patch
 	patchOperations := []map[string]interface{}{
 		{
@@ -135,15 +139,17 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	if err != nil {
 		setupSpan.End()
 		logger.Error("failed to create repository resources client", "error", err)
-		err = fmt.Errorf("create repository resources client: %w", err)
-		return tracing.Error(span, err)
+		setupError := fmt.Errorf("create repository resources client: %w", err)
+		progress.Complete(ctx, setupError)
+		return tracing.Error(span, setupError)
 	}
 	clients, err := r.clients.Clients(setupCtx, cfg.Namespace)
 	if err != nil {
 		setupSpan.End()
 		logger.Error("failed to get clients for the repository", "error", err)
-		err = fmt.Errorf("get clients for %s: %w", cfg.Name, err)
-		return tracing.Error(span, err)
+		setupError := fmt.Errorf("get clients for %s: %w", cfg.Name, err)
+		progress.Complete(ctx, setupError)
+		return tracing.Error(span, setupError)
 	}
 	setupSpan.End()
 

@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"fmt"
 	"maps"
 	"strings"
 
@@ -151,6 +152,14 @@ func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string
 
 func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
+
+	// teams + users must have shorter names because they are often used as part of another name
+	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
+		MaximumNameLength: 80,
+	})
+	opts.StorageOptsRegister(iamv0.UserResourceInfo.GroupResource(), apistore.StorageOptions{
+		MaximumNameLength: 80,
+	})
 
 	teamResource := iamv0.TeamResourceInfo
 	teamLegacyStore := team.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation)
@@ -345,6 +354,12 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 		switch typedObj := a.GetObject().(type) {
 		case *iamv0.ResourcePermission:
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
+		case *iamv0.Team:
+			oldTeamObj, ok := a.GetOldObject().(*iamv0.Team)
+			if !ok {
+				return fmt.Errorf("expected old object to be a Team, got %T", oldTeamObj)
+			}
+			return team.ValidateOnUpdate(ctx, typedObj, oldTeamObj)
 		}
 		return nil
 	case admission.Delete:

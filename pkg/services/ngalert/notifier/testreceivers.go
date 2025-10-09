@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	v2 "github.com/prometheus/alertmanager/api/v2"
 
@@ -13,9 +14,9 @@ import (
 func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
 	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, r := range c.Receivers {
-		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
+		integrations := make([]*models.IntegrationConfig, 0, len(r.GrafanaManagedReceivers))
 		for _, gr := range r.GrafanaManagedReceivers {
-			integrations = append(integrations, &alertingNotify.GrafanaIntegrationConfig{
+			integrations = append(integrations, &models.IntegrationConfig{
 				UID:                   gr.UID,
 				Name:                  gr.Name,
 				Type:                  gr.Type,
@@ -26,7 +27,7 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		}
 		recv := &alertingNotify.APIReceiver{
 			ConfigReceiver: r.Receiver,
-			GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
+			ReceiverConfig: models.ReceiverConfig{
 				Integrations: integrations,
 			},
 		}
@@ -52,5 +53,5 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 }
 
 func (am *alertmanager) GetReceivers(_ context.Context) ([]apimodels.Receiver, error) {
-	return am.Base.GetReceivers(), nil
+	return am.Base.GetReceiversStatus(), nil
 }
