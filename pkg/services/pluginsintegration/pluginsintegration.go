@@ -137,6 +137,8 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(advisor.AdvisorStats), new(*advisor.Service)),
 	pluginchecker.ProvideService,
 	wire.Bind(new(pluginchecker.PluginUpdateChecker), new(*pluginchecker.Service)),
+	pluginsso.ProvideDefaultSettingsProvider,
+	wire.Bind(new(pluginsso.SettingsProvider), new(*pluginsso.DefaultSettingsProvider)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -158,8 +160,6 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(checkregistry.CheckService), new(*checkregistry.Service)),
 	pluginassets2.ProvideService,
 	wire.Bind(new(pluginassets2.Provider), new(*pluginassets2.LocalProvider)),
-	pluginsso.ProvideDefaultSettingsProvider,
-	wire.Bind(new(pluginsso.SettingsProvider), new(*pluginsso.DefaultSettingsProvider)),
 )
 
 func ProvideClientWithMiddlewares(
