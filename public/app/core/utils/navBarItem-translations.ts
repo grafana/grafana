@@ -220,7 +220,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'dashboards/recently-deleted':
       return t(
         'nav.recently-deleted.subtitle',
-        'Any items listed here for more than 30 days will be automatically deleted.'
+        'Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.'
       );
     case 'alerting':
       return t('nav.alerting.subtitle', 'Learn about problems in your systems moments after they occur');
