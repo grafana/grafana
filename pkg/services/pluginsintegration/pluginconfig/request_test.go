@@ -434,6 +434,108 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 			"GFAZPL_AZURE_ENTRA_PASSWORD_CREDENTIALS_ENABLED":           "true",
 		})
 	})
+
+	t.Run("sets user token endpoint settings from SSO settings for an Azure plugin", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Azure = azSettings
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{
+			GetForProviderFunc: getAzureSSOSettings,
+		})
+		require.Subset(t, p.PluginRequestConfig(context.Background(), "grafana-azure-monitor-datasource", nil), map[string]string{
+			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
+			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":                         "mock_managed_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":                          "true",
+			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID":                        "mock_workload_identity_tenant_id",
+			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID":                        "mock_workload_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE":                       "mock_workload_identity_token_file",
+			"GFAZPL_USER_IDENTITY_ENABLED":                              "true",
+			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED": "true",
+			"GFAZPL_USER_IDENTITY_TOKEN_URL":                            "sso_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_AUTHENTICATION":                "sso_user_client_authentication",
+			"GFAZPL_USER_IDENTITY_CLIENT_ID":                            "sso_user_identity_client_id",
+			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":                        "sso_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_MANAGED_IDENTITY_CLIENT_ID":           "sso_user_identity_managed_identity_client_id",
+			"GFAZPL_USER_IDENTITY_FEDERATED_CREDENTIAL_AUDIENCE":        "sso_user_identity_federated_credential_audience",
+			"GFAZPL_USER_IDENTITY_ASSERTION":                            "username",
+			"GFAZPL_AZURE_ENTRA_PASSWORD_CREDENTIALS_ENABLED":           "true",
+		})
+	})
+
+	t.Run("does not use SSO settings if overrides have been set for an Azure plugin", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Azure = &azsettings.AzureSettings{
+			Cloud:                   azsettings.AzurePublic,
+			ManagedIdentityEnabled:  true,
+			ManagedIdentityClientId: "mock_managed_identity_client_id",
+			WorkloadIdentityEnabled: true,
+			WorkloadIdentitySettings: &azsettings.WorkloadIdentitySettings{
+				TenantId:  "mock_workload_identity_tenant_id",
+				ClientId:  "mock_workload_identity_client_id",
+				TokenFile: "mock_workload_identity_token_file",
+			},
+			UserIdentityEnabled: true,
+			UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{
+				TokenUrl:                            "override_user_identity_token_url",
+				TokenUrlOverride:                    true,
+				ClientAuthentication:                "override_user_client_authentication",
+				ClientAuthenticationOverride:        true,
+				ClientId:                            "override_user_identity_client_id",
+				ClientIdOverride:                    true,
+				ClientSecret:                        "override_user_identity_client_secret",
+				ClientSecretOverride:                true,
+				ManagedIdentityClientId:             "override_user_identity_managed_identity_client_id",
+				ManagedIdentityClientIdOverride:     true,
+				FederatedCredentialAudience:         "override_user_identity_federated_credential_audience",
+				FederatedCredentialAudienceOverride: true,
+				UsernameAssertion:                   true,
+			},
+			UserIdentityFallbackCredentialsEnabled: true,
+			ForwardSettingsPlugins:                 []string{"grafana-azure-monitor-datasource", "prometheus", "grafana-azure-data-explorer-datasource", "mssql", "grafana-azureprometheus-datasource"},
+			AzureEntraPasswordCredentialsEnabled:   true,
+		}
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{
+			GetForProviderFunc: getAzureSSOSettings,
+		})
+		require.Subset(t, p.PluginRequestConfig(context.Background(), "grafana-azure-monitor-datasource", nil), map[string]string{
+			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
+			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":                         "mock_managed_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":                          "true",
+			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID":                        "mock_workload_identity_tenant_id",
+			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID":                        "mock_workload_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE":                       "mock_workload_identity_token_file",
+			"GFAZPL_USER_IDENTITY_ENABLED":                              "true",
+			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED": "true",
+			"GFAZPL_USER_IDENTITY_TOKEN_URL":                            "override_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_AUTHENTICATION":                "override_user_client_authentication",
+			"GFAZPL_USER_IDENTITY_CLIENT_ID":                            "override_user_identity_client_id",
+			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":                        "override_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_MANAGED_IDENTITY_CLIENT_ID":           "override_user_identity_managed_identity_client_id",
+			"GFAZPL_USER_IDENTITY_FEDERATED_CREDENTIAL_AUDIENCE":        "override_user_identity_federated_credential_audience",
+			"GFAZPL_USER_IDENTITY_ASSERTION":                            "username",
+			"GFAZPL_AZURE_ENTRA_PASSWORD_CREDENTIALS_ENABLED":           "true",
+		})
+	})
+}
+
+func getAzureSSOSettings(ctx context.Context, provider string) (*pluginsso.Settings, error) {
+	return &pluginsso.Settings{
+		Values: map[string]any{
+			"token_url":                     "sso_user_identity_token_url",
+			"client_authentication":         "sso_user_client_authentication",
+			"client_id":                     "sso_user_identity_client_id",
+			"client_secret":                 "sso_user_identity_client_secret",
+			"managed_identity_client_id":    "sso_user_identity_managed_identity_client_id",
+			"federated_credential_audience": "sso_user_identity_federated_credential_audience",
+		},
+	}, nil
 }
 
 func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
