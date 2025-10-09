@@ -81,6 +81,7 @@ export { type TooltipPlacement } from '../components/Tooltip/types';
 export { ConfirmContent, type ConfirmContentProps } from '../components/ConfirmModal/ConfirmContent';
 
 export { EmotionPerfTest } from '../components/ThemeDemos/EmotionPerfTest';
+export { ThemeDemo } from '../components/ThemeDemos/ThemeDemo';
 
 export { VizTooltipContent } from '../components/VizTooltip/VizTooltipContent';
 export { VizTooltipFooter, type AdHocFilterModel } from '../components/VizTooltip/VizTooltipFooter';
