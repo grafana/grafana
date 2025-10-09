@@ -5,6 +5,7 @@ go 1.25.2
 require (
 	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4
 	github.com/grafana/grafana-plugin-sdk-go v0.279.0
+	github.com/grafana/grafana/apps/scope v0.0.0-20251007093103-792853df9134
 	github.com/json-iterator/go v1.1.12
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/common v0.66.1
@@ -54,6 +55,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20251007081214-26e147d01f0a // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
@@ -91,10 +93,9 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/smartystreets/goconvey v1.8.1 // indirect
-	github.com/spf13/pflag v1.0.10 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
 	github.com/unknwon/com v1.0.1 // indirect
