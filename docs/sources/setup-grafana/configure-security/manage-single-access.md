@@ -30,12 +30,12 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/assign-rbac-roles
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/assign-rbac-roles      
+      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/assign-rbac-roles
   rbac-fixed:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions    
+      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
 ---
 
 # Manage multi-team access in a single Grafana instance
