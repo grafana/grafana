@@ -27,13 +27,14 @@
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
+      "grid": {
+        "threshold1": 200,
+        "threshold1Color": "yellow",
+        "threshold2": 400,
+        "threshold2Color": "red",
+        "thresholdLine": true
+      },
       "id": 1,
-      "links": [
-        {
-          "title": "Dashboard Link",
-          "url": "dashboard/db/my-dashboard?$__url_time_range"
-        }
-      ],
       "targets": [
         {
           "datasource": {
@@ -44,22 +45,24 @@
           "refId": "A"
         }
       ],
-      "title": "Panel with legacy dashboard link",
+      "title": "Graph with Line Thresholds",
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
+      },
+      "grid": {
+        "threshold1": 100,
+        "threshold1Color": "green",
+        "threshold2": 300,
+        "threshold2Color": "blue",
+        "thresholdLine": false
       },
       "id": 2,
-      "links": [
-        {
-          "title": "DashUri Link",
-          "url": "dashboard/my-dashboard-uid?$__all_variables"
-        }
-      ],
       "targets": [
         {
           "datasource": {
@@ -70,75 +73,22 @@
           "refId": "A"
         }
       ],
-      "title": "Panel with dashUri link",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "id": 3,
-      "links": [
-        {
-          "title": "Custom Params Link",
-          "url": "http://example.com?customParam=value"
-        }
-      ],
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "Panel with custom params",
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "id": 4,
-      "links": [
-        {
-          "targetBlank": true,
-          "title": "Complex Link",
-          "url": "dashboard/db/complex-dashboard?$__url_time_range\u0026$__all_variables\u0026param1=value1\u0026param2=value2"
-        }
-      ],
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "Panel with complex link",
+      "title": "Graph with Fill Thresholds",
       "type": "timeseries"
     },
     {
+      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
-      "id": 5,
-      "links": [
-        {
-          "title": "Existing URL Link",
-          "url": "http://existing-url.com"
-        }
-      ],
+      "grid": {
+        "threshold1": 150,
+        "threshold1Color": "orange",
+        "thresholdLine": true
+      },
+      "id": 3,
       "targets": [
         {
           "datasource": {
@@ -149,8 +99,41 @@
           "refId": "A"
         }
       ],
-      "title": "Panel with existing URL",
-      "type": "gauge"
+      "title": "Graph with Single Threshold",
+      "type": "timeseries"
+    },
+    {
+      "autoMigrateFrom": "graph",
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "grid": {
+        "threshold1": 200,
+        "threshold1Color": "yellow",
+        "thresholdLine": false
+      },
+      "id": 4,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "thresholds": [
+        {
+          "color": "purple",
+          "colorMode": "custom",
+          "value": 50
+        }
+      ],
+      "title": "Graph with Existing Thresholds",
+      "type": "timeseries"
     },
     {
       "autoMigrateFrom": "singlestat",
@@ -159,7 +142,7 @@
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
-      "id": 6,
+      "id": 5,
       "targets": [
         {
           "datasource": {
@@ -170,7 +153,7 @@
           "refId": "A"
         }
       ],
-      "title": "Panel with no links",
+      "title": "Non-Graph Panel",
       "type": "stat"
     }
   ],
@@ -186,6 +169,6 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "V19 Panel Links Migration Test Dashboard",
+  "title": "V13 Graph Thresholds Migration Test",
   "weekStart": ""
 }
