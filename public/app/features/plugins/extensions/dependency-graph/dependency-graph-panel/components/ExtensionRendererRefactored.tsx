@@ -36,9 +36,7 @@ interface ExtensionRendererProps {
   onContentConsumerClick: (id: string | null) => void;
   onContentProviderClick: (id: string | null) => void;
   onHighlightedExtensionPointChange: (id: string | null) => void;
-  styles: {
-    [key: string]: { toString(): string };
-  };
+  styles: Record<string, { toString(): string }>;
 }
 
 /**
