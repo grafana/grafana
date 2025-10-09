@@ -4,7 +4,7 @@
  * Centralized styling for the dependency graph components.
  */
 
-import { css } from '@emotion/react';
+import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 

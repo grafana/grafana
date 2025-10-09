@@ -1,4 +1,7 @@
+import { css } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
+
+import { useStyles2 } from '@grafana/ui';
 
 import { DependencyGraph } from '../dependency-graph-panel/components/DependencyGraph';
 import { LAYOUT_CONSTANTS } from '../dependency-graph-panel/constants';
@@ -30,8 +33,10 @@ export function DependencyGraphVisualization({ controls }: DependencyGraphVisual
     selectedExtensionPoints,
   });
 
+  const styles = useStyles2(getStyles);
+
   return (
-    <div style={{ flex: 1, overflow: 'visible', minHeight: LAYOUT_CONSTANTS.VISUALIZATION_MIN_HEIGHT, width: '100%' }}>
+    <div className={styles.container}>
       {visualizationMode === 'extensionpoint' ? (
         <AutoSizer>
           {({ width, height }: { width: number; height: number }) => {
@@ -39,7 +44,7 @@ export function DependencyGraphVisualization({ controls }: DependencyGraphVisual
             const effectiveHeight = height || LAYOUT_CONSTANTS.VISUALIZATION_MIN_HEIGHT;
             logAutoSizer(effectiveWidth, effectiveHeight);
             return (
-              <div style={{ width: effectiveWidth, height: effectiveHeight }}>
+              <div className={styles.graphContainer} style={{ width: effectiveWidth, height: effectiveHeight }}>
                 <DependencyGraph
                   data={graphData}
                   options={{
@@ -69,7 +74,7 @@ export function DependencyGraphVisualization({ controls }: DependencyGraphVisual
             const effectiveHeight = LAYOUT_CONSTANTS.VISUALIZATION_LARGE_HEIGHT;
             logAutoSizer(effectiveWidth, effectiveHeight);
             return (
-              <div style={{ width: effectiveWidth, height: effectiveHeight }}>
+              <div className={styles.graphContainer} style={{ width: effectiveWidth, height: effectiveHeight }}>
                 <DependencyGraph
                   data={graphData}
                   options={{
@@ -96,3 +101,17 @@ export function DependencyGraphVisualization({ controls }: DependencyGraphVisual
     </div>
   );
 }
+
+const getStyles = () => {
+  return {
+    container: css({
+      flex: 1,
+      overflow: 'visible',
+      minHeight: LAYOUT_CONSTANTS.VISUALIZATION_MIN_HEIGHT,
+      width: '100%',
+    }),
+    graphContainer: css({
+      // Additional styles can be added here if needed
+    }),
+  };
+};

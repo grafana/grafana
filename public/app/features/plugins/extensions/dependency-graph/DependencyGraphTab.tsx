@@ -1,3 +1,7 @@
+import { css } from '@emotion/css';
+
+import { useStyles2 } from '@grafana/ui';
+
 import { DependencyGraphControlsComponent } from './components/DependencyGraphControls';
 import { DependencyGraphErrorBoundary } from './components/DependencyGraphErrorBoundary';
 import { DependencyGraphHeader } from './components/DependencyGraphHeader';
@@ -11,11 +15,12 @@ import { useDependencyGraphControls } from './hooks/useDependencyGraphControls';
  */
 export function DependencyGraphTab(): JSX.Element {
   const controls = useDependencyGraphControls();
+  const styles = useStyles2(getStyles);
 
   return (
     <DependencyGraphErrorBoundary>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <div style={{ marginTop: LAYOUT_CONSTANTS.TAB_PADDING }}>
+      <div className={styles.container}>
+        <div className={styles.headerSection}>
           <DependencyGraphHeader controls={controls} />
 
           {/* Controls Section */}
@@ -29,3 +34,15 @@ export function DependencyGraphTab(): JSX.Element {
     </DependencyGraphErrorBoundary>
   );
 }
+
+const getStyles = () => {
+  return {
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    headerSection: css({
+      marginTop: LAYOUT_CONSTANTS.TAB_PADDING,
+    }),
+  };
+};

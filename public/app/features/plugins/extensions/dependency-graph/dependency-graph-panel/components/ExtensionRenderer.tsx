@@ -4,7 +4,7 @@
  * Renders extension points and exposed components in the dependency graph.
  */
 
-import { SerializedStyles } from '@emotion/react';
+import { SerializedStyles } from '@emotion/css';
 import React, { useState } from 'react';
 import semver from 'semver';
 
