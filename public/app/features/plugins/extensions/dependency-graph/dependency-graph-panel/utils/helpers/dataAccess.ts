@@ -1,50 +1,25 @@
 import { AppPluginConfig } from '@grafana/data';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const pluginDataFallback = require('../../data.json');
-
-// Type definition for window.grafanaBootData
-interface GrafanaBootData {
-  settings: {
-    apps: Record<string, AppPluginConfig>;
-  };
-}
-
-declare global {
-  interface Window {
-    grafanaBootData?: GrafanaBootData;
-  }
-}
+const pluginData = require('../../data.json');
 
 // Cache for expensive calculations
 const cache = new Map<string, unknown>();
 const ENABLE_DEBUG_LOGS = true; // Set to true for debugging
 
 /**
- * Gets plugin data from window.grafanaBootData.settings.apps with fallback to data.json
+ * Gets plugin data from data.json file
  *
  * @returns Plugin data object
  */
 export const getPluginData = (): Record<string, AppPluginConfig> => {
-  // Use window.grafanaBootData.settings.apps if available, otherwise fallback to data.json
-  if (typeof window !== 'undefined' && window.grafanaBootData?.settings?.apps) {
-    if (ENABLE_DEBUG_LOGS) {
-      console.log(
-        'Using window.grafanaBootData.settings.apps',
-        Object.keys(window.grafanaBootData.settings.apps).length,
-        'plugins'
-      );
-    }
-    return window.grafanaBootData.settings.apps;
-  }
-
-  // Fallback to data.json
+  // Always use data.json for dependency graph data
   if (ENABLE_DEBUG_LOGS) {
-    console.log('Using data.json fallback', Object.keys(pluginDataFallback).length, 'plugins');
+    console.log('Using data.json', Object.keys(pluginData).length, 'plugins');
   }
-  // Type assertion to handle the fallback to data.json
+  // Type assertion to handle the data from data.json
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return pluginDataFallback as Record<string, AppPluginConfig>;
+  return pluginData as Record<string, AppPluginConfig>;
 };
 
 /**

@@ -24,7 +24,7 @@ const ENABLE_DEBUG_LOGS = true; // Set to true for debugging
  * - Arrows: From extensions to their target extension points
  *
  * @param options - Panel options including filtering settings
- * @param pluginData - Raw plugin data from data.json or window.grafanaBootData
+ * @param pluginData - Raw plugin data from data.json
  * @returns Processed graph data for extension point mode visualization
  */
 export const processPluginDataToExtensionPointGraph = (
