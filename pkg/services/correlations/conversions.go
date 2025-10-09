@@ -56,6 +56,7 @@ func ToCorrelation(obj *correlationsV0.Correlation) (*Correlation, error) {
 		Label:       obj.Spec.Label,
 		Description: ptr.Deref(obj.Spec.Description, ""),
 		SourceUID:   obj.Spec.Datasource.Name,
+		SourceType:  ptr.To(obj.Spec.Datasource.Group),
 		Type:        CorrelationType(obj.Spec.Type),
 		Config:      ToConfig(obj.Spec.Config),
 	}
@@ -67,6 +68,7 @@ func ToCorrelation(obj *correlationsV0.Correlation) (*Correlation, error) {
 	}
 	if len(obj.Spec.Target) == 1 {
 		result.TargetUID = &obj.Spec.Target[0].Name
+		result.TargetType = ptr.To(obj.Spec.Target[0].Group)
 	}
 	return result, nil
 }

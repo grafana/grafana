@@ -8,7 +8,6 @@ import (
 	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
-
 	correlationsV0 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
 )
 
@@ -50,11 +49,11 @@ func TestConversion(t *testing.T) {
 					Label:       "Test Label",
 					Type:        correlationsV0.CorrelationCorrelationTypeQuery,
 					Datasource: correlationsV0.CorrelationDataSourceRef{
-						Group: "group-for-source",
+						Group: "source-type",
 						Name:  "source",
 					},
 					Target: []correlationsV0.CorrelationDataSourceRef{{
-						Group: "group-for-target",
+						Group: "target-type",
 						Name:  "target",
 					}},
 					Config: correlationsV0.CorrelationConfigSpec{
