@@ -142,7 +142,10 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 	// Useful to have a separate route for this for logging and metrics purposes
 	s.routeGet(m, "/-/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+
+		if _, err := w.Write([]byte("OK")); err != nil {
+			s.log.Error("failed to write health check response", "error", err)
+		}
 	})
 
 	// All other requests return index.html
