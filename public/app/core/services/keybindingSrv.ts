@@ -53,7 +53,7 @@ export class KeybindingSrv {
       this.bind('g e', this.goToExplore);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
-      // Conditionally bind assistant shortcut only if Assistant is available
+      // Conditionally bind Assistant shortcut if it is available
       this.bindAssistantShortcutIfAvailable();
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
