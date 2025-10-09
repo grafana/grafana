@@ -1,12 +1,9 @@
 import { readdirSync } from 'fs';
 import path from 'path';
 
-import { PanelPlugin } from '@grafana/data';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
-import { plugin as tablePanelPlugin } from 'app/plugins/panel/table/module';
 
 // Set up the same datasources as backend test provider to ensure consistency
 export const dataSources = {
@@ -180,5 +177,3 @@ export function constructBackendOutputFilename(inputFile: string, targetVersion:
 export function constructLatestVersionOutputFilename(inputFile: string, latestVersion: number): string {
   return inputFile.replace('.json', `.v${latestVersion}.json`);
 }
-
-export const pluginVersionForAutoMigrate = '12.1.0';
