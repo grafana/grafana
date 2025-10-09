@@ -918,26 +918,23 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       model = createDashboardModelFixture({
         panels: [
-          // @ts-expect-error
-          { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 }, legend: { show: true } },
-          // @ts-expect-error
-          { id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 }, legend: { show: false } },
-          // @ts-expect-error
-          { id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 }, legend: { show: false } },
+          { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 }, options: { legend: { showLegend: true } } },
+          { id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 }, options: { legend: { showLegend: false } } },
+          { id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 }, options: { legend: { showLegend: false } } },
         ],
       });
     });
 
     it('toggleLegendsForAll should toggle all legends on on first execution', () => {
       model.toggleLegendsForAll();
-      const legendsOn = model.panels.filter((panel) => panel.legend!.show === true);
+      const legendsOn = model.panels.filter((panel) => panel.options?.legend?.showLegend === true);
       expect(legendsOn.length).toBe(3);
     });
 
     it('toggleLegendsForAll should toggle all legends off on second execution', () => {
       model.toggleLegendsForAll();
       model.toggleLegendsForAll();
-      const legendsOn = model.panels.filter((panel) => panel.legend!.show === true);
+      const legendsOn = model.panels.filter((panel) => panel.options?.legend?.showLegend === true);
       expect(legendsOn.length).toBe(0);
     });
   });
