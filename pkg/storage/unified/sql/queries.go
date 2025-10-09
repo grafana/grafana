@@ -35,6 +35,7 @@ var (
 	sqlResourceUpdate                   = mustTemplate("resource_update.sql")
 	sqlResourceRead                     = mustTemplate("resource_read.sql")
 	sqlResourceStats                    = mustTemplate("resource_stats.sql")
+	sqlResourceStatsSingleResource      = mustTemplate("resource_stats_single_resource.sql")
 	sqlResourceList                     = mustTemplate("resource_list.sql")
 	sqlResourceHistoryList              = mustTemplate("resource_history_list.sql")
 	sqlResourceHistoryListModifiedSince = mustTemplate("resource_history_list_since_modified.sql")
@@ -114,6 +115,17 @@ func (r sqlStatsRequest) Validate() error {
 	if r.Folder != "" && r.Namespace == "" {
 		return fmt.Errorf("folder constraint requires a namespace")
 	}
+	return nil
+}
+
+type sqlStatsSingleResourceRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Group     string
+	Resource  string
+}
+
+func (r sqlStatsSingleResourceRequest) Validate() error {
 	return nil
 }
 
