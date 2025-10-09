@@ -536,6 +536,13 @@ var (
 			RequiresRestart: true, // Adds a route at startup
 		},
 		{
+			Name:            "queryServiceWithConnections",
+			Description:     "Adds datasource connections to the query service",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: true, // Adds a route at startup
+		},
+		{
 			Name:            "queryServiceRewrite",
 			Description:     "Rewrite requests targeting /ds/query to the query service",
 			Stage:           FeatureStageExperimental,
@@ -1678,13 +1685,6 @@ var (
 			Owner:        awsDatasourcesSquad,
 		},
 		{
-			Name:         "localizationForPlugins",
-			Description:  "Enables localization for plugins",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaPluginsPlatformSquad,
-			FrontendOnly: false,
-		},
-		{
 			Name:         "unifiedNavbars",
 			Description:  "Enables unified navbars",
 			Stage:        FeatureStageGeneralAvailability,
@@ -2079,6 +2079,14 @@ var (
 		{
 			Name:         "cdnPluginsLoadFirst",
 			Description:  "Prioritize loading plugins from the CDN before other sources",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "cdnPluginsUrls",
+			Description:  "Enable loading plugins via declarative URLs",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,

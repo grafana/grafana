@@ -323,6 +323,10 @@ export interface FeatureToggles {
   */
   queryService?: boolean;
   /**
+  * Adds datasource connections to the query service
+  */
+  queryServiceWithConnections?: boolean;
+  /**
   * Rewrite requests targeting /ds/query to the query service
   */
   queryServiceRewrite?: boolean;
@@ -970,10 +974,6 @@ export interface FeatureToggles {
   */
   multiTenantTempCredentials?: boolean;
   /**
-  * Enables localization for plugins
-  */
-  localizationForPlugins?: boolean;
-  /**
   * Enables unified navbars
   * @default false
   */
@@ -1202,4 +1202,9 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsLoadFirst?: boolean;
+  /**
+  * Enable loading plugins via declarative URLs
+  * @default false
+  */
+  cdnPluginsUrls?: boolean;
 }

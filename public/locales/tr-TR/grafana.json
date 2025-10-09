@@ -1535,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "Grup siliniyor"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "\"{{refId}}\" ifadesini kaldır"
     },
@@ -1709,6 +1712,9 @@
       },
       "placeholder-key": "anahtar",
       "placeholder-value": "değer"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "İletişim noktalarını görüntüle veya oluştur",
@@ -2024,6 +2030,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Seçilen Alertmanager artık mevcut değil veya erişim izniniz olmayabilir. Açılır menüden başka bir Alertmanager seçebilirsiniz.",
       "title-selected-alertmanager-not-found": "Seçili Alertmanager bulunamadı."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2916,6 +2928,13 @@
         "title-warning": "Uyarı"
       }
     },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
+    },
     "type-selector-button": {
       "add-expression": "İfade ekle"
     },
@@ -3240,7 +3259,7 @@
       "define-allowed-teams-ids-label": "İzin verilen ekip kimliklerini tanımlayın",
       "display-name-description": "Giriş sayfasında \"Şununla giriş yap:\" olarak gösterilecektir. Birden fazla kimlik sağlayıcı veya SSO protokolü kullanıyorsanız faydalıdır.",
       "display-name-label": "Görünen ad",
-      "domain-hint-description": "Azure AD/Entra ID kiracısında kullanıcının alanını belirtmek ve oturum açma işlemini kolaylaştırmak için parametre.",
+      "domain-hint-description": "",
       "domain-hint-label": "Alan adı ipucu",
       "domain-hint-valid-domain": "Bu alan geçerli bir alan adı olmalıdır.",
       "email-attribute-name-description": "OAuth2 kimlik belirteci öznitelik eşlemesinde kullanıcı e-postasını aramak için kullanılacak anahtarın adı.",
@@ -4142,6 +4161,13 @@
       "body": "Veri kaynaklarınız ve eklentilerinizle ilgili olası sorunları keşfetmek için yeni Advisor'ı deneyin.",
       "go-to-advisor": "Advisor'a git"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4190,6 +4216,20 @@
         "unknown-datasource": "Bilinmeyen veri kaynağı"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Bir veri kaynağı türü seçin"
@@ -4219,6 +4259,13 @@
         },
         "subtitle": ""
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Tümünü ara",
@@ -6577,6 +6624,7 @@
         "service-now-integration-and-data-source": "ServiceNow entegrasyonu ve veri kaynağı",
         "signal-fx-integration-and-datasource": "SignalFx entegrasyonu ve veri kaynağı",
         "snowflake-integration-and-data-source": "Snowflake entegrasyonu ve veri kaynağı",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic entegrasyonu ve veri kaynağı",
         "visualize-and-explore-dynatrace-data": "Dynatrace verilerini görselleştirin ve keşfedin",
         "visualize-and-explore-oracle-sql": "Oracle SQL'i görselleştirin ve keşfedin",
@@ -8697,6 +8745,9 @@
       "tooltip-hide": "Parolayı gizle",
       "tooltip-show": "Parolayı göster"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Satırı genişlet",
       "collapse": "Satırı daralt",
@@ -8724,6 +8775,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Sağ Y eksenini kullan"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Yükleniyor"
@@ -9412,6 +9466,7 @@
     "description-enable-infinite-scrolling": "Deneysel. Günlük listesinin en altına kaydırarak daha fazla sonuç isteyin.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Son veya ilk günlük satırına atlamak için ekran kontrolleri ve günlük düzeyine göre filtreler",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9462,9 +9517,6 @@
       "collapse": "Etiketleri daralt",
       "expand": "Etiketleri genişlet"
     },
-    "log-labels-list": {
-      "log-line": "günlük kaydı satırı"
-    },
     "log-line": {
       "has-error": "Hatalar var",
       "is-sampled": "Örneklendi",
@@ -9504,6 +9556,7 @@
       "inline-mode": "Satır içi görüntüle",
       "link-value-tooltip": "",
       "links-section": "Bağlantılar",
+      "log-attributes-field": "",
       "log-line-field": "Günlük satırı",
       "log-line-section": "Günlük satırı",
       "move-displayed-field-down": "Aşağı taşı",
@@ -9710,6 +9763,7 @@
       "line-contains": "Satır içerir filtresi olarak ekle",
       "line-contains-not": "Satır içermez filtresi olarak ekle"
     },
+    "show-log-attributes": "",
     "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Veri bağlantıları",
@@ -13651,6 +13705,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "ve",
       "placeholder-from": "",

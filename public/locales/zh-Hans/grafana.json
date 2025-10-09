@@ -1530,6 +1530,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "正在删除组"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "移除表达式“{{refId}}”"
     },
@@ -1704,6 +1707,9 @@
       },
       "placeholder-key": "密钥",
       "placeholder-value": "值"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "查看或创建联络点",
@@ -2018,6 +2024,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "所选 Alertmanager 不再存在，或者您可能没有访问它的权限。您可以从下拉列表中选择其他 Alertmanager。",
       "title-selected-alertmanager-not-found": "未找到所选的 Alertmanager。"
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2904,6 +2916,13 @@
         "title-warning": "警告"
       }
     },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
+    },
     "type-selector-button": {
       "add-expression": "添加表达式"
     },
@@ -3228,7 +3247,7 @@
       "define-allowed-teams-ids-label": "定义允许的团队 ID",
       "display-name-description": "将在登录页面上显示为“使用... 登录”。如果您使用多个身份提供程序或 SSO 协议，这将很有帮助。",
       "display-name-label": "显示名称",
-      "domain-hint-description": "用于指示 Azure AD/Entra ID 租户中用户领域并简化登录流程的参数。",
+      "domain-hint-description": "",
       "domain-hint-label": "域提示",
       "domain-hint-valid-domain": "此字段必须是有效的域。",
       "email-attribute-name-description": "用于在 OAuth2 ID 令牌的属性映射中查找用户电子邮箱的密钥的名称。",
@@ -4122,6 +4141,13 @@
       "body": "尝试使用新的 Advisor 来发现数据源和插件的潜在问题。",
       "go-to-advisor": "前往顾问"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4170,6 +4196,20 @@
         "unknown-datasource": "未知数据源"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "选择一个数据源类型"
@@ -4199,6 +4239,13 @@
         },
         "subtitle": "在一个地方管理您的数据源连接。使用此页面添加新数据源或管理现有连接。"
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "搜索全部",
@@ -6554,6 +6601,7 @@
         "service-now-integration-and-data-source": "ServiceNow 集成和数据源",
         "signal-fx-integration-and-datasource": "SignalFx 集成和数据源",
         "snowflake-integration-and-data-source": "Snowflake 集成和数据源",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic 集成和数据源",
         "visualize-and-explore-dynatrace-data": "可视化并探索 Dynatrace 数据",
         "visualize-and-explore-oracle-sql": "可视化并探索 Oracle SQL",
@@ -8674,6 +8722,9 @@
       "tooltip-hide": "隐藏密码",
       "tooltip-show": "显示密码"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "展开行",
       "collapse": "折叠行",
@@ -8701,6 +8752,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "使用右侧 Y 轴"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "正在加载"
@@ -9384,6 +9438,7 @@
     "description-enable-infinite-scrolling": "实验性。通过滚动到日志列表底部来请求更多结果。",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9431,9 +9486,6 @@
       "collapse": "收起标签",
       "expand": "展开标签"
     },
-    "log-labels-list": {
-      "log-line": "日志行"
-    },
     "log-line": {
       "has-error": "有错误",
       "is-sampled": "已采样",
@@ -9473,6 +9525,7 @@
       "inline-mode": "内联显示",
       "link-value-tooltip": "",
       "links-section": "关联",
+      "log-attributes-field": "",
       "log-line-field": "日志行",
       "log-line-section": "日志行",
       "move-displayed-field-down": "下移",
@@ -9679,6 +9732,7 @@
       "line-contains": "添加为包含筛选器的行",
       "line-contains-not": "添加为不包含筛选器的行"
     },
+    "show-log-attributes": "",
     "timestamp-format": "时间戳分辨率",
     "un-themed-log-details": {
       "aria-label-data-links": "数据关联",
@@ -13606,6 +13660,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "与",
       "placeholder-from": "",

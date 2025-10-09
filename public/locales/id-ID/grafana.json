@@ -1530,6 +1530,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "Grup sedang dihapus"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Hapus ekspresi \"{{refId}}\""
     },
@@ -1704,6 +1707,9 @@
       },
       "placeholder-key": "kunci",
       "placeholder-value": "nilai"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Lihat atau buat titik kontak",
@@ -2018,6 +2024,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Alertmanager yang dipilih tidak ada lagi atau Anda mungkin tidak memiliki izin untuk mengaksesnya. Anda dapat memilih Alertmanager lain dari menu dropdown.",
       "title-selected-alertmanager-not-found": "Alertmanager yang dipilih tidak ditemukan."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2904,6 +2916,13 @@
         "title-warning": "PERINGATAN"
       }
     },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
+    },
     "type-selector-button": {
       "add-expression": "Tambah pola"
     },
@@ -3228,7 +3247,7 @@
       "define-allowed-teams-ids-label": "Tentukan ID tim yang diizinkan",
       "display-name-description": "Akan ditampilkan di halaman login sebagai \"Masuk dengan ...\". Berguna jika Anda menggunakan lebih dari satu penyedia identitas atau protokol SSO.",
       "display-name-label": "Nama tampilan",
-      "domain-hint-description": "Parameter untuk menunjukkan domain pengguna di penyewa Azure AD/Entra ID dan menyederhanakan proses masuk.",
+      "domain-hint-description": "",
       "domain-hint-label": "Petunjuk domain",
       "domain-hint-valid-domain": "Bidang ini harus berupa domain yang valid.",
       "email-attribute-name-description": "Nama kunci yang akan digunakan untuk pencarian email pengguna dalam peta atribut token ID OAuth2.",
@@ -4122,6 +4141,13 @@
       "body": "Coba Advisor baru untuk mengungkap potensi masalah dengan sumber data dan plugin Anda.",
       "go-to-advisor": "Masuk ke Advisor"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4170,6 +4196,20 @@
         "unknown-datasource": "Sumber data tidak diketahui"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Pilih jenis sumber data"
@@ -4199,6 +4239,13 @@
         },
         "subtitle": "Kelola koneksi sumber data Anda di satu tempat. Gunakan halaman ini untuk menambahkan sumber data baru atau mengelola koneksi yang ada."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Cari semua",
@@ -6554,6 +6601,7 @@
         "service-now-integration-and-data-source": "Integrasi dan sumber data ServiceNow",
         "signal-fx-integration-and-datasource": "Integrasi dan sumber data SignalFx",
         "snowflake-integration-and-data-source": "Integrasi dan sumber data Snowflake",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "Integrasi dan sumber data SumoLogic",
         "visualize-and-explore-dynatrace-data": "Visualisasikan dan telusuri data Dynatrace",
         "visualize-and-explore-oracle-sql": "Visualisasikan dan telusuri Oracle SQL",
@@ -8674,6 +8722,9 @@
       "tooltip-hide": "Sembunyikan kata sandi",
       "tooltip-show": "Tampilkan kata sandi"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Perbesar baris",
       "collapse": "Ciutkan baris",
@@ -8701,6 +8752,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Gunakan sumbu y kanan"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Memuat"
@@ -9384,6 +9438,7 @@
     "description-enable-infinite-scrolling": "Eksperimental. Minta lebih banyak hasil dengan menggulir ke bagian bawah daftar log.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Tampilkan kontrol untuk melompat ke baris log terakhir atau pertama, dan filter berdasarkan level log",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9431,9 +9486,6 @@
       "collapse": "Ciutkan label",
       "expand": "Perbesar label"
     },
-    "log-labels-list": {
-      "log-line": "baris log"
-    },
     "log-line": {
       "has-error": "Memiliki kesalahan",
       "is-sampled": "Diambil sampelnya",
@@ -9473,6 +9525,7 @@
       "inline-mode": "Tampilkan sebaris",
       "link-value-tooltip": "",
       "links-section": "Tautan",
+      "log-attributes-field": "",
       "log-line-field": "Baris log",
       "log-line-section": "Baris log",
       "move-displayed-field-down": "Pindahkan ke bawah",
@@ -9679,6 +9732,7 @@
       "line-contains": "Tambahkan sebagai baris berisi filter",
       "line-contains-not": "Tambahkan sebagai baris tidak berisi filter"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Resolusi stempel waktu",
     "un-themed-log-details": {
       "aria-label-data-links": "Tautan data",
@@ -13606,6 +13660,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "dan",
       "placeholder-from": "",

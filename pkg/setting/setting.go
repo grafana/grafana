@@ -577,11 +577,11 @@ type Cfg struct {
 	IndexPath                                  string
 	IndexWorkers                               int
 	IndexRebuildWorkers                        int
-	IndexMaxBatchSize                          int
 	IndexFileThreshold                         int
 	IndexMinCount                              int
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
+	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	EnableSharding                             bool
