@@ -6601,6 +6601,7 @@
         "service-now-integration-and-data-source": "ServiceNow統合・データソース",
         "signal-fx-integration-and-datasource": "SignalFx統合・データソース",
         "snowflake-integration-and-data-source": "Snowflake統合・データソース",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic統合・データソース",
         "visualize-and-explore-dynatrace-data": "Dynatraceデータの可視化・探索",
         "visualize-and-explore-oracle-sql": "Oracle SQLの可視化・探索",

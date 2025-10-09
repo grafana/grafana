@@ -6624,6 +6624,7 @@
         "service-now-integration-and-data-source": "Integrazione e origine dati ServiceNow",
         "signal-fx-integration-and-datasource": "Integrazione e origine dati SignalFx",
         "snowflake-integration-and-data-source": "Integrazione e origine dati Snowflake",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "Integrazione e origine dati SumoLogic",
         "visualize-and-explore-dynatrace-data": "Visualizza ed esplora i dati Dynatrace",
         "visualize-and-explore-oracle-sql": "Visualizza ed esplora Oracle SQL",

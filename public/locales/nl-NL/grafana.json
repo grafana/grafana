@@ -6624,6 +6624,7 @@
         "service-now-integration-and-data-source": "ServiceNow-integratie en -gegevensbron",
         "signal-fx-integration-and-datasource": "SignalFx-integratie en -gegevensbron",
         "snowflake-integration-and-data-source": "Snowflake-integratie en -gegevensbron",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic-integratie en -gegevensbron",
         "visualize-and-explore-dynatrace-data": "Visualiseer en verken Dynatrace-gegevens",
         "visualize-and-explore-oracle-sql": "Visualiseer en verken Oracle SQL",
