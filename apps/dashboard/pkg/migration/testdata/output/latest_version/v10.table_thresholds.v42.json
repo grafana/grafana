@@ -21,67 +21,29 @@
   "links": [],
   "panels": [
     {
+      "autoMigrateFrom": "table-old",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName"
-            },
-            "properties": [
-              {
-                "id": "custom.align"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName"
-            },
-            "properties": [
-              {
-                "id": "custom.align"
-              }
-            ]
-          }
-        ]
-      },
       "id": 1,
-      "options": {
-        "cellHeight": "sm",
-        "showHeader": true
-      },
-      "pluginVersion": "12.1.0",
+      "styles": [
+        {
+          "align": "auto",
+          "thresholds": [
+            "20",
+            "30"
+          ]
+        },
+        {
+          "align": "auto",
+          "thresholds": [
+            "200",
+            "300"
+          ]
+        }
+      ],
       "targets": [
         {
           "datasource": {
@@ -95,57 +57,22 @@
       "type": "table"
     },
     {
+      "autoMigrateFrom": "table-old",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName"
-            },
-            "properties": [
-              {
-                "id": "custom.align"
-              }
-            ]
-          }
-        ]
-      },
       "id": 2,
-      "options": {
-        "cellHeight": "sm",
-        "showHeader": true
-      },
-      "pluginVersion": "12.1.0",
+      "styles": [
+        {
+          "align": "auto",
+          "thresholds": [
+            "50",
+            "75"
+          ]
+        }
+      ],
       "targets": [
         {
           "datasource": {
