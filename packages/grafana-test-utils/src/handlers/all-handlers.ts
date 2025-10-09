@@ -1,6 +1,7 @@
 import { HttpHandler } from 'msw';
 
 import folderHandlers from './api/folders/handlers';
+import pluginsHandlers from './api/plugins/handlers';
 import searchHandlers from './api/search/handlers';
 import teamsHandlers from './api/teams/handlers';
 import userHandlers from './api/user/handlers';
@@ -13,6 +14,7 @@ const allHandlers: HttpHandler[] = [
   ...teamsHandlers,
   ...folderHandlers,
   ...searchHandlers,
+  ...pluginsHandlers,
   ...userHandlers,
 
   // App platform handlers
