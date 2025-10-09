@@ -101,13 +101,14 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	if azureSettings == nil {
 		azureSettings = &azsettings.AzureSettings{}
 	}
-	azureAdSettings, err := s.ssoSettings.GetForProvider(context.Background(), social.AzureADProviderName)
-	if err != nil {
-		s.logger.Error("Failed to get SSO settings", "error", err)
-	}
-	azureSettings = GetAzureSettings(azureSettings, azureAdSettings)
 
 	if azureSettings != nil && slices.Contains(azureSettings.ForwardSettingsPlugins, pluginID) {
+		azureAdSettings, err := s.ssoSettings.GetForProviderFromCache(ctx, social.AzureADProviderName)
+		if err != nil {
+			s.logger.Error("Failed to get SSO settings", "error", err)
+		}
+		azureSettings = GetAzureSettings(azureSettings, azureAdSettings)
+
 		if azureSettings.Cloud != "" {
 			m[azsettings.AzureCloud] = azureSettings.Cloud
 		}
