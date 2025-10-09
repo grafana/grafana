@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Drawer, LinkButton, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
+import { Alert, Box, Drawer, LinkButton, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
 import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import { Spacer } from '../../components/Spacer';
@@ -69,9 +69,10 @@ export function RuleDetailsDrawer({ ruleUID, onClose }: RuleDetailsDrawerProps) 
   return (
     <Drawer
       onClose={onClose}
+      subtitle={`HELLO`}
       title={
         <Stack direction="column">
-          <Stack direction="row">
+          <Stack direction="row" alignItems="center">
             <Title
               name={rule.name}
               paused={isPaused}
@@ -81,26 +82,29 @@ export function RuleDetailsDrawer({ ruleUID, onClose }: RuleDetailsDrawerProps) 
               ruleOrigin={ruleOrigin}
             />
             <Spacer />
-            <WithReturnButton
-              component={
-                <LinkButton
-                  icon="external-link-alt"
-                  variant="secondary"
-                  href={rulesNav.detailsPageLink('grafana', {
-                    ruleSourceName: 'grafana',
-                    uid: rule.uid ?? '',
-                  })}
-                  target="_blank"
-                >
-                  <Trans i18nKey="alerting.rule-details-drawer.go-to-detail-view">Open in new tab</Trans>
-                </LinkButton>
-              }
-            />
+            <Box marginRight={4}>
+              <WithReturnButton
+                component={
+                  <LinkButton
+                    icon="eye"
+                    variant="secondary"
+                    href={rulesNav.detailsPageLink('grafana', {
+                      ruleSourceName: 'grafana',
+                      uid: rule.uid ?? '',
+                    })}
+                    target="_blank"
+                    size="sm"
+                  >
+                    <Trans i18nKey="alerting.rule-details-drawer.go-to-detail-view">View alert rule</Trans>
+                  </LinkButton>
+                }
+              />
+            </Box>
           </Stack>
           <Text color="secondary">{t('alerting.triage.rule-details.subtitle', 'Rule details and conditions')}</Text>
         </Stack>
       }
-      size="md"
+      size="lg"
       tabs={
         <TabsBar>
           <Tab
