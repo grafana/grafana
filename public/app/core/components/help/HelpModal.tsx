@@ -1,37 +1,48 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import { isAssistantAvailable } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
 import { getModKey } from 'app/core/utils/browser';
 
-const getShortcuts = (modKey: string) => {
+const getShortcuts = (modKey: string, assistantAvailable: boolean) => {
+  const globalShortcuts = [
+    {
+      keys: ['g', 'h'],
+      description: t('help-modal.shortcuts-description.go-to-home-dashboard', 'Go to Home Dashboard'),
+    },
+    {
+      keys: ['g', 'd'],
+      description: t('help-modal.shortcuts-description.go-to-dashboards', 'Go to Dashboards'),
+    },
+    { keys: ['g', 'e'], description: t('help-modal.shortcuts-description.go-to-explore', 'Go to Explore') },
+    { keys: ['g', 'p'], description: t('help-modal.shortcuts-description.go-to-profile', 'Go to Profile') },
+    { keys: [`${modKey} + k`], description: t('help-modal.shortcuts-description.open-search', 'Open search') },
+    {
+      keys: ['esc'],
+      description: t('help-modal.shortcuts-description.exit-edit/setting-views', 'Exit edit/setting views'),
+    },
+    {
+      keys: ['?'],
+      description: t('help-modal.shortcuts-description.show-all-shortcuts', 'Show all keyboard shortcuts'),
+    },
+    { keys: ['c', 't'], description: t('help-modal.shortcuts-description.change-theme', 'Change theme') }
+  ];
+
+  // Add assistant shortcut only if assistant is available
+  if (assistantAvailable) {
+    globalShortcuts.push({
+      keys: ['o', 'a'],
+      description: t('help-modal.shortcuts-description.open-assistant', 'Open Assistant'),
+    });
+  }
+
   return [
     {
       category: t('help-modal.shortcuts-category.global', 'Global'),
-      shortcuts: [
-        {
-          keys: ['g', 'h'],
-          description: t('help-modal.shortcuts-description.go-to-home-dashboard', 'Go to Home Dashboard'),
-        },
-        {
-          keys: ['g', 'd'],
-          description: t('help-modal.shortcuts-description.go-to-dashboards', 'Go to Dashboards'),
-        },
-        { keys: ['g', 'e'], description: t('help-modal.shortcuts-description.go-to-explore', 'Go to Explore') },
-        { keys: ['g', 'p'], description: t('help-modal.shortcuts-description.go-to-profile', 'Go to Profile') },
-        { keys: [`${modKey} + k`], description: t('help-modal.shortcuts-description.open-search', 'Open search') },
-        {
-          keys: ['esc'],
-          description: t('help-modal.shortcuts-description.exit-edit/setting-views', 'Exit edit/setting views'),
-        },
-        {
-          keys: ['?'],
-          description: t('help-modal.shortcuts-description.show-all-shortcuts', 'Show all keyboard shortcuts'),
-        },
-        { keys: ['c', 't'], description: t('help-modal.shortcuts-description.change-theme', 'Change theme') },
-      ],
+      shortcuts: globalShortcuts,
     },
     {
       category: t('help-modal.shortcuts-category.time-range', 'Time range'),
@@ -165,9 +176,21 @@ export interface HelpModalProps {
 
 export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
+  const [assistantAvailable, setAssistantAvailable] = useState(false);
 
   const modKey = useMemo(() => getModKey(), []);
-  const shortcuts = useMemo(() => getShortcuts(modKey), [modKey]);
+
+  useEffect(() => {
+    // Check if the assistant is available
+    const subscription = isAssistantAvailable().subscribe((available) => {
+      setAssistantAvailable(available);
+    });
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const shortcuts = useMemo(() => getShortcuts(modKey, assistantAvailable), [modKey, assistantAvailable]);
   return (
     <Modal title={t('help-modal.title', 'Shortcuts')} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
       <Grid columns={{ xs: 1, sm: 2 }} gap={3} tabIndex={0}>
