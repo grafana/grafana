@@ -341,7 +341,6 @@ type Cfg struct {
 	SATokenExpirationDayLimit int
 
 	// Annotations
-	AnnotationCleanupJobBatchSize      int64
 	AnnotationMaximumTagsLength        int64
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
@@ -788,7 +787,6 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 
 func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
-	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
 	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
 	switch {
 	case cfg.AnnotationMaximumTagsLength > 4096:

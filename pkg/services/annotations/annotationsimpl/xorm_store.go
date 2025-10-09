@@ -556,42 +556,63 @@ func (r *xormRepositoryImpl) validateTagsLength(item *annotations.Item) error {
 
 func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.AnnotationCleanupSettings, annotationType string) (int64, error) {
 	var totalAffected int64
+
 	if cfg.MaxAge > 0 {
 		cutoffDate := timeNow().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
-		// Single-statement approaches, specifically ones using batched sub-queries, seem to deadlock with concurrent inserts on MySQL.
-		// We have a bounded batch size, so work around this by first loading the IDs into memory and allowing any locks to flush inside each batch.
-		// This may under-delete when concurrent inserts happen, but any such annotations will simply be cleaned on the next cycle.
-		//
-		// We execute the following batched operation repeatedly until either we run out of objects, the context is cancelled, or there is an error.
-		affected, err := untilDoneOrCancelled(ctx, func() (int64, error) {
-			cond := fmt.Sprintf(`%s AND created < %v ORDER BY id DESC %s`, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
-			ids, err := r.fetchIDs(ctx, "annotation", cond)
+
+		err := r.db.WithDbSession(ctx, func(sess *db.Session) error {
+			query := "DELETE FROM annotation WHERE " + annotationType + " AND created < ?"
+
+			res, err := sess.Exec(query, cutoffDate)
 			if err != nil {
-				return 0, err
+				return fmt.Errorf("failed to exec annotation cleanup query (%v): %w", annotationType, err)
 			}
 
-			return r.deleteByIDs(ctx, "annotation", ids)
+			affected, err := res.RowsAffected()
+			if err != nil {
+				return fmt.Errorf("affected rows (%v): %w", annotationType, err)
+			}
+
+			totalAffected += affected
+			return nil
 		})
-		totalAffected += affected
 		if err != nil {
-			return totalAffected, err
+			return 0, fmt.Errorf("failed to clean annotations (max age): %w", err)
 		}
 	}
 
 	if cfg.MaxCount > 0 {
-		// Similar strategy as the above cleanup process, to avoid deadlocks.
-		affected, err := untilDoneOrCancelled(ctx, func() (int64, error) {
-			cond := fmt.Sprintf(`%s ORDER BY id DESC %s`, annotationType, r.db.GetDialect().LimitOffset(r.cfg.AnnotationCleanupJobBatchSize, cfg.MaxCount))
-			ids, err := r.fetchIDs(ctx, "annotation", cond)
-			if err != nil {
-				return 0, err
+		err := r.db.WithDbSession(ctx, func(sess *db.Session) error {
+			// MySQL uses the large int64 number as a workaround for "no limit"
+			// https://dev.mysql.com/doc/refman/8.4/en/select.html#id4651990
+			limit := "18446744073709551615"
+			if r.db.GetDBType() == migrator.Postgres {
+				// LIMIT ALL has the same effect as no LIMIT, but needs to be declared when used with OFFSET.
+				// https://www.postgresql.org/docs/current/queries-limit.html#QUERIES-LIMIT
+				limit = "ALL"
+			} else if r.db.GetDBType() == migrator.SQLite {
+				limit = "-1"
 			}
 
-			return r.deleteByIDs(ctx, "annotation", ids)
+			query := `WITH delete_ids AS (
+				SELECT id FROM annotation WHERE ` + annotationType + ` ORDER BY id DESC LIMIT ` + limit + ` OFFSET ?
+			) DELETE FROM annotation WHERE id IN (SELECT id FROM delete_ids)`
+
+			res, err := sess.Exec(query, cfg.MaxCount)
+			if err != nil {
+				return fmt.Errorf("failed to exec annotation cleanup query (%v): %w", annotationType, err)
+			}
+
+			affected, err := res.RowsAffected()
+			if err != nil {
+				return fmt.Errorf("affected rows (%v): %w", annotationType, err)
+			}
+
+			totalAffected += affected
+			return nil
 		})
-		totalAffected += affected
 		if err != nil {
-			return totalAffected, err
+			return 0, fmt.Errorf("failed to clean annotations (max count): %w", err)
 		}
 	}
 
@@ -599,94 +620,29 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 }
 
 func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (int64, error) {
-	return untilDoneOrCancelled(ctx, func() (int64, error) {
-		cond := fmt.Sprintf(`NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id) %s`, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
-		ids, err := r.fetchIDs(ctx, "annotation_tag", cond)
-		if err != nil {
-			return 0, err
-		}
-
-		return r.deleteByIDs(ctx, "annotation_tag", ids)
-	})
-}
-
-func (r *xormRepositoryImpl) fetchIDs(ctx context.Context, table, condition string) ([]int64, error) {
-	sql := fmt.Sprintf(`SELECT id FROM %s`, table)
-	if condition == "" {
-		return nil, fmt.Errorf("condition must be supplied; cannot fetch IDs from entire table")
-	}
-	sql += fmt.Sprintf(` WHERE %s`, condition)
-	ids := make([]int64, 0)
-	err := r.db.WithDbSession(ctx, func(session *db.Session) error {
-		return session.SQL(sql).Find(&ids)
-	})
-	return ids, err
-}
-
-func (r *xormRepositoryImpl) deleteByIDs(ctx context.Context, table string, ids []int64) (int64, error) {
-	if len(ids) == 0 {
-		return 0, nil
-	}
-
-	sql := ""
-	args := make([]any, 0)
-
-	// SQLite has a parameter limit of 999.
-	// If the batch size is bigger than that, and we're on SQLite, we have to put the IDs directly into the statement.
-	const sqliteParameterLimit = 999
-	if r.db.GetDBType() == migrator.SQLite && r.cfg.AnnotationCleanupJobBatchSize > sqliteParameterLimit {
-		values := fmt.Sprint(ids[0])
-		for _, v := range ids[1:] {
-			values = fmt.Sprintf("%s, %d", values, v)
-		}
-		sql = fmt.Sprintf(`DELETE FROM %s WHERE id IN (%s)`, table, values)
-	} else {
-		placeholders := "?" + strings.Repeat(",?", len(ids)-1)
-		sql = fmt.Sprintf(`DELETE FROM %s WHERE id IN (%s)`, table, placeholders)
-		args = asAny(ids)
-	}
-
-	var affected int64
-	err := r.db.WithDbSession(ctx, func(session *db.Session) error {
-		res, err := session.Exec(append([]any{sql}, args...)...)
-		if err != nil {
-			return err
-		}
-		affected, err = res.RowsAffected()
-		return err
-	})
-	return affected, err
-}
-
-func asAny(vs []int64) []any {
-	r := make([]any, len(vs))
-	for i, v := range vs {
-		r[i] = v
-	}
-	return r
-}
-
-// untilDoneOrCancelled repeatedly executes batched work until that work is either done (i.e., returns zero affected objects),
-// a batch produces an error, or the provided context is cancelled.
-// The work to be done is given as a callback that returns the number of affected objects for each batch, plus that batch's errors.
-func untilDoneOrCancelled(ctx context.Context, batchWork func() (int64, error)) (int64, error) {
 	var totalAffected int64
-	for {
-		select {
-		case <-ctx.Done():
-			return totalAffected, ctx.Err()
-		default:
-			affected, err := batchWork()
-			totalAffected += affected
-			if err != nil {
-				return totalAffected, err
-			}
 
-			if affected == 0 {
-				return totalAffected, nil
-			}
+	err := r.db.WithDbSession(ctx, func(sess *db.Session) error {
+		query := "DELETE FROM annotation_tag WHERE NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id)"
+
+		res, err := sess.Exec(query)
+		if err != nil {
+			return fmt.Errorf("failed to exec annotation tags cleanup query: %w", err)
 		}
+
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("affected rows: %w", err)
+		}
+
+		totalAffected += affected
+		return nil
+	})
+	if err != nil {
+		return 0, fmt.Errorf("failed to clean annotation tags: %w", err)
 	}
+
+	return totalAffected, nil
 }
 
 type annotationTag struct {

@@ -2,7 +2,6 @@ package annotationsimpl
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"testing"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -20,25 +20,21 @@ import (
 func TestIntegrationAnnotationCleanUp(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	fakeSQL := db.InitTestDB(t)
-
 	tests := []struct {
 		name                    string
 		createAnnotationsNum    int
 		createOldAnnotationsNum int
 
-		cfg                           *setting.Cfg
-		alertAnnotationCount          int64
-		annotationCleanupJobBatchSize int
-		dashboardAnnotationCount      int64
-		APIAnnotationCount            int64
-		affectedAnnotations           int64
+		cfg                      *setting.Cfg
+		alertAnnotationCount     int64
+		dashboardAnnotationCount int64
+		APIAnnotationCount       int64
+		affectedAnnotations      int64
 	}{
 		{
-			name:                          "default settings should not delete any annotations",
-			createAnnotationsNum:          21,
-			createOldAnnotationsNum:       6,
-			annotationCleanupJobBatchSize: 1,
+			name:                    "default settings should not delete any annotations",
+			createAnnotationsNum:    21,
+			createOldAnnotationsNum: 6,
 			cfg: &setting.Cfg{
 				AlertingAnnotationCleanupSetting:   settingsFn(0, 0),
 				DashboardAnnotationCleanupSettings: settingsFn(0, 0),
@@ -50,10 +46,9 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 			affectedAnnotations:      0,
 		},
 		{
-			name:                          "should remove annotations created before cut off point",
-			createAnnotationsNum:          21,
-			createOldAnnotationsNum:       6,
-			annotationCleanupJobBatchSize: 1,
+			name:                    "should remove annotations created before cut off point",
+			createAnnotationsNum:    21,
+			createOldAnnotationsNum: 6,
 			cfg: &setting.Cfg{
 				AlertingAnnotationCleanupSetting:   settingsFn(time.Hour*48, 0),
 				DashboardAnnotationCleanupSettings: settingsFn(time.Hour*48, 0),
@@ -65,10 +60,8 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 			affectedAnnotations:      6,
 		},
 		{
-			name:                          "should only keep three annotations",
-			createAnnotationsNum:          15,
-			createOldAnnotationsNum:       6,
-			annotationCleanupJobBatchSize: 1,
+			name:                 "should only keep three annotations",
+			createAnnotationsNum: 12, // 4 of each type
 			cfg: &setting.Cfg{
 				AlertingAnnotationCleanupSetting:   settingsFn(0, 3),
 				DashboardAnnotationCleanupSettings: settingsFn(0, 3),
@@ -77,28 +70,11 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     3,
 			dashboardAnnotationCount: 3,
 			APIAnnotationCount:       3,
-			affectedAnnotations:      6,
+			affectedAnnotations:      3, // 1 of each type (keep max 3 of each type)
 		},
 		{
-			name:                          "running the max count delete again should not remove any annotations",
-			createAnnotationsNum:          9,
-			createOldAnnotationsNum:       6,
-			annotationCleanupJobBatchSize: 1,
-			cfg: &setting.Cfg{
-				AlertingAnnotationCleanupSetting:   settingsFn(0, 3),
-				DashboardAnnotationCleanupSettings: settingsFn(0, 3),
-				APIAnnotationCleanupSettings:       settingsFn(0, 3),
-			},
-			alertAnnotationCount:     3,
-			dashboardAnnotationCount: 3,
-			APIAnnotationCount:       3,
-			affectedAnnotations:      0,
-		},
-		{
-			name:                          "should not fail if batch size is larger than SQLITE_MAX_VARIABLE_NUMBER for SQLite >= 3.32.0",
-			createAnnotationsNum:          40003,
-			createOldAnnotationsNum:       0,
-			annotationCleanupJobBatchSize: 32767,
+			name:                 "should not fail if batch size is larger than SQLITE_MAX_VARIABLE_NUMBER for SQLite >= 3.32.0",
+			createAnnotationsNum: 40003,
 			cfg: &setting.Cfg{
 				AlertingAnnotationCleanupSetting:   settingsFn(0, 1),
 				DashboardAnnotationCleanupSettings: settingsFn(0, 1),
@@ -113,23 +89,16 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			fakeSQL := sqlstore.NewTestStore(t)
+
 			createTestAnnotations(t, fakeSQL, test.createAnnotationsNum, test.createOldAnnotationsNum)
 			assertAnnotationCount(t, fakeSQL, "", int64(test.createAnnotationsNum))
 			assertAnnotationTagCount(t, fakeSQL, 2*int64(test.createAnnotationsNum))
 
-			t.Cleanup(func() {
-				err := fakeSQL.WithDbSession(context.Background(), func(session *db.Session) error {
-					_, deleteAnnotationErr := session.Exec("DELETE FROM annotation WHERE true")
-					_, deleteAnnotationTagErr := session.Exec("DELETE FROM annotation_tag WHERE true")
-					return errors.Join(deleteAnnotationErr, deleteAnnotationTagErr)
-				})
-				assert.NoError(t, err)
-			})
-
 			cfg := setting.NewCfg()
-			cfg.AnnotationCleanupJobBatchSize = int64(test.annotationCleanupJobBatchSize)
 			cleaner := ProvideCleanupService(fakeSQL, cfg)
-			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(context.Background(), test.cfg)
+
+			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(t.Context(), test.cfg)
 			require.NoError(t, err)
 
 			assert.Equal(t, test.affectedAnnotations, affectedAnnotations)
@@ -140,9 +109,7 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 			assertAnnotationCount(t, fakeSQL, apiAnnotationType, test.APIAnnotationCount)
 
 			// we create two records in annotation_tag for each sample annotation
-			expectedAnnotationTagCount := (test.alertAnnotationCount +
-				test.dashboardAnnotationCount +
-				test.APIAnnotationCount) * 2
+			expectedAnnotationTagCount := (test.alertAnnotationCount + test.dashboardAnnotationCount + test.APIAnnotationCount) * 2
 			assertAnnotationTagCount(t, fakeSQL, expectedAnnotationTagCount)
 		})
 	}
@@ -184,7 +151,6 @@ func TestIntegrationOldAnnotationsAreDeletedFirst(t *testing.T) {
 
 		// run the clean up task to keep one annotation.
 		cfg := setting.NewCfg()
-		cfg.AnnotationCleanupJobBatchSize = 1
 		cleaner := NewXormStore(cfg, log.New("annotation.test"), fakeSQL, nil)
 		_, err = cleaner.CleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
 		require.NoError(t, err)
