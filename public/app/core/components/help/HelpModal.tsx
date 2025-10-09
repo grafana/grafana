@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
-import { isAssistantAvailable } from '@grafana/assistant';
+import { useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
@@ -177,19 +177,9 @@ export interface HelpModalProps {
 
 export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
-  const [assistantAvailable, setAssistantAvailable] = useState(false);
+  const [assistantAvailable] = useAssistant();
 
   const modKey = useMemo(() => getModKey(), []);
-
-  useEffect(() => {
-    // Check if the assistant is available
-    const subscription = isAssistantAvailable().subscribe((available) => {
-      setAssistantAvailable(available);
-    });
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
 
   const shortcuts = useMemo(() => getShortcuts(modKey, assistantAvailable), [modKey, assistantAvailable]);
   return (
