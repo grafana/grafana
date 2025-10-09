@@ -12955,6 +12955,10 @@
     "name-show-line-numbers": "Show line numbers",
     "name-show-mini-map": "Show mini map"
   },
+  "theme-playground": {
+    "label-base-theme": "Base theme",
+    "title": "Theme playground"
+  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "Dashboards",
