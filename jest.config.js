@@ -90,5 +90,4 @@ module.exports = {
     '<rootDir>/public/app/plugins/datasource/zipkin',
   ],
   projects: ['<rootDir>'],
-  prettierPath: null, // Disable prettier for inline snapshots
 };
