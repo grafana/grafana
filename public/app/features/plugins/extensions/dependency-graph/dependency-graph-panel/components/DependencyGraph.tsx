@@ -141,10 +141,10 @@ export function DependencyGraph({ data, options, width, height }: DependencyGrap
           height={height}
           isExposeMode={isExposeMode}
           isExtensionPointMode={isExtensionPointMode}
-          extensionPointPositions={extensionPointPositions}
+          extensionPointsPositions={extensionPointPositions}
           exposedComponentPositions={exposedComponentPositions}
           extensionPositions={extensionPositions}
-          extensionPointModePositions={extensionPointModePositions}
+          extensionPointsModePositions={extensionPointModePositions}
           selectedExposedComponent={selectedExposedComponent}
           selectedContentConsumer={selectedContentConsumer}
           highlightedExtensionPointId={highlightedExtensionPointId}

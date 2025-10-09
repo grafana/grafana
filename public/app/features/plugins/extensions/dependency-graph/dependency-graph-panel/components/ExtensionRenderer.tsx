@@ -351,7 +351,7 @@ export function ExtensionRenderer({
     if (selectedExtensionPointForFilter) {
       // Update URL parameter to filter on extension point
       const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.set('extensionPoint', selectedExtensionPointForFilter);
+      currentUrl.searchParams.set('extensionPoints', selectedExtensionPointForFilter);
       locationService.push(currentUrl.pathname + currentUrl.search);
     }
     handleExtensionPointContextMenuClose();
@@ -361,13 +361,13 @@ export function ExtensionRenderer({
     if (selectedExtensionPointForFilter) {
       // Remove the extension point from URL parameters
       const currentUrl = new URL(window.location.href);
-      const currentExtensionPoints = currentUrl.searchParams.get('extensionPoint')?.split(',').filter(Boolean) || [];
+      const currentExtensionPoints = currentUrl.searchParams.get('extensionPoints')?.split(',').filter(Boolean) || [];
       const updatedExtensionPoints = currentExtensionPoints.filter((ep) => ep !== selectedExtensionPointForFilter);
 
       if (updatedExtensionPoints.length > 0) {
-        currentUrl.searchParams.set('extensionPoint', updatedExtensionPoints.join(','));
+        currentUrl.searchParams.set('extensionPoints', updatedExtensionPoints.join(','));
       } else {
-        currentUrl.searchParams.delete('extensionPoint');
+        currentUrl.searchParams.delete('extensionPoints');
       }
 
       locationService.push(currentUrl.pathname + currentUrl.search);
@@ -378,7 +378,7 @@ export function ExtensionRenderer({
   // Helper function to check if an extension point is already filtered
   const isExtensionPointFiltered = (extensionPointsId: string): boolean => {
     const currentUrl = new URL(window.location.href);
-    const currentExtensionPoints = currentUrl.searchParams.get('extensionPoint')?.split(',').filter(Boolean) || [];
+    const currentExtensionPoints = currentUrl.searchParams.get('extensionPoints')?.split(',').filter(Boolean) || [];
     return currentExtensionPoints.includes(extensionPointsId);
   };
 
@@ -396,13 +396,13 @@ export function ExtensionRenderer({
       if (extension) {
         // Remove the extension point from URL parameters
         const currentUrl = new URL(window.location.href);
-        const currentExtensionPoints = currentUrl.searchParams.get('extensionPoint')?.split(',').filter(Boolean) || [];
+        const currentExtensionPoints = currentUrl.searchParams.get('extensionPoints')?.split(',').filter(Boolean) || [];
         const updatedExtensionPoints = currentExtensionPoints.filter((ep) => ep !== extension.targetExtensionPoint);
 
         if (updatedExtensionPoints.length > 0) {
-          currentUrl.searchParams.set('extensionPoint', updatedExtensionPoints.join(','));
+          currentUrl.searchParams.set('extensionPoints', updatedExtensionPoints.join(','));
         } else {
-          currentUrl.searchParams.delete('extensionPoint');
+          currentUrl.searchParams.delete('extensionPoints');
         }
 
         locationService.push(currentUrl.pathname + currentUrl.search);
@@ -418,7 +418,7 @@ export function ExtensionRenderer({
       return false;
     }
     const currentUrl = new URL(window.location.href);
-    const currentExtensionPoints = currentUrl.searchParams.get('extensionPoint')?.split(',').filter(Boolean) || [];
+    const currentExtensionPoints = currentUrl.searchParams.get('extensionPoints')?.split(',').filter(Boolean) || [];
     return currentExtensionPoints.includes(extension.targetExtensionPoint);
   };
 
@@ -427,7 +427,7 @@ export function ExtensionRenderer({
       // Navigate to extension point mode with this specific extension point selected
       const currentUrl = new URL(window.location.href);
       currentUrl.searchParams.set('view', 'extensionpoint');
-      currentUrl.searchParams.set('extensionPoint', selectedExtensionPointId);
+      currentUrl.searchParams.set('extensionPoints', selectedExtensionPointId);
       locationService.push(currentUrl.pathname + currentUrl.search);
 
       // Scroll to top of the page after navigation
