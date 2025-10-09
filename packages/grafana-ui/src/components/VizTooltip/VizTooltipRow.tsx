@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import clsx from 'clsx';
-import { Property } from 'csstype';
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
@@ -228,7 +227,7 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     maxWidth: '100%',
     alignItems: 'start',
     justifyContent: justify,
-    columnGap: '2px',
+    columnGap: '6px',
   }),
   label: css({ display: 'inline' }),
   value: css({
@@ -241,6 +240,7 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     position: 'relative',
     flexShrink: 0,
     top: -2, // half the height of the color indicator, since the top is aligned with flex center.
+    marginRight: '-6px', // account for the built-in column-gap in relation to the color indicator's margin
   }),
   labelWrapper: css({
     flexGrow: 1,
