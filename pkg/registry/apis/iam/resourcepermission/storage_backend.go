@@ -13,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -294,4 +295,10 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 	}
 
 	return rv, err
+}
+
+func (s *ResourcePermSqlBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+	return func(yield func(resource.ResourceLastImportTime, error) bool) {
+		yield(resource.ResourceLastImportTime{}, errNotImplemented)
+	}
 }
