@@ -8,7 +8,7 @@ const UNFOCUSED = -1;
 export interface UseMenuFocusProps {
   localRef: RefObject<HTMLDivElement>;
   isMenuOpen?: boolean;
-  close?: () => void;
+  close?: () => void; 
   onOpen?: (focusOnItem: (itemId: number) => void) => void;
   onClose?: () => void;
   onKeyDown?: React.KeyboardEventHandler;
