@@ -85,6 +85,19 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 			APIAnnotationCount:       1,
 			affectedAnnotations:      40000,
 		},
+		{
+			name:                 "very large number",
+			createAnnotationsNum: 12_000_000, // 4m of each type
+			cfg: &setting.Cfg{
+				AlertingAnnotationCleanupSetting:   settingsFn(0, 3_000_000),
+				DashboardAnnotationCleanupSettings: settingsFn(0, 3_000_000),
+				APIAnnotationCleanupSettings:       settingsFn(0, 3_000_000),
+			},
+			alertAnnotationCount:     3_000_000,
+			dashboardAnnotationCount: 3_000_000,
+			APIAnnotationCount:       3_000_000,
+			affectedAnnotations:      3_000_000, // 1m of each type (keep max 3m of each type)
+		},
 	}
 
 	for _, test := range tests {
@@ -98,8 +111,12 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 			cfg := setting.NewCfg()
 			cleaner := ProvideCleanupService(fakeSQL, cfg)
 
+			t1 := time.Now()
 			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(t.Context(), test.cfg)
 			require.NoError(t, err)
+			t2 := time.Since(t1)
+			t.Logf("cleaned up %d annotations and %d annotation tags in %s", affectedAnnotations, affectedAnnotationTags, t2)
+			require.LessOrEqual(t, t2.Milliseconds(), int64(2*time.Minute.Milliseconds()), "cleanup took longer than 2min")
 
 			assert.Equal(t, test.affectedAnnotations, affectedAnnotations)
 			assert.Equal(t, test.affectedAnnotations*2, affectedAnnotationTags)
