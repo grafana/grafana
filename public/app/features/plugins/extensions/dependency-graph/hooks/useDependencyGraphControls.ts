@@ -119,7 +119,20 @@ export function useDependencyGraphControls(): DependencyGraphControls {
   const setVisualizationMode = useCallback(
     (mode: VisualizationMode) => {
       setVisualizationModeState(mode);
-      updateUrlParams({ [URL_PARAMS.API_MODE]: mode });
+      // Reset filters when changing views via dropdown
+      setSelectedContentProvidersState([]);
+      setSelectedContentConsumersState([]);
+      setSelectedContentConsumersForExtensionPointState([]);
+      setSelectedExtensionPointsState([]);
+      setSelectedExtensionsState([]);
+      updateUrlParams({
+        [URL_PARAMS.API_MODE]: mode,
+        [URL_PARAMS.CONTENT_PROVIDERS]: null,
+        [URL_PARAMS.CONTENT_CONSUMERS]: null,
+        [URL_PARAMS.CONTENT_CONSUMERS_FOR_EXTENSION_POINT]: null,
+        [URL_PARAMS.EXTENSION_POINTS]: null,
+        [URL_PARAMS.EXTENSIONS]: null,
+      });
     },
     [updateUrlParams]
   );
