@@ -17,7 +17,7 @@ import {
   VizPanel,
   isSceneObject,
 } from '@grafana/scenes';
-import { Panel } from '@grafana/schema/dist/esm/index.gen';
+import { Panel } from '@grafana/schema';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
