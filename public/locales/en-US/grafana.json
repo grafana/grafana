@@ -4572,7 +4572,7 @@
         "unsupported-object-type": "Conditional rendering not supported for this item type"
       },
       "overlay": {
-        "tooltip": "Element is hidden due to conditional rendering."
+        "tooltip": "Element is hidden by show/hide rules."
       },
       "root": {
         "title": "Show / hide rules"
