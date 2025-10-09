@@ -58,7 +58,7 @@ const fieldNameMatcher: FieldMatcherInfo<string> = {
         return false;
       }
 
-      return name === field.name || Boolean(fallback && fallback(field, frame, allFrames));
+      return name === field.name || Boolean(fallback?.(field, frame, allFrames));
     };
   },
 
