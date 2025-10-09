@@ -653,7 +653,6 @@ require (
 require (
 	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/grafana/grafana/apps/scope v0.0.0-20251009135136-d408e712e5d0
-	github.com/puzpuzpuz/xsync/v4 v4.2.0
 )
 
 require github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
