@@ -392,7 +392,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context, idx = 0)
 
   // binary operations that are part of a function arguument do not get processed and added to the query until the end, this index helps keep track
   // of where to add the operation in the list rather than just appending it to the end. If the binary operation is just part of a nested binary exp,
-  // we appen at the end
+  // we append at the end
   const parent = node.parent;
   const child = node.firstChild;
   const shouldOffsetTail =
