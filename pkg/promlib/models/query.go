@@ -190,7 +190,6 @@ func Parse(ctx context.Context, log glog.Logger, span trace.Span, query backend.
 		scopeFilters = append(scopeFilters, scope.Filters...)
 	}
 
-
 	if len(scopeFilters) > 0 {
 		span.SetAttributes(attribute.StringSlice("scopeFilters", func() []string {
 			var filters []string
