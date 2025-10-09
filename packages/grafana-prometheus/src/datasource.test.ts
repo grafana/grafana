@@ -695,17 +695,32 @@ describe('PrometheusDatasource', () => {
       expect(ds.enhanceExprWithAdHocFilters).toHaveBeenCalled();
     });
 
-    it('should not apply adhoc filters when promQLScope is enabled', () => {
-      config.featureToggles.promQLScope = true;
+    it('should not apply adhoc filters when scopes with filters are present', () => {
       ds.enhanceExprWithAdHocFilters = jest.fn();
       ds.generateScopeFilters = jest.fn();
-      const queries = [
+      // Fix: Use correct types for scopes and filters
+      const typedScopes = [
+        {
+          name: 'test-scope',
+          title: 'Test Scope',
+          type: 'test',
+          filters: [
+            {
+              key: 'bar',
+              operator: 'equals' as const,
+              value: 'baz',
+            },
+          ],
+        },
+      ];
+      const typedQueries: PromQuery[] = [
         {
           refId: 'A',
           expr: 'rate({bar="baz", job="foo"} [5m]',
+          scopes: typedScopes,
         },
       ];
-      ds.interpolateVariablesInQueries(queries, {});
+      ds.interpolateVariablesInQueries(typedQueries, {});
       expect(ds.enhanceExprWithAdHocFilters).not.toHaveBeenCalled();
       expect(ds.generateScopeFilters).toHaveBeenCalled();
     });
@@ -783,7 +798,27 @@ describe('PrometheusDatasource', () => {
     });
 
     it('should generate scope filters and **not** apply ad-hoc filters to expr', () => {
-      config.featureToggles.promQLScope = true;
+      const scopes = [
+        {
+          name: 'test-scope',
+          title: 'Test Scope',
+          type: 'test',
+          filters: [
+            {
+              key: 'bar',
+              operator: 'equals',
+              value: 'baz',
+            },
+          ],
+        },
+      ];
+      const queries = [
+        {
+          refId: 'A',
+          expr: 'rate({bar="baz", job="foo"} [5m]',
+          scopes: scopes,
+        },
+      ];
       replaceMock.mockImplementation((a: string) => a);
       const filters = [
         {
@@ -801,6 +836,7 @@ describe('PrometheusDatasource', () => {
       const query = {
         expr: 'test{job="bar"}',
         refId: 'A',
+        scopes: scopes,
       };
 
       const expectedScopeFilters: ScopeSpecFilter[] = [
@@ -891,13 +927,27 @@ describe('PrometheusDatasource', () => {
     });
 
     it('should replace variables in adhoc filters on backend when promQLScope is enabled', () => {
-      config.featureToggles.promQLScope = true;
+      const scopes = [
+        {
+          name: 'test-scope',
+          title: 'Test Scope',
+          type: 'test',
+          filters: [
+            {
+              key: 'bar',
+              operator: 'equals' as const,
+              value: 'baz',
+            },
+          ],
+        },
+      ];
       const searchPattern = /\$A/g;
       replaceMock.mockImplementation((a: string) => a?.replace(searchPattern, '99') ?? a);
 
       const query = {
         expr: 'test',
         refId: 'A',
+        scopes: scopes,
       };
       const filters = [
         {
@@ -906,6 +956,7 @@ describe('PrometheusDatasource', () => {
           value: '$A',
         },
       ];
+
       const result = ds.applyTemplateVariables(query, {}, filters);
       expect(result).toMatchObject({
         expr: 'test',
