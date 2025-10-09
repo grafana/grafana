@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -38,7 +39,8 @@ type correlationsResponse struct {
 	UID         string
 	OrgID       int64
 	Type        string
-	Config      string
+	ConfigJSON  string
+	Config      correlations.CorrelationConfig
 	Description string
 	Label       string
 	provisioned bool

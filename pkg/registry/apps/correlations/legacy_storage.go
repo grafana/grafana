@@ -102,7 +102,35 @@ func (s *legacyStorage) Create(ctx context.Context,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	return nil, fmt.Errorf("TODO")
+	orgID, err := request.OrgIDForList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resource, ok := obj.(*correlationsV0.Correlation)
+	if !ok {
+		return nil, fmt.Errorf("expected correlation")
+	}
+
+	tmp, err := correlations.ToCorrelation(resource)
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := s.service.CreateCorrelation(ctx, correlations.CreateCorrelationCommand{
+		OrgId:       orgID,
+		SourceUID:   tmp.SourceUID,
+		TargetUID:   tmp.TargetUID,
+		Label:       tmp.Label,
+		Description: tmp.Description,
+		Config:      tmp.Config,
+		Type:        tmp.Type,
+		Provisioned: tmp.Provisioned,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return s.Get(ctx, out.UID, &metav1.GetOptions{})
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -113,7 +141,47 @@ func (s *legacyStorage) Update(ctx context.Context,
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("TODO")
+	orgID, err := request.OrgIDForList(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+
+	before, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+	obj, err := objInfo.UpdatedObject(ctx, before)
+	if err != nil {
+		return nil, false, err
+	}
+
+	resource, ok := obj.(*correlationsV0.Correlation)
+	if !ok {
+		return nil, false, fmt.Errorf("expected correlation")
+	}
+
+	tmp, err := correlations.ToCorrelation(resource)
+	if err != nil {
+		return nil, false, err
+	}
+
+	out, err := s.service.UpdateCorrelation(ctx, correlations.UpdateCorrelationCommand{
+		UID:         tmp.UID,
+		OrgId:       orgID,
+		SourceUID:   tmp.SourceUID,
+		Label:       &tmp.Label,
+		Description: &tmp.Description,
+		Type:        &tmp.Type,
+		Config: &correlations.CorrelationConfigUpdateDTO{
+			Field: &tmp.Config.Field,
+			// TODO!!! more (or add a conversion?)
+		},
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	obj, err = s.Get(ctx, out.UID, &metav1.GetOptions{})
+	return obj, false, err
 }
 
 // GracefulDeleter

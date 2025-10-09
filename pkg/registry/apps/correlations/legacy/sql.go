@@ -8,8 +8,9 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	correlations "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
+	correlationsV0 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -24,7 +25,7 @@ func NewLegacySQL(db legacysql.LegacyDatabaseProvider) *LegacySQL {
 }
 
 // Using custom SQL so we can get the types as part of the query
-func (s *LegacySQL) List(ctx context.Context, orgId int64, name string, src []string) (*correlations.CorrelationList, error) {
+func (s *LegacySQL) List(ctx context.Context, orgId int64, name string, src []string) (*correlationsV0.CorrelationList, error) {
 	sql, err := s.db(ctx)
 	if err != nil {
 		return nil, err
@@ -50,14 +51,14 @@ func (s *LegacySQL) List(ctx context.Context, orgId int64, name string, src []st
 		}
 	}()
 
-	rsp := &correlations.CorrelationList{}
+	rsp := &correlationsV0.CorrelationList{}
 	for rows.Next() {
 		row := correlationsResponse{}
 		// SELECT c.uid,c.org_id,c.{{ .Ident "type" }},c.config,c.description,c.label,c.provisioned,
 		// 	src.{{ .Ident "type" }} as src_type, src.uid as src_uid,
 		// 	tgt.{{ .Ident "type" }} as tgt_type, tgt.uid as tgt_uid
 
-		err := rows.Scan(&row.UID, &row.OrgID, &row.Type, &row.Config,
+		err := rows.Scan(&row.UID, &row.OrgID, &row.Type, &row.ConfigJSON,
 			&row.Description, &row.Label, &row.provisioned,
 			&row.SourceType, &row.SourceUID,
 			&row.TargetType, &row.TargetUID,
@@ -66,30 +67,29 @@ func (s *LegacySQL) List(ctx context.Context, orgId int64, name string, src []st
 			return nil, err
 		}
 
-		obj := correlations.Correlation{
+		obj := correlationsV0.Correlation{
 			ObjectMeta: v1.ObjectMeta{
 				Name: row.UID,
 			},
-			Spec: correlations.CorrelationSpec{
+			Spec: correlationsV0.CorrelationSpec{
 				Description: &row.Description,
 				Label:       row.Label,
-				Type:        correlations.CorrelationCorrelationType(row.Type),
-				Datasource: correlations.CorrelationDataSourceRef{
+				Type:        correlationsV0.CorrelationCorrelationType(row.Type),
+				Datasource: correlationsV0.CorrelationDataSourceRef{
 					Group: row.SourceType.String,
 					Name:  row.SourceUID.String,
 				},
-				Target: []correlations.CorrelationDataSourceRef{{
+				Target: []correlationsV0.CorrelationDataSourceRef{{
 					Group: row.TargetType.String,
 					Name:  row.TargetUID.String,
 				}},
 			},
 		}
 
-		if err = json.Unmarshal([]byte(row.Config), &obj.Spec.Config); err != nil {
+		if err = json.Unmarshal([]byte(row.ConfigJSON), &row.Config); err != nil {
 			return nil, fmt.Errorf("error decoding config %w", err)
 		}
-
-		// Mark provisioning in metadata
+		obj.Spec.Config = correlations.ToSpecConfig(row.Config)
 		if row.provisioned {
 			v, err := utils.MetaAccessor(&obj)
 			if err != nil {
