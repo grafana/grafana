@@ -4,7 +4,7 @@
  * Renders dependency links/arrows between nodes in the dependency graph.
  */
 
-import { SerializedStyles } from '@emotion/css';
+import { SerializedStyles } from '@emotion/react';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';

@@ -5,7 +5,7 @@
  * from focused modules for better organization and maintainability.
  */
 
-import { SerializedStyles } from '@emotion/css';
+import { SerializedStyles } from '@emotion/react';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
