@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { DependencyGraph } from '../dependency-graph-panel/components/DependencyGraph';
-import { LAYOUT_CONSTANTS } from '../dependency-graph-panel/constants';
+import { LAYOUT_CONSTANTS, getThemeColors } from '../dependency-graph-panel/constants';
 import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
 import { useDependencyGraphData } from '../hooks/useDependencyGraphData';
 import { logAutoSizer } from '../utils/logger';
@@ -34,6 +34,8 @@ export function DependencyGraphVisualization({ controls }: DependencyGraphVisual
   });
 
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const themeColors = getThemeColors(theme);
 
   return (
     <div className={styles.container}>
@@ -55,9 +57,9 @@ export function DependencyGraphVisualization({ controls }: DependencyGraphVisual
                     selectedContentConsumers,
                     selectedContentConsumersForExtensionPoint,
                     selectedExtensionPoints,
-                    linkExtensionColor: '#37872d',
-                    componentExtensionColor: '#ff9900',
-                    functionExtensionColor: '#e02f44',
+                    linkExtensionColor: themeColors.LINK_EXTENSION,
+                    componentExtensionColor: themeColors.COMPONENT_EXTENSION,
+                    functionExtensionColor: themeColors.FUNCTION_EXTENSION,
                     layoutType: 'hierarchical',
                   }}
                   width={effectiveWidth}
@@ -85,9 +87,9 @@ export function DependencyGraphVisualization({ controls }: DependencyGraphVisual
                     selectedContentConsumers,
                     selectedContentConsumersForExtensionPoint,
                     selectedExtensionPoints,
-                    linkExtensionColor: '#37872d',
-                    componentExtensionColor: '#ff9900',
-                    functionExtensionColor: '#e02f44',
+                    linkExtensionColor: themeColors.LINK_EXTENSION,
+                    componentExtensionColor: themeColors.COMPONENT_EXTENSION,
+                    functionExtensionColor: themeColors.FUNCTION_EXTENSION,
                     layoutType: 'hierarchical',
                   }}
                   width={effectiveWidth}

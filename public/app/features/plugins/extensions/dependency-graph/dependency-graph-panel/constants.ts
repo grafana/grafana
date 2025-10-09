@@ -5,6 +5,8 @@
  * used throughout the plugin to improve maintainability.
  */
 
+import { GrafanaTheme2 } from '@grafana/data';
+
 export const LAYOUT_CONSTANTS = {
   // Minimum margins and spacing
   MIN_MARGIN: 20,
@@ -105,6 +107,14 @@ export const TYPOGRAPHY_CONSTANTS = {
   MONOSPACE_FAMILY: "'Monaco', 'Menlo', 'Ubuntu Mono', monospace",
 } as const;
 
+export const getThemeColors = (theme: GrafanaTheme2) => ({
+  // Extension type colors using theme colors
+  LINK_EXTENSION: theme.colors.success.main,
+  COMPONENT_EXTENSION: theme.colors.warning.main,
+  FUNCTION_EXTENSION: theme.colors.error.main,
+});
+
+// Fallback colors for when theme is not available
 export const COLOR_DEFAULTS = {
   // Extension type colors
   LINK_EXTENSION: '#37872d',

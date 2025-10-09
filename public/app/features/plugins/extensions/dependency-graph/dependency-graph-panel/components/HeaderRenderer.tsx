@@ -46,7 +46,10 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({
           y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
           textAnchor="middle"
           fill={theme.colors.text.primary}
-          style={{ fontSize: '18px', fontWeight: 'bold' }}
+          style={{
+            fontSize: theme.typography.h4.fontSize,
+            fontWeight: theme.typography.h4.fontWeight,
+          }}
         >
           {MODE_LABELS.CONTENT_PROVIDER}
         </text>
@@ -57,7 +60,10 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({
           y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
           textAnchor="middle"
           fill={theme.colors.text.primary}
-          style={{ fontSize: '18px', fontWeight: 'bold' }}
+          style={{
+            fontSize: theme.typography.h4.fontSize,
+            fontWeight: theme.typography.h4.fontWeight,
+          }}
         >
           {MODE_LABELS.CONTENT_CONSUMER}
         </text>
@@ -85,7 +91,10 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({
           y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
           textAnchor="middle"
           fill={theme.colors.text.primary}
-          style={{ fontSize: '18px', fontWeight: 'bold' }}
+          style={{
+            fontSize: theme.typography.h4.fontSize,
+            fontWeight: theme.typography.h4.fontWeight,
+          }}
         >
           {MODE_LABELS.EXTENSIONS}
         </text>
@@ -96,7 +105,10 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({
           y={LAYOUT_CONSTANTS.SUB_HEADER_Y_OFFSET}
           textAnchor="middle"
           fill={theme.colors.text.primary}
-          style={{ fontSize: '18px', fontWeight: 'bold' }}
+          style={{
+            fontSize: theme.typography.h4.fontSize,
+            fontWeight: theme.typography.h4.fontWeight,
+          }}
         >
           {MODE_LABELS.EXTENSION_POINTS}
         </text>

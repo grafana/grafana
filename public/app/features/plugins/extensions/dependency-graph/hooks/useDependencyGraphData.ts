@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
 
+import { useTheme2 } from '@grafana/ui';
+
+import { getThemeColors } from '../dependency-graph-panel/constants';
 import {
   getActiveContentConsumers,
   getAvailableContentConsumers,
@@ -57,6 +60,8 @@ export function useDependencyGraphData({
   selectedExtensionPoints,
   selectedExtensions,
 }: DependencyGraphOptions): DependencyGraphData {
+  const theme = useTheme2();
+  const themeColors = getThemeColors(theme);
   // Get available providers and consumers based on visualization mode
   const availableProviders = useMemo(() => getAvailableContentProviders(visualizationMode), [visualizationMode]);
 
@@ -220,9 +225,9 @@ export function useDependencyGraphData({
       selectedContentConsumers,
       selectedContentConsumersForExtensionPoint: selectedContentConsumersForExtensionPoint || [],
       selectedExtensionPoints: effectiveSelectedExtensionPoints,
-      linkExtensionColor: '#37872d',
-      componentExtensionColor: '#ff9900',
-      functionExtensionColor: '#e02f44',
+      linkExtensionColor: themeColors.LINK_EXTENSION,
+      componentExtensionColor: themeColors.COMPONENT_EXTENSION,
+      functionExtensionColor: themeColors.FUNCTION_EXTENSION,
     };
     const data = processPluginDataToGraph(options);
     logGraphData(data);
@@ -234,6 +239,9 @@ export function useDependencyGraphData({
     selectedContentConsumersForExtensionPoint,
     selectedExtensionPoints,
     availableExtensionPoints,
+    themeColors.LINK_EXTENSION,
+    themeColors.COMPONENT_EXTENSION,
+    themeColors.FUNCTION_EXTENSION,
   ]);
 
   return {

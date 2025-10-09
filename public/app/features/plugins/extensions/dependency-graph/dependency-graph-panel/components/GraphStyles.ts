@@ -43,30 +43,30 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
     }),
 
     nodeLabel: css({
-      fontSize: `${TYPOGRAPHY_CONSTANTS.PLUGIN_LABEL_SIZE}px`,
-      fontWeight: TYPOGRAPHY_CONSTANTS.SEMI_BOLD_WEIGHT,
+      fontSize: theme.typography.body.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
       pointerEvents: 'none',
       userSelect: 'none',
     }),
 
     nodeTypeBadge: css({
-      fontSize: `${TYPOGRAPHY_CONSTANTS.TYPE_BADGE_SIZE}px`,
-      fontWeight: TYPOGRAPHY_CONSTANTS.BOLD_WEIGHT,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightBold,
       pointerEvents: 'none',
       userSelect: 'none',
     }),
 
     nodeRole: css({
-      fontSize: `${TYPOGRAPHY_CONSTANTS.TYPE_BADGE_SIZE}px`,
-      fontWeight: TYPOGRAPHY_CONSTANTS.MEDIUM_WEIGHT,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
       pointerEvents: 'none',
       userSelect: 'none',
     }),
 
     // Content indicator styles
     contentIndicator: css({
-      fontSize: `${TYPOGRAPHY_CONSTANTS.TYPE_BADGE_SIZE}px`,
-      fontWeight: TYPOGRAPHY_CONSTANTS.BOLD_WEIGHT,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightBold,
       pointerEvents: 'none',
       userSelect: 'none',
     }),
@@ -80,8 +80,8 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
     }),
 
     apiLabelText: css({
-      fontSize: `${TYPOGRAPHY_CONSTANTS.API_LABEL_SIZE}px`,
-      fontWeight: TYPOGRAPHY_CONSTANTS.SEMI_BOLD_WEIGHT,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
       fontFamily: TYPOGRAPHY_CONSTANTS.MONOSPACE_FAMILY,
       pointerEvents: 'none',
       userSelect: 'none',
@@ -109,8 +109,8 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
     }),
 
     linkLabel: css({
-      fontSize: `${TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}px`,
-      fontWeight: TYPOGRAPHY_CONSTANTS.SEMI_BOLD_WEIGHT,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
       pointerEvents: 'none',
       userSelect: 'none',
       background: theme.colors.background.primary,
@@ -118,8 +118,8 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
 
     // App ID label
     appIdLabel: css({
-      fontSize: `${TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}px`,
-      fontWeight: TYPOGRAPHY_CONSTANTS.SEMI_BOLD_WEIGHT,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
       fontFamily: TYPOGRAPHY_CONSTANTS.MONOSPACE_FAMILY,
       pointerEvents: 'none',
       userSelect: 'none',
@@ -127,7 +127,7 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
 
     roleLabel: css({
       fontSize: `${TYPOGRAPHY_CONSTANTS.TYPE_BADGE_SIZE}px`,
-      fontWeight: TYPOGRAPHY_CONSTANTS.MEDIUM_WEIGHT,
+      fontWeight: theme.typography.fontWeightMedium,
       pointerEvents: 'none',
       userSelect: 'none',
     }),
@@ -153,23 +153,23 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
     }),
 
     definingPluginLabel: css({
-      fontSize: `${TYPOGRAPHY_CONSTANTS.PLUGIN_LABEL_SIZE}px`,
+      fontSize: theme.typography.body.fontSize,
       fontWeight: TYPOGRAPHY_CONSTANTS.BOLD_WEIGHT,
       pointerEvents: 'none',
       userSelect: 'none',
     }),
 
     extensionPointLabel: css({
-      fontSize: `${TYPOGRAPHY_CONSTANTS.EXTENSION_LABEL_SIZE}px`,
-      fontWeight: TYPOGRAPHY_CONSTANTS.SEMI_BOLD_WEIGHT,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
       fontFamily: TYPOGRAPHY_CONSTANTS.MONOSPACE_FAMILY,
       pointerEvents: 'none',
       userSelect: 'none',
     }),
 
     extensionTypeBadge: css({
-      fontSize: `${TYPOGRAPHY_CONSTANTS.TYPE_BADGE_SIZE}px`,
-      fontWeight: TYPOGRAPHY_CONSTANTS.BOLD_WEIGHT,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightBold,
       pointerEvents: 'none',
       userSelect: 'none',
     }),
@@ -200,8 +200,8 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
 
     // Description text styles
     descriptionInlineText: css({
-      fontSize: `${TYPOGRAPHY_CONSTANTS.DESCRIPTION_SIZE}px`,
-      fontWeight: TYPOGRAPHY_CONSTANTS.MEDIUM_WEIGHT,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
       fontStyle: 'italic',
       pointerEvents: 'none',
       userSelect: 'none',
