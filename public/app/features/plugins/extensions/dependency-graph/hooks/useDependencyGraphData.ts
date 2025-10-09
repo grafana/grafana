@@ -39,10 +39,10 @@ export interface DependencyGraphData {
   contentConsumerForExtensionPointOptions: Array<{ label: string; value: string }>;
   extensionPointOptions: Array<{ label: string; value: string }>;
   extensionOptions: Array<{ label: string; value: string }>;
-  selectedProviderValues: string[];
-  selectedConsumerValues: string[];
-  selectedConsumerForExtensionPointValues: string[];
-  selectedExtensionPointValues: string[];
+  selectedProviderValues: Array<{ value: string; label: string }>;
+  selectedConsumerValues: Array<{ value: string; label: string }>;
+  selectedConsumerForExtensionPointValues: Array<{ value: string; label: string }>;
+  selectedExtensionPointValues: Array<{ value: string; label: string }>;
   selectedExtensionValues: string[];
 }
 
@@ -137,25 +137,36 @@ export function useDependencyGraphData({
   );
 
   // Calculate selected values for display
-  const selectedProviderValues = useMemo(
-    () =>
+  const selectedProviderValues = useMemo(() => {
+    const values =
       !selectedContentProviders || selectedContentProviders.length === 0
         ? availableProviders
-        : selectedContentProviders,
-    [selectedContentProviders, availableProviders]
-  );
+        : selectedContentProviders;
+    return values.map((provider) => ({
+      value: provider,
+      label: provider === 'grafana-core' ? 'Grafana Core' : provider,
+    }));
+  }, [selectedContentProviders, availableProviders]);
 
-  const selectedConsumerValues = useMemo(
-    () =>
-      !selectedContentConsumers || selectedContentConsumers.length === 0 ? activeConsumers : selectedContentConsumers,
-    [selectedContentConsumers, activeConsumers]
-  );
+  const selectedConsumerValues = useMemo(() => {
+    const values =
+      !selectedContentConsumers || selectedContentConsumers.length === 0 ? activeConsumers : selectedContentConsumers;
+    return values.map((consumer) => ({
+      value: consumer,
+      label: consumer === 'grafana-core' ? 'Grafana Core' : consumer,
+    }));
+  }, [selectedContentConsumers, activeConsumers]);
 
   const selectedConsumerForExtensionPointValues = useMemo(() => {
     const consumers = getAvailableContentConsumers('extensionpoint');
-    return !selectedContentConsumersForExtensionPoint || selectedContentConsumersForExtensionPoint.length === 0
-      ? consumers
-      : selectedContentConsumersForExtensionPoint;
+    const values =
+      !selectedContentConsumersForExtensionPoint || selectedContentConsumersForExtensionPoint.length === 0
+        ? consumers
+        : selectedContentConsumersForExtensionPoint;
+    return values.map((consumer) => ({
+      value: consumer,
+      label: consumer === 'grafana-core' ? 'Grafana Core' : consumer,
+    }));
   }, [selectedContentConsumersForExtensionPoint]);
 
   const selectedExtensionPointValues = useMemo(() => {
@@ -177,9 +188,14 @@ export function useDependencyGraphData({
       return availableExtensionPoints;
     })();
 
-    return !selectedExtensionPoints || selectedExtensionPoints.length === 0
-      ? filteredExtensionPoints
-      : selectedExtensionPoints;
+    const values =
+      !selectedExtensionPoints || selectedExtensionPoints.length === 0
+        ? filteredExtensionPoints
+        : selectedExtensionPoints;
+    return values.map((extensionPoint) => ({
+      value: extensionPoint,
+      label: extensionPoint,
+    }));
   }, [selectedExtensionPoints, availableExtensionPoints, selectedContentConsumersForExtensionPoint]);
 
   const selectedExtensionValues = useMemo(

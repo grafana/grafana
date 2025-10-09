@@ -2,12 +2,8 @@ import { DependencyGraphControlsComponent } from './components/DependencyGraphCo
 import { DependencyGraphErrorBoundary } from './components/DependencyGraphErrorBoundary';
 import { DependencyGraphHeader } from './components/DependencyGraphHeader';
 import { DependencyGraphVisualization } from './components/DependencyGraphVisualization';
+import { LAYOUT_CONSTANTS } from './dependency-graph-panel/constants';
 import { useDependencyGraphControls } from './hooks/useDependencyGraphControls';
-
-// Layout constants
-const LAYOUT_CONSTANTS = {
-  PADDING: 16,
-} as const;
 
 /**
  * Main dependency graph tab component
@@ -19,7 +15,7 @@ export function DependencyGraphTab(): JSX.Element {
   return (
     <DependencyGraphErrorBoundary>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <div style={{ marginTop: LAYOUT_CONSTANTS.PADDING }}>
+        <div style={{ marginTop: LAYOUT_CONSTANTS.TAB_PADDING }}>
           <DependencyGraphHeader controls={controls} />
 
           {/* Controls Section */}

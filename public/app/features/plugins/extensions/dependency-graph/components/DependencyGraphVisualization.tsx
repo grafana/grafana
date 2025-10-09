@@ -1,6 +1,7 @@
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { DependencyGraph } from '../dependency-graph-panel/components/DependencyGraph';
+import { LAYOUT_CONSTANTS } from '../dependency-graph-panel/constants';
 import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
 import { useDependencyGraphData } from '../hooks/useDependencyGraphData';
 import { logAutoSizer } from '../utils/logger';
@@ -8,13 +9,6 @@ import { logAutoSizer } from '../utils/logger';
 interface DependencyGraphVisualizationProps {
   controls: DependencyGraphControls;
 }
-
-// Layout constants
-const LAYOUT_CONSTANTS = {
-  MIN_HEIGHT: 500,
-  FALLBACK_WIDTH: 1200,
-  LARGE_HEIGHT: 2000,
-} as const;
 
 /**
  * Reusable component for rendering the dependency graph visualization
@@ -37,12 +31,12 @@ export function DependencyGraphVisualization({ controls }: DependencyGraphVisual
   });
 
   return (
-    <div style={{ flex: 1, overflow: 'visible', minHeight: LAYOUT_CONSTANTS.MIN_HEIGHT, width: '100%' }}>
+    <div style={{ flex: 1, overflow: 'visible', minHeight: LAYOUT_CONSTANTS.VISUALIZATION_MIN_HEIGHT, width: '100%' }}>
       {visualizationMode === 'extensionpoint' ? (
         <AutoSizer>
           {({ width, height }: { width: number; height: number }) => {
-            const effectiveWidth = width || LAYOUT_CONSTANTS.FALLBACK_WIDTH;
-            const effectiveHeight = height || LAYOUT_CONSTANTS.MIN_HEIGHT;
+            const effectiveWidth = width || LAYOUT_CONSTANTS.VISUALIZATION_FALLBACK_WIDTH;
+            const effectiveHeight = height || LAYOUT_CONSTANTS.VISUALIZATION_MIN_HEIGHT;
             logAutoSizer(effectiveWidth, effectiveHeight);
             return (
               <div style={{ width: effectiveWidth, height: effectiveHeight }}>
@@ -71,8 +65,8 @@ export function DependencyGraphVisualization({ controls }: DependencyGraphVisual
       ) : (
         <AutoSizer disableHeight>
           {({ width }: { width: number }) => {
-            const effectiveWidth = width || LAYOUT_CONSTANTS.FALLBACK_WIDTH;
-            const effectiveHeight = LAYOUT_CONSTANTS.LARGE_HEIGHT;
+            const effectiveWidth = width || LAYOUT_CONSTANTS.VISUALIZATION_FALLBACK_WIDTH;
+            const effectiveHeight = LAYOUT_CONSTANTS.VISUALIZATION_LARGE_HEIGHT;
             logAutoSizer(effectiveWidth, effectiveHeight);
             return (
               <div style={{ width: effectiveWidth, height: effectiveHeight }}>

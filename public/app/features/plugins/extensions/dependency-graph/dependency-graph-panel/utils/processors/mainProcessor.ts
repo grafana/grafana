@@ -1,5 +1,3 @@
-import { AppPluginConfig } from '@grafana/data';
-
 import { GraphData, PanelOptions } from '../../types';
 import { getCacheKey, getCachedResult, getPluginData, setCachedResult } from '../helpers/dataAccess';
 
@@ -38,7 +36,7 @@ export const processPluginDataToGraph = (options: PanelOptions): GraphData => {
 
   // Check cache first
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const cacheKey = getCacheKey(options as Record<string, unknown>);
+  const cacheKey = getCacheKey(options as unknown as Record<string, unknown>);
   const cachedResult = getCachedResult<GraphData>(cacheKey);
   if (cachedResult) {
     if (ENABLE_DEBUG_LOGS) {

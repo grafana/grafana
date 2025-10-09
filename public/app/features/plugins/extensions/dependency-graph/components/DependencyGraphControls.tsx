@@ -1,10 +1,12 @@
-import { useCallback } from 'react';
-
-import { t } from '@grafana/i18n';
-import { Combobox, InlineField, InlineFieldRow, MultiCombobox } from '@grafana/ui';
+import { InlineFieldRow } from '@grafana/ui';
 
 import { DependencyGraphControls } from '../hooks/useDependencyGraphControls';
-import { VisualizationMode, useDependencyGraphData } from '../hooks/useDependencyGraphData';
+import { useDependencyGraphData } from '../hooks/useDependencyGraphData';
+
+import { ContentConsumerSelector } from './controls/ContentConsumerSelector';
+import { ContentProviderSelector } from './controls/ContentProviderSelector';
+import { ExtensionPointSelector } from './controls/ExtensionPointSelector';
+import { VisualizationModeSelector } from './controls/VisualizationModeSelector';
 
 interface DependencyGraphControlsProps {
   controls: DependencyGraphControls;
@@ -21,20 +23,15 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
     selectedContentConsumersForExtensionPoint,
     selectedExtensionPoints,
     selectedExtensions,
-    setVisualizationMode,
     setSelectedContentProviders,
     setSelectedContentConsumers,
     setSelectedContentConsumersForExtensionPoint,
     setSelectedExtensionPoints,
-    modeOptions,
   } = controls;
 
   const {
     availableProviders,
     activeConsumers,
-    contentProviderOptions,
-    contentConsumerOptions,
-    contentConsumerForExtensionPointOptions,
     extensionPointOptions,
     selectedProviderValues,
     selectedConsumerValues,
@@ -49,141 +46,56 @@ export function DependencyGraphControlsComponent({ controls }: DependencyGraphCo
     selectedExtensions,
   });
 
-  const handleModeChange = useCallback(
-    (option: { value?: VisualizationMode }) => {
-      if (
-        option.value &&
-        (option.value === 'exposedComponents' ||
-          option.value === 'addedlinks' ||
-          option.value === 'addedcomponents' ||
-          option.value === 'addedfunctions' ||
-          option.value === 'extensionpoint')
-      ) {
-        setVisualizationMode(option.value);
-      }
-    },
-    [setVisualizationMode]
-  );
-
-  const handleProviderChange = useCallback(
-    (selected: Array<{ value?: string }>) => {
-      const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
-      const newValue = selectedValues.length === availableProviders.length ? [] : selectedValues;
-      setSelectedContentProviders(newValue);
-    },
-    [availableProviders.length, setSelectedContentProviders]
-  );
-
-  const handleConsumerChange = useCallback(
-    (selected: Array<{ value?: string }>) => {
-      const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
-      const isDefaultSelection =
-        selectedValues.length === activeConsumers.length &&
-        activeConsumers.every((consumer) => selectedValues.includes(consumer));
-      const newValue = isDefaultSelection ? [] : selectedValues;
-      setSelectedContentConsumers(newValue);
-    },
-    [activeConsumers, setSelectedContentConsumers]
-  );
-
-  const handleConsumerForExtensionPointChange = useCallback(
-    (selected: Array<{ value?: string }>) => {
-      const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
-      const newValue = selectedValues.length === contentConsumerForExtensionPointOptions.length ? [] : selectedValues;
-      setSelectedContentConsumersForExtensionPoint(newValue);
-    },
-    [contentConsumerForExtensionPointOptions.length, setSelectedContentConsumersForExtensionPoint]
-  );
-
-  const handleExtensionPointChange = useCallback(
-    (selected: Array<{ value?: string }>) => {
-      const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
-      const newValue = selectedValues.length === extensionPointOptions.length ? [] : selectedValues;
-      setSelectedExtensionPoints(newValue);
-    },
-    [extensionPointOptions.length, setSelectedExtensionPoints]
-  );
-
   return (
     <>
       <InlineFieldRow>
-        <InlineField>
-          <Combobox<VisualizationMode>
-            options={modeOptions}
-            value={visualizationMode}
-            onChange={handleModeChange}
-            width={22}
-          />
-        </InlineField>
+        <VisualizationModeSelector controls={controls} />
         {visualizationMode !== 'extensionpoint' && (
           <>
-            <InlineField label={t('extensions.content-provider.label', 'Content provider')}>
-              <MultiCombobox
-                options={contentProviderOptions}
-                value={selectedProviderValues}
-                onChange={handleProviderChange}
-                placeholder={t('extensions.content-provider.placeholder', 'Select content providers to display')}
-                width="auto"
-                enableAllOption
-                minWidth={20}
-                maxWidth={30}
-              />
-            </InlineField>
-            <InlineField label={t('extensions.content-consumer.label', 'Content consumer')}>
-              <MultiCombobox
-                options={contentConsumerOptions}
-                value={selectedConsumerValues}
-                onChange={handleConsumerChange}
-                placeholder={t(
-                  'extensions.content-consumer.placeholder',
-                  'Select content consumers to display (active consumers by default)'
-                )}
-                width="auto"
-                enableAllOption
-                minWidth={20}
-                maxWidth={30}
-              />
-            </InlineField>
+            <ContentProviderSelector
+              availableProviders={availableProviders}
+              selectedProviderValues={selectedProviderValues}
+              onProviderChange={(selected) => {
+                const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
+                setSelectedContentProviders(selectedValues);
+              }}
+            />
+            <ContentConsumerSelector
+              activeConsumers={activeConsumers}
+              selectedConsumerValues={selectedConsumerValues}
+              onConsumerChange={(selected) => {
+                const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
+                setSelectedContentConsumers(selectedValues);
+              }}
+            />
           </>
         )}
         {visualizationMode === 'extensionpoint' && (
           <>
-            <InlineField label={t('extensions.content-provider.label', 'Content provider')}>
-              <MultiCombobox
-                options={contentProviderOptions}
-                value={selectedProviderValues}
-                onChange={handleProviderChange}
-                placeholder={t('extensions.content-provider.placeholder', 'Select content providers to display')}
-                width="auto"
-                enableAllOption
-                minWidth={20}
-                maxWidth={30}
-              />
-            </InlineField>
-            <InlineField label={t('extensions.content-consumers.label', 'Content consumers')}>
-              <MultiCombobox
-                options={contentConsumerForExtensionPointOptions}
-                value={selectedConsumerForExtensionPointValues}
-                onChange={handleConsumerForExtensionPointChange}
-                placeholder={t('extensions.content-consumers.placeholder', 'Select content consumers to display')}
-                width="auto"
-                enableAllOption
-                minWidth={20}
-                maxWidth={30}
-              />
-            </InlineField>
-            <InlineField label={t('extensions.extension-points.label', 'Extension points')}>
-              <MultiCombobox
-                options={extensionPointOptions}
-                value={selectedExtensionPointValues}
-                onChange={handleExtensionPointChange}
-                placeholder={t('extensions.extension-points.placeholder', 'Select extension points to display')}
-                width="auto"
-                enableAllOption
-                minWidth={20}
-                maxWidth={30}
-              />
-            </InlineField>
+            <ContentProviderSelector
+              availableProviders={availableProviders}
+              selectedProviderValues={selectedProviderValues}
+              onProviderChange={(selected) => {
+                const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
+                setSelectedContentProviders(selectedValues);
+              }}
+            />
+            <ContentConsumerSelector
+              activeConsumers={activeConsumers}
+              selectedConsumerValues={selectedConsumerForExtensionPointValues}
+              onConsumerChange={(selected) => {
+                const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
+                setSelectedContentConsumersForExtensionPoint(selectedValues);
+              }}
+            />
+            <ExtensionPointSelector
+              extensionPointOptions={extensionPointOptions}
+              selectedExtensionPointValues={selectedExtensionPointValues}
+              onExtensionPointChange={(selected) => {
+                const selectedValues = selected.map((item) => item.value).filter((v): v is string => Boolean(v));
+                setSelectedExtensionPoints(selectedValues);
+              }}
+            />
           </>
         )}
       </InlineFieldRow>

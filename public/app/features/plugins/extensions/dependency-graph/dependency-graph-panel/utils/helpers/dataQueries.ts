@@ -1,5 +1,3 @@
-import { AppPluginConfig } from '@grafana/data';
-
 import { ExposedComponent } from '../../types';
 
 // Note: We avoid importing from processors to prevent circular dependencies

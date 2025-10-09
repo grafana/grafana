@@ -48,6 +48,12 @@ export const LAYOUT_CONSTANTS = {
   // Consumer positioning
   RIGHT_MARGIN_WIDTH_RATIO: 0.04, // 4% of width
   MIN_RIGHT_MARGIN: 40,
+
+  // Tab and visualization layout
+  TAB_PADDING: 16,
+  VISUALIZATION_MIN_HEIGHT: 500,
+  VISUALIZATION_FALLBACK_WIDTH: 1200,
+  VISUALIZATION_LARGE_HEIGHT: 2000,
 } as const;
 
 export const VISUAL_CONSTANTS = {
