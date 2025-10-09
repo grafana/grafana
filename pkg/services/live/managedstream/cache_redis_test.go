@@ -59,13 +59,13 @@ func redisCleanup(t *testing.T, redisClient *redis.Client, prefix string) func()
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		keys, err := redisClient.Keys(t.Context(), prefix+"*").Result()
+		keys, err := redisClient.Keys(ctx, prefix+"*").Result()
 		if err != nil {
 			require.NoError(t, err)
 		}
 
 		for _, key := range keys {
-			_, err := redisClient.Del(t.Context(), key).Result()
+			_, err := redisClient.Del(ctx, key).Result()
 			require.NoError(t, err)
 		}
 	}
