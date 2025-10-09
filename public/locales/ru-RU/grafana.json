@@ -6670,6 +6670,7 @@
         "service-now-integration-and-data-source": "Интеграция и источник данных ServiceNow",
         "signal-fx-integration-and-datasource": "Интеграция и источник данных SignalFx",
         "snowflake-integration-and-data-source": "Интеграция и источник данных Snowflake",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "Интеграция и источник данных SumoLogic",
         "visualize-and-explore-dynatrace-data": "Визуализация и обзор данных Dynatrace",
         "visualize-and-explore-oracle-sql": "Визуализация и обзор Oracle SQL",
