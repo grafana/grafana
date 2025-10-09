@@ -53,7 +53,7 @@ export class KeybindingSrv {
       this.bind('g e', this.goToExplore);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
-      // Conditionally bind Assistant shortcut if it is available
+      // Conditionally bind open Assistant shortcut ('o a') if Assistant is available
       this.bindAssistantShortcutIfAvailable();
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
@@ -123,7 +123,6 @@ export class KeybindingSrv {
   private showHelpModal() {
     appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
   }
-
 
   private bindAssistantShortcutIfAvailable() {
     // Clean up any existing subscription
