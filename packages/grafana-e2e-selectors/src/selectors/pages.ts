@@ -500,9 +500,6 @@ export const versionedPages = {
             queryOptionsQueryInput: {
               '10.4.0': 'data-testid Variable editor Form Default Variable Query Editor textarea',
             },
-            queryOptionsStaticOptionsRow: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options row',
-            },
             queryOptionsStaticOptionsToggle: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options toggle',
             },
@@ -603,19 +600,22 @@ export const versionedPages = {
           },
           StaticOptionsEditor: {
             addButton: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Static Options Add button',
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Add button',
             },
             labelInput: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Static Options Label input',
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Label input',
             },
             valueInput: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Static Options Value input',
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Value input',
             },
             moveButton: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Static Options Move button',
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Move button',
             },
             deleteButton: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Static Options Delete button',
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Delete button',
+            },
+            row: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Row',
             },
           },
         },

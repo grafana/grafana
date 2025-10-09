@@ -47,7 +47,7 @@ export function VariableStaticOptionsFormItemEditor({
       {(draggableProvided) => (
         <tr
           ref={draggableProvided.innerRef}
-          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsRow}
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.row}
           {...draggableProvided.draggableProps}
         >
           <td>

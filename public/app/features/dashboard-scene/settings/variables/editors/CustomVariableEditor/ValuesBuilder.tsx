@@ -15,7 +15,10 @@ export const ValuesBuilder = forwardRef<VariableStaticOptionsFormRef, ValuesBuil
 ) {
   const { query } = variable.useState();
 
-  const options = variable.transformCsvStringToOptions(query, false);
+  const options = variable.transformCsvStringToOptions(query, false).map(({ label, value }) => ({
+    value,
+    label: value === label ? '' : label,
+  }));
 
   const escapeEntities = useCallback((text: VariableValueSingle) => String(text).trim().replaceAll(',', '\\,'), []);
 

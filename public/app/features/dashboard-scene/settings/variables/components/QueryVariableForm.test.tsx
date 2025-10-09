@@ -441,9 +441,7 @@ describe('QueryVariableEditorForm', () => {
     ).toBeInTheDocument();
 
     // Option rows should be visible
-    expect(
-      getAllByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsRow)
-    ).toHaveLength(2);
+    expect(getAllByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.row)).toHaveLength(2);
 
     // Uncheck the static options switch
     const staticOptionsToggle = getByTestId(
@@ -462,7 +460,7 @@ describe('QueryVariableEditorForm', () => {
       )
     ).not.toBeInTheDocument();
     expect(
-      queryByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsRow)
+      queryByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.row)
     ).not.toBeInTheDocument();
   });
 });
