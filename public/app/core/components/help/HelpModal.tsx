@@ -7,7 +7,59 @@ import { Trans, t } from '@grafana/i18n';
 import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
 import { getModKey } from 'app/core/utils/browser';
 
-const useShortcuts = () => {
+export interface HelpModalProps {
+  onDismiss: () => void;
+}
+
+export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
+  const styles = useStyles2(getStyles);
+  const shortcuts = useShortcuts();
+  return (
+    <Modal title={t('help-modal.title', 'Shortcuts')} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
+      <Grid columns={{ xs: 1, sm: 2 }} gap={3} tabIndex={0}>
+        {Object.values(shortcuts).map(({ category, shortcuts }) => (
+          <section key={category}>
+            <table className={styles.table}>
+              <caption>
+                <Text element="p" variant="h5">
+                  {category}
+                </Text>
+              </caption>
+              <thead className="sr-only">
+                <tr>
+                  <th>
+                    <Trans i18nKey="help-modal.column-headers.keys">Keys</Trans>
+                  </th>
+                  <th>
+                    <Trans i18nKey="help-modal.column-headers.description">Description</Trans>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {shortcuts.map(({ keys, description }) => (
+                  <tr key={keys.join()}>
+                    <td className={styles.keys}>
+                      {keys.map((key) => (
+                        <Key key={key}>{key}</Key>
+                      ))}
+                    </td>
+                    <td>
+                      <Text variant="bodySmall" element="p">
+                        {description}
+                      </Text>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        ))}
+      </Grid>
+    </Modal>
+  );
+};
+
+export const useShortcuts = () => {
   const [assistantAvailable] = useAssistant();
   const modKey = useMemo(() => getModKey(), []);
 
@@ -174,58 +226,6 @@ const useShortcuts = () => {
       },
     ];
   }, [modKey, assistantAvailable]);
-};
-
-export interface HelpModalProps {
-  onDismiss: () => void;
-}
-
-export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
-  const styles = useStyles2(getStyles);
-  const shortcuts = useShortcuts();
-  return (
-    <Modal title={t('help-modal.title', 'Shortcuts')} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-      <Grid columns={{ xs: 1, sm: 2 }} gap={3} tabIndex={0}>
-        {Object.values(shortcuts).map(({ category, shortcuts }) => (
-          <section key={category}>
-            <table className={styles.table}>
-              <caption>
-                <Text element="p" variant="h5">
-                  {category}
-                </Text>
-              </caption>
-              <thead className="sr-only">
-                <tr>
-                  <th>
-                    <Trans i18nKey="help-modal.column-headers.keys">Keys</Trans>
-                  </th>
-                  <th>
-                    <Trans i18nKey="help-modal.column-headers.description">Description</Trans>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {shortcuts.map(({ keys, description }) => (
-                  <tr key={keys.join()}>
-                    <td className={styles.keys}>
-                      {keys.map((key) => (
-                        <Key key={key}>{key}</Key>
-                      ))}
-                    </td>
-                    <td>
-                      <Text variant="bodySmall" element="p">
-                        {description}
-                      </Text>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
-        ))}
-      </Grid>
-    </Modal>
-  );
 };
 
 interface KeyProps {
