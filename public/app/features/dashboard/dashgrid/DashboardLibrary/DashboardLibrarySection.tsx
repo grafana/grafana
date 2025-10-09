@@ -89,23 +89,25 @@ export const DashboardLibrarySection = () => {
             Start with a pre-made dashboard from your data source
           </Trans>
         </Text>
-        <Grid
-          gap={4}
-          columns={{
-            xs: 1,
-            sm: (dashboardsToShow?.length || 1) >= 2 ? 2 : 1,
-            lg: (dashboardsToShow?.length || 1) >= 3 ? 3 : (dashboardsToShow?.length || 1) >= 2 ? 2 : 1,
-          }}
-        >
-          {dashboardsToShow?.map((dashboard, index) => (
-            <TemplateDashboardBox
-              key={dashboard.uid}
-              index={index}
-              dashboard={dashboard}
-              onImportClick={onImportDashboardClick}
-            />
-          )) || []}
-        </Grid>
+        <Box marginTop={2}>
+          <Grid
+            gap={4}
+            columns={{
+              xs: 1,
+              sm: (dashboardsToShow?.length || 1) >= 2 ? 2 : 1,
+              lg: (dashboardsToShow?.length || 1) >= 3 ? 3 : (dashboardsToShow?.length || 1) >= 2 ? 2 : 1,
+            }}
+          >
+            {dashboardsToShow?.map((dashboard, index) => (
+              <TemplateDashboardBox
+                key={dashboard.uid}
+                index={index}
+                dashboard={dashboard}
+                onImportClick={onImportDashboardClick}
+              />
+            )) || []}
+          </Grid>
+        </Box>
         {hasMoreThanThree && (
           <Button
             variant="secondary"
@@ -154,16 +156,14 @@ const TemplateDashboardBox = ({
         alt={dashboard.title}
         className={styles.templateDashboardImage}
       />
-      <div className={styles.templateDashboardSection}>
-        <div className={styles.templateDashboardTitle}>
-          <Text element="p" textAlignment="center">
-            {dashboard.title}
-          </Text>
-        </div>
-        <Button fill="outline" onClick={() => onImportClick(dashboard)} size="sm">
-          <Trans i18nKey="dashboard.empty.use-template-button">Use this dashboard</Trans>
-        </Button>
+      <div className={styles.templateDashboardTitle}>
+        <Text element="p" textAlignment="center">
+          {dashboard.title}
+        </Text>
       </div>
+      <Button fill="outline" onClick={() => onImportClick(dashboard)} size="sm">
+        <Trans i18nKey="dashboard.empty.use-template-button">Use this dashboard</Trans>
+      </Button>
     </div>
   );
 };
@@ -173,23 +173,15 @@ function getStyles(theme: GrafanaTheme2, dashboardsLength?: number) {
     templateDashboardBox: css({
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(2),
-      alignItems: 'center',
-    }),
-    templateDashboardSection: css({
-      display: 'flex',
-      flexDirection: 'column',
       gap: theme.spacing(1),
-      flex: 1,
       alignItems: 'center',
     }),
     templateDashboardTitle: css({
       flex: 1,
     }),
     templateDashboardImage: css({
-      objectFit: 'cover',
       borderRadius: theme.shape.radius.default,
-      borderColor: theme.colors.primary.main,
+      borderColor: theme.colors.text.primary,
       borderWidth: 1,
       borderStyle: 'solid',
     }),
