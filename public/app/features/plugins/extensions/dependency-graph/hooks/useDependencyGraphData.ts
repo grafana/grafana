@@ -6,9 +6,9 @@ import {
   getAvailableContentProviders,
   getAvailableExtensionPoints,
   getAvailableExtensions,
-  getDefaultOptions,
-  processPluginDataToGraph,
-} from '../dependency-graph-panel/utils/dataProcessor';
+} from '../dependency-graph-panel/utils/helpers/dataQueries';
+import { getDefaultOptions } from '../dependency-graph-panel/utils/helpers/defaults';
+import { processPluginDataToGraph } from '../dependency-graph-panel/utils/processors/mainProcessor';
 import { logGraphData } from '../utils/logger';
 
 export type VisualizationMode =

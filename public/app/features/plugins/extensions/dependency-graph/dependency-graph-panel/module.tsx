@@ -11,7 +11,7 @@ import {
   getAvailableContentConsumers,
   getAvailableContentProviders,
   getAvailableExtensionPoints,
-} from './utils/dataProcessor';
+} from './utils/helpers/dataQueries';
 
 // Custom multiselect editor for content providers
 const ContentProviderMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ value, onChange, context }) => {

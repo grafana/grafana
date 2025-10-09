@@ -3,7 +3,8 @@ import React, { useMemo } from 'react';
 import { PanelProps } from '@grafana/data';
 
 import { PanelOptions } from '../types';
-import { getDefaultOptions, processPluginDataToGraph } from '../utils/dataProcessor';
+import { getDefaultOptions } from '../utils/helpers/defaults';
+import { processPluginDataToGraph } from '../utils/processors/mainProcessor';
 
 import { DependencyGraph } from './DependencyGraph';
 
