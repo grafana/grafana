@@ -14,7 +14,30 @@ Once your feature toggle is defined, you can then wrap your feature around a che
 Examples:
 
 - [Backend](https://github.com/grafana/grafana/blob/feb2b5878b3e3ec551d64872c35edec2a0187812/pkg/services/authn/clients/session.go#L57): Use the `IsEnabled` function and pass in your feature toggle.
-- [Frontend](https://github.com/grafana/grafana/blob/feb2b5878b3e3ec551d64872c35edec2a0187812/public/app/features/search/service/folders.ts#L14): Check the config for your feature toggle.
+
+### Frontend
+
+Use the new OpenFeature-based feature flag client for all new feature flags. There are some differences compared to the legacy `config.featureToggles` system:
+
+- Feature flag initialisation is async, but will be finished by the time the UI is rendered. This means you cannot get the value of a feature flag at the 'top level' of a module/file
+- Call `evaluateBooleanFlag("flagName")` from `@grafana/runtime/internal` instead to get the value of a feature flag
+- Feature flag values _may_ change over the lifetime of the session. Do not store the value in a variable that is used for longer than a single render - always call `evaluateBooleanFlag` lazily when you use the value.
+
+e.g.
+
+```ts
+import { evaluateBooleanFlag } from '@grafana/runtime/internal';
+
+// BAD - Don't do this. The feature toggle will not evaluate correctly
+const isEnabled = evaluateBooleanFlag('newPreferences', false);
+
+function makeAPICall() {
+  // GOOD - The feature toggle should be called after app initialisation
+  if (evaluateBooleanFlag('newPreferences', false)) {
+    // do new things
+  }
+}
+```
 
 ## Enabling toggles in development
 

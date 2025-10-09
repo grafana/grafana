@@ -65,10 +65,6 @@ type BleveOptions struct {
 	// The resource count where values switch from memory to file based
 	FileThreshold int64
 
-	// How big should a batch get before flushing
-	// ?? not totally sure the units
-	BatchSize int
-
 	// Index cache TTL for bleve indices. 0 disables expiration for in-memory indexes.
 	// Also used for file-based indexes, if they are not owned by this instance, and they are not fetched from the cache recently.
 	IndexCacheTTL time.Duration
@@ -170,13 +166,13 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 }
 
 // GetIndex will return nil if the key does not exist
-func (b *bleveBackend) GetIndex(_ context.Context, key resource.NamespacedResource) (resource.ResourceIndex, error) {
+func (b *bleveBackend) GetIndex(key resource.NamespacedResource) resource.ResourceIndex {
 	idx := b.getCachedIndex(key, time.Now())
 	// Avoid returning typed nils.
 	if idx == nil {
-		return nil, nil
+		return nil
 	}
-	return idx, nil
+	return idx
 }
 
 func (b *bleveBackend) GetOpenIndexes() []resource.NamespacedResource {
@@ -1358,7 +1354,7 @@ func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
 	return b.index.Close()
 }
 
-func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) (int64, error) {
+func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 	// We don't have to do anything if the index cannot be updated (typically in tests).
 	if b.updaterFn == nil {
 		return 0, nil
