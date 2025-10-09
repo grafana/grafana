@@ -11570,6 +11570,7 @@
       "active-jobs": "active jobs",
       "column-action": "Action",
       "column-duration": "Duration",
+      "column-job-id": "Job ID",
       "column-message": "Message",
       "column-started": "Started",
       "column-status": "Status",
@@ -11588,12 +11589,6 @@
       "settings": "Settings",
       "view": "View"
     },
-    "repository-health": {
-      "details": "Details:",
-      "no-errors-found": "No errors found",
-      "title-repository-is-healthy": "Repository is healthy",
-      "title-repository-is-unhealthy": "Repository is unhealthy"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Compare branch",
@@ -11608,7 +11603,7 @@
     },
     "repository-overview": {
       "checked": "Checked:",
-      "finished": "Finished:",
+      "finished": "Last successful pull:",
       "health": "Health",
       "healthy": "Healthy",
       "job-id": "Job ID:",
@@ -11617,7 +11612,6 @@
       "not-available": "N/A",
       "pull-status": "Pull status",
       "resources": "Resources",
-      "started": "Started:",
       "status": "Status:",
       "unhealthy": "Unhealthy",
       "view-folder": "View Folder",
