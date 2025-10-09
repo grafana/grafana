@@ -69,6 +69,7 @@ func TestMain(m *testing.M) {
 
 func TestIntegrationStorageServer(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
 
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
 		return newTestBackend(t, true, 0)
@@ -78,6 +79,7 @@ func TestIntegrationStorageServer(t *testing.T) {
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
