@@ -10,7 +10,6 @@ import { getConvertFieldTypeTransformRegistryItem } from './editors/ConvertField
 import { getFilterFieldsByNameTransformRegistryItem } from './editors/FilterByNameTransformerEditor';
 import { getFilterFramesByRefIdTransformRegistryItem } from './editors/FilterByRefIdTransformerEditor';
 import { getFormatStringTransformerRegistryItem } from './editors/FormatStringTransformerEditor';
-import { getFormatTimeTransformerRegistryItem } from './editors/FormatTimeTransformerEditor';
 import { getGroupByTransformRegistryItem } from './editors/GroupByTransformerEditor';
 import { getGroupToNestedTableTransformRegistryItem } from './editors/GroupToNestedTableTransformerEditor';
 import { getGroupingToMatrixTransformRegistryItem } from './editors/GroupingToMatrixTransformerEditor';
@@ -67,7 +66,6 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     getPartitionByValuesTransformRegistryItem(),
     ...(config.featureToggles.formatString ? [getFormatStringTransformerRegistryItem()] : []),
     ...(config.featureToggles.groupToNestedTableTransformation ? [getGroupToNestedTableTransformRegistryItem()] : []),
-    getFormatTimeTransformerRegistryItem(),
     getTimeSeriesTableTransformRegistryItem(),
     getTransposeTransformerRegistryItem(),
   ];
