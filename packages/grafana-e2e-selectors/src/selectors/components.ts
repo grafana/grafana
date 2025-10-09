@@ -670,6 +670,11 @@ export const versionedComponents = {
           '12.1.0': 'data-testid fill screen switch',
         },
       },
+      TabsLayout: {
+        titleInput: {
+          '12.2.0': 'data-testid tab title input',
+        },
+      },
     },
   },
   PanelInspector: {

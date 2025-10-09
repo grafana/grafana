@@ -91,6 +91,7 @@ function TabTitleInput({ tab, isNewElement, id }: { tab: TabItem; isNewElement: 
         onFocus={() => (prevTitle.current = title || '')}
         onBlur={() => editTabTitleAction(tab, title || '', prevTitle.current || '')}
         onChange={(e) => tab.onChangeTitle(e.currentTarget.value)}
+        data-testid={selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput}
       />
     </Field>
   );

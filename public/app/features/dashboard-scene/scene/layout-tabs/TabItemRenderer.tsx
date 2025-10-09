@@ -24,7 +24,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
   const isActive = mySlug === currentTabSlug;
-  const myIndex = parentLayout.state.tabs.findIndex((tab) => tab === model);
+  const myIndex = parentLayout.getTabsIncludingRepeats().findIndex((tab) => tab === model);
   const location = useLocation();
   const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { [urlKey]: mySlug }));
   const styles = useStyles2(getStyles);
