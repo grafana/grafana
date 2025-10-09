@@ -323,6 +323,10 @@ export interface FeatureToggles {
   */
   queryService?: boolean;
   /**
+  * Adds datasource connections to the query service
+  */
+  queryServiceWithConnections?: boolean;
+  /**
   * Rewrite requests targeting /ds/query to the query service
   */
   queryServiceRewrite?: boolean;
@@ -969,10 +973,6 @@ export interface FeatureToggles {
   * use multi-tenant path for awsTempCredentials
   */
   multiTenantTempCredentials?: boolean;
-  /**
-  * Enables localization for plugins
-  */
-  localizationForPlugins?: boolean;
   /**
   * Enables unified navbars
   * @default false
