@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
-	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
 var _ envvars.Provider = (*EnvVarsProvider)(nil)
@@ -25,10 +25,10 @@ type EnvVarsProvider struct {
 	cfg         *PluginInstanceCfg
 	license     plugins.Licensing
 	logger      log.Logger
-	ssoSettings ssosettings.Service
+	ssoSettings pluginsso.SettingsProvider
 }
 
-func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSettings ssosettings.Service) *EnvVarsProvider {
+func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSettings pluginsso.SettingsProvider) *EnvVarsProvider {
 	return &EnvVarsProvider{
 		cfg:         cfg,
 		license:     license,
@@ -76,7 +76,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	if err != nil {
 		p.logger.Error("Failed to get SSO settings", "error", err)
 	}
-	azureSettings = GetAzureSettings(azureSettings, azureAdSettings)
+	azureSettings = getAzureSettings(azureSettings, azureAdSettings)
 
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(azureSettings)...)
 	hostEnv = append(hostEnv, p.tracingEnvVars(plugin)...)

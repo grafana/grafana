@@ -9,14 +9,14 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/plugins/auth"
-	"github.com/grafana/grafana/pkg/services/ssosettings"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/plugins/auth"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
 var _ PluginRequestConfigProvider = (*RequestConfigProvider)(nil)
@@ -27,15 +27,15 @@ type PluginRequestConfigProvider interface {
 
 type RequestConfigProvider struct {
 	cfg         *PluginInstanceCfg
-	ssoSettings ssosettings.Service
+	ssoSettings pluginsso.SettingsProvider
 	logger      log.Logger
 }
 
-func NewRequestConfigProvider(cfg *PluginInstanceCfg, ssoSettings ssosettings.Service) *RequestConfigProvider {
+func NewRequestConfigProvider(cfg *PluginInstanceCfg, ssoSettings pluginsso.SettingsProvider) *RequestConfigProvider {
 	return &RequestConfigProvider{
 		cfg:         cfg,
 		ssoSettings: ssoSettings,
-		logger:      log.New("pluginsintegration.pluginrequestconfig"),
+		logger:      log.New("pluginrequestconfig"),
 	}
 }
 
@@ -103,11 +103,11 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	}
 
 	if azureSettings != nil && slices.Contains(azureSettings.ForwardSettingsPlugins, pluginID) {
-		azureAdSettings, err := s.ssoSettings.GetForProviderFromCache(ctx, social.AzureADProviderName)
+		azureAdSettings, err := s.ssoSettings.GetForProvider(ctx, social.AzureADProviderName)
 		if err != nil {
 			s.logger.Error("Failed to get SSO settings", "error", err)
 		}
-		azureSettings = GetAzureSettings(azureSettings, azureAdSettings)
+		azureSettings = getAzureSettings(azureSettings, azureAdSettings)
 
 		if azureSettings.Cloud != "" {
 			m[azsettings.AzureCloud] = azureSettings.Cloud

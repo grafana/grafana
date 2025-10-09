@@ -55,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/renderer"
@@ -157,6 +158,8 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(checkregistry.CheckService), new(*checkregistry.Service)),
 	pluginassets2.ProvideService,
 	wire.Bind(new(pluginassets2.Provider), new(*pluginassets2.LocalProvider)),
+	pluginsso.ProvideDefaultSettingsProvider,
+	wire.Bind(new(pluginsso.SettingsProvider), new(*pluginsso.DefaultSettingsProvider)),
 )
 
 func ProvideClientWithMiddlewares(
