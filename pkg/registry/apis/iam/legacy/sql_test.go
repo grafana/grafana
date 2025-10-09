@@ -226,8 +226,8 @@ func TestIdentityQueries(t *testing.T) {
 					Name: "team_1_bindings",
 					Data: listTeamBindings(&ListTeamBindingsQuery{
 						OrgID:      1,
-						TeamID:     1,
-						UserID:     1,
+						TeamUID:    "team1",
+						UserUID:    "user1",
 						Pagination: common.Pagination{Limit: 1},
 					}),
 				},

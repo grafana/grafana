@@ -281,7 +281,7 @@ func doTeamBindingCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTest
 			GVR:       gvrTeamBindings,
 		})
 
-		teamBindingName := fmt.Sprintf("binding-%d-%d", teamRsp.Result.ID, userRsp.Result.ID)
+		teamBindingName := fmt.Sprintf("%s-%s", teamRsp.Result.UID, userRsp.Result.UID)
 		teamBinding, err := teamBindingClient.Resource.Get(ctx, teamBindingName, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, teamBinding)
