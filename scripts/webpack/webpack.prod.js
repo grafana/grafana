@@ -67,12 +67,12 @@ module.exports = (env = {}) =>
       parseInt(env.noMinify, 10) === 1
         ? false
         : {
-          type: 'filesystem',
-          name: 'grafana-default-production',
-          buildDependencies: {
-            config: [__filename],
+            type: 'filesystem',
+            name: 'grafana-default-production',
+            buildDependencies: {
+              config: [__filename],
+            },
           },
-        },
 
     plugins: [
       new MiniCssExtractPlugin({
