@@ -84,7 +84,7 @@ interface ExtensionRendererProps {
   };
 }
 
-export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
+export function ExtensionRenderer({
   theme,
   data,
   options,
@@ -104,7 +104,7 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
   onContentProviderClick,
   onHighlightedExtensionPointChange,
   styles,
-}) => {
+}: ExtensionRendererProps) {
   // Context menu state
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
@@ -1713,4 +1713,4 @@ export const ExtensionRenderer: React.FC<ExtensionRendererProps> = ({
     }
     return pluginId;
   }
-};
+}

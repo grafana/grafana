@@ -35,7 +35,7 @@ interface LinkRendererProps {
   };
 }
 
-export const LinkRenderer: React.FC<LinkRendererProps> = ({
+export function LinkRenderer({
   theme,
   data,
   nodes,
@@ -51,7 +51,7 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
   selectedContentProvider,
   highlightedExtensionPointId,
   styles,
-}) => {
+}: LinkRendererProps) {
   if (isExposeMode) {
     return renderExposeDependencyLinks();
   }
@@ -362,4 +362,4 @@ export const LinkRenderer: React.FC<LinkRendererProps> = ({
 
     return <g>{arrows}</g>;
   }
-};
+}

@@ -5,7 +5,6 @@
  */
 
 import { SerializedStyles } from '@emotion/react';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -27,13 +26,7 @@ interface HeaderRendererProps {
   };
 }
 
-export const HeaderRenderer: React.FC<HeaderRendererProps> = ({
-  theme,
-  width,
-  isExposeMode,
-  isExtensionPointMode,
-  styles,
-}) => {
+export function HeaderRenderer({ theme, width, isExposeMode, isExtensionPointMode, styles }: HeaderRendererProps) {
   const margin = getResponsiveMargin(width);
   const nodeWidth = getResponsiveNodeWidth(width);
 
@@ -163,4 +156,4 @@ export const HeaderRenderer: React.FC<HeaderRendererProps> = ({
       />
     </g>
   );
-};
+}

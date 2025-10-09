@@ -14,7 +14,7 @@ interface ArrowMarkersProps {
   theme: GrafanaTheme2;
 }
 
-export const ArrowMarkers: React.FC<ArrowMarkersProps> = ({ theme }) => {
+export function ArrowMarkers({ theme }: ArrowMarkersProps) {
   return (
     <defs>
       {/* Default arrow marker */}
@@ -54,4 +54,4 @@ export const ArrowMarkers: React.FC<ArrowMarkersProps> = ({ theme }) => {
       </marker>
     </defs>
   );
-};
+}

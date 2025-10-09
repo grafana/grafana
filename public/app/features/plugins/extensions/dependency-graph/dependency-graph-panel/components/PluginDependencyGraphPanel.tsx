@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { PanelProps } from '@grafana/data';
 
@@ -42,14 +42,7 @@ interface Props extends PanelProps<PanelOptions> {}
  *
  * @public
  */
-export const PluginDependencyGraphPanel: React.FC<Props> = ({
-  options,
-  data,
-  width,
-  height,
-  fieldConfig,
-  timeZone,
-}) => {
+export function PluginDependencyGraphPanel({ options, data, width, height, fieldConfig, timeZone }: Props) {
   // Merge user options with defaults
   const mergedOptions = useMemo(
     () => ({
@@ -65,4 +58,4 @@ export const PluginDependencyGraphPanel: React.FC<Props> = ({
   }, [mergedOptions]); // Removed 'data' dependency since we no longer use panel data
 
   return <DependencyGraph data={graphData} options={mergedOptions} width={width} height={height} />;
-};
+}

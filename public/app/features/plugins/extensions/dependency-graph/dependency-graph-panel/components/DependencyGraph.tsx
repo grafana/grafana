@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { useTheme2 } from '@grafana/ui';
 
@@ -22,7 +22,7 @@ interface DependencyGraphProps {
   height: number;
 }
 
-export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options, width, height }) => {
+export function DependencyGraph({ data, options, width, height }: DependencyGraphProps) {
   const theme = useTheme2();
   const styles = getGraphStyles(theme);
 
@@ -158,4 +158,4 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ data, options,
       </svg>
     </div>
   );
-};
+}

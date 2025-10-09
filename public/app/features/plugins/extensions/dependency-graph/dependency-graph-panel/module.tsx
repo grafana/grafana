@@ -25,8 +25,6 @@
  * @public
  */
 
-import React from 'react';
-
 import { PanelPlugin, StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { MultiCombobox } from '@grafana/ui';
@@ -41,7 +39,7 @@ import {
 } from './utils/helpers/dataQueries';
 
 // Custom multiselect editor for content providers
-const ContentProviderMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ value, onChange, context }) => {
+function ContentProviderMultiSelect({ value, onChange, context }: StandardEditorProps<string[]>) {
   // Get visualization mode from panel options
   const visualizationMode = context.options?.visualizationMode || 'addedlinks';
   const availableProviders = getAvailableContentProviders(visualizationMode);
@@ -68,10 +66,10 @@ const ContentProviderMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ v
       placeholder={t('extensions.dependency-graph.select-content-providers', 'Select content providers to display')}
     />
   );
-};
+}
 
 // Custom multiselect editor for content consumers
-const ContentConsumerMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ value, onChange, context }) => {
+function ContentConsumerMultiSelect({ value, onChange, context }: StandardEditorProps<string[]>) {
   // Get visualization mode from panel options
   const visualizationMode = context.options?.visualizationMode || 'addedlinks';
   const availableConsumers = getAvailableContentConsumers(visualizationMode);
@@ -105,14 +103,10 @@ const ContentConsumerMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ v
       )}
     />
   );
-};
+}
 
 // Custom multiselect editor for content consumers in extension point mode
-const ContentConsumerForExtensionPointMultiSelect: React.FC<StandardEditorProps<string[]>> = ({
-  value,
-  onChange,
-  context,
-}) => {
+function ContentConsumerForExtensionPointMultiSelect({ value, onChange, context }: StandardEditorProps<string[]>) {
   console.log('ContentConsumerForExtensionPointMultiSelect component called');
   const availableContentConsumers = getAvailableContentConsumers('extensionpoint');
 
@@ -148,10 +142,10 @@ const ContentConsumerForExtensionPointMultiSelect: React.FC<StandardEditorProps<
       )}
     />
   );
-};
+}
 
 // Custom multiselect editor for extension points
-const ExtensionPointMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ value, onChange, context }) => {
+function ExtensionPointMultiSelect({ value, onChange, context }: StandardEditorProps<string[]>) {
   const availableExtensionPoints = getAvailableExtensionPoints();
 
   const options = availableExtensionPoints.map((extensionPoint) => ({
@@ -176,7 +170,7 @@ const ExtensionPointMultiSelect: React.FC<StandardEditorProps<string[]>> = ({ va
       placeholder={t('extensions.dependency-graph.select-extension-points', 'Select extension points to display')}
     />
   );
-};
+}
 
 export const plugin = new PanelPlugin<PanelOptions>(PluginDependencyGraphPanel).setPanelOptions((builder) => {
   console.log('Panel options builder called');

@@ -44,7 +44,7 @@ interface NodeRendererProps {
   };
 }
 
-export const NodeRenderer: React.FC<NodeRendererProps> = ({
+export function NodeRenderer({
   theme,
   nodes,
   data,
@@ -57,7 +57,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
   onContentConsumerClick,
   onContentProviderClick,
   styles,
-}) => {
+}: NodeRendererProps) {
   // Context menu state for content provider boxes
   const [contentProviderContextMenuOpen, setContentProviderContextMenuOpen] = useState(false);
   const [contentProviderContextMenuPosition, setContentProviderContextMenuPosition] = useState({ x: 0, y: 0 });
@@ -327,7 +327,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
       {renderContentProviderContextMenu()}
     </>
   );
-};
+}
 
 // Helper function to get display name for an app
 function getDisplayName(appId: string): string {
