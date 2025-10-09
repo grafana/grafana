@@ -502,11 +502,27 @@ export enum VizOrientation {
   Vertical = 'vertical',
 }
 
-/**
- * Breaks out each annotation frame into multiple lanes on the x-axis
- */
 export interface VizAnnotations {
+  /**
+   * @internal: Toggles the display of the annotation marker — for "xymark" annotations
+   */
+  hideMarker?: boolean;
+  /**
+   * Breaks out each annotation frame into multiple lanes on the x-axis
+   */
   multiLane?: boolean;
+  /**
+   * Sets opacity of shaded annotation region
+   */
+  regionOpacity?: number;
+  /**
+   * Toggles showing the dotted line above annotation markers
+   */
+  showLine?: boolean;
+  /**
+   * Hides shaded area above annotation region marker
+   */
+  showRegions?: boolean;
 }
 
 /**

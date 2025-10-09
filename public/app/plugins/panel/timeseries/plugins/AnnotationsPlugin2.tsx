@@ -130,14 +130,15 @@ export const AnnotationsPlugin2 = ({
       ctx.save();
 
       ctx.beginPath();
-      ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+      // @todo rename
+      const additionalHeight = annotationsConfig?.multiLane ? annos.length * ANNOTATION_LANE_SIZE * uPlot.pxRatio : 0;
+      ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height + additionalHeight);
       ctx.clip();
 
       // Multi-lane annotations do not support vertical lines or shaded regions
 
-      annos.forEach((frame) => {
+      annos.forEach((frame, frameIdx) => {
         let vals = getVals(frame);
-
         if (frame.name === 'xymark') {
           // xMin, xMax, yMin, yMax, color, lineWidth, lineStyle, fillOpacity, text
 
@@ -169,28 +170,41 @@ export const AnnotationsPlugin2 = ({
             ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
           }
         } else {
-          if (!annotationsConfig?.multiLane) {
+          if (!annotationsConfig?.multiLane || annotationsConfig?.showRegions || annotationsConfig?.showLine) {
+            const verticalOffset = annotationsConfig?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE * uPlot.pxRatio : 0;
             let y0 = u.bbox.top;
             let y1 = y0 + u.bbox.height;
 
             ctx.lineWidth = 2;
             ctx.setLineDash([5, 5]);
 
-            for (let i = 0; i < vals.time.length; i++) {
-              let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
+            const showAnnoRegion = annotationsConfig?.showRegions !== false;
+            const showAnnoLine = annotationsConfig?.showLine !== false;
 
-              let x0 = u.valToPos(vals.time[i], 'x', true);
-              renderLine(ctx, y0, y1, x0, color);
+            if (showAnnoRegion || showAnnoLine) {
+              for (let i = 0; i < vals.time.length; i++) {
+                let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
-              // If dataframe does not have end times, let's omit rendering the region for now to prevent runtime error in valToPos
-              // @todo do we want to fix isRegion to render a point (or use "to" as timeEnd) when we're missing timeEnd?
-              if (vals.isRegion?.[i] && vals.timeEnd?.[i]) {
-                let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
-                renderLine(ctx, y0, y1, x1, color);
+                let x0 = u.valToPos(vals.time[i], 'x', true);
+                if (showAnnoLine) {
+                  renderLine(ctx, y0, y1 + verticalOffset, x0, color);
+                }
 
-                if (canvasRegionRendering) {
-                  ctx.fillStyle = colorManipulator.alpha(color, 0.1);
-                  ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
+                // If dataframe does not have end times, let's omit rendering the region for now to prevent runtime error in valToPos
+                // @todo do we want to fix isRegion to render a point (or use "to" as timeEnd) when we're missing timeEnd?
+                if (vals.isRegion?.[i] && vals.timeEnd?.[i]) {
+                  let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
+                  if (showAnnoLine) {
+                    renderLine(ctx, y0, y1 + verticalOffset, x1, color);
+                  }
+
+                  if (canvasRegionRendering && showAnnoRegion) {
+                    const regionOpacity = annotationsConfig?.regionOpacity
+                      ? Math.max(annotationsConfig?.regionOpacity, 1) / 100
+                      : 0.1;
+                    ctx.fillStyle = colorManipulator.alpha(color, regionOpacity);
+                    ctx.fillRect(x0, y0, x1 - x0, u.bbox.height + verticalOffset);
+                  }
                 }
               }
             }
@@ -224,50 +238,52 @@ export const AnnotationsPlugin2 = ({
 
       // Top offset for multi-lane annotations
       const top = annotationsConfig?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
-      for (let i = 0; i < vals.time.length; i++) {
-        let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
-        let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
-        let style: React.CSSProperties | null = null;
-        let className = '';
-        let isVisible = true;
+      const hideMarker = annotationsConfig?.hideMarker === true;
+      if (!hideMarker) {
+        for (let i = 0; i < vals.time.length; i++) {
+          let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
+          let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
+          let style: React.CSSProperties | null = null;
+          let className = '';
+          let isVisible = true;
+          if (vals.isRegion?.[i]) {
+            let right = Math.round(plot.valToPos(vals.timeEnd?.[i], 'x')) || 0; // handles -0
 
-        if (vals.isRegion?.[i]) {
-          let right = Math.round(plot.valToPos(vals.timeEnd?.[i], 'x')) || 0; // handles -0
+            isVisible = left < plot.rect.width && right > 0;
 
-          isVisible = left < plot.rect.width && right > 0;
+            if (isVisible) {
+              let clampedLeft = Math.max(0, left);
+              let clampedRight = Math.min(plot.rect.width, right);
 
-          if (isVisible) {
-            let clampedLeft = Math.max(0, left);
-            let clampedRight = Math.min(plot.rect.width, right);
+              style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft, top };
+              className = styles.annoRegion;
+            }
+          } else {
+            isVisible = left >= 0 && left <= plot.rect.width;
 
-            style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft, top };
-            className = styles.annoRegion;
+            if (isVisible) {
+              style = { left, borderBottomColor: color, top };
+              className = styles.annoMarker;
+            }
           }
-        } else {
-          isVisible = left >= 0 && left <= plot.rect.width;
 
+          // @TODO: Reset newRange after annotation is saved
           if (isVisible) {
-            style = { left, borderBottomColor: color, top };
-            className = styles.annoMarker;
+            let isWip = frame.meta?.custom?.isWip;
+
+            markers.push(
+              <AnnotationMarker2
+                annoIdx={i}
+                annoVals={vals}
+                className={className}
+                style={style}
+                timeZone={timeZone}
+                key={`${frameIdx}:${i}`}
+                exitWipEdit={isWip ? exitWipEdit : null}
+                portalRoot={portalRoot}
+              />
+            );
           }
-        }
-
-        // @TODO: Reset newRange after annotation is saved
-        if (isVisible) {
-          let isWip = frame.meta?.custom?.isWip;
-
-          markers.push(
-            <AnnotationMarker2
-              annoIdx={i}
-              annoVals={vals}
-              className={className}
-              style={style}
-              timeZone={timeZone}
-              key={`${frameIdx}:${i}`}
-              exitWipEdit={isWip ? exitWipEdit : null}
-              portalRoot={portalRoot}
-            />
-          );
         }
       }
 
