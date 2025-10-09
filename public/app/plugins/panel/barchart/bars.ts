@@ -456,7 +456,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           };
           
           //Calculate marker positions and fill markerList to prepare drawing
-          const m = populateMarkerList(markers ?? [], dataIdx, seriesIdx, labels, xOri, lft, top, wid, hgt, u, barRect.x + u.bbox.left, barRect.y + u.bbox.top);
+          const m = populateMarkerList(markers ?? [], dataIdx, seriesIdx, xOri, wid, hgt, u, barRect.x + u.bbox.left, barRect.y + u.bbox.top);
 
           resolvedMarkers.push(...m);  
               
@@ -681,8 +681,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   };
 }
 
-function populateMarkerList(markers: PreparedMarker[], dataIdx: number, seriesIdx: number, labels: ValueLabelTable,
-   xOri: ScaleOrientation, lft: number, top: number, wid: number, hgt: number, u: uPlot, barX: number, barY: number){ 
+export function populateMarkerList(markers: PreparedMarker[], dataIdx: number, seriesIdx: number,
+   xOri: ScaleOrientation, wid: number, hgt: number, u: uPlot, barX: number, barY: number){ 
     
   const resolvedMarkerList: ResolvedMarker[] = [];
   if (markers) {
