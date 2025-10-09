@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { colorManipulator, FALLBACK_COLOR, Field, PanelProps } from '@grafana/data';
+import { colorManipulator, FALLBACK_COLOR, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   AdHocFilterItem,
@@ -132,48 +132,38 @@ export const XYChartPanel2 = (props: Props2) => {
                   return [];
                 }
 
-                if (!config.featureToggles.adhocFiltersInTooltips || onAddAdHocFilter == null) {
-                  return [];
-                }
-
                 const xySeries = series[seriesIdx - 1];
-                const adHocFilters: AdHocFilterModel[] = [];
+                const xField = xySeries.x.field;
 
-                // Helper function to add filter for a field if it's filterable
-                const addFilterForField = (field: Field) => {
-                  if (field?.config.filterable && !field.config.custom?.hideFrom?.tooltip) {
-                    const adHocFilterItem: AdHocFilterItem = {
-                      key: field.name,
-                      operator: FILTER_FOR_OPERATOR,
-                      value: String(field.values[dataIdx]),
-                    };
+                // Check if the field supports filtering
+                // We only show filters on filterable fields (xField.config.filterable).
+                // Fields will have been marked as filterable by the data source if that data source supports adhoc filtering
+                // (eg. Prom or Loki) and the field types support adhoc filtering (eg. string or number - depending on the data source).
+                // Fields may later be marked as not filterable. For example, fields created from Grafana Transforms that
+                // are derived from a data source, but are not present in the data source.
+                // We choose `xField` here because it contains the label-value pair, rather than `yField` which is the numeric Value.
+                if (
+                  config.featureToggles.adhocFiltersInTooltips &&
+                  xField.config.filterable &&
+                  onAddAdHocFilter != null
+                ) {
+                  const adHocFilterItem: AdHocFilterItem = {
+                    key: xField.name,
+                    operator: FILTER_FOR_OPERATOR,
+                    value: String(xField.values[dataIdx]),
+                  };
 
-                    adHocFilters.push({
+                  const adHocFilters: AdHocFilterModel[] = [
+                    {
                       ...adHocFilterItem,
-                      displayName: field.state?.displayName || field.name,
                       onClick: () => onAddAdHocFilter(adHocFilterItem),
-                    });
-                  }
-                };
+                    },
+                  ];
 
-                // Add filters for all filterable fields that are shown in the tooltip
-                addFilterForField(xySeries.x.field);
-                addFilterForField(xySeries.y.field);
-
-                if (xySeries.size.field) {
-                  addFilterForField(xySeries.size.field);
+                  return adHocFilters;
                 }
 
-                if (xySeries.color.field) {
-                  addFilterForField(xySeries.color.field);
-                }
-
-                // Add filters for any additional fields in _rest
-                xySeries._rest?.forEach((field) => {
-                  addFilterForField(field);
-                });
-
-                return adHocFilters;
+                return [];
               }}
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks, adHocFilters) => {
                 return (
