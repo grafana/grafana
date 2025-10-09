@@ -1,8 +1,10 @@
 import { css, cx } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
@@ -16,7 +18,6 @@ import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/Dashb
 import { addNewRowTo, addNewTabTo } from './addNew';
 import { useClipboardState } from './useClipboardState';
 import { ungroupLayout } from './utils';
-import { useMemo } from 'react';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;
@@ -27,6 +28,10 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
   const { hasCopiedPanel } = useClipboardState();
 
   const { disableGrouping, disableTabs } = useMemo(() => {
+    if (config.featureToggles.unlimitedLayoutsNesting) {
+      return { disableGrouping: false, disableTabs: false };
+    }
+
     let parent = layoutManager.parent;
     const layouts = [];
     while (parent) {
@@ -35,6 +40,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
       }
       parent = parent.parent;
     }
+
     if (layouts.length >= 2) {
       return { disableGrouping: true, disableTabs: true };
     }

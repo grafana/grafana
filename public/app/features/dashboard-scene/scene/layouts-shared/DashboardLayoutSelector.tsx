@@ -1,16 +1,17 @@
 import { useCallback, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { RadioButtonGroup, Box } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { layoutRegistry } from './layoutRegistry';
-import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;
@@ -21,6 +22,9 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
   const options = layoutRegistry.list().filter((layout) => layout.isGridLayout === isGridLayout);
 
   const disableTabs = useMemo(() => {
+    if (config.featureToggles.unlimitedLayoutsNesting) {
+      return false;
+    }
     let parent = layoutManager.parent;
     while (parent) {
       if (parent instanceof TabsLayoutManager) {
