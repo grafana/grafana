@@ -352,7 +352,7 @@
 /pkg/tsdb/prometheus/ @grafana/oss-big-tent
 /pkg/tsdb/elasticsearch/ @grafana/partner-datasources
 /pkg/tsdb/loki/ @grafana/oss-big-tent
-/pkg/tsdb/tempo/ @grafana/oss-big-tent @grafana/oss-big-tent
+/pkg/tsdb/tempo/ @grafana/oss-big-tent
 /pkg/tsdb/grafana-pyroscope-datasource/ @grafana/oss-big-tent
 /pkg/tsdb/parca/ @grafana/oss-big-tent
 
@@ -1089,7 +1089,7 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/prometheus/ @grafana/oss-big-tent
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources
 /public/app/plugins/datasource/zipkin/ @grafana/oss-big-tent
-/public/app/plugins/datasource/tempo/ @grafana/oss-big-tent @grafana/oss-big-tent
+/public/app/plugins/datasource/tempo/ @grafana/oss-big-tent
 /public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/oss-big-tent
 /public/app/plugins/datasource/parca/ @grafana/oss-big-tent
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
