@@ -18,7 +18,6 @@ import {
   getJsonInputFiles,
   extractTargetVersionFromFilename,
   constructBackendOutputFilename,
-  handleAngularPanelMigration,
 } from './__tests__/migrationTestUtils';
 
 /*
@@ -108,9 +107,6 @@ describe('Backend / Frontend single version migration result comparison', () => 
         targetSchemaVersion: targetVersion,
         getVariablesFromState: () => jsonInput?.templating?.list ?? [],
       });
-
-      // Handle angular panel migration if needed
-      await handleAngularPanelMigration(frontendModel, jsonInput.schemaVersion, targetVersion);
 
       const frontendMigrationResult = frontendModel.getSaveModelClone();
 
