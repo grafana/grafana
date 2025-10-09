@@ -16,16 +16,26 @@ labels:
 title: Manage multi-team access in a single Grafana instance
 weight: 1200
 refs:
-  manage-single-access:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/manage-single-access
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/manage-single-access
   create-folder:
     - pattern: /docs/grafana/
-      destination: /docs/grafana//<GRAFANA_VERSION>/dashboards/manage-dashboards/#create-a-dashboard-folder
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#create-a-dashboard-folder
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#create-a-dashboard-folder
+  rbac:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control
+  rbac-assign:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/assign-rbac-roles
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/assign-rbac-roles      
+  rbac-fixed:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions    
 ---
 
 # Manage multi-team access in a single Grafana instance
@@ -75,16 +85,16 @@ For guidance on when to use one stack vs. multiple, refer to [Stack architecture
 After you’ve deployed your Grafana instance:
 
 - To follow the example in this doc, create three [Grafana Teams](../../../administration/team-management/configure-grafana-teams/#create-a-grafana-team) and add them to the Grafana instance.
-- Determine the [RBAC strategy](../../../administration/roles-and-permissions/access-control/) for your organization. RBAC extends default Grafana roles, provides more granular access rights, and simplifies how to grant, modify, or revoke user access to Grafana resources, such as users and reports.
+- Determine the [RBAC](ref:rbac) strategy for your organization. RBAC extends default Grafana roles, provides more granular access rights, and simplifies how to grant, modify, or revoke user access to Grafana resources, such as users and reports.
 - Assign each user to the [relevant team](../../../administration/user-management/manage-org-users/). By default [new users](../../configure-grafana/#auto_assign_org) are granted the **Viewer** role.
-- Assign the [**Admin** role](../../../administration/roles-and-permissions/access-control/assign-rbac-roles/#assign-rbac-roles) to Team C so that they can manage all resources in the instance.
+- Assign the [**Admin** role](ref:rbac-assign) to Team C so that they can manage all resources in the instance.
 
 ### Design a folder structure to match your access needs
 
 To design a [folder](ref:create-folder) setup that helps users quickly understand where to go, what they can access, and what they can manage:
 
 - Create an “Everyone” folder for shared items that all teams can manage.
-- For each team, create a folder that they can manage and grant them the `fixed:teams:read` [fixed role](../../../administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions). This means they can share items in their team folder with other teams, to encourage collaboration and learning from each other.
+- For each team, create a folder that they can manage and grant them the `fixed:teams:read` [fixed role](ref:rbac-assign). This means they can share items in their team folder with other teams, to encourage collaboration and learning from each other.
 - For Team C, create an “Admins” folder for sensitive content only Admins can access.
 - Optionally, create a personal folder for each team member so that they can work on draft content before moving it into their team folder when ready.
 
