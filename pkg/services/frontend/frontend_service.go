@@ -138,6 +138,12 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 	// them so we can get logs for them
 	s.routeGet(m, "/public/*", http.NotFound)
 
+	// Empty health check endpoint to allow k8s and other orchestrators to check if the server is alive
+	// Useful to have a separate route for this for logging and metrics purposes
+	s.routeGet(m, "/-/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
 	// All other requests return index.html
 	s.routeGet(m, "/*", s.index.HandleRequest)
 }
