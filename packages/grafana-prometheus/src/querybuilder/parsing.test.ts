@@ -931,6 +931,29 @@ describe('buildVisualQueryFromString', () => {
       })
     );
   });
+
+  it('parses query with functions and binary operations', () => {
+    expect(
+      buildVisualQueryFromString(
+        'clamp(sum(rate(loki_distributor_bytes_received_total{cluster="loki", tenant="kubernetes"}[5m])) / 1024 / 55, 5, 30)'
+      )
+    ).toEqual(
+      noErrors({
+        metric: 'loki_distributor_bytes_received_total',
+        labels: [
+          { label: 'cluster', op: '=', value: 'loki' },
+          { label: 'tenant', op: '=', value: 'kubernetes' },
+        ],
+        operations: [
+          { id: 'rate', params: ['5m'] },
+          { id: 'sum', params: [] },
+          { id: '__divide_by', params: [1024] },
+          { id: '__divide_by', params: [55] },
+          { id: 'clamp', params: [5, 30] },
+        ],
+      })
+    );
+  });
 });
 
 function noErrors(query: PromVisualQuery) {

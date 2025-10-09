@@ -34,6 +34,7 @@ import {
   getAllByType,
   getLeftMostChild,
   getString,
+  isFunctionOrAggregation,
   makeBinOp,
   makeError,
   replaceBuiltInVariable,
@@ -395,7 +396,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context, idx = 0)
   const parent = node.parent;
   const child = node.firstChild;
   const shouldOffsetTail =
-    parent && !parent.type.isTop && (parent.type.id !== BinaryExpr || (child && child.type.id !== BinaryExpr));
+    parent && !parent.type.isTop && (isFunctionOrAggregation(parent) || (child && isFunctionOrAggregation(child)));
   if (shouldOffsetTail) {
     idx += 1;
   }
