@@ -298,7 +298,7 @@ export const plugin = new PanelPlugin<PanelOptions>(PluginDependencyGraphPanel).
       .addCustomEditor({
         id: 'extensionPointFilter',
         path: 'selectedExtensionPoints',
-        name: t('extensions.dependency-graph.extension-points', 'Extension Points'),
+        name: t('extensions.dependency-graph.extension-point', 'Extension Point'),
         description: t(
           'extensions.dependency-graph.extension-points-description',
           'Extension Point Mode: select which extension points to display (right side)'

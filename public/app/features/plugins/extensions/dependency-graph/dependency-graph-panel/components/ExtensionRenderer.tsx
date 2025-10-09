@@ -63,10 +63,10 @@ interface ExtensionRendererProps {
   height: number;
   isExposeMode: boolean;
   isExtensionPointMode: boolean;
-  extensionPointPositions: Map<string, PositionInfo>;
+  extensionPointsPositions: Map<string, PositionInfo>;
   exposedComponentPositions: Map<string, PositionInfo>;
   extensionPositions: Map<string, PositionInfo>;
-  extensionPointModePositions: Map<string, PositionInfo>;
+  extensionPointsModePositions: Map<string, PositionInfo>;
   selectedExposedComponent: string | null;
   selectedContentConsumer: string | null;
   highlightedExtensionPointId: string | null;
@@ -76,8 +76,8 @@ interface ExtensionRendererProps {
   onHighlightedExtensionPointChange: (id: string | null) => void;
   styles: {
     extensionGroupBox: SerializedStyles;
-    extensionPointBox: SerializedStyles;
-    extensionPointLabel: SerializedStyles;
+    extensionPointsBox: SerializedStyles;
+    extensionPointsLabel: SerializedStyles;
     extensionTypeBadge: SerializedStyles;
     definingPluginLabel: SerializedStyles;
     descriptionInlineText: SerializedStyles;
@@ -92,10 +92,10 @@ export function ExtensionRenderer({
   height,
   isExposeMode,
   isExtensionPointMode,
-  extensionPointPositions,
+  extensionPointsPositions,
   exposedComponentPositions,
   extensionPositions,
-  extensionPointModePositions,
+  extensionPointsModePositions,
   selectedExposedComponent,
   selectedContentConsumer,
   highlightedExtensionPointId,
@@ -116,7 +116,7 @@ export function ExtensionRenderer({
   const [selectedContentConsumerId, setSelectedContentConsumerId] = useState<string | null>(null);
 
   // Context menu handlers
-  const handleContextMenu = (event: React.MouseEvent, extensionPointId: string) => {
+  const handleContextMenu = (event: React.MouseEvent, extensionPointsId: string) => {
     event.preventDefault();
     event.stopPropagation();
 
@@ -125,12 +125,12 @@ export function ExtensionRenderer({
     onContentConsumerClick(null);
     onHighlightedExtensionPointChange(null);
 
-    setSelectedExtensionPointId(extensionPointId);
+    setSelectedExtensionPointId(extensionPointsId);
     setContextMenuPosition({ x: event.clientX, y: event.clientY });
     setContextMenuOpen(true);
   };
 
-  const handleLeftClick = (event: React.MouseEvent, extensionPointId: string) => {
+  const handleLeftClick = (event: React.MouseEvent, extensionPointsId: string) => {
     event.preventDefault();
     event.stopPropagation();
 
@@ -139,7 +139,7 @@ export function ExtensionRenderer({
     onContentConsumerClick(null);
     onHighlightedExtensionPointChange(null);
 
-    setSelectedExtensionPointId(extensionPointId);
+    setSelectedExtensionPointId(extensionPointsId);
     setContextMenuPosition({ x: event.clientX, y: event.clientY });
     setContextMenuOpen(true);
   };
@@ -224,8 +224,8 @@ export function ExtensionRenderer({
   const [selectedContentProviderId, setSelectedContentProviderId] = useState<string | null>(null);
 
   // Extension point context menu handlers (for extension point mode right side)
-  const [extensionPointContextMenuOpen, setExtensionPointContextMenuOpen] = useState(false);
-  const [extensionPointContextMenuPosition, setExtensionPointContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [extensionPointsContextMenuOpen, setExtensionPointContextMenuOpen] = useState(false);
+  const [extensionPointsContextMenuPosition, setExtensionPointContextMenuPosition] = useState({ x: 0, y: 0 });
   const [selectedExtensionPointForFilter, setSelectedExtensionPointForFilter] = useState<string | null>(null);
 
   // Individual extension context menu handlers (for extension point mode left side)
@@ -314,7 +314,7 @@ export function ExtensionRenderer({
   };
 
   // Extension point context menu handlers
-  const handleExtensionPointContextMenu = (event: React.MouseEvent, extensionPointId: string) => {
+  const handleExtensionPointContextMenu = (event: React.MouseEvent, extensionPointsId: string) => {
     event.preventDefault();
     event.stopPropagation();
 
@@ -323,12 +323,12 @@ export function ExtensionRenderer({
     onContentConsumerClick(null);
     onHighlightedExtensionPointChange(null);
 
-    setSelectedExtensionPointForFilter(extensionPointId);
+    setSelectedExtensionPointForFilter(extensionPointsId);
     setExtensionPointContextMenuPosition({ x: event.clientX, y: event.clientY });
     setExtensionPointContextMenuOpen(true);
   };
 
-  const handleExtensionPointLeftClick = (event: React.MouseEvent, extensionPointId: string) => {
+  const handleExtensionPointLeftClick = (event: React.MouseEvent, extensionPointsId: string) => {
     event.preventDefault();
     event.stopPropagation();
 
@@ -337,7 +337,7 @@ export function ExtensionRenderer({
     onContentConsumerClick(null);
     onHighlightedExtensionPointChange(null);
 
-    setSelectedExtensionPointForFilter(extensionPointId);
+    setSelectedExtensionPointForFilter(extensionPointsId);
     setExtensionPointContextMenuPosition({ x: event.clientX, y: event.clientY });
     setExtensionPointContextMenuOpen(true);
   };
@@ -351,7 +351,7 @@ export function ExtensionRenderer({
     if (selectedExtensionPointForFilter) {
       // Update URL parameter to filter on extension point
       const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.set('extensionPoints', selectedExtensionPointForFilter);
+      currentUrl.searchParams.set('extensionPoint', selectedExtensionPointForFilter);
       locationService.push(currentUrl.pathname + currentUrl.search);
     }
     handleExtensionPointContextMenuClose();
@@ -361,13 +361,13 @@ export function ExtensionRenderer({
     if (selectedExtensionPointForFilter) {
       // Remove the extension point from URL parameters
       const currentUrl = new URL(window.location.href);
-      const currentExtensionPoints = currentUrl.searchParams.get('extensionPoints')?.split(',').filter(Boolean) || [];
+      const currentExtensionPoints = currentUrl.searchParams.get('extensionPoint')?.split(',').filter(Boolean) || [];
       const updatedExtensionPoints = currentExtensionPoints.filter((ep) => ep !== selectedExtensionPointForFilter);
 
       if (updatedExtensionPoints.length > 0) {
-        currentUrl.searchParams.set('extensionPoints', updatedExtensionPoints.join(','));
+        currentUrl.searchParams.set('extensionPoint', updatedExtensionPoints.join(','));
       } else {
-        currentUrl.searchParams.delete('extensionPoints');
+        currentUrl.searchParams.delete('extensionPoint');
       }
 
       locationService.push(currentUrl.pathname + currentUrl.search);
@@ -376,10 +376,10 @@ export function ExtensionRenderer({
   };
 
   // Helper function to check if an extension point is already filtered
-  const isExtensionPointFiltered = (extensionPointId: string): boolean => {
+  const isExtensionPointFiltered = (extensionPointsId: string): boolean => {
     const currentUrl = new URL(window.location.href);
-    const currentExtensionPoints = currentUrl.searchParams.get('extensionPoints')?.split(',').filter(Boolean) || [];
-    return currentExtensionPoints.includes(extensionPointId);
+    const currentExtensionPoints = currentUrl.searchParams.get('extensionPoint')?.split(',').filter(Boolean) || [];
+    return currentExtensionPoints.includes(extensionPointsId);
   };
 
   // Individual extension context menu handlers
@@ -396,13 +396,13 @@ export function ExtensionRenderer({
       if (extension) {
         // Remove the extension point from URL parameters
         const currentUrl = new URL(window.location.href);
-        const currentExtensionPoints = currentUrl.searchParams.get('extensionPoints')?.split(',').filter(Boolean) || [];
+        const currentExtensionPoints = currentUrl.searchParams.get('extensionPoint')?.split(',').filter(Boolean) || [];
         const updatedExtensionPoints = currentExtensionPoints.filter((ep) => ep !== extension.targetExtensionPoint);
 
         if (updatedExtensionPoints.length > 0) {
-          currentUrl.searchParams.set('extensionPoints', updatedExtensionPoints.join(','));
+          currentUrl.searchParams.set('extensionPoint', updatedExtensionPoints.join(','));
         } else {
-          currentUrl.searchParams.delete('extensionPoints');
+          currentUrl.searchParams.delete('extensionPoint');
         }
 
         locationService.push(currentUrl.pathname + currentUrl.search);
@@ -418,7 +418,7 @@ export function ExtensionRenderer({
       return false;
     }
     const currentUrl = new URL(window.location.href);
-    const currentExtensionPoints = currentUrl.searchParams.get('extensionPoints')?.split(',').filter(Boolean) || [];
+    const currentExtensionPoints = currentUrl.searchParams.get('extensionPoint')?.split(',').filter(Boolean) || [];
     return currentExtensionPoints.includes(extension.targetExtensionPoint);
   };
 
@@ -427,7 +427,7 @@ export function ExtensionRenderer({
       // Navigate to extension point mode with this specific extension point selected
       const currentUrl = new URL(window.location.href);
       currentUrl.searchParams.set('view', 'extensionpoint');
-      currentUrl.searchParams.set('extensionPoints', selectedExtensionPointId);
+      currentUrl.searchParams.set('extensionPoint', selectedExtensionPointId);
       locationService.push(currentUrl.pathname + currentUrl.search);
 
       // Scroll to top of the page after navigation
@@ -447,13 +447,13 @@ export function ExtensionRenderer({
   };
 
   // Function to count extensions for each extension point
-  const getExtensionCountForExtensionPoint = (extensionPointId: string): number => {
+  const getExtensionCountForExtensionPoint = (extensionPointsId: string): number => {
     if (!data.dependencies) {
       return 0;
     }
 
     // Count dependencies that target this extension point
-    return data.dependencies.filter((dep) => dep.target === extensionPointId).length;
+    return data.dependencies.filter((dep) => dep.target === extensionPointsId).length;
   };
   const renderContextMenu = () => {
     if (!contextMenuOpen) {
@@ -636,7 +636,7 @@ export function ExtensionRenderer({
   };
 
   const renderExtensionPointContextMenu = () => {
-    if (!extensionPointContextMenuOpen || !selectedExtensionPointForFilter) {
+    if (!extensionPointsContextMenuOpen || !selectedExtensionPointForFilter) {
       return null;
     }
 
@@ -649,12 +649,12 @@ export function ExtensionRenderer({
       return fullId;
     };
 
-    const extensionPointName = getShortExtensionPointName(selectedExtensionPointForFilter);
+    const extensionPointsName = getShortExtensionPointName(selectedExtensionPointForFilter);
 
     return (
       <ContextMenu
-        x={extensionPointContextMenuPosition.x}
-        y={extensionPointContextMenuPosition.y}
+        x={extensionPointsContextMenuPosition.x}
+        y={extensionPointsContextMenuPosition.y}
         onClose={handleExtensionPointContextMenuClose}
         renderMenuItems={() => (
           <>
@@ -662,9 +662,9 @@ export function ExtensionRenderer({
               <Menu.Item
                 label={t(
                   'extensions.dependency-graph.remove-extension-point-filter',
-                  'Remove {{extensionPointName}} filter',
+                  'Remove {{extensionPointsName}} filter',
                   {
-                    extensionPointName,
+                    extensionPointsName,
                   }
                 )}
                 onClick={handleRemoveExtensionPointFilter}
@@ -702,7 +702,7 @@ export function ExtensionRenderer({
       return fullId;
     };
 
-    const extensionPointName = getShortExtensionPointName(extension.targetExtensionPoint);
+    const extensionPointsName = getShortExtensionPointName(extension.targetExtensionPoint);
 
     return (
       <ContextMenu
@@ -715,9 +715,9 @@ export function ExtensionRenderer({
               <Menu.Item
                 label={t(
                   'extensions.dependency-graph.remove-extension-point-filter',
-                  'Remove {{extensionPointName}} filter',
+                  'Remove {{extensionPointsName}} filter',
                   {
-                    extensionPointName,
+                    extensionPointsName,
                   }
                 )}
                 onClick={handleRemoveExtensionFilter}
@@ -1225,12 +1225,12 @@ export function ExtensionRenderer({
     }
 
     // Group extension points by their defining plugin, then by type
-    const extensionPointGroups = new Map<string, Map<string, string[]>>();
+    const extensionPointsGroups = new Map<string, Map<string, string[]>>();
     data.extensionPoints.forEach((ep) => {
-      if (!extensionPointGroups.has(ep.definingPlugin)) {
-        extensionPointGroups.set(ep.definingPlugin, new Map());
+      if (!extensionPointsGroups.has(ep.definingPlugin)) {
+        extensionPointsGroups.set(ep.definingPlugin, new Map());
       }
-      const pluginGroup = extensionPointGroups.get(ep.definingPlugin)!;
+      const pluginGroup = extensionPointsGroups.get(ep.definingPlugin)!;
       const extensionType = ep.extensionType || 'link';
       if (!pluginGroup.has(extensionType)) {
         pluginGroup.set(extensionType, []);
@@ -1243,10 +1243,10 @@ export function ExtensionRenderer({
 
     return (
       <g>
-        {Array.from(extensionPointGroups.entries()).map(([definingPlugin, typeGroups]) => {
+        {Array.from(extensionPointsGroups.entries()).map(([definingPlugin, typeGroups]) => {
           // Get the first extension point to get group positioning info
           const firstTypeGroup = Array.from(typeGroups.values())[0];
-          const firstEpPos = firstTypeGroup ? extensionPointModePositions.get(firstTypeGroup[0]) : null;
+          const firstEpPos = firstTypeGroup ? extensionPointsModePositions.get(firstTypeGroup[0]) : null;
           if (!firstEpPos) {
             return null;
           }
@@ -1273,22 +1273,22 @@ export function ExtensionRenderer({
 
               {/* Render extension points by type (no headers in extension point mode) */}
               {['function', 'component', 'link'].map((type) => {
-                const extensionPointIds = typeGroups.get(type);
-                if (!extensionPointIds || extensionPointIds.length === 0) {
+                const extensionPointsIds = typeGroups.get(type);
+                if (!extensionPointsIds || extensionPointsIds.length === 0) {
                   return null;
                 }
 
                 return (
                   <g key={`${definingPlugin}-${type}`}>
                     {/* Extension points for this type */}
-                    {extensionPointIds.map((epId) => {
-                      const epPos = extensionPointModePositions.get(epId);
+                    {extensionPointsIds.map((epId) => {
+                      const epPos = extensionPointsModePositions.get(epId);
                       if (!epPos) {
                         return null;
                       }
 
-                      const extensionPoint = data.extensionPoints?.find((ep) => ep.id === epId);
-                      if (!extensionPoint) {
+                      const extensionPoints = data.extensionPoints?.find((ep) => ep.id === epId);
+                      if (!extensionPoints) {
                         return null;
                       }
 
@@ -1404,12 +1404,12 @@ export function ExtensionRenderer({
     }
 
     // Group extension points by their defining plugin, then by type
-    const extensionPointGroups = new Map<string, Map<string, string[]>>();
+    const extensionPointsGroups = new Map<string, Map<string, string[]>>();
     data.extensionPoints.forEach((ep) => {
-      if (!extensionPointGroups.has(ep.definingPlugin)) {
-        extensionPointGroups.set(ep.definingPlugin, new Map());
+      if (!extensionPointsGroups.has(ep.definingPlugin)) {
+        extensionPointsGroups.set(ep.definingPlugin, new Map());
       }
-      const pluginGroup = extensionPointGroups.get(ep.definingPlugin)!;
+      const pluginGroup = extensionPointsGroups.get(ep.definingPlugin)!;
       const extensionType = ep.extensionType || 'link';
       if (!pluginGroup.has(extensionType)) {
         pluginGroup.set(extensionType, []);
@@ -1422,10 +1422,10 @@ export function ExtensionRenderer({
 
     return (
       <g>
-        {Array.from(extensionPointGroups.entries()).map(([definingPlugin, typeGroups]) => {
+        {Array.from(extensionPointsGroups.entries()).map(([definingPlugin, typeGroups]) => {
           // Get the first extension point to get group positioning info
           const firstTypeGroup = Array.from(typeGroups.values())[0];
-          const firstEpPos = firstTypeGroup ? extensionPointPositions.get(firstTypeGroup[0]) : null;
+          const firstEpPos = firstTypeGroup ? extensionPointsPositions.get(firstTypeGroup[0]) : null;
           if (!firstEpPos) {
             console.warn(`No first EP position found for plugin ${definingPlugin}`);
             return null;
@@ -1459,12 +1459,12 @@ export function ExtensionRenderer({
 
               {/* Render extension points by type with headers */}
               {['function', 'component', 'link'].map((type) => {
-                const extensionPointIds = typeGroups.get(type);
-                if (!extensionPointIds || extensionPointIds.length === 0) {
+                const extensionPointsIds = typeGroups.get(type);
+                if (!extensionPointsIds || extensionPointsIds.length === 0) {
                   return null;
                 }
 
-                const firstEpInType = extensionPointPositions.get(extensionPointIds[0]);
+                const firstEpInType = extensionPointsPositions.get(extensionPointsIds[0]);
 
                 if (!firstEpInType) {
                   console.warn(
@@ -1476,7 +1476,7 @@ export function ExtensionRenderer({
                 // Ensure we have valid positioning data
                 if (typeof firstEpInType.y !== 'number' || isNaN(firstEpInType.y)) {
                   console.warn(
-                    `Invalid Y position for extension point ${extensionPointIds[0]} in plugin ${definingPlugin}`
+                    `Invalid Y position for extension point ${extensionPointsIds[0]} in plugin ${definingPlugin}`
                   );
                   return null;
                 }
@@ -1524,14 +1524,14 @@ export function ExtensionRenderer({
                       )}
 
                     {/* Extension points for this type */}
-                    {extensionPointIds.map((epId) => {
-                      const epPos = extensionPointPositions.get(epId);
+                    {extensionPointsIds.map((epId) => {
+                      const epPos = extensionPointsPositions.get(epId);
                       if (!epPos) {
                         return null;
                       }
 
-                      const extensionPoint = data.extensionPoints?.find((ep) => ep.id === epId);
-                      const extensionType = extensionPoint?.extensionType || 'link';
+                      const extensionPoints = data.extensionPoints?.find((ep) => ep.id === epId);
+                      const extensionType = extensionPoints?.extensionType || 'link';
                       const extensionColor = getExtensionColor(extensionType);
 
                       const extensionCount = getExtensionCountForExtensionPoint(epId);
@@ -1583,7 +1583,7 @@ export function ExtensionRenderer({
                           {/* Extension point ID - first line */}
                           {(() => {
                             const hasDescription =
-                              extensionPoint?.description && extensionPoint.description.trim() !== '';
+                              extensionPoints?.description && extensionPoints.description.trim() !== '';
                             const epIdY = hasDescription
                               ? options.showDependencyTypes
                                 ? epPos.y - 5
@@ -1608,7 +1608,7 @@ export function ExtensionRenderer({
                           })()}
 
                           {/* Extension point description - second line */}
-                          {extensionPoint?.description && extensionPoint.description.trim() !== '' && (
+                          {extensionPoints?.description && extensionPoints.description.trim() !== '' && (
                             <text
                               x={epPos.x + extensionBoxWidth / 2}
                               y={options.showDependencyTypes ? epPos.y + 10 : epPos.y + 20}
@@ -1616,7 +1616,7 @@ export function ExtensionRenderer({
                               fill={theme.colors.getContrastText(extensionColor)}
                               style={{ fontSize: `${TYPOGRAPHY_CONSTANTS.DESCRIPTION_SIZE}px`, pointerEvents: 'none' }}
                             >
-                              {extensionPoint.description}
+                              {extensionPoints.description}
                             </text>
                           )}
 
@@ -1635,8 +1635,8 @@ export function ExtensionRenderer({
 
                               {/* Description text underneath parentheses */}
                               {options.showDescriptions &&
-                                extensionPoint?.description &&
-                                extensionPoint.description.trim() !== '' && (
+                                extensionPoints?.description &&
+                                extensionPoints.description.trim() !== '' && (
                                   <text
                                     x={epPos.x + extensionBoxWidth / 2}
                                     y={epPos.y + 45}
@@ -1644,7 +1644,7 @@ export function ExtensionRenderer({
                                     fill={theme.colors.getContrastText(extensionColor)}
                                     style={{ pointerEvents: 'none' }}
                                   >
-                                    {extensionPoint.description}
+                                    {extensionPoints.description}
                                   </text>
                                 )}
                             </g>

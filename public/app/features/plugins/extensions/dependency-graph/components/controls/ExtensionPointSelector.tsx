@@ -27,12 +27,12 @@ export function ExtensionPointSelector({
   );
 
   return (
-    <InlineField label={t('extensions.extension-points.label', 'Extension points')}>
+    <InlineField label={t('extensions.extension-point.label', 'Extension point')}>
       <MultiCombobox
         options={extensionPointOptions}
         value={selectedExtensionPointValues}
         onChange={handleExtensionPointChange}
-        placeholder={t('extensions.extension-points.placeholder', 'Select extension points to display')}
+        placeholder={t('extensions.extension-point.placeholder', 'Select extension points to display')}
         width="auto"
         enableAllOption
         minWidth={20}
