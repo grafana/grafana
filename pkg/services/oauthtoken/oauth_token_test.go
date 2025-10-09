@@ -749,6 +749,7 @@ func TestOAuthTokenSync_needTokenRefresh(t *testing.T) {
 	}
 }
 
+// nolint: gocyclo
 func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
