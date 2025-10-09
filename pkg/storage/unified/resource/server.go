@@ -86,6 +86,11 @@ type BackendReadResponse struct {
 	Error *resourcepb.ErrorResult
 }
 
+type ResourceLastImportTime struct {
+	NamespacedResource
+	LastImportTime time.Time
+}
+
 // The StorageBackend is an internal abstraction that supports interacting with
 // the underlying raw storage medium.  This interface is never exposed directly,
 // it is provided by concrete instances that actually write values.
@@ -118,6 +123,9 @@ type StorageBackend interface {
 
 	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
 	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
+
+	// GetResourceLastImportTimes returns import times for all namespaced resources in the backend.
+	GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error]
 }
 
 type ModifiedResource struct {
