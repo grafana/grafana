@@ -43,11 +43,16 @@ export function extractCommonLabels(labels: Label[][]): Label[] {
 }
 
 export function historyDataFrameToLogRecords(stateHistory?: DataFrameJSON): LogRecord[] {
-  if (!stateHistory?.data) {
+  if (!stateHistory?.data || !stateHistory.data.values || !Array.isArray(stateHistory.data.values)) {
     return [];
   }
 
   const [tsValues, lines] = stateHistory.data.values;
+
+  if (!Array.isArray(tsValues) || !Array.isArray(lines) || tsValues.length !== lines.length) {
+    return [];
+  }
+
   const timestamps = isNumbers(tsValues) ? tsValues : [];
 
   // merge timestamp with "line"
