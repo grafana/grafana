@@ -25,10 +25,10 @@ interface ExtensionRendererProps {
   height: number;
   isExposeMode: boolean;
   isExtensionPointMode: boolean;
-  extensionPointPositions: Map<string, unknown>;
-  exposedComponentPositions: Map<string, unknown>;
-  extensionPositions: Map<string, unknown>;
-  extensionPointModePositions: Map<string, unknown>;
+  extensionPointPositions: Map<string, { x: number; y: number; groupY: number; groupHeight: number }>;
+  exposedComponentPositions: Map<string, { x: number; y: number; groupY: number; groupHeight: number }>;
+  extensionPositions: Map<string, { x: number; y: number; groupY: number; groupHeight: number }>;
+  extensionPointModePositions: Map<string, { x: number; y: number; groupY: number; groupHeight: number }>;
   selectedExposedComponent: string | null;
   selectedContentConsumer: string | null;
   highlightedExtensionPointId: string | null;
@@ -36,9 +36,7 @@ interface ExtensionRendererProps {
   onContentConsumerClick: (id: string | null) => void;
   onContentProviderClick: (id: string | null) => void;
   onHighlightedExtensionPointChange: (id: string | null) => void;
-  styles: {
-    [key: string]: { toString(): string };
-  };
+  styles: Record<string, { toString(): string }>;
 }
 
 /**
