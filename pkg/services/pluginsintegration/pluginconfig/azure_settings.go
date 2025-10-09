@@ -6,14 +6,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
-// getAzureSettings merges the Azure AD settings from the SSO settings DB with the Azure AD settings from the config.
+// mergeAzureSettings merges the Azure AD settings from the SSO settings DB with the Azure AD settings from the config.
 // Azure AD settings can be changed via the UI or SSO settings API
 // They can also be overridden in the [azure] config section
 // The order of precedence is:
 // 1. [azure] config section (if the override flag is set)
 // 2. SSO settings from the DB (if they exist)
 // 3. [auth.azuread] config section (if enabled)
-func getAzureSettings(currSettings *azsettings.AzureSettings, azureAdSettings *pluginsso.Settings) *azsettings.AzureSettings {
+func mergeAzureSettings(currSettings *azsettings.AzureSettings, azureAdSettings *pluginsso.Settings) *azsettings.AzureSettings {
 	if azureAdSettings != nil {
 		settings := azureAdSettings.Values
 		tokenEndpointSettings := currSettings.UserIdentityTokenEndpoint

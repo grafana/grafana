@@ -11,7 +11,7 @@ import (
 
 func TestGetAzureSettings(t *testing.T) {
 	t.Run("no Azure settings input", func(t *testing.T) {
-		result := getAzureSettings(nil, nil)
+		result := mergeAzureSettings(nil, nil)
 
 		assert.Nil(t, result)
 	})
@@ -31,7 +31,7 @@ func TestGetAzureSettings(t *testing.T) {
 			Settings: map[string]any{},
 		}
 
-		result := getAzureSettings(currSettings, azureAdSettings)
+		result := mergeAzureSettings(currSettings, azureAdSettings)
 
 		assert.Equal(t, "original-token-url", result.UserIdentityTokenEndpoint.TokenUrl)
 		assert.Equal(t, "original-auth", result.UserIdentityTokenEndpoint.ClientAuthentication)
@@ -69,7 +69,7 @@ func TestGetAzureSettings(t *testing.T) {
 			},
 		}
 
-		result := getAzureSettings(currSettings, azureAdSettings)
+		result := mergeAzureSettings(currSettings, azureAdSettings)
 
 		assert.Equal(t, "sso-token-url", result.UserIdentityTokenEndpoint.TokenUrl)
 		assert.Equal(t, "sso-auth", result.UserIdentityTokenEndpoint.ClientAuthentication)
@@ -109,7 +109,7 @@ func TestGetAzureSettings(t *testing.T) {
 			},
 		}
 
-		result := getAzureSettings(currSettings, azureAdSettings)
+		result := mergeAzureSettings(currSettings, azureAdSettings)
 
 		// Should keep override values, not SSO values
 		assert.Equal(t, "override-token-url", result.UserIdentityTokenEndpoint.TokenUrl)
@@ -135,7 +135,7 @@ func TestGetAzureSettings(t *testing.T) {
 			},
 		}
 
-		result := getAzureSettings(currSettings, azureAdSettings)
+		result := mergeAzureSettings(currSettings, azureAdSettings)
 
 		assert.Equal(t, "original-auth", result.UserIdentityTokenEndpoint.ClientAuthentication)
 	})
@@ -158,7 +158,7 @@ func TestGetAzureSettings(t *testing.T) {
 			},
 		}
 
-		result := getAzureSettings(currSettings, azureAdSettings)
+		result := mergeAzureSettings(currSettings, azureAdSettings)
 
 		assert.Equal(t, "original-token-url", result.UserIdentityTokenEndpoint.TokenUrl)
 		assert.Equal(t, "original-client-id", result.UserIdentityTokenEndpoint.ClientId)
@@ -177,7 +177,7 @@ func TestGetAzureSettings(t *testing.T) {
 		}
 
 		require.NotPanics(t, func() {
-			getAzureSettings(currSettings, azureAdSettings)
+			mergeAzureSettings(currSettings, azureAdSettings)
 		})
 	})
 
@@ -195,7 +195,7 @@ func TestGetAzureSettings(t *testing.T) {
 			Settings: map[string]any{},
 		}
 
-		result := getAzureSettings(currSettings, azureAdSettings)
+		result := mergeAzureSettings(currSettings, azureAdSettings)
 
 		assert.Equal(t, "original-token-url", result.UserIdentityTokenEndpoint.TokenUrl)
 		assert.Equal(t, "original-auth", result.UserIdentityTokenEndpoint.ClientAuthentication)

@@ -107,7 +107,7 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		if err != nil {
 			s.logger.Error("Failed to get SSO settings", "error", err)
 		}
-		azureSettings = getAzureSettings(azureSettings, azureAdSettings)
+		azureSettings = mergeAzureSettings(azureSettings, azureAdSettings)
 
 		if azureSettings.Cloud != "" {
 			m[azsettings.AzureCloud] = azureSettings.Cloud

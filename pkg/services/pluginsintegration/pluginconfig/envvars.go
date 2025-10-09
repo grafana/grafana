@@ -67,18 +67,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	hostEnv = append(hostEnv, p.featureToggleEnableVars(ctx)...)
 	hostEnv = append(hostEnv, p.awsEnvVars(plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.secureSocksProxyEnvVars()...)
-
-	azureSettings := p.cfg.Azure
-	if azureSettings == nil {
-		azureSettings = &azsettings.AzureSettings{}
-	}
-	azureAdSettings, err := p.ssoSettings.GetForProvider(context.Background(), social.AzureADProviderName)
-	if err != nil {
-		p.logger.Error("Failed to get SSO settings", "error", err)
-	}
-	azureSettings = getAzureSettings(azureSettings, azureAdSettings)
-
-	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(azureSettings)...)
+	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(p.getAzureSettings())...)
 	hostEnv = append(hostEnv, p.tracingEnvVars(plugin)...)
 	hostEnv = append(hostEnv, p.pluginSettingsEnvVars(plugin.PluginID())...)
 
@@ -203,4 +192,16 @@ func (p *EnvVarsProvider) envVar(key, value string) string {
 		p.logger.Error("Variable with key '%s' contains NUL", key)
 	}
 	return fmt.Sprintf("%s=%s", key, value)
+}
+
+func (p *EnvVarsProvider) getAzureSettings() *azsettings.AzureSettings {
+	azureSettings := p.cfg.Azure
+	if azureSettings == nil {
+		azureSettings = &azsettings.AzureSettings{}
+	}
+	azureAdSettings, err := p.ssoSettings.GetForProvider(context.Background(), social.AzureADProviderName)
+	if err != nil {
+		p.logger.Error("Failed to get SSO settings", "error", err)
+	}
+	return mergeAzureSettings(azureSettings, azureAdSettings)
 }
