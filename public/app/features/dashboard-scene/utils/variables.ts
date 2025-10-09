@@ -11,6 +11,7 @@ import {
   SceneVariable,
   SceneVariableSet,
   ScopesVariable,
+  SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -156,6 +157,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       ),
     });
   }
+  // Custom variable
   if (variable.type === 'custom') {
     return new CustomVariable({
       ...commonProperties,
@@ -171,6 +173,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
       allowCustomValue: variable.allowCustomValue,
     });
+    // Query variable
   } else if (variable.type === 'query') {
     return new QueryVariable({
       ...commonProperties,
@@ -196,6 +199,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       })),
       staticOptionsOrder: variable.staticOptionsOrder,
     });
+    // Datasource variable
   } else if (variable.type === 'datasource') {
     return new DataSourceVariable({
       ...commonProperties,
@@ -212,6 +216,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultOptionEnabled: variable.current?.value === DEFAULT_DATASOURCE && variable.current?.text === 'default',
       allowCustomValue: variable.allowCustomValue,
     });
+    // Interval variable
   } else if (variable.type === 'interval') {
     const intervals = getIntervalsFromQueryString(variable.query);
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
@@ -226,6 +231,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
+    // Constant variable
   } else if (variable.type === 'constant') {
     return new ConstantVariable({
       ...commonProperties,
@@ -233,6 +239,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
+    // Textbox variable
   } else if (variable.type === 'textbox') {
     let val;
     if (!variable?.current?.value) {
@@ -251,6 +258,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
+    // Groupby variable
   } else if (config.featureToggles.groupByVariable && variable.type === 'groupby') {
     return new GroupByVariable({
       ...commonProperties,
@@ -263,6 +271,25 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultOptions: variable.options,
       defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
+    });
+    // Switch variable
+    // In the old variable model we are storing the enabled and disabled values in the options:
+    // the first option is the enabled value and the second is the disabled value
+  } else if (variable.type === 'switch') {
+    const pickFirstValue = (value: string | string[]) => {
+      if (Array.isArray(value)) {
+        return value[0];
+      }
+      return value;
+    };
+
+    return new SwitchVariable({
+      ...commonProperties,
+      value: pickFirstValue(variable.current?.value),
+      enabledValue: pickFirstValue(variable.options?.[0]?.value),
+      disabledValue: pickFirstValue(variable.options?.[1]?.value),
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
     });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);
