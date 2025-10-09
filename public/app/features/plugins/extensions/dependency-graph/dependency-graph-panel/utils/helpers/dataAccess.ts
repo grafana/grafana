@@ -8,9 +8,11 @@ const cache = new Map<string, unknown>();
 const ENABLE_DEBUG_LOGS = true; // Set to true for debugging
 
 /**
- * Gets plugin data from data.json file
+ * Gets plugin data from data.json file.
  *
- * @returns Plugin data object
+ * @returns Plugin data object containing all plugin configurations
+ *
+ * @public
  */
 export const getPluginData = (): Record<string, AppPluginConfig> => {
   // Always use data.json for dependency graph data
@@ -27,6 +29,8 @@ export const getPluginData = (): Record<string, AppPluginConfig> => {
  *
  * Call this when the underlying plugin data changes or when you want to force
  * a fresh computation of all graph data.
+ *
+ * @public
  */
 export const clearCache = (): void => {
   cache.clear();
@@ -36,13 +40,20 @@ export const clearCache = (): void => {
  * Returns the current number of cached graph data results.
  *
  * @returns The number of entries currently in the cache
+ *
+ * @public
  */
 export const getCacheSize = (): number => {
   return cache.size;
 };
 
 /**
- * Helper to generate cache keys
+ * Helper to generate cache keys for graph data caching.
+ *
+ * @param options - Options object containing visualization mode and filter selections
+ * @returns Cache key string for the given options
+ *
+ * @internal
  */
 export const getCacheKey = (options: {
   visualizationMode: string;

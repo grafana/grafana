@@ -1,3 +1,30 @@
+/**
+ * @packageDocumentation
+ *
+ * # Plugin Dependency Graph Panel
+ *
+ * A Grafana panel plugin that visualizes dependencies between Grafana plugins,
+ * specifically focusing on extension relationships where one plugin extends another.
+ *
+ * ## Features
+ *
+ * - **Extension Relationship Visualization**: Displays provider-consumer relationships between plugins
+ * - **Interactive Graph**: Drag nodes, multiple layout options (force-directed, hierarchical, circular)
+ * - **Customizable Appearance**: Configure node sizes, colors, and labels
+ * - **Real-time Data Processing**: Processes Grafana table data to create dependency graphs
+ * - **Sample Data**: Includes sample data for testing when no data source is available
+ *
+ * ## Visualization Modes
+ *
+ * - **Exposed Components**: Shows components exposed by plugins and their consumers
+ * - **Extension Points**: Shows extension points and the plugins that provide content to them
+ * - **Added Links**: Shows navigation links added by plugins
+ * - **Added Components**: Shows UI components added by plugins
+ * - **Added Functions**: Shows functions added by plugins
+ *
+ * @public
+ */
+
 import React from 'react';
 
 import { PanelPlugin, StandardEditorProps } from '@grafana/data';

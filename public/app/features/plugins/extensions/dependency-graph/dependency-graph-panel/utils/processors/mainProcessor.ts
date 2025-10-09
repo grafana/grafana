@@ -28,6 +28,8 @@ const ENABLE_DEBUG_LOGS = true; // Set to true for debugging
  * };
  * const graphData = processPluginDataToGraph(options);
  * ```
+ *
+ * @public
  */
 export const processPluginDataToGraph = (options: PanelOptions): GraphData => {
   if (ENABLE_DEBUG_LOGS) {
