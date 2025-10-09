@@ -12,10 +12,10 @@ export const VariableStaticOptionsFormAddButton = ({ onAdd }: VariableStaticOpti
       icon="plus"
       variant="secondary"
       onClick={onAdd}
-      data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsAddButton}
-      aria-label={t('variables.query-variable-static-options.add-option-button-label', 'Add new option')}
+      data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton}
+      aria-label={t('variables.static-options.add-option-button-label', 'Add new option')}
     >
-      <Trans i18nKey="variables.query-variable-static-options.add-option-button-label">Add new option</Trans>
+      <Trans i18nKey="variables.static-options.add-option-button-label">Add new option</Trans>
     </Button>
   );
 };

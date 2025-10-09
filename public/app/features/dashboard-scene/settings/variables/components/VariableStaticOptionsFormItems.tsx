@@ -59,10 +59,10 @@ export function VariableStaticOptionsFormItems({ items, onChange }: VariableStat
         <tr>
           <th className={styles.headerIconColumn} />
           <th className={styles.headerInputColumn}>
-            <Trans i18nKey="variables.query-variable-static-options.value-header">Value</Trans>
+            <Trans i18nKey="variables.static-options.value-header">Value</Trans>
           </th>
           <th className={styles.headerInputColumn}>
-            <Trans i18nKey="variables.query-variable-static-options.label-header">Display text</Trans>
+            <Trans i18nKey="variables.static-options.label-header">Display text</Trans>
           </th>
           <th className={styles.headerIconColumn} />
         </tr>

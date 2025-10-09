@@ -14130,17 +14130,19 @@
       }
     },
     "query-variable-static-options": {
+      "description": "Add custom options in addition to query results"
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": "How to sort static options with query results"
+    },
+    "static-options": {
       "add-option-button-label": "Add new option",
-      "description": "Add custom options in addition to query results",
       "drag-and-drop": "Drag and drop to reorder",
       "label-header": "Display text",
       "label-placeholder": "Defaults to value",
       "remove-option-button-label": "Remove option",
       "value-header": "Value",
       "value-placeholder": "Value"
-    },
-    "query-variable-static-options-sort-select": {
-      "description-values-variable": "How to sort static options with query results"
     },
     "text-box-variable-editor": {
       "name-default-value": "Default value",

@@ -51,9 +51,14 @@ export function VariableStaticOptionsFormItemEditor({
           {...draggableProvided.draggableProps}
         >
           <td>
-            <Stack direction="row" alignItems="center" {...draggableProvided.dragHandleProps}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.moveButton}
+              {...draggableProvided.dragHandleProps}
+            >
               <Icon
-                title={t('variables.query-variable-static-options.drag-and-drop', 'Drag and drop to reorder')}
+                title={t('variables.static-options.drag-and-drop', 'Drag and drop to reorder')}
                 name="draggabledots"
                 size="lg"
                 className={styles.dragIcon}
@@ -63,32 +68,26 @@ export function VariableStaticOptionsFormItemEditor({
           <td>
             <Input
               value={item.value}
-              placeholder={t('variables.query-variable-static-options.value-placeholder', 'Value')}
+              placeholder={t('variables.static-options.value-placeholder', 'Value')}
               onChange={handleValueChange}
-              data-testid={
-                selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsValueInput
-              }
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.valueInput}
             />
           </td>
           <td>
             <Input
               value={item.label}
-              placeholder={t('variables.query-variable-static-options.label-placeholder', 'Defaults to value')}
+              placeholder={t('variables.static-options.label-placeholder', 'Defaults to value')}
               onChange={handleLabelChange}
-              data-testid={
-                selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsLabelInput
-              }
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.labelInput}
             />
           </td>
           <td>
             <Stack direction="row" alignItems="center">
               <IconButton
                 name="trash-alt"
-                aria-label={t('variables.query-variable-static-options.remove-option-button-label', 'Remove option')}
+                aria-label={t('variables.static-options.remove-option-button-label', 'Remove option')}
                 onClick={handleRemove}
-                data-testid={
-                  selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsDeleteButton
-                }
+                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.deleteButton}
               />
             </Stack>
           </td>

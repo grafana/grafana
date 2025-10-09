@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useMemo } from 'react';
+import { forwardRef, useCallback } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { CustomVariable, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
@@ -14,23 +14,8 @@ export const ValuesBuilder = forwardRef<VariableStaticOptionsFormRef, ValuesBuil
   ref
 ) {
   const { query } = variable.useState();
-  const match = useMemo(() => query.match(/(?:\\,|[^,])+/g) ?? [], [query]);
-  const options = useMemo<VariableValueOption[]>(
-    () =>
-      match.map((text) => {
-        text = text.replace(/\\,/g, ',');
-        const textMatch = /^\s*(.+)\s:\s(.+)$/g.exec(text) ?? [];
 
-        if (textMatch.length === 3) {
-          const [, label, value] = textMatch;
-          return { label: label.trim(), value: value.trim() };
-        }
-
-        text = text.trim();
-        return { label: '', value: text };
-      }),
-    [match]
-  );
+  const options = variable.transformCsvStringToOptions(query, false);
 
   const escapeEntities = useCallback((text: VariableValueSingle) => String(text).trim().replaceAll(',', '\\,'), []);
 

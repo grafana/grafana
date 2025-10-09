@@ -506,18 +506,6 @@ export const versionedPages = {
             queryOptionsStaticOptionsToggle: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options toggle',
             },
-            queryOptionsStaticOptionsLabelInput: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Label input',
-            },
-            queryOptionsStaticOptionsValueInput: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Value input',
-            },
-            queryOptionsStaticOptionsDeleteButton: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Delete button',
-            },
-            queryOptionsStaticOptionsAddButton: {
-              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Add button',
-            },
             queryOptionsStaticOptionsOrderDropdown: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Order dropdown',
             },
@@ -611,6 +599,23 @@ export const versionedPages = {
             },
             disabledValueInput: {
               ['12.3.0']: 'data-testid switch variable disabled value input',
+            },
+          },
+          StaticOptionsEditor: {
+            addButton: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Static Options Add button',
+            },
+            labelInput: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Static Options Label input',
+            },
+            valueInput: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Static Options Value input',
+            },
+            moveButton: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Static Options Move button',
+            },
+            deleteButton: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Static Options Delete button',
             },
           },
         },
