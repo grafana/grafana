@@ -76,13 +76,13 @@ func ToCorrelation(obj *correlationsV0.Correlation) (*Correlation, error) {
 func ToSpecConfig(orig CorrelationConfig) correlationsV0.CorrelationConfigSpec {
 	return correlationsV0.CorrelationConfigSpec{
 		Field: orig.Field,
-		// TODO... the rest
+		// TODO!!! this is obviously still incomplete
 	}
 }
 
 func ToConfig(orig correlationsV0.CorrelationConfigSpec) CorrelationConfig {
 	return CorrelationConfig{
 		Field: orig.Field,
-		// TODO... the rest
+		// TODO!!! this is obviously still incomplete
 	}
 }
