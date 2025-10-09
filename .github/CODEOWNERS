@@ -88,6 +88,7 @@
 /apps/preferences/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/shorturl/ @grafana/sharing-squad
 /apps/secret/ @grafana/grafana-operator-experience-squad
+/apps/scope/ @grafana/grafana-operator-experience-squad
 /apps/investigations/ @fcjack @matryer @svennergr
 /apps/advisor/ @grafana/plugins-platform-backend
 /apps/iam/ @grafana/access-squad
@@ -629,6 +630,7 @@
 /packages/grafana-runtime/rollup.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/index.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-runtime/src/internal/index.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
+/packages/grafana-runtime/src/internal/openFeature @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/unstable.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-runtime/tsconfig.build.json @grafana/grafana-frontend-platform
 /packages/grafana-runtime/tsconfig.json @grafana/grafana-frontend-platform
@@ -947,6 +949,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/serviceaccounts/ @grafana/identity-squad
 /public/app/features/teams/ @grafana/access-squad
 /public/app/features/templating/ @grafana/dashboards-squad
+/public/app/features/theme-playground/ @grafana/grafana-frontend-platform
 /public/app/features/trails/ @grafana/observability-metrics
 /public/app/features/transformers/ @grafana/datapro
 /public/app/features/transformers/timeSeriesTable/ @grafana/dataviz-squad @grafana/app-o11y-visualizations
@@ -1055,6 +1058,10 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/levitate-show-affected-plugins.js @grafana/plugins-platform-frontend
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
 /scripts/rtk-client-generator/ @grafana/grafana-search-navigate-organise
+
+/scripts/codeowners-manifest/ @grafana/dataviz-squad
+/scripts/test-coverage-by-codeowner.js @grafana/dataviz-squad
+/jest.config.codeowner.js @grafana/dataviz-squad
 
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops

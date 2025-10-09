@@ -33,12 +33,13 @@ func grpcMetaValueIsTrue(vals []string) bool {
 }
 
 type BulkRequestIterator interface {
+	// Next advances the iterator to the next element if one exists.
 	Next() bool
 
-	// The next event we should process
+	// Request returns the current element. Only valid after Next() returns true.
 	Request() *resourcepb.BulkRequest
 
-	// Rollback requested
+	// RollbackRequested returns true if there was an error advancing the iterator. Checked after Next() returns true.
 	RollbackRequested() bool
 }
 
@@ -170,9 +171,9 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		})
 	}
 
-	// Verify all request keys are valid
+	// Verify all collection request keys are valid
 	for _, k := range settings.Collection {
-		if r := verifyRequestKey(k); r != nil {
+		if r := verifyRequestKeyCollection(k); r != nil {
 			return sendAndClose(&resourcepb.BulkResponse{
 				Error: &resourcepb.ErrorResult{
 					Message: fmt.Sprintf("invalid request key: %s", r.Message),
