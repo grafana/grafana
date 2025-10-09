@@ -2,15 +2,16 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"iter"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	gocache "github.com/patrickmn/go-cache"
 )
 
@@ -54,12 +55,6 @@ type GroupResource struct {
 	Resource string
 }
 
-var (
-	// validNameRegex validates that a name contains only lowercase alphanumeric characters, '-' or '.'
-	// and starts and ends with an alphanumeric character
-	validNameRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$`)
-)
-
 func (k DataKey) String() string {
 	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder)
 }
@@ -69,42 +64,35 @@ func (k DataKey) Equals(other DataKey) bool {
 }
 
 func (k DataKey) Validate() error {
-	if k.Group == "" {
-		return fmt.Errorf("group is required")
-	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource is required")
-	}
 	if k.Namespace == "" {
-		return fmt.Errorf("namespace is required")
-	}
-	if k.Name == "" {
-		return fmt.Errorf("name is required")
+		return NewValidationError("namespace", k.Namespace, ErrNamespaceRequired)
 	}
 	if k.ResourceVersion <= 0 {
-		return fmt.Errorf("resource version must be positive")
+		return NewValidationError("resourceVersion", fmt.Sprintf("%d", k.ResourceVersion), ErrResourceVersionInvalid)
 	}
 	if k.Action == "" {
-		return fmt.Errorf("action is required")
+		return NewValidationError("action", string(k.Action), ErrActionRequired)
 	}
 
 	// Validate naming conventions for all required fields
-	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	if err := validation.IsValidNamespace(k.Namespace); err != nil {
+		return NewValidationError("namespace", k.Namespace, err[0])
 	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
+	if err := validation.IsValidGroup(k.Group); err != nil {
+		return NewValidationError("group", k.Group, err[0])
 	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
+	if err := validation.IsValidResource(k.Resource); err != nil {
+		return NewValidationError("resource", k.Resource, err[0])
 	}
-	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
+	if err := validation.IsValidGrafanaName(k.Name); err != nil {
+		return NewValidationError("name", k.Name, err[0])
 	}
 
 	// Validate folder field if provided (optional field)
-	if k.Folder != "" && !validNameRegex.MatchString(k.Folder) {
-		return fmt.Errorf("folder '%s' is invalid", k.Folder)
+	if k.Folder != "" {
+		if err := validation.IsValidGrafanaName(k.Folder); err != nil {
+			return NewValidationError("folder", k.Folder, err[0])
+		}
 	}
 
 	// Validate action is one of the valid values
@@ -124,27 +112,21 @@ type ListRequestKey struct {
 }
 
 func (k ListRequestKey) Validate() error {
-	if k.Group == "" {
-		return fmt.Errorf("group is required")
-	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource is required")
-	}
 	if k.Namespace == "" && k.Name != "" {
-		return fmt.Errorf("name must be empty when namespace is empty")
+		return errors.New(ErrNameMustBeEmptyWhenNamespaceEmpty)
 	}
-	if k.Namespace != "" && !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	if k.Namespace != "" {
+		if err := validation.IsValidNamespace(k.Namespace); err != nil {
+			return NewValidationError("namespace", k.Namespace, err[0])
+		}
 	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
+	if err := validation.IsValidGroup(k.Group); err != nil {
+		return NewValidationError("group", k.Group, err[0])
 	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
+	if err := validation.IsValidResource(k.Resource); err != nil {
+		return NewValidationError("resource", k.Resource, err[0])
 	}
-	if k.Name != "" && !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
-	}
+
 	return nil
 }
 
@@ -168,31 +150,20 @@ type GetRequestKey struct {
 
 // Validate validates the get request key
 func (k GetRequestKey) Validate() error {
-	if k.Group == "" {
-		return fmt.Errorf("group is required")
-	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource is required")
-	}
 	if k.Namespace == "" {
-		return fmt.Errorf("namespace is required")
+		return errors.New(ErrNamespaceRequired)
 	}
-	if k.Name == "" {
-		return fmt.Errorf("name is required")
+	if err := validation.IsValidNamespace(k.Namespace); err != nil {
+		return NewValidationError("namespace", k.Namespace, err[0])
 	}
-
-	// Validate naming conventions
-	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	if err := validation.IsValidGroup(k.Group); err != nil {
+		return NewValidationError("group", k.Group, err[0])
 	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
+	if err := validation.IsValidResource(k.Resource); err != nil {
+		return NewValidationError("resource", k.Resource, err[0])
 	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
-	}
-	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
+	if err := validation.IsValidGrafanaName(k.Name); err != nil {
+		return NewValidationError("name", k.Name, err[0])
 	}
 
 	return nil
