@@ -3,6 +3,14 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
+type CorrelationCorrelationType string
+
+const (
+	CorrelationCorrelationTypeQuery    CorrelationCorrelationType = "query"
+	CorrelationCorrelationTypeExternal CorrelationCorrelationType = "external"
+)
+
+// +k8s:openapi-gen=true
 type CorrelationDataSourceRef struct {
 	// same as pluginId
 	Group string `json:"group"`
@@ -45,21 +53,13 @@ func NewCorrelationTransformationSpec() *CorrelationTransformationSpec {
 }
 
 // +k8s:openapi-gen=true
-type CorrelationCorrelationType string
-
-const (
-	CorrelationCorrelationTypeQuery    CorrelationCorrelationType = "query"
-	CorrelationCorrelationTypeExternal CorrelationCorrelationType = "external"
-)
-
-// +k8s:openapi-gen=true
 type CorrelationSpec struct {
-	Description *string                    `json:"description,omitempty"`
-	Label       string                     `json:"label"`
+	Type        CorrelationCorrelationType `json:"type"`
 	Source      CorrelationDataSourceRef   `json:"source"`
 	Target      *CorrelationDataSourceRef  `json:"target,omitempty"`
+	Description *string                    `json:"description,omitempty"`
+	Label       string                     `json:"label"`
 	Config      CorrelationConfigSpec      `json:"config"`
-	Type        CorrelationCorrelationType `json:"type"`
 }
 
 // NewCorrelationSpec creates a new CorrelationSpec object.

@@ -1,5 +1,12 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
+export enum CorrelationType {
+	Query = "query",
+	External = "external",
+}
+
+export const defaultCorrelationType = (): CorrelationType => (CorrelationType.Query);
+
 export interface DataSourceRef {
 	// same as pluginId
 	group: string;
@@ -42,26 +49,19 @@ export const defaultTransformationSpec = (): TransformationSpec => ({
 	mapValue: "",
 });
 
-export enum CorrelationType {
-	Query = "query",
-	External = "external",
-}
-
-export const defaultCorrelationType = (): CorrelationType => (CorrelationType.Query);
-
 export interface Spec {
-	description?: string;
-	label: string;
+	type: CorrelationType;
 	source: DataSourceRef;
 	target?: DataSourceRef;
+	description?: string;
+	label: string;
 	config: ConfigSpec;
-	type: CorrelationType;
 }
 
 export const defaultSpec = (): Spec => ({
-	label: "",
-	source: defaultDataSourceRef(),
-	config: defaultConfigSpec(),
 	type: CorrelationType.Query,
+	source: defaultDataSourceRef(),
+	label: "",
+	config: defaultConfigSpec(),
 });
 
