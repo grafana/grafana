@@ -35,6 +35,7 @@ type translation struct {
 	actionSetMapping  map[string][]string
 	folderSupport     bool
 	skipScopeOnCreate bool
+	useWildcardScope  bool
 }
 
 func (t translation) Action(verb string) (string, bool) {
@@ -48,6 +49,9 @@ func (t translation) ActionSets(verb string) []string {
 }
 
 func (t translation) Scope(name string) string {
+	if t.useWildcardScope {
+		return "*"
+	}
 	return t.resource + ":" + t.attribute + ":" + name
 }
 
@@ -199,8 +203,8 @@ func NewMapperRegistry() MapperRegistry {
 				skipScopeOnCreate: false,
 			},
 			"rolebindings": translation{
-				resource:  "rolebindings",
-				attribute: "uid",
+				resource:         "rolebindings",
+				useWildcardScope: true,
 				verbMapping: map[string]string{
 					utils.VerbCreate:           "users.roles:add",
 					utils.VerbGet:              "users.roles:read",
