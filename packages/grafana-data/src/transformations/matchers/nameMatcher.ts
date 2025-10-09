@@ -42,15 +42,23 @@ const fieldNameMatcher: FieldMatcherInfo<string> = {
 
   get: (name: string): FieldMatcher => {
     const uniqueNames = new Set<string>([name]);
-
     const fallback = fieldNameFallback(uniqueNames);
 
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
-      return (
-        name === field.name ||
-        name === getFieldDisplayName(field, frame, allFrames) ||
-        Boolean(fallback && fallback(field, frame, allFrames))
-      );
+      const displayName = getFieldDisplayName(field, frame, allFrames);
+
+      // Exact match on display name
+      if (name === displayName) {
+        return true;
+      }
+
+      // Comparison fields match by display name only
+      const isComparisonField = Boolean(frame?.meta?.timeCompare?.isTimeShiftQuery);
+      if (isComparisonField) {
+        return false;
+      }
+
+      return name === field.name || Boolean(fallback && fallback(field, frame, allFrames));
     };
   },
 
@@ -71,15 +79,23 @@ const multipleFieldNamesMatcher: FieldMatcherInfo<ByNamesMatcherOptions> = {
   get: (options: ByNamesMatcherOptions): FieldMatcher => {
     const { names, mode = ByNamesMatcherMode.include } = options;
     const uniqueNames = new Set<string>(names ?? []);
-
     const fallback = fieldNameFallback(uniqueNames);
 
     const matcher = (field: Field, frame: DataFrame, frames: DataFrame[]) => {
-      return (
-        uniqueNames.has(field.name) ||
-        uniqueNames.has(getFieldDisplayName(field, frame, frames)) ||
-        Boolean(fallback && fallback(field, frame, frames))
-      );
+      const displayName = getFieldDisplayName(field, frame, frames);
+
+      // Exact match on display name
+      if (uniqueNames.has(displayName)) {
+        return true;
+      }
+
+      // Comparison fields match by display name only
+      const isComparisonField = Boolean(frame?.meta?.timeCompare?.isTimeShiftQuery);
+      if (isComparisonField) {
+        return false;
+      }
+
+      return uniqueNames.has(field.name) || Boolean(fallback?.(field, frame, frames));
     };
 
     if (mode === ByNamesMatcherMode.exclude) {
