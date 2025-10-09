@@ -95,6 +95,12 @@ export const useMenuFocus = ({
         break;
       default:
         break;
+      // ... inside the switch statement
+   case 'Escape':
+     event.preventDefault();    // <-- Add this line
+     event.stopPropagation(); // <-- Keep this line
+     onClose?.();
+     break;
     }
 
     // Forward event to parent
@@ -103,3 +109,4 @@ export const useMenuFocus = ({
 
   return [handleKeys];
 };
+
