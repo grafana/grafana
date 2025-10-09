@@ -22,6 +22,7 @@ export interface Options extends common.SingleStatBaseOptions {
   segmentCount: number;
   segmentSpacing: number;
   sparkline?: boolean;
+   showThresholdMarkers?: boolean;
 }
 
 export interface RadialBarEffects {
@@ -38,4 +39,5 @@ export const defaultOptions: Partial<Options> = {
   shape: 'circle',
   segmentCount: 1,
   segmentSpacing: 0.3,
+  showThresholdMarkers: false
 };

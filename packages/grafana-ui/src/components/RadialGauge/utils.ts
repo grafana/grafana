@@ -54,23 +54,26 @@ export function calculateDimensions(
 
   // Max radius based on height
   let heightRatioV = Math.sin(toRad(yMaxAngle));
-  let outerRadiusV = (height - margin * 2) / (1 + heightRatioV);
+  let maxRadiusV = (height - margin * 2) / (1 + heightRatioV);
 
-  let maxRadiusV = outerRadiusV;
-  let outerRadius = Math.min(maxRadiusH, maxRadiusV);
+  let maxRadius = Math.min(maxRadiusH, maxRadiusV);
 
-  const barWidth = Math.max(barWidthFactor * (outerRadius / 3.5), 2);
+  const barWidth = Math.max(barWidthFactor * (maxRadius / 3.5), 2);
   const thresholdsToBarWidth = 1 / 5;
   const thresholdsBarWidth = thresholdBar ? Math.min(Math.max(barWidth * thresholdsToBarWidth, 4), 12) : 0;
   const thresholdsBarSpacing = Math.min(Math.max(thresholdsBarWidth / 2, 2), 12);
 
+  let outerRadius = maxRadius;
+  console.log('outer radius', outerRadius, maxRadiusH, maxRadiusV);
   // If rounded bars is enabled they need a bit more vertical space
   if (yMaxAngle < 180 && roundedBars) {
     outerRadius -= barWidth / 4;
   }
 
   if (thresholdsBarWidth > 0) {
-    outerRadius = outerRadius - thresholdsBarWidth - thresholdsBarSpacing;
+    maxRadiusH -= thresholdsBarWidth + thresholdsBarSpacing;
+    maxRadiusV -= thresholdsBarWidth + thresholdsBarSpacing;
+    outerRadius = Math.min(maxRadiusH, maxRadiusV);
   }
 
   if (glow) {
@@ -80,10 +83,10 @@ export function calculateDimensions(
 
   let innerRadius = outerRadius - barWidth / 2;
 
-  const maxY = outerRadius * Math.sin(toRad(yMaxAngle)) + outerRadius;
+  const maxY = maxRadius * Math.sin(toRad(yMaxAngle)) + maxRadius;
   const rest = height - maxY - margin * 2;
   const centerX = width / 2;
-  const centerY = outerRadius + margin + rest / 2;
+  const centerY = maxRadius + margin + rest / 2;
 
   if (barIndex > 0) {
     innerRadius = innerRadius - (barWidth + 4) * barIndex;

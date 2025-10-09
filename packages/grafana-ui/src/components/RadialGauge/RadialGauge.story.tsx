@@ -241,6 +241,44 @@ export const Examples: StoryFn = (args) => {
           barWidthFactor={0.4}
         />
       </Stack>
+      <div>Thresholds</div>
+      <Stack direction={'row'} gap={3}>
+        <RadialBarExample
+          value={70}
+          {...args}
+          gradient="scheme"
+          colorMode={FieldColorModeId.Thresholds}
+          thresholdsBar={true}
+          roundedBars={false}
+          spotlight
+          glowCenter={true}
+          barWidthFactor={0.7}
+        />
+        <RadialBarExample
+          value={70}
+          {...args}
+          gradient="scheme"
+          colorMode={FieldColorModeId.Thresholds}
+          glowCenter={true}
+          thresholdsBar={true}
+          roundedBars={false}
+          shape="gauge"
+          barWidthFactor={0.7}
+        />
+        <RadialBarExample
+          value={70}
+          {...args}
+          gradient="scheme"
+          colorMode={FieldColorModeId.Thresholds}
+          glowCenter={true}
+          thresholdsBar={true}
+          roundedBars={false}
+          segmentCount={40}
+          segmentSpacing={0.2}
+          shape="gauge"
+          barWidthFactor={0.7}
+        />
+      </Stack>
     </Stack>
   );
 };

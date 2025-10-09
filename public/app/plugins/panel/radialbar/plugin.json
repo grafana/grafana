@@ -1,10 +1,10 @@
 {
   "type": "panel",
-  "name": "Radial bar",
+  "name": "New Gauge (temp)",
   "id": "radialbar",
-
+  "state": "alpha",
   "info": {
-    "description": "Standard radial bar visualization",
+    "description": "Standard gauge visualization",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

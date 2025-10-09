@@ -82,7 +82,7 @@ export function GradientDef({ fieldDisplay, id, theme, gradient, dimensions, sha
         const count = colors.length;
 
         return (
-          <linearGradient x1="0" y1="1" x2={1 / valuePercent} y2="1" id={id}>
+          <linearGradient x1="0" y1="0" x2={1 / valuePercent} y2="0" id={id}>
             {colors.map((stopColor, i) => (
               <stop key={i} offset={`${(i / (count - 1)).toFixed(2)}`} stopColor={stopColor} stopOpacity={1} />
             ))}

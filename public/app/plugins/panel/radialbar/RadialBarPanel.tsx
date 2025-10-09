@@ -33,6 +33,7 @@ export function RadialBarPanel({
         shape={options.shape}
         segmentCount={options.segmentCount}
         segmentSpacing={options.segmentSpacing}
+        thresholdsBar={options.showThresholdMarkers}
       />
     );
   }

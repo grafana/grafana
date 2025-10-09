@@ -12,7 +12,7 @@ import { GaugeSuggestionsSupplier } from './suggestions';
 export const plugin = new PanelPlugin<Options>(RadialBarPanel)
   .useFieldConfig({})
   .setPanelOptions((builder) => {
-    const category = [t('gauge.category-radial-bar', 'Radial bar')];
+    const category = [t('gauge.category-radial-bar', 'Gauge')];
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder, category);
     commonOptionsBuilder.addTextSizeOptions(builder);
@@ -47,15 +47,23 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
 
     builder.addBooleanSwitch({
       path: 'sparkline',
-      name: t('radialbar.config.sparkline', 'Sparkline'),
+      name: t('radialbar.config.sparkline', 'Show sparkline'),
       category,
       defaultValue: defaultOptions.sparkline,
+    });
+
+    builder.addBooleanSwitch({
+      path: 'showThresholdMarkers',
+      name: t('radialbar.config.threshold-markers', 'Show thresholds'),
+      category,
+      defaultValue: defaultOptions.showThresholdMarkers,
     });
 
     builder.addCustomEditor({
       id: 'radialbar-effects',
       path: 'effects',
       name: 'Effects',
+      category,
       editor: EffectsEditor,
       settings: {},
       defaultValue: defaultOptions.effects,

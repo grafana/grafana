@@ -1,4 +1,5 @@
 import { StandardEditorProps } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Checkbox, Stack } from '@grafana/ui';
 
 import { RadialBarEffects } from './panelcfg.gen';
@@ -8,24 +9,24 @@ import { RadialBarEffects } from './panelcfg.gen';
  */
 export function EffectsEditor(props: StandardEditorProps<RadialBarEffects>) {
   return (
-    <Stack direction="row" alignItems={'flex-start'} gap={2} wrap>
+    <Stack direction="row" alignItems={'flex-start'} gap={1} wrap>
       <Checkbox
-        label="Rounded"
+        label={t('radialbar.config.effects.rounded-bars', 'Rounded bars')}
         value={!!props.value?.rounded}
         onChange={(e) => props.onChange({ ...props.value, rounded: e.currentTarget.checked })}
       />
       <Checkbox
-        label="Bar glow"
+        label={t('radialbar.config.effects.bar-glow', 'Bar glow')}
         value={!!props.value?.barGlow}
         onChange={(e) => props.onChange({ ...props.value, barGlow: e.currentTarget.checked })}
       />
       <Checkbox
-        label="Center glow"
+        label={t('radialbar.config.effects.center-glow', 'Center glow')}
         value={!!props.value?.centerGlow}
         onChange={(e) => props.onChange({ ...props.value, centerGlow: e.currentTarget.checked })}
       />
       <Checkbox
-        label="Spotlight"
+        label={t('radialbar.config.effects.spotlight', 'Spotlight')}
         value={!!props.value?.spotlight}
         onChange={(e) => props.onChange({ ...props.value, spotlight: e.currentTarget.checked })}
       />
