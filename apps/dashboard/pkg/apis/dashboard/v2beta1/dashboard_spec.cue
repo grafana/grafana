@@ -249,7 +249,8 @@ MatcherConfig: {
 }
 
 Threshold: {
-	value: number
+	// Value null means -Infinity
+	value: number | null
 	color: string
 }
 
