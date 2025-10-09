@@ -27,14 +27,13 @@
     },
     "permissions": {
       "add-label": "Add a permission",
+      "loading": "Loading permissions...",
       "no-permissions": "There are no permissions",
       "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
       "role": "Role",
       "serviceaccount": "Service Account",
       "team": "Team",
-      "title": "Permissions",
-      "user": "User",
-      "loading": "Loading permissions..."
+      "user": "User"
     }
   },
   "action-editor": {
