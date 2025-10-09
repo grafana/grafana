@@ -726,7 +726,6 @@ func TestIntegrationQueryDataWithQSDSClient(t *testing.T) {
 		// Use the fake caching service for testing.
 		fakeCachingService := caching.NewFakeOSSCachingService()
 		fakeCachingService.ReturnHit = false
-		// fakeCachingService.ReturnQueryResponse = caching.CachedQueryDataResponse{Response: stubbedResponse}
 		cachingServiceClient := caching.ProvideCachingServiceClient(fakeCachingService, nil)
 		tc := setup(t, true, testClient, WithCachingServiceClient(cachingServiceClient))
 		mr := metricRequestWithQueries(t, `{
@@ -855,7 +854,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		secretStore:            ss,
 		pluginRequestValidator: rv,
 		queryService:           queryService,
-		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: identity.RoleAdmin},
+		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: identity.RoleAdmin, Namespace: "ns1"},
 	}
 }
 
