@@ -72,7 +72,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     textMode = 'auto',
     vizCount = 1,
     segmentCount = 0,
-    segmentSpacing = 0,
+    segmentSpacing = 0.1,
     roundedBars = true,
     thresholdsBar = false,
     values,

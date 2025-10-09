@@ -1,6 +1,6 @@
 {
   "type": "panel",
-  "name": "New Gauge (temp)",
+  "name": "New Gauge",
   "id": "radialbar",
   "state": "alpha",
   "info": {

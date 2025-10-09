@@ -2,6 +2,6 @@
 * unit where name is
 * dynamic font size based on text length
 * text alignment factors 
-* better size for gauge shape
-* thresholds
 * segment hue gradient 
+* Rethink gradient / color options
+* threshold & min/max labels

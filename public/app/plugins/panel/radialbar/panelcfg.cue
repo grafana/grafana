@@ -25,8 +25,23 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
+				GaugePanelEffects: {
+					barGlow?: bool | *false
+					spotlight?: bool | *false
+					rounded?: bool | *false	
+					centerGlow?: bool | *true
+				 } @cuetsy(kind="interface")
+
 				Options: {
-					common.SingleStatBaseOptions					
+					common.SingleStatBaseOptions		
+					showThresholdMarkers: bool | *true
+					segmentCount: number | *1
+					segmentSpacing: number | *0.3
+					sparkline?: bool | *false
+					shape: "circle" | *"gauge"	
+					barWidthFactor: number | *0.4
+					gradient: *"none" | "hue" | "shade" |"scheme" 
+					effects: GaugePanelEffects | *{}
 				} @cuetsy(kind="interface")
 			}
 		}]

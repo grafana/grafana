@@ -10,6 +10,8 @@
 
 import * as common from '@grafana/schema';
 
+export const pluginVersion = "12.3.0-pre";
+
 export interface GaugePanelEffects {
   barGlow?: boolean;
   centerGlow?: boolean;

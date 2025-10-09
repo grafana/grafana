@@ -2,12 +2,12 @@ import { StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, Stack } from '@grafana/ui';
 
-import { RadialBarEffects } from './panelcfg.gen';
+import { GaugePanelEffects } from './panelcfg.gen';
 
 /**
  * Editor for all the radial bar effects options
  */
-export function EffectsEditor(props: StandardEditorProps<RadialBarEffects>) {
+export function EffectsEditor(props: StandardEditorProps<GaugePanelEffects>) {
   return (
     <Stack direction="row" alignItems={'flex-start'} gap={1} wrap>
       <Checkbox
