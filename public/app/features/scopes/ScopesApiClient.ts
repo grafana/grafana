@@ -1,6 +1,7 @@
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
 import { getBackendSrv, config } from '@grafana/runtime';
 
+import { scopeAPIv0alpha1 as scopeAPI } from '../../api/clients/scope/v0alpha1';
 import { getAPINamespace } from '../../api/utils';
 
 import { ScopeNavigation } from './dashboards/types';
@@ -12,6 +13,8 @@ const apiUrl = `/apis/${apiGroup}/${apiVersion}/namespaces/${apiNamespace}`;
 
 export class ScopesApiClient {
   async fetchScope(name: string): Promise<Scope | undefined> {
+    scopeAPI.useGetScopeQuery({ name });
+
     try {
       return await getBackendSrv().get<Scope>(apiUrl + `/scopes/${name}`);
     } catch (err) {
@@ -22,11 +25,15 @@ export class ScopesApiClient {
   }
 
   async fetchMultipleScopes(scopesIds: string[]): Promise<Scope[]> {
+    scopeAPI.useListScopeQuery({ fieldSelector: `metadata.name in (${scopesIds.join(',')})` });
+
     const scopes = await Promise.all(scopesIds.map((id) => this.fetchScope(id)));
     return scopes.filter((scope) => scope !== undefined);
   }
 
   async fetchMultipleScopeNodes(names: string[]): Promise<ScopeNode[]> {
+    scopeAPI.useGetFindScopeNodeChildrenResultsQuery({ names });
+
     if (!config.featureToggles.useMultipleScopeNodesEndpoint || names.length === 0) {
       return Promise.resolve([]);
     }
@@ -51,6 +58,12 @@ export class ScopesApiClient {
    * @return {Promise<ScopeNode[]>} A promise that resolves to a map of fetched nodes. Returns an empty object if an error occurs.
    */
   async fetchNodes(options: { parent?: string; query?: string; limit?: number }): Promise<ScopeNode[]> {
+    scopeAPI.useGetFindScopeNodeChildrenResultsQuery({
+      parent: options.parent,
+      query: options.query,
+      limit: options.limit,
+    });
+
     const limit = options.limit ?? 1000;
 
     if (!(0 < limit && limit <= 10000)) {
@@ -74,6 +87,8 @@ export class ScopesApiClient {
   }
 
   public fetchDashboards = async (scopeNames: string[]): Promise<ScopeDashboardBinding[]> => {
+    scopeAPI.useGetFindScopeDashboardBindingsResultsQuery({ name: 'name', scope: scopeNames });
+
     try {
       const response = await getBackendSrv().get<{ items: ScopeDashboardBinding[] }>(
         apiUrl + `/find/scope_dashboard_bindings`,
@@ -89,6 +104,8 @@ export class ScopesApiClient {
   };
 
   public fetchScopeNavigations = async (scopeNames: string[]): Promise<ScopeNavigation[]> => {
+    scopeAPI.useGetFindScopeNavigationsResultsQuery({ name: 'name', scope: scopeNames });
+
     try {
       const response = await getBackendSrv().get<{ items: ScopeNavigation[] }>(apiUrl + `/find/scope_navigations`, {
         scope: scopeNames,
@@ -101,6 +118,8 @@ export class ScopesApiClient {
   };
 
   public fetchScopeNode = async (scopeNodeId: string): Promise<ScopeNode | undefined> => {
+    scopeAPI.useGetScopeNodeQuery({ name: scopeNodeId });
+
     if (!config.featureToggles.useScopeSingleNodeEndpoint) {
       return Promise.resolve(undefined);
     }
