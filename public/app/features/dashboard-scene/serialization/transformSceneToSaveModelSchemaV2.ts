@@ -44,6 +44,7 @@ import {
   FieldColor,
   defaultFieldConfig,
   defaultDataQueryKind,
+  SwitchVariableKind,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -411,6 +412,7 @@ function getVariables(oldDash: DashboardSceneState, dsReferencesMapping?: DSRefe
     | ConstantVariableKind
     | GroupByVariableKind
     | AdhocVariableKind
+    | SwitchVariableKind
   > = [];
 
   if (variablesSet instanceof SceneVariableSet) {

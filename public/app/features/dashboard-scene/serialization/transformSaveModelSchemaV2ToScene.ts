@@ -16,6 +16,7 @@ import {
   SceneVariable,
   SceneVariableSet,
   ScopesVariable,
+  SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
 import {
@@ -34,11 +35,13 @@ import {
   defaultIntervalVariableKind,
   defaultQueryVariableKind,
   defaultTextVariableKind,
+  defaultSwitchVariableKind,
   GroupByVariableKind,
   IntervalVariableKind,
   LibraryPanelKind,
   PanelKind,
   QueryVariableKind,
+  SwitchVariableKind,
   TextVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
@@ -92,7 +95,8 @@ export type TypedVariableModelV2 =
   | IntervalVariableKind
   | CustomVariableKind
   | GroupByVariableKind
-  | AdhocVariableKind;
+  | AdhocVariableKind
+  | SwitchVariableKind;
 
 export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<DashboardV2Spec>): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
@@ -415,6 +419,15 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       // @ts-expect-error
       defaultOptions: variable.options,
     });
+  } else if (variable.kind === defaultSwitchVariableKind().kind) {
+    return new SwitchVariable({
+      ...commonProperties,
+      value: variable.spec.current ?? 'false',
+      enabledValue: variable.spec.enabledValue ?? 'true',
+      disabledValue: variable.spec.disabledValue ?? 'false',
+      skipUrlSync: variable.spec.skipUrlSync,
+      hide: transformVariableHideToEnumV1(variable.spec.hide),
+    });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.kind}`);
   }
@@ -519,6 +532,11 @@ export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVar
     current = {
       value: '',
       text: '',
+    };
+  } else if (variable.kind === 'SwitchVariable') {
+    current = {
+      value: variable.spec.current ?? 'false',
+      text: variable.spec.current ?? 'false',
     };
   } else {
     current = {

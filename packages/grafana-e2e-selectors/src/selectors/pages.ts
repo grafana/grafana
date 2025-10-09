@@ -596,6 +596,17 @@ export const versionedPages = {
               '11.0.0': 'data-testid ad-hoc filters variable mode toggle',
             },
           },
+          SwitchVariable: {
+            valuePairTypeSelect: {
+              ['12.3.0']: 'data-testid switch variable value pair type select',
+            },
+            enabledValueInput: {
+              ['12.3.0']: 'data-testid switch variable enabled value input',
+            },
+            disabledValueInput: {
+              ['12.3.0']: 'data-testid switch variable disabled value input',
+            },
+          },
         },
       },
     },

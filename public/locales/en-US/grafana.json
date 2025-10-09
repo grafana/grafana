@@ -5819,6 +5819,7 @@
         "dynamically-switch-source-multiple-panels": "Dynamically switch the data source for multiple panels",
         "group": "Add keys to group by on the fly",
         "hidden-constant-variable": "A hidden constant variable, useful for metric prefixes in dashboards you want to share",
+        "users-enter-arbitrary-strings-switch": "A variable that can be toggled on and off",
         "users-enter-arbitrary-strings-textbox": "Users can enter any arbitrary strings in a textbox",
         "values-are-static-and-defined-manually": "Values are static and defined manually",
         "values-fetched-source-query": "Values are fetched from a data source query",
@@ -5832,6 +5833,7 @@
         "group-by": "Group by",
         "interval": "Interval",
         "query": "Query",
+        "switch": "Switch",
         "textbox": "Textbox"
       }
     },
@@ -6175,6 +6177,17 @@
       "title": {
         "copy-to-clipboard-failed": "Copy to clipboard failed"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "Disabled value",
+      "disabled-value-description": "Value when switch is disabled",
+      "disabled-value-placeholder": "e.g. Off, Disabled, Inactive",
+      "enabled-value": "Enabled value",
+      "enabled-value-description": "Value when switch is enabled",
+      "enabled-value-placeholder": "e.g. On, Enabled, Active",
+      "switch-options": "Switch options",
+      "value-pair-type": "Value pair type",
+      "value-pair-type-description": "Choose the type of values for the switch states"
     },
     "text-box-variable": {
       "name-default-value": "Default value"
