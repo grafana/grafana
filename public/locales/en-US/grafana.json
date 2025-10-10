@@ -4506,6 +4506,17 @@
       "paste-tab": "Paste tab",
       "un-group-panels": "Ungroup"
     },
+    "community-preview": {
+      "cancel": "Cancel",
+      "datasource-mapping-description": "Select which data sources to use for previewing this dashboard:",
+      "drawer-subtitle": "Select data sources to preview this dashboard",
+      "drawer-title": "Configure Data Sources for {dashboard.name}",
+      "error-title": "Error loading dashboard",
+      "loading": "Loading dashboard...",
+      "no-config-needed": "No datasource configuration needed",
+      "no-datasources": "This dashboard does not require any datasource configuration.",
+      "use-dashboard": "Use this dashboard"
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -4794,11 +4805,17 @@
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "browse-more-dashboards": "Browse more dashboards on grafana.com",
+      "community-dashboard-description": "Browse templates created by the Grafana community",
+      "downloads-count": "{{count}} downloads",
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
+      "matches-datasources": "Matches your datasources",
+      "no-preview": "No preview available",
       "show-less-dashboards": "Show less",
       "show-more-dashboards": "Show more",
+      "start-with-popular-community-dashboard": "Start with a popular community dashboard",
       "start-with-suggested-dashboards": "Start with a pre-made dashboard from your data source",
       "use-template-button": "Use this dashboard"
     },

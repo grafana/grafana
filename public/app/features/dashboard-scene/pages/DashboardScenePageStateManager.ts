@@ -5,6 +5,7 @@ import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import {
@@ -451,6 +452,14 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
   private async loadTemplateDashboard(): Promise<DashboardDTO> {
     // Extract template parameters from URL
     const searchParams = new URLSearchParams(window.location.search);
+    const gnetId = searchParams.get('gnetId');
+
+    // Community dashboard flow (from grafana.com)
+    if (gnetId) {
+      return this.loadCommunityTemplateDashboard(gnetId);
+    }
+
+    // Plugin dashboard flow (datasource-specific templates)
     const datasource = searchParams.get('datasource');
     const pluginId = searchParams.get('pluginId');
     const path = searchParams.get('path');
@@ -497,6 +506,77 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         folderUid: '',
       },
     };
+  }
+
+  /**
+   * Loads a community dashboard from grafana.com by its gnet ID
+   */
+  private async loadCommunityTemplateDashboard(gnetId: string): Promise<DashboardDTO> {
+    const searchParams = new URLSearchParams(window.location.search);
+
+    // Fetch dashboard details from grafana.com API
+    const gnetDashboard = await getBackendSrv().get(`/api/gnet/dashboards/${gnetId}`);
+
+    // The json property is already parsed by the backend
+    const dashboardJson = gnetDashboard.json;
+
+    // Extract datasource mappings from URL parameters (ds_<inputName>=<datasourceUid>)
+    const inputs: Array<{ name: string; type: string; value: string; pluginId?: string }> = [];
+    searchParams.forEach((value, key) => {
+      if (key.startsWith('ds_')) {
+        const inputName = key.substring(3); // Remove 'ds_' prefix to get the input name (e.g., "DS_PROMETHEUS")
+
+        // Find the corresponding input definition from __inputs to get the pluginId
+        const inputsArray = dashboardJson.__inputs;
+        const inputDef = Array.isArray(inputsArray)
+          ? inputsArray.find((input: unknown): input is { name: string; pluginId?: string } => {
+              return (
+                typeof input === 'object' &&
+                input !== null &&
+                'name' in input &&
+                typeof input.name === 'string' &&
+                input.name === inputName
+              );
+            })
+          : undefined;
+
+        inputs.push({
+          name: inputName,
+          type: 'datasource',
+          value: value, // datasource UID
+          pluginId: inputDef?.pluginId,
+        });
+      }
+    });
+
+    // Use backend interpolation if we have datasource mappings
+    let interpolatedDashboard = dashboardJson;
+    if (inputs.length > 0) {
+      interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', {
+        dashboard: dashboardJson,
+        inputs,
+      });
+    }
+
+    return {
+      dashboard: {
+        ...interpolatedDashboard,
+        uid: '',
+        version: 0,
+        id: null,
+      },
+      meta: {
+        canSave: contextSrv.hasEditPermissionInFolders,
+        canEdit: contextSrv.hasEditPermissionInFolders,
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+        isNew: true,
+        folderUid: '',
+      },
+    };
+
+    console.log('contextSrv.hasEditPermissionInFolders', contextSrv.hasEditPermissionInFolders);
   }
 
   public async fetchDashboard({

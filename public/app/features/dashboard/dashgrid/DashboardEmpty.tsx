@@ -20,6 +20,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { setInitialDatasource } from '../state/reducers';
 
+import { CommunityDashboardsSection } from './DashboardLibrary/CommunityDashboardsSection';
 import { DashboardLibrarySection } from './DashboardLibrary/DashboardLibrarySection';
 
 export interface Props {
@@ -99,7 +100,8 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               </Button>
             </Stack>
           </Box>
-          {config.featureToggles.dashboardLibrary && dashboardLibraryDatasourceUid && <DashboardLibrarySection />}
+          {config.featureToggles.dashboardLibrary && <DashboardLibrarySection />}
+          {config.featureToggles.dashboardLibrary && !dashboardLibraryDatasourceUid && <CommunityDashboardsSection />}
           <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
             <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
               <Stack direction="column" alignItems="center" gap={1}>

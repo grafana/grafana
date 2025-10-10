@@ -62,8 +62,9 @@ func (api *ImportDashboardAPI) InterpolateDashboard(c *contextmodel.ReqContext) 
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	if req.PluginId == "" {
-		return response.Error(http.StatusUnprocessableEntity, "pluginId must be set", nil)
+	// Either pluginId or dashboard must be set
+	if req.PluginId == "" && req.Dashboard == nil {
+		return response.Error(http.StatusUnprocessableEntity, "either pluginId or dashboard must be set", nil)
 	}
 
 	resp, err := api.dashboardImportService.InterpolateDashboard(c.Req.Context(), &req)
