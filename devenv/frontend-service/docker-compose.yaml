@@ -62,6 +62,7 @@ services:
       - 'alloy.logs=true'
     environment:
       OTEL_BSP_SCHEDULE_DELAY: 500
+      GF_DATABASE_SKIP_MIGRATIONS: true
       GF_DEFAULT_APP_MODE: development
       GF_DEFAULT_TARGET: frontend-server
       GF_SECURITY_CONTENT_SECURITY_POLICY: false
