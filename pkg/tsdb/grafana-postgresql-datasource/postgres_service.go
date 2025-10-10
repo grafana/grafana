@@ -7,30 +7,27 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	sqlengpgx "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/pgx"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 )
 
 type Service struct {
-	im       instancemgmt.InstanceManager
-	features featuremgmt.FeatureToggles
+	im instancemgmt.InstanceManager
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *Service {
+func ProvideService(cfg *setting.Cfg) *Service {
 	logger := backend.NewLoggerWith("logger", "tsdb.postgres")
-	usePGX := features.IsEnabled(context.Background(), featuremgmt.FlagPostgresDSUsePGX)
 	s := &Service{
-		im:       datasource.NewInstanceManager(NewInstanceSettings(logger, usePGX, cfg.DataPath)),
-		features: features,
+		im: datasource.NewInstanceManager(NewInstanceSettings(logger, cfg.DataPath)),
 	}
 	return s
 }
 
 // NOTE: do not put any business logic into this method. it's whole job is to forward the call "inside"
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	if s.features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
+	cfg := backend.GrafanaConfigFromContext(ctx)
+	if cfg.FeatureToggles().IsEnabled("postgresDSUsePGX") {
 		dsHandler, err := s.getDSInfoPGX(ctx, req.PluginContext)
 		if err != nil {
 			return sqlengpgx.ErrToHealthCheckResult(err)
@@ -47,7 +44,8 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 // NOTE: do not put any business logic into this method. it's whole job is to forward the call "inside"
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	if s.features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
+	cfg := backend.GrafanaConfigFromContext(ctx)
+	if cfg.FeatureToggles().IsEnabled("postgresDSUsePGX") {
 		dsInfo, err := s.getDSInfoPGX(ctx, req.PluginContext)
 		if err != nil {
 			return nil, err
