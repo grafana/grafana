@@ -23,11 +23,11 @@ func NodeImage(version string) string {
 }
 
 type GrafanaServiceOpts struct {
-	GrafanaDir           *dagger.Directory
-	GrafanaTarGz         *dagger.File
-	YarnCache            *dagger.CacheVolume
-	License              *dagger.File
-	InstallImageRenderer bool
+	GrafanaDir         *dagger.Directory
+	GrafanaTarGz       *dagger.File
+	YarnCache          *dagger.CacheVolume
+	License            *dagger.File
+	StartImageRenderer bool
 }
 
 func Frontend(src *dagger.Directory) *dagger.Directory {
@@ -97,8 +97,8 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		licenseArg = "/src/license.jwt"
 	}
 
-	if opts.InstallImageRenderer {
-		container = container.WithEnvVariable("INSTALL_IMAGE_RENDERER", "true").
+	if opts.StartImageRenderer {
+		container = container.WithEnvVariable("START_IMAGE_RENDERER", "true").
 			WithExec([]string{"apt-get", "update"}).
 			WithExec([]string{"apt-get", "install", "-y", "ca-certificates"})
 	}

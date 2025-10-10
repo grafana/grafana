@@ -100,11 +100,11 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	svc, err := GrafanaService(ctx, d, GrafanaServiceOpts{
-		GrafanaDir:           grafana,
-		GrafanaTarGz:         targz,
-		YarnCache:            yarnCache,
-		License:              license,
-		InstallImageRenderer: imageRenderer,
+		GrafanaDir:         grafana,
+		GrafanaTarGz:       targz,
+		YarnCache:          yarnCache,
+		License:            license,
+		StartImageRenderer: imageRenderer,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create Grafana service: %w", err)

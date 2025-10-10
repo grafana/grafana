@@ -109,7 +109,7 @@ func NewCmd() *cli.Command {
 			},
 			&cli.BoolFlag{
 				Name:     "image-renderer",
-				Usage:    "Install the image renderer plugin (requires --start-grafana)",
+				Usage:    "Start the image renderer Docker container (requires --start-grafana)",
 				Category: "Grafana Server",
 			},
 
@@ -194,7 +194,7 @@ func runAction(ctx context.Context, c *cli.Command) error {
 			cmd.Env = os.Environ()
 			cmd.Env = append(cmd.Env, fmt.Sprintf("TZ=%s", c.String("timezone")))
 			if c.Bool("image-renderer") {
-				cmd.Env = append(cmd.Env, "INSTALL_IMAGE_RENDERER=true")
+				cmd.Env = append(cmd.Env, "START_IMAGE_RENDERER=true")
 			}
 			cmd.Stdout = prefixGrafana(os.Stdout)
 			cmd.Stderr = prefixGrafana(os.Stderr)
