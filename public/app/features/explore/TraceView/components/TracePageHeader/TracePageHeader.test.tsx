@@ -96,6 +96,7 @@ const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean }
   const mockUsePluginComponents = usePluginComponents as jest.MockedFunction<typeof usePluginComponents>;
   mockUsePluginComponents.mockReturnValue({ components: [], isLoading: false });
 
+  const viewRangeTime: [number, number] = [0, 0];
   const defaultProps = {
     trace,
     timeZone: '',
@@ -114,6 +115,9 @@ const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean }
     data: new MutableDataFrame(),
     datasourceName: 'test-datasource',
     datasourceUid: 'test-datasource-uid',
+    updateNextViewRangeTime: jest.fn(),
+    updateViewRangeTime: jest.fn(),
+    viewRange: { time: { current: viewRangeTime } },
   };
 
   return {
