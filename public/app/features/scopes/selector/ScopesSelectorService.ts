@@ -18,6 +18,7 @@ import {
   treeNodeAtPath,
 } from './scopesTreeUtils';
 import { NodesMap, RecentScope, RecentScopeSchema, ScopeSchema, ScopesMap, SelectedScope, TreeNode } from './types';
+import { getDashboardPathForComparison, isCurrentPath } from '../dashboards/ScopesNavigationTreeLink';
 
 export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
@@ -365,10 +366,14 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId)).then(() => {
       // Redirect to first scopeNavigation if current URL isn't a scopeNavigation
       const currentPath = locationService.getLocation().pathname;
-      const scopeNavigation = this.dashboardsService.state.scopeNavigations.find(
-        (s) => 'url' in s.spec && s.spec.url === currentPath
-      );
-      if (!scopeNavigation && this.dashboardsService.state.scopeNavigations.length > 0) {
+      const activeScopeNavigation = this.dashboardsService.state.scopeNavigations.find((s) => {
+        if (!('url' in s.spec) || typeof s.spec.url !== 'string') {
+          return false;
+        }
+        return isCurrentPath(currentPath, s.spec.url);
+      });
+
+      if (!activeScopeNavigation && this.dashboardsService.state.scopeNavigations.length > 0) {
         // Redirect to the first available scopeNavigation
         const firstScopeNavigation = this.dashboardsService.state.scopeNavigations[0];
 
