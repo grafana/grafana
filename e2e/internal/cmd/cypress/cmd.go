@@ -112,7 +112,12 @@ func NewCmd() *cli.Command {
 				Usage:    "Start the image renderer Docker container (requires --start-grafana)",
 				Category: "Grafana Server",
 			},
-
+			&cli.StringFlag{
+				Name:     "image-renderer-version",
+				Usage:    "When enabling the image renderer, which version to use",
+				Value:    "latest",
+				Category: "Grafana Server",
+			},
 			&cli.StringFlag{
 				Name:      "suite",
 				Usage:     "Path to the suite to run (e.g. './e2e/dashboards-suite')",
@@ -195,6 +200,9 @@ func runAction(ctx context.Context, c *cli.Command) error {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("TZ=%s", c.String("timezone")))
 			if c.Bool("image-renderer") {
 				cmd.Env = append(cmd.Env, "START_IMAGE_RENDERER=true")
+			}
+			if c.String("image-renderer-version") != "" {
+				cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_RENDERER_VERSION=%s", c.String("image-renderer-version")))
 			}
 			cmd.Stdout = prefixGrafana(os.Stdout)
 			cmd.Stderr = prefixGrafana(os.Stderr)

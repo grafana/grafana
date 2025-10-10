@@ -59,7 +59,7 @@ fi
 
 if [ "$START_IMAGE_RENDERER" ]; then
   echo -e "Starting image renderer container"
-  docker run -d --rm --name=grafana-image-renderer -p 8081:8081 grafana/grafana-image-renderer:${IMAGE_RENDERER_VERSION:-latest}
+  docker run -d --rm --name=grafana-image-renderer -p ${IR_DEFAULT_PORT}:${IR_DEFAULT_PORT} grafana/grafana-image-renderer:${IMAGE_RENDERER_VERSION:-latest}
 
   if [[ "$(uname)" == "Darwin" ]]; then
     DOCKER_HOST="host.docker.internal"
@@ -95,7 +95,7 @@ echo -e "Starting Grafana server port $PORT"
   if [ "$START_IMAGE_RENDERER" ]; then
     CMD+=(
       cfg:rendering.callback_url="http://$DOCKER_HOST:$PORT"
-      cfg:rendering.server_url="http://localhost:8081/render"
+      cfg:rendering.server_url="http://localhost:$IR_DEFAULT_PORT/render"
     )
   fi
 

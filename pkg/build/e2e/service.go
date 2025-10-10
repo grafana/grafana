@@ -23,11 +23,12 @@ func NodeImage(version string) string {
 }
 
 type GrafanaServiceOpts struct {
-	GrafanaDir         *dagger.Directory
-	GrafanaTarGz       *dagger.File
-	YarnCache          *dagger.CacheVolume
-	License            *dagger.File
-	StartImageRenderer bool
+	GrafanaDir           *dagger.Directory
+	GrafanaTarGz         *dagger.File
+	YarnCache            *dagger.CacheVolume
+	License              *dagger.File
+	StartImageRenderer   bool
+	ImageRendererVersion string
 }
 
 func Frontend(src *dagger.Directory) *dagger.Directory {
@@ -101,6 +102,10 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		container = container.WithEnvVariable("START_IMAGE_RENDERER", "true").
 			WithExec([]string{"apt-get", "update"}).
 			WithExec([]string{"apt-get", "install", "-y", "ca-certificates"})
+
+		if opts.ImageRendererVersion != "" {
+			container = container.WithEnvVariable("IMAGE_RENDERER_VERSION", opts.ImageRendererVersion)
+		}
 	}
 
 	// We add all GF_ environment variables to allow for overriding Grafana configuration.
