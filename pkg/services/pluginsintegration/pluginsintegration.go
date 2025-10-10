@@ -54,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/renderer"
@@ -134,6 +135,8 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(advisor.AdvisorStats), new(*advisor.Service)),
 	pluginchecker.ProvideService,
 	wire.Bind(new(pluginchecker.PluginUpdateChecker), new(*pluginchecker.Service)),
+	pluginsso.ProvideDefaultSettingsProvider,
+	wire.Bind(new(pluginsso.SettingsProvider), new(*pluginsso.DefaultSettingsProvider)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
