@@ -2531,7 +2531,7 @@
       "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 19
+      "count": 18
     }
   },
   "public/app/features/dashboard/state/DashboardModel.repeat.test.ts": {
