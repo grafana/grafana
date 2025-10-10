@@ -111,38 +111,6 @@ func processChange(ctx context.Context, change ResourceFileChange, clients resou
 
 	// Handle folders based on action type
 	if safepath.IsDir(change.Path) {
-		// if change.Action == repository.FileActionDeleted {
-		// 	// For deletions, delete the folder
-		// 	deleteFolderCtx, deleteFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.delete_folder")
-		// 	result := jobs.JobResourceResult{
-		// 		Path:   change.Path,
-		// 		Action: change.Action,
-		// 		Group:  resources.FolderKind.Group,
-		// 		Kind:   resources.FolderKind.Kind,
-		// 	}
-
-		// 	// Get the folder name from the existing reference if available
-		// 	if change.Existing != nil && change.Existing.Name != "" {
-		// 		result.Name = change.Existing.Name
-		// 	}
-
-		// 	client, gvk, err := clients.ForResource(deleteFolderCtx, resources.FolderResource)
-		// 	if err != nil {
-		// 		result.Kind = resources.FolderResource.Resource
-		// 		result.Error = fmt.Errorf("get client for deleted folder: %w", err)
-		// 		progress.Record(deleteFolderCtx, result)
-		// 		deleteFolderSpan.End()
-		// 		return
-		// 	}
-		// 	result.Kind = gvk.Kind
-
-		// 	if err := client.Delete(deleteFolderCtx, result.Name, metav1.DeleteOptions{}); err != nil {
-		// 		result.Error = fmt.Errorf("deleting folder %s: %w", result.Name, err)
-		// 	}
-		// 	progress.Record(deleteFolderCtx, result)
-		// 	deleteFolderSpan.End()
-		// 	return
-		// } else {
 		// For non-deletions, ensure folder exists
 		ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.ensure_folder_exists")
 		result := jobs.JobResourceResult{
@@ -165,7 +133,6 @@ func processChange(ctx context.Context, change ResourceFileChange, clients resou
 		progress.Record(ensureFolderCtx, result)
 		ensureFolderSpan.End()
 		return
-		// }
 	}
 
 	writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
@@ -194,43 +161,48 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 	)
 	defer applyChangesSpan.End()
 
-	// Check if this is a deletion-only operation
-	isDeletionOnly := true
-	for _, change := range changes {
-		if change.Action != repository.FileActionDeleted {
-			isDeletionOnly = false
-			break
-		}
-	}
-
-	// Separate folders from other resources
-	var folders []ResourceFileChange
-	var otherResources []ResourceFileChange
+	// Separate changes into four categories for proper ordering:
+	// 1. File deletions (must happen before folder deletions)
+	// 2. Folder deletions
+	// 3. Folder creations (must happen before file creations)
+	// 4. File creations (must happen after folder creations)
+	var fileDeletions []ResourceFileChange
+	var folderDeletions []ResourceFileChange
+	var folderCreations []ResourceFileChange
+	var fileCreations []ResourceFileChange
 
 	for _, change := range changes {
-		if safepath.IsDir(change.Path) {
-			folders = append(folders, change)
+		isFolder := safepath.IsDir(change.Path)
+		isDeleted := change.Action == repository.FileActionDeleted
+
+		if isDeleted {
+			if isFolder {
+				folderDeletions = append(folderDeletions, change)
+			} else {
+				fileDeletions = append(fileDeletions, change)
+			}
 		} else {
-			otherResources = append(otherResources, change)
+			if isFolder {
+				folderCreations = append(folderCreations, change)
+			} else {
+				fileCreations = append(fileCreations, change)
+			}
 		}
 	}
 
-	if isDeletionOnly {
-		// For deletions: process files first (in parallel), then folders (serially)
-		if err := processResourcesInParallel(ctx, otherResources, clients, repositoryResources, progress, tracer); err != nil {
-			return err
-		}
-
-		// Then process folders serially after files are deleted
-		return processFoldersSerially(ctx, folders, clients, repositoryResources, progress, tracer)
-	}
-
-	// For non-deletions: process folders first (serially), then files (in parallel)
-	if err := processFoldersSerially(ctx, folders, clients, repositoryResources, progress, tracer); err != nil {
+	if err := processResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer); err != nil {
 		return err
 	}
 
-	return processResourcesInParallel(ctx, otherResources, clients, repositoryResources, progress, tracer)
+	if err := processFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer); err != nil {
+		return err
+	}
+
+	if err := processFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer); err != nil {
+		return err
+	}
+
+	return processResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer)
 }
 
 func processFoldersSerially(ctx context.Context, folders []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
