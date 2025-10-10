@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Añadir un permiso",
+      "loading": "",
       "no-permissions": "No hay ningún permiso",
       "permissions-change-warning": "Esto cambiará los permisos para esta carpeta y todos sus descendientes. En total, esto afectará:",
       "role": "Rol",
       "serviceaccount": "Cuenta de servicio",
       "team": "Equipo",
-      "title": "Permisos",
       "user": "Usuario"
     }
   },
@@ -3504,7 +3504,7 @@
       "delete-button": "Eliminar",
       "delete-modal-invalid-text": "Una o más carpetas contienen paneles de biblioteca o reglas de alerta. Para continuar, primero elimínelas.",
       "delete-modal-invalid-title": "No se puede eliminar la carpeta",
-      "delete-modal-restore-dashboards-text": "Esta acción eliminará las carpetas seleccionadas de inmediato, pero los paneles de control seleccionados se marcarán para su eliminación en 30 días. El administrador de tu organización puede restaurar los paneles de control en cualquier momento antes de que transcurran los 30 días. Las carpetas no se pueden restaurar.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Esta acción eliminará el siguiente contenido:",
       "delete-modal-title": "Eliminar",
       "delete-provisioned-folder": "Eliminar carpeta aprovisionada",
@@ -4572,7 +4572,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "El elemento está oculto debido al renderizado condicional."
+        "tooltip": ""
       },
       "root": {
         "title": "Mostrar/ocultar reglas"
@@ -5819,6 +5819,7 @@
         "dynamically-switch-source-multiple-panels": "Cambiar dinámicamente la fuente de datos para varios paneles",
         "group": "Añadir claves para agrupar sobre la marcha",
         "hidden-constant-variable": "Una variable constante oculta, útil para prefijos métricos en dashboards que quieras compartir",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Los usuarios pueden introducir cualquier cadena arbitraria en un cuadro de texto",
         "values-are-static-and-defined-manually": "Los valores son estáticos y se definen manualmente",
         "values-fetched-source-query": "Los valores se obtienen de una consulta de fuente de datos",
@@ -5832,6 +5833,7 @@
         "group-by": "Agrupar por",
         "interval": "Intervalo",
         "query": "Consulta",
+        "switch": "",
         "textbox": "Cuadro de texto"
       }
     },
@@ -6175,6 +6177,17 @@
       "title": {
         "copy-to-clipboard-failed": "Error al copiar al portapapeles"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Valor predeterminado"
@@ -6624,6 +6637,7 @@
         "service-now-integration-and-data-source": "Integración y fuente de datos de ServiceNow",
         "signal-fx-integration-and-datasource": "Integración y fuente de datos de SignalFx",
         "snowflake-integration-and-data-source": "Integración y fuente de datos de Snowflake",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "Integración y fuente de datos de SumoLogic",
         "visualize-and-explore-dynatrace-data": "Visualizar y explorar los datos de Dynatrace",
         "visualize-and-explore-oracle-sql": "Visualizar y explorar Oracle SQL",
@@ -10354,7 +10368,7 @@
       "title": "Perfiles"
     },
     "recently-deleted": {
-      "subtitle": "Cualquier elemento que aparezca aquí durante más de 30 días se eliminará automáticamente.",
+      "subtitle": "",
       "title": "Eliminados recientemente"
     },
     "recorded-queries": {
@@ -11570,6 +11584,7 @@
       "active-jobs": "trabajos activos",
       "column-action": "Acción",
       "column-duration": "Duración",
+      "column-job-id": "",
       "column-message": "Mensaje",
       "column-started": "Iniciados",
       "column-status": "Estado",
@@ -11588,12 +11603,6 @@
       "settings": "Configuración",
       "view": "Vista"
     },
-    "repository-health": {
-      "details": "Detalles:",
-      "no-errors-found": "No se han encontrado errores",
-      "title-repository-is-healthy": "El repositorio está en buen estado",
-      "title-repository-is-unhealthy": "El repositorio no está en buen estado"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Comparar rama",
@@ -11608,7 +11617,7 @@
     },
     "repository-overview": {
       "checked": "Revisado:",
-      "finished": "Finalizado:",
+      "finished": "",
       "health": "Salud",
       "healthy": "Lineas",
       "job-id": "ID del trabajo:",
@@ -11617,7 +11626,6 @@
       "not-available": "N/D",
       "pull-status": "Estado de extracción",
       "resources": "Recursos",
-      "started": "Inicio:",
       "status": "Estado:",
       "unhealthy": "En mal estado",
       "view-folder": "Ver carpeta",
@@ -12276,9 +12284,6 @@
       "title-disable-service-account": "Deshabilitar cuenta de servicio",
       "tokens": "Tokens",
       "tooltip-managed-service-account-cannot-modified": "Esta es una cuenta de servicio gestionada y no se puede modificar"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Permisos"
     },
     "service-account-profile": {
       "information": "Información",
@@ -12953,6 +12958,10 @@
     "name-mode": "Modo",
     "name-show-line-numbers": "Mostrar números de línea",
     "name-show-mini-map": "Mostrar minimapa"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {

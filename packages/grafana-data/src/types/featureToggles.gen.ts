@@ -396,6 +396,10 @@ export interface FeatureToggles {
   */
   dashboardUndoRedo?: boolean;
   /**
+  * Enables unlimited dashboard panel grouping
+  */
+  unlimitedLayoutsNesting?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
   panelFilterVariable?: boolean;
@@ -487,11 +491,6 @@ export interface FeatureToggles {
   * @default false
   */
   useMultipleScopeNodesEndpoint?: boolean;
-  /**
-  * In-development feature that will allow injection of labels into prometheus queries.
-  * @default true
-  */
-  promQLScope?: boolean;
   /**
   * In-development feature that will allow injection of labels into loki queries.
   * @default false
@@ -1112,11 +1111,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistory?: boolean;
-  /**
-  * Allows decoupled core plugins to load from the Grafana CDN
-  * @default false
-  */
-  pluginAssetProvider?: boolean;
   /**
   * Enable dual reader for unified storage search
   */
