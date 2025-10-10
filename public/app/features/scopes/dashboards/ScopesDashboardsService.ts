@@ -49,8 +49,22 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         }
         return isCurrentPath(currentPath, s.spec.url);
       });
-      if (activeScopeNavigation && activeScopeNavigation.status.groups) {
-        // Expand the first group, as we don't know which one to prioritize
+
+      if (!activeScopeNavigation) {
+        return;
+      }
+
+      // Check if the activeScopeNavigation is in a folder that is already expanded
+      if (activeScopeNavigation.status.groups) {
+        for (const group of activeScopeNavigation.status.groups) {
+          if (this.state.folders[''].folders[group].expanded) {
+            return;
+          }
+        }
+      }
+
+      // Expand the first group, as we don't know which one to prioritize
+      if (activeScopeNavigation.status.groups) {
         this.updateFolder(['', activeScopeNavigation.status.groups[0]], true);
       }
     });
