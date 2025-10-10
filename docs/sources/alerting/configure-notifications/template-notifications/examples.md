@@ -120,8 +120,6 @@ Regular text without formatting
 #### Additional contact point types
 
 {{< admonition type="note" >}}
-**Coming soon**: More formatting examples for additional contact point types including Teams, Discord, and other integrations will be added to this documentation.
-
 Each contact point type has its own formatting requirements:
 
 - Some support Markdown-style formatting
