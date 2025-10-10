@@ -75,7 +75,7 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 		return nil
 	}
 	m := make(map[string]int)
-	receiverUseCounts([]*definitions.Route{e.importedConfig.Config.Route}, m)
+	receiverUseCounts([]*definitions.Route{e.importedConfig.Route}, m)
 	_, renames := definition.MergeReceivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.GetReceivers(), e.opts.DedupSuffix)
 	for original, renamed := range renames {
 		if cnt, ok := m[original]; ok {

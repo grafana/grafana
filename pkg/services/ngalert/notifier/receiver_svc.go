@@ -571,9 +571,10 @@ func (rs *ReceiverService) InUseMetadata(ctx context.Context, orgID int64, recei
 
 	var hasGrafanaOrigin, hasImportedOrigin bool
 	for i := range receivers {
-		if receivers[i].Origin == models.ResourceOriginGrafana {
+		switch receivers[i].Origin {
+		case models.ResourceOriginGrafana:
 			hasGrafanaOrigin = true
-		} else if receivers[i].Origin == models.ResourceOriginImported {
+		case models.ResourceOriginImported:
 			hasImportedOrigin = true
 		}
 		if hasGrafanaOrigin && hasImportedOrigin {
