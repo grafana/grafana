@@ -31,16 +31,30 @@ func (s *Service) withDatasourceHandlerFunc(getHandler func(d *datasourceInfo) h
 
 func getServicesHandler(ds *datasourceInfo) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		services, err := ds.JaegerClient.Services()
-		writeResponse(services, err, rw, ds.JaegerClient.logger)
+		// TODO: migrate this to feature toggle
+		useGrpc := true
+		if useGrpc {
+			services, err := ds.JaegerClient.GrpcServices()
+			writeResponse(services, err, rw, ds.JaegerClient.logger)
+		} else {
+			services, err := ds.JaegerClient.Services()
+			writeResponse(services, err, rw, ds.JaegerClient.logger)
+		}
 	}
 }
 
 func getOperationsHandler(ds *datasourceInfo) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
+		// TODO: migrate this to feature toggle
+		useGrpc := true
 		service := strings.TrimSpace(r.PathValue("service"))
-		operations, err := ds.JaegerClient.Operations(service)
-		writeResponse(operations, err, rw, ds.JaegerClient.logger)
+		if useGrpc {
+			operations, err := ds.JaegerClient.GrpcOperations(strings.TrimSpace(r.PathValue("service")))
+			writeResponse(operations, err, rw, ds.JaegerClient.logger)
+		} else {
+			operations, err := ds.JaegerClient.Operations(service)
+			writeResponse(operations, err, rw, ds.JaegerClient.logger)
+		}
 	}
 }
 

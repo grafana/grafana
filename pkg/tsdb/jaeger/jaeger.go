@@ -90,10 +90,19 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}, nil
 	}
 
-	if _, err = client.JaegerClient.Services(); err != nil {
+	var servicesErr error
+	// TODO: migrate this to feature toggle
+	useGrpc := true
+	if useGrpc {
+		_, servicesErr = client.JaegerClient.GrpcServices()
+	} else {
+		_, servicesErr = client.JaegerClient.Services()
+	}
+
+	if servicesErr != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
-			Message: err.Error(),
+			Message: servicesErr.Error(),
 		}, nil
 	}
 
