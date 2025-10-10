@@ -5019,6 +5019,14 @@
         "group-layout-disabled": "No groups exists on this level",
         "panel-layout": "Panel layout",
         "panel-layout-disabled": "Select a row or tab to change panel layout options"
+      },
+      "panel": {
+        "modal": {
+          "body": "Changing the layout will reset all panel positions and sizes.",
+          "confirm": "Change layout",
+          "dismiss": "Cancel",
+          "title": "Change layout"
+        }
       }
     },
     "legacy-dashboard-api": {
