@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"iter"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 )
 
 const (
@@ -37,46 +39,38 @@ func (k EventKey) String() string {
 
 func (k EventKey) Validate() error {
 	if k.Namespace == "" {
-		return fmt.Errorf("namespace cannot be empty")
-	}
-	if k.Group == "" {
-		return fmt.Errorf("group cannot be empty")
-	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource cannot be empty")
-	}
-	if k.Name == "" {
-		return fmt.Errorf("name cannot be empty")
+		return NewValidationError("namespace", k.Namespace, ErrNamespaceRequired)
 	}
 	if k.ResourceVersion < 0 {
-		return fmt.Errorf("resource version must be non-negative")
+		return errors.New(ErrResourceVersionInvalid)
 	}
 	if k.Action == "" {
-		return fmt.Errorf("action cannot be empty")
+		return NewValidationError("action", string(k.Action), ErrActionRequired)
 	}
-	if k.Folder != "" && !validNameRegex.MatchString(k.Folder) {
-		return fmt.Errorf("folder '%s' is invalid", k.Folder)
+
+	// Validate each field against the naming rules
+	// Validate naming conventions for all required fields
+	if err := validation.IsValidNamespace(k.Namespace); err != nil {
+		return NewValidationError("namespace", k.Namespace, err[0])
 	}
-	// Validate each field against the naming rules (reusing the regex from datastore.go)
-	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	if err := validation.IsValidGroup(k.Group); err != nil {
+		return NewValidationError("group", k.Group, err[0])
 	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
+	if err := validation.IsValidResource(k.Resource); err != nil {
+		return NewValidationError("resource", k.Resource, err[0])
 	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
+	if err := validation.IsValidGrafanaName(k.Name); err != nil {
+		return NewValidationError("name", k.Name, err[0])
 	}
-	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
-	}
-	if k.Folder != "" && !validNameRegex.MatchString(k.Folder) {
-		return fmt.Errorf("folder '%s' is invalid", k.Folder)
+	if k.Folder != "" {
+		if err := validation.IsValidGrafanaName(k.Folder); err != nil {
+			return NewValidationError("folder", k.Folder, err[0])
+		}
 	}
 	switch k.Action {
 	case DataActionCreated, DataActionUpdated, DataActionDeleted:
 	default:
-		return fmt.Errorf("action '%s' is invalid: must be one of 'created', 'updated', or 'deleted'", k.Action)
+		return NewValidationError("action", string(k.Action), ErrActionInvalid)
 	}
 
 	return nil
@@ -148,6 +142,7 @@ func (n *eventStore) Save(ctx context.Context, event Event) error {
 		Name:            event.Name,
 		ResourceVersion: event.ResourceVersion,
 		Action:          event.Action,
+		//TODO why isnt folder part of the key?
 	}
 
 	if err := eventKey.Validate(); err != nil {

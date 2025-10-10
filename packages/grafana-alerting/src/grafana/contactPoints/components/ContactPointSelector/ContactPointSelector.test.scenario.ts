@@ -5,8 +5,8 @@ import {
   EmailIntegrationFactory,
   ListReceiverApiResponseFactory,
   SlackIntegrationFactory,
-} from '../../../api/v0alpha1/mocks/fakes/Receivers';
-import { listReceiverHandler } from '../../../api/v0alpha1/mocks/handlers/ReceiverHandlers';
+} from '../../../api/notifications/v0alpha1/mocks/fakes/Receivers';
+import { listReceiverHandler } from '../../../api/notifications/v0alpha1/mocks/handlers/ReceiverHandlers/listReceiverHandler';
 
 export const simpleContactPointsList = ListReceiverApiResponseFactory.build({
   items: [
