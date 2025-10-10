@@ -13,41 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
-type JaegerClient struct {
-	logger     log.Logger
-	url        string
-	httpClient *http.Client
-	settings   backend.DataSourceInstanceSettings
-}
-
-type ServicesResponse struct {
-	Data   []string    `json:"data"`
-	Errors interface{} `json:"errors"`
-	Limit  int         `json:"limit"`
-	Offset int         `json:"offset"`
-	Total  int         `json:"total"`
-}
-
-type SettingsJSONData struct {
-	TraceIdTimeParams struct {
-		Enabled bool `json:"enabled"`
-	} `json:"traceIdTimeParams"`
-}
-
-type DependenciesResponse struct {
-	Data   []ServiceDependency `json:"data"`
-	Errors []struct {
-		Code int    `json:"code"`
-		Msg  string `json:"msg"`
-	} `json:"errors"`
-}
-
-type ServiceDependency struct {
-	Parent    string `json:"parent"`
-	Child     string `json:"child"`
-	CallCount int    `json:"callCount"`
-}
-
 func New(hc *http.Client, logger log.Logger, settings backend.DataSourceInstanceSettings) (JaegerClient, error) {
 	client := JaegerClient{
 		logger:     logger,
@@ -59,10 +24,12 @@ func New(hc *http.Client, logger log.Logger, settings backend.DataSourceInstance
 }
 
 func (j *JaegerClient) Services() ([]string, error) {
-	var response ServicesResponse
+	// var response ServicesResponse
+	var response GrpcServicesResponse
 	services := []string{}
 
-	u, err := url.JoinPath(j.url, "/api/services")
+	// u, err := url.JoinPath(j.url, "/api/services")
+	u, err := url.JoinPath(j.url, "/api/v3/services")
 	if err != nil {
 		return services, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
 	}
@@ -82,20 +49,32 @@ func (j *JaegerClient) Services() ([]string, error) {
 		return services, err
 	}
 
-	services = response.Data
+	// services = response.Data
+	services = response.Services
 	return services, err
 }
 
 func (j *JaegerClient) Operations(s string) ([]string, error) {
-	var response ServicesResponse
+	// var response ServicesResponse
+	var response GrpcOperationsResponse
 	operations := []string{}
 
-	u, err := url.JoinPath(j.url, "/api/services/", s, "/operations")
+	u, err := url.JoinPath(j.url, "/api/v3/operations")
+	// u, err := url.JoinPath(j.url, "/api/services/", s, "/operations")
 	if err != nil {
 		return operations, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
 	}
 
-	res, err := j.httpClient.Get(u)
+	jaegerURL, err := url.Parse(u)
+	if err != nil {
+		return operations, backend.DownstreamError(fmt.Errorf("failed to parse Jaeger URL: %w", err))
+	}
+
+	urlQuery := jaegerURL.Query()
+	urlQuery.Set("service", url.QueryEscape(s))
+	jaegerURL.RawQuery = urlQuery.Encode()
+
+	res, err := j.httpClient.Get(jaegerURL.String())
 	if err != nil {
 		return operations, err
 	}
@@ -110,12 +89,16 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 		return operations, err
 	}
 
-	operations = response.Data
+	// extract name from operations response
+	for _, op := range response.Operations {
+		operations = append(operations, op.Name)
+	}
+	// operations = response.Data
 	return operations, err
 }
 
 func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResponse, error) {
-	u, err := url.JoinPath(j.url, "/api/traces")
+	u, err := url.JoinPath(j.url, "/api/v3/traces")
 	if err != nil {
 		return []TraceResponse{}, backend.DownstreamError(fmt.Errorf("failed to join url path: %w", err))
 	}
@@ -211,7 +194,8 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 		return trace, backend.DownstreamError(fmt.Errorf("traceID is empty"))
 	}
 
-	traceUrl, err := url.JoinPath(j.url, "/api/traces", url.QueryEscape(traceID))
+	traceUrl, err := url.JoinPath(j.url, "/api/v3/traces", url.QueryEscape(traceID))
+	// traceUrl, err := url.JoinPath(j.url, "/api/traces", url.QueryEscape(traceID))
 	if err != nil {
 		return trace, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
 	}
