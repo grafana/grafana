@@ -1,4 +1,7 @@
+import { firstValueFrom } from 'rxjs';
+
 import { onUpdateDatasourceJsonDataOptionSelect, onUpdateDatasourceOption } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 import {
   Box,
   CollapsableSection,
@@ -68,13 +71,30 @@ export const UrlAndAuthenticationSection = (props: Props) => {
   };
 
   const pingInfluxForProductDetection = async (urlValue: string) => {
-    const base = urlValue.replace(/\/$/, '');
+    const dsId = options.id;
+    if (!dsId) {
+      return;
+    }
 
     try {
-      const res = await fetch(`${base}/ping`);
+      const res = await firstValueFrom(
+        getBackendSrv().fetch({
+          method: 'GET',
+          url: `/api/datasources/proxy/${dsId}/ping`,
+          headers: { Accept: 'application/json' },
+          responseType: 'text',
+          showErrorAlert: false,
+          showSuccessAlert: false,
+        })
+      );
       if (res.ok) {
-        const product = res.headers.get('x-influxdb-build') ?? undefined;
-        const version = res.headers.get('x-influxdb-version') ?? undefined;
+        let product: string | undefined;
+        let version: string | undefined;
+
+        if (res.headers && typeof res.headers.get === 'function') {
+          product = res.headers.get('x-influxdb-build') ?? undefined;
+          version = res.headers.get('x-influxdb-version') ?? undefined;
+        }
 
         if (product || version) {
           return { product, version };
@@ -146,7 +166,15 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       >
         <Text color="secondary">
           Enter the URL of your InfluxDB instance, then select your product and query language. This will determine the
-          available settings and authentication methods in the next steps.
+          available settings and authentication methods in the next steps. If you are unsure of your InfluxDB product,
+          use{' '}
+          <TextLink
+            href="https://docs.influxdata.com/influxdb3/enterprise/visualize-data/grafana/?section=influxdb3%252Fenterprise%252Fvisualize-data&detection_method=url_analysis"
+            external
+          >
+            product detection
+          </TextLink>{' '}
+          to identify it.
         </Text>
 
         <Box direction="column" gap={2} marginTop={3}>
