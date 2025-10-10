@@ -22,7 +22,7 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
 
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder, mainCategory);
-    commonOptionsBuilder.addTextSizeOptions(builder);
+    commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true, withPercentChange: true });
 
     builder
       .addSelect({
