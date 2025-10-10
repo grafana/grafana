@@ -93,6 +93,35 @@ export class DefaultGridLayoutManager
     this.addActivationHandler(() => this._activationHandler());
   }
 
+  public merge(other: DashboardLayoutManager) {
+    if (!(other instanceof DefaultGridLayoutManager)) {
+      throw new Error('Cannot merge non-default grid layout');
+    }
+
+    let offset = 0;
+    for (const child of this.state.grid.state.children) {
+      const newOffset = (child.state.y ?? 0) + (child.state.height ?? 0);
+      if (newOffset > offset) {
+        offset = newOffset;
+      }
+    }
+
+    const sourceGrid = other.state.grid;
+    const movedChildren = [...sourceGrid.state.children];
+
+    for (const child of movedChildren) {
+      const currentY = child.state.y ?? 0;
+      child.setState({ y: currentY + offset });
+    }
+
+    // Remove from source and append to destination
+    sourceGrid.setState({ children: [] });
+    for (const child of movedChildren) {
+      child.clearParent();
+    }
+    this.state.grid.setState({ children: [...this.state.grid.state.children, ...movedChildren] });
+  }
+
   private _activationHandler() {
     if (config.featureToggles.dashboardNewLayouts) {
       this._subs.add(

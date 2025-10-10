@@ -4504,7 +4504,8 @@
       "paste-panel": "Paste panel",
       "paste-row": "Paste row",
       "paste-tab": "Paste tab",
-      "un-group-panels": "Ungroup"
+      "un-group-panels": "Ungroup",
+      "ungroup-rows": "Ungroup rows"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5167,10 +5168,16 @@
       "title-row-options": "Row options"
     },
     "rows-layout": {
+      "cancel": "Cancel",
+      "continue": "Continue",
+      "convert-to": "Convert to {{name}}",
       "delete-row-text": "Deleting this row will also remove all panels. Are you sure you want to continue?",
       "delete-row-title": "Delete row?",
       "delete-row-yes": "Delete",
       "description": "Collapsable panel groups with headings",
+      "edit": {
+        "ungroup-rows": "Ungroup rows"
+      },
       "header-hidden-tooltip": "Row header only visible in edit mode",
       "name": "Rows",
       "row": {
@@ -5200,7 +5207,11 @@
       },
       "row-warning": {
         "title-not-unique": "This title is not unique"
-      }
+      },
+      "ungroup-convert-text": "All grids must be converted to the same type and positions will be lost.",
+      "ungroup-convert-title": "Convert mixed grids?",
+      "ungroup-nested-text": "This will ungroup all nested groups.",
+      "ungroup-nested-title": "Ungroup nested groups?"
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
