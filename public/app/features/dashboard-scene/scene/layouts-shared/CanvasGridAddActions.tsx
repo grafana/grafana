@@ -34,18 +34,21 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
 
     let parent = layoutManager.parent;
     const layouts = [];
-    while (parent) {
-      if (layouts.length > 1) {
-        break;
-      }
 
+    while (parent) {
       if (isDashboardLayoutManager(parent)) {
         layouts.push(parent.descriptor.id);
       }
+
+      if (layouts.length === 2) {
+        parent = undefined;
+        break;
+      }
+
       parent = parent.parent;
     }
 
-    if (layouts.length >= 2) {
+    if (layouts.length === 2) {
       return { disableGrouping: true, disableTabs: true };
     }
 
