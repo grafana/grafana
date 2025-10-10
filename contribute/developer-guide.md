@@ -151,7 +151,7 @@ When you log in for the first time, Grafana asks you to change your password.
 #### Build on Windows
 
 The Grafana backend includes SQLite, a database which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC with binutils version 2.37 or later.
-We recommend [MinGW x64](). Eventually, if you use [Scoop](https://scoop.sh), you can install GCC through that.
+We recommend [MinGW x64](https://www.mingw-w64.org/downloads). Eventually, if you use [Scoop](https://scoop.sh), you can install GCC through that.
 
 You can build the back-end as follows:
 
