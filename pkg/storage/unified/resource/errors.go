@@ -2,6 +2,7 @@ package resource
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -18,8 +19,7 @@ import (
 
 // Package-level errors.
 var (
-	ErrOptimisticLockingFailed = errors.New("optimistic locking failed")
-	ErrNotImplementedYet       = errors.New("not implemented yet")
+	ErrNotImplementedYet = errors.New("not implemented yet")
 )
 
 var (
@@ -30,6 +30,12 @@ var (
 			Message: "the resource already exists",
 			Code:    http.StatusConflict,
 		},
+	}
+
+	ErrOptimisticLockingFailed = resourcepb.ErrorResult{
+		Code:    http.StatusConflict,
+		Reason:  "optimistic locking failed",
+		Message: "requested RV does not match saved RV",
 	}
 )
 
@@ -193,4 +199,26 @@ func HandleQueueError[T any](err error, makeResp func(*resourcepb.ErrorResult) *
 		return makeResp(NewTooManyRequestsError("tenant queue is full, please try again later")), nil
 	}
 	return makeResp(AsErrorResult(err)), nil
+}
+
+var (
+	ErrNamespaceRequired                 = "namespace is required"
+	ErrResourceVersionInvalid            = "resource version must be positive"
+	ErrActionRequired                    = "action is required"
+	ErrActionInvalid                     = "action is invalid: must be one of 'created', 'updated', or 'deleted'"
+	ErrNameMustBeEmptyWhenNamespaceEmpty = "name must be empty when namespace is empty"
+)
+
+type ValidationError struct {
+	Field string
+	Value string
+	Msg   string
+}
+
+func (e ValidationError) Error() string {
+	return fmt.Sprintf("%s '%s' is invalid: %s", e.Field, e.Value, e.Msg)
+}
+
+func NewValidationError(field, value, msg string) error {
+	return ValidationError{Field: field, Value: value, Msg: msg}
 }

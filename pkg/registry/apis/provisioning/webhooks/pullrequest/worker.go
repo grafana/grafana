@@ -28,7 +28,7 @@ func ProvidePullRequestWorker(
 	configProvider apiserver.RestConfigProvider,
 	registry prometheus.Registerer,
 ) *PullRequestWorker {
-	urlProvider := func(_ string) string {
+	urlProvider := func(_ context.Context, _ string) string {
 		return cfg.AppURL
 	}
 

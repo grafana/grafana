@@ -15,12 +15,13 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util/debouncer"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/debouncer"
 )
 
 const (
@@ -889,12 +890,13 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 	pagedKeys := applyPagination(filteredKeys, lastSeenRV, sortAscending)
 
 	iter := kvHistoryIterator{
-		keys:          pagedKeys,
-		currentIndex:  -1,
-		ctx:           ctx,
-		listRV:        listRV,
-		sortAscending: sortAscending,
-		dataStore:     k.dataStore,
+		keys:            pagedKeys,
+		currentIndex:    -1,
+		ctx:             ctx,
+		listRV:          listRV,
+		sortAscending:   sortAscending,
+		dataStore:       k.dataStore,
+		skipProvisioned: true,
 	}
 
 	err = fn(&iter)
@@ -907,12 +909,13 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 
 // kvHistoryIterator implements ListIterator for KV storage history
 type kvHistoryIterator struct {
-	ctx           context.Context
-	keys          []DataKey
-	currentIndex  int
-	listRV        int64
-	sortAscending bool
-	dataStore     *dataStore
+	ctx             context.Context
+	keys            []DataKey
+	currentIndex    int
+	listRV          int64
+	sortAscending   bool
+	skipProvisioned bool
+	dataStore       *dataStore
 
 	// current
 	rv     int64
@@ -961,6 +964,11 @@ func (i *kvHistoryIterator) Next() bool {
 	}
 	i.folder = meta.GetFolder()
 	i.err = nil
+
+	// if the resource is provisioned and we are skipping provisioned resources, continue onto the next one
+	if i.skipProvisioned && meta.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
+		return i.Next()
+	}
 
 	return true
 }
@@ -1067,6 +1075,12 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 // GetResourceStats returns resource stats within the storage backend.
 func (k *kvStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
 	return k.dataStore.GetResourceStats(ctx, namespace, minCount)
+}
+
+func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
+	return func(yield func(ResourceLastImportTime, error) bool) {
+		yield(ResourceLastImportTime{}, fmt.Errorf("not implemented"))
+	}
 }
 
 // readAndClose reads all data from a ReadCloser and ensures it's closed,

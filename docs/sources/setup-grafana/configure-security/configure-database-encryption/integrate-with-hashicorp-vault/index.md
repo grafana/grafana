@@ -6,7 +6,6 @@ description: Learn how to integrate Grafana with Hashicorp Vault so that you can
 labels:
   products:
     - enterprise
-    - oss
 title: Integrate Grafana with Hashicorp Vault
 weight: 500
 ---
