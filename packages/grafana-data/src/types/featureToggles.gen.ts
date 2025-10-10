@@ -1113,11 +1113,6 @@ export interface FeatureToggles {
   */
   alertingNotificationHistory?: boolean;
   /**
-  * Allows decoupled core plugins to load from the Grafana CDN
-  * @default false
-  */
-  pluginAssetProvider?: boolean;
-  /**
   * Enable dual reader for unified storage search
   */
   unifiedStorageSearchDualReaderEnabled?: boolean;

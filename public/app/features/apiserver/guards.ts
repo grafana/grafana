@@ -21,8 +21,6 @@ export function isResource<T = object, S = object, K = string>(value: unknown): 
   }
 
   return (
-    typeof value.apiVersion === 'string' &&
-    typeof value.kind === 'string' &&
     typeof metadata.name === 'string' &&
     typeof metadata.resourceVersion === 'string' &&
     typeof metadata.creationTimestamp === 'string' &&
