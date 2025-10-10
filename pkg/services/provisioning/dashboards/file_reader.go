@@ -119,7 +119,11 @@ func (fr *FileReader) watchChanges(ctx context.Context) error {
 			select {
 			case <-ctx.Done():
 				return
-			case <-events:
+			case _, ok := <-events:
+				// channel closed
+				if !ok {
+					return
+				}
 				changed = true
 			case <-time.After(time.Second * 5): // 5s maximum refresh
 				if changed {
