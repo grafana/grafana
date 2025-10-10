@@ -244,10 +244,59 @@ func GroupScopesByActionContext(ctx context.Context, permissions []Permission) m
 	))
 	defer span.End()
 
-	m := make(map[string][]string)
-	for i := range permissions {
-		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
+	// Note: this has been optimized to improve memory usage in large instances
+	// where there are lots of permissions. This isn't quite as fast as it can
+	// be, but we should prioritize memory over speed in this case.
+
+	if len(permissions) == 0 {
+		return make(map[string][]string)
 	}
+
+	// Use index-based approach with cached lookups for better performance
+	// First pass: assign and cache indices for each permission
+	actionIndex := make(map[string]int)
+	indices := make([]int, len(permissions))
+
+	for i := range permissions {
+		action := permissions[i].Action
+		if idx, ok := actionIndex[action]; ok {
+			indices[i] = idx
+		} else {
+			idx = len(actionIndex)
+			actionIndex[action] = idx
+			indices[i] = idx
+		}
+	}
+
+	// Count scopes per action using cached indices
+	actionCounts := make([]int, len(actionIndex))
+	for i := range indices {
+		actionCounts[indices[i]]++
+	}
+
+	// Preallocate slice array with exact capacities
+	scopes := make([][]string, len(actionCounts))
+	for i, count := range actionCounts {
+		scopes[i] = make([]string, 0, count)
+	}
+
+	// Second pass: append scopes using cached indices (no map lookups!)
+	for i := range permissions {
+		idx := indices[i]
+		scopes[idx] = append(scopes[idx], permissions[i].Scope)
+	}
+
+	// Build result map
+	m := make(map[string][]string, len(actionIndex))
+	for action, idx := range actionIndex {
+		m[action] = scopes[idx]
+	}
+
+	span.SetAttributes(
+		attribute.Int("unique_actions", len(actionIndex)),
+		attribute.Float64("avg_scopes_per_action", float64(len(permissions))/float64(len(actionIndex))),
+	)
+
 	return m
 }
 

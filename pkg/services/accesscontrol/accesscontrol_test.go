@@ -155,27 +155,47 @@ func TestGroupScopesByActionContext(t *testing.T) {
 }
 
 func BenchmarkGroupScopesByAction(b *testing.B) {
-	// create a big list of permissions with a bunch of duplicates
-	permissions := []Permission{}
-	for i := 0; i < 100; i++ {
-		for j := 0; j < 500+i; j++ {
-			permissions = append(permissions, Permission{
-				Action: fmt.Sprintf("action:%d", i),
-				Scope:  fmt.Sprintf("scope:%d_%d", i, j),
-			})
-		}
-		// add duplicate scopes
-		for j := 0; j < 10; j++ {
-			permissions = append(permissions, Permission{
-				Action: fmt.Sprintf("action:%d", i),
-				Scope:  fmt.Sprintf("scope:%d_%d", i, 0),
-			})
-		}
+	testCases := []struct {
+		name         string
+		numActions   int
+		totalPerms   int
+		avgPerAction int
+	}{
+		{"small", 10, 1000, 100},
+		{"medium", 50, 10000, 200},
+		{"large", 100, 70000, 700},
 	}
 
-	b.ResetTimer()
+	for _, tc := range testCases {
+		b.Run(tc.name, func(b *testing.B) {
+			permissions := make([]Permission, 0, tc.totalPerms)
 
-	for i := 0; i < b.N; i++ {
-		GroupScopesByActionContext(context.Background(), permissions)
+			// Create realistic distribution with variance
+			// Some actions have more scopes than others
+			for i := 0; i < tc.numActions; i++ {
+				// Add variance: some actions get more scopes
+				scopeCount := tc.avgPerAction
+				if i%3 == 0 {
+					scopeCount = scopeCount * 2
+				} else if i%5 == 0 {
+					scopeCount = scopeCount / 2
+				}
+
+				for j := 0; j < scopeCount && len(permissions) < tc.totalPerms; j++ {
+					permissions = append(permissions, Permission{
+						Action: fmt.Sprintf("action:%d", i),
+						Scope:  fmt.Sprintf("scope:%d_%d", i, j),
+					})
+				}
+			}
+
+			b.ReportMetric(float64(len(permissions)), "permissions")
+			b.ReportMetric(float64(tc.numActions), "actions")
+			b.ResetTimer()
+
+			for b.Loop() {
+				GroupScopesByActionContext(context.Background(), permissions)
+			}
+		})
 	}
 }
