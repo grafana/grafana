@@ -103,10 +103,14 @@ describe('Backend / Frontend single version migration result comparison', () => 
       expect(backendMigrationResult.schemaVersion).toEqual(targetVersion);
 
       // Migrate dashboard in Frontend.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let migratedTemplatingList: any[] = jsonInput?.templating?.list ?? [];
       const frontendModel = new DashboardModel(jsonInput, undefined, {
         targetSchemaVersion: targetVersion,
-        getVariablesFromState: () => jsonInput?.templating?.list ?? [],
+        getVariablesFromState: () => migratedTemplatingList,
       });
+      // Update the templating list reference after migration
+      migratedTemplatingList = frontendModel.templating?.list ?? [];
 
       const frontendMigrationResult = frontendModel.getSaveModelClone();
 
