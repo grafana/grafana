@@ -113,7 +113,14 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 
 	_ = concurrency.ForEachJob(ctx, len(req.Queries), concurrentQueryCount, func(ctx context.Context, idx int) error {
 		query := req.Queries[idx]
-		r := s.handleQuery(ctx, query, fromAlert, hasPromQLScopeFeatureFlag)
+
+		// Extract hideWarnings from JSONData if available
+		hideWarnings := false
+		if v, ok := query.JSONData["hideWarnings"].(bool); ok {
+			hideWarnings = v
+		}
+
+		r := s.handleQuery(ctx, query, fromAlert, hasPromQLScopeFeatureFlag, hideWarnings)
 		if r != nil {
 			m.Lock()
 			result.Responses[query.RefID] = *r
@@ -126,7 +133,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromAlert,
-	hasPromQLScopeFeatureFlag bool) *backend.DataResponse {
+	hasPromQLScopeFeatureFlag bool, hideWarnings bool) *backend.DataResponse {
 	traceCtx, span := s.tracer.Start(ctx, "datasource.prometheus")
 	defer span.End()
 	query, err := models.Parse(ctx, s.log, span, bq, s.TimeInterval, s.intervalCalculator, fromAlert, hasPromQLScopeFeatureFlag)
@@ -136,14 +143,14 @@ func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromA
 		}
 	}
 
-	r := s.fetch(traceCtx, s.client, query)
+	r := s.fetch(traceCtx, s.client, query, hideWarnings)
 	if r == nil {
 		s.log.FromContext(ctx).Debug("Received nil response from runQuery", "query", query.Expr)
 	}
 	return r
 }
 
-func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *models.Query) *backend.DataResponse {
+func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *models.Query, hideWarnings bool) *backend.DataResponse {
 	logger := s.log.FromContext(traceCtx)
 	logger.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr)
 
@@ -161,7 +168,7 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			res := s.instantQuery(traceCtx, client, q)
+			res := s.instantQuery(traceCtx, client, q, hideWarnings)
 			m.Lock()
 			addDataResponse(&res, dr)
 			m.Unlock()
@@ -172,7 +179,7 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			res := s.rangeQuery(traceCtx, client, q)
+			res := s.rangeQuery(traceCtx, client, q, hideWarnings)
 			m.Lock()
 			addDataResponse(&res, dr)
 			m.Unlock()
@@ -183,11 +190,9 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			res := s.exemplarQuery(traceCtx, client, q)
+			res := s.exemplarQuery(traceCtx, client, q, hideWarnings)
 			m.Lock()
 			if res.Error != nil {
-				// If exemplar query returns error, we want to only log it and
-				// continue with other results processing
 				logger.Error("Exemplar query failed", "query", q.Expr, "err", res.Error)
 			}
 			dr.Frames = append(dr.Frames, res.Frames...)
@@ -199,7 +204,7 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 	return dr
 }
 
-func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query) backend.DataResponse {
+func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, hideWarnings bool) backend.DataResponse {
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
 		return addErrorSourceToDataResponse(err)
@@ -212,16 +217,15 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 		}
 	}()
 
-	return s.parseResponse(ctx, q, res)
+	return s.parseResponse(ctx, q, res, hideWarnings)
 }
 
-func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query) backend.DataResponse {
+func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, hideWarnings bool) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
 		return addErrorSourceToDataResponse(err)
 	}
 
-	// This is only for health check fall back scenario
 	if res.StatusCode != 200 && q.RefId == "__healthcheck__" {
 		return backend.DataResponse{
 			Error:       errors.New(res.Status),
@@ -236,10 +240,10 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 		}
 	}()
 
-	return s.parseResponse(ctx, q, res)
+	return s.parseResponse(ctx, q, res, hideWarnings)
 }
 
-func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query) backend.DataResponse {
+func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, hideWarnings bool) backend.DataResponse {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
 		response := backend.DataResponse{
@@ -258,7 +262,7 @@ func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *mode
 			s.log.Warn("Failed to close response body", "error", err)
 		}
 	}()
-	return s.parseResponse(ctx, q, res)
+	return s.parseResponse(ctx, q, res, hideWarnings)
 }
 
 func addDataResponse(res *backend.DataResponse, dr *backend.DataResponse) {

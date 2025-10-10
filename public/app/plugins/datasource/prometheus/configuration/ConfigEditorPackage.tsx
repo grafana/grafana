@@ -6,7 +6,7 @@ import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data
 import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { AlertingSettingsOverhaul, PromOptions, PromSettings } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { Alert, FieldValidationMessage, TextLink, useTheme2 } from '@grafana/ui';
+import { Alert, FieldValidationMessage, FormField, Switch, TextLink, useTheme2 } from '@grafana/ui';
 
 import { AzureAuthSettings } from './AzureAuthSettings';
 import { AzurePromDataSourceSettings, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
@@ -65,10 +65,29 @@ export const ConfigEditor = (props: Props) => {
         />
         <AlertingSettingsOverhaul<PromOptions> options={options} onOptionsChange={onOptionsChange} />
         <PromSettings options={options} onOptionsChange={onOptionsChange} />
+
+        {/* NEW: Hide warnings toggle */}
+        <FormField
+          label="Hide Prometheus warnings"
+          labelWidth={20}
+          inputWidth={30}
+          tooltip="If enabled, warnings from Prometheus will not be shown in Grafana panels."
+        >
+          <Switch
+            value={options.jsonData.hideWarnings || false}
+            onChange={(e) =>
+              onOptionsChange({
+                ...options,
+                jsonData: { ...options.jsonData, hideWarnings: e.currentTarget.checked },
+              })
+            }
+          />
+        </FormField>
       </ConfigSection>
     </>
   );
 };
+
 /**
  * Use this to return a url in a tooltip in a field. Don't forget to make the field interactive to be able to click on the tooltip
  * @param url
