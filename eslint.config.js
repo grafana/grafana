@@ -100,6 +100,7 @@ module.exports = [
       '**/build/',
       '**/compiled/',
       '**/dist/',
+      'coverage/',
       'data/',
       'deployment_tools_config.json',
       'devenv',
