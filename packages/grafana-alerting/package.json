@@ -70,6 +70,7 @@
     "@types/lodash": "^4",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
+    "@types/tinycolor2": "^1",
     "i18next": "^25.5.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -95,6 +96,7 @@
     "@faker-js/faker": "^9.8.0",
     "@grafana/i18n": "12.3.0-pre",
     "fishery": "^2.3.1",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "tinycolor2": "^1.6.0"
   }
 }
