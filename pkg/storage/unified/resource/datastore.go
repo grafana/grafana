@@ -165,9 +165,6 @@ func (k GetRequestKey) Validate() error {
 	if err := validation.IsValidGrafanaName(k.Name); err != nil {
 		return NewValidationError("name", k.Name, err[0])
 	}
-	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
-	}
 
 	return nil
 }
