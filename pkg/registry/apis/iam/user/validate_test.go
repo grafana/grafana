@@ -182,60 +182,47 @@ func TestValidateOnUpdate(t *testing.T) {
 		errorContains string
 	}{
 		{
-			name: "grafana admin updates user email",
+			name: "un-provisioning a provisioned user",
 			oldUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Email: "old@test.com", Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Provisioned: true, Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Email: "new@test.com", Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Provisioned: false, Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: true,
 			},
-			expectError: false,
+			expectError:   true,
+			errorContains: "provisioned user cannot be un-provisioned",
 		},
 		{
-			name: "non-admin updates user email",
+			name: "non-service user provisions a user",
 			oldUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Email: "old@test.com", Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Provisioned: false, Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Email: "new@test.com", Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Provisioned: true, Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,
-				IsGrafanaAdmin: false,
+				IsGrafanaAdmin: true,
 			},
 			expectError:   true,
-			errorContains: "only grafana admins can update email, name, or login",
+			errorContains: "only service users can provision a user",
 		},
 		{
-			name: "service user updates provisioned status",
+			name: "service user provisions a user",
 			oldUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Provisioned: false, Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Provisioned: false, Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Provisioned: true, Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Provisioned: true, Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
 				Type: types.TypeAccessPolicy,
 			},
 			expectError: false,
-		},
-		{
-			name: "non-service user updates provisioned status",
-			oldUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Provisioned: false, Role: "Viewer"},
-			},
-			newUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Provisioned: true, Role: "Viewer"},
-			},
-			requester: &identity.StaticRequester{
-				Type: types.TypeUser,
-			},
-			expectError:   true,
-			errorContains: "only service users can update provisioned status",
 		},
 		{
 			name: "no changes",
@@ -251,12 +238,54 @@ func TestValidateOnUpdate(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "service user verifies email",
+			name: "update with empty login and email",
 			oldUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{EmailVerified: false, Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{EmailVerified: true, Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "", Email: "", Role: "Viewer"},
+			},
+			requester: &identity.StaticRequester{
+				Type: types.TypeUser,
+			},
+			expectError:   true,
+			errorContains: "user must have either login or email",
+		},
+		{
+			name: "update with only login",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Email: "test@test.com", Role: "Viewer"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Email: "", Role: "Viewer"},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: true,
+			},
+			expectError: false,
+		},
+		{
+			name: "update with only email",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Role: "Viewer"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "", Email: "test@test.com", Role: "Viewer"},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: true,
+			},
+			expectError: false,
+		},
+		{
+			name: "service user verifies email",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", EmailVerified: false, Role: "Viewer"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", EmailVerified: true, Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
 				Type: types.TypeAccessPolicy,
@@ -266,10 +295,10 @@ func TestValidateOnUpdate(t *testing.T) {
 		{
 			name: "non-service user verifies email",
 			oldUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{EmailVerified: false, Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", EmailVerified: false, Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{EmailVerified: true, Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", EmailVerified: true, Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
 				Type: types.TypeUser,
@@ -280,10 +309,10 @@ func TestValidateOnUpdate(t *testing.T) {
 		{
 			name: "grafana admin disables user",
 			oldUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Disabled: false, Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Disabled: false, Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Disabled: true, Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Disabled: true, Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,
@@ -294,10 +323,10 @@ func TestValidateOnUpdate(t *testing.T) {
 		{
 			name: "non-admin disables user",
 			oldUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Disabled: false, Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Disabled: false, Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Disabled: true, Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Disabled: true, Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,
@@ -309,10 +338,10 @@ func TestValidateOnUpdate(t *testing.T) {
 		{
 			name: "grafana admin grants admin",
 			oldUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{GrafanaAdmin: false, Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", GrafanaAdmin: false, Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{GrafanaAdmin: true, Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", GrafanaAdmin: true, Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,
@@ -323,10 +352,10 @@ func TestValidateOnUpdate(t *testing.T) {
 		{
 			name: "non-admin grants admin",
 			oldUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{GrafanaAdmin: false, Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", GrafanaAdmin: false, Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{GrafanaAdmin: true, Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", GrafanaAdmin: true, Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,
@@ -338,10 +367,10 @@ func TestValidateOnUpdate(t *testing.T) {
 		{
 			name: "update to empty role",
 			oldUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Role: ""},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Role: ""},
 			},
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,
@@ -353,10 +382,10 @@ func TestValidateOnUpdate(t *testing.T) {
 		{
 			name: "update to invalid role",
 			oldUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Role: "InvalidRole"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Role: "InvalidRole"},
 			},
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,
@@ -368,10 +397,10 @@ func TestValidateOnUpdate(t *testing.T) {
 		{
 			name: "update to valid role",
 			oldUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Role: "Editor"},
 			},
 			newUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Role: "Admin"},
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,

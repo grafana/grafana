@@ -58,11 +58,6 @@ func ValidateOnUpdate(ctx context.Context, oldObj, newObj *iamv0alpha1.User) err
 	isServiceUser := requester.IsIdentityType(types.TypeAccessPolicy)
 
 	if !isGrafanaAdmin {
-		if newObj.Spec.Email != oldObj.Spec.Email || newObj.Spec.Name != oldObj.Spec.Name || newObj.Spec.Login != oldObj.Spec.Login {
-			return apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
-				newObj.Name,
-				fmt.Errorf("only grafana admins can update email, name, or login"))
-		}
 		if newObj.Spec.Disabled != oldObj.Spec.Disabled {
 			return apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
 				newObj.Name,
@@ -75,17 +70,27 @@ func ValidateOnUpdate(ctx context.Context, oldObj, newObj *iamv0alpha1.User) err
 		}
 	}
 
+	if !newObj.Spec.Provisioned && oldObj.Spec.Provisioned {
+		return apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
+			newObj.Name,
+			fmt.Errorf("provisioned user cannot be un-provisioned"))
+	}
+
 	if !isServiceUser {
-		if newObj.Spec.Provisioned != oldObj.Spec.Provisioned {
+		if newObj.Spec.Provisioned && !oldObj.Spec.Provisioned {
 			return apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
 				newObj.Name,
-				fmt.Errorf("only service users can update provisioned status"))
+				fmt.Errorf("only service users can provision a user"))
 		}
 		if newObj.Spec.EmailVerified && !oldObj.Spec.EmailVerified {
 			return apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
 				newObj.Name,
 				fmt.Errorf("only service users can verify email"))
 		}
+	}
+
+	if newObj.Spec.Login == "" && newObj.Spec.Email == "" {
+		return apierrors.NewBadRequest("user must have either login or email")
 	}
 
 	err = validateRole(newObj)

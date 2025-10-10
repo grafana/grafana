@@ -673,27 +673,19 @@ func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo
 
 	var updatedUser common.UserWithRole
 	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		userInternalID, err := s.GetUserInternalID(ctx, ns, GetUserInternalIDQuery{UID: cmd.UID})
+		if err != nil {
+			return fmt.Errorf("user not found: %w", err)
+		}
+
 		userQuery, err := sqltemplate.Execute(sqlUpdateUserTemplate, req)
 		if err != nil {
 			return fmt.Errorf("execute user template %q: %w", sqlUpdateUserTemplate.Name(), err)
 		}
 
-		result, err := st.Exec(ctx, userQuery, req.GetArgs()...)
+		_, err = st.Exec(ctx, userQuery, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("failed to update user: %w", err)
-		}
-
-		rowsAffected, err := result.RowsAffected()
-		if err != nil {
-			return fmt.Errorf("failed to get rows affected: %w", err)
-		}
-		if rowsAffected == 0 {
-			return user.ErrUserNotFound
-		}
-
-		userInternalID, err := s.GetUserInternalID(ctx, ns, GetUserInternalIDQuery{UID: cmd.UID})
-		if err != nil {
-			return err
 		}
 
 		orgUserCmd := &UpdateOrgUserCommand{
