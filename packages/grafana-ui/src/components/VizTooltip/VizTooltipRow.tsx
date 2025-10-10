@@ -30,6 +30,7 @@ enum LabelValueTypes {
 const SUCCESSFULLY_COPIED_TEXT = 'Copied to clipboard';
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 const HORIZONTAL_PX_PER_CHAR = 7;
+const CAN_COPY = Boolean(navigator.clipboard && window.isSecureContext);
 
 export const VizTooltipRow = ({
   label,
@@ -64,7 +65,6 @@ export const VizTooltipRow = ({
 
   const [copiedText, setCopiedText] = useState<Record<string, string> | null>(null);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
-  const canCopy = navigator?.clipboard;
 
   const labelRef = useRef<null | HTMLDivElement>(null);
   const valueRef = useRef<null | HTMLDivElement>(null);
@@ -84,7 +84,7 @@ export const VizTooltipRow = ({
   }, [showCopySuccess]);
 
   const copyToClipboard = async (text: string, type: LabelValueTypes) => {
-    if (!navigator?.clipboard && window.isSecureContext) {
+    if (!CAN_COPY) {
       fallbackCopyToClipboard(text, type);
       return;
     }
@@ -158,7 +158,7 @@ export const VizTooltipRow = ({
                   )}
                   {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
                   <div
-                    className={clsx(styles.label, isActive ? styles.activeSeries : '', canCopy ? styles.copy : '')}
+                    className={clsx(styles.label, isActive ? styles.activeSeries : '', CAN_COPY ? styles.copy : '')}
                     onMouseEnter={onMouseEnterLabel}
                     onMouseLeave={onMouseLeaveLabel}
                     onClick={() => copyToClipboard(label, LabelValueTypes.label)}
@@ -196,7 +196,7 @@ export const VizTooltipRow = ({
             )}
             {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
             <div
-              className={clsx(styles.value, canCopy ? styles.copy : '')}
+              className={clsx(styles.value, CAN_COPY ? styles.copy : '')}
               style={innerValueScrollStyle}
               onClick={() => copyToClipboard(value ? value.toString() : '', LabelValueTypes.value)}
               ref={valueRef}
