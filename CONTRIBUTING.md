@@ -75,7 +75,7 @@ You can help even if you don't write code:
 - Help with [issue triage](https://github.com/grafana/grafana/blob/main/contribute/triage-issues.md) by reviewing, labeling, and clarifying open issues.
 - Report security vulnerabilities following our [security policy](https://github.com/grafana/grafana/security/policy).
 
-**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests translating grafana.json files - they will be rejected. We do accept contributions to mark up phrases for translation. See [Internationalization](contribute/internationalization.md).
+**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests translating `grafana.json` files - they will be rejected. We do accept contributions to mark up phrases for translation. See [Internationalization](contribute/internationalization.md).
 
 #### Reporting issues
 
