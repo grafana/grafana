@@ -21,10 +21,9 @@
   "links": [],
   "panels": [
     {
-      "autoMigrateFrom": "graph",
       "grid": {
         "leftMax": 100,
-        "leftMin": 0
+        "min": 0
       },
       "id": 1,
       "legend": {
@@ -37,7 +36,7 @@
         }
       ],
       "title": "CPU Usage",
-      "type": "timeseries",
+      "type": "graph",
       "y_formats": [
         "percent",
         "short"
@@ -46,12 +45,10 @@
     {
       "autoMigrateFrom": "graph",
       "grid": {
-        "leftMin": 0
+        "min": 0
       },
       "id": 2,
-      "legend": {
-        "show": false
-      },
+      "legend": false,
       "targets": [
         {
           "refId": "A",
@@ -60,10 +57,7 @@
       ],
       "title": "Memory Usage",
       "type": "timeseries",
-      "y_formats": [
-        "bytes",
-        null
-      ]
+      "y_format": "bytes"
     },
     {
       "grid": {
@@ -78,7 +72,6 @@
       "y_format": "short"
     },
     {
-      "autoMigrateFrom": "graph",
       "id": 4,
       "legend": {
         "show": true
@@ -90,7 +83,7 @@
         }
       ],
       "title": "Disk I/O",
-      "type": "timeseries",
+      "type": "graph",
       "y_formats": [
         null,
         "Bps"

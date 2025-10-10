@@ -70,6 +70,10 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 	// This is needed to preserve empty custom objects that were originally present
 	trackOriginalFieldConfigCustom(dash)
 
+	// 1.2. Track which panels were originally graphite type
+	// This is needed to prevent auto-migration to timeseries after V2 migration converts graphite->graph
+	trackOriginalGraphitePanels(dash)
+
 	// 2. Apply ALL frontend defaults FIRST (DashboardModel + PanelModel defaults)
 	// This replicates the behavior of the frontend DashboardModel and PanelModel constructors
 	applyFrontendDefaults(dash)

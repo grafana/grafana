@@ -21,7 +21,6 @@
   "links": [],
   "panels": [
     {
-      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -29,7 +28,7 @@
       },
       "grid": {
         "leftMax": 100,
-        "leftMin": 0
+        "min": 0
       },
       "id": 1,
       "legend": {
@@ -47,7 +46,7 @@
         }
       ],
       "title": "CPU Usage",
-      "type": "timeseries",
+      "type": "graph",
       "y_formats": [
         "percent",
         "short"
@@ -61,12 +60,10 @@
         "uid": "default-ds-uid"
       },
       "grid": {
-        "leftMin": 0
+        "min": 0
       },
       "id": 2,
-      "legend": {
-        "show": false
-      },
+      "legend": false,
       "targets": [
         {
           "datasource": {
@@ -80,10 +77,7 @@
       ],
       "title": "Memory Usage",
       "type": "timeseries",
-      "y_formats": [
-        "bytes",
-        null
-      ]
+      "y_format": "bytes"
     },
     {
       "datasource": {
@@ -113,7 +107,6 @@
       "y_format": "short"
     },
     {
-      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -135,7 +128,7 @@
         }
       ],
       "title": "Disk I/O",
-      "type": "timeseries",
+      "type": "graph",
       "y_formats": [
         null,
         "Bps"

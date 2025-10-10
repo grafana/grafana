@@ -66,7 +66,7 @@ func V2(_ context.Context, dashboard map[string]interface{}) error {
 			if !ok {
 				continue
 			}
-			upgradePanelV2(panel)
+			upgradePanel(panel)
 		}
 	}
 
@@ -92,7 +92,6 @@ func migrateServicesFilter(dashboard map[string]interface{}) {
 
 	// Migrate templating list
 	if list, ok := filter["list"]; ok {
-		// Ensure templating exists
 		if _, exists := dashboard["templating"]; !exists {
 			dashboard["templating"] = map[string]interface{}{}
 		}
@@ -104,16 +103,20 @@ func migrateServicesFilter(dashboard map[string]interface{}) {
 	delete(dashboard, "services")
 }
 
-// upgradePanelV2 applies panel-specific upgrades for V2 migration
-func upgradePanelV2(panel map[string]interface{}) {
+// upgradePanel applies panel-specific upgrades for V2 migration
+func upgradePanel(panel map[string]interface{}) {
 	// Panel type conversion: graphite -> graph
+	wasOriginallyGraphite := false
 	if panelType, ok := panel["type"].(string); ok && panelType == "graphite" {
 		panel["type"] = "graph"
+		wasOriginallyGraphite = true
 	}
 
-	// Only apply graph-specific migrations to graph panels
+	// Only apply graph-specific migrations to panels that are currently graph type
+	// AND were originally graphite (to match frontend behavior where originally-graph panels
+	// are auto-migrated to timeseries before V2 migration runs)
 	panelType := GetStringValue(panel, "type")
-	if panelType != "graph" {
+	if panelType != "graph" || !wasOriginallyGraphite {
 		return
 	}
 
@@ -139,19 +142,28 @@ func migrateLegendProperty(panel map[string]interface{}) {
 }
 
 // migrateGridProperties migrates grid.min/max to grid.leftMin/leftMax
+// Note: This matches the frontend's behavior which has a bug where min=0 is not converted
+// due to JavaScript's falsy check: if (panel.grid.min)
 func migrateGridProperties(panel map[string]interface{}) {
 	grid, ok := panel["grid"].(map[string]interface{})
 	if !ok {
 		return
 	}
 
-	// Migrate grid.min to grid.leftMin
+	// Migrate grid.min to grid.leftMin (but skip if value is 0 to match frontend bug)
 	if min, ok := grid["min"]; ok {
-		grid["leftMin"] = min
-		delete(grid, "min")
+		// Frontend uses if (panel.grid.min) which is falsy for 0
+		// We need to match this buggy behavior
+		if minFloat, ok := min.(float64); ok && minFloat != 0 {
+			grid["leftMin"] = min
+			delete(grid, "min")
+		} else if minInt, ok := min.(int); ok && minInt != 0 {
+			grid["leftMin"] = min
+			delete(grid, "min")
+		}
 	}
 
-	// Migrate grid.max to grid.leftMax
+	// Migrate grid.max to grid.leftMax (works correctly for all values)
 	if max, ok := grid["max"]; ok {
 		grid["leftMax"] = max
 		delete(grid, "max")

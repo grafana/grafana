@@ -551,6 +551,7 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 	// Clean up internal markers
 	delete(panel, "_originallyHadTransformations")
 	delete(panel, "_originallyHadFieldConfigCustom")
+	delete(panel, "_originallyWasGraphite")
 }
 
 // filterDefaultValues removes properties that match the default values (matches frontend's isEqual logic)
@@ -945,33 +946,16 @@ func applyPanelAutoMigration(panel map[string]interface{}) {
 
 	var newType string
 
+	// Special handling for panels that were originally graphite
+	// These should not be auto-migrated to timeseries after V2 migration converts them to graph
+	if panel["_originallyWasGraphite"] == true && panelType == "graph" {
+		return
+	}
+
 	// Graph needs special logic as it can be migrated to multiple panels
 	if panelType == "graph" {
 		// Check xaxis mode for special cases
-		if xaxis, ok := panel["xaxis"].(map[string]interface{}); ok {
-			if mode, ok := xaxis["mode"].(string); ok {
-				switch mode {
-				case "series":
-					// Check legend values for bargauge
-					if legend, ok := panel["legend"].(map[string]interface{}); ok {
-						if values, ok := legend["values"].(bool); ok && values {
-							newType = "bargauge"
-						} else {
-							newType = "barchart"
-						}
-					} else {
-						newType = "barchart"
-					}
-				case "histogram":
-					newType = "histogram"
-				}
-			}
-		}
-
-		// Default graph migration to timeseries
-		if newType == "" {
-			newType = "timeseries"
-		}
+		newType = getGraphAutoMigration(panel)
 	} else {
 		// Check autoMigrateAngular mapping
 		autoMigrateAngular := map[string]string{
@@ -993,6 +977,36 @@ func applyPanelAutoMigration(panel map[string]interface{}) {
 		panel["autoMigrateFrom"] = panelType
 		panel["type"] = newType
 	}
+}
+
+func getGraphAutoMigration(panel map[string]interface{}) string {
+	newType := ""
+	if xaxis, ok := panel["xaxis"].(map[string]interface{}); ok {
+		if mode, ok := xaxis["mode"].(string); ok {
+			switch mode {
+			case "series":
+				// Check legend values for bargauge
+				if legend, ok := panel["legend"].(map[string]interface{}); ok {
+					if values, ok := legend["values"].(bool); ok && values {
+						newType = "bargauge"
+					} else {
+						newType = "barchart"
+					}
+				} else {
+					newType = "barchart"
+				}
+			case "histogram":
+				newType = "histogram"
+			}
+		}
+	}
+
+	// Default graph migration to timeseries
+	if newType == "" {
+		newType = "timeseries"
+	}
+
+	return newType
 }
 
 // removeNullValuesRecursively removes null values from nested objects and arrays
@@ -1120,6 +1134,36 @@ func trackPanelOriginalTransformations(panel map[string]interface{}) {
 		for _, nestedPanelInterface := range nestedPanels {
 			if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
 				trackPanelOriginalTransformations(nestedPanel)
+			}
+		}
+	}
+}
+
+// trackOriginalGraphitePanels marks panels that were originally graphite type
+// This is needed to match frontend behavior where graphite->graph conversion in V2 migration
+// should not trigger auto-migration to timeseries
+func trackOriginalGraphitePanels(dashboard map[string]interface{}) {
+	if panels, ok := dashboard["panels"].([]interface{}); ok {
+		for _, panelInterface := range panels {
+			if panel, ok := panelInterface.(map[string]interface{}); ok {
+				trackPanelOriginalGraphite(panel)
+			}
+		}
+	}
+}
+
+// trackPanelOriginalGraphite recursively tracks graphite panels and nested panels
+func trackPanelOriginalGraphite(panel map[string]interface{}) {
+	// Mark if this panel was originally graphite
+	if panelType, ok := panel["type"].(string); ok && panelType == "graphite" {
+		panel["_originallyWasGraphite"] = true
+	}
+
+	// Handle nested panels in row panels
+	if nestedPanels, ok := panel["panels"].([]interface{}); ok {
+		for _, nestedPanelInterface := range nestedPanels {
+			if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
+				trackPanelOriginalGraphite(nestedPanel)
 			}
 		}
 	}
