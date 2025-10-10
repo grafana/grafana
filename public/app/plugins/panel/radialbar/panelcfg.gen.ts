@@ -42,6 +42,6 @@ export const defaultOptions: Partial<Options> = {
   segmentCount: 1,
   segmentSpacing: 0.3,
   shape: 'gauge',
-  showThresholdMarkers: true,
+  showThresholdMarkers: false,
   sparkline: false,
 };

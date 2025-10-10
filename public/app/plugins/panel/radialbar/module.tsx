@@ -45,30 +45,6 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       },
     });
 
-    builder.addBooleanSwitch({
-      path: 'sparkline',
-      name: t('radialbar.config.sparkline', 'Show sparkline'),
-      category,
-      defaultValue: defaultOptions.sparkline,
-    });
-
-    builder.addBooleanSwitch({
-      path: 'showThresholdMarkers',
-      name: t('radialbar.config.threshold-markers', 'Show thresholds'),
-      category,
-      defaultValue: defaultOptions.showThresholdMarkers,
-    });
-
-    builder.addCustomEditor({
-      id: 'radialbar-effects',
-      path: 'effects',
-      name: 'Effects',
-      category,
-      editor: EffectsEditor,
-      settings: {},
-      defaultValue: defaultOptions.effects,
-    });
-
     builder.addSliderInput({
       path: 'barWidthFactor',
       name: t('radialbar.config.bar-width', 'Bar width'),
@@ -104,6 +80,30 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
         max: 1,
         step: 0.01,
       },
+    });
+
+    builder.addBooleanSwitch({
+      path: 'sparkline',
+      name: t('radialbar.config.sparkline', 'Show sparkline'),
+      category,
+      defaultValue: defaultOptions.sparkline,
+    });
+
+    builder.addBooleanSwitch({
+      path: 'showThresholdMarkers',
+      name: t('radialbar.config.threshold-markers', 'Show thresholds'),
+      category,
+      defaultValue: defaultOptions.showThresholdMarkers,
+    });
+
+    builder.addCustomEditor({
+      id: 'radialbar-effects',
+      path: 'effects',
+      name: 'Effects',
+      category,
+      editor: EffectsEditor,
+      settings: {},
+      defaultValue: defaultOptions.effects,
     });
   })
   .setSuggestionsSupplier(new GaugeSuggestionsSupplier());
