@@ -1535,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "Il gruppo è in fase di eliminazione"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Rimuovi l'espressione \"{{refId}}\""
     },
@@ -1709,6 +1712,9 @@
       },
       "placeholder-key": "chiave",
       "placeholder-value": "valore"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Visualizza o crea punti di contatto",
@@ -2024,6 +2030,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "L'Alertmanager selezionato non esiste più o potresti non avere l'autorizzazione per accedervi. È possibile selezionare un diverso Alertmanager dal menu a discesa.",
       "title-selected-alertmanager-not-found": "Alertmanager selezionato non trovato."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2915,6 +2927,13 @@
         "summary": "Verranno importate le seguenti regole di avviso:",
         "title-warning": "Attenzione"
       }
+    },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
     },
     "type-selector-button": {
       "add-expression": "Aggiungi espressione"
@@ -4142,6 +4161,13 @@
       "body": "Prova il nuovo Advisor per scoprire potenziali problemi con le tue origini dei dati e i tuoi componenti aggiuntivi.",
       "go-to-advisor": "Vai ad Advisor"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4190,6 +4216,20 @@
         "unknown-datasource": "Origine dati sconosciuta"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Scegli un tipo di sorgente dati"
@@ -4219,6 +4259,13 @@
         },
         "subtitle": "Gestisci le connessioni alle origini dati in un unico posto. Utilizza questa pagina per aggiungere una nuova origine dati o gestire le connessioni esistenti."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Cerca tutto",
@@ -6577,6 +6624,7 @@
         "service-now-integration-and-data-source": "Integrazione e origine dati ServiceNow",
         "signal-fx-integration-and-datasource": "Integrazione e origine dati SignalFx",
         "snowflake-integration-and-data-source": "Integrazione e origine dati Snowflake",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "Integrazione e origine dati SumoLogic",
         "visualize-and-explore-dynatrace-data": "Visualizza ed esplora i dati Dynatrace",
         "visualize-and-explore-oracle-sql": "Visualizza ed esplora Oracle SQL",
@@ -9418,6 +9466,7 @@
     "description-enable-infinite-scrolling": "Sperimentale. Richiedi più risultati scorrendo fino alla fine dell'elenco dei registri.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Visualizza i controlli per passare all'ultima o alla prima riga del registro e filtra per livello di registro",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9468,9 +9517,6 @@
       "collapse": "Riduci etichette",
       "expand": "Ingrandisci etichette"
     },
-    "log-labels-list": {
-      "log-line": "riga registro"
-    },
     "log-line": {
       "has-error": "Sono presenti errori",
       "is-sampled": "È campionato",
@@ -9510,6 +9556,7 @@
       "inline-mode": "Visualizza in linea",
       "link-value-tooltip": "",
       "links-section": "Collegamenti",
+      "log-attributes-field": "",
       "log-line-field": "Riga registro",
       "log-line-section": "Riga registro",
       "move-displayed-field-down": "Sposta in basso",
@@ -9716,6 +9763,7 @@
       "line-contains": "Aggiungi come riga contenente filtro",
       "line-contains-not": "Aggiungi come riga non contenente filtro"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Risoluzione marca temporale",
     "un-themed-log-details": {
       "aria-label-data-links": "Collegamenti dati",
@@ -13657,6 +13705,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "e",
       "placeholder-from": "",
