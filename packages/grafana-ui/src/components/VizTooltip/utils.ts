@@ -83,7 +83,9 @@ export const getContentItems = (
   hideZeros = false
 ): VizTooltipItem[] => {
   // needed for computing percentage on stacked fields, null means 'NotAvailable'
-  let groupAccums: Record<string, number | null> = {};
+  let stackingGroupSums: Record<string, number | null> = {};
+  // allowed field types for stacking accumulation
+  const STACKING_ACCUM_FIELD_TYPES = new Set([FieldType.number, FieldType.boolean, FieldType.enum]);
 
   for (let i = 0; i < fields.length; i++) {
     const field = fields[i];
@@ -98,17 +100,16 @@ export const getContentItems = (
       continue;
     }
 
-    // not available when group contains non-numeric
-    if (!(field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum)) {
-      groupAccums[stackingConfig.group] = null;
+    if (!STACKING_ACCUM_FIELD_TYPES.has(field.type)) {
+      stackingGroupSums[stackingConfig.group] = null;
       continue;
     }
 
-    let dataIdx = dataIdxs[i];
+    const dataIdx = dataIdxs[i];
 
     // not available when group contains non-hovered
     if (dataIdx == null) {
-      groupAccums[stackingConfig.group] = null;
+      stackingGroupSums[stackingConfig.group] = null;
       continue;
     }
 
@@ -118,10 +119,9 @@ export const getContentItems = (
       continue;
     }
 
-    if (groupAccums[stackingConfig.group] === undefined) {
-      groupAccums[stackingConfig.group] = v;
-    } else if (groupAccums[stackingConfig.group] !== null) {
-      groupAccums[stackingConfig.group] += v;
+    if (stackingGroupSums[stackingConfig.group] !== null) {
+      stackingGroupSums[stackingConfig.group] ??= 0;
+      stackingGroupSums[stackingConfig.group] += v;
     }
   }
 
@@ -184,15 +184,17 @@ export const getContentItems = (
     }
 
     const stackingConfig = field.config.custom?.stacking;
-    let suffixInPercentStackingMode = '';
-    if (stackingConfig && stackingConfig.mode === StackingMode.Percent && groupAccums[stackingConfig.group]) {
-      const percentage = (numeric / groupAccums[stackingConfig.group]!) * 100;
-      suffixInPercentStackingMode = isFinite(percentage) ? ` (${percentage.toFixed()}%)` : '';
+    if (stackingConfig && stackingConfig.mode === StackingMode.Percent && stackingGroupSums[stackingConfig.group]) {
+      const percentage = (numeric / stackingGroupSums[stackingConfig.group]!) * 100;
+      if (isFinite(percentage)) {
+        const suffixForPercentage = ` (${percentage.toFixed()}%)`;
+        display.suffix = display.suffix ? `${display.suffix}${suffixForPercentage}` : suffixForPercentage;
+      }
     }
 
     rows.push({
       label: field.state?.displayName ?? field.name,
-      value: `${formattedValueToString(display)}${suffixInPercentStackingMode}`,
+      value: formattedValueToString(display),
       color: display.color ?? FALLBACK_COLOR,
       colorIndicator,
       colorPlacement,
