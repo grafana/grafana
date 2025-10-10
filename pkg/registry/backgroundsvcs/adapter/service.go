@@ -18,10 +18,9 @@ var _ services.NamedService = &serviceAdapter{}
 // The adapter uses dskit's BasicService with a custom RunningFn:
 //   - Starting phase: No-op, transitions immediately to Running
 //   - Running phase: Delegates to the wrapped service's Run method
-//   - Stopping phase: Closes the stop channel to signal the service to stop
+//   - Stopping phase: No-op, transitions immediately to Terminated/Failed
 type serviceAdapter struct {
-	services.NamedService
-	stopCh  chan struct{}
+	*services.BasicService
 	name    string
 	service registry.BackgroundService
 }
@@ -37,9 +36,8 @@ func asNamedService(service registry.BackgroundService) *serviceAdapter {
 	a := &serviceAdapter{
 		name:    name,
 		service: service,
-		stopCh:  make(chan struct{}),
 	}
-	a.NamedService = services.NewBasicService(nil, a.running, a.stopping).WithName(name)
+	a.BasicService = services.NewBasicService(nil, a.run, nil).WithName(name)
 	return a
 }
 
@@ -48,24 +46,13 @@ func asNamedService(service registry.BackgroundService) *serviceAdapter {
 // background service's Run method. If the background service completes without
 // error, the adapter waits for context cancellation (service stop) before
 // transitioning to Stopping state, ensuring proper dskit service lifecycle.
-func (a *serviceAdapter) running(ctx context.Context) error {
-	serviceCtx, serviceCancel := context.WithCancel(ctx)
-	go func() {
-		<-a.stopCh
-		serviceCancel()
-	}()
-
-	err := a.service.Run(serviceCtx)
+func (a *serviceAdapter) run(ctx context.Context) error {
+	err := a.service.Run(ctx)
 	if err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}
 	// wait for context cancellation to transition to Stopping state.
 	// this prevents the service from causing it's dependents to stop prematurely.
-	<-serviceCtx.Done()
-	return nil
-}
-
-func (a *serviceAdapter) stopping(_ error) error {
-	close(a.stopCh)
+	<-ctx.Done()
 	return nil
 }

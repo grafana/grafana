@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -18,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
-
-const ServiceName = "plugin.backgroundinstaller"
 
 var (
 	installRequestCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -39,7 +36,6 @@ var (
 )
 
 type Service struct {
-	services.NamedService
 	cfg             *setting.Cfg
 	log             log.Logger
 	pluginInstaller plugins.Installer
@@ -47,7 +43,6 @@ type Service struct {
 	pluginRepo      repo.Service
 	features        featuremgmt.FeatureToggles
 	updateChecker   pluginchecker.PluginUpdateChecker
-	installComplete chan struct{} // closed when all plugins are installed (used for testing)
 }
 
 func ProvideService(
@@ -65,24 +60,45 @@ func ProvideService(
 	})
 
 	s := &Service{
-		log:             log.New(ServiceName),
+		log:             log.New("plugin.backgroundinstaller"),
 		cfg:             cfg,
 		pluginInstaller: pluginInstaller,
 		pluginStore:     pluginStore,
 		pluginRepo:      pluginRepo,
 		features:        features,
 		updateChecker:   updateChecker,
-		installComplete: make(chan struct{}),
 	}
-
-	s.NamedService = services.NewBasicService(s.starting, s.running, nil).WithName(ServiceName)
-
+	if len(cfg.PreinstallPluginsSync) > 0 {
+		// Block initialization process until plugins are installed
+		err := s.installPluginsWithTimeout(cfg.PreinstallPluginsSync)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return s, nil
 }
 
 // IsDisabled disables background installation of plugins.
 func (s *Service) IsDisabled() bool {
 	return len(s.cfg.PreinstallPluginsAsync) == 0
+}
+
+func (s *Service) installPluginsWithTimeout(pluginsToInstall []setting.InstallPlugin) error {
+	// Installation process does not timeout by default nor reuses the context
+	// passed to the request so we need to handle the timeout here.
+	// We could make this timeout configurable in the future.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	done := make(chan struct{ err error })
+	go func() {
+		done <- struct{ err error }{err: s.installPlugins(ctx, pluginsToInstall, true)}
+	}()
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("failed to install plugins: %w", ctx.Err())
+	case d := <-done:
+		return d.err
+	}
 }
 
 func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion string, pluginURL string) bool {
@@ -150,34 +166,11 @@ func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting
 	return nil
 }
 
-func (s *Service) starting(ctx context.Context) error {
-	if len(s.cfg.PreinstallPluginsSync) > 0 {
-		s.log.Info("Installing plugins", "plugins", s.cfg.PreinstallPluginsSync)
-		if err := s.installPlugins(ctx, s.cfg.PreinstallPluginsSync, true); err != nil {
-			s.log.Error("Failed to install plugins", "error", err)
-			return err
-		}
-	}
-	s.log.Info("Plugins installed", "plugins", s.cfg.PreinstallPluginsSync)
-	return nil
-}
-
-func (s *Service) running(ctx context.Context) error {
-	if len(s.cfg.PreinstallPluginsAsync) > 0 {
-		s.log.Info("Installing plugins", "plugins", s.cfg.PreinstallPluginsAsync)
-		if err := s.installPlugins(ctx, s.cfg.PreinstallPluginsAsync, false); err != nil {
-			s.log.Error("Failed to install plugins", "error", err)
-			return err
-		}
-	}
-	close(s.installComplete)
-	<-ctx.Done()
-	return nil
-}
-
 func (s *Service) Run(ctx context.Context) error {
-	if err := s.StartAsync(ctx); err != nil {
-		return err
+	err := s.installPlugins(ctx, s.cfg.PreinstallPluginsAsync, false)
+	if err != nil {
+		// Unexpected error, asynchronous installation should not return errors
+		s.log.Error("Failed to install plugins", "error", err)
 	}
-	return s.AwaitTerminated(ctx)
+	return nil
 }
