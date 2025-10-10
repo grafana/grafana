@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	pluginLoader "github.com/grafana/grafana/pkg/plugins/manager/loader"
 	pAngularInspector "github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
@@ -78,7 +77,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(process.Manager), new(*process.Service)),
 	coreplugin.ProvideCoreRegistry,
 	pluginscdn.ProvideService,
-	assetpath.ProvideService,
 
 	pipeline.ProvideDiscoveryStage,
 	wire.Bind(new(discovery.Discoverer), new(*discovery.Discovery)),
@@ -155,7 +153,7 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(sources.Registry), new(*sources.Service)),
 	checkregistry.ProvideService,
 	wire.Bind(new(checkregistry.CheckService), new(*checkregistry.Service)),
-	pluginassets2.ProvideService,
+	pluginassets2.NewLocalProvider,
 	wire.Bind(new(pluginassets2.Provider), new(*pluginassets2.LocalProvider)),
 )
 

@@ -32,7 +32,6 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 			SkipHostEnvVarsEnabled: features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars),
 			SriChecksEnabled:       features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
 			TempoAlertingEnabled:   features.IsEnabledGlobally(featuremgmt.FlagTempoAlerting),
-			PluginAssetProvider:    features.IsEnabledGlobally(featuremgmt.FlagPluginAssetProvider),
 		},
 		cfg.GrafanaComAPIURL,
 		cfg.DisablePlugins,
