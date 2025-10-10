@@ -39,6 +39,7 @@ import {
   getMock,
 } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
+import { ScopeNavigation } from '../dashboards/types';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
@@ -259,6 +260,35 @@ describe('Dashboards list', () => {
     expectDashboardLength('usage-insights-overview', 1);
     expectDashboardLength('usage-insights-query-errors', 1);
     expectDashboardLength('billing-usage', 1);
+  });
+
+  it('redirects to the first scope navigation if your current dashboard is not a scope navigation', async () => {
+    // Render another dashboard, which is not a scope navigation
+    const mockNavigations: ScopeNavigation[] = [
+      {
+        spec: {
+          scope: 'grafana',
+          url: '/d/dashboard1',
+        },
+        status: {
+          title: 'Dashboard 1',
+          groups: ['group1'],
+        },
+        metadata: {
+          name: 'dashboard1',
+        },
+      },
+    ];
+    fetchDashboardsSpy.mockResolvedValue(mockNavigations);
+
+    await renderDashboard();
+    expect(locationService.getLocation().pathname).toBe('/');
+
+    await updateScopes(scopesService, ['grafana']);
+    expect(locationService.getLocation().pathname).toBe('/d/dashboard1');
+    // renderDashboard defaults to home dashboard
+    expect(locationService.getLocation().pathname).not.toBe('/');
+    expect(fetchDashboardsSpy).toHaveBeenCalled();
   });
 
   it('Shows a proper message when no scopes are selected', async () => {
