@@ -12,7 +12,6 @@ import { config } from '@grafana/runtime';
 import { createLogMock } from './logs/testUtils';
 import {
   assertConfigureIsValid,
-  assertLinkPathIsValid,
   assertStringProps,
   isAddedComponentMetaInfoMissing,
   isAddedLinkMetaInfoMissing,
@@ -25,48 +24,6 @@ import {
 } from './validators';
 
 describe('Plugin Extension Validators', () => {
-  describe('assertLinkPathIsValid()', () => {
-    it('should not throw an error if the link path is valid', () => {
-      expect(() => {
-        const pluginId = 'myorg-b-app';
-        const extension = {
-          path: `/a/${pluginId}/overview`,
-          title: 'My Plugin',
-          description: 'My Plugin Description',
-          extensionPointId: '...',
-        };
-
-        assertLinkPathIsValid(pluginId, extension.path);
-      }).not.toThrowError();
-    });
-
-    it('should throw an error if the link path is pointing to a different plugin', () => {
-      expect(() => {
-        const extension = {
-          path: `/a/myorg-b-app/overview`,
-          title: 'My Plugin',
-          description: 'My Plugin Description',
-          extensionPointId: '...',
-        };
-
-        assertLinkPathIsValid('another-plugin-app', extension.path);
-      }).toThrowError();
-    });
-
-    it('should throw an error if the link path is not prefixed with "/a/<PLUGIN_ID>"', () => {
-      expect(() => {
-        const extension = {
-          path: `/some-bad-path`,
-          title: 'My Plugin',
-          description: 'My Plugin Description',
-          extensionPointId: '...',
-        };
-
-        assertLinkPathIsValid('myorg-b-app', extension.path);
-      }).toThrowError();
-    });
-  });
-
   describe('assertConfigureIsValid()', () => {
     it('should NOT throw an error if the configure() function is missing', () => {
       expect(() => {

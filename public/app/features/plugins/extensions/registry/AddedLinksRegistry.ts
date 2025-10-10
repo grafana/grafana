@@ -5,7 +5,7 @@ import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@gra
 
 import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';
-import { isAddedLinkMetaInfoMissing, isConfigureFnValid, isLinkPathValid } from '../validators';
+import { isAddedLinkMetaInfoMissing, isConfigureFnValid } from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
@@ -61,11 +61,6 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
 
       if (!path && !onClick) {
         configLog.error(`${logPrefix} ${errors.INVALID_PATH_OR_ON_CLICK}`);
-        continue;
-      }
-
-      if (path && !isLinkPathValid(pluginId, path)) {
-        configLog.error(`${logPrefix} ${errors.INVALID_PATH}`);
         continue;
       }
 

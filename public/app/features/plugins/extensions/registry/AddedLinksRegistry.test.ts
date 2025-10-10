@@ -551,34 +551,6 @@ describe('AddedLinksRegistry', () => {
     expect(registry).toEqual({});
   });
 
-  it('should not register link extensions with invalid path configured', () => {
-    const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new AddedLinksRegistry();
-    const observable = reactiveRegistry.asObservable();
-    const subscribeCallback = jest.fn();
-
-    reactiveRegistry.register({
-      pluginId: pluginId,
-      configs: [
-        {
-          title: 'Title 1',
-          description: 'Description 1',
-          path: `/a/another-plugin/declare-incident`,
-          targets: 'grafana/dashboard/panel/menu',
-          configure: jest.fn().mockReturnValue({}),
-        },
-      ],
-    });
-
-    expect(log.error).toHaveBeenCalled();
-
-    observable.subscribe(subscribeCallback);
-    expect(subscribeCallback).toHaveBeenCalledTimes(1);
-
-    const registry = subscribeCallback.mock.calls[0][0];
-    expect(registry).toEqual({});
-  });
-
   it('should not be possible to register a link on a read-only registry', async () => {
     const pluginId = 'grafana-basic-app';
     const registry = new AddedLinksRegistry();
