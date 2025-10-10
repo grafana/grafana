@@ -220,7 +220,7 @@ export function RadialGauge(props: RadialGaugeProps) {
 
   return (
     <div className={styles.vizWrapper} style={{ width, height }}>
-      <svg width={width} height={height}>
+      <svg width={width} height={height} role="img">
         <defs> {defs}</defs>
         {graphics}
       </svg>
