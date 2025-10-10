@@ -63,13 +63,16 @@ module.exports = (env = {}) =>
     },
 
     // enable persistent cache for faster builds
-    cache: {
-      type: 'filesystem',
-      name: 'grafana-default-production',
-      buildDependencies: {
-        config: [__filename],
-      },
-    },
+    cache:
+      parseInt(env.noMinify, 10) === 1
+        ? false
+        : {
+            type: 'filesystem',
+            name: 'grafana-default-production',
+            buildDependencies: {
+              config: [__filename],
+            },
+          },
 
     plugins: [
       new MiniCssExtractPlugin({
