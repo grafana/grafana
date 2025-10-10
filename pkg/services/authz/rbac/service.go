@@ -119,6 +119,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		ctxLogger.Debug("Check execution time", "duration", time.Since(start).Milliseconds())
 	}(time.Now())
 
+	allow := &authzv1.CheckResponse{Allowed: true}
 	deny := &authzv1.CheckResponse{Allowed: false}
 
 	checkReq, err := s.validateCheckRequest(ctx, req)
@@ -135,13 +136,14 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		attribute.String("action", checkReq.Action),
 		attribute.String("name", checkReq.Name),
 		attribute.String("folder", checkReq.ParentFolder),
+		attribute.Bool("allowed", false),
 	)
 
 	permDenialKey := userPermDenialCacheKey(checkReq.Namespace.Value, checkReq.UserUID, checkReq.Action, checkReq.Name, checkReq.ParentFolder)
 	if _, ok := s.permDenialCache.Get(ctx, permDenialKey); ok {
 		s.metrics.permissionCacheUsage.WithLabelValues("true", checkReq.Action).Inc()
 		s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
-		return &authzv1.CheckResponse{Allowed: false}, nil
+		return deny, nil
 	}
 
 	cachedPerms, err := s.getCachedIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
@@ -155,7 +157,8 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		if allowed {
 			s.metrics.permissionCacheUsage.WithLabelValues("true", checkReq.Action).Inc()
 			s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
-			return &authzv1.CheckResponse{Allowed: allowed}, nil
+			span.SetAttributes(attribute.Bool("allowed", true))
+			return allow, nil
 		}
 	}
 	s.metrics.permissionCacheUsage.WithLabelValues("false", checkReq.Action).Inc()
@@ -179,6 +182,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	}
 
 	s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+	span.SetAttributes(attribute.Bool("allowed", allowed))
 	return &authzv1.CheckResponse{Allowed: allowed}, nil
 }
 

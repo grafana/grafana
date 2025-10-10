@@ -3,14 +3,12 @@ package libraryelements
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/libraryelements/model"
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -83,12 +81,12 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
-						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+						CreatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      userInDbName,
 							AvatarUrl: userInDbAvatar,
 						},
-						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+						UpdatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
 							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
