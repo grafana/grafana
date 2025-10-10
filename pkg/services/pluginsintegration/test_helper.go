@@ -3,6 +3,7 @@ package pluginsintegration
 import (
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
@@ -78,7 +79,11 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	sourcesService, err := sources.ProvideService(cfgProvider, pCfg, installer, prometheus.NewRegistry())
+
+	// Create a mock client generator for testing
+	clientGenerator := &mockClientGenerator{}
+
+	sourcesService, err := sources.ProvideService(cfgProvider, pCfg, installer, prometheus.NewRegistry(), clientGenerator)
 	require.NoError(t, err)
 	ps, err := pluginstore.NewPluginStoreForTest(reg, l, sourcesService)
 	require.NoError(t, err)
@@ -125,4 +130,12 @@ func CreateTestLoader(t *testing.T, cfg *config.PluginManagementCfg, opts Loader
 	}
 
 	return loader.New(cfg, opts.Discoverer, opts.Bootstrapper, opts.Validator, opts.Initializer, opts.Terminator, pluginerrs.ProvideErrorTracker())
+}
+
+// mockClientGenerator is a mock implementation of resource.ClientGenerator for testing
+type mockClientGenerator struct{}
+
+func (m *mockClientGenerator) ClientFor(kind resource.Kind) (resource.Client, error) {
+	// Return a mock client that doesn't do anything for testing
+	return nil, nil
 }

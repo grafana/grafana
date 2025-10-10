@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
@@ -30,7 +31,7 @@ func TestSources_List(t *testing.T) {
 			},
 		}
 
-		s, err := ProvideService(&mockConfigProvider{pCfg: pCfg, staticRootPath: testdata}, pCfg, &mockDownloader{}, prometheus.NewRegistry())
+		s, err := ProvideService(&mockConfigProvider{pCfg: pCfg, staticRootPath: testdata}, pCfg, &mockDownloader{}, prometheus.NewRegistry(), &mockClientGenerator{})
 		require.NoError(t, err)
 		srcs := s.List(context.Background())
 
@@ -98,7 +99,7 @@ func TestSources_List(t *testing.T) {
 			PluginsPath: filepath.Join(testdata, "symbolic-plugin-dirs"),
 		}
 
-		s, err := ProvideService(&mockConfigProvider{pCfg: pCfg, staticRootPath: testdata}, pCfg, &mockDownloader{}, prometheus.NewRegistry())
+		s, err := ProvideService(&mockConfigProvider{pCfg: pCfg, staticRootPath: testdata}, pCfg, &mockDownloader{}, prometheus.NewRegistry(), &mockClientGenerator{})
 		require.NoError(t, err)
 		ctx := context.Background()
 		srcs := s.List(ctx)
@@ -124,4 +125,10 @@ func TestSources_List(t *testing.T) {
 			filepath.Join(testdata, "symbolic-plugin-dirs", "plugin"): {},
 		}, "should include external symlinked plugin")
 	})
+}
+
+type mockClientGenerator struct{}
+
+func (m *mockClientGenerator) ClientFor(k resource.Kind) (resource.Client, error) {
+	return nil, nil
 }

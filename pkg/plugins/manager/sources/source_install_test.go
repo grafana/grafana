@@ -97,7 +97,7 @@ func createMockDownloaderWithDirFunc(tmpDir string, createPluginJSON func(plugin
 func TestPreinstallSource_CheckCache(t *testing.T) {
 	t.Run("Plugin not cached", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: "1.0.0"}},
 			&mockDownloader{},
 			tmpDir,
@@ -126,7 +126,7 @@ func TestPreinstallSource_CheckCache(t *testing.T) {
 		data, _ := json.Marshal(pluginJSON)
 		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), data, 0644))
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: "1.0.0"}},
 			&mockDownloader{},
 			tmpDir,
@@ -155,7 +155,7 @@ func TestPreinstallSource_CheckCache(t *testing.T) {
 		data, _ := json.Marshal(pluginJSON)
 		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), data, 0644))
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: "2.0.0"}},
 			&mockDownloader{},
 			tmpDir,
@@ -185,7 +185,7 @@ func TestPreinstallSource_CheckCache(t *testing.T) {
 		data, _ := json.Marshal(pluginJSON)
 		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), data, 0644))
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: ""}},
 			&mockDownloader{},
 			tmpDir,
@@ -212,7 +212,7 @@ func TestPreinstallSource_Discover_Sync(t *testing.T) {
 			},
 		}
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: "1.0.0"}},
 			downloader,
 			tmpDir,
@@ -255,7 +255,7 @@ func TestPreinstallSource_Discover_Sync(t *testing.T) {
 			},
 		}
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: "1.0.0"}},
 			downloader,
 			tmpDir,
@@ -303,7 +303,7 @@ func TestPreinstallSource_Discover_Async(t *testing.T) {
 			},
 		}
 
-		source := NewPreinstallAsyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{
 				{ID: "bad-plugin", Version: "1.0.0"},
 				{ID: "good-plugin", Version: "1.0.0"},
@@ -343,7 +343,7 @@ func TestPreinstallSource_Dependencies(t *testing.T) {
 			return os.WriteFile(filepath.Join(pluginDir, "plugin.json"), data, 0644)
 		})
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "parent-plugin", Version: "1.0.0"}},
 			downloader,
 			tmpDir,
@@ -418,7 +418,7 @@ func TestPreinstallSource_Dependencies(t *testing.T) {
 			},
 		}
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{
 				{ID: "parent-plugin", Version: "1.0.0"},
 			},
@@ -436,7 +436,7 @@ func TestPreinstallSource_Dependencies(t *testing.T) {
 }
 
 func TestPreinstallSource_PluginClass(t *testing.T) {
-	source := NewPreinstallSyncSource(
+	source := NewInstallSource(
 		[]setting.InstallPlugin{},
 		&mockDownloader{},
 		"/tmp",
@@ -448,7 +448,7 @@ func TestPreinstallSource_PluginClass(t *testing.T) {
 }
 
 func TestPreinstallSource_DefaultSignature(t *testing.T) {
-	source := NewPreinstallSyncSource(
+	source := NewInstallSource(
 		[]setting.InstallPlugin{},
 		&mockDownloader{},
 		"/tmp",
@@ -470,7 +470,7 @@ func TestPreinstallSource_CheckCache_EdgeCases(t *testing.T) {
 		// Create corrupted plugin.json
 		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte("invalid json content"), 0644))
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: "1.0.0"}},
 			&mockDownloader{},
 			tmpDir,
@@ -489,7 +489,7 @@ func TestPreinstallSource_CheckCache_EdgeCases(t *testing.T) {
 		require.NoError(t, os.MkdirAll(pluginDir, 0755))
 		// Don't create plugin.json
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: "1.0.0"}},
 			&mockDownloader{},
 			tmpDir,
@@ -518,7 +518,7 @@ func TestPreinstallSource_CheckCache_EdgeCases(t *testing.T) {
 		data, _ := json.Marshal(pluginJSON)
 		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), data, 0644))
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: "1.0.0"}},
 			&mockDownloader{},
 			tmpDir,
@@ -546,7 +546,7 @@ func TestPreinstallSource_CheckCache_EdgeCases(t *testing.T) {
 		data, _ := json.Marshal(pluginJSON)
 		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), data, 0644))
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: "1.0.0"}},
 			&mockDownloader{},
 			tmpDir,
@@ -590,7 +590,7 @@ func TestPreinstallSource_CheckCache_EdgeCases(t *testing.T) {
 		data2, _ := json.Marshal(pluginJSON2)
 		require.NoError(t, os.WriteFile(filepath.Join(pluginDir2, "plugin.json"), data2, 0644))
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: "1.0.0"}},
 			&mockDownloader{},
 			tmpDir,
@@ -633,7 +633,7 @@ func TestPreinstallSource_BackwardsCompatibility(t *testing.T) {
 		data, _ := json.Marshal(pluginJSON)
 		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), data, 0644))
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: ""}},
 			&mockDownloader{},
 			tmpDir,
@@ -666,7 +666,7 @@ func TestPreinstallSource_BackwardsCompatibility(t *testing.T) {
 		data, _ := json.Marshal(pluginJSON)
 		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), data, 0644))
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: "1.0.0"}},
 			&mockDownloader{},
 			tmpDir,
@@ -711,7 +711,7 @@ func TestPreinstallSource_BackwardsCompatibility(t *testing.T) {
 		data, _ = json.Marshal(versionedJSON)
 		require.NoError(t, os.WriteFile(filepath.Join(versionedDir, "plugin.json"), data, 0644))
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: "1.0.0"}},
 			&mockDownloader{},
 			tmpDir,
@@ -740,7 +740,7 @@ func TestPreinstallSource_DownloadEdgeCases(t *testing.T) {
 			},
 		}
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: "1.0.0"}},
 			downloader,
 			tmpDir,
@@ -805,7 +805,7 @@ func TestPreinstallSource_DownloadEdgeCases(t *testing.T) {
 			},
 		}
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "parent-plugin", Version: "1.0.0"}},
 			downloader,
 			tmpDir,
@@ -879,7 +879,7 @@ func TestPreinstallSource_DownloadEdgeCases(t *testing.T) {
 			},
 		}
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "plugin-a", Version: "1.0.0"}},
 			downloader,
 			tmpDir,
@@ -935,7 +935,7 @@ func TestPreinstallSource_DownloadEdgeCases(t *testing.T) {
 			},
 		}
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{
 				{ID: "test-plugin", Version: "1.0.0", URL: "https://example.com/plugin.zip"},
 			},
@@ -995,7 +995,7 @@ func TestPreinstallSource_DownloadAndResolveVersion(t *testing.T) {
 			},
 		}
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: "1.0.0"}},
 			downloader,
 			tmpDir,
@@ -1040,7 +1040,7 @@ func TestPreinstallSource_DownloadAndResolveVersion(t *testing.T) {
 			},
 		}
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{{ID: "test-plugin", Version: ""}}, // No version to trigger downloadAndResolveVersion
 			downloader,
 			tmpDir,
@@ -1064,7 +1064,7 @@ func TestPreinstallSource_DownloadAndResolveVersion(t *testing.T) {
 }
 
 func TestPreinstallSource_EmptyPluginList(t *testing.T) {
-	source := NewPreinstallSyncSource(
+	source := NewInstallSource(
 		[]setting.InstallPlugin{},
 		&mockDownloader{},
 		"/tmp",
@@ -1122,7 +1122,7 @@ func TestPreinstallSource_URLChangeDetection(t *testing.T) {
 			},
 		}
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{
 				{ID: "test-plugin", Version: "", URL: "https://example.com/plugin-v1.zip"},
 			},
@@ -1191,7 +1191,7 @@ func TestPreinstallSource_URLChangeDetection(t *testing.T) {
 			},
 		}
 
-		source := NewPreinstallSyncSource(
+		source := NewInstallSource(
 			[]setting.InstallPlugin{
 				{ID: "test-plugin", Version: "1.0.0", URL: "https://example.com/plugin-v1.zip"},
 			},

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 
+	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
 )
@@ -44,7 +45,7 @@ func RegisterAppInstaller(
 		ManifestData:   *apis.LocalManifest().ManifestData,
 		SpecificConfig: specificConfig,
 	}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &apis.GoTypeAssociator{})
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, pluginsappapis.NewGoTypeAssociator())
 	if err != nil {
 		return nil, err
 	}

@@ -619,6 +619,7 @@ type InstallPlugin struct {
 	ID      string `json:"id"`
 	Version string `json:"version"`
 	URL     string `json:"url,omitempty"`
+	Class   string `json:"class,omitempty"` // "core", "external", "cdn"
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since

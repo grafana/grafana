@@ -2,9 +2,11 @@ package sources
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"sync"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -14,36 +16,32 @@ import (
 )
 
 type Service struct {
-	cfgProvider     configprovider.ConfigProvider
-	downloader      PluginDownloader
-	startupComplete bool
-
-	log log.Logger
+	cfgProvider         configprovider.ConfigProvider
+	downloader          PluginDownloader
+	startupComplete     bool
+	pluginInstallClient *PluginInstallClientWrapper // lazy-init
+	log                 log.Logger
 }
 
 var metricsRegistered sync.Once
 
-func ProvideService(cfgProvider configprovider.ConfigProvider, pCcfg *config.PluginManagementCfg, downloader PluginDownloader, promReg prometheus.Registerer) (*Service, error) {
+func ProvideService(cfgProvider configprovider.ConfigProvider, pCcfg *config.PluginManagementCfg, downloader PluginDownloader, promReg prometheus.Registerer, clientGenerator resource.ClientGenerator) (*Service, error) {
 	metricsRegistered.Do(func() {
 		if err := RegisterMetrics(promReg); err != nil {
-			log.New("plugin.sources").Warn("Failed to register preinstall metrics", "error", err)
+			log.New("plugin.sources").Warn("Failed to register install metrics", "error", err)
 		}
 	})
 	return &Service{
-		cfgProvider:     cfgProvider,
-		downloader:      downloader,
-		startupComplete: false,
-		log:             log.New("plugin.sources"),
+		cfgProvider:         cfgProvider,
+		downloader:          downloader,
+		startupComplete:     false,
+		pluginInstallClient: NewPluginInstallClientWrapper(clientGenerator),
+		log:                 log.New("plugin.sources"),
 	}, nil
 }
 
 func (s *Service) List(ctx context.Context) []plugins.PluginSource {
-	r := []plugins.PluginSource{
-		NewLocalSource(
-			plugins.ClassCore,
-			s.corePluginPaths(),
-		),
-	}
+	r := []plugins.PluginSource{}
 
 	cfg, err := s.cfgProvider.Get(ctx)
 	if err != nil {
@@ -51,8 +49,24 @@ func (s *Service) List(ctx context.Context) []plugins.PluginSource {
 		return []plugins.PluginSource{}
 	}
 
+	// 1. Add API-driven sources (positioned early, before other sources)
+	apiSources, err := s.apiPluginSources(ctx, cfg)
+	if err != nil {
+		s.log.Warn("Failed to get API plugin sources", "error", err)
+		// Continue without API sources - not fatal
+	} else {
+		r = append(r, apiSources...)
+	}
+
+	// 2. Add core plugins
+	r = append(r, NewLocalSource(
+		plugins.ClassCore,
+		s.corePluginPaths(),
+	))
+
+	// 3. Add config-based preinstall sources (existing behavior)
 	if len(cfg.PreinstallPluginsSync) > 0 {
-		r = append(r, NewPreinstallSyncSource(
+		r = append(r, NewInstallSource(
 			cfg.PreinstallPluginsSync,
 			s.downloader,
 			cfg.PluginsPath,
@@ -61,9 +75,9 @@ func (s *Service) List(ctx context.Context) []plugins.PluginSource {
 		))
 	}
 
-	// preinstall async plugins are only loaded after startup (first run) is complete
+	// 4. Add async preinstall (config-based, after first startup)
 	if s.startupComplete && len(cfg.PreinstallPluginsAsync) > 0 {
-		r = append(r, NewPreinstallAsyncSource(
+		r = append(r, NewInstallSource(
 			cfg.PreinstallPluginsAsync,
 			s.downloader,
 			cfg.PluginsPath,
@@ -72,11 +86,63 @@ func (s *Service) List(ctx context.Context) []plugins.PluginSource {
 		))
 	}
 
+	// 4. Add external sources (scan disk)
 	r = append(r, s.externalPluginSources()...)
 	r = append(r, s.pluginSettingSources()...)
 
 	s.startupComplete = true
 	return r
+}
+
+// apiPluginSources generates plugin sources based on PluginInstall API resources
+func (s *Service) apiPluginSources(ctx context.Context, cfg *setting.Cfg) ([]plugins.PluginSource, error) {
+	if s.pluginInstallClient == nil {
+		return []plugins.PluginSource{}, nil
+	}
+
+	// Query API for plugin installs
+	namespace := "default" // TODO: make configurable
+	pluginInstalls, err := s.pluginInstallClient.ListPluginInstalls(ctx, namespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list plugin installs: %w", err)
+	}
+
+	if len(pluginInstalls) == 0 {
+		return []plugins.PluginSource{}, nil
+	}
+
+	// Group by class
+	byClass := make(map[string][]setting.InstallPlugin)
+	for _, pi := range pluginInstalls {
+		installPlugin := setting.InstallPlugin{
+			ID:      pi.ID,
+			Version: pi.Version,
+			URL:     pi.URL,
+			Class:   pi.Class,
+		}
+		byClass[pi.Class] = append(byClass[pi.Class], installPlugin)
+	}
+
+	sources := make([]plugins.PluginSource, 0)
+
+	// External class: use InstallSource
+	if externalPlugins, ok := byClass["external"]; ok && len(externalPlugins) > 0 {
+		sources = append(sources, NewInstallSource(
+			externalPlugins,
+			s.downloader,
+			cfg.PluginsPath,
+			s.cfgProvider,
+			cfg.BuildVersion,
+		))
+	}
+
+	// CDN class: TODO - placeholder
+	if cdnPlugins, ok := byClass["cdn"]; ok && len(cdnPlugins) > 0 {
+		s.log.Info("CDN plugins found but not yet supported", "count", len(cdnPlugins))
+		// TODO: Implement CDN source
+	}
+
+	return sources, nil
 }
 
 func (s *Service) externalPluginSources() []plugins.PluginSource {

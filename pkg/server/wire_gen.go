@@ -550,7 +550,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService)
-	sourcesService, err := sources.ProvideService(configProvider, pluginManagementCfg, pluginInstaller, registerer)
+	clientGenerator := appregistry.ProvideClientGenerator(eventualRestConfigProvider)
+	sourcesService, err := sources.ProvideService(configProvider, pluginManagementCfg, pluginInstaller, registerer, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
@@ -1151,7 +1152,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService)
-	sourcesService, err := sources.ProvideService(configProvider, pluginManagementCfg, pluginInstaller, registerer)
+	clientGenerator := appregistry.ProvideClientGenerator(eventualRestConfigProvider)
+	sourcesService, err := sources.ProvideService(configProvider, pluginManagementCfg, pluginInstaller, registerer, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
