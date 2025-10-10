@@ -1,5 +1,5 @@
 import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { SceneRenderProfiler } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
@@ -362,7 +362,27 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     // Fetches both dashboards and scope navigations
     // We call this even if we have 0 scope because in that case it also closes the dashboard drawer.
-    this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId));
+    this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId)).then(() => {
+      // Redirect to first scopeNavigation if current URL isn't a scopeNavigation
+      const currentPath = locationService.getLocation().pathname;
+      const scopeNavigation = this.dashboardsService.state.scopeNavigations.find(
+        (s) => 'url' in s.spec && s.spec.url === currentPath
+      );
+      if (!scopeNavigation && this.dashboardsService.state.scopeNavigations.length > 0) {
+        // Redirect to the first available scopeNavigation
+        const firstScopeNavigation = this.dashboardsService.state.scopeNavigations[0];
+
+        if (
+          firstScopeNavigation &&
+          'url' in firstScopeNavigation.spec &&
+          typeof firstScopeNavigation.spec.url === 'string' &&
+          // Only redirect to dashboards TODO: Remove this once Logs Drilldown has Scopes support
+          firstScopeNavigation.spec.url.includes('/d/')
+        ) {
+          locationService.push(firstScopeNavigation.spec.url);
+        }
+      }
+    });
 
     if (scopes.length > 0) {
       const fetchedScopes = await this.apiClient.fetchMultipleScopes(scopes.map((s) => s.scopeId));
