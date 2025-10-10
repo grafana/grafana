@@ -36,6 +36,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
+  drilldown:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION/explore/simplified-exploration/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/simplified-exploration/
+  add-data-source:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION/datasources/#add-a-data-source
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#add-a-data-source
 ---
 
 # Manage multi-team access in a single Grafana instance
@@ -106,9 +116,9 @@ Next, focus on how teams interact with data to decide further access needs.
 
 #### General resources
 
-For resources accessible by all teams, grant the `datasources:explorer` fixed role to all teams so they can use the [Drilldown apps](../../../explore/simplified-exploration) for easily exploring data sources.
+For resources accessible by all teams, grant the `datasources:explorer` fixed role to all teams so they can use the [Drilldown apps](ref:drilldown) for easily exploring data sources.
 
-However, you may need to protect data in shared resources. For example, all teams can be forwarding metrics to a shared [data source](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/#add-a-data-source), but not everyone needs to see all of the data. In this case, grant each team [query access](../../../administration/data-source-management/#assign-data-source-permissions-to-users-service-accounts-teams-or-roles) to the data relevant for them, based on [label based access controls (LBAC) per team](../../../administration/data-source-management/teamlbac/create-teamlbac-rules/#create-a-lbac-for-data-sources-rule-for-a-team). This way, you’ll maintain a central observability pipeline but still preserve data separation.
+However, you may need to protect data in shared resources. For example, all teams can be forwarding metrics to a shared [data source](ref:add-data-source), but not everyone needs to see all of the data. In this case, grant each team [query access](../../../administration/data-source-management/#assign-data-source-permissions-to-users-service-accounts-teams-or-roles) to the data relevant for them, based on [label based access controls (LBAC) per team](../../../administration/data-source-management/teamlbac/create-teamlbac-rules/#create-a-lbac-for-data-sources-rule-for-a-team). This way, you’ll maintain a central observability pipeline but still preserve data separation.
 
 #### Team-specific resources
 
