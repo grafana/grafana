@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "添加权限",
+      "loading": "",
       "no-permissions": "没有任何权限",
       "permissions-change-warning": "这将更改此文件夹及其所有子文件夹的权限。总体而言，这将影响：",
       "role": "角色",
       "serviceaccount": "服务帐户",
       "team": "团队",
-      "title": "权限",
       "user": "用户"
     }
   },
@@ -3492,7 +3492,7 @@
       "delete-button": "删除",
       "delete-modal-invalid-text": "一个或多个文件夹包含库面板或警报规则。请首先删除这些以便继续。",
       "delete-modal-invalid-title": "无法删除文件夹",
-      "delete-modal-restore-dashboards-text": "此操作将立即删除所选文件夹，但所选数据面板将被标记为在 30 天后删除。您的组织管理员可以在 30 天期限内随时还原数据面板。文件夹无法还原。",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "此操作将删除以下内容：",
       "delete-modal-title": "删除",
       "delete-provisioned-folder": "删除已预置的文件夹",
@@ -4552,7 +4552,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "由于条件渲染，元素已被隐藏。"
+        "tooltip": ""
       },
       "root": {
         "title": "显示/隐藏规则"
@@ -5798,6 +5798,7 @@
         "dynamically-switch-source-multiple-panels": "动态切换多个面板的数据源",
         "group": "即时添加按键分组",
         "hidden-constant-variable": "隐藏的常量变量，对于您要共享的数据面板中的指标前缀很有用",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "用户可以在文本框中输入任意字符串",
         "values-are-static-and-defined-manually": "值为静态，由手动定义",
         "values-fetched-source-query": "值从数据源查询中获取",
@@ -5811,6 +5812,7 @@
         "group-by": "分组方式",
         "interval": "间隔",
         "query": "查询",
+        "switch": "",
         "textbox": "文本框"
       }
     },
@@ -6152,6 +6154,17 @@
       "title": {
         "copy-to-clipboard-failed": "复制到剪贴板失败"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "默认值"
@@ -10324,7 +10337,7 @@
       "title": "个人资料"
     },
     "recently-deleted": {
-      "subtitle": "此处列出的任何项目超过 30 天都将被自动删除。",
+      "subtitle": "",
       "title": "最近删除"
     },
     "recorded-queries": {
@@ -11531,6 +11544,7 @@
       "active-jobs": "活跃的作业",
       "column-action": "操作",
       "column-duration": "持续时间",
+      "column-job-id": "",
       "column-message": "消息",
       "column-started": "已启动",
       "column-status": "状态",
@@ -11549,12 +11563,6 @@
       "settings": "设置",
       "view": "查看"
     },
-    "repository-health": {
-      "details": "详情：",
-      "no-errors-found": "没有发现错误",
-      "title-repository-is-healthy": "存储库状态良好",
-      "title-repository-is-unhealthy": "存储库状态不良"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "比较分支",
@@ -11569,7 +11577,7 @@
     },
     "repository-overview": {
       "checked": "已检查：",
-      "finished": "已完成：",
+      "finished": "",
       "health": "健康",
       "healthy": "状态良好",
       "job-id": "作业 ID：",
@@ -11578,7 +11586,6 @@
       "not-available": "N/A",
       "pull-status": "拉取状态",
       "resources": "资源",
-      "started": "已开始：",
       "status": "状态：",
       "unhealthy": "状态不良",
       "view-folder": "查看文件夹",
@@ -12234,9 +12241,6 @@
       "title-disable-service-account": "禁用服务账户",
       "tokens": "令牌",
       "tooltip-managed-service-account-cannot-modified": "这是托管服务账户，无法修改"
-    },
-    "service-account-permissions": {
-      "title-permissions": "权限"
     },
     "service-account-profile": {
       "information": "信息",
@@ -12909,6 +12913,10 @@
     "name-mode": "模式",
     "name-show-line-numbers": "显示行号",
     "name-show-mini-map": "显示小地图"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
