@@ -36,7 +36,7 @@ type fileWatcher struct {
 // See: https://github.com/fsnotify/fsnotify/blob/main/cmd/fsnotify/dedup.go
 func NewFileWatcher(path string, accept func(string) bool) (FileWatcher, error) {
 	info, _ := os.Stat(path)
-	if !info.IsDir() {
+	if info == nil || !info.IsDir() {
 		return nil, fmt.Errorf("expecting to watch a folder")
 	}
 
