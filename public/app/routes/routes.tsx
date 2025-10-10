@@ -365,14 +365,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/admin/featuretoggles',
-      component: config.featureToggles.featureToggleAdminPage
-        ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "AdminFeatureTogglesPage" */ 'app/features/admin/AdminFeatureTogglesPage')
-          )
-        : () => <Navigate replace to="/admin" />,
-    },
-    {
       path: '/admin/stats',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
@@ -526,6 +518,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/bookmarks',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
+      ),
+    },
+    {
+      path: '/theme-playground',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ThemePlayground"*/ 'app/features/theme-playground/ThemePlayground')
       ),
     },
     config.featureToggles.restoreDashboards && {

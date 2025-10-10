@@ -58,6 +58,9 @@ export function useFoldersQueryLegacy({
   // Keep a list of all request subscriptions so we can unsubscribe from them when the component is unmounted
   const requestsRef = useRef<ListFoldersRequest[]>([]);
 
+  // Set of UIDs for which children were requested but were empty.
+  const [emptyFolders, setEmptyFolders] = useState<Set<string>>(new Set());
+
   // Keep a list of selectors for dynamic state selection
   const [selectors, setSelectors] = useState<
     Array<ReturnType<typeof browseDashboardsAPI.endpoints.listFolders.select>>
@@ -165,8 +168,15 @@ export function useFoldersQueryLegacy({
           };
 
           const childPages = folderIsOpen && state.pagesByParent[item.uid];
+
           if (childPages) {
             const childFlatItems = createFlatList(item.uid, childPages, level + 1);
+
+            // If we finished loading and there are no children add to empty list
+            if (childPages[0] && childPages[0].status !== PENDING_STATUS && childFlatItems.length === 0) {
+              setEmptyFolders((prev) => new Set(prev).add(item.uid));
+            }
+
             return [flatItem, ...childFlatItems];
           }
 
@@ -191,6 +201,7 @@ export function useFoldersQueryLegacy({
   }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
 
   return {
+    emptyFolders,
     items: treeList,
     isLoading: state.isLoading,
     requestNextPage,

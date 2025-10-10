@@ -220,9 +220,8 @@ func (ng *AlertNG) init() error {
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
 		}
 		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
-			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid)
+			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid, ng.FeatureToggles)
 		}
-		store := notifier.NewFileStore(cfg.OrgID, ng.KVStore)
 
 		// This function will be used by the MOA to create new Alertmanagers.
 		var override func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory
@@ -230,12 +229,12 @@ func (ng *AlertNG) init() error {
 		if remotePrimary {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
-			override = remote.NewRemotePrimaryFactory(cfg, store, crypto, autogenFn, m, ng.tracer)
+			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer)
 		} else {
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
 			override = remote.NewRemoteSecondaryFactory(cfg,
-				store,
+				ng.KVStore,
 				ng.store,
 				ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 				crypto,
@@ -369,19 +368,21 @@ func (ng *AlertNG) init() error {
 	ng.InstanceStore, ng.StartupInstanceReader = initInstanceStore(ng.store.SQLStore, ng.Log, ng.FeatureToggles)
 
 	stateManagerCfg := state.ManagerCfg{
-		Metrics:                    ng.Metrics.GetStateMetrics(),
-		ExternalURL:                appUrl,
-		DisableExecution:           !ng.Cfg.UnifiedAlerting.ExecuteAlerts,
-		InstanceStore:              ng.InstanceStore,
-		Images:                     ng.ImageService,
-		Clock:                      clk,
-		Historian:                  history,
-		MaxStateSaveConcurrency:    ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
-		StatePeriodicSaveBatchSize: ng.Cfg.UnifiedAlerting.StatePeriodicSaveBatchSize,
-		RulesPerRuleGroupLimit:     ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
-		Tracer:                     ng.tracer,
-		Log:                        log.New("ngalert.state.manager"),
-		ResolvedRetention:          ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
+		Metrics:                        ng.Metrics.GetStateMetrics(),
+		ExternalURL:                    appUrl,
+		DisableExecution:               !ng.Cfg.UnifiedAlerting.ExecuteAlerts,
+		InstanceStore:                  ng.InstanceStore,
+		Images:                         ng.ImageService,
+		Clock:                          clk,
+		Historian:                      history,
+		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
+		StatePeriodicSaveBatchSize:     ng.Cfg.UnifiedAlerting.StatePeriodicSaveBatchSize,
+		StatePeriodicSaveJitterEnabled: ng.Cfg.UnifiedAlerting.StatePeriodicSaveJitterEnabled,
+		StatePeriodicSaveInterval:      ng.Cfg.UnifiedAlerting.StatePeriodicSaveInterval,
+		RulesPerRuleGroupLimit:         ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
+		Tracer:                         ng.tracer,
+		Log:                            log.New("ngalert.state.manager"),
+		ResolvedRetention:              ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
 	}
 	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
 	stateManager := state.NewManager(stateManagerCfg, statePersister)

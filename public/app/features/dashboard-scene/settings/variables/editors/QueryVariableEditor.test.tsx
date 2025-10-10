@@ -384,17 +384,15 @@ describe('QueryVariableEditor', () => {
     await userEvent.click(staticOptionsToggle);
 
     // Add first static option
-    const addButton = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsAddButton
-    );
+    const addButton = getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton);
     await user.click(addButton);
 
     // Enter label and value for first option
     const labelInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsLabelInput
+      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.labelInput
     );
     const valueInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsValueInput
+      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.valueInput
     );
 
     await user.type(labelInputs[0], 'First Option');
@@ -411,10 +409,10 @@ describe('QueryVariableEditor', () => {
 
     // Get updated inputs (now there should be 2 sets)
     const updatedLabelInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsLabelInput
+      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.labelInput
     );
     const updatedValueInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsValueInput
+      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.valueInput
     );
 
     // Enter label and value for second option

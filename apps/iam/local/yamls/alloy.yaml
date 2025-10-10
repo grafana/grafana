@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: default
+data:
+  config.alloy: |
+    // Pyroscope configuration to receive profiles
+    pyroscope.write "default" {
+      endpoint {
+        url = "http://pyroscope.default.svc.cluster.local:4040"
+      }
+    }
+
+    // Scrape CPU profiles from the IAM operator
+    pyroscope.scrape "iam_operator" {
+      targets = [
+        {
+          "__address__" = "iam-folder-reconciler.default.svc.cluster.local:6060",
+          "service_name" = "iam-folder-reconciler",
+        },
+      ]
+      forward_to = [pyroscope.write.default.receiver]
+
+      job_name = "iam-operator"
+      scrape_interval = "30s"
+      scrape_timeout = "25s"
+
+      profiling_config {
+        profile.process_cpu {
+          enabled = true
+          path = "/debug/pprof/profile"
+          delta = false
+        }
+
+        profile.godeltaprof_memory {
+          enabled = true
+          path = "/debug/pprof/delta_heap"
+        }
+
+        profile.memory {
+          enabled = true
+          path = "/debug/pprof/heap"
+          delta = false
+        }
+
+        profile.godeltaprof_mutex {
+          enabled = true
+          path = "/debug/pprof/delta_mutex"
+        }
+
+        profile.godeltaprof_block {
+          enabled = true
+          path = "/debug/pprof/delta_block"
+        }
+
+        profile.goroutine {
+          enabled = true
+          path = "/debug/pprof/goroutine"
+          delta = false
+        }
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alloy
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: alloy
+  template:
+    metadata:
+      labels:
+        name: alloy
+    spec:
+      containers:
+        - name: alloy
+          image: grafana/alloy:v1.10.0
+          args:
+            - run
+            - /etc/alloy/config.alloy
+            - --storage.path=/var/lib/alloy/data
+            - --server.http.listen-addr=0.0.0.0:12345
+            - --stability.level=experimental
+          ports:
+            - containerPort: 12345
+              name: http
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alloy
+            - name: storage
+              mountPath: /var/lib/alloy/data
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+      volumes:
+        - name: config
+          configMap:
+            name: alloy-config
+        - name: storage
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alloy
+  namespace: default
+spec:
+  selector:
+    name: alloy
+  ports:
+    - name: http
+      port: 12345
+      targetPort: 12345

@@ -6,18 +6,17 @@ import (
 	"fmt"
 	"net/http"
 
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/registry/rest"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	query_headers "github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/web"
-
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type subQueryREST struct {
@@ -28,6 +27,7 @@ var (
 	_ rest.Storage         = (*subQueryREST)(nil)
 	_ rest.Connecter       = (*subQueryREST)(nil)
 	_ rest.StorageMetadata = (*subQueryREST)(nil)
+	_ rest.Scoper          = (*subQueryREST)(nil)
 )
 
 func (r *subQueryREST) New() runtime.Object {
@@ -36,6 +36,10 @@ func (r *subQueryREST) New() runtime.Object {
 }
 
 func (r *subQueryREST) Destroy() {}
+
+func (r *subQueryREST) NamespaceScoped() bool {
+	return true
+}
 
 func (r *subQueryREST) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"} // and parquet!
@@ -58,15 +62,8 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			return nil, k8serrors.NewNotFound(
-				schema.GroupResource{
-					Group:    r.builder.connectionResourceInfo.GroupResource().Group,
-					Resource: r.builder.connectionResourceInfo.GroupResource().Resource,
-				},
-				name,
-			)
+			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
 		}
-
 		return nil, err
 	}
 
@@ -96,6 +93,22 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			PluginContext: pluginCtx,
 			Headers:       query_headers.ExtractKnownHeaders(req.Header),
 		})
+
+		// all errors get converted into k8 errors when sent in responder.Error and lose important context like downstream info
+		var e errutil.Error
+		if errors.As(err, &e) && e.Source == errutil.SourceDownstream {
+			responder.Object(int(backend.StatusBadRequest),
+				&query.QueryDataResponse{QueryDataResponse: backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
+					"A": {
+						Error:       errors.New(e.LogMessage),
+						ErrorSource: backend.ErrorSourceDownstream,
+						Status:      backend.StatusBadRequest,
+					},
+				}}},
+			)
+			return
+		}
+
 		if err != nil {
 			responder.Error(err)
 			return

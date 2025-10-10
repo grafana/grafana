@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -21,6 +22,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -174,6 +176,39 @@ func TestSimpleServer(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, all.Items, 1)
 		require.Equal(t, updated.ResourceVersion, all.Items[0].ResourceVersion)
+
+		// Try again with a direct query
+		all, err = server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Fields: []*resourcepb.Requirement{{
+				Key:      "metadata.name",
+				Operator: "=",
+				Values:   []string{"not-matching"},
+			}},
+		}})
+		require.NoError(t, err)
+		require.Len(t, all.Items, 0)
+
+		// This time matching
+		all, err = server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			},
+			Fields: []*resourcepb.Requirement{{
+				Key:      "metadata.name",
+				Operator: "=",
+				Values:   []string{"fdgsv37qslr0ga"},
+			}},
+		}})
+		require.NoError(t, err)
+		require.Len(t, all.Items, 1)
+		require.Equal(t, raw, all.Items[0].Value)
 
 		deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: updated.ResourceVersion})
 		require.NoError(t, err)
@@ -331,8 +366,8 @@ func TestSimpleServer(t *testing.T) {
 		require.NotNil(t, created)
 
 		invalidQualifiedNames := []string{
-			"", // empty
-			strings.Repeat("1", MaxQualifiedNameLength+1), // too long
+			"",                                     // empty
+			strings.Repeat("1", 260),               // too long
 			"    ",                                 // only spaces
 			"f8cc010c.ee72.4681;89d2+d46e1bd47d33", // invalid chars
 		}
@@ -375,6 +410,11 @@ func TestSimpleServer(t *testing.T) {
 
 		// namespace
 		for _, invalidNamespace := range invalidQualifiedNames {
+			if invalidNamespace == "" {
+				// empty namespace is allowed
+				continue
+			}
+
 			key = &resourcepb.ResourceKey{
 				Group:     "playlist.grafana.app",
 				Resource:  "rrrr", // can be anything :(
@@ -439,11 +479,12 @@ func TestSimpleServer(t *testing.T) {
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
 
-		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
+		rsp, _ := server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
-		require.ErrorIs(t, err, ErrOptimisticLockingFailed)
+		require.Equal(t, rsp.Error.Code, ErrOptimisticLockingFailed.Code)
+		require.Equal(t, rsp.Error.Message, ErrOptimisticLockingFailed.Message)
 	})
 }
 
@@ -547,4 +588,31 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 		log: slog.Default(),
 	}
 	return s, q
+}
+
+func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
+	s := &server{artificialSuccessfulWriteDelay: 1 * time.Millisecond}
+
+	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {
+		slept := s.sleepAfterSuccessfulWriteOperation(res, err)
+		require.Equal(t, expectedSleep, slept)
+	}
+
+	// Successful responses should sleep
+	check(t, true, nil, nil)
+
+	check(t, true, (responseWithErrorResult)((*resourcepb.CreateResponse)(nil)), nil)
+	check(t, true, &resourcepb.CreateResponse{}, nil)
+
+	check(t, true, (responseWithErrorResult)((*resourcepb.UpdateResponse)(nil)), nil)
+	check(t, true, &resourcepb.UpdateResponse{}, nil)
+
+	check(t, true, (responseWithErrorResult)((*resourcepb.DeleteResponse)(nil)), nil)
+	check(t, true, &resourcepb.DeleteResponse{}, nil)
+
+	// Failed responses should return without sleeping
+	check(t, false, nil, errors.New("some error"))
+	check(t, false, &resourcepb.CreateResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
+	check(t, false, &resourcepb.UpdateResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
+	check(t, false, &resourcepb.DeleteResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
 }

@@ -11,7 +11,7 @@ import (
 	"embed"
 	"encoding/json"
 
-	featuretoggle "github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	featuretoggleapi "github.com/grafana/grafana/pkg/services/featuremgmt/feature_toggle_api"
 )
 
 var (
@@ -172,6 +172,22 @@ var (
 			AllowSelfServe: false,
 		},
 		{
+			Name:           "starsFromAPIServer",
+			Description:    "populate star status from apiserver",
+			Stage:          FeatureStageExperimental,
+			FrontendOnly:   true,
+			Owner:          grafanaFrontendPlatformSquad,
+			AllowSelfServe: false,
+			HideFromDocs:   true,
+		},
+		{
+			Name:            "kubernetesStars",
+			Description:     "Routes stars requests from /api to the /apis endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
@@ -322,15 +338,6 @@ var (
 			RequiresDevMode: true,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
-		},
-		{
-			Name:            "featureToggleAdminPage",
-			Description:     "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           grafanaBackendServicesSquad,
-			RequiresRestart: true,
-			HideFromDocs:    true,
 		},
 		{
 			Name:        "awsAsyncQueryCaching",
@@ -529,6 +536,13 @@ var (
 			RequiresRestart: true, // Adds a route at startup
 		},
 		{
+			Name:            "queryServiceWithConnections",
+			Description:     "Adds datasource connections to the query service",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: true, // Adds a route at startup
+		},
+		{
 			Name:            "queryServiceRewrite",
 			Description:     "Rewrite requests targeting /ds/query to the query service",
 			Stage:           FeatureStageExperimental,
@@ -639,6 +653,13 @@ var (
 		{
 			Name:         "dashboardUndoRedo",
 			Description:  "Enables undo/redo in dynamic dashboards",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "unlimitedLayoutsNesting",
+			Description:  "Enables unlimited dashboard panel grouping",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
@@ -775,7 +796,7 @@ var (
 		},
 		{
 			Name:         "alertingSaveStateCompressed",
-			Description:  "Enables the compressed protobuf-based alert state storage",
+			Description:  "Enables the compressed protobuf-based alert state storage. Default is enabled.",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
@@ -800,11 +821,12 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "promQLScope",
-			Description:       "In-development feature that will allow injection of labels into prometheus queries.",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaOSSBigTent,
-			Expression:        "true",
+			Name:              "useMultipleScopeNodesEndpoint",
+			Description:       "Makes the frontend use the 'names' param for fetching multiple scope nodes at once",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaOperatorExperienceSquad,
+			Expression:        "false",
+			FrontendOnly:      true,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
@@ -933,19 +955,18 @@ var (
 		},
 		{
 			Name:           "queryLibrary",
-			Description:    "Renamed feature toggle, enables Saved queries feature",
-			Stage:          FeatureStagePrivatePreview,
+			Description:    "Enables Saved queries (query library) feature",
+			Stage:          FeatureStagePublicPreview,
 			Owner:          grafanaSharingSquad,
 			FrontendOnly:   false,
 			AllowSelfServe: false,
 		},
 		{
-			Name:           "savedQueries",
-			Description:    "Enables Saved Queries feature",
-			Stage:          FeatureStagePublicPreview,
-			Owner:          grafanaSharingSquad,
-			FrontendOnly:   false,
-			AllowSelfServe: false,
+			Name:         "dashboardLibrary",
+			Description:  "Enable suggested dashboards when creating new dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
 		},
 		{
 			Name:         "logsExploreTableDefaultVisualization",
@@ -1179,6 +1200,14 @@ var (
 		{
 			Name:              "unifiedStorageSearchSprinkles",
 			Description:       "Enable sprinkles on unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "unifiedStorageUseFullNgram",
+			Description:       "Use full n-gram indexing instead of edge n-gram for unified storage search",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromDocs:      true,
@@ -1497,6 +1526,16 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:              "alertingUseNewSimplifiedRoutingHashAlgorithm",
+			Description:       "",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+			Expression:        "true",
+		},
+		{
 			Name:              "useScopesNavigationEndpoint",
 			Description:       "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
 			Stage:             FeatureStageExperimental,
@@ -1644,13 +1683,6 @@ var (
 			Owner:        awsDatasourcesSquad,
 		},
 		{
-			Name:         "localizationForPlugins",
-			Description:  "Enables localization for plugins",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaPluginsPlatformSquad,
-			FrontendOnly: false,
-		},
-		{
 			Name:         "unifiedNavbars",
 			Description:  "Enables unified navbars",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1728,6 +1760,14 @@ var (
 		{
 			Name:              "kubernetesAuthzApis",
 			Description:       "Registers AuthZ /apis endpoint",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "kubernetesAuthZHandlerRedirect",
+			Description:       "Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,
@@ -1888,16 +1928,6 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:              "pluginAssetProvider",
-			Description:       "Allows decoupled core plugins to load from the Grafana CDN",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaPluginsPlatformSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			Expression:        "false",
-			RequiresRestart:   true,
-		},
-		{
 			Name:              "unifiedStorageSearchDualReaderEnabled",
 			Description:       "Enable dual reader for unified storage search",
 			Stage:             FeatureStageExperimental,
@@ -2011,16 +2041,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:              "dskitBackgroundServices",
-			Description:       "Enables dskit background service wrapper",
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			Stage:             FeatureStageExperimental,
-			RequiresRestart:   true,
-			Owner:             grafanaPluginsPlatformSquad,
-			Expression:        "false",
-		},
-		{
 			Name:            "pluginContainers",
 			Description:     "Enables running plugins in containers",
 			Stage:           FeatureStagePrivatePreview,
@@ -2044,6 +2064,22 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},
+		{
+			Name:         "cdnPluginsLoadFirst",
+			Description:  "Prioritize loading plugins from the CDN before other sources",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "cdnPluginsUrls",
+			Description:  "Enable loading plugins via declarative URLs",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
 	}
 )
 
@@ -2051,8 +2087,8 @@ var (
 var f embed.FS
 
 // Get the cached feature list (exposed as a k8s resource)
-func GetEmbeddedFeatureList() (featuretoggle.FeatureList, error) {
-	features := featuretoggle.FeatureList{}
+func GetEmbeddedFeatureList() (featuretoggleapi.FeatureList, error) {
+	features := featuretoggleapi.FeatureList{}
 	body, err := f.ReadFile("toggles_gen.json")
 	if err == nil {
 		err = json.Unmarshal(body, &features)

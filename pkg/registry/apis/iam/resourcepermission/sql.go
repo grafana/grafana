@@ -158,7 +158,12 @@ func (s *ResourcePermSqlBackend) getRbacAssignmentsWithTx(ctx context.Context, s
 
 // getResourcePermission retrieves a single ResourcePermission by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
 func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, ns types.NamespaceInfo, name string) (*v0alpha1.ResourcePermission, error) {
-	mapper, grn, err := s.splitResourceName(name)
+	grn, err := splitResourceName(name)
+	if err != nil {
+		return nil, apierrors.NewInternalError(err)
+	}
+
+	mapper, err := s.getResourceMapper(grn.Group, grn.Resource)
 	if err != nil {
 		return nil, apierrors.NewInternalError(err)
 	}
@@ -371,10 +376,6 @@ func (s *ResourcePermSqlBackend) existsResourcePermission(ctx context.Context, t
 func (s *ResourcePermSqlBackend) createResourcePermission(
 	ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, mapper Mapper, grn *groupResourceName, v0ResourcePerm *v0alpha1.ResourcePermission,
 ) (int64, error) {
-	if err := validateCreateAndUpdateInput(v0ResourcePerm, grn); err != nil {
-		return 0, err
-	}
-
 	assignments, err := s.buildRbacAssignments(ctx, ns, mapper, v0ResourcePerm.Spec.Permissions, mapper.Scope(grn.Name))
 	if err != nil {
 		return 0, err
@@ -404,10 +405,6 @@ func (s *ResourcePermSqlBackend) createResourcePermission(
 }
 
 func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, mapper Mapper, grn *groupResourceName, v0ResourcePerm *v0alpha1.ResourcePermission) (int64, error) {
-	if err := validateCreateAndUpdateInput(v0ResourcePerm, grn); err != nil {
-		return 0, err
-	}
-
 	err := dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
 		currentPerms, err := s.getResourcePermission(ctx, dbHelper, tx, ns, grn.string())
 		if err != nil {
@@ -500,28 +497,14 @@ func diffPermissions(currentPermissions, desiredPermissions []v0alpha1.ResourceP
 	return permissionsToAdd, permissionsToRemove
 }
 
-func validateCreateAndUpdateInput(v0ResourcePerm *v0alpha1.ResourcePermission, grn *groupResourceName) error {
-	if v0ResourcePerm == nil {
-		return fmt.Errorf("resource permission cannot be nil")
-	}
-
-	if len(v0ResourcePerm.Spec.Permissions) == 0 {
-		return fmt.Errorf("resource permission must have at least one permission: %w", errInvalidSpec)
-	}
-
-	// Validate that the group/resource/name in the name matches the spec
-	if grn.Group != v0ResourcePerm.Spec.Resource.ApiGroup ||
-		grn.Resource != v0ResourcePerm.Spec.Resource.Resource ||
-		grn.Name != v0ResourcePerm.Spec.Resource.Name {
-		return fmt.Errorf("resource permission name does not match spec: %w", errInvalidSpec)
-	}
-
-	return nil
-}
-
 // deleteResourcePermission deletes resource permissions for a single ResourcePermission resource referenced by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
 func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, name string) error {
-	mapper, grn, err := s.splitResourceName(name)
+	grn, err := splitResourceName(name)
+	if err != nil {
+		return err
+	}
+
+	mapper, err := s.getResourceMapper(grn.Group, grn.Resource)
 	if err != nil {
 		return err
 	}

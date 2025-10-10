@@ -6,7 +6,7 @@ import { ScopedVars } from './ScopedVars';
 import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
 import { IconName } from './icon';
 import { PanelData } from './panel';
-import { RawTimeRange, TimeZone } from './time';
+import { AbsoluteTimeRange, RawTimeRange, TimeZone } from './time';
 
 // Plugin Extensions types
 // ---------------------------------------
@@ -165,6 +165,8 @@ export type PluginExtensionOpenModalOptions = {
 
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
+  // The ID of the extension point that triggered this event
+  extensionPointId: string;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
   /**
@@ -273,6 +275,7 @@ export type PluginExtensionResourceAttributesContext = {
   // Key-value pairs of resource attributes, attribute name is the key
   attributes: Record<string, string[]>;
   spanAttributes?: Record<string, string[]>;
+  timeRange: AbsoluteTimeRange;
   datasource: {
     type: string;
     uid: string;

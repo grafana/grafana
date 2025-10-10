@@ -16,6 +16,7 @@ import {
   SceneVariable,
   SceneVariableSet,
   ScopesVariable,
+  SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
 import {
@@ -34,11 +35,13 @@ import {
   defaultIntervalVariableKind,
   defaultQueryVariableKind,
   defaultTextVariableKind,
+  defaultSwitchVariableKind,
   GroupByVariableKind,
   IntervalVariableKind,
   LibraryPanelKind,
   PanelKind,
   QueryVariableKind,
+  SwitchVariableKind,
   TextVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
@@ -53,6 +56,7 @@ import {
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
+  getDashboardComponentInteractionCallback,
   getDashboardInteractionCallback,
   getDashboardSceneProfiler,
 } from 'app/features/dashboard/services/DashboardProfiler';
@@ -91,7 +95,8 @@ export type TypedVariableModelV2 =
   | IntervalVariableKind
   | CustomVariableKind
   | GroupByVariableKind
-  | AdhocVariableKind;
+  | AdhocVariableKind
+  | SwitchVariableKind;
 
 export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<DashboardV2Spec>): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
@@ -172,6 +177,15 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     getDashboardSceneProfiler()
   );
 
+  const interactionTracker = new behaviors.SceneInteractionTracker(
+    {
+      enableInteractionTracking:
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
+      onInteractionComplete: getDashboardComponentInteractionCallback(metadata.name, dashboard.title),
+    },
+    getDashboardSceneProfiler()
+  );
+
   const dashboardScene = new DashboardScene(
     {
       description: dashboard.description,
@@ -200,6 +214,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
           sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
         }),
         queryController,
+        interactionTracker,
         registerDashboardMacro,
         registerPanelInteractionsReporter,
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
@@ -404,6 +419,15 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       // @ts-expect-error
       defaultOptions: variable.options,
     });
+  } else if (variable.kind === defaultSwitchVariableKind().kind) {
+    return new SwitchVariable({
+      ...commonProperties,
+      value: variable.spec.current ?? 'false',
+      enabledValue: variable.spec.enabledValue ?? 'true',
+      disabledValue: variable.spec.disabledValue ?? 'false',
+      skipUrlSync: variable.spec.skipUrlSync,
+      hide: transformVariableHideToEnumV1(variable.spec.hide),
+    });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.kind}`);
   }
@@ -508,6 +532,11 @@ export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVar
     current = {
       value: '',
       text: '',
+    };
+  } else if (variable.kind === 'SwitchVariable') {
+    current = {
+      value: variable.spec.current ?? 'false',
+      text: variable.spec.current ?? 'false',
     };
   } else {
     current = {

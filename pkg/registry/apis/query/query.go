@@ -291,14 +291,15 @@ func prepareQuery(
 	}
 	headers := ExtractKnownHeaders(httpreq.Header)
 
-	instance, err := b.instanceProvider.GetInstance(ctx, headers)
+	instance, err := b.instanceProvider.GetInstance(ctx, connectLogger, headers)
 	if err != nil {
 		connectLogger.Error("failed to get instance configuration settings", "err", err)
 		return nil, err
 	}
 
 	instanceConfig := instance.GetSettings()
-	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger)
+
+	dsQuerierLoggerWithSlug := instance.GetLogger()
 
 	// Datasource client qsDsClientBuilder
 	qsDsClientBuilder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(
