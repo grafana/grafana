@@ -261,15 +261,6 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 	}
 
 	sectionChildren := []*navtree.NavLink{appLink}
-	// asserts pages expand to root Observability section instead of it's own node
-	if plugin.ID == "grafana-asserts-app" {
-		sectionChildren = appLink.Children
-
-		// keep current sorting if the pages, but above all the other apps
-		for _, child := range sectionChildren {
-			child.SortWeight = -100 + child.SortWeight
-		}
-	}
 
 	if sectionID == navtree.NavIDRoot {
 		treeRoot.AddSection(appLink)
