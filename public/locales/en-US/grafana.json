@@ -4496,6 +4496,8 @@
     },
     "canvas-actions": {
       "add-panel": "Add panel",
+      "disabled-nested-grouping": "Grouping is limited to 2 levels",
+      "disabled-nested-tabs": "Tabs cannot be nested inside other tabs",
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
       "group-panels": "Group panels",

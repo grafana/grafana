@@ -359,6 +359,10 @@ const (
 	// Enables undo/redo in dynamic dashboards
 	FlagDashboardUndoRedo = "dashboardUndoRedo"
 
+	// FlagUnlimitedLayoutsNesting
+	// Enables unlimited dashboard panel grouping
+	FlagUnlimitedLayoutsNesting = "unlimitedLayoutsNesting"
+
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"

@@ -396,6 +396,10 @@ export interface FeatureToggles {
   */
   dashboardUndoRedo?: boolean;
   /**
+  * Enables unlimited dashboard panel grouping
+  */
+  unlimitedLayoutsNesting?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
   panelFilterVariable?: boolean;

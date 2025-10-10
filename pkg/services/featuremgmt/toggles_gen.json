@@ -3899,6 +3899,19 @@
     },
     {
       "metadata": {
+        "name": "unlimitedLayoutsNesting",
+        "resourceVersion": "1760013838902",
+        "creationTimestamp": "2025-10-09T12:43:58Z"
+      },
+      "spec": {
+        "description": "Enables unlimited dashboard panel grouping",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "useKubernetesShortURLsAPI",
         "resourceVersion": "1756914263808",
         "creationTimestamp": "2025-09-03T10:49:07Z",
