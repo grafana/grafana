@@ -24,12 +24,10 @@ func New(hc *http.Client, logger log.Logger, settings backend.DataSourceInstance
 }
 
 func (j *JaegerClient) Services() ([]string, error) {
-	// var response ServicesResponse
-	var response GrpcServicesResponse
+	var response ServicesResponse
 	services := []string{}
 
-	// u, err := url.JoinPath(j.url, "/api/services")
-	u, err := url.JoinPath(j.url, "/api/v3/services")
+	u, err := url.JoinPath(j.url, "/api/services")
 	if err != nil {
 		return services, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
 	}
@@ -49,32 +47,20 @@ func (j *JaegerClient) Services() ([]string, error) {
 		return services, err
 	}
 
-	// services = response.Data
-	services = response.Services
+	services = response.Data
 	return services, err
 }
 
 func (j *JaegerClient) Operations(s string) ([]string, error) {
-	// var response ServicesResponse
-	var response GrpcOperationsResponse
+	var response ServicesResponse
 	operations := []string{}
 
-	u, err := url.JoinPath(j.url, "/api/v3/operations")
-	// u, err := url.JoinPath(j.url, "/api/services/", s, "/operations")
+	u, err := url.JoinPath(j.url, "/api/services/", s, "/operations")
 	if err != nil {
 		return operations, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
 	}
 
-	jaegerURL, err := url.Parse(u)
-	if err != nil {
-		return operations, backend.DownstreamError(fmt.Errorf("failed to parse Jaeger URL: %w", err))
-	}
-
-	urlQuery := jaegerURL.Query()
-	urlQuery.Set("service", url.QueryEscape(s))
-	jaegerURL.RawQuery = urlQuery.Encode()
-
-	res, err := j.httpClient.Get(jaegerURL.String())
+	res, err := j.httpClient.Get(u)
 	if err != nil {
 		return operations, err
 	}
@@ -89,11 +75,7 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 		return operations, err
 	}
 
-	// extract name from operations response
-	for _, op := range response.Operations {
-		operations = append(operations, op.Name)
-	}
-	// operations = response.Data
+	operations = response.Data
 	return operations, err
 }
 

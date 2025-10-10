@@ -42,7 +42,7 @@ type ServiceDependency struct {
 	CallCount int    `json:"callCount"`
 }
 
-// gRPC related response types as defined in: https://github.com/jaegertracing/jaeger-idl/blob/main/swagger/api_v3/query_service.swagger.json
+// gRPC related types as defined in: https://github.com/jaegertracing/jaeger-idl/blob/main/swagger/api_v3/query_service.swagger.json
 type GrpcServicesResponse struct {
 	Services []string `json:"services"`
 }
