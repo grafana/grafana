@@ -14,6 +14,7 @@ import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { calculateDimensions, getValueAngleForValue } from './utils';
+import { t } from '@grafana/i18n';
 
 export interface RadialGaugeProps {
   values: FieldDisplay[];
@@ -220,7 +221,7 @@ export function RadialGauge(props: RadialGaugeProps) {
 
   return (
     <div className={styles.vizWrapper} style={{ width, height }}>
-      <svg width={width} height={height} role="img">
+      <svg width={width} height={height} role="img" aria-label={t('gauge.category-gauge', 'Gauge')}>
         <defs> {defs}</defs>
         {graphics}
       </svg>
