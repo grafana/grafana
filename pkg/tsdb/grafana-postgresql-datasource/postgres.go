@@ -128,7 +128,7 @@ func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit
 	return p, handler, nil
 }
 
-func NewInstanceSettings(logger log.Logger, usePGX bool, dataPath string) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(logger log.Logger, dataPath string) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		cfg := backend.GrafanaConfigFromContext(ctx)
 		sqlCfg, err := cfg.SQL()
@@ -170,6 +170,8 @@ func NewInstanceSettings(logger log.Logger, usePGX bool, dataPath string) dataso
 		if err != nil {
 			return nil, err
 		}
+
+		usePGX := cfg.FeatureToggles().IsEnabled("postgresDSUsePGX")
 
 		if usePGX {
 			pgxlogger := logger.FromContext(ctx).With("driver", "pgx")
