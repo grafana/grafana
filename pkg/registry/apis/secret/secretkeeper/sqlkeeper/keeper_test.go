@@ -148,19 +148,19 @@ func Test_SQLKeeperSetup(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("data key migration only runs if the stack ID is not set", func(t *testing.T) {
+	t.Run("data key migration only runs if the grpc client is enabled", func(t *testing.T) {
 		t.Parallel()
 
 		m := &mockMigrationExecutor{}
 
 		testutils.Setup(t, testutils.WithMutateCfg(func(cfg *testutils.SetupConfig) {
-			cfg.StackID = "test-123"
+			cfg.GRPCClientEnable = false
 			cfg.DataKeyMigrationExecutor = m
 		}))
 		assert.False(t, m.wasExecuted)
 
 		testutils.Setup(t, testutils.WithMutateCfg(func(cfg *testutils.SetupConfig) {
-			cfg.StackID = ""
+			cfg.GRPCClientEnable = true
 			cfg.DataKeyMigrationExecutor = m
 		}))
 		assert.True(t, m.wasExecuted)

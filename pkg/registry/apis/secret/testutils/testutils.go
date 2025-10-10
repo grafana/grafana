@@ -41,7 +41,7 @@ import (
 
 type SetupConfig struct {
 	KeeperService            contracts.KeeperService
-	StackID                  string
+	GRPCClientEnable         bool
 	DataKeyMigrationExecutor contracts.EncryptedValueMigrationExecutor
 }
 
@@ -96,8 +96,8 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		GCWorkerEnabled:               false,
 		GCWorkerMaxBatchSize:          2,
 		GCWorkerMaxConcurrentCleanups: 2,
+		GrpcClientEnable:              setupCfg.GRPCClientEnable, // overridable
 	}
-	cfg.StackID = setupCfg.StackID
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
 

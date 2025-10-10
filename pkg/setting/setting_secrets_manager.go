@@ -71,3 +71,7 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	}
 	cfg.SecretsManagement.ConfiguredKMSProviders = providers
 }
+
+func (s SecretsManagerSettings) IsMTAPIServer() bool {
+	return s.GrpcClientEnable
+}
