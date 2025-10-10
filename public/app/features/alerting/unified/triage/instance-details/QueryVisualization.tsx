@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { DataFrame, Labels, LoadingState } from '@grafana/data';
 import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
-import { VizPanel, useDataTransformer, useQueryRunner, useTimeRange } from '@grafana/scenes-react';
+import { VizPanel, useQueryRunner, useTimeRange } from '@grafana/scenes-react';
 import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
 import { Box } from '@grafana/ui';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -37,40 +37,22 @@ export function QueryVisualization({ query, instanceLabels, thresholds, annotati
     queries: [visualizationQuery],
   });
 
-  // Create transformations to convert labels to fields, then filter by instance labels
-  const transformations = useMemo(() => {
-    const filters = Object.entries(instanceLabels).map(([labelName, labelValue]) => ({
-      fieldName: labelName,
-      config: {
-        id: 'equal',
-        options: { value: labelValue },
-      },
-    }));
+  // Get data and filter by instance labels
+  const { data } = baseDataProvider.useState();
 
-    return [
-      {
-        id: 'labelsToFields',
-        options: {},
-      },
-      {
-        id: 'filterByValue',
-        options: { filters, type: 'include', match: 'all' },
-      },
-    ];
-  }, [instanceLabels]);
+  // Filter frames to only include those matching the instance labels
+  const filteredSeries = useMemo(() => {
+    if (!data?.series || Object.keys(instanceLabels).length === 0) {
+      return data?.series || [];
+    }
 
-  // Apply transformation to filter data
-  const filteredDataProvider = useDataTransformer({
-    data: baseDataProvider,
-    transformations,
-  });
+    return data.series.filter((frame) => frameMatchesInstanceLabels(frame, instanceLabels));
+  }, [data?.series, instanceLabels]);
 
-  // Get the data from the data provider
-  const { data } = filteredDataProvider.useState();
-
+  // Create a data provider with filtered series
   const dataProvider = new SceneDataNode({
     data: {
-      series: data?.series || [],
+      series: filteredSeries,
       state: data?.state || LoadingState.NotStarted,
       timeRange: timeRange,
       annotations: annotations,
@@ -107,4 +89,18 @@ export function QueryVisualization({ query, instanceLabels, thresholds, annotati
       />
     </Box>
   );
+}
+
+// Helper function to check if frame labels match instance labels
+function frameMatchesInstanceLabels(frame: DataFrame, instanceLabels: Labels): boolean {
+  // Check if any field in the frame has labels that match all instance labels
+  for (const field of frame.fields) {
+    if (field.labels) {
+      const allLabelsMatch = Object.entries(instanceLabels).every(([key, value]) => field.labels![key] === value);
+      if (allLabelsMatch) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
