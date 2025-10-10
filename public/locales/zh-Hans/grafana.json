@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "添加权限",
+      "loading": "",
       "no-permissions": "没有任何权限",
       "permissions-change-warning": "这将更改此文件夹及其所有子文件夹的权限。总体而言，这将影响：",
       "role": "角色",
       "serviceaccount": "服务帐户",
       "team": "团队",
-      "title": "权限",
       "user": "用户"
     }
   },
@@ -1530,6 +1530,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "正在删除组"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "移除表达式“{{refId}}”"
     },
@@ -1704,6 +1707,9 @@
       },
       "placeholder-key": "密钥",
       "placeholder-value": "值"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "查看或创建联络点",
@@ -2018,6 +2024,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "所选 Alertmanager 不再存在，或者您可能没有访问它的权限。您可以从下拉列表中选择其他 Alertmanager。",
       "title-selected-alertmanager-not-found": "未找到所选的 Alertmanager。"
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2904,6 +2916,13 @@
         "title-warning": "警告"
       }
     },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
+    },
     "type-selector-button": {
       "add-expression": "添加表达式"
     },
@@ -3473,7 +3492,7 @@
       "delete-button": "删除",
       "delete-modal-invalid-text": "一个或多个文件夹包含库面板或警报规则。请首先删除这些以便继续。",
       "delete-modal-invalid-title": "无法删除文件夹",
-      "delete-modal-restore-dashboards-text": "此操作将立即删除所选文件夹，但所选数据面板将被标记为在 30 天后删除。您的组织管理员可以在 30 天期限内随时还原数据面板。文件夹无法还原。",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "此操作将删除以下内容：",
       "delete-modal-title": "删除",
       "delete-provisioned-folder": "删除已预置的文件夹",
@@ -4122,6 +4141,13 @@
       "body": "尝试使用新的 Advisor 来发现数据源和插件的潜在问题。",
       "go-to-advisor": "前往顾问"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4170,6 +4196,20 @@
         "unknown-datasource": "未知数据源"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "选择一个数据源类型"
@@ -4199,6 +4239,13 @@
         },
         "subtitle": "在一个地方管理您的数据源连接。使用此页面添加新数据源或管理现有连接。"
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "搜索全部",
@@ -4505,7 +4552,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "由于条件渲染，元素已被隐藏。"
+        "tooltip": ""
       },
       "root": {
         "title": "显示/隐藏规则"
@@ -5751,6 +5798,7 @@
         "dynamically-switch-source-multiple-panels": "动态切换多个面板的数据源",
         "group": "即时添加按键分组",
         "hidden-constant-variable": "隐藏的常量变量，对于您要共享的数据面板中的指标前缀很有用",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "用户可以在文本框中输入任意字符串",
         "values-are-static-and-defined-manually": "值为静态，由手动定义",
         "values-fetched-source-query": "值从数据源查询中获取",
@@ -5764,6 +5812,7 @@
         "group-by": "分组方式",
         "interval": "间隔",
         "query": "查询",
+        "switch": "",
         "textbox": "文本框"
       }
     },
@@ -6105,6 +6154,17 @@
       "title": {
         "copy-to-clipboard-failed": "复制到剪贴板失败"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "默认值"
@@ -6554,6 +6614,7 @@
         "service-now-integration-and-data-source": "ServiceNow 集成和数据源",
         "signal-fx-integration-and-datasource": "SignalFx 集成和数据源",
         "snowflake-integration-and-data-source": "Snowflake 集成和数据源",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic 集成和数据源",
         "visualize-and-explore-dynatrace-data": "可视化并探索 Dynatrace 数据",
         "visualize-and-explore-oracle-sql": "可视化并探索 Oracle SQL",
@@ -9390,6 +9451,7 @@
     "description-enable-infinite-scrolling": "实验性。通过滚动到日志列表底部来请求更多结果。",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9437,9 +9499,6 @@
       "collapse": "收起标签",
       "expand": "展开标签"
     },
-    "log-labels-list": {
-      "log-line": "日志行"
-    },
     "log-line": {
       "has-error": "有错误",
       "is-sampled": "已采样",
@@ -9479,6 +9538,7 @@
       "inline-mode": "内联显示",
       "link-value-tooltip": "",
       "links-section": "关联",
+      "log-attributes-field": "",
       "log-line-field": "日志行",
       "log-line-section": "日志行",
       "move-displayed-field-down": "下移",
@@ -9685,6 +9745,7 @@
       "line-contains": "添加为包含筛选器的行",
       "line-contains-not": "添加为不包含筛选器的行"
     },
+    "show-log-attributes": "",
     "timestamp-format": "时间戳分辨率",
     "un-themed-log-details": {
       "aria-label-data-links": "数据关联",
@@ -10276,7 +10337,7 @@
       "title": "个人资料"
     },
     "recently-deleted": {
-      "subtitle": "此处列出的任何项目超过 30 天都将被自动删除。",
+      "subtitle": "",
       "title": "最近删除"
     },
     "recorded-queries": {
@@ -11483,6 +11544,7 @@
       "active-jobs": "活跃的作业",
       "column-action": "操作",
       "column-duration": "持续时间",
+      "column-job-id": "",
       "column-message": "消息",
       "column-started": "已启动",
       "column-status": "状态",
@@ -11501,12 +11563,6 @@
       "settings": "设置",
       "view": "查看"
     },
-    "repository-health": {
-      "details": "详情：",
-      "no-errors-found": "没有发现错误",
-      "title-repository-is-healthy": "存储库状态良好",
-      "title-repository-is-unhealthy": "存储库状态不良"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "比较分支",
@@ -11521,7 +11577,7 @@
     },
     "repository-overview": {
       "checked": "已检查：",
-      "finished": "已完成：",
+      "finished": "",
       "health": "健康",
       "healthy": "状态良好",
       "job-id": "作业 ID：",
@@ -11530,7 +11586,6 @@
       "not-available": "N/A",
       "pull-status": "拉取状态",
       "resources": "资源",
-      "started": "已开始：",
       "status": "状态：",
       "unhealthy": "状态不良",
       "view-folder": "查看文件夹",
@@ -12186,9 +12241,6 @@
       "title-disable-service-account": "禁用服务账户",
       "tokens": "令牌",
       "tooltip-managed-service-account-cannot-modified": "这是托管服务账户，无法修改"
-    },
-    "service-account-permissions": {
-      "title-permissions": "权限"
     },
     "service-account-profile": {
       "information": "信息",
@@ -12861,6 +12913,10 @@
     "name-mode": "模式",
     "name-show-line-numbers": "显示行号",
     "name-show-mini-map": "显示小地图"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -13612,6 +13668,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "与",
       "placeholder-from": "",

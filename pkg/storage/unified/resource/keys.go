@@ -8,7 +8,24 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// verifyRequestKey verifies that the key is valid for a request (all fields set and valid, including name)
 func verifyRequestKey(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
+	if err := verifyRequestKeyNamespaceGroupResource(key); err != nil {
+		return NewBadRequestError(err.Message)
+	}
+	if err := validation.IsValidGrafanaName(key.Name); err != nil {
+		return NewBadRequestError(err[0])
+	}
+	return nil
+}
+
+// verifyRequestKeyCollection verifies that the key is valid for a collection (namespace/group/resource set and valid)
+func verifyRequestKeyCollection(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
+	return verifyRequestKeyNamespaceGroupResource(key)
+}
+
+// verifyRequestKeyNamespaceGroupResource verifies that the key has namespace/group/resource set and valid
+func verifyRequestKeyNamespaceGroupResource(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	if key == nil {
 		return NewBadRequestError("missing resource key")
 	}
@@ -24,10 +41,7 @@ func verifyRequestKey(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	if err := validation.IsValidGroup(key.Group); err != nil {
 		return NewBadRequestError(err[0])
 	}
-	if err := validation.IsValidateResource(key.Resource); err != nil {
-		return NewBadRequestError(err[0])
-	}
-	if err := validation.IsValidGrafanaName(key.Name); err != nil {
+	if err := validation.IsValidResource(key.Resource); err != nil {
 		return NewBadRequestError(err[0])
 	}
 	return nil
