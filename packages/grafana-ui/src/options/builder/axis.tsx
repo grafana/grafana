@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import {
   FieldConfigEditorBuilder,
   FieldType,
@@ -126,12 +128,23 @@ const LOG_DISTRIBUTION_OPTIONS: Array<SelectableValue<number>> = [
   },
 ];
 
+const isValidLinearThreshold = (value: number) => !Number.isNaN(value) && value !== 0;
+
 /**
  * @internal
  */
-export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps<ScaleDistributionConfig>) => {
+export const ScaleDistributionEditor = ({
+  value,
+  onChange,
+}: Pick<StandardEditorProps<ScaleDistributionConfig>, 'value' | 'onChange'>) => {
   const type = value?.type ?? ScaleDistribution.Linear;
   const log = value?.log ?? 2;
+
+  const [localLinearThreshold, setLocalLinearThreshold] = useState<string>(
+    value?.linearThreshold != null ? String(value.linearThreshold) : ''
+  );
+  const [linearThresholdWarning, setLinearThresholdWarning] = useState<boolean>(false);
+
   const DISTRIBUTION_OPTIONS: Array<SelectableValue<ScaleDistribution>> = [
     {
       label: t('grafana-ui.builder.axis.scale-distribution-editor.distribution-options.label-linear', 'Linear'),
@@ -179,12 +192,31 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
           <Input
             // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="1"
-            value={value?.linearThreshold}
+            value={localLinearThreshold}
+            invalid={linearThresholdWarning}
+            onBlur={(ev) => {
+              if (ev.currentTarget.value) {
+                setLinearThresholdWarning(!isValidLinearThreshold(Number(ev.currentTarget.value)));
+              }
+            }}
             onChange={(v) => {
-              onChange({
-                ...value,
-                linearThreshold: Number(v.currentTarget.value),
-              });
+              setLocalLinearThreshold(v.currentTarget.value);
+              if (v.currentTarget.value === '') {
+                const newValue = { ...value };
+                delete newValue.linearThreshold;
+                onChange(newValue);
+                setLinearThresholdWarning(false);
+                return;
+              }
+
+              const asNumber = Number(v.currentTarget.value);
+              if (isValidLinearThreshold(asNumber)) {
+                setLinearThresholdWarning(false);
+                onChange({
+                  ...value,
+                  linearThreshold: asNumber,
+                });
+              }
             }}
           />
         </Field>
