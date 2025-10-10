@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ConfirmModal, Space, Text } from '@grafana/ui';
+import { ConfirmModal, Field, Space, Text } from '@grafana/ui';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
 
@@ -61,7 +61,10 @@ export const RestoreModal = ({
             </Trans>
           </Text>
           <Space v={1} />
-          <FolderPicker onChange={setRestoreTarget} value={restoreTarget} />
+          {/* Field wrapper resets font-size to 14px, preventing cascade from parent Text components */}
+          <Field noMargin>
+            <FolderPicker onChange={setRestoreTarget} value={restoreTarget} />
+          </Field>
         </>
       }
       confirmText={
