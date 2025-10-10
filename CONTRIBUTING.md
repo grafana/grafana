@@ -70,10 +70,11 @@ Grafana plugins let you extend the platform with new data sources, panels, and m
 
 You can help even if you don't write code:
 
-- **Triage issues:** Review, label, and clarify open issues ([triage guide](contribute/triage-issues.md)).
-- **Suggest features:** Propose new ideas ([feature request template](https://github.com/grafana/grafana/issues/new?template=1-feature_requests.md)).
-- **Improve documentation:** Edit or add to our docs ([docs guide](contribute/documentation/README.md)).
-- **Report security vulnerabilities:** If you believe you've found a security issue, please read our [security policy](https://github.com/grafana/grafana/security/policy) for details on responsible reporting.
+- Report a bug with the [bug report template](https://github.com/grafana/grafana/issues/new?template=0-bug-report.yaml) and include steps to reproduce.
+- Submit a [feature request](https://github.com/grafana/grafana/issues/new?template=1-feature_requests.md) to propose improvements.
+- Improve our docs with the [documentation contribution guide](https://github.com/grafana/grafana/blob/main/contribute/documentation).
+- Help with [issue triage](https://github.com/grafana/grafana/blob/main/contribute/triage-issues.md) by reviewing, labeling, and clarifying open issues.
+- Report security vulnerabilities following our [security policy](https://github.com/grafana/grafana/security/policy).
 
 **Please note:** We do not currently accept contributions for translations. Please do not submit pull requests translating grafana.json files - they will be rejected. We do accept contributions to mark up phrases for translation. See [Internationalization](contribute/internationalization.md).
 
