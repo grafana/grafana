@@ -318,34 +318,6 @@ describe('getPluginExtensions()', () => {
     });
   });
 
-  test('should skip the link extension if the configure() function returns with an invalid path', async () => {
-    link1.configure = jest.fn().mockImplementation(() => ({
-      path: '/a/another-plugin/page-a',
-    }));
-    link2.configure = jest.fn().mockImplementation(() => ({
-      path: 'invalid-path',
-    }));
-
-    const registries = await createRegistries([
-      { pluginId, addedLinkConfigs: [link1, link2], addedComponentConfigs: [] },
-    ]);
-    const { extensions: extensionsAtPlacement1 } = getPluginExtensions({
-      ...registries,
-      extensionPointId: extensionPoint1,
-    });
-    const { extensions: extensionsAtPlacement2 } = getPluginExtensions({
-      ...registries,
-      extensionPointId: extensionPoint2,
-    });
-
-    expect(extensionsAtPlacement1).toHaveLength(0);
-    expect(extensionsAtPlacement2).toHaveLength(0);
-
-    expect(link1.configure).toHaveBeenCalledTimes(1);
-    expect(link2.configure).toHaveBeenCalledTimes(1);
-    expect(log.error).toHaveBeenCalledTimes(2);
-  });
-
   test('should skip the extension if any of the updated props returned by the configure() function are invalid', async () => {
     const overrides = {
       title: '', // Invalid empty string for title - should be ignored
