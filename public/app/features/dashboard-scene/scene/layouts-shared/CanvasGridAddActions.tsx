@@ -35,6 +35,10 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
     let parent = layoutManager.parent;
     const layouts = [];
     while (parent) {
+      if (layouts.length > 1) {
+        break;
+      }
+
       if (isDashboardLayoutManager(parent)) {
         layouts.push(parent.descriptor.id);
       }
