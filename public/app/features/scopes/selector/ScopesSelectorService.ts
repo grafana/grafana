@@ -7,6 +7,7 @@ import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 
+import { isCurrentPath } from '../dashboards/ScopesNavigationTreeLink';
 import {
   closeNodes,
   expandNodes,
@@ -18,8 +19,6 @@ import {
   treeNodeAtPath,
 } from './scopesTreeUtils';
 import { NodesMap, RecentScope, RecentScopeSchema, ScopeSchema, ScopesMap, SelectedScope, TreeNode } from './types';
-import { getDashboardPathForComparison, isCurrentPath } from '../dashboards/ScopesNavigationTreeLink';
-
 export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
 export interface ScopesSelectorServiceState {

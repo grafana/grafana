@@ -6,6 +6,7 @@ import { config, locationService } from '@grafana/runtime';
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
+import { isCurrentPath } from './ScopesNavigationTreeLink';
 import { ScopeNavigation, SuggestedNavigationsFoldersMap } from './types';
 
 interface ScopesDashboardsServiceState {
@@ -34,6 +35,24 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       forScopeNames: [],
       loading: false,
       searchQuery: '',
+    });
+
+    // Add listener to location change, and expand the group that matches the current path, if it is not already expanded
+    locationService.getLocationObservable().subscribe((location) => {
+      if (!this.state.drawerOpened) {
+        return;
+      }
+      const currentPath = location.pathname;
+      const activeScopeNavigation = this.state.scopeNavigations.find((s) => {
+        if (!('url' in s.spec) || typeof s.spec.url !== 'string') {
+          return false;
+        }
+        return isCurrentPath(currentPath, s.spec.url);
+      });
+      if (activeScopeNavigation && activeScopeNavigation.status.groups) {
+        // Expand the first group, as we don't know which one to prioritize
+        this.updateFolder(['', activeScopeNavigation.status.groups[0]], true);
+      }
     });
   }
 
