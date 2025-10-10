@@ -69,7 +69,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     <Stack alignItems="center" justifyContent="center">
       <div
         className={cx(styles.wrapper, {
-          [styles.maxWidthWrapper]: !config.featureToggles.dashboardLibrary || !dashboardLibraryDatasourceUid,
+          [styles.wrapperMaxWidth]: !config.featureToggles.dashboardLibrary || !dashboardLibraryDatasourceUid,
         })}
       >
         <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
@@ -175,7 +175,7 @@ function getStyles(theme: GrafanaTheme2) {
         paddingTop: theme.spacing(12),
       },
     }),
-    maxWidthWrapper: css({
+    wrapperMaxWidth: css({
       maxWidth: '890px',
     }),
   };

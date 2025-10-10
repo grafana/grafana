@@ -208,12 +208,12 @@ describe('DashboardLibrarySection feature toggle', () => {
   });
 });
 
-describe('maxWidthWrapper CSS class', () => {
+describe('wrapperMaxWidth CSS class', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('applies maxWidthWrapper class when dashboardLibrary feature is disabled', () => {
+  it('applies wrapperMaxWidth class when dashboardLibrary feature is disabled', () => {
     config.featureToggles.dashboardLibrary = false;
 
     const mockSearchParams = new URLSearchParams();
@@ -228,7 +228,7 @@ describe('maxWidthWrapper CSS class', () => {
     expect(wrapperElement).toHaveStyle('max-width: 890px');
   });
 
-  it('applies maxWidthWrapper class when dashboardLibrary feature is enabled but no dashboardLibraryDatasourceUid param', () => {
+  it('applies wrapperMaxWidth class when dashboardLibrary feature is enabled but no dashboardLibraryDatasourceUid param', () => {
     config.featureToggles.dashboardLibrary = true;
 
     const mockSearchParams = new URLSearchParams();
@@ -243,7 +243,7 @@ describe('maxWidthWrapper CSS class', () => {
     expect(wrapperElement).toHaveStyle('max-width: 890px');
   });
 
-  it('does not apply maxWidthWrapper class when dashboardLibrary feature is enabled and dashboardLibraryDatasourceUid param exists', () => {
+  it('does not apply wrapperMaxWidth class when dashboardLibrary feature is enabled and dashboardLibraryDatasourceUid param exists', () => {
     config.featureToggles.dashboardLibrary = true;
 
     const mockSearchParams = new URLSearchParams('dashboardLibraryDatasourceUid=test-uid');
