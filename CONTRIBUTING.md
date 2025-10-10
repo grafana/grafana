@@ -43,7 +43,6 @@ We welcome your technical contributions! You can contribute in several ways:
 **What you will need:**
 
 - Follow our [developer guide](contribute/developer-guide.md) to set up your environment.
-- Set up your environment ([guide](contribute/developer-guide.md)).
 - Adhere to our [frontend](contribute/style-guides/frontend.md) and [backend](contribute/backend/style-guide.md) style guides.
 - Write or update tests ([testing guide](contribute/style-guides/testing.md)).
 
