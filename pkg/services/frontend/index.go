@@ -35,7 +35,7 @@ type IndexViewData struct {
 	AppTitle     string
 
 	Assets      dtos.EntryPointAssets // Includes CDN info
-	Settings    dtos.FrontendSettingsDTO
+	Settings    FSFrontendSettings
 	DefaultUser dtos.CurrentUser
 
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
@@ -59,7 +59,7 @@ func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets) (*
 
 	// subset of frontend settings needed for the login page
 	// TODO what about enterprise settings here?
-	frontendSettings := dtos.FrontendSettingsDTO{
+	frontendSettings := FSFrontendSettings{
 		AnalyticsConsoleReporting:           cfg.FrontendAnalyticsConsoleReporting,
 		AnonymousEnabled:                    cfg.Anonymous.Enabled,
 		ApplicationInsightsConnectionString: cfg.ApplicationInsightsConnectionString,
