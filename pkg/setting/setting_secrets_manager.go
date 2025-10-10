@@ -72,6 +72,7 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.ConfiguredKMSProviders = providers
 }
 
+// TODO create specific configs to control the things this is gating instead of overly relying on this flag
 func (s SecretsManagerSettings) IsMTAPIServer() bool {
 	return s.GrpcClientEnable
 }
