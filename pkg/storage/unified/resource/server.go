@@ -554,7 +554,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, NewBadRequestError(
 			fmt.Sprintf("key/name do not match (key: %s, name: %s)", key.Name, obj.GetName()))
 	}
-	if errs := validation.IsValidGrafanaName(obj.GetName()); err != nil {
+	if errs := validation.IsValidGrafanaName(obj.GetName()); errs != nil {
 		return nil, NewBadRequestError(errs[0])
 	}
 
