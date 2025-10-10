@@ -99,7 +99,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               </Button>
             </Stack>
           </Box>
-          {config.featureToggles.dashboardLibrary && <DashboardLibrarySection />}
+          {config.featureToggles.dashboardLibrary && dashboardLibraryDatasourceUid && <DashboardLibrarySection />}
           <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
             <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
               <Stack direction="column" alignItems="center" gap={1}>

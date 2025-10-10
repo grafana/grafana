@@ -160,8 +160,24 @@ it('renders with buttons disabled when repository is read-only', () => {
 });
 
 describe('DashboardLibrarySection feature toggle', () => {
-  it('renders DashboardLibrarySection when feature toggle is enabled', () => {
+  beforeEach(() => {
+    // Reset all mocks before each test
+    jest.clearAllMocks();
+    // Reset the mock to default state
+    mockUseGetResourceRepositoryView.mockReturnValue({
+      isReadOnlyRepo: false,
+      isInstanceManaged: false,
+      isLoading: false,
+    });
+  });
+
+  it('renders DashboardLibrarySection when feature toggle is enabled and dashboardLibraryDatasourceUid param exists', () => {
     config.featureToggles.dashboardLibrary = true;
+
+    // Mock URL search params to include dashboardLibraryDatasourceUid
+    const mockSearchParams = new URLSearchParams('dashboardLibraryDatasourceUid=test-uid');
+    jest.spyOn(require('react-router-dom-v5-compat'), 'useSearchParams').mockReturnValue([mockSearchParams]);
+
     setup();
 
     expect(screen.getByTestId('dashboard-library-section')).toBeInTheDocument();
@@ -169,6 +185,23 @@ describe('DashboardLibrarySection feature toggle', () => {
 
   it('does not render DashboardLibrarySection when feature toggle is disabled', () => {
     config.featureToggles.dashboardLibrary = false;
+
+    // Mock URL search params with no dashboardLibraryDatasourceUid
+    const mockSearchParams = new URLSearchParams();
+    jest.spyOn(require('react-router-dom-v5-compat'), 'useSearchParams').mockReturnValue([mockSearchParams]);
+
+    setup();
+
+    expect(screen.queryByTestId('dashboard-library-section')).not.toBeInTheDocument();
+  });
+
+  it('does not render DashboardLibrarySection when feature toggle is enabled but no dashboardLibraryDatasourceUid param', () => {
+    config.featureToggles.dashboardLibrary = true;
+
+    // Mock URL search params with no dashboardLibraryDatasourceUid
+    const mockSearchParams = new URLSearchParams();
+    jest.spyOn(require('react-router-dom-v5-compat'), 'useSearchParams').mockReturnValue([mockSearchParams]);
+
     setup();
 
     expect(screen.queryByTestId('dashboard-library-section')).not.toBeInTheDocument();
@@ -176,22 +209,30 @@ describe('DashboardLibrarySection feature toggle', () => {
 });
 
 describe('maxWidthWrapper CSS class', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('applies maxWidthWrapper class when dashboardLibrary feature is disabled', () => {
     config.featureToggles.dashboardLibrary = false;
+
+    const mockSearchParams = new URLSearchParams();
+    jest.spyOn(require('react-router-dom-v5-compat'), 'useSearchParams').mockReturnValue([mockSearchParams]);
 
     const { container } = render(
       <DashboardEmpty dashboard={createDashboardModelFixture(defaultDashboard)} canCreate={true} />
     );
 
-    // Look for the wrapper element with the dashboard-empty-wrapper label
     const wrapperElement = container.querySelector('[class*="dashboard-empty-wrapper"]');
     expect(wrapperElement).toBeInTheDocument();
-    // Check if it has the maxWidth style applied
     expect(wrapperElement).toHaveStyle('max-width: 890px');
   });
 
   it('applies maxWidthWrapper class when dashboardLibrary feature is enabled but no dashboardLibraryDatasourceUid param', () => {
     config.featureToggles.dashboardLibrary = true;
+
+    const mockSearchParams = new URLSearchParams();
+    jest.spyOn(require('react-router-dom-v5-compat'), 'useSearchParams').mockReturnValue([mockSearchParams]);
 
     const { container } = render(
       <DashboardEmpty dashboard={createDashboardModelFixture(defaultDashboard)} canCreate={true} />
