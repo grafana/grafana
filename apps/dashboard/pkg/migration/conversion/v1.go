@@ -56,6 +56,8 @@ func Convert_V1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, s
 }
 
 func Convert_V1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope) error {
+	out.TypeMeta.Kind = "Dashboard"
+	out.TypeMeta.APIVersion = dashv2beta1.GroupVersion.String()
 	out.ObjectMeta = in.ObjectMeta
 
 	// TODO: implement V1 to v2beta1 conversion
