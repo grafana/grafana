@@ -2832,7 +2832,8 @@
       "metadata": {
         "name": "pluginAssetProvider",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-17T15:20:35Z"
+        "creationTimestamp": "2025-07-17T15:20:35Z",
+        "deletionTimestamp": "2025-10-03T16:13:14Z"
       },
       "spec": {
         "description": "Allows decoupled core plugins to load from the Grafana CDN",
@@ -3163,6 +3164,19 @@
       },
       "spec": {
         "description": "Rewrite requests targeting /ds/query to the query service",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryServiceWithConnections",
+        "resourceVersion": "1756367172351",
+        "creationTimestamp": "2025-08-28T07:46:12Z"
+      },
+      "spec": {
+        "description": "Adds datasource connections to the query service",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "requiresRestart": true

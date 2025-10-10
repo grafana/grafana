@@ -242,6 +242,12 @@ func (a *dashboardSqlAccess) ListModifiedSince(ctx context.Context, key resource
 	}
 }
 
+func (a *dashboardSqlAccess) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+	return func(yield func(resource.ResourceLastImportTime, error) bool) {
+		yield(resource.ResourceLastImportTime{}, errors.New("not implemented"))
+	}
+}
+
 // List implements StorageBackend.
 func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	if req.ResourceVersion != 0 {
