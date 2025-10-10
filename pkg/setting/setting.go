@@ -2121,6 +2121,11 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	}
 
 	cfg.ProvisioningDisableControllers = iniFile.Section("provisioning").Key("disable_controllers").MustBool(false)
+	// if disable_controllers is not set, check if grafana-apiserver.disable_controllers is set
+	// TODO: consolidate to just [grafana-apiserver]disable_controllers
+	if !cfg.ProvisioningDisableControllers {
+		cfg.ProvisioningDisableControllers = iniFile.Section("grafana-apiserver").Key("disable_controllers").MustBool(false)
+	}
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
 		cfg.ProvisioningAllowedTargets = []string{"instance", "folder"}
