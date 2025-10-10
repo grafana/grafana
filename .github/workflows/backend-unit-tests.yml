@@ -6,9 +6,10 @@ on:
     branches:
       - main
       - release-*.*.*
-      - steady
-      - fast
-      - slow
+    tags:
+      - rrc_steady_*
+      - rrc_fast_*
+      - rrc_slow_*
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
