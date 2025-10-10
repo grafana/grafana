@@ -473,7 +473,10 @@ export function ExtensionRenderer({
               icon="external-link-alt"
             />
             <Menu.Item
-              label={t('extensions.dependency-graph.highlight-provider-connections', 'Highlight provider connections')}
+              label={t(
+                'extensions.dependency-graph.highlight-extension-point-connections',
+                'Highlight extension point connections'
+              )}
               onClick={handleHighlightArrows}
               icon="arrow-right"
             />
