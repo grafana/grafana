@@ -15,7 +15,7 @@ type OpenFeatureSettings struct {
 	ProviderType string
 	URL          *url.URL
 	TargetingKey string
-	ContextAttrs map[string]any
+	ContextAttrs map[string]string
 }
 
 func (cfg *Cfg) readOpenFeatureSettings() error {
@@ -24,9 +24,14 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 	config := cfg.Raw.Section("feature_toggles.openfeature")
 	cfg.OpenFeature.APIEnabled = config.Key("enable_api").MustBool(true)
 	cfg.OpenFeature.ProviderType = config.Key("provider").MustString(StaticProviderType)
-	cfg.OpenFeature.TargetingKey = config.Key("targetingKey").MustString(cfg.AppURL)
-
 	strURL := config.Key("url").MustString("")
+
+	defaultTargetingKey := "default"
+	if cfg.StackID != "" {
+		defaultTargetingKey = fmt.Sprintf("stacks-%s", cfg.StackID)
+	}
+
+	cfg.OpenFeature.TargetingKey = config.Key("targetingKey").MustString(defaultTargetingKey)
 
 	if strURL != "" && cfg.OpenFeature.ProviderType == GOFFProviderType {
 		u, err := url.Parse(strURL)
@@ -38,7 +43,7 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 
 	// build the eval context attributes using [feature_toggles.openfeature.context] section
 	ctxConf := cfg.Raw.Section("feature_toggles.openfeature.context")
-	attrs := map[string]any{}
+	attrs := map[string]string{}
 	for _, key := range ctxConf.KeyStrings() {
 		attrs[key] = ctxConf.Key(key).String()
 	}
@@ -46,6 +51,10 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 	// Some default attributes
 	if _, ok := attrs["grafana_version"]; !ok {
 		attrs["grafana_version"] = BuildVersion
+	}
+
+	if _, ok := attrs["namespace"]; !ok {
+		attrs["namespace"] = defaultTargetingKey
 	}
 
 	cfg.OpenFeature.ContextAttrs = attrs

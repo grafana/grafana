@@ -350,6 +350,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			MaxIdleConns:    hs.Cfg.SqlDatasourceMaxIdleConnsDefault,
 			ConnMaxLifetime: hs.Cfg.SqlDatasourceMaxConnLifetimeDefault,
 		},
+		OpenFeatureContext: hs.Cfg.OpenFeature.ContextAttrs,
 	}
 
 	if hs.Cfg.UnifiedAlerting.StateHistory.Enabled {

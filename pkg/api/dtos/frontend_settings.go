@@ -305,6 +305,7 @@ type FrontendSettingsDTO struct {
 
 	LocalFileSystemAvailable bool `json:"localFileSystemAvailable"`
 	// Experimental Scope settings
-	ListScopesEndpoint          string `json:"listScopesEndpoint"`
-	ListDashboardScopesEndpoint string `json:"listDashboardScopesEndpoint"`
+	ListScopesEndpoint          string            `json:"listScopesEndpoint"`
+	ListDashboardScopesEndpoint string            `json:"listDashboardScopesEndpoint"`
+	OpenFeatureContext          map[string]string `json:"openFeatureContext"`
 }
