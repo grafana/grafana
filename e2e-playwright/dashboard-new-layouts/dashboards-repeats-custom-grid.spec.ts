@@ -1,6 +1,5 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
 import {

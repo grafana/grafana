@@ -3,7 +3,7 @@ package loki
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/promlib/models"
+	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,7 +14,7 @@ func TestInjectScopesIntoLokiQuery(t *testing.T) {
 	tests := []struct {
 		name         string
 		query        string
-		scopeFilters []models.ScopeFilter
+		scopeFilters []scope.ScopeFilter
 		expected     string
 		expectErr    bool
 	}{
@@ -33,8 +33,8 @@ func TestInjectScopesIntoLokiQuery(t *testing.T) {
 		{
 			name:  "scopes with existing filter",
 			query: `{namespace="default"} |= "an unexpected error"`,
-			scopeFilters: []models.ScopeFilter{
-				{Key: "cluster", Value: "us-central-1", Operator: models.FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "cluster", Value: "us-central-1", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `{namespace="default", cluster="us-central-1"} |= "an unexpected error"`,
 			expectErr: false,
@@ -42,8 +42,8 @@ func TestInjectScopesIntoLokiQuery(t *testing.T) {
 		{
 			name:  "scopes without existing label matchers",
 			query: `{} |= "an unexpected error"`,
-			scopeFilters: []models.ScopeFilter{
-				{Key: "cluster", Value: "us-central-1", Operator: models.FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "cluster", Value: "us-central-1", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `{cluster="us-central-1"} |= "an unexpected error"`,
 			expectErr: false,
@@ -51,9 +51,9 @@ func TestInjectScopesIntoLokiQuery(t *testing.T) {
 		{
 			name:  "scopes with multiple filters",
 			query: `{} |= "an unexpected error"`,
-			scopeFilters: []models.ScopeFilter{
-				{Key: "cluster", Value: "us-central-1", Operator: models.FilterOperatorEquals},
-				{Key: "namespace", Value: "default", Operator: models.FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "cluster", Value: "us-central-1", Operator: scope.FilterOperatorEquals},
+				{Key: "namespace", Value: "default", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `{cluster="us-central-1", namespace="default"} |= "an unexpected error"`,
 			expectErr: false,
@@ -61,8 +61,8 @@ func TestInjectScopesIntoLokiQuery(t *testing.T) {
 		{
 			name:  "metric query with scopes filters",
 			query: `count_over_time({} |= "error" [1m])`,
-			scopeFilters: []models.ScopeFilter{
-				{Key: "namespace", Value: "default", Operator: models.FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "namespace", Value: "default", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `count_over_time({namespace="default"} |= "error"[1m])`,
 			expectErr: false,
@@ -70,9 +70,9 @@ func TestInjectScopesIntoLokiQuery(t *testing.T) {
 		{
 			name:  "multi range metric query operation",
 			query: `count_over_time({} |= "error" [1m])/count_over_time({} [1m])`,
-			scopeFilters: []models.ScopeFilter{
-				{Key: "cluster", Value: "us-central-1", Operator: models.FilterOperatorEquals},
-				{Key: "namespace", Value: "default", Operator: models.FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "cluster", Value: "us-central-1", Operator: scope.FilterOperatorEquals},
+				{Key: "namespace", Value: "default", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `(count_over_time({cluster="us-central-1", namespace="default"} |= "error"[1m]) / count_over_time({cluster="us-central-1", namespace="default"}[1m]))`,
 			expectErr: false,
@@ -80,9 +80,9 @@ func TestInjectScopesIntoLokiQuery(t *testing.T) {
 		{
 			name:  "multi range metric query operation with existing label matchers",
 			query: `count_over_time({a="bar"} |= "error" [1m])/count_over_time({a="bar"} [1m])`,
-			scopeFilters: []models.ScopeFilter{
-				{Key: "cluster", Value: "us-central-1", Operator: models.FilterOperatorEquals},
-				{Key: "namespace", Value: "default", Operator: models.FilterOperatorEquals},
+			scopeFilters: []scope.ScopeFilter{
+				{Key: "cluster", Value: "us-central-1", Operator: scope.FilterOperatorEquals},
+				{Key: "namespace", Value: "default", Operator: scope.FilterOperatorEquals},
 			},
 			expected:  `(count_over_time({a="bar", cluster="us-central-1", namespace="default"} |= "error"[1m]) / count_over_time({a="bar", cluster="us-central-1", namespace="default"}[1m]))`,
 			expectErr: false,
