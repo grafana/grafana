@@ -27,7 +27,7 @@ import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaAp
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import { ExtensionsLog, log as baseLog } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
-import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
+import { assertIsNotPromise, assertStringProps, isPromise } from './validators';
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   return (...args: unknown[]) => {
@@ -481,7 +481,6 @@ export function getLinkExtensionOverrides(
       `The configure() function for "${config.title}" returned a promise, skipping updates.`
     );
 
-    path && assertLinkPathIsValid(pluginId, path);
     assertStringProps({ title, description }, ['title', 'description']);
 
     if (Object.keys(rest).length > 0) {
