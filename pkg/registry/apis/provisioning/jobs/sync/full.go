@@ -190,19 +190,29 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 		}
 	}
 
-	if err := processResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer); err != nil {
-		return err
+	if len(fileDeletions) > 0 {
+		if err := processResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer); err != nil {
+			return err
+		}
 	}
 
-	if err := processFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer); err != nil {
-		return err
+	if len(folderDeletions) > 0 {
+		if err := processFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer); err != nil {
+			return err
+		}
 	}
 
-	if err := processFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer); err != nil {
-		return err
+	if len(folderCreations) > 0 {
+		if err := processFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer); err != nil {
+			return err
+		}
 	}
 
-	return processResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer)
+	if len(fileCreations) > 0 {
+		return processResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer)
+	}
+
+	return nil
 }
 
 func processFoldersSerially(ctx context.Context, folders []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
@@ -211,11 +221,11 @@ func processFoldersSerially(ctx context.Context, folders []ResourceFileChange, c
 
 	for _, folder := range folders {
 		if folderCtx.Err() != nil {
-			return nil
+			return folderCtx.Err()
 		}
 
 		if err := progress.TooManyErrors(); err != nil {
-			return nil
+			return err
 		}
 
 		processChange(folderCtx, folder, clients, repositoryResources, progress, tracer)
@@ -236,7 +246,6 @@ func processResourcesInParallel(ctx context.Context, resources []ResourceFileCha
 	changeChan := make(chan ResourceFileChange, len(resources))
 	var wg sync.WaitGroup
 
-	// Start workers
 	for i := 0; i < maxWorkers; i++ {
 		wg.Add(1)
 		go func() {
@@ -252,7 +261,6 @@ func processResourcesInParallel(ctx context.Context, resources []ResourceFileCha
 						cancel()
 						return
 					}
-
 					if workerCtx.Err() != nil {
 						return
 					}
@@ -266,7 +274,6 @@ func processResourcesInParallel(ctx context.Context, resources []ResourceFileCha
 		}()
 	}
 
-	// Send all resources to the channel
 	for _, change := range resources {
 		select {
 		case changeChan <- change:
@@ -278,5 +285,9 @@ done:
 	close(changeChan)
 	wg.Wait()
 
-	return nil
+	if err := progress.TooManyErrors(); err != nil {
+		return err
+	}
+
+	return ctx.Err()
 }

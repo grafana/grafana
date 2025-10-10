@@ -202,20 +202,23 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				// First call returns nil, second call returns error
-				progress.On("TooManyErrors").Return(nil).Once()
-				progress.On("TooManyErrors").Return(fmt.Errorf("too many errors")).Once()
+				callCount := 0
+				progress.On("TooManyErrors").Return(func() error {
+					callCount++
+					if callCount > 1 {
+						return fmt.Errorf("too many errors")
+					}
+					return nil
+				})
 
-				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/one.json", "").
-					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+				repoResources.On("WriteResourceFromFile", mock.Anything, mock.MatchedBy(func(path string) bool {
+					return path == "dashboards/one.json" || path == "dashboards/two.json" || path == "dashboards/three.json"
+				}), "").Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil).Maybe()
 
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionCreated,
-					Path:   "dashboards/one.json",
-					Name:   "test-dashboard",
-					Kind:   "Dashboard",
-					Group:  "dashboards",
-				}).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionCreated &&
+						(result.Path == "dashboards/one.json" || result.Path == "dashboards/two.json" || result.Path == "dashboards/three.json")
+				})).Return().Maybe()
 			},
 			expectedError: "too many errors",
 		},

@@ -224,7 +224,6 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	}
 	readSpan.End()
 
-	// Parse the file
 	parseCtx, parseSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.parse_file")
 	parsed, err := r.parser.Parse(parseCtx, fileInfo)
 	if err != nil {
@@ -268,7 +267,6 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	parsed.Meta.SetUID("")
 	parsed.Meta.SetResourceVersion("")
 
-	// Run the resource operation (create/update/delete)
 	runCtx, runSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.run_resource")
 	err = parsed.Run(runCtx)
 	if err != nil {
