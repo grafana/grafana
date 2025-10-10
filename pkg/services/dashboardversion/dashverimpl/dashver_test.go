@@ -128,6 +128,59 @@ func TestDashboardVersionService(t *testing.T) {
 		})
 	})
 
+	t.Run("Get dashboard versions, with annonymous update", func(t *testing.T) {
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
+		mockCli := new(client.MockK8sHandler)
+		dashboardVersionService.k8sclient = mockCli
+		dashboardVersionService.features = featuremgmt.WithFeatures()
+		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).Return(&dashboards.DashboardRef{UID: "uid"}, nil)
+
+		creationTimestamp := time.Now().Add(time.Hour * -24).UTC()
+		updatedTimestamp := time.Now().UTC().Truncate(time.Second)
+		dash := &unstructured.Unstructured{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name":            "uid",
+					"resourceVersion": "12",
+					"generation":      int64(10),
+					"labels": map[string]any{
+						utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+					},
+					"annotations": map[string]any{
+						utils.AnnoKeyCreatedBy: "user:1",
+						utils.AnnoKeyUpdatedBy: "user:",
+					},
+				},
+				"spec": map[string]any{
+					"hello": "world",
+				},
+			}}
+		dash.SetCreationTimestamp(v1.NewTime(creationTimestamp))
+		obj, err := utils.MetaAccessor(dash)
+		require.NoError(t, err)
+		obj.SetUpdatedTimestamp(&updatedTimestamp)
+		mockCli.On("GetUsersFromMeta", mock.Anything, []string{"user:1", "user:"}).Return(map[string]*user.User{"user:1": {ID: 1}}, nil)
+		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(&unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{*dash}}, nil).Once()
+		res, err := dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
+			DashboardID: 42,
+			OrgID:       1,
+			Version:     10,
+		})
+		require.Nil(t, err)
+		require.Equal(t, res, &dashver.DashboardVersionDTO{
+			ID:            10,
+			Version:       10,
+			ParentVersion: 9,
+			DashboardID:   42,
+			DashboardUID:  "uid",
+			CreatedBy:     -1,
+			Created:       updatedTimestamp,
+			Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(10), "hello": "world"}),
+		})
+	})
+
 	t.Run("should dashboard not found error when k8s returns not found", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}

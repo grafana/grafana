@@ -350,6 +350,42 @@ func TestBuildSaveDashboardCommand(t *testing.T) {
 			require.True(t, cmd.Overwrite)
 		})
 	}
+
+	t.Run("service account should have userID set", func(t *testing.T) {
+		mockStore := &dashboards.FakeDashboardStore{}
+		access := &dashboardSqlAccess{
+			dashStore: mockStore,
+			log:       log.New("test"),
+		}
+
+		dash := &dashboardV1.Dashboard{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: dashboardV1.APIVERSION,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-dash",
+			},
+			Spec: common.Unstructured{
+				Object: map[string]interface{}{
+					"title": "Test Dashboard",
+				},
+			},
+		}
+
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{
+			UserID:           123,
+			OrgID:            1,
+			OrgRole:          "Editor",
+			IsServiceAccount: true,
+		})
+
+		mockStore.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, nil).Once()
+		cmd, created, err := access.buildSaveDashboardCommand(ctx, 1, dash)
+		require.NoError(t, err)
+		require.True(t, created)
+		require.NotNil(t, cmd)
+		require.Equal(t, int64(123), cmd.UserID, "service account user ID should be set correctly")
+	})
 }
 
 func TestParseLibraryPanelRow(t *testing.T) {
