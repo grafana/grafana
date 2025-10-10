@@ -195,7 +195,7 @@ var wireExtsModuleServerSet = wire.NewSet(
 	resource.ProvideIndexMetrics,
 	// Overriden by enterprise
 	ProvideNoopModuleRegisterer,
-	unified.ProvideStorageBackend,
+	sql.ProvideStorageBackend,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(
