@@ -35,17 +35,24 @@ export const DashboardLibrarySection = () => {
       return [];
     }
 
-    const dashboards = await getBackendSrv().get(`api/plugins/${ds.type}/dashboards`);
-    if (dashboards.length > 0) {
-      DashboardLibraryInteractions.loaded({
-        numberOfItems: dashboards.length,
-        contentKinds: ['datasource_dashboard'],
-        datasourceTypes: [ds.type],
-        sourceEntryPoint: 'datasource_page',
+    try {
+      const dashboards = await getBackendSrv().get(`api/plugins/${ds.type}/dashboards`, undefined, undefined, {
+        showErrorAlert: false,
       });
-    }
 
-    return dashboards;
+      if (dashboards.length > 0) {
+        DashboardLibraryInteractions.loaded({
+          numberOfItems: dashboards.length,
+          contentKinds: ['datasource_dashboard'],
+          datasourceTypes: [ds.type],
+          sourceEntryPoint: 'datasource_page',
+        });
+      }
+      return dashboards;
+    } catch (error) {
+      console.error('Error loading template dashboards', error);
+      return [];
+    }
   }, [datasourceUid]);
 
   const hasMoreThanThree = templateDashboards && templateDashboards.length > 3;
