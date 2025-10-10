@@ -120,7 +120,6 @@ For 2000 alert instances with 1-minute interval and 100 batch size:
 
 This helps reduce database load spikes in environments with high alert cardinality by distributing writes over time rather than concentrating them at the beginning of each save cycle.
 
-
 The time it takes to write to the database periodically can be monitored using the `state_full_sync_duration_seconds` metric
 that is exposed by Grafana.
 
