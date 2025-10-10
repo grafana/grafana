@@ -71,13 +71,13 @@ export function trackDashboardSceneCreatedOrSaved(
           autoLayoutCount: dynamicDashboardsTrackingInformation.autoLayoutCount,
           customGridLayoutCount: dynamicDashboardsTrackingInformation.customGridLayoutCount,
           panelsByDatasourceType: dynamicDashboardsTrackingInformation.panelsByDatasourceType,
-          pluginId,
+          datasourceTypes: [pluginId],
           sourceEntryPoint,
           libraryItemId,
           creationOrigin,
         }
       : {
-          ...(pluginId && { pluginId }),
+          ...(pluginId && { datasourceTypes: [pluginId] }),
           ...(sourceEntryPoint && { sourceEntryPoint }),
           ...(libraryItemId && { libraryItemId }),
           ...(creationOrigin && { creationOrigin }),
