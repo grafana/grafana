@@ -2814,7 +2814,8 @@
       "metadata": {
         "name": "pluginAssetProvider",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-17T15:20:35Z"
+        "creationTimestamp": "2025-07-17T15:20:35Z",
+        "deletionTimestamp": "2025-10-03T16:13:14Z"
       },
       "spec": {
         "description": "Allows decoupled core plugins to load from the Grafana CDN",
@@ -3894,6 +3895,19 @@
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "unlimitedLayoutsNesting",
+        "resourceVersion": "1760013838902",
+        "creationTimestamp": "2025-10-09T12:43:58Z"
+      },
+      "spec": {
+        "description": "Enables unlimited dashboard panel grouping",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
       }
     },
     {

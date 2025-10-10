@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Adicionar uma permissão",
+      "loading": "",
       "no-permissions": "Não existem permissões",
       "permissions-change-warning": "Isto alterará as permissões para esta pasta e todas as suas descendentes. No total, isto afetará:",
       "role": "Função",
       "serviceaccount": "Conta de serviços",
       "team": "Equipa",
-      "title": "Permissões",
       "user": "Utilizador"
     }
   },
@@ -3504,7 +3504,7 @@
       "delete-button": "Eliminar",
       "delete-modal-invalid-text": "Uma ou mais pastas contêm painéis de biblioteca ou regras de alerta. Elimine-as primeiro para continuar.",
       "delete-modal-invalid-title": "Não é possível eliminar a pasta",
-      "delete-modal-restore-dashboards-text": "Esta ação eliminará as pastas selecionadas imediatamente, mas os painéis selecionados serão marcados para eliminação em 30 dias. O administrador da sua organização pode restaurar os painéis a qualquer momento antes que os 30 dias expirem. Não é possível restaurar as pastas.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Esta ação eliminará o seguinte conteúdo:",
       "delete-modal-title": "Eliminar",
       "delete-provisioned-folder": "Eliminar a pasta disponibilizada",
@@ -4572,7 +4572,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "O elemento está oculto devido à renderização condicional."
+        "tooltip": ""
       },
       "root": {
         "title": "Mostrar/ocultar regras"
@@ -5819,6 +5819,7 @@
         "dynamically-switch-source-multiple-panels": "Alternar dinamicamente a origem de dados para vários painéis",
         "group": "Adicionar chaves para agrupar em tempo real",
         "hidden-constant-variable": "Uma variável constante oculta, útil para prefixos métricos em painéis que pretende partilhar",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Os utilizadores podem inserir quaisquer cadeias de caracteres arbitrárias numa caixa de texto",
         "values-are-static-and-defined-manually": "Os valores são estáticos e definidos manualmente",
         "values-fetched-source-query": "Os valores são obtidos a partir de uma consulta de origem de dados",
@@ -5832,6 +5833,7 @@
         "group-by": "Agrupar por",
         "interval": "Intervalo",
         "query": "Consulta",
+        "switch": "",
         "textbox": "Caixa de texto"
       }
     },
@@ -6175,6 +6177,17 @@
       "title": {
         "copy-to-clipboard-failed": "A cópia para a área de transferência falhou"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Valor predefinido"
@@ -10355,7 +10368,7 @@
       "title": "Profiles"
     },
     "recently-deleted": {
-      "subtitle": "Quaisquer elementos listados aqui por mais de 30 dias serão eliminados automaticamente.",
+      "subtitle": "",
       "title": "Eliminado recentemente"
     },
     "recorded-queries": {
@@ -11571,6 +11584,7 @@
       "active-jobs": "trabalhos ativos",
       "column-action": "Ação",
       "column-duration": "Duração",
+      "column-job-id": "",
       "column-message": "Mensagem",
       "column-started": "Iniciado",
       "column-status": "Estado",
@@ -11589,12 +11603,6 @@
       "settings": "Definições",
       "view": "Ver"
     },
-    "repository-health": {
-      "details": "Detalhes:",
-      "no-errors-found": "Nenhum erro encontrado",
-      "title-repository-is-healthy": "O repositório está em bom estado",
-      "title-repository-is-unhealthy": "O repositório não está em bom estado"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Comparar filial",
@@ -11609,7 +11617,7 @@
     },
     "repository-overview": {
       "checked": "Verificado:",
-      "finished": "Concluído:",
+      "finished": "",
       "health": "Saúde",
       "healthy": "Em bom estado",
       "job-id": "ID do trabalho:",
@@ -11618,7 +11626,6 @@
       "not-available": "N/A",
       "pull-status": "Estado da extração",
       "resources": "Recursos",
-      "started": "Iniciado:",
       "status": "Estado:",
       "unhealthy": "Não em bom estado",
       "view-folder": "Visualizar pasta",
@@ -12277,9 +12284,6 @@
       "title-disable-service-account": "Desativar a conta de serviço",
       "tokens": "Tokens",
       "tooltip-managed-service-account-cannot-modified": "Esta é uma conta de serviço gerida e não pode ser modificada"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Permissões"
     },
     "service-account-profile": {
       "information": "Informação",
@@ -12954,6 +12958,10 @@
     "name-mode": "Modo",
     "name-show-line-numbers": "Mostrar os números das linhas",
     "name-show-mini-map": "Mostrar o minimapa"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
