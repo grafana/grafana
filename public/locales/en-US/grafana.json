@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Add a permission",
+      "loading": "Loading permissions...",
       "no-permissions": "There are no permissions",
       "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
       "role": "Role",
       "serviceaccount": "Service Account",
       "team": "Team",
-      "title": "Permissions",
       "user": "User"
     }
   },
@@ -3504,7 +3504,7 @@
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
       "delete-modal-invalid-title": "Cannot delete folder",
-      "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately but the selected dashboards will be marked for deletion in 30 days. Your organization administrator can restore the dashboards anytime before the 30 days expire. Folders cannot be restored.",
+      "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately. Deleted dashboards will be kept in the history for up to 12 months and can be restored by your organization administrator during that time. The history is limited to 1000 dashboards — older ones may be removed sooner if the limit is reached. Folders cannot be restored.",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
       "delete-provisioned-folder": "Delete provisioned folder",
@@ -4572,7 +4572,7 @@
         "unsupported-object-type": "Conditional rendering not supported for this item type"
       },
       "overlay": {
-        "tooltip": "Element is hidden due to conditional rendering."
+        "tooltip": "Element is hidden by show/hide rules."
       },
       "root": {
         "title": "Show / hide rules"
@@ -5819,6 +5819,7 @@
         "dynamically-switch-source-multiple-panels": "Dynamically switch the data source for multiple panels",
         "group": "Add keys to group by on the fly",
         "hidden-constant-variable": "A hidden constant variable, useful for metric prefixes in dashboards you want to share",
+        "users-enter-arbitrary-strings-switch": "A variable that can be toggled on and off",
         "users-enter-arbitrary-strings-textbox": "Users can enter any arbitrary strings in a textbox",
         "values-are-static-and-defined-manually": "Values are static and defined manually",
         "values-fetched-source-query": "Values are fetched from a data source query",
@@ -5832,6 +5833,7 @@
         "group-by": "Group by",
         "interval": "Interval",
         "query": "Query",
+        "switch": "Switch",
         "textbox": "Textbox"
       }
     },
@@ -6175,6 +6177,17 @@
       "title": {
         "copy-to-clipboard-failed": "Copy to clipboard failed"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "Disabled value",
+      "disabled-value-description": "Value when switch is disabled",
+      "disabled-value-placeholder": "e.g. Off, Disabled, Inactive",
+      "enabled-value": "Enabled value",
+      "enabled-value-description": "Value when switch is enabled",
+      "enabled-value-placeholder": "e.g. On, Enabled, Active",
+      "switch-options": "Switch options",
+      "value-pair-type": "Value pair type",
+      "value-pair-type-description": "Choose the type of values for the switch states"
     },
     "text-box-variable": {
       "name-default-value": "Default value"
@@ -6624,6 +6637,7 @@
         "service-now-integration-and-data-source": "ServiceNow integration and data source",
         "signal-fx-integration-and-datasource": "SignalFx integration and datasource",
         "snowflake-integration-and-data-source": "Snowflake integration and data source",
+        "solarwinds-datasource": "SolarWinds datasource",
         "sumo-logic-integration-and-datasource": "SumoLogic integration and datasource",
         "visualize-and-explore-dynatrace-data": "Visualize and explore Dynatrace data",
         "visualize-and-explore-oracle-sql": "Visualize and explore Oracle SQL",
@@ -10355,7 +10369,7 @@
       "title": "Profiles"
     },
     "recently-deleted": {
-      "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
+      "subtitle": "Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.",
       "title": "Recently deleted"
     },
     "recorded-queries": {
@@ -11571,6 +11585,7 @@
       "active-jobs": "active jobs",
       "column-action": "Action",
       "column-duration": "Duration",
+      "column-job-id": "Job ID",
       "column-message": "Message",
       "column-started": "Started",
       "column-status": "Status",
@@ -11589,12 +11604,6 @@
       "settings": "Settings",
       "view": "View"
     },
-    "repository-health": {
-      "details": "Details:",
-      "no-errors-found": "No errors found",
-      "title-repository-is-healthy": "Repository is healthy",
-      "title-repository-is-unhealthy": "Repository is unhealthy"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Compare branch",
@@ -11609,7 +11618,7 @@
     },
     "repository-overview": {
       "checked": "Checked:",
-      "finished": "Finished:",
+      "finished": "Last successful pull:",
       "health": "Health",
       "healthy": "Healthy",
       "job-id": "Job ID:",
@@ -11618,7 +11627,6 @@
       "not-available": "N/A",
       "pull-status": "Pull status",
       "resources": "Resources",
-      "started": "Started:",
       "status": "Status:",
       "unhealthy": "Unhealthy",
       "view-folder": "View Folder",
@@ -12301,9 +12309,6 @@
       "tokens": "Tokens",
       "tooltip-managed-service-account-cannot-modified": "This is a managed service account and cannot be modified"
     },
-    "service-account-permissions": {
-      "title-permissions": "Permissions"
-    },
     "service-account-profile": {
       "information": "Information",
       "label-creation-date": "Creation date",
@@ -12977,6 +12982,10 @@
     "name-mode": "Mode",
     "name-show-line-numbers": "Show line numbers",
     "name-show-mini-map": "Show mini map"
+  },
+  "theme-playground": {
+    "label-base-theme": "Base theme",
+    "title": "Theme playground"
   },
   "theme-preview": {
     "breadcrumbs": {

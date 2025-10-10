@@ -60,6 +60,14 @@ func (f *FakeService) GetForProvider(ctx context.Context, provider string) (*mod
 	return f.ExpectedSSOSetting, f.ExpectedError
 }
 
+func (f *FakeService) GetForProviderFromCache(ctx context.Context, provider string) (*models.SSOSettings, error) {
+	if f.GetForProviderFn != nil {
+		return f.GetForProviderFn(ctx, provider)
+	}
+	f.ActualProvider = provider
+	return f.ExpectedSSOSetting, f.ExpectedError
+}
+
 func (f *FakeService) GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error) {
 	if f.GetForProviderWithRedactedSecretsFn != nil {
 		return f.GetForProviderWithRedactedSecretsFn(ctx, provider)
