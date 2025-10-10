@@ -5,10 +5,9 @@ on:
     branches:
       - main
       - release-*.*.*
-    tags:
-      - rrc_steady_*
-      - rrc_fast_*
-      - rrc_slow_*
+      - steady
+      - fast
+      - slow
   pull_request:
     types:
       - opened
