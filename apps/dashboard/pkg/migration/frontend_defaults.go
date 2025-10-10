@@ -1053,6 +1053,7 @@ func cleanupDashboardDefaults(dashboard map[string]interface{}) {
 	// These properties are lost during frontend's property copying loop in getSaveModelCloneOld()
 	delete(dashboard, "preload")   // Transient dashboard loading state
 	delete(dashboard, "iteration") // Template variable iteration timestamp
+	delete(dashboard, "nav")
 }
 
 // cleanupFieldConfigDefaults removes properties that frontend considers as defaults and omits
