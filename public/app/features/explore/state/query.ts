@@ -521,6 +521,14 @@ async function handleHistory(
   }
 }
 
+export const refreshQueriesInAllPanes = (): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    Object.keys(getState().explore.panes).forEach((exploreId) => {
+      dispatch(runQueries({ exploreId: exploreId, preserveCache: true }));
+    });
+  };
+};
+
 interface RunQueriesOptions {
   exploreId: string;
   preserveCache?: boolean;
