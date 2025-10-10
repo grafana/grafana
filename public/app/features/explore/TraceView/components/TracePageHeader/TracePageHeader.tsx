@@ -53,7 +53,9 @@ import { getHeaderTags, getTraceName } from '../model/trace-viewer';
 import { Trace, TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
 
+import TracePageSearchBar from './SearchBar/TracePageSearchBar';
 import SpanGraph from './SpanGraph';
+import { TraceFilterPills } from './TraceFilterPills';
 import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController';
 
 export type TracePageHeaderProps = {
@@ -85,6 +87,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     search,
     setSearch,
     showSpanFilters,
+    setFocusedSpanIdForSearch,
+    spanFilterMatches,
     datasourceType,
     datasourceName,
     datasourceUid,
@@ -99,6 +103,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const notifyApp = useAppNotification();
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
   const [isOverviewOpen, setIsOverviewOpen] = useState(true);
+  const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
 
   // Create controller for adhoc filters
   const controller = useTraceAdHocFiltersController(trace, search, setSearch);
@@ -380,7 +385,27 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
 
       <div className={styles.filtersContainer}>
         <Label>{t('explore.trace-page-header.filters', 'Filters')}</Label>
-        {controller && <AdHocFiltersComboboxRenderer controller={controller} />}
+        <div className={styles.adhocFiltersRow}>
+          {controller && <AdHocFiltersComboboxRenderer controller={controller} />}
+        </div>
+        {trace && (
+          <div className={styles.searchAndPillsRow}>
+            <TraceFilterPills trace={trace} search={search} setSearch={setSearch} />
+            <TracePageSearchBar
+              trace={trace}
+              search={search}
+              spanFilterMatches={spanFilterMatches}
+              setShowSpanFilterMatchesOnly={(showMatchesOnly: boolean) =>
+                setSearch({ ...search, matchesOnly: showMatchesOnly })
+              }
+              focusedSpanIndexForSearch={focusedSpanIndexForSearch}
+              setFocusedSpanIndexForSearch={setFocusedSpanIndexForSearch}
+              setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+              datasourceType={datasourceType}
+              showSpanFilters={showSpanFilters}
+            />
+          </div>
+        )}
       </div>
     </header>
   );
@@ -524,12 +549,24 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     overviewCollapsableSectionContent: css({
       padding: 0,
-      marginBottom: theme.spacing(2),
     }),
     filtersContainer: css({
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(0.5),
+      marginTop: theme.spacing(2),
+    }),
+    adhocFiltersRow: css({
+      display: 'flex',
+      width: '100%',
+    }),
+    searchAndPillsRow: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(2),
+      width: '100%',
+      marginTop: theme.spacing(0.5),
     }),
   };
 };

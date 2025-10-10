@@ -399,5 +399,5 @@ export const convertTimeFilter = (time: string) => {
   } else if (time.includes('h')) {
     return parseFloat(time.split('h')[0]) * 1000 * 1000 * 60 * 60;
   }
-  return undefined;
+  return parseFloat(time);
 };
