@@ -4749,8 +4749,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Values separated by comma",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "Close",
+          "modal-title": "Custom Variable",
+          "values": "Values separated by comma"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -14139,14 +14140,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Add option",
-      "description": "Add custom options in addition to query results",
-      "label-placeholder": "display label",
-      "remove-option-button-label": "Remove option",
-      "value-placeholder": "value, default empty string"
+      "description": "Add custom options in addition to query results"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "How to sort static options with query results"
+    },
+    "static-options": {
+      "add-option-button-label": "Add new option",
+      "drag-and-drop": "Drag and drop to reorder",
+      "label-header": "Display text",
+      "label-placeholder": "Defaults to value",
+      "remove-option-button-label": "Remove option",
+      "value-header": "Value",
+      "value-placeholder": "Value"
     },
     "text-box-variable-editor": {
       "name-default-value": "Default value",
