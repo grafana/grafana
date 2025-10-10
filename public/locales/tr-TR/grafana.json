@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "İzin ekle",
+      "loading": "",
       "no-permissions": "İzin yok",
       "permissions-change-warning": "Bu işlem, bu klasör ve tüm alt klasörlerin izinlerini değiştirecektir. Bu işlem toplamda şunları etkileyecektir:",
       "role": "Rol",
       "serviceaccount": "Hizmet Hesabı",
       "team": "Ekip",
-      "title": "İzinler",
       "user": "Kullanıcı"
     }
   },
@@ -1535,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "Grup siliniyor"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "\"{{refId}}\" ifadesini kaldır"
     },
@@ -1709,6 +1712,9 @@
       },
       "placeholder-key": "anahtar",
       "placeholder-value": "değer"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "İletişim noktalarını görüntüle veya oluştur",
@@ -2024,6 +2030,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Seçilen Alertmanager artık mevcut değil veya erişim izniniz olmayabilir. Açılır menüden başka bir Alertmanager seçebilirsiniz.",
       "title-selected-alertmanager-not-found": "Seçili Alertmanager bulunamadı."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2916,6 +2928,13 @@
         "title-warning": "Uyarı"
       }
     },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
+    },
     "type-selector-button": {
       "add-expression": "İfade ekle"
     },
@@ -3485,7 +3504,7 @@
       "delete-button": "Sil",
       "delete-modal-invalid-text": "Bir veya daha fazla klasör, kütüphane panelleri veya uyarı kuralları içeriyor. Devam etmek için öncelikle bunları silin.",
       "delete-modal-invalid-title": "Klasör silinemiyor",
-      "delete-modal-restore-dashboards-text": "Bu işlem, seçilen klasörleri anında silecektir ancak seçilen panolar 30 gün içinde silinmek üzere işaretlenecektir. Kuruluş yöneticiniz, panoları 30 günlük süre dolmadan önce istediği zaman geri yükleyebilir. Klasörler geri yüklenemez.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Bu işlem aşağıdaki içerikleri silecektir:",
       "delete-modal-title": "Sil",
       "delete-provisioned-folder": "Sağlanan klasörü sil",
@@ -4142,6 +4161,13 @@
       "body": "Veri kaynaklarınız ve eklentilerinizle ilgili olası sorunları keşfetmek için yeni Advisor'ı deneyin.",
       "go-to-advisor": "Advisor'a git"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4190,6 +4216,20 @@
         "unknown-datasource": "Bilinmeyen veri kaynağı"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Bir veri kaynağı türü seçin"
@@ -4219,6 +4259,13 @@
         },
         "subtitle": ""
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Tümünü ara",
@@ -4525,7 +4572,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "Koşullu oluşturma nedeniyle öge gizlendi."
+        "tooltip": ""
       },
       "root": {
         "title": "Kuralları göster/gizle"
@@ -5772,6 +5819,7 @@
         "dynamically-switch-source-multiple-panels": "Birden fazla panel için veri kaynağını dinamik olarak değiştirin",
         "group": "Anında gruplandırma için anahtarlar ekleyin",
         "hidden-constant-variable": "Paylaşmak istediğiniz panolardaki metrik önekler için kullanışlı olan gizli bir sabit değişken",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Kullanıcılar bir metin kutusuna herhangi bir dizi girebilir",
         "values-are-static-and-defined-manually": "Değerler statiktir ve manuel olarak tanımlanır",
         "values-fetched-source-query": "Değerler bir veri kaynağı sorgusundan alınır",
@@ -5785,6 +5833,7 @@
         "group-by": "Gruplandır",
         "interval": "Aralık",
         "query": "Sorgu",
+        "switch": "",
         "textbox": "Metin kutusu"
       }
     },
@@ -6128,6 +6177,17 @@
       "title": {
         "copy-to-clipboard-failed": "Panoya kopyalanamadı"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Varsayılan değer"
@@ -6577,6 +6637,7 @@
         "service-now-integration-and-data-source": "ServiceNow entegrasyonu ve veri kaynağı",
         "signal-fx-integration-and-datasource": "SignalFx entegrasyonu ve veri kaynağı",
         "snowflake-integration-and-data-source": "Snowflake entegrasyonu ve veri kaynağı",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic entegrasyonu ve veri kaynağı",
         "visualize-and-explore-dynatrace-data": "Dynatrace verilerini görselleştirin ve keşfedin",
         "visualize-and-explore-oracle-sql": "Oracle SQL'i görselleştirin ve keşfedin",
@@ -9418,6 +9479,7 @@
     "description-enable-infinite-scrolling": "Deneysel. Günlük listesinin en altına kaydırarak daha fazla sonuç isteyin.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Son veya ilk günlük satırına atlamak için ekran kontrolleri ve günlük düzeyine göre filtreler",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9468,9 +9530,6 @@
       "collapse": "Etiketleri daralt",
       "expand": "Etiketleri genişlet"
     },
-    "log-labels-list": {
-      "log-line": "günlük kaydı satırı"
-    },
     "log-line": {
       "has-error": "Hatalar var",
       "is-sampled": "Örneklendi",
@@ -9510,6 +9569,7 @@
       "inline-mode": "Satır içi görüntüle",
       "link-value-tooltip": "",
       "links-section": "Bağlantılar",
+      "log-attributes-field": "",
       "log-line-field": "Günlük satırı",
       "log-line-section": "Günlük satırı",
       "move-displayed-field-down": "Aşağı taşı",
@@ -9716,6 +9776,7 @@
       "line-contains": "Satır içerir filtresi olarak ekle",
       "line-contains-not": "Satır içermez filtresi olarak ekle"
     },
+    "show-log-attributes": "",
     "timestamp-format": "",
     "un-themed-log-details": {
       "aria-label-data-links": "Veri bağlantıları",
@@ -10307,7 +10368,7 @@
       "title": "Profiller"
     },
     "recently-deleted": {
-      "subtitle": "Burada 30 günden fazla listelenen ögeler otomatik olarak silinecektir.",
+      "subtitle": "",
       "title": "Son silinenler"
     },
     "recorded-queries": {
@@ -11523,6 +11584,7 @@
       "active-jobs": "etkin işler",
       "column-action": "Eylem",
       "column-duration": "Süre",
+      "column-job-id": "",
       "column-message": "Mesaj",
       "column-started": "Başlatıldı",
       "column-status": "Durum",
@@ -11541,12 +11603,6 @@
       "settings": "Ayarlar",
       "view": "Görüntüle"
     },
-    "repository-health": {
-      "details": "Detaylar: ",
-      "no-errors-found": "Hata bulunmadı",
-      "title-repository-is-healthy": "Depo iyi durumda",
-      "title-repository-is-unhealthy": "Depo iyi durumda değil"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "",
@@ -11561,7 +11617,7 @@
     },
     "repository-overview": {
       "checked": "Kontrol Eden:",
-      "finished": "Bitiş:",
+      "finished": "",
       "health": "Sağlık",
       "healthy": "İyi durumda",
       "job-id": "İş Kimliği:",
@@ -11570,7 +11626,6 @@
       "not-available": "Geçersiz",
       "pull-status": "Çekme durumu",
       "resources": "Kaynaklar",
-      "started": "Başlangıç:",
       "status": "Durum:",
       "unhealthy": "İyi durumda değil",
       "view-folder": "Klasörü Görüntüle",
@@ -12229,9 +12284,6 @@
       "title-disable-service-account": "Hizmet hesabını devre dışı bırak",
       "tokens": "Belirteçler",
       "tooltip-managed-service-account-cannot-modified": "Bu yönetilen bir hizmet hesabıdır ve değiştirilemez"
-    },
-    "service-account-permissions": {
-      "title-permissions": "İzinler"
     },
     "service-account-profile": {
       "information": "Bilgi",
@@ -12906,6 +12958,10 @@
     "name-mode": "Mod",
     "name-show-line-numbers": "Satır numaralarını göster",
     "name-show-mini-map": "Mini haritayı göster"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -13657,6 +13713,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "ve",
       "placeholder-from": "",

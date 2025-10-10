@@ -17,7 +17,7 @@ import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plug
 
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
-import { CustomVariableEditor } from './editors/CustomVariableEditor';
+import { CustomVariableEditor } from './editors/CustomVariableEditor/CustomVariableEditor';
 import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
 import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
@@ -147,7 +147,7 @@ describe('getVariableTypeSelectOptions', () => {
     it('should return an array of selectable values for editable variable types', () => {
       const editableVariables = getEditableVariables();
       const options = getVariableTypeSelectOptions();
-      expect(options).toHaveLength(8);
+      expect(options).toHaveLength(9);
 
       options.forEach((option, index) => {
         const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
@@ -174,7 +174,7 @@ describe('getVariableTypeSelectOptions', () => {
     it('should return an array of selectable values for editable variable types', () => {
       const editableVariables = getEditableVariables();
       const options = getVariableTypeSelectOptions();
-      expect(options).toHaveLength(7);
+      expect(options).toHaveLength(8);
 
       options.forEach((option, index) => {
         const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];

@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Přidat oprávnění",
+      "loading": "",
       "no-permissions": "Nejsou k dispozici žádná oprávnění",
       "permissions-change-warning": "Tímto změníte oprávnění pro tuto složku a všechny následné složky. Celkově to ovlivní:",
       "role": "Role",
       "serviceaccount": "Účet služby",
       "team": "Tým",
-      "title": "Oprávnění",
       "user": "Uživatel"
     }
   },
@@ -1545,6 +1545,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "Probíhá odstranění skupiny"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Odebrat výraz „{{refId}}“"
     },
@@ -1719,6 +1722,9 @@
       },
       "placeholder-key": "klíč",
       "placeholder-value": "hodnota"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Zobrazit nebo vytvořit kontaktní body",
@@ -2036,6 +2042,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Vybraný správce výstrah již neexistuje nebo nemáte potřebná oprávnění. Vyberte jiného správce výstrah z rozevíracího seznamu.",
       "title-selected-alertmanager-not-found": "Vybraný správce výstrah nebyl nalezen."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2940,6 +2952,13 @@
         "title-warning": "Varování"
       }
     },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
+    },
     "type-selector-button": {
       "add-expression": "Přidat výraz"
     },
@@ -3509,7 +3528,7 @@
       "delete-button": "Odstranit",
       "delete-modal-invalid-text": "Jedna nebo více složek obsahuje panely knihovny nebo pravidla výstrah. Chcete-li pokračovat, nejprve je odstraňte.",
       "delete-modal-invalid-title": "Složku nelze odstranit",
-      "delete-modal-restore-dashboards-text": "Tato akce okamžitě odstraní vybrané složky, ale vybrané nástěnky budou označeny k odstranění za 30 dnů. Správce organizace může obnovit nástěnky kdykoli před uplynutím 30 dnů. Složky nelze obnovit.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Tato akce odstraní následující obsah:",
       "delete-modal-title": "Odstranit",
       "delete-provisioned-folder": "Odstranit poskytnutou složku",
@@ -4182,6 +4201,13 @@
       "body": "Vyzkoušejte nového poradce a odhalte potenciální problémy se zdroji dat a pluginy.",
       "go-to-advisor": "Přejít na poradce"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4230,6 +4256,20 @@
         "unknown-datasource": "Neznámý zdroj dat"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Vyberte typ zdroje dat"
@@ -4259,6 +4299,13 @@
         },
         "subtitle": "Spravujte připojení zdrojů dat na jednom místě. Na této stránce můžete přidat nový zdroj dat nebo spravovat stávající připojení."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Hledat vše",
@@ -4565,7 +4612,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "Prvek je skrytý kvůli podmíněnému vykreslení."
+        "tooltip": ""
       },
       "root": {
         "title": "Zobrazit/skrýt pravidla"
@@ -5814,6 +5861,7 @@
         "dynamically-switch-source-multiple-panels": "Dynamicky přepínat zdroj dat pro více panelů",
         "group": "Přidat klíče do skupiny za chodu",
         "hidden-constant-variable": "Skrytá konstantní proměnná, užitečná pro metrické předpony na nástěnkách, které chcete sdílet",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Uživatelé mohou do textového pole zadat libovolné řetězce znaků",
         "values-are-static-and-defined-manually": "Hodnoty jsou statické a definované ručně",
         "values-fetched-source-query": "Hodnoty jsou načteny z dotazu na zdroj dat",
@@ -5827,6 +5875,7 @@
         "group-by": "Seskupit podle",
         "interval": "Interval",
         "query": "Dotaz",
+        "switch": "",
         "textbox": "Textové pole"
       }
     },
@@ -6174,6 +6223,17 @@
       "title": {
         "copy-to-clipboard-failed": "Kopírování do schránky se nezdařilo"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Výchozí hodnota"
@@ -6623,6 +6683,7 @@
         "service-now-integration-and-data-source": "Integrace a zdroj dat ServiceNow",
         "signal-fx-integration-and-datasource": "Integrace a zdroj dat SignalFx",
         "snowflake-integration-and-data-source": "Integrace a zdroj dat Snowflake",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "Integrace a zdroj dat SumoLogic",
         "visualize-and-explore-dynatrace-data": "Vizualizace a prozkoumání dat Dynatrace",
         "visualize-and-explore-oracle-sql": "Vizualizace a prozkoumání Oracle SQL",
@@ -9474,6 +9535,7 @@
     "description-enable-infinite-scrolling": "Experimentální. Požádejte o další výsledky posunutím do dolní části seznamu protokolů.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Zobrazit ovládací prvky pro přechod na poslední nebo první řádek protokolu a filtry podle úrovně protokolu",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9530,9 +9592,6 @@
       "collapse": "Sbalit štítky",
       "expand": "Rozbalit štítky"
     },
-    "log-labels-list": {
-      "log-line": "řádek protokolu"
-    },
     "log-line": {
       "has-error": "Obsahuje chyby",
       "is-sampled": "Je vzorkováno",
@@ -9572,6 +9631,7 @@
       "inline-mode": "Zobrazit v řádku",
       "link-value-tooltip": "",
       "links-section": "Odkazy",
+      "log-attributes-field": "",
       "log-line-field": "Řádek protokolu",
       "log-line-section": "Řádek protokolu",
       "move-displayed-field-down": "Přesunout dolů",
@@ -9778,6 +9838,7 @@
       "line-contains": "Přidat jako řádek obsahuje filtr",
       "line-contains-not": "Přidat jako řádek neobsahuje filtr"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Rozlišení časového razítka",
     "un-themed-log-details": {
       "aria-label-data-links": "Propojení dat",
@@ -10369,7 +10430,7 @@
       "title": "Profily"
     },
     "recently-deleted": {
-      "subtitle": "Všechny tady uvedené položky po dobu delší než 30 dnů budou automaticky odstraněny.",
+      "subtitle": "",
       "title": "Nedávno odstraněné"
     },
     "recorded-queries": {
@@ -11603,6 +11664,7 @@
       "active-jobs": "aktivní práce",
       "column-action": "Akce",
       "column-duration": "Doba trvání",
+      "column-job-id": "",
       "column-message": "Zpráva",
       "column-started": "Zahájeno",
       "column-status": "Stav",
@@ -11621,12 +11683,6 @@
       "settings": "Nastavení",
       "view": "Zobrazit"
     },
-    "repository-health": {
-      "details": "Podrobnosti:",
-      "no-errors-found": "Nebyly nalezeny žádné chyby",
-      "title-repository-is-healthy": "Úložiště je zdravé",
-      "title-repository-is-unhealthy": "Úložiště je nezdravé"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Porovnat větev",
@@ -11641,7 +11697,7 @@
     },
     "repository-overview": {
       "checked": "Zkontrolováno:",
-      "finished": "Dokončeno:",
+      "finished": "",
       "health": "Kondice",
       "healthy": "Zdravý",
       "job-id": "ID úkolu:",
@@ -11650,7 +11706,6 @@
       "not-available": "Nelze aplikovat",
       "pull-status": "Stav stažení",
       "resources": "Zdroje",
-      "started": "Zahájeno:",
       "status": "Stav:",
       "unhealthy": "Nezdravý",
       "view-folder": "Zobrazit složku",
@@ -12315,9 +12370,6 @@
       "title-disable-service-account": "Zakázat účet služby",
       "tokens": "Tokeny",
       "tooltip-managed-service-account-cannot-modified": "Toto je spravovaný účet služby a nelze ho upravit"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Oprávnění"
     },
     "service-account-profile": {
       "information": "Informace",
@@ -12996,6 +13048,10 @@
     "name-mode": "Režim",
     "name-show-line-numbers": "Zobrazovat čísla řádek",
     "name-show-mini-map": "Zobrazit mini mapu"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -13747,6 +13803,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "a",
       "placeholder-from": "",

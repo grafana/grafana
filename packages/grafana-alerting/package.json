@@ -70,6 +70,7 @@
     "@types/lodash": "^4",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
+    "@types/tinycolor2": "^1",
     "i18next": "^25.5.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -85,7 +86,6 @@
     "@grafana/data": ">=11.6 <= 12.x",
     "@grafana/runtime": ">=11.6 <= 12.x",
     "@grafana/ui": ">=11.6 <= 12.x",
-    "@reduxjs/toolkit": "^2.8.0",
     "msw": "^2.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
@@ -94,7 +94,9 @@
     "@emotion/css": "11.13.5",
     "@faker-js/faker": "^9.8.0",
     "@grafana/i18n": "12.3.0-pre",
+    "@reduxjs/toolkit": "^2.9.0",
     "fishery": "^2.3.1",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "tinycolor2": "^1.6.0"
   }
 }
