@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 var (
@@ -214,15 +215,24 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 
 func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path string, ref string) (string, schema.GroupVersionKind, error) {
 	// Read the referenced file
-	fileInfo, err := r.repo.Read(ctx, path, ref)
+	readCtx, readSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.read_file")
+	fileInfo, err := r.repo.Read(readCtx, path, ref)
 	if err != nil {
+		readSpan.RecordError(err)
+		readSpan.End()
 		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
+	readSpan.End()
 
-	parsed, err := r.parser.Parse(ctx, fileInfo)
+	// Parse the file
+	parseCtx, parseSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.parse_file")
+	parsed, err := r.parser.Parse(parseCtx, fileInfo)
 	if err != nil {
+		parseSpan.RecordError(err)
+		parseSpan.End()
 		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse file: %w", err)
 	}
+	parseSpan.End()
 
 	if parsed.Obj.GetName() == "" {
 		return "", schema.GroupVersionKind{}, ErrMissingName
@@ -243,18 +253,28 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	// For resources that exist in folders, set the header annotation
 	if slices.Contains(SupportsFolderAnnotation, parsed.GVR.GroupResource()) {
 		// Make sure the parent folders exist
-		folder, err := r.folders.EnsureFolderPathExist(ctx, path)
+		folderCtx, folderSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.ensure_folder")
+		folder, err := r.folders.EnsureFolderPathExist(folderCtx, path)
 		if err != nil {
+			folderSpan.RecordError(err)
+			folderSpan.End()
 			return "", parsed.GVK, fmt.Errorf("failed to ensure folder path exists: %w", err)
 		}
 		parsed.Meta.SetFolder(folder)
+		folderSpan.End()
 	}
 
 	// Clear any saved identifiers
 	parsed.Meta.SetUID("")
 	parsed.Meta.SetResourceVersion("")
 
-	err = parsed.Run(ctx)
+	// Run the resource operation (create/update/delete)
+	runCtx, runSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.run_resource")
+	err = parsed.Run(runCtx)
+	if err != nil {
+		runSpan.RecordError(err)
+	}
+	runSpan.End()
 
 	return parsed.Obj.GetName(), parsed.GVK, err
 }
