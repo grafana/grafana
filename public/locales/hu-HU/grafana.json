@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Engedély hozzáadása",
+      "loading": "",
       "no-permissions": "Nincsenek engedélyek",
       "permissions-change-warning": "Ez módosítja ennek a mappának és minden almappájának az engedélyeit. Összességében ez a következőket érinti:",
       "role": "Szerepkör",
       "serviceaccount": "Szolgáltatási fiók",
       "team": "Csapat",
-      "title": "Engedélyek",
       "user": "Felhasználó"
     }
   },
@@ -3504,7 +3504,7 @@
       "delete-button": "Törlés",
       "delete-modal-invalid-text": "Egy vagy több mappa könyvtárpaneleket vagy riasztási szabályokat tartalmaz. A folytatáshoz először törölje ezeket.",
       "delete-modal-invalid-title": "Nem lehet törölni a mappát",
-      "delete-modal-restore-dashboards-text": "Ez a művelet azonnal törli a kijelölt mappákat, de a kijelölt irányítópultok 30 napon belüli törlésre lesznek megjelölve. A szervezeti rendszergazda a 30 nap lejárta előtt bármikor visszaállíthatja az irányítópultokat. A mappák nem állíthatók vissza.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Ez a művelet törli a következő tartalmat:",
       "delete-modal-title": "Törlés",
       "delete-provisioned-folder": "Kiépített mappa törlése",
@@ -4572,7 +4572,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "Az elem rejtve van a feltételes renderelés miatt."
+        "tooltip": ""
       },
       "root": {
         "title": "Szabályok megjelenítése/elrejtése"
@@ -5819,6 +5819,7 @@
         "dynamically-switch-source-multiple-panels": "Adatforrás dinamikus váltása több panelhez",
         "group": "Csoportosítási kulcsok hozzáadása menet közben",
         "hidden-constant-variable": "Rejtett konstans változó, mely hasznos metrikai előtagokhoz a megosztani kívánt irányítópultokon",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "A felhasználók tetszőleges szöveget írhatnak be egy szövegmezőbe",
         "values-are-static-and-defined-manually": "Az értékek statikusak, és manuálisan vannak megadva",
         "values-fetched-source-query": "Az értékek egy adatforrás-lekérdezéséből származnak",
@@ -5832,6 +5833,7 @@
         "group-by": "Csoportosítási szempont",
         "interval": "Intervallum",
         "query": "Lekérdezés",
+        "switch": "",
         "textbox": "Szövegdoboz"
       }
     },
@@ -6175,6 +6177,17 @@
       "title": {
         "copy-to-clipboard-failed": "Nem sikerült a vágólapra másolás"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Alapértelmezett érték"
@@ -10355,7 +10368,7 @@
       "title": "Profilok"
     },
     "recently-deleted": {
-      "subtitle": "Az itt 30 napnál hosszabb ideig felsorolt elemek automatikusan törlődnek.",
+      "subtitle": "",
       "title": "Nemrég törölt"
     },
     "recorded-queries": {
@@ -11571,6 +11584,7 @@
       "active-jobs": "aktív feladatok",
       "column-action": "Művelet",
       "column-duration": "Időtartam",
+      "column-job-id": "",
       "column-message": "Üzenet",
       "column-started": "Elindítva",
       "column-status": "Állapot",
@@ -11589,12 +11603,6 @@
       "settings": "Beállítások",
       "view": "Nézet"
     },
-    "repository-health": {
-      "details": "Részletek:",
-      "no-errors-found": "Nem található hiba",
-      "title-repository-is-healthy": "Az adattár állapota megfelelő",
-      "title-repository-is-unhealthy": "Az adattár állapota nem megfelelő"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Ág összehasonlítása",
@@ -11609,7 +11617,7 @@
     },
     "repository-overview": {
       "checked": "Ellenőrzés:",
-      "finished": "Befejezés:",
+      "finished": "",
       "health": "Állapot",
       "healthy": "Megfelelő állapotú",
       "job-id": "Feladatazonosító:",
@@ -11618,7 +11626,6 @@
       "not-available": "n.a.",
       "pull-status": "Lekérés állapota",
       "resources": "Erőforrások",
-      "started": "Kezdet:",
       "status": "Állapot:",
       "unhealthy": "Nem megfelelő állapotú",
       "view-folder": "Mappa megtekintése",
@@ -12277,9 +12284,6 @@
       "title-disable-service-account": "Szolgáltatási fiók letiltása",
       "tokens": "Tokenek",
       "tooltip-managed-service-account-cannot-modified": "Ez egy felügyelt szolgáltatási fiók, és nem módosítható"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Engedélyek"
     },
     "service-account-profile": {
       "information": "Információ",
@@ -12954,6 +12958,10 @@
     "name-mode": "Mód",
     "name-show-line-numbers": "Sorszámozás megjelenítése",
     "name-show-mini-map": "Minitérkép megjelenítése"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
