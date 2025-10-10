@@ -1,4 +1,5 @@
 import { store } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
@@ -61,6 +62,15 @@ export function trackDashboardSceneCreatedOrSaved(
 
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
+  const dashboardLibraryProperties = config.featureToggles.dashboardLibrary
+    ? {
+        datasourceTypes: [pluginId],
+        sourceEntryPoint,
+        libraryItemId,
+        creationOrigin,
+      }
+    : {};
+
   DashboardInteractions.dashboardCreatedOrSaved(isNew, {
     ...initialProperties,
     ...(dynamicDashboardsTrackingInformation
@@ -71,16 +81,10 @@ export function trackDashboardSceneCreatedOrSaved(
           autoLayoutCount: dynamicDashboardsTrackingInformation.autoLayoutCount,
           customGridLayoutCount: dynamicDashboardsTrackingInformation.customGridLayoutCount,
           panelsByDatasourceType: dynamicDashboardsTrackingInformation.panelsByDatasourceType,
-          datasourceTypes: [pluginId],
-          sourceEntryPoint,
-          libraryItemId,
-          creationOrigin,
+          ...dashboardLibraryProperties,
         }
       : {
-          ...(pluginId && { datasourceTypes: [pluginId] }),
-          ...(sourceEntryPoint && { sourceEntryPoint }),
-          ...(libraryItemId && { libraryItemId }),
-          ...(creationOrigin && { creationOrigin }),
+          ...dashboardLibraryProperties,
         }),
   });
 }
