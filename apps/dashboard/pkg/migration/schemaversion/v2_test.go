@@ -46,208 +46,9 @@ func TestV2(t *testing.T) {
 			},
 		},
 		{
-			name: "panel type conversion from graphite to graph",
+			name: "comprehensive services filter migration",
 			input: map[string]interface{}{
-				"title":         "V2 Panel Type Migration Test",
-				"schemaVersion": 1,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id":   1,
-						"type": "graphite",
-					},
-					map[string]interface{}{
-						"id":   2,
-						"type": "table",
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"title":         "V2 Panel Type Migration Test",
-				"schemaVersion": 2,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id":   1,
-						"type": "graph",
-					},
-					map[string]interface{}{
-						"id":   2,
-						"type": "table",
-					},
-				},
-			},
-		},
-		{
-			name: "legend boolean to object conversion for graph panels",
-			input: map[string]interface{}{
-				"title":         "V2 Legend Migration Test",
-				"schemaVersion": 1,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id":     1,
-						"type":   "graph",
-						"legend": true,
-					},
-					map[string]interface{}{
-						"id":     2,
-						"type":   "graph",
-						"legend": false,
-					},
-					map[string]interface{}{
-						"id":     3,
-						"type":   "table",
-						"legend": true, // Should not be migrated for non-graph panels
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"title":         "V2 Legend Migration Test",
-				"schemaVersion": 2,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id":   1,
-						"type": "graph",
-						"legend": map[string]interface{}{
-							"show": true,
-						},
-					},
-					map[string]interface{}{
-						"id":   2,
-						"type": "graph",
-						"legend": map[string]interface{}{
-							"show": false,
-						},
-					},
-					map[string]interface{}{
-						"id":     3,
-						"type":   "table",
-						"legend": true, // Unchanged for non-graph panels
-					},
-				},
-			},
-		},
-		{
-			name: "grid property migration for graph panels",
-			input: map[string]interface{}{
-				"title":         "V2 Grid Migration Test",
-				"schemaVersion": 1,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id":   1,
-						"type": "graph",
-						"grid": map[string]interface{}{
-							"min": 0,
-							"max": 100,
-						},
-					},
-					map[string]interface{}{
-						"id":   2,
-						"type": "graph",
-						"grid": map[string]interface{}{
-							"min": 10,
-						},
-					},
-					map[string]interface{}{
-						"id":   3,
-						"type": "table",
-						"grid": map[string]interface{}{
-							"min": 0,
-							"max": 100,
-						}, // Should not be migrated for non-graph panels
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"title":         "V2 Grid Migration Test",
-				"schemaVersion": 2,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id":   1,
-						"type": "graph",
-						"grid": map[string]interface{}{
-							"leftMin": 0,
-							"leftMax": 100,
-						},
-					},
-					map[string]interface{}{
-						"id":   2,
-						"type": "graph",
-						"grid": map[string]interface{}{
-							"leftMin": 10,
-						},
-					},
-					map[string]interface{}{
-						"id":   3,
-						"type": "table",
-						"grid": map[string]interface{}{
-							"min": 0,
-							"max": 100,
-						}, // Unchanged for non-graph panels
-					},
-				},
-			},
-		},
-		{
-			name: "y-format migration for graph panels",
-			input: map[string]interface{}{
-				"title":         "V2 Y-Format Migration Test",
-				"schemaVersion": 1,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id":        1,
-						"type":      "graph",
-						"y_format":  "short",
-						"y2_format": "bytes",
-					},
-					map[string]interface{}{
-						"id":       2,
-						"type":     "graph",
-						"y_format": "percent",
-					},
-					map[string]interface{}{
-						"id":        3,
-						"type":      "graph",
-						"y2_format": "ms",
-					},
-					map[string]interface{}{
-						"id":        4,
-						"type":      "table",
-						"y_format":  "short",
-						"y2_format": "bytes", // Should not be migrated for non-graph panels
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"title":         "V2 Y-Format Migration Test",
-				"schemaVersion": 2,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id":        1,
-						"type":      "graph",
-						"y_formats": []interface{}{"short", "bytes"},
-					},
-					map[string]interface{}{
-						"id":        2,
-						"type":      "graph",
-						"y_formats": []interface{}{"percent", nil},
-					},
-					map[string]interface{}{
-						"id":        3,
-						"type":      "graph",
-						"y_formats": []interface{}{nil, "ms"},
-					},
-					map[string]interface{}{
-						"id":        4,
-						"type":      "table",
-						"y_format":  "short",
-						"y2_format": "bytes", // Unchanged for non-graph panels
-					},
-				},
-			},
-		},
-		{
-			name: "comprehensive migration with all features",
-			input: map[string]interface{}{
-				"title":         "V2 Comprehensive Migration Test",
+				"title":         "V2 Comprehensive Services Migration Test",
 				"schemaVersion": 1,
 				"services": map[string]interface{}{
 					"filter": map[string]interface{}{
@@ -265,20 +66,14 @@ func TestV2(t *testing.T) {
 				},
 				"panels": []interface{}{
 					map[string]interface{}{
-						"id":        1,
-						"type":      "graphite",
-						"legend":    true,
-						"y_format":  "short",
-						"y2_format": "bytes",
-						"grid": map[string]interface{}{
-							"min": 0,
-							"max": 100,
-						},
+						"id":    1,
+						"type":  "graphite",
+						"title": "CPU Usage",
 					},
 				},
 			},
 			expected: map[string]interface{}{
-				"title":         "V2 Comprehensive Migration Test",
+				"title":         "V2 Comprehensive Services Migration Test",
 				"schemaVersion": 2,
 				"time": map[string]interface{}{
 					"from": "now-6h",
@@ -294,16 +89,9 @@ func TestV2(t *testing.T) {
 				},
 				"panels": []interface{}{
 					map[string]interface{}{
-						"id":   1,
-						"type": "graph",
-						"legend": map[string]interface{}{
-							"show": true,
-						},
-						"y_formats": []interface{}{"short", "bytes"},
-						"grid": map[string]interface{}{
-							"leftMin": 0,
-							"leftMax": 100,
-						},
+						"id":    1,
+						"type":  "graphite", // Panel types are not migrated by V2 anymore
+						"title": "CPU Usage",
 					},
 				},
 			},
@@ -366,6 +154,57 @@ func TestV2(t *testing.T) {
 						map[string]interface{}{
 							"name": "env",
 							"type": "custom",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "panels remain unchanged when no services filter",
+			input: map[string]interface{}{
+				"title":         "V2 Panels Unchanged Test",
+				"schemaVersion": 1,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":        1,
+						"type":      "graphite",
+						"legend":    true,
+						"y_format":  "short",
+						"y2_format": "bytes",
+						"grid": map[string]interface{}{
+							"min": 0,
+							"max": 100,
+						},
+					},
+					map[string]interface{}{
+						"id":   2,
+						"type": "graph",
+						"legend": map[string]interface{}{
+							"show": false,
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V2 Panels Unchanged Test",
+				"schemaVersion": 2,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":        1,
+						"type":      "graphite", // Panel migrations handled by auto-migration
+						"legend":    true,
+						"y_format":  "short",
+						"y2_format": "bytes",
+						"grid": map[string]interface{}{
+							"min": 0,
+							"max": 100,
+						},
+					},
+					map[string]interface{}{
+						"id":   2,
+						"type": "graph",
+						"legend": map[string]interface{}{
+							"show": false,
 						},
 					},
 				},

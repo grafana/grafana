@@ -946,14 +946,12 @@ func applyPanelAutoMigration(panel map[string]interface{}) {
 
 	var newType string
 
-	// Special handling for panels that were originally graphite
-	// These should not be auto-migrated to timeseries after V2 migration converts them to graph
-	if panel["_originallyWasGraphite"] == true && panelType == "graph" {
-		return
-	}
-
 	// Graph needs special logic as it can be migrated to multiple panels
-	if panelType == "graph" {
+	// Including graphite which was previously migrated to graph in the schema version 2 migration in DashboardMigrator.ts
+	// but this was a bug because in there graphite was set to graph, but since those migrations run
+	// after PanelModel.restoreModel where autoMigrateFrom is set, this caused the graph migration to be skipped.
+	// And this resulted in a dashboard with invalid panels.
+	if panelType == "graph" || panelType == "graphite" {
 		// Check xaxis mode for special cases
 		newType = getGraphAutoMigration(panel)
 	} else {
@@ -1134,36 +1132,6 @@ func trackPanelOriginalTransformations(panel map[string]interface{}) {
 		for _, nestedPanelInterface := range nestedPanels {
 			if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
 				trackPanelOriginalTransformations(nestedPanel)
-			}
-		}
-	}
-}
-
-// trackOriginalGraphitePanels marks panels that were originally graphite type
-// This is needed to match frontend behavior where graphite->graph conversion in V2 migration
-// should not trigger auto-migration to timeseries
-func trackOriginalGraphitePanels(dashboard map[string]interface{}) {
-	if panels, ok := dashboard["panels"].([]interface{}); ok {
-		for _, panelInterface := range panels {
-			if panel, ok := panelInterface.(map[string]interface{}); ok {
-				trackPanelOriginalGraphite(panel)
-			}
-		}
-	}
-}
-
-// trackPanelOriginalGraphite recursively tracks graphite panels and nested panels
-func trackPanelOriginalGraphite(panel map[string]interface{}) {
-	// Mark if this panel was originally graphite
-	if panelType, ok := panel["type"].(string); ok && panelType == "graphite" {
-		panel["_originallyWasGraphite"] = true
-	}
-
-	// Handle nested panels in row panels
-	if nestedPanels, ok := panel["panels"].([]interface{}); ok {
-		for _, nestedPanelInterface := range nestedPanels {
-			if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
-				trackPanelOriginalGraphite(nestedPanel)
 			}
 		}
 	}
