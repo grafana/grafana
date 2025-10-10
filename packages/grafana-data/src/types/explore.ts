@@ -82,6 +82,8 @@ export interface ExploreLogsPanelState {
   // Used for logs table visualisation, contains the refId of the dataFrame that is currently visualized
   refId?: string;
   displayedFields?: string[];
+  tableSortBy?: string;
+  tableSortDir?: 'asc' | 'desc';
 }
 
 export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {

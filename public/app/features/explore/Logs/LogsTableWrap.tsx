@@ -289,16 +289,23 @@ export function LogsTableWrap(props: Props) {
     // Sync displayed fields from URL
     pendingLabelState = getColumnsFromDisplayedFields(pendingLabelState, columnIndex);
 
-    // if (props.panelState?.displayedFields) {
-    //   props.panelState?.displayedFields.forEach((field) => {
-    //     pendingLabelState[field].active = true;
-    //   });
-    // }
-
     setColumnsWithMeta(pendingLabelState);
 
     // The panel state is updated when the user interacts with the multi-select sidebar
   }, [currentDataFrame, getColumnsFromProps, getColumnsFromDisplayedFields, props.panelState?.displayedFields]);
+
+  const onSortByChange = useCallback(
+    (sortBy: Array<{ displayName: string; desc?: boolean }>) => {
+      // Transform from Table format to URL format - only store the first sort column
+      if (sortBy.length > 0) {
+        props.updatePanelState({
+          tableSortBy: sortBy[0].displayName,
+          tableSortDir: sortBy[0].desc ? 'desc' : 'asc',
+        });
+      }
+    },
+    [props]
+  );
 
   const [sidebarWidth, setSidebarWidth] = useState(220);
   const tableWidth = props.width - sidebarWidth;
@@ -401,6 +408,8 @@ export function LogsTableWrap(props: Props) {
       refId: currentDataFrame.refId,
       visualisationType: 'table',
       labelFieldName: logsFrame?.getLabelFieldName() ?? undefined,
+      tableSortBy: props.panelState?.tableSortBy,
+      tableSortDir: props.panelState?.tableSortDir,
     };
 
     // Update url state
@@ -584,6 +593,12 @@ export function LogsTableWrap(props: Props) {
           dataFrame={currentDataFrame}
           columnsWithMeta={columnsWithMeta}
           height={height}
+          sortBy={
+            props.panelState?.tableSortBy
+              ? [{ displayName: props.panelState.tableSortBy, desc: props.panelState.tableSortDir === 'desc' }]
+              : undefined
+          }
+          onSortByChange={onSortByChange}
         />
       </div>
     </>

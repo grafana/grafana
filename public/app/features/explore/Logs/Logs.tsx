@@ -297,7 +297,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       panelState?.logs?.columns ||
       panelState?.logs?.refId ||
       panelState?.logs?.labelFieldName ||
-      panelState?.logs?.displayedFields
+      panelState?.logs?.displayedFields ||
+      panelState?.logs?.tableSortBy ||
+      panelState?.logs?.tableSortDir
     ) {
       dispatch(
         changePanelState(exploreId, 'logs', {
@@ -307,6 +309,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           labelFieldName: undefined,
           refId: undefined,
           displayedFields: undefined,
+          tableSortBy: undefined,
+          tableSortDir: undefined,
         })
       );
     }
@@ -324,6 +328,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             labelFieldName: logsPanelState.labelFieldName,
             refId: logsPanelState.refId ?? panelState?.logs?.refId,
             displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
+            tableSortBy: logsPanelState.tableSortBy ?? panelState?.logs?.tableSortBy,
+            tableSortDir: logsPanelState.tableSortDir ?? panelState?.logs?.tableSortDir,
           })
         );
       }
@@ -334,6 +340,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       panelState?.logs?.columns,
       panelState?.logs?.displayedFields,
       panelState?.logs?.refId,
+      panelState?.logs?.tableSortBy,
+      panelState?.logs?.tableSortDir,
       visualisationType,
     ]
   );

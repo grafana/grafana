@@ -38,6 +38,8 @@ interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   logsFrame: LogsFrame | null;
+  sortBy?: Array<{ displayName: string; desc?: boolean }>;
+  onSortByChange?: (sortBy: Array<{ displayName: string; desc?: boolean }>) => void;
 }
 
 export function LogsTable(props: Props) {
@@ -174,9 +176,12 @@ export function LogsTable(props: Props) {
       onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
       height={props.height}
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
-      initialSortBy={[
-        { displayName: logsFrame?.timeField.name || '', desc: logsSortOrder === LogsSortOrder.Descending },
-      ]}
+      initialSortBy={
+        props.sortBy ?? [
+          { displayName: logsFrame?.timeField.name || '', desc: logsSortOrder === LogsSortOrder.Descending },
+        ]
+      }
+      onSortByChange={props.onSortByChange}
     />
   );
 }
