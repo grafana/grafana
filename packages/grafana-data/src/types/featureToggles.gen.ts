@@ -492,11 +492,6 @@ export interface FeatureToggles {
   */
   useMultipleScopeNodesEndpoint?: boolean;
   /**
-  * In-development feature that will allow injection of labels into prometheus queries.
-  * @default true
-  */
-  promQLScope?: boolean;
-  /**
   * In-development feature that will allow injection of labels into loki queries.
   * @default false
   */

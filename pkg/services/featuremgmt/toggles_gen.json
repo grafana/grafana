@@ -2960,7 +2960,8 @@
       "metadata": {
         "name": "promQLScope",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-01-29T20:22:17Z"
+        "creationTimestamp": "2024-01-29T20:22:17Z",
+        "deletionTimestamp": "2025-10-05T00:24:17Z"
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into prometheus queries.",
