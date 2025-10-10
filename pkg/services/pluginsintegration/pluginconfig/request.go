@@ -102,7 +102,7 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		azureSettings = &azsettings.AzureSettings{}
 	}
 
-	if azureSettings != nil && slices.Contains(azureSettings.ForwardSettingsPlugins, pluginID) {
+	if slices.Contains(azureSettings.ForwardSettingsPlugins, pluginID) {
 		azureAdSettings, err := s.ssoSettings.GetForProvider(ctx, social.AzureADProviderName)
 		if err != nil {
 			s.logger.Error("Failed to get SSO settings", "error", err)
