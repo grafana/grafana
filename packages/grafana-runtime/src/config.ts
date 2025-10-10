@@ -259,6 +259,8 @@ export class GrafanaBootConfig {
   listDashboardScopesEndpoint = '';
   listScopesEndpoint = '';
 
+  openFeatureContext: Record<string, unknown> = {};
+
   constructor(
     options: BootData['settings'] & {
       bootData: BootData;
