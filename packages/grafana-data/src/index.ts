@@ -596,6 +596,7 @@ export {
   type PluginExtensionAddedFunctionConfig,
   type PluginExtensionResourceAttributesContext,
   type CentralAlertHistorySceneV1Props,
+  type PluginExtensionTopbarHelpV1Context,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,

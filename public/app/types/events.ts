@@ -181,6 +181,10 @@ export class CloseExtensionSidebarEvent extends BusEventBase {
   static type = 'close-extension-sidebar';
 }
 
+export class ToggleExtensionSideBarEvent extends BusEventWithPayload<OpenExtensionSidebarPayload> {
+  static type = 'toggle-extension-sidebar';
+}
+
 /**
  * @deprecated use ShowModalReactEvent instead that has this capability built in
  */
