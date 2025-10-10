@@ -26,6 +26,7 @@ func FullSync(
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
+	maxSyncWorkers int,
 ) error {
 	cfg := repo.Config()
 
@@ -60,7 +61,7 @@ func FullSync(
 		return nil
 	}
 
-	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer)
+	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers)
 }
 
 func processChange(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) {
@@ -153,7 +154,7 @@ func processChange(ctx context.Context, change ResourceFileChange, clients resou
 	writeSpan.End()
 }
 
-func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
+func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int) error {
 	progress.SetTotal(ctx, len(changes))
 
 	_, applyChangesSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes",
@@ -191,7 +192,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 	}
 
 	if len(fileDeletions) > 0 {
-		if err := processResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer); err != nil {
+		if err := processResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers); err != nil {
 			return err
 		}
 	}
@@ -209,7 +210,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 	}
 
 	if len(fileCreations) > 0 {
-		return processResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer)
+		return processResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer, maxSyncWorkers)
 	}
 
 	return nil
@@ -234,19 +235,18 @@ func processFoldersSerially(ctx context.Context, folders []ResourceFileChange, c
 	return nil
 }
 
-func processResourcesInParallel(ctx context.Context, resources []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
+func processResourcesInParallel(ctx context.Context, resources []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int) error {
 	if len(resources) == 0 {
 		return nil
 	}
 
-	const maxWorkers = 10
 	workerCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	changeChan := make(chan ResourceFileChange, len(resources))
 	var wg sync.WaitGroup
 
-	for i := 0; i < maxWorkers; i++ {
+	for i := 0; i < maxSyncWorkers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
