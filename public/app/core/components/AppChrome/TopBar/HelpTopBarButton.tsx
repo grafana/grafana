@@ -14,14 +14,14 @@ import {
 } from '../ExtensionSidebar/ExtensionSidebarProvider';
 
 import { TopNavBarMenu } from './TopNavBarMenu';
-import { useHelpNavItem } from './useHelpNode';
+import { useHelpNode } from './useHelpNode';
 
 interface Props {
   isSmallScreen: boolean;
 }
 
 export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }: Props) {
-  const enrichedHelpNode = useHelpNavItem();
+  const enrichedHelpNode = useHelpNode();
   const { setDockedComponentId, dockedComponentId, availableComponents } = useExtensionSidebarContext();
   const styles = useStyles2(getStyles);
 
