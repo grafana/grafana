@@ -2541,10 +2541,10 @@
   },
   "public/app/features/dashboard/state/DashboardMigrator.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
+      "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 24
+      "count": 19
     }
   },
   "public/app/features/dashboard/state/DashboardModel.repeat.test.ts": {
