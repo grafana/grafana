@@ -112,12 +112,13 @@ func (f *fileWatcher) Watch(ctx context.Context, events chan<- string) {
 			f.timersMu.Lock()
 			t, ok := f.timers[e.Name]
 			if !ok {
+				nameCopy := e.Name
 				t = time.AfterFunc(math.MaxInt64, func() {
-					path, _ := strings.CutPrefix(e.Name, f.prefix)
+					path, _ := strings.CutPrefix(nameCopy, f.prefix)
 					events <- path
 
 					f.timersMu.Lock()
-					delete(f.timers, e.Name)
+					delete(f.timers, nameCopy)
 					f.timersMu.Unlock()
 				})
 				f.timers[e.Name] = t
