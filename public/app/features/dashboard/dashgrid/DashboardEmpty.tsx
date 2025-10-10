@@ -1,9 +1,10 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
@@ -28,6 +29,9 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
+
+  const [searchParams] = useSearchParams();
+  const dashboardLibraryDatasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
 
   // Get repository information to check if it's read-only
   const { isReadOnlyRepo } = useGetResourceRepositoryView({
@@ -61,7 +65,11 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const isProvisioned = dashboard instanceof DashboardScene && dashboard.isManagedRepository();
   return (
     <Stack alignItems="center" justifyContent="center">
-      <div className={styles.wrapper}>
+      <div
+        className={cx(styles.wrapper, {
+          [styles.wrapperMaxWidth]: !config.featureToggles.dashboardLibrary || !dashboardLibraryDatasourceUid,
+        })}
+      >
         <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
           <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={4}>
             <Stack direction="column" alignItems="center" gap={2}>
@@ -157,13 +165,15 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       label: 'dashboard-empty-wrapper',
       flexDirection: 'column',
-      maxWidth: '890px',
       gap: theme.spacing.gridSize * 4,
       paddingTop: theme.spacing(2),
 
       [theme.breakpoints.up('sm')]: {
         paddingTop: theme.spacing(12),
       },
+    }),
+    wrapperMaxWidth: css({
+      maxWidth: '890px',
     }),
   };
 }
