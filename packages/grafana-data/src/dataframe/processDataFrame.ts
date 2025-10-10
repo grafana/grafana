@@ -429,18 +429,20 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
 
   return {
     ...data,
-    fields: data.fields.map((f) => {
-      const newF = {
-        ...f,
-        values: f.values.map((v, i) => f.values[index[i]]),
+    fields: data.fields.map((field) => {
+      const newValues = Array.from({ length: field.values.length }, (_, i) => field.values[index[i]]);
+
+      const newField = {
+        ...field,
+        values: newValues,
       };
 
       // only add .nanos if it exists
-      const { nanos } = f;
+      const { nanos } = field;
       if (nanos !== undefined) {
-        newF.nanos = nanos.map((n, i) => nanos[index[i]]);
+        newField.nanos = Array.from({ length: nanos.length }, (_, i) => nanos[index[i]]);
       }
-      return newF;
+      return newField;
     }),
   };
 }
