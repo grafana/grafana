@@ -4,6 +4,7 @@ import { config, locationService } from '@grafana/runtime';
 
 import { ScopesService } from '../ScopesService';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { ScopeNavigation } from '../dashboards/types';
 
 import {
   clearNotFound,
@@ -39,7 +40,6 @@ import {
   getMock,
 } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
-import { ScopeNavigation } from '../dashboards/types';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,

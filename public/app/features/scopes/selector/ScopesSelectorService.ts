@@ -6,8 +6,8 @@ import { getDashboardSceneProfiler } from 'app/features/dashboard/services/Dashb
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
-
 import { isCurrentPath } from '../dashboards/ScopesNavigationTreeLink';
+
 import {
   closeNodes,
   expandNodes,
