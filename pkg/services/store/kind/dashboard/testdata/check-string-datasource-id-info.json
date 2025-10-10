@@ -2,24 +2,12 @@
   "id": 250,
   "title": "fast streaming",
   "tags": null,
-  "datasource": [
-    {
-      "uid": "grafana",
-      "type": "datasource"
-    }
-  ],
   "panels": [
     {
       "id": 3,
       "title": "Panel Title",
       "type": "timeseries",
-      "pluginVersion": "7.5.0-pre",
-      "datasource": [
-        {
-          "uid": "grafana",
-          "type": "datasource"
-        }
-      ]
+      "pluginVersion": "7.5.0-pre"
     }
   ],
   "schemaVersion": 27,

@@ -3,6 +3,17 @@
 # https://docs.tilt.dev/api.html#api.version_settings
 version_settings(constraint='>=0.22.2')
 
+custom_build(
+    'iam-folder-reconciler',
+    command='docker buildx build --tag $EXPECTED_REF -f ./apps/iam/local/Dockerfile .',
+    deps=[
+      'apps/iam',
+      'pkg',
+    ],
+    disable_push=True,
+    dir='../..',
+)
+
 k8s_yaml([filename for filename in listdir('local/yamls') if filename.lower().endswith(('.yaml', '.yml'))])
 
 # Port forward Grafana to localhost:3000
