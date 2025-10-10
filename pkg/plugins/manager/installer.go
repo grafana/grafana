@@ -54,31 +54,36 @@ func New(cfg *config.PluginManagementCfg, pluginRegistry registry.Service, plugi
 	}
 }
 
-func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
+func (m *PluginInstaller) Download(ctx context.Context, pluginID, version string, opts plugins.AddOpts) (*storage.ExtractedPluginArchive, error) {
 	if ok, _ := m.installing.Load(pluginID); ok != nil {
-		return nil
+		return nil, plugins.DuplicateError{PluginID: pluginID}
 	}
 	m.installing.Store(pluginID, true)
 	defer func() {
 		m.installing.Delete(pluginID)
 	}()
 
-	archive, err := m.install(ctx, pluginID, version, opts)
+	return m.install(ctx, pluginID, version, opts)
+}
+
+// Add downloads, extracts, and loads a plugin along with its dependencies.
+func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
+	archive, err := m.Download(ctx, pluginID, version, opts)
 	if err != nil {
 		return err
 	}
 
-	for _, dep := range archive.Dependencies {
-		m.log.Info(fmt.Sprintf("Fetching %s dependency %s...", pluginID, dep.ID))
+	visited := make(map[string]bool)
+	visited[pluginID] = true
+	dependencyPaths, err := m.resolveDependencies(ctx, archive.Dependencies, opts, visited)
+	if err != nil {
+		return err
+	}
 
-		err = m.Add(ctx, dep.ID, "", plugins.NewAddOpts(opts.GrafanaVersion(), opts.OS(), opts.Arch(), ""))
+	if len(dependencyPaths) > 0 {
+		_, err = m.pluginLoader.Load(ctx, sources.NewLocalSource(plugins.ClassExternal, dependencyPaths))
 		if err != nil {
-			var dupeErr plugins.DuplicateError
-			if errors.As(err, &dupeErr) {
-				m.log.Info("Dependency already installed", "pluginId", dep.ID)
-				continue
-			}
-			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
+			return fmt.Errorf("failed to load dependency plugins: %w", err)
 		}
 	}
 
@@ -91,7 +96,45 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	return nil
 }
 
+func (m *PluginInstaller) resolveDependencies(ctx context.Context, dependencies []*storage.Dependency, opts plugins.AddOpts, visited map[string]bool) ([]string, error) {
+	var allPaths []string
+
+	for _, dep := range dependencies {
+		if visited[dep.ID] {
+			continue
+		}
+		visited[dep.ID] = true
+		m.log.Info("Fetching dependency", "dependency", dep.ID)
+		depArchive, err := m.Download(ctx, dep.ID, "", plugins.NewAddOpts(opts.GrafanaVersion(), opts.OS(), opts.Arch(), ""))
+		if err != nil {
+			var dupeErr plugins.DuplicateError
+			if errors.As(err, &dupeErr) {
+				m.log.Info("Dependency already installed", "pluginId", dep.ID)
+				continue
+			}
+			return nil, fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
+		}
+
+		subPaths, err := m.resolveDependencies(ctx, depArchive.Dependencies, opts, visited)
+		if err != nil {
+			return nil, err
+		}
+		allPaths = append(allPaths, subPaths...)
+		allPaths = append(allPaths, depArchive.Path)
+	}
+
+	return allPaths, nil
+}
+
 func (m *PluginInstaller) install(ctx context.Context, pluginID, version string, opts plugins.AddOpts) (*storage.ExtractedPluginArchive, error) {
+	dirFunc := opts.CustomDirNameFunc()
+	if dirFunc == nil {
+		dirFunc = m.pluginStorageDirFunc
+	}
+	return m.installWithDirFunc(ctx, pluginID, version, opts, dirFunc)
+}
+
+func (m *PluginInstaller) installWithDirFunc(ctx context.Context, pluginID, version string, opts plugins.AddOpts, dirFunc plugins.DirNameGeneratorFunc) (*storage.ExtractedPluginArchive, error) {
 	var pluginArchive *repo.PluginArchive
 	compatOpts, err := RepoCompatOpts(opts)
 	if err != nil {
@@ -128,7 +171,7 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version string,
 		m.log.Info("Installing plugin", "pluginId", pluginID, "version", version)
 	}
 
-	extractedArchive, err := m.pluginStorage.Extract(ctx, pluginID, m.pluginStorageDirFunc, pluginArchive.File)
+	extractedArchive, err := m.pluginStorage.Extract(ctx, pluginID, storage.DirNameGeneratorFunc(dirFunc), pluginArchive.File)
 	if err != nil {
 		return nil, err
 	}
@@ -165,14 +208,14 @@ func (m *PluginInstaller) updateFromCatalog(ctx context.Context, plugin *plugins
 		return nil, err
 	}
 
-	m.log.Info("Updating plugin", "pluginId", plugin.ID, "from", plugin.Info.Version, "to", pluginArchiveInfo.Version)
-
 	// if existing plugin version is the same as the target update version
 	if pluginArchiveInfo.Version == plugin.Info.Version {
 		return nil, plugins.DuplicateError{
 			PluginID: plugin.ID,
 		}
 	}
+
+	m.log.Info("Updating plugin", "pluginId", plugin.ID, "from", plugin.Info.Version, "to", pluginArchiveInfo.Version)
 
 	if pluginArchiveInfo.URL == "" && pluginArchiveInfo.Version == "" {
 		return nil, fmt.Errorf("could not determine update options for %s", plugin.ID)

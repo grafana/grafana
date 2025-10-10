@@ -3,14 +3,17 @@ package pluginsintegration
 import (
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
-	pluginsCfg "github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
@@ -28,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
@@ -67,7 +71,16 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 		Terminator:   term,
 	})
 
-	ps, err := pluginstore.NewPluginStoreForTest(reg, l, sources.ProvideService(cfg, pCfg))
+	// Create installer with the loader we just created
+	pluginRepo, err := repo.ProvideService(pCfg)
+	require.NoError(t, err)
+	installer := manager.ProvideInstaller(pCfg, reg, l, pluginRepo, &fakes.FakeAuthService{})
+
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	sourcesService, err := sources.ProvideService(cfgProvider, pCfg, installer, prometheus.NewRegistry())
+	require.NoError(t, err)
+	ps, err := pluginstore.NewPluginStoreForTest(reg, l, sourcesService)
 	require.NoError(t, err)
 
 	return &IntegrationTestCtx{
@@ -85,7 +98,7 @@ type LoaderOpts struct {
 	Initializer  initialization.Initializer
 }
 
-func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginManagementCfg, opts LoaderOpts) *loader.Loader {
+func CreateTestLoader(t *testing.T, cfg *config.PluginManagementCfg, opts LoaderOpts) *loader.Loader {
 	if opts.Discoverer == nil {
 		opts.Discoverer = pipeline.ProvideDiscoveryStage(cfg, registry.ProvideService())
 	}

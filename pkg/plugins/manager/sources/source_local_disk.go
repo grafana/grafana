@@ -238,7 +238,7 @@ func (s *LocalSource) getAbsPluginJSONPaths(path string) ([]string, error) {
 }
 
 func (s *LocalSource) readFile(pluginJSONPath string) (io.ReadCloser, error) {
-	s.log.Debug("Loading plugin", "path", pluginJSONPath)
+	s.log.Debug("Reading plugin.json", "path", pluginJSONPath)
 
 	if !strings.EqualFold(filepath.Ext(pluginJSONPath), ".json") {
 		return nil, ErrInvalidPluginJSONFilePath

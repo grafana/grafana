@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	pluginLoader "github.com/grafana/grafana/pkg/plugins/manager/loader"
@@ -52,7 +53,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -128,7 +128,6 @@ var WireSet = wire.NewSet(
 	pluginexternal.ProvideService,
 	plugincontext.ProvideBaseService,
 	wire.Bind(new(plugincontext.BasePluginContextProvider), new(*plugincontext.BaseProvider)),
-	plugininstaller.ProvideService,
 	pluginassets.ProvideService,
 	pluginchecker.ProvidePreinstall,
 	wire.Bind(new(pluginchecker.Preinstall), new(*pluginchecker.PreinstallImpl)),
@@ -147,6 +146,9 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
 	ProvideClientWithMiddlewares,
 	wire.Bind(new(plugins.Client), new(*backend.MiddlewareHandler)),
+	manager.ProvideInstaller, // Need provider in same set as binding for OSS mode
+	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
+	wire.Bind(new(sources.PluginDownloader), new(*manager.PluginInstaller)),
 	managedplugins.NewNoop,
 	wire.Bind(new(managedplugins.Manager), new(*managedplugins.Noop)),
 	provisionedplugins.NewNoop,

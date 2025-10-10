@@ -36,6 +36,9 @@ type File struct {
 	ModTime time.Time
 }
 
+// DirNameGeneratorFunc generates a directory name for a plugin
+type DirNameGeneratorFunc = func(pluginID string) string
+
 type AddOpts struct {
 	grafanaVersion string
 
@@ -43,6 +46,8 @@ type AddOpts struct {
 	arch string
 
 	url string
+
+	customDirNameFunc DirNameGeneratorFunc
 }
 
 func (co AddOpts) GrafanaVersion() string {
@@ -61,8 +66,17 @@ func (co AddOpts) URL() string {
 	return co.url
 }
 
+func (co AddOpts) CustomDirNameFunc() DirNameGeneratorFunc {
+	return co.customDirNameFunc
+}
+
 func NewAddOpts(grafanaVersion, os, arch, url string) AddOpts {
 	return AddOpts{grafanaVersion: grafanaVersion, arch: arch, os: os, url: url}
+}
+
+func (a AddOpts) WithCustomDirNameFunc(customDirNameFunc DirNameGeneratorFunc) AddOpts {
+	a.customDirNameFunc = customDirNameFunc
+	return a
 }
 
 type UpdateInfo struct {

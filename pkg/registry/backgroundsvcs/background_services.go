@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	pluginStore "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsmetric "github.com/grafana/grafana/pkg/services/publicdashboards/metric"
@@ -65,7 +64,6 @@ func ProvideBackgroundServiceRegistry(
 	anon *anonimpl.AnonDeviceService,
 	ssoSettings *ssosettingsimpl.Service,
 	pluginExternal *pluginexternal.Service,
-	pluginInstaller *plugininstaller.Service,
 	zanzanaReconciler *dualwrite.ZanzanaReconciler,
 	appRegistry *appregistry.Service,
 	pluginDashboardUpdater *plugindashboardsservice.DashboardUpdater,
@@ -112,7 +110,6 @@ func ProvideBackgroundServiceRegistry(
 		anon,
 		ssoSettings,
 		pluginExternal,
-		pluginInstaller,
 		zanzanaReconciler,
 		appRegistry,
 		pluginDashboardUpdater,
