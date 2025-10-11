@@ -198,7 +198,6 @@ export abstract class BigValueLayout {
       width: `${width}px`,
       height: `${height}px`,
       padding: `${textMode === BigValueTextMode.None ? 2 : this.panelPadding}px`,
-      borderRadius: theme.shape.radius.default,
       position: 'relative',
       display: 'flex',
     };

@@ -2,7 +2,7 @@ import { clamp } from 'lodash';
 import { PureComponent, CSSProperties } from 'react';
 import * as React from 'react';
 
-import { VizOrientation } from '@grafana/data';
+import { VizOrientation, ThemeContext } from '@grafana/data';
 
 import { calculateGridDimensions } from '../../utils/squares';
 
@@ -56,6 +56,9 @@ interface State<V> {
 }
 
 export class VizRepeater<V, D = {}> extends PureComponent<PropsWithDefaults<V, D>, State<V>> {
+  declare context: React.ContextType<typeof ThemeContext>;
+  static contextType = ThemeContext;
+
   static defaultProps: DefaultProps = {
     itemSpacing: 8,
   };
@@ -139,7 +142,20 @@ export class VizRepeater<V, D = {}> extends PureComponent<PropsWithDefaults<V, D
       }
     }
 
-    return <div style={{ position: 'relative' }}>{items}</div>;
+    return (
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          borderBottomLeftRadius: this.context.shape.radius.default,
+          borderBottomRightRadius: this.context.shape.radius.default,
+          overflow: 'hidden',
+        }}
+      >
+        {items}
+      </div>
+    );
   }
 
   render() {
@@ -168,6 +184,10 @@ export class VizRepeater<V, D = {}> extends PureComponent<PropsWithDefaults<V, D
     const repeaterStyle: React.CSSProperties = {
       display: 'flex',
       overflow: `${minVizWidth ? 'auto' : 'hidden'} ${minVizHeight ? 'auto' : 'hidden'}`,
+      width: '100%',
+      height: '100%',
+      borderBottomLeftRadius: this.context.shape.radius.default,
+      borderBottomRightRadius: this.context.shape.radius.default,
     };
 
     let vizHeight = height;
