@@ -492,3 +492,91 @@ describe('Fields returned by query with refId', () => {
     expect(matcher(frameB.fields[1], frameB, data)).toBe(false);
   });
 });
+
+describe('Comparison field matching', () => {
+  // Shared test data
+  const createTestData = () => [
+    toDataFrame({
+      fields: [
+        { name: 'a', type: FieldType.number, values: [1, 2, 3] },
+        { name: 'b', type: FieldType.number, values: [4, 5, 6] },
+      ],
+      meta: {},
+    }),
+    toDataFrame({
+      fields: [
+        { name: 'a', type: FieldType.number, values: [7, 8, 9] },
+        { name: 'b', type: FieldType.number, values: [10, 11, 12] },
+      ],
+      meta: {
+        timeCompare: {
+          diffMs: -86400000,
+          isTimeShiftQuery: true,
+        },
+      },
+    }),
+  ];
+
+  it('byName: should match regular field by name, not comparison field', () => {
+    const data = createTestData();
+    const matcher = getFieldMatcher({ id: FieldMatcherID.byName, options: 'a' });
+
+    expect(matcher(data[0].fields[0], data[0], data)).toBe(true); // original true
+    expect(matcher(data[1].fields[0], data[1], data)).toBe(false); // comparison false
+  });
+
+  it('byName: should match comparison field by display name', () => {
+    const data = createTestData();
+    const matcher = getFieldMatcher({ id: FieldMatcherID.byName, options: 'a (comparison)' });
+
+    expect(matcher(data[0].fields[0], data[0], data)).toBe(false); // original false
+    expect(matcher(data[1].fields[0], data[1], data)).toBe(true); // comparison true
+  });
+
+  it('byNames: should match regular fields by name, not comparison fields', () => {
+    const data = createTestData();
+    const matcher = getFieldMatcher({
+      id: FieldMatcherID.byNames,
+      options: { mode: ByNamesMatcherMode.include, names: ['a'] },
+    });
+
+    expect(matcher(data[0].fields[0], data[0], data)).toBe(true); // original true
+    expect(matcher(data[1].fields[0], data[1], data)).toBe(false); // comparison false
+  });
+
+  it('byNames: should match comparison fields by display name', () => {
+    const data = createTestData();
+    const matcher = getFieldMatcher({
+      id: FieldMatcherID.byNames,
+      options: { mode: ByNamesMatcherMode.include, names: ['a (comparison)'] },
+    });
+
+    expect(matcher(data[0].fields[0], data[0], data)).toBe(false); // original false
+    expect(matcher(data[1].fields[0], data[1], data)).toBe(true); // comparison true
+  });
+
+  it('byNames: exclude mode should not match regular fields but should match comparison fields', () => {
+    const data = createTestData();
+    const matcher = getFieldMatcher({
+      id: FieldMatcherID.byNames,
+      options: { mode: ByNamesMatcherMode.exclude, names: ['a'] },
+    });
+
+    expect(matcher(data[0].fields[0], data[0], data)).toBe(false); // original false
+    expect(matcher(data[1].fields[0], data[1], data)).toBe(true); // comparison true
+    expect(matcher(data[0].fields[1], data[0], data)).toBe(true); // other field true
+  });
+
+  it('byNames: should handle mixed regular and comparison names', () => {
+    const data = createTestData();
+    const matcher = getFieldMatcher({
+      id: FieldMatcherID.byNames,
+      options: { mode: ByNamesMatcherMode.include, names: ['a', 'b (comparison)'] },
+    });
+
+    expect(matcher(data[0].fields[0], data[0], data)).toBe(true); // original true
+    expect(matcher(data[1].fields[0], data[1], data)).toBe(false); // comparison false
+    expect(matcher(data[0].fields[1], data[0], data)).toBe(false); // original false
+    expect(matcher(data[1].fields[1], data[1], data)).toBe(true); // comparison true
+  });
+});
