@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Card, TagList, useTheme2, Icon } from '@grafana/ui';
+import { Card, Icon, TagList, useTheme2 } from '@grafana/ui';
 
 interface DataSourceCardProps {
   ds: DataSourceInstanceSettings;
@@ -27,6 +27,7 @@ export function DataSourceCard({
   return (
     <Card
       key={ds.uid}
+      noMargin
       onClick={onClick}
       className={cx(styles.card, selected ? styles.selected : undefined)}
       {...htmlProps}
@@ -64,8 +65,6 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
     card: css({
       cursor: 'pointer',
       backgroundColor: 'transparent',
-      // Move to list component
-      marginBottom: 0,
       padding: theme.spacing(1),
 
       '&:hover': {
@@ -75,7 +74,7 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
     heading: css({
       width: '100%',
       overflow: 'hidden',
-      // This is needed to enable ellipsis when text overlfows
+      // This is needed to enable ellipsis when text overflows
       '> button': {
         width: '100%',
       },
