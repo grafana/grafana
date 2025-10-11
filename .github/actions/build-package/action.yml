@@ -90,6 +90,10 @@ inputs:
     type: string
     default: 'alpine:3.22'
     required: false
+  cache-builders:
+    type: boolean
+    default: true
+    required: false
 outputs:
   dist-dir:
     description: Directory where artifacts are placed
@@ -134,13 +138,31 @@ runs:
         UBUNTU_TAG_FORMAT: ${{ inputs.docker-tag-format-ubuntu }}
         CHECKSUM: ${{ inputs.checksum }}
         VERIFY: ${{ inputs.verify }}
+        CACHE_BUILDERS: ${{ inputs.cache-builders }}
         ALPINE_BASE: ${{ inputs.alpine-base }}
         UBUNTU_BASE: ${{ inputs.ubuntu-base }}
       with:
         verb: run
         dagger-flags: --verbose=0
         version: 0.18.8
-        args: go run -C ${GRAFANA_PATH} ./pkg/build/cmd artifacts --artifacts ${ARTIFACTS} --grafana-dir=${GRAFANA_PATH} --alpine-base=${ALPINE_BASE} --ubuntu-base=${UBUNTU_BASE} --enterprise-dir=${ENTERPRISE_PATH} --version=${VERSION} --patches-repo=${PATCHES_REPO} --patches-ref=${PATCHES_REF} --patches-path=${PATCHES_PATH} --build-id=${BUILD_ID} --tag-format="${TAG_FORMAT}" --ubuntu-tag-format="${UBUNTU_TAG_FORMAT}" --org=${DOCKER_ORG} --registry=${DOCKER_REGISTRY} --checksum=${CHECKSUM} --verify=${VERIFY} > $OUTFILE
+        args: go run -C ${GRAFANA_PATH} ./pkg/build/cmd artifacts
+          --artifacts ${ARTIFACTS}
+          --grafana-dir=${GRAFANA_PATH}
+          --alpine-base=${ALPINE_BASE}
+          --ubuntu-base=${UBUNTU_BASE}
+          --enterprise-dir=${ENTERPRISE_PATH}
+          --version=${VERSION}
+          --patches-repo=${PATCHES_REPO}
+          --patches-ref=${PATCHES_REF}
+          --patches-path=${PATCHES_PATH}
+          --build-id=${BUILD_ID}
+          --tag-format="${TAG_FORMAT}"
+          --ubuntu-tag-format="${UBUNTU_TAG_FORMAT}"
+          --org=${DOCKER_ORG}
+          --registry=${DOCKER_REGISTRY}
+          --checksum=${CHECKSUM}
+          --cache-builders=${CACHE_BUILDERS}
+          --verify=${VERIFY} > $OUTFILE
     - id: output
       shell: bash
       env:

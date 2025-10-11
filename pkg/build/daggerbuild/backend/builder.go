@@ -141,53 +141,11 @@ func Builder(
 	distro Distribution,
 	opts *BuildOpts,
 	platform dagger.Platform,
-	src *dagger.Directory,
 	goVersion string,
 	viceroyVersion string,
-	goBuildCache *dagger.CacheVolume,
-	goModCache *dagger.CacheVolume,
 ) (*dagger.Container, error) {
-	var (
-		version = opts.Version
-	)
-
 	// for some distros we use the golang official iamge. For others, we use viceroy.
-	builder, err := GolangContainer(d, log, goVersion, viceroyVersion, platform, distro, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	builder = builder.
-		WithMountedCache("/root/.cache/go", goBuildCache).
-		WithEnvVariable("GOCACHE", "/root/.cache/go")
-
-	if prog := opts.GoCacheProg; prog != "" {
-		builder = builder.WithEnvVariable("GOCACHEPROG", prog)
-	}
-
-	commitInfo := GetVCSInfo(src, version, opts.Enterprise)
-
-	builder = withCue(builder, src).
-		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
-			Include: []string{"**/*.mod", "**/*.sum", "**/*.work", ".git"},
-		}).
-		WithDirectory("/src/pkg", src.WithoutDirectory("pkg/build").Directory("pkg")).
-		WithDirectory("/src/apps", src.Directory("apps")).
-		WithDirectory("/src/emails", src.Directory("emails")).
-		WithFile("/src/pkg/server/wire_gen.go", Wire(d, src, platform, goVersion, opts.WireTag)).
-		WithFile("/src/.buildinfo.commit", commitInfo.Commit).
-		WithWorkdir("/src")
-
-	if opts.Enterprise {
-		builder = builder.WithFile("/src/.buildinfo.enterprise-commit", commitInfo.EnterpriseCommit)
-	}
-
-	builder = golang.WithCachedGoDependencies(
-		builder,
-		goModCache,
-	)
-
-	return builder, nil
+	return GolangContainer(d, log, goVersion, viceroyVersion, platform, distro, opts)
 }
 
 func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goVersion string, wireTag string) *dagger.File {

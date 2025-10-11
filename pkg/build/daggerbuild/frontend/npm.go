@@ -11,7 +11,7 @@ import (
 
 // NPMPackages versions and packs the npm packages into tarballs into `npm-packages` directory.
 // It then returns the npm-packages directory as a dagger.Directory.
-func NPMPackages(builder *dagger.Container, d *dagger.Client, log *slog.Logger, src *dagger.Directory, ersion string) (*dagger.Directory, error) {
+func NPMPackages(builder *dagger.Container, d *dagger.Client, log *slog.Logger, src *dagger.Directory, ersion string, nodeModules *dagger.Directory) (*dagger.Directory, error) {
 	// Check if the version of Grafana uses lerna or nx to manage package versioning.
 	var (
 		out = fmt.Sprintf("/src/npm-packages/%%s-%v.tgz", "v"+ersion)
@@ -23,7 +23,7 @@ func NPMPackages(builder *dagger.Container, d *dagger.Client, log *slog.Logger, 
 		nxPack  = fmt.Sprintf("yarn nx exec --projects=$(cat nx.json | jq -r '.relase.groups.grafanaPackages.projects | join(\",\")') -- yarn pack --out %s", out)
 	)
 
-	return builder.WithExec([]string{"mkdir", "npm-packages"}).
+	return WithNodeModules(WithFrontendSource(builder, src), nodeModules).WithExec([]string{"mkdir", "npm-packages"}).
 		WithEnvVariable("SHELL", "/bin/bash").
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"/bin/bash", "-c", fmt.Sprintf("if [ -f lerna.json ]; then %s; else %s; fi", lernaBuild, nxBuild)}).
