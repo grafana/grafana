@@ -4,6 +4,7 @@ import { formatExpectError } from '../errors';
 import { successfulDataQuery } from '../mocks/queries';
 
 const REACT_TABLE_DASHBOARD = { uid: 'U_bZIMRMk' };
+const TABLE_TEST_PANEL_DASHBOARD = { uid: 'pttable' };
 
 test.describe(
   'plugin-e2e-api-tests admin',
@@ -61,6 +62,13 @@ test.describe(
           panelEditPage.panel.locator.getByRole('gridcell'),
           formatExpectError('Could not locate data elements in table panel')
         ).toContainText(['val1', 'val2', 'val3', 'val4']);
+      });
+
+      test('get table headers', async ({ gotoPanelEditPage, selectors }) => {
+        const panelEditPage = await gotoPanelEditPage({ dashboard: TABLE_TEST_PANEL_DASHBOARD, id: '7' });
+        await expect(
+          panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.ColumnHeader)
+        ).toContainText(['Metric', 'Value', 'Stat']);
       });
     });
 
