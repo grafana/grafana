@@ -446,7 +446,7 @@ describe('LogListControls', () => {
     await userEvent.click(screen.getByLabelText(DOWNLOAD_LOGS_LABEL_COPY));
     await userEvent.click(await screen.findByText(label));
     expect(downloadLogs).toHaveBeenCalledTimes(1);
-    expect(downloadLogs).toHaveBeenCalledWith(format, [], undefined);
+    expect(downloadLogs).toHaveBeenCalledWith(format, [], undefined, []);
   });
 
   test('Allows to download logs filtered logs', async () => {
@@ -463,7 +463,7 @@ describe('LogListControls', () => {
     );
     await userEvent.click(screen.getByLabelText(DOWNLOAD_LOGS_LABEL_COPY));
     await userEvent.click(await screen.findByText('txt'));
-    expect(downloadLogs).toHaveBeenCalledWith('text', filteredLogs, undefined);
+    expect(downloadLogs).toHaveBeenCalledWith('text', filteredLogs, undefined, []);
   });
 
   test('Controls new lines', async () => {
