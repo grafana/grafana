@@ -33,9 +33,9 @@ refs:
 
 # Examples of high-cardinality alerts
 
-In Prometheus and Mimir, each unique label combination creates a new time series.
+In Prometheus and Mimir, metrics are stored as time series, where each unique set of labels defines a distinct series.
 
-Excessive series (also known as high-cardinality metrics) can overload your metrics backend, slow down dashboard and alert queries, and quickly increase your observability costs or exceed the limits of your Grafana Cloud plan.
+A large number of unique series (_high cardinality_) can overload your metrics backend, slow down dashboard and alert queries, and quickly increase your observability costs or exceed the limits of your Grafana Cloud plan.
 
 These examples show how to detect and alert on early signs of high cardinality:
 
@@ -99,7 +99,7 @@ For more robust alerting, you can compare your current usage to the `max_global_
   Divides current usage by the account limit to calculate a utilization ratio between 0 and 1 (where `1` means the limit is reached).
 
 - `* on (id) group_left(name) grafanacloud_instance_info`  
-  Joins instance metadata to display the instance name.  
+  Joins instance metadata to display the instance name.
 
 - `> 0.9`  
   Defines the threshold condition to fire when usage exceeds 90% of the limit.  
