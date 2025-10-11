@@ -176,6 +176,8 @@ export const defaultTransformationKind = (): TransformationKind => ({
 export interface DataTransformerConfig {
 	// Unique identifier of transformer
 	id: string;
+	// Unique identifier of the instance of the transformer
+	refId?: string;
 	// Disabled transformations are skipped
 	disabled?: boolean;
 	// Optional frame matcher. When missing it will be applied to all results
