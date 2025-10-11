@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { colorManipulator, FALLBACK_COLOR, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
+  AdHocFilterItem,
   TooltipDisplayMode,
   TooltipPlugin2,
   UPlotChart,
@@ -14,7 +15,12 @@ import {
   useTheme2,
   usePanelContext,
 } from '@grafana/ui';
-import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
+import {
+  AdHocFilterModel,
+  FILTER_FOR_OPERATOR,
+  getDisplayValuesForCalcs,
+  TooltipHoverMode,
+} from '@grafana/ui/internal';
 
 import { getDataLinks } from '../status-history/utils';
 
@@ -29,7 +35,7 @@ export const XYChartPanel2 = (props: Props2) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
-  const { canExecuteActions } = usePanelContext();
+  const { canExecuteActions, onAddAdHocFilter } = usePanelContext();
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   let { mapping, series: mappedSeries } = props.options;
@@ -121,7 +127,45 @@ export const XYChartPanel2 = (props: Props2) => {
                 const xySeries = series[seriesIdx - 1];
                 return getDataLinks(xySeries.y.field, dataIdx);
               }}
-              render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
+              getAdHocFilters={(seriesIdx, dataIdx) => {
+                if (seriesIdx === 0 || !series[seriesIdx - 1]) {
+                  return [];
+                }
+
+                const xySeries = series[seriesIdx - 1];
+                const xField = xySeries.x.field;
+
+                // Check if the field supports filtering
+                // We only show filters on filterable fields (xField.config.filterable).
+                // Fields will have been marked as filterable by the data source if that data source supports adhoc filtering
+                // (eg. Prom or Loki) and the field types support adhoc filtering (eg. string or number - depending on the data source).
+                // Fields may later be marked as not filterable. For example, fields created from Grafana Transforms that
+                // are derived from a data source, but are not present in the data source.
+                // We choose `xField` here because it contains the label-value pair, rather than `yField` which is the numeric Value.
+                if (
+                  config.featureToggles.adhocFiltersInTooltips &&
+                  xField.config.filterable &&
+                  onAddAdHocFilter != null
+                ) {
+                  const adHocFilterItem: AdHocFilterItem = {
+                    key: xField.name,
+                    operator: FILTER_FOR_OPERATOR,
+                    value: String(xField.values[dataIdx]),
+                  };
+
+                  const adHocFilters: AdHocFilterModel[] = [
+                    {
+                      ...adHocFilterItem,
+                      onClick: () => onAddAdHocFilter(adHocFilterItem),
+                    },
+                  ];
+
+                  return adHocFilters;
+                }
+
+                return [];
+              }}
+              render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks, adHocFilters) => {
                 return (
                   <XYChartTooltip
                     data={props.data.series}
@@ -132,6 +176,7 @@ export const XYChartPanel2 = (props: Props2) => {
                     seriesIdx={seriesIdx!}
                     replaceVariables={props.replaceVariables}
                     dataLinks={dataLinks}
+                    adHocFilters={adHocFilters}
                     canExecuteActions={userCanExecuteActions}
                   />
                 );
