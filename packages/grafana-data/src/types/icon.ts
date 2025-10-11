@@ -285,6 +285,7 @@ export const availableIconsIndex = {
   'ai-sparkle': true,
   bitbucket: true,
   git: true,
+  'cmab-logo': true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;
