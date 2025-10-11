@@ -88,6 +88,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
   private panelOptionsLogger: PanelOptionsLogger | undefined = undefined;
+  private lastDataUpdate = 0;
+  private readonly dataUpdateThrottleMs = 100; // Throttle data updates to prevent excessive re-renders
 
   constructor(props: Props) {
     super(props);
@@ -297,6 +299,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   // So in this context we can only do a single call to setState
   onDataUpdate(data: PanelData) {
     const { dashboard, panel, plugin } = this.props;
+
+    // Throttle data updates to prevent excessive re-renders during rapid refresh cycles
+    const now = Date.now();
+    if (now - this.lastDataUpdate < this.dataUpdateThrottleMs) {
+      return;
+    }
+    this.lastDataUpdate = now;
 
     // Ignore this data update if we are now a non data panel
     if (plugin.meta.skipDataQuery) {
