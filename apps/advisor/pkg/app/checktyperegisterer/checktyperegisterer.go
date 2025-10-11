@@ -24,12 +24,14 @@ import (
 // with the existing checks types. This does not need to be a CRUD resource, but it is
 // the only way existing at the moment to expose the check types.
 type Runner struct {
-	checkRegistry checkregistry.CheckService
-	client        resource.Client
-	namespace     string
-	log           logging.Logger
-	retryAttempts int
-	retryDelay    time.Duration
+	checkRegistry             checkregistry.CheckService
+	typeClient                resource.Client
+	checkClient               resource.Client
+	namespace                 string
+	log                       logging.Logger
+	retryAttempts             int
+	retryDelay                time.Duration
+	defaultEvaluationInterval time.Duration
 }
 
 // NewRunner creates a new Runner.
@@ -47,18 +49,29 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 
 	// Prepare storage client
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
-	client, err := clientGenerator.ClientFor(advisorv0alpha1.CheckTypeKind())
+	typeClient, err := clientGenerator.ClientFor(advisorv0alpha1.CheckTypeKind())
+	if err != nil {
+		return nil, err
+	}
+	checkClient, err := clientGenerator.ClientFor(advisorv0alpha1.CheckKind())
+	if err != nil {
+		return nil, err
+	}
+
+	defaultEvaluationInterval, err := checks.GetDefaultEvaluationInterval(specificConfig.PluginConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Runner{
-		checkRegistry: checkRegistry,
-		client:        client,
-		namespace:     namespace,
-		log:           log.With("runner", "advisor.checktyperegisterer"),
-		retryAttempts: 5,
-		retryDelay:    time.Second * 10,
+		checkRegistry:             checkRegistry,
+		typeClient:                typeClient,
+		checkClient:               checkClient,
+		namespace:                 namespace,
+		log:                       log.With("runner", "advisor.checktyperegisterer"),
+		retryAttempts:             5,
+		retryDelay:                time.Second * 10,
+		defaultEvaluationInterval: defaultEvaluationInterval,
 	}, nil
 }
 
@@ -82,8 +95,9 @@ func (r *Runner) Run(ctx context.Context) error {
 				Annotations: map[string]string{
 					checks.NameAnnotation: t.Name(),
 					// Flag to indicate feature availability
-					checks.RetryAnnotation:       "1",
-					checks.IgnoreStepsAnnotation: "1",
+					checks.RetryAnnotation:              "1",
+					checks.IgnoreStepsAnnotation:        "1",
+					checks.EvaluationIntervalAnnotation: "0",
 				},
 			},
 			Spec: advisorv0alpha1.CheckTypeSpec{
@@ -101,7 +115,7 @@ func (r *Runner) Run(ctx context.Context) error {
 
 func (r *Runner) registerCheckType(ctx context.Context, logger logging.Logger, checkType string, obj resource.Object) error {
 	for i := 0; i < r.retryAttempts; i++ {
-		current, err := r.client.Get(ctx, obj.GetStaticMetadata().Identifier())
+		current, err := r.typeClient.Get(ctx, obj.GetStaticMetadata().Identifier())
 		if err != nil {
 			if errors.IsNotFound(err) {
 				// Check type does not exist, create it
@@ -164,7 +178,7 @@ func (r *Runner) shouldRetry(err error, logger logging.Logger, attempt int, chec
 
 func (r *Runner) create(ctx context.Context, log logging.Logger, obj resource.Object) error {
 	id := obj.GetStaticMetadata().Identifier()
-	_, err := r.client.Create(ctx, id, obj, resource.CreateOptions{})
+	_, err := r.typeClient.Create(ctx, id, obj, resource.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -208,10 +222,16 @@ func (r *Runner) update(ctx context.Context, log logging.Logger, obj resource.Ob
 		currentAnnotations = make(map[string]string)
 	}
 	annotations := obj.GetAnnotations()
+	// If the evaluation interval is not set, set it to the default
+	if currentAnnotations[checks.EvaluationIntervalAnnotation] == "" {
+		annotations[checks.EvaluationIntervalAnnotation] = r.defaultEvaluationInterval.String()
+	} else {
+		delete(annotations, checks.EvaluationIntervalAnnotation)
+	}
 	maps.Copy(currentAnnotations, annotations)
 	obj.SetAnnotations(currentAnnotations) // This will update the annotations in the object
 
-	_, err := r.client.Update(ctx, id, obj, resource.UpdateOptions{})
+	_, err := r.typeClient.Update(ctx, id, obj, resource.UpdateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		// Ignore the error, it's probably due to a race condition
 		log.Info("Error updating check type, ignoring", "error", err)
