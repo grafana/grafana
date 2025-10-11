@@ -18,6 +18,7 @@ const (
 	HealthCheckStepID   = "health-check"
 	UIDValidationStepID = "uid-validation"
 	MissingPluginStepID = "missing-plugin"
+	PromDepAuthStepID   = "prom-dep-auth"
 )
 
 type check struct {
@@ -99,6 +100,10 @@ func (c *check) Steps() []checks.Step {
 		},
 		&missingPluginStep{
 			PluginStore:    c.PluginStore,
+			PluginRepo:     c.PluginRepo,
+			GrafanaVersion: c.GrafanaVersion,
+		},
+		&promDepAuthStep{
 			PluginRepo:     c.PluginRepo,
 			GrafanaVersion: c.GrafanaVersion,
 		},
