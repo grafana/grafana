@@ -67,7 +67,7 @@ export function AdHocVariableForm({
             onChange={onDataSourceChange}
             width={30}
             variables={true}
-            dashboard={config.featureToggles.dashboardDsAdHocFiltering}
+            dashboard={true}
             noDefault
           />
         </EditorField>
