@@ -73,9 +73,10 @@ export function useFilteredRulesIteratorProvider() {
       withAbort(abortController.signal),
       concatMap((groups) =>
         groups
-          .filter((group) => groupFilter(group, normalizedFilterState))
-          .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
-          .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
+          .map((group) => ({ group, filterResult: groupFilter(group, normalizedFilterState) }))
+          .filter(({ filterResult }) => filterResult.matches)
+          .flatMap(({ group, filterResult }) => group.rules.map((rule) => ({ group, rule, filterResult })))
+          .filter(({ rule, filterResult }) => ruleFilter(rule, normalizedFilterState, filterResult.freeFormMatched))
           .map(({ group, rule }) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),
       catchError(() => empty())
