@@ -1,3 +1,5 @@
+import { uniq } from 'lodash';
+
 import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
 import { logsResourceTypes } from '../azureMetadata/logsResourceTypes';
@@ -57,31 +59,46 @@ export default class ResourcePickerData extends DataSourceWithBackend<
         return subscriptions;
       }
 
-      let resources = subscriptions;
-      const promises = currentSelection.map((selection) => async () => {
-        if (selection.subscription) {
-          const resourceGroupURI = `/subscriptions/${selection.subscription}/resourceGroups/${selection.resourceGroup}`;
+      const rgUriOf = (s: AzureMonitorResource) => `/subscriptions/${s.subscription}/resourceGroups/${s.resourceGroup}`;
 
-          if (selection.resourceGroup && !findRow(resources, resourceGroupURI)) {
-            const resourceGroups = await this.getResourceGroupsBySubscriptionId(selection.subscription, type);
-            resources = addResources(resources, `/subscriptions/${selection.subscription}`, resourceGroups);
-          }
+      const resUriOf = (s: AzureMonitorResource) => resourceToString(s);
 
-          const resourceURI = resourceToString(selection);
-          if (selection.resourceName && !findRow(resources, resourceURI)) {
-            const resourcesForResourceGroup = await this.getResourcesForResourceGroup(resourceGroupURI, type);
-            resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
-          }
-        }
-      });
+      const hasSubAndRG = (
+        s: AzureMonitorResource
+      ): s is AzureMonitorResource & { subscription: string; resourceGroup: string } =>
+        Boolean(s.subscription && s.resourceGroup);
 
-      for (const promise of promises) {
-        // Fetch resources one by one, avoiding re-fetching the same resource
-        // and race conditions updating the resources array
-        await promise();
-      }
+      const subsToFetch = uniq(
+        currentSelection
+          .filter(hasSubAndRG)
+          .filter((s) => !findRow(subscriptions, rgUriOf(s)))
+          .map(({ subscription }) => subscription)
+      );
 
-      return resources;
+      const rgUrisToFetch = uniq(
+        currentSelection
+          .filter((s) => s.subscription && s.resourceGroup && s.resourceName && !findRow(subscriptions, resUriOf(s)))
+          .map((s) => rgUriOf(s))
+      );
+
+      const [groupsResults, resourcesResults] = await Promise.all([
+        Promise.all(
+          subsToFetch.map(async (sub) => [sub, await this.getResourceGroupsBySubscriptionId(sub, type)] as const)
+        ),
+        Promise.all(
+          rgUrisToFetch.map(async (rgUri) => [rgUri, await this.getResourcesForResourceGroup(rgUri, type)] as const)
+        ),
+      ]);
+
+      const withGroups = groupsResults.reduce<ResourceRowGroup>(
+        (acc, [sub, rgs]) => addResources(acc, `/subscriptions/${sub}`, rgs),
+        subscriptions
+      );
+
+      return resourcesResults.reduce<ResourceRowGroup>(
+        (acc, [rgUri, res]) => addResources(acc, rgUri, res),
+        withGroups
+      );
     } catch (err) {
       if (err instanceof Error) {
         if (err.message !== 'No subscriptions were found') {
@@ -244,7 +261,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     | project subscriptionName=name, subscriptionId
 
     | join kind=leftouter (
-      resourcecontainers            
+      resourcecontainers
             | where type == "microsoft.resources/subscriptions/resourcegroups"
             | where id =~ "${resourceGroupURI}"
             | project resourceGroupName=name, resourceGroup, subscriptionId
