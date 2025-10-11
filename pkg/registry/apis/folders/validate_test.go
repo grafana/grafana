@@ -127,7 +127,121 @@ func TestValidateCreate(t *testing.T) {
 			},
 			maxDepth: folder.MaxNestedFolderDepth,
 		},
-	}
+		{
+			name: "team folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "team-abc",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "abc", Kind: "Team", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+			},
+		}, {
+			name: "user folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "user-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "xyz", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+			},
+		}, {
+			name: "team without owner reference",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "user-xyz",
+				},
+			},
+			expectedErr: "missing owner reference (user-xyz)",
+		}, {
+			name: "team with owner mismatch",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "user-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "ABC", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+			},
+			expectedErr: "owner reference must match the same name",
+		}, {
+			name: "team with wrong owner kind",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "user-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "xyz", Kind: "NotUser", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+			},
+			expectedErr: "owner reference kind must match the name",
+		}, {
+			name: "team with wrong owner apiVersion",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "user-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "xyz", Kind: "User", APIVersion: "not-iam.grafana.app"},
+					},
+				},
+			},
+			expectedErr: "owner reference should be iam.grafana.app",
+		}, {
+			name: "team with multiple owners",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "user-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "ABC", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
+						{Name: "EFG", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+			},
+			expectedErr: "multiple owner references",
+		}, {
+			name: "team with title set",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "user-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "xyz", Kind: "User", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "should not set a title",
+				},
+			},
+			expectedErr: "folder title must be empty",
+		}, {
+			name: "team folder must be root",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "user-xyz",
+					Annotations: map[string]string{"grafana.app/folder": "p1"},
+				},
+			},
+			expectedErr: "folder must be a root",
+		}, {
+			name: "team folder must be root",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "user-xyz",
+					Annotations: map[string]string{"grafana.app/folder": "p1"},
+				},
+			},
+			expectedErr: "folder must be a root",
+		}, {
+			name: "team folder with grant permissions",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "team-abc",
+					Annotations: map[string]string{"grafana.app/grant-permissions": "default"},
+				},
+			},
+			expectedErr: "team folders do not support:",
+		}}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -264,8 +378,38 @@ func TestValidateUpdate(t *testing.T) {
 			},
 			maxDepth:    folder.MaxNestedFolderDepth,
 			expectedErr: "[folder.maximum-depth-reached]",
-		},
-	}
+		}, {
+			name: "change team folder title",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "team-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "xyz", Kind: "Team", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "team-xyz",
+					OwnerReferences: []metav1.OwnerReference{
+						{Name: "xyz", Kind: "Team", APIVersion: "iam.grafana.app/vAnything"},
+					},
+				},
+			},
+			expectedErr: "folder title must be empty",
+		}, {
+			name: "remove owner from team folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "team-xyz",
+				},
+			},
+			old:         &folders.Folder{},
+			expectedErr: "missing owner reference",
+		}}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
