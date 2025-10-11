@@ -38,7 +38,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.225.2 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/oam v1.18.3 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.6 // @grafana/aws-datasources
-	github.com/aws/smithy-go v1.22.5 // @grafana/aws-datasources
+	github.com/aws/smithy-go v1.23.0 // @grafana/aws-datasources
 	github.com/beevik/etree v1.4.1 // @grafana/grafana-backend-group
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-backend
 	github.com/blang/semver/v4 v4.0.0 // indirect; @grafana/grafana-developer-enablement-squad
