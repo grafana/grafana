@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { config } from '../config';
 import { BackendSrvRequest, FetchError, FetchResponse, BackendSrv } from '../services';
 
-import { usePluginUserStorage } from './userStorage';
+import { getPluginUserStorage, usePluginUserStorage, UserStorage } from './userStorage';
 
 const request = jest.fn<Promise<FetchResponse | FetchError>, BackendSrvRequest[]>();
 
@@ -140,6 +140,74 @@ describe('userStorage', () => {
             },
           },
         })
+      );
+    });
+  });
+});
+
+describe('getPluginUserStorage', () => {
+  const originalLocation = window.location;
+  const originalConfig = cloneDeep(config);
+  const originalGetItem = Storage.prototype.getItem;
+
+  // cleanup
+  afterEach(() => {
+    Storage.prototype.getItem = originalGetItem;
+    config.bootData = originalConfig.bootData;
+    Object.defineProperty(window, 'location', {
+      value: originalLocation,
+      writable: true,
+    });
+  });
+
+  function setup(pathname: string) {
+    Object.defineProperty(window, 'location', {
+      value: { pathname, search: '', hash: '' },
+      writable: true,
+    });
+
+    // isSignedIn is set to false so that getItem falls back to localStorage
+    config.bootData.user = { ...config.bootData.user, uid: 'user-uid', isSignedIn: false };
+
+    Storage.prototype.getItem = jest.fn();
+  }
+
+  describe.each([
+    ['/a/test-plugin', 'simple app plugin URL'],
+    ['/a/test-plugin/', 'simple app plugin URL with a trailing slash'],
+    ['/a/test-plugin/config/settings', 'app plugin URL with nested paths'],
+    ['/a/test-plugin?tab=config&mode=edit', 'plugin URL with query parameters'],
+    ['/a/test-plugin/some/path/a/not-this-plugin', 'URL with multiple /a/ patterns'],
+    ['/some/prefix/a/test-plugin', 'URL with /a/ not at the start'],
+  ])(
+    'returns a UserStorage instance scoped to the plugin ID retrieved from the current URL',
+    (pathname, description) => {
+      it(`${description} (${pathname})`, async () => {
+        setup(pathname);
+
+        const userStorage = getPluginUserStorage();
+        expect(userStorage).toBeInstanceOf(UserStorage);
+
+        await userStorage.getItem('test-key');
+        expect(localStorage.getItem).toHaveBeenCalledWith('test-plugin:user-uid:test-key');
+      });
+    }
+  );
+
+  describe.each([
+    ['/a/', 'URL with /a/ but no plugin ID'],
+    ['/d/dashboard-uid/dashboard-name', 'dashboard URL'],
+    ['/explore?orgId=1', 'explore URL'],
+    ['/admin/users', 'admin URL'],
+    ['/', 'root URL'],
+  ])('throws error when no plugin ID is retrieved from the current URL', (pathname, description) => {
+    it(`${description} (${pathname})`, () => {
+      setup(pathname);
+
+      expect(() => getPluginUserStorage()).toThrow(
+        'getUserStorage() could not determine the current plugin ID from URL. ' +
+          'This function must be called from within an app plugin context (URL pattern: /a/plugin-id). ' +
+          'For React components, use usePluginUserStorage() hook instead.'
       );
     });
   });
