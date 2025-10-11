@@ -4476,6 +4476,8 @@
     },
     "canvas-actions": {
       "add-panel": "パネルを追加",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "行にグループ化",
       "group-into-tab": "タブにグループ化",
       "group-panels": "パネルをグループ化",
@@ -4484,7 +4486,8 @@
       "paste-panel": "パネルを貼り付け",
       "paste-row": "行を貼り付け",
       "paste-tab": "タブを貼り付け",
-      "un-group-panels": "グループ解除"
+      "un-group-panels": "グループ解除",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4726,8 +4729,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "カンマで区切った値",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped, value"
+          "close": "",
+          "modal-title": "",
+          "values": "カンマで区切った値"
         },
         "datasource-options": {
           "name-filter": "名前フィルター",
@@ -5146,10 +5150,16 @@
       "title-row-options": "行オプション"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "この行を削除すると、すべてのパネルも削除されます。続行してもよろしいですか？",
       "delete-row-title": "行を削除しますか？",
       "delete-row-yes": "削除",
       "description": "見出し付きの折りたたみ可能なパネルグループ",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "行ヘッダーは編集モードでのみ表示されます",
       "name": "行",
       "row": {
@@ -5179,7 +5189,11 @@
       },
       "row-warning": {
         "title-not-unique": "このタイトルは重複しています"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "ダッシュボードが保存されました"
@@ -14081,14 +14095,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "オプションを追加",
-      "description": "クエリ結果に加えてカスタムオプションを追加",
-      "label-placeholder": "ラベルを表示",
-      "remove-option-button-label": "オプションの削除",
-      "value-placeholder": "値 (デフォルト：空の文字列) "
+      "description": "クエリ結果に加えてカスタムオプションを追加"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "クエリ結果とスタティックオプションの並び替え方法"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "既定値",

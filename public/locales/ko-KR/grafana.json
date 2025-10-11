@@ -4476,6 +4476,8 @@
     },
     "canvas-actions": {
       "add-panel": "패널 추가",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "행으로 그룹화",
       "group-into-tab": "탭으로 그룹화",
       "group-panels": "패널 그룹화",
@@ -4484,7 +4486,8 @@
       "paste-panel": "패널 붙여넣기",
       "paste-row": "행 붙여넣기",
       "paste-tab": "탭 붙여넣기",
-      "un-group-panels": "그룹 해제"
+      "un-group-panels": "그룹 해제",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4726,8 +4729,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "쉼표로 구분된 값",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped, value"
+          "close": "",
+          "modal-title": "",
+          "values": "쉼표로 구분된 값"
         },
         "datasource-options": {
           "name-filter": "이름 필터",
@@ -5146,10 +5150,16 @@
       "title-row-options": "행 옵션"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "이 행을 삭제하면 패널도 모두 삭제됩니다. 정말 계속하시겠어요?",
       "delete-row-title": "행을 삭제하시겠어요?",
       "delete-row-yes": "삭제",
       "description": "헤더가 있는 접을 수 있는 패널 그룹",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "행 헤더는 편집 모드에서만 표시됩니다",
       "name": "행",
       "row": {
@@ -5179,7 +5189,11 @@
       },
       "row-warning": {
         "title-not-unique": "이 제목은 고유하지 않습니다"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "대시보드가 저장되었습니다"
@@ -14081,14 +14095,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "옵션 추가",
-      "description": "쿼리 결과 외에 사용자 지정 옵션 추가",
-      "label-placeholder": "표시 레이블",
-      "remove-option-button-label": "옵션 제거",
-      "value-placeholder": "값, 기본 빈 문자열"
+      "description": "쿼리 결과 외에 사용자 지정 옵션 추가"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "쿼리 결과로 정적 옵션을 정렬하는 방법"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "기본값",

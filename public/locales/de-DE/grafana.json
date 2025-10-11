@@ -4496,6 +4496,8 @@
     },
     "canvas-actions": {
       "add-panel": "Panel hinzufügen",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "In Zeile gruppieren",
       "group-into-tab": "In Registerkarte gruppieren",
       "group-panels": "Panels gruppieren",
@@ -4504,7 +4506,8 @@
       "paste-panel": "Panel einfügen",
       "paste-row": "Zeile einfügen",
       "paste-tab": "Tab einfügen",
-      "un-group-panels": "Gruppierung aufheben"
+      "un-group-panels": "Gruppierung aufheben",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4746,8 +4749,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Werte werden durch Komma getrennt",
-          "values-placeholder": "1, 10, mykey: myvalue, myvalue, escaped, value"
+          "close": "",
+          "modal-title": "",
+          "values": "Werte werden durch Komma getrennt"
         },
         "datasource-options": {
           "name-filter": "Namensfilter",
@@ -5167,10 +5171,16 @@
       "title-row-options": "Zeilenoptionen"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Wenn Sie diese Zeile löschen, werden auch alle Panels entfernt. Sind Sie sicher, dass Sie fortfahren möchten?",
       "delete-row-title": "Zeile löschen?",
       "delete-row-yes": "Löschen",
       "description": "Einklappbare Panel-Gruppen mit Überschriften",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Kopfzeile nur im Bearbeitungsmodus sichtbar",
       "name": "Zeilen",
       "row": {
@@ -5200,7 +5210,11 @@
       },
       "row-warning": {
         "title-not-unique": "Dieser Titel ist nicht eindeutig"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard gespeichert"
@@ -14126,14 +14140,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Option hinzufügen",
-      "description": "Fügen Sie neben den Abfrageergebnissen benutzerdefinierte Optionen hinzu",
-      "label-placeholder": "Label anzeigen",
-      "remove-option-button-label": "Option entfernen",
-      "value-placeholder": "Wert, standardmäßig leere Zeichenfolge"
+      "description": "Fügen Sie neben den Abfrageergebnissen benutzerdefinierte Optionen hinzu"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "So sortieren Sie statische Optionen mit Abfrageergebnissen"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Standardwert",

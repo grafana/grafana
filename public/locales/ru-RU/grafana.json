@@ -4536,6 +4536,8 @@
     },
     "canvas-actions": {
       "add-panel": "Добавить панель",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Группировать в строку",
       "group-into-tab": "Группировать во вкладку",
       "group-panels": "Группировать панели",
@@ -4544,7 +4546,8 @@
       "paste-panel": "Вставка панели",
       "paste-row": "Вставить строку",
       "paste-tab": "Вставить вкладку",
-      "un-group-panels": "Разгруппировать"
+      "un-group-panels": "Разгруппировать",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4786,8 +4789,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Значения, разделенные запятыми",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped, value"
+          "close": "",
+          "modal-title": "",
+          "values": "Значения, разделенные запятыми"
         },
         "datasource-options": {
           "name-filter": "Фильтр по названию",
@@ -5209,10 +5213,16 @@
       "title-row-options": "Параметры строки"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Удаление этой строки также приведет к удалению всех панелей. Действительно продолжить?",
       "delete-row-title": "Удалить строку?",
       "delete-row-yes": "Удалить",
       "description": "Сворачиваемые группы панелей с заголовками",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Заголовок строки отображается только в режиме редактирования",
       "name": "Строки",
       "row": {
@@ -5242,7 +5252,11 @@
       },
       "row-warning": {
         "title-not-unique": "Заголовок не является уникальным"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Дашборд сохранен"
@@ -14216,14 +14230,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Добавить параметр",
-      "description": "Добавить пользовательские параметры в дополнение к результатам запроса",
-      "label-placeholder": "показать метку",
-      "remove-option-button-label": "Удалить параметр",
-      "value-placeholder": "значение, пустая строка по умолчанию"
+      "description": "Добавить пользовательские параметры в дополнение к результатам запроса"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Как сортировать статические параметры с результатами запроса"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Значение по умолчанию",

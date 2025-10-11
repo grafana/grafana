@@ -4496,6 +4496,8 @@
     },
     "canvas-actions": {
       "add-panel": "Paneel toevoegen",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Groeperen in rij",
       "group-into-tab": "Groeperen in tabblad",
       "group-panels": "Groeperen van panelen",
@@ -4504,7 +4506,8 @@
       "paste-panel": "Paneel plakken",
       "paste-row": "Rij plakken",
       "paste-tab": "Tabblad plakken",
-      "un-group-panels": "Groepering opheffen"
+      "un-group-panels": "Groepering opheffen",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4746,8 +4749,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Waarden gescheiden door komma",
-          "values-placeholder": "1, 10, mijnsleutel : mijnwaarde, mijnwaarde, escaped,waarde"
+          "close": "",
+          "modal-title": "",
+          "values": "Waarden gescheiden door komma"
         },
         "datasource-options": {
           "name-filter": "Filter een naam geven",
@@ -5167,10 +5171,16 @@
       "title-row-options": "Opties voor rijen"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Als je deze rij verwijdert, worden ook alle panelen verwijderd. Weet je zeker dat je wilt doorgaan?",
       "delete-row-title": "Rij verwijderen?",
       "delete-row-yes": "Verwijderen",
       "description": "Inklapbare paneelgroepen met koppen",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Koptekst van de rij is alleen zichtbaar in bewerkingsmodus",
       "name": "Rijen",
       "row": {
@@ -5200,7 +5210,11 @@
       },
       "row-warning": {
         "title-not-unique": "Deze titel is niet uniek"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard opgeslagen"
@@ -14126,14 +14140,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Optie toevoegen",
-      "description": "Aangepaste opties toevoegen naast zoekresultaten",
-      "label-placeholder": "label weergeven",
-      "remove-option-button-label": "Optie verwijderen",
-      "value-placeholder": "waarde, standaard lege string"
+      "description": "Aangepaste opties toevoegen naast zoekresultaten"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Statische opties sorteren met zoekresultaten"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Standaardwaarde",
