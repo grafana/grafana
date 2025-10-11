@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { Trans } from '@grafana/i18n';
 import { Card, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1/endpoints.gen';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { CONNECT_URL } from '../constants';
 import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';

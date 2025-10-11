@@ -1,5 +1,6 @@
 import { isEmpty } from 'lodash';
 
+import { BASE_URL as v0alphaBaseURL } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
@@ -25,8 +26,7 @@ import { filterSearchResults, replaceCurrentFolderQuery } from './utils';
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
 
-const baseURL = getAPIBaseURL('dashboard.grafana.app', 'v0alpha1');
-const searchURI = `${baseURL}/search`;
+const searchURI = `${v0alphaBaseURL}/search`;
 
 export type SearchHit = {
   resource: string; // dashboards | folders
