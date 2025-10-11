@@ -24,8 +24,8 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       defaultValue: defaultOptions.shape,
       settings: {
         options: [
-          { value: 'circle', label: t('radialbar.config.shape-circle', 'Circle') },
-          { value: 'gauge', label: t('radialbar.config.shape-gauge', 'Gauge') },
+          { value: 'circle', label: t('radialbar.config.shape-circle', 'Circle'), icon: 'circle' },
+          { value: 'gauge', label: t('radialbar.config.shape-gauge', 'Gauge'), icon: 'tachometer-fast' },
         ],
       },
     });
