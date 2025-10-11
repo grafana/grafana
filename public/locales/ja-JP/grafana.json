@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "権限を追加する",
+      "loading": "",
       "no-permissions": "権限がありません",
       "permissions-change-warning": "これにより、このフォルダとそのすべての子孫のアクセス許可が変更されます。合計で、これは次のように影響します：",
       "role": "役割",
       "serviceaccount": "サービスアカウント",
       "team": "チーム",
-      "title": "権限",
       "user": "ユーザー"
     }
   },
@@ -3492,7 +3492,7 @@
       "delete-button": "削除",
       "delete-modal-invalid-text": "1つ以上のフォルダにライブラリパネルまたはアラートルールが含まれています。続行するには、まずこれらを削除してください。",
       "delete-modal-invalid-title": "フォルダを削除できません",
-      "delete-modal-restore-dashboards-text": "このアクションにより、選択したフォルダはすぐに削除されますが、選択したダッシュボードは30日後に削除されます。組織の管理者は、30日が経過する前であればいつでもダッシュボードを復元できます。フォルダは復元できません。",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "この操作により、次のコンテンツが削除されます：",
       "delete-modal-title": "削除",
       "delete-provisioned-folder": "プロビジョニングされたフォルダを削除",
@@ -4552,7 +4552,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "条件付きレンダリング設定のため、要素は非表示になっています。"
+        "tooltip": ""
       },
       "root": {
         "title": "表示/非表示ルール"
@@ -5798,6 +5798,7 @@
         "dynamically-switch-source-multiple-panels": "複数のパネルのデータソースを動的に切り替える",
         "group": "即時にグループ化キーを追加",
         "hidden-constant-variable": "共有するダッシュボードのメトリックプレフィックスに便利な非表示の定数変数",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "ユーザーはテキストボックスに任意の文字列を入力できます",
         "values-are-static-and-defined-manually": "値はスタティックであり、手動で定義されます",
         "values-fetched-source-query": "値はデータソースクエリから取得されます",
@@ -5811,6 +5812,7 @@
         "group-by": "グループ化",
         "interval": "間隔",
         "query": "クエリ",
+        "switch": "",
         "textbox": "テキストボックス"
       }
     },
@@ -6152,6 +6154,17 @@
       "title": {
         "copy-to-clipboard-failed": "クリップボードへのコピーが失敗しました"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "既定値"
@@ -6601,6 +6614,7 @@
         "service-now-integration-and-data-source": "ServiceNow統合・データソース",
         "signal-fx-integration-and-datasource": "SignalFx統合・データソース",
         "snowflake-integration-and-data-source": "Snowflake統合・データソース",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic統合・データソース",
         "visualize-and-explore-dynatrace-data": "Dynatraceデータの可視化・探索",
         "visualize-and-explore-oracle-sql": "Oracle SQLの可視化・探索",
@@ -10323,7 +10337,7 @@
       "title": "プロフィール"
     },
     "recently-deleted": {
-      "subtitle": "ここに30日以上リストされているアイテムはすべて自動的に削除されます。",
+      "subtitle": "",
       "title": "最近削除された"
     },
     "recorded-queries": {
@@ -11530,6 +11544,7 @@
       "active-jobs": "アクティブなジョブ",
       "column-action": "操作",
       "column-duration": "継続時間",
+      "column-job-id": "",
       "column-message": "メッセージ",
       "column-started": "開始済み",
       "column-status": "ステータス",
@@ -11548,12 +11563,6 @@
       "settings": "設定",
       "view": "表示"
     },
-    "repository-health": {
-      "details": "詳細：",
-      "no-errors-found": "エラーは見つかりませんでした",
-      "title-repository-is-healthy": "リポジトリは正常です",
-      "title-repository-is-unhealthy": "リポジトリに問題があります"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "ブランチを比較",
@@ -11568,7 +11577,7 @@
     },
     "repository-overview": {
       "checked": "確認済み：",
-      "finished": "終了：",
+      "finished": "",
       "health": "健康",
       "healthy": "正常",
       "job-id": "ジョブID：",
@@ -11577,7 +11586,6 @@
       "not-available": "該当なし",
       "pull-status": "プル状態",
       "resources": "リソース",
-      "started": "開始：",
       "status": "ステータス：",
       "unhealthy": "異常",
       "view-folder": "フォルダを表示",
@@ -12233,9 +12241,6 @@
       "title-disable-service-account": "サービスアカウントを無効化",
       "tokens": "トークン",
       "tooltip-managed-service-account-cannot-modified": "これは管理対象サービスアカウントであり、変更できません"
-    },
-    "service-account-permissions": {
-      "title-permissions": "権限"
     },
     "service-account-profile": {
       "information": "情報",
@@ -12908,6 +12913,10 @@
     "name-mode": "モード",
     "name-show-line-numbers": "行番号を表示",
     "name-show-mini-map": "ミニマップを表示"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {

@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Een toestemming toevoegen",
+      "loading": "",
       "no-permissions": "Er zijn geen toestemmingen",
       "permissions-change-warning": "Dit wijzigt de toestemmingen voor deze map en alle onderliggende mappen. In totaal heeft dit invloed op:",
       "role": "Rol",
       "serviceaccount": "Serviceaccount",
       "team": "Team",
-      "title": "Toestemmingen",
       "user": "Gebruiker"
     }
   },
@@ -3504,7 +3504,7 @@
       "delete-button": "Verwijderen",
       "delete-modal-invalid-text": "Een of meer mappen bevatten bibliotheekpanelen of waarschuwingsregels. Verwijder deze eerst om verder te gaan.",
       "delete-modal-invalid-title": "Kan de map niet verwijderen",
-      "delete-modal-restore-dashboards-text": "Deze actie verwijdert de geselecteerde mappen onmiddellijk, maar de geselecteerde dashboards worden gemarkeerd voor verwijdering over 30 dagen. Je organisatiebeheerder kan de dashboards op elk moment herstellen voordat de 30 dagen verlopen. Mappen kunnen niet worden hersteld.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Met deze actie wordt de volgende inhoud verwijderd:",
       "delete-modal-title": "Verwijderen",
       "delete-provisioned-folder": "Geprovisioneerde map verwijderen",
@@ -4572,7 +4572,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "Element is verborgen vanwege voorwaardelijke weergave."
+        "tooltip": ""
       },
       "root": {
         "title": "Regels tonen / verbergen"
@@ -5819,6 +5819,7 @@
         "dynamically-switch-source-multiple-panels": "Schakel dynamisch tussen gegevensbronnen voor meerdere panelen",
         "group": "Voeg direct sleutels toe om te groeperen",
         "hidden-constant-variable": "Een verborgen constante variabele, handig voor metrische voorvoegsels in dashboards die je wilt delen",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Gebruikers kunnen willekeurige strings invoeren in een tekstvak",
         "values-are-static-and-defined-manually": "Waarden zijn statisch en handmatig gedefinieerd",
         "values-fetched-source-query": "Waarden worden opgehaald uit een gegevensbronquery",
@@ -5832,6 +5833,7 @@
         "group-by": "Groeperen op",
         "interval": "Interval",
         "query": "Query",
+        "switch": "",
         "textbox": "Tekstvak"
       }
     },
@@ -6175,6 +6177,17 @@
       "title": {
         "copy-to-clipboard-failed": "Kopiëren naar klembord mislukt"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Standaardwaarde"
@@ -6624,6 +6637,7 @@
         "service-now-integration-and-data-source": "ServiceNow-integratie en -gegevensbron",
         "signal-fx-integration-and-datasource": "SignalFx-integratie en -gegevensbron",
         "snowflake-integration-and-data-source": "Snowflake-integratie en -gegevensbron",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic-integratie en -gegevensbron",
         "visualize-and-explore-dynatrace-data": "Visualiseer en verken Dynatrace-gegevens",
         "visualize-and-explore-oracle-sql": "Visualiseer en verken Oracle SQL",
@@ -10354,7 +10368,7 @@
       "title": "Profielen"
     },
     "recently-deleted": {
-      "subtitle": "Alle items die hier langer dan 30 dagen worden vermeld, worden automatisch verwijderd.",
+      "subtitle": "",
       "title": "Onlangs verwijderd"
     },
     "recorded-queries": {
@@ -11570,6 +11584,7 @@
       "active-jobs": "actieve taken",
       "column-action": "Actie",
       "column-duration": "Duur",
+      "column-job-id": "",
       "column-message": "Bericht",
       "column-started": "Gestart",
       "column-status": "Status",
@@ -11588,12 +11603,6 @@
       "settings": "Instellingen",
       "view": "Weergave"
     },
-    "repository-health": {
-      "details": "Details:",
-      "no-errors-found": "Geen fouten gevonden",
-      "title-repository-is-healthy": "Repository is gezond",
-      "title-repository-is-unhealthy": "Repository is ongezond"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Tak vergelijken",
@@ -11608,7 +11617,7 @@
     },
     "repository-overview": {
       "checked": "Gecontroleerd:",
-      "finished": "Beëindigd:",
+      "finished": "",
       "health": "Gezondheid",
       "healthy": "Gezond",
       "job-id": "Taak-id:",
@@ -11617,7 +11626,6 @@
       "not-available": "N.v.t.",
       "pull-status": "Pull-status",
       "resources": "Bronnen",
-      "started": "Begonnen:",
       "status": "Status:",
       "unhealthy": "Ongezond",
       "view-folder": "Map bekijken",
@@ -12276,9 +12284,6 @@
       "title-disable-service-account": "Serviceaccount uitschakelen",
       "tokens": "Tokens",
       "tooltip-managed-service-account-cannot-modified": "Dit is een beheerd serviceaccount dat niet kan worden gewijzigd"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Toestemmingen"
     },
     "service-account-profile": {
       "information": "Informatie",
@@ -12953,6 +12958,10 @@
     "name-mode": "Modus",
     "name-show-line-numbers": "Regelnummers tonen",
     "name-show-mini-map": "Minikaart weergeven"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
