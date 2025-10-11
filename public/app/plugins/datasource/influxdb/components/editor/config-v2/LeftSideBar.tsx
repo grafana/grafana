@@ -12,7 +12,7 @@ export const LeftSideBar = ({ pdcInjected }: LeftSideBarProps) => {
     <Stack>
       <Box flex={1} marginY={10}>
         <Box height="75px"></Box>
-        <Text element="h4">InfluxDB</Text>
+        <Text element="h4">Connect data source</Text>
         <Box paddingTop={2}>
           {headers.map((header, index) => (
             <div key={index} data-testid={`${header.label}-sidebar`}>
@@ -24,7 +24,8 @@ export const LeftSideBar = ({ pdcInjected }: LeftSideBarProps) => {
                     e.preventDefault();
                     const target = document.getElementById(header.id);
                     if (target) {
-                      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      const y = target.getBoundingClientRect().top + window.scrollY - 60;
+                      window.scrollTo({ top: y, behavior: 'smooth' });
                     }
                   }}
                 >
