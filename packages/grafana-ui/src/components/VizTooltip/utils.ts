@@ -1,5 +1,5 @@
 import { FALLBACK_COLOR, Field, FieldType, formattedValueToString, getFieldColorModeForField } from '@grafana/data';
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { SortOrder, StackingMode, TooltipDisplayMode } from '@grafana/schema';
 
 import { ColorIndicatorStyles } from './VizTooltipColorIndicator';
 import { ColorIndicator, ColorPlacement, VizTooltipItem } from './types';
@@ -85,6 +85,49 @@ export const getContentItems = (
   hideZeros = false,
   _restFields?: Field[]
 ): VizTooltipItem[] => {
+  // needed for computing percentage on stacked fields, null means 'NotAvailable'
+  let stackingGroupSums: Record<string, number | null> = {};
+  // allowed field types for stacking accumulation
+  const STACKING_ACCUM_FIELD_TYPES = new Set([FieldType.number, FieldType.boolean, FieldType.enum]);
+
+  for (let i = 0; i < fields.length; i++) {
+    const field = fields[i];
+
+    if (field === xField || field.type === FieldType.time || field.config.custom?.hideFrom?.viz) {
+      continue;
+    }
+
+    // only accum those in 'percent' stacking mode
+    const stackingConfig = field.config.custom?.stacking;
+    if (!stackingConfig || stackingConfig.mode !== StackingMode.Percent) {
+      continue;
+    }
+
+    if (!STACKING_ACCUM_FIELD_TYPES.has(field.type)) {
+      stackingGroupSums[stackingConfig.group] = null;
+      continue;
+    }
+
+    const dataIdx = dataIdxs[i];
+
+    // not available when group contains non-hovered
+    if (dataIdx == null) {
+      stackingGroupSums[stackingConfig.group] = null;
+      continue;
+    }
+
+    const v = fields[i].values[dataIdx];
+
+    if (v === null) {
+      continue;
+    }
+
+    if (stackingGroupSums[stackingConfig.group] !== null) {
+      stackingGroupSums[stackingConfig.group] ??= 0;
+      stackingGroupSums[stackingConfig.group] += v;
+    }
+  }
+
   let rows: VizTooltipItem[] = [];
 
   let allNumeric = true;
@@ -133,6 +176,15 @@ export const getContentItems = (
         : Number.MAX_SAFE_INTEGER;
 
     const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
+
+    const stackingConfig = field.config.custom?.stacking;
+    if (stackingConfig && stackingConfig.mode === StackingMode.Percent && stackingGroupSums[stackingConfig.group]) {
+      const percentage = (numeric / stackingGroupSums[stackingConfig.group]!) * 100;
+      if (isFinite(percentage)) {
+        const suffixForPercentage = ` (${percentage.toFixed()}%)`;
+        display.suffix = display.suffix ? `${display.suffix}${suffixForPercentage}` : suffixForPercentage;
+      }
+    }
 
     rows.push({
       label: field.state?.displayName ?? field.name,
