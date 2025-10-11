@@ -6,8 +6,9 @@ pluginInstallV0Alpha1: {
 	scope: "Namespaced"
 	schema: {
 		spec: {
-			id:       string
+			pluginID: string
 			version:  string
+			url: string
 		}
 	}
 }

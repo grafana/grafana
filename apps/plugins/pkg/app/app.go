@@ -1,39 +1,33 @@
 package app
 
 import (
-	"context"
-
 	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/klog/v2"
 
 	pluginsapi "github.com/grafana/grafana/apps/plugins/pkg/apis"
+	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 )
 
-func New(cfg app.Config) (app.App, error) {
-	managedKinds := []simple.AppManagedKind{}
-	for _, kinds := range GetKinds() {
-		for _, k := range kinds {
-			managedKinds = append(managedKinds, simple.AppManagedKind{
-				Kind: k,
-			})
-		}
-	}
+// PluginsAppConfig holds configuration for the plugins app
+type PluginsAppConfig struct {
+	// No specific configuration needed at this time
+}
 
+func New(cfg app.Config) (app.App, error) {
+	cfg.KubeConfig.APIPath = "apis"
 	simpleConfig := simple.AppConfig{
 		Name:       "plugins",
 		KubeConfig: cfg.KubeConfig,
-		InformerConfig: simple.AppInformerConfig{
-			InformerOptions: operator.InformerOptions{
-				ErrorHandler: func(ctx context.Context, err error) {
-					klog.ErrorS(err, "Informer processing error")
-				},
+		ManagedKinds: []simple.AppManagedKind{
+			{
+				Kind: pluginsv0alpha1.PluginInstallKind(),
+			},
+			{
+				Kind: pluginsv0alpha1.PluginMetaKind(),
 			},
 		},
-		ManagedKinds: managedKinds,
 	}
 
 	a, err := simple.NewApp(simpleConfig)

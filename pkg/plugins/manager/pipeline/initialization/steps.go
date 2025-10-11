@@ -3,13 +3,20 @@ package initialization
 import (
 	"context"
 	"errors"
+	"fmt"
 
+	"github.com/grafana/grafana-app-sdk/resource"
+	"go.opentelemetry.io/otel/trace"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // BackendClientInit implements an InitializeFunc for initializing a backend plugin process.
@@ -120,4 +127,115 @@ func (r *PluginRegistration) Initialize(ctx context.Context, p *plugins.Plugin) 
 	}
 
 	return p, nil
+}
+
+// PluginInstallResourceSync syncs plugin state to PluginInstall resources in the API.
+// This ensures that plugins loaded from disk are reflected as PluginInstall resources,
+// enabling bidirectional sync between disk state and API state.
+type PluginInstallResourceSync struct {
+	clientGenerator resource.ClientGenerator
+	log             log.Logger
+}
+
+// PluginInstallResourceStep returns an InitializeFunc that creates/updates
+// PluginInstall resources for loaded plugins.
+//
+// This step runs during plugin initialization and ensures that every plugin
+// loaded from disk has a corresponding PluginInstall resource in the API.
+// Only external plugins are synced.
+//
+// If clientGenerator is nil, this step is a no-op.
+func PluginInstallResourceStep(
+	clientGenerator resource.ClientGenerator,
+) InitializeFunc {
+	return newPluginInstallResourceSync(clientGenerator).Initialize
+}
+
+func newPluginInstallResourceSync(
+	clientGenerator resource.ClientGenerator,
+) *PluginInstallResourceSync {
+	return &PluginInstallResourceSync{
+		clientGenerator: clientGenerator,
+		log:             log.New("plugins.plugininstall.sync"),
+	}
+}
+
+// Initialize creates or updates a PluginInstall resource for the plugin.
+// This step is non-blocking - errors are logged but don't fail plugin loading.
+func (s *PluginInstallResourceSync) Initialize(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if s.clientGenerator == nil {
+		return p, nil
+	}
+
+	installClient, err := pluginsv0alpha1.NewPluginInstallClientFromGenerator(s.clientGenerator)
+	if err != nil {
+		s.log.Warn("Failed to create PluginInstall client", "error", err)
+		return p, nil
+	}
+
+	namespace := "default"
+	if requester, err := identity.GetRequester(ctx); err == nil {
+		namespace = requester.GetNamespace()
+	}
+
+	identifier := resource.Identifier{
+		Namespace: namespace,
+		Name:      p.ID,
+	}
+
+	_, err = installClient.Get(ctx, identifier)
+	if err != nil {
+		if kerrors.IsNotFound(err) {
+			if err := s.createPluginInstallResource(ctx, p); err != nil {
+				s.log.Warn("Failed to create PluginInstall resource", "pluginId", p.ID, "error", err)
+			}
+			return p, nil
+		}
+		s.log.Warn("Failed to get PluginInstall resource", "pluginId", p.ID, "error", err)
+		return p, nil
+	}
+
+	s.log.Debug("PluginInstall resource already exists", "pluginId", p.ID)
+
+	return p, nil
+}
+
+func (s *PluginInstallResourceSync) createPluginInstallResource(
+	ctx context.Context,
+	p *plugins.Plugin,
+) error {
+	installClient, err := pluginsv0alpha1.NewPluginInstallClientFromGenerator(s.clientGenerator)
+	if err != nil {
+		return err
+	}
+
+	// Get namespace from requester identity
+	namespace := "default"
+	if requester, err := identity.GetRequester(ctx); err == nil {
+		namespace = requester.GetNamespace()
+	}
+
+	pluginInstall := &pluginsv0alpha1.PluginInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      p.ID,
+			Namespace: namespace,
+			Labels:    map[string]string{},
+		},
+		Spec: pluginsv0alpha1.PluginInstallSpec{
+			PluginID: p.ID,
+			Version:  p.Info.Version,
+		},
+	}
+
+	_, err = installClient.Create(ctx, pluginInstall, resource.CreateOptions{})
+	if err != nil {
+		if kerrors.IsAlreadyExists(err) {
+			s.log.Debug("PluginInstall resource already exists", "pluginId", p.ID)
+			return nil
+		}
+		return fmt.Errorf("failed to create PluginInstall resource: %w", err)
+	}
+
+	s.log.Info("Created PluginInstall resource from disk", "pluginId", p.ID, "version", p.Info.Version)
+	return nil
 }
