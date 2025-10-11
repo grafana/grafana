@@ -1201,4 +1201,9 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsUrls?: boolean;
+  /**
+  * Enables the drop and paste handlers on dashboards
+  * @default false
+  */
+  dashboardDropAndPaste?: boolean;
 }

@@ -1051,6 +1051,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardDropAndPaste",
+        "resourceVersion": "1760089664458",
+        "creationTimestamp": "2025-10-10T09:47:44Z"
+      },
+      "spec": {
+        "description": "Enables the drop and paste handlers on dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDsAdHocFiltering",
         "resourceVersion": "1756814786992",
         "creationTimestamp": "2025-07-23T08:12:25Z",
@@ -3156,7 +3170,8 @@
       "metadata": {
         "name": "queryServiceWithConnections",
         "resourceVersion": "1756367172351",
-        "creationTimestamp": "2025-08-28T07:46:12Z"
+        "creationTimestamp": "2025-08-28T19:28:26Z",
+        "deletionTimestamp": "2025-08-29T12:49:57Z"
       },
       "spec": {
         "description": "Adds datasource connections to the query service",
