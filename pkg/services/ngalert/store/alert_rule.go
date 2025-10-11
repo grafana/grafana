@@ -604,31 +604,27 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			q = buildGroupCursorCondition(q, cursor)
 		}
 
-		// No arbitrary fetch limit - let the loop control pagination
+		// Use streaming with Iterate for better memory efficiency
 		alertRules := make([]*ngmodels.AlertRule, 0)
-		rule := new(alertRule)
-		rows, err := q.Rows(rule)
-		if err != nil {
-			return err
-		}
-		defer func() {
-			_ = rows.Close()
-		}()
-
-		// Process rules and implement per-group pagination
 		var groupsFetched int64
-		for rows.Next() {
-			rule := new(alertRule)
-			err = rows.Scan(rule)
-			if err != nil {
-				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "ListAlertRulesByGroup", "error", err)
-				continue
+		var stopIteration bool
+
+		err = q.Iterate(new(alertRule), func(idx int, bean interface{}) error {
+			if stopIteration {
+				return nil
+			}
+
+			rule := bean.(*alertRule)
+
+			// Quick pre-filter checks before expensive conversion
+			if !st.quickPreFilter(rule, query) {
+				return nil // Skip this rule
 			}
 
 			converted, err := alertRuleToModelsAlertRule(*rule, st.Logger)
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "ListAlertRulesByGroup", "error", err)
-				continue
+				return nil // Continue iteration
 			}
 
 			// Check if we've moved to a new group
@@ -641,7 +637,8 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 				if query.Limit > 0 && groupsFetched == query.Limit {
 					// Generate next token for the next group
 					nextToken = ngmodels.EncodeGroupCursor(cursor)
-					break
+					stopIteration = true
+					return nil
 				}
 
 				// Reset for new group
@@ -651,10 +648,15 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 
 			// Apply post-query filters
 			if !shouldIncludeRule(&converted, query, groupsSet) {
-				continue
+				return nil // Continue iteration
 			}
 
 			alertRules = append(alertRules, &converted)
+			return nil
+		})
+
+		if err != nil {
+			return err
 		}
 
 		result = alertRules
@@ -668,7 +670,234 @@ func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm
 		Or("(namespace_uid = ? AND rule_group > ?)", c.NamespaceUID, c.RuleGroup)
 }
 
-func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery, groupsMap map[string]struct{}) bool {
+// quickPreFilter performs cheap string-based filtering before expensive JSON parsing
+func (st DBstore) quickPreFilter(rule *alertRule, query *ngmodels.ListAlertRulesExtendedQuery) bool {
+	// Check exclude plugins filter using raw labels
+	if query.ExcludePlugins && rule.Labels != "" {
+		// Quick string contains check before parsing JSON
+		if strings.Contains(rule.Labels, "__grafana_origin") {
+			return false
+		}
+	}
+
+	// Check receiver filter using raw notification settings
+	if query.ReceiverName != "" && rule.NotificationSettings != "" {
+		// Quick check - if receiver name not in the JSON string at all, skip
+		if !strings.Contains(rule.NotificationSettings, query.ReceiverName) {
+			return false
+		}
+	}
+
+	// Check time interval filter using raw notification settings
+	if query.TimeIntervalName != "" && rule.NotificationSettings != "" {
+		if !strings.Contains(rule.NotificationSettings, query.TimeIntervalName) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// quickPreFilterExtended performs cheap string-based filtering for extended queries
+func (st DBstore) quickPreFilterExtended(rule *alertRule, query *ngmodels.ListAlertRulesExtendedQuery) bool {
+	// Check exclude plugins filter using raw labels
+	if query.ExcludePlugins && rule.Labels != "" {
+		if strings.Contains(rule.Labels, "__grafana_origin") {
+			return false
+		}
+	}
+
+	// Check receiver filter
+	if query.ReceiverName != "" && rule.NotificationSettings != "" {
+		if !strings.Contains(rule.NotificationSettings, query.ReceiverName) {
+			return false
+		}
+	}
+
+	// Check time interval filter
+	if query.TimeIntervalName != "" && rule.NotificationSettings != "" {
+		if !strings.Contains(rule.NotificationSettings, query.TimeIntervalName) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// processRuleForPagination converts and filters a rule for paginated results
+func (st DBstore) processRuleForPagination(rule *alertRule, query *ngmodels.ListAlertRulesExtendedQuery, groupsSet map[string]struct{}) (*ngmodels.AlertRule, bool) {
+	converted, err := alertRuleToModelsAlertRule(*rule, st.Logger)
+	if err != nil {
+		st.Logger.Error("Failed to convert rule to alert rule", "error", err)
+		return nil, false
+	}
+
+	// Apply group filter if needed
+	if groupsSet != nil {
+		if _, ok := groupsSet[converted.RuleGroup]; !ok {
+			return nil, false
+		}
+	}
+
+	// Apply complex filters that couldn't be done in SQL
+	if query.ExcludePlugins {
+		if converted.Labels["__grafana_origin"] == "plugin" {
+			return nil, false
+		}
+	}
+
+	if query.ReceiverName != "" {
+		if !st.hasReceiver(&converted, query.ReceiverName) {
+			return nil, false
+		}
+	}
+
+	if query.TimeIntervalName != "" {
+		if !st.hasTimeInterval(&converted, query.TimeIntervalName) {
+			return nil, false
+		}
+	}
+
+	if query.Labels != nil {
+		if !matchLabels(&converted, query.Labels) {
+			return nil, false
+		}
+	}
+
+	return &converted, true
+}
+
+// Helper methods for checking receivers and time intervals
+func (st DBstore) hasReceiver(rule *ngmodels.AlertRule, receiverName string) bool {
+	if rule.NotificationSettings == nil {
+		return false
+	}
+	for _, setting := range rule.NotificationSettings {
+		if setting.Receiver == receiverName {
+			return true
+		}
+	}
+	return false
+}
+
+func (st DBstore) hasTimeInterval(rule *ngmodels.AlertRule, intervalName string) bool {
+	if rule.NotificationSettings == nil {
+		return false
+	}
+	for _, setting := range rule.NotificationSettings {
+		if setting.MuteTimeIntervals != nil {
+			for _, interval := range setting.MuteTimeIntervals {
+				if interval == intervalName {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// applyComplexFilters applies filters that couldn't be done in SQL to a converted rule
+func (st DBstore) applyComplexFilters(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery) bool {
+	// Apply receiver filter
+	if query.ReceiverName != "" {
+		if !st.hasReceiver(rule, query.ReceiverName) {
+			return false
+		}
+	}
+
+	// Apply time interval filter
+	if query.TimeIntervalName != "" {
+		if !st.hasTimeInterval(rule, query.TimeIntervalName) {
+			return false
+		}
+	}
+
+	// Apply label filters
+	if len(query.Labels) > 0 {
+		if !matchLabels(rule, query.Labels) {
+			return false
+		}
+	}
+
+	// Apply exclude plugins filter
+	if query.ExcludePlugins {
+		if rule.Labels["__grafana_origin"] == "plugin" {
+			return false
+		}
+	}
+
+	// Apply search filters
+	if s := strings.TrimSpace(strings.ToLower(query.FreeFormSearch)); s != "" {
+		if !strings.Contains(strings.ToLower(rule.Title), s) {
+			return false
+		}
+	}
+
+	if s := strings.TrimSpace(strings.ToLower(query.RuleNameSearch)); s != "" {
+		if !strings.Contains(strings.ToLower(rule.Title), s) {
+			return false
+		}
+	}
+
+	if s := strings.TrimSpace(strings.ToLower(query.GroupNameSearch)); s != "" {
+		if !strings.Contains(strings.ToLower(rule.RuleGroup), s) {
+			return false
+		}
+	}
+
+	// Apply datasource filter
+	if len(query.DatasourceUIDs) > 0 {
+		uids := make(map[string]struct{})
+		for _, u := range query.DatasourceUIDs {
+			uids[u] = struct{}{}
+		}
+		match := false
+		for _, dq := range rule.Data {
+			if dq.DatasourceUID != "" {
+				if _, ok := uids[dq.DatasourceUID]; ok {
+					match = true
+					break
+				}
+			}
+		}
+		if !match && rule.Record != nil && rule.Record.TargetDatasourceUID != "" {
+			if _, ok := uids[rule.Record.TargetDatasourceUID]; ok {
+				match = true
+			}
+		}
+		if !match {
+			return false
+		}
+	}
+
+	return true
+}
+
+// matchLabels checks if the rule matches the provided label filters
+func matchLabels(rule *ngmodels.AlertRule, labelFilters []string) bool {
+	labels := rule.GetLabels()
+	for _, l := range labelFilters {
+		l = strings.TrimSpace(l)
+		if l == "" {
+			continue
+		}
+		if strings.Contains(l, "=") {
+			parts := strings.SplitN(l, "=", 2)
+			k := strings.TrimSpace(parts[0])
+			v := strings.TrimSpace(parts[1])
+			if labels[k] != v {
+				return false
+			}
+		} else {
+			if _, ok := labels[l]; !ok {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery, groupsSet map[string]struct{}) bool {
 	if query.ReceiverName != "" {
 		if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
 			return settings.Receiver == query.ReceiverName
@@ -692,8 +921,87 @@ func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesE
 		}
 	}
 
-	if groupsMap != nil {
-		if _, ok := groupsMap[rule.RuleGroup]; !ok {
+	// Exact group filter already handled via groupsSet
+	if groupsSet != nil {
+		if _, ok := groupsSet[rule.RuleGroup]; !ok {
+			return false
+		}
+	}
+
+	// Free-form or rule name search (case-insensitive substring)
+	if s := strings.TrimSpace(strings.ToLower(query.FreeFormSearch)); s != "" {
+		if !strings.Contains(strings.ToLower(rule.Title), s) {
+			return false
+		}
+	}
+	if s := strings.TrimSpace(strings.ToLower(query.RuleNameSearch)); s != "" {
+		if !strings.Contains(strings.ToLower(rule.Title), s) {
+			return false
+		}
+	}
+	if s := strings.TrimSpace(strings.ToLower(query.GroupNameSearch)); s != "" {
+		if !strings.Contains(strings.ToLower(rule.RuleGroup), s) {
+			return false
+		}
+	}
+
+	// Datasource UID filter: check rule.Data and recording target
+	if len(query.DatasourceUIDs) > 0 {
+		match := false
+		uids := make(map[string]struct{})
+		for _, u := range query.DatasourceUIDs {
+			uids[u] = struct{}{}
+		}
+		for _, dq := range rule.Data {
+			if dq.DatasourceUID != "" {
+				if _, ok := uids[dq.DatasourceUID]; ok {
+					match = true
+					break
+				}
+			}
+		}
+		if !match && rule.Record != nil && rule.Record.TargetDatasourceUID != "" {
+			if _, ok := uids[rule.Record.TargetDatasourceUID]; ok {
+				match = true
+			}
+		}
+		if !match {
+			return false
+		}
+	}
+
+	// Labels filter: support key or key=value exact match
+	labels := rule.GetLabels()
+	if len(query.Labels) > 0 {
+		labelMatch := true
+		for _, l := range query.Labels {
+			l = strings.TrimSpace(l)
+			if l == "" {
+				continue
+			}
+			if strings.Contains(l, "=") {
+				parts := strings.SplitN(l, "=", 2)
+				k := strings.TrimSpace(parts[0])
+				v := strings.TrimSpace(parts[1])
+				if labels[k] != v {
+					labelMatch = false
+					break
+				}
+			} else {
+				if _, ok := labels[l]; !ok {
+					labelMatch = false
+					break
+				}
+			}
+		}
+		if !labelMatch {
+			return false
+		}
+	}
+
+	// Exclude plugin-provided rules when requested
+	if query.ExcludePlugins {
+		if _, ok := labels["__grafana_origin"]; ok {
 			return false
 		}
 	}
@@ -734,38 +1042,46 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 			q = buildCursorCondition(q, cursor)
 		}
 
+		// Use streaming with Iterate for better memory efficiency
+		alertRules := make([]*ngmodels.AlertRule, 0)
+		var count int64
+		limit := int64(math.MaxInt64)
 		if query.Limit > 0 {
-			// Ensure we clamp to the max int available on the platform
-			lim := min(query.Limit, math.MaxInt)
-			// Fetch one extra rule to determine if there are more results
-			q = q.Limit(int(lim) + 1)
+			limit = min(query.Limit, math.MaxInt)
 		}
 
-		alertRules := make([]*ngmodels.AlertRule, 0)
-		rule := new(alertRule)
-		rows, err := q.Rows(rule)
+		err = q.Iterate(new(alertRule), func(idx int, bean interface{}) error {
+			// Stop if we've already fetched limit+1 rules (to check for more)
+			if query.Limit > 0 && count > limit {
+				return nil
+			}
+
+			rule := bean.(*alertRule)
+
+			// Quick pre-filter checks before expensive conversion
+			if !st.quickPreFilterExtended(rule, query) {
+				return nil // Skip this rule
+			}
+
+			converted, ok := st.processRuleForPagination(rule, query, groupsSet)
+			if !ok {
+				return nil // Skip filtered out rule
+			}
+
+			alertRules = append(alertRules, converted)
+			count++
+
+			return nil
+		})
+
 		if err != nil {
 			return err
 		}
-		defer func() {
-			_ = rows.Close()
-		}()
 
-		// Deserialize each rule separately in case any of them contain invalid JSON.
-		for rows.Next() {
-			converted, ok := st.handleRuleRow(rows, query, groupsSet)
-			if ok {
-				alertRules = append(alertRules, converted)
-			}
-		}
-
-		genToken := query.Limit > 0 && len(alertRules) > int(query.Limit)
+		genToken := query.Limit > 0 && count > limit
 		if genToken {
-			// Remove the extra item we fetched
-			alertRules = alertRules[:query.Limit]
-
-			// Generate next continue token from the last item
-			lastRule := alertRules[len(alertRules)-1]
+			// Generate next continue token from the last item before truncating
+			lastRule := alertRules[limit-1]
 			cursor := continueCursor{
 				NamespaceUID: lastRule.NamespaceUID,
 				RuleGroup:    lastRule.RuleGroup,
@@ -774,6 +1090,8 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 			}
 
 			nextToken = encodeCursor(cursor)
+			// Remove the extra items we fetched
+			alertRules = alertRules[:limit]
 		}
 
 		result = alertRules
@@ -915,6 +1233,77 @@ func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesE
 			return nil, false
 		}
 	}
+
+	// Apply complex filters in Go for DB portability
+	if s := strings.TrimSpace(strings.ToLower(query.FreeFormSearch)); s != "" {
+		if !strings.Contains(strings.ToLower(converted.Title), s) {
+			return nil, false
+		}
+	}
+	if s := strings.TrimSpace(strings.ToLower(query.RuleNameSearch)); s != "" {
+		if !strings.Contains(strings.ToLower(converted.Title), s) {
+			return nil, false
+		}
+	}
+	if s := strings.TrimSpace(strings.ToLower(query.GroupNameSearch)); s != "" {
+		if !strings.Contains(strings.ToLower(converted.RuleGroup), s) {
+			return nil, false
+		}
+	}
+
+	if len(query.DatasourceUIDs) > 0 {
+		uids := make(map[string]struct{})
+		for _, u := range query.DatasourceUIDs {
+			uids[u] = struct{}{}
+		}
+		match := false
+		for _, dq := range converted.Data {
+			if dq.DatasourceUID != "" {
+				if _, ok := uids[dq.DatasourceUID]; ok {
+					match = true
+					break
+				}
+			}
+		}
+		if !match && converted.Record != nil && converted.Record.TargetDatasourceUID != "" {
+			if _, ok := uids[converted.Record.TargetDatasourceUID]; ok {
+				match = true
+			}
+		}
+		if !match {
+			return nil, false
+		}
+	}
+
+	labels := converted.GetLabels()
+	if len(query.Labels) > 0 {
+		for _, l := range query.Labels {
+			l = strings.TrimSpace(l)
+			if l == "" {
+				continue
+			}
+			if strings.Contains(l, "=") {
+				parts := strings.SplitN(l, "=", 2)
+				k := strings.TrimSpace(parts[0])
+				v := strings.TrimSpace(parts[1])
+				if labels[k] != v {
+					return nil, false
+				}
+			} else {
+				if _, ok := labels[l]; !ok {
+					return nil, false
+				}
+			}
+		}
+	}
+
+	// Exclude plugin-provided rules when requested
+	if query.ExcludePlugins {
+		if _, ok := labels["__grafana_origin"]; ok {
+			return nil, false
+		}
+	}
+
 	return &converted, true
 }
 

@@ -63,19 +63,29 @@ export function useFilteredRulesIteratorProvider() {
     const normalizedFilterState = normalizeFilterState(filterState);
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
+    // Pass all filters to the API instead of filtering locally
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
       grafanaGroupsGenerator(groupLimit, {
         contactPoint: filterState.contactPoint ?? undefined,
         health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
         state: filterState.ruleState ? [filterState.ruleState] : [],
+        freeFormSearch: filterState.freeFormWords.join(' ') || undefined,
+        namespaceSearch: filterState.namespace,
+        groupNameSearch: filterState.groupName,
+        ruleNameSearch: filterState.ruleName,
+        labels: filterState.labels.length > 0 ? filterState.labels : undefined,
+        ruleType: filterState.ruleType as 'alerting' | 'recording' | undefined,
+        datasourceUids: filterState.dataSourceNames.length > 0 ? filterState.dataSourceNames : undefined,
+        excludePlugins: filterState.plugins === 'hide' || undefined,
       })
     ).pipe(
       withAbort(abortController.signal),
       concatMap((groups) =>
         groups
-          .filter((group) => groupFilter(group, normalizedFilterState))
+          // Note: We're removing the local filters as they should be handled by the backend now
+          // .filter((group) => groupFilter(group, normalizedFilterState))
           .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
-          .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
+          // .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
           .map(({ group, rule }) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),
       catchError(() => empty())
