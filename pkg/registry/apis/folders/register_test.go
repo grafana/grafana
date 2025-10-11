@@ -456,7 +456,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 			},
 		},
 		{
-			name: "should return error if title doesnt exist",
+			name: "should return error if title doesn't exist",
 			input: &folders.Folder{
 				Spec: folders.FolderSpec{},
 				TypeMeta: metav1.TypeMeta{
@@ -464,18 +464,24 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "valid-name",
+					Annotations: map[string]string{
+						"grafana.app/folder": "general", // the root folder
+					},
 				},
 			},
 			wantErr: true,
 		},
 		{
-			name: "should return error if spec doesnt exist",
+			name: "should return error if spec doesn't exist",
 			input: &folders.Folder{
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Folder",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "valid-name",
+					Annotations: map[string]string{
+						"grafana.app/folder": "general", // the root folder
+					},
 				},
 			},
 			wantErr: true,
@@ -560,11 +566,14 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "valid-name",
+					Annotations: map[string]string{
+						"grafana.app/folder": "general", // the root folder
+					},
 				},
 			},
 		},
 		{
-			name: "should return error if title doesnt exist",
+			name: "should return error if title doesn't exist",
 			input: &folders.Folder{
 				Spec: folders.FolderSpec{},
 				TypeMeta: metav1.TypeMeta{
@@ -577,7 +586,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should return error if spec doesnt exist",
+			name: "should return error if spec doesn't exist",
 			input: &folders.Folder{
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Folder",

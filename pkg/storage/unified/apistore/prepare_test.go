@@ -34,9 +34,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
 		snowflake: node,
 		opts: StorageOptions{
-			EnableFolderSupport: true,
-			LargeObjectSupport:  nil,
-			MaximumNameLength:   100,
+			LargeObjectSupport: nil,
+			MaximumNameLength:  100,
 		},
 	}
 
@@ -137,6 +136,16 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Update should manage incrementing generation and metadata", func(t *testing.T) {
+		s := &Storage{
+			codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			snowflake: node,
+			opts: StorageOptions{
+				EnableFolderSupport: true, // folders are OK and changes will bump the generation
+				LargeObjectSupport:  nil,
+				MaximumNameLength:   100,
+			},
+		}
+
 		dashboard := dashv1.Dashboard{}
 		dashboard.Name = "test-name"
 		obj := dashboard.DeepCopyObject()
@@ -272,13 +281,13 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			require.NotEmpty(t, out.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 		})
 
-		t.Run("increment when the folder changes", func(t *testing.T) {
+		t.Run("fail when folder exists", func(t *testing.T) {
 			b := dash.DeepCopy()
 			b.Annotations = map[string]string{
 				utils.AnnoKeyFolder: "abc",
 			}
-			out = getPreparedObject(t, ctx, s, b, dash)
-			require.Equal(t, int64(2), out.GetGeneration())
+			_, err = s.prepareObjectForUpdate(ctx, b, dash)
+			require.ErrorContains(t, err, "folders not supported in this resource")
 		})
 
 		t.Run("increment when deleted", func(t *testing.T) {

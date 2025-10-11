@@ -3,7 +3,6 @@ package folders
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,8 +40,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
-var _ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder    = (*FolderAPIBuilder)(nil)
+	_ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
+	_ builder.APIGroupMutation   = (*FolderAPIBuilder)(nil)
+)
 
 var resourceInfo = folders.FolderResourceInfo
 
@@ -310,20 +312,6 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 // The default authorizer is fine because authorization happens in storage where we know the parent folder
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return grafanaauthorizer.NewServiceAuthorizer()
-}
-
-func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
-	verb := a.GetOperation()
-	if verb == admission.Create || verb == admission.Update {
-		obj := a.GetObject()
-		f, ok := obj.(*folders.Folder)
-		if !ok {
-			return fmt.Errorf("obj is not folders.Folder")
-		}
-		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
-		return nil
-	}
-	return nil
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {

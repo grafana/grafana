@@ -25,11 +25,16 @@ var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPubli
 var ErrFolderCannotBeParentOfItself = errors.New("folder cannot be parent of itself")
 
 const (
+	EmptyFolderUID        = ""
 	GeneralFolderUID      = "general"
-	RootFolderUID         = ""
 	MaxNestedFolderDepth  = 4
 	SharedWithMeFolderUID = "sharedwithme"
 )
+
+func IsRootFolder(obj utils.GrafanaMetaAccessor) bool {
+	f := obj.GetFolder()
+	return f == "" || f == GeneralFolderUID
+}
 
 var ErrFolderNotFound = errutil.NotFound("folder.notFound")
 

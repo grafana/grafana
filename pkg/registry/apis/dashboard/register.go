@@ -50,6 +50,7 @@ import (
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -329,7 +330,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate folder existence if specified
-	if !a.IsDryRun() && accessor.GetFolder() != "" {
+	if !a.IsDryRun() && !folder.IsRootFolder(accessor) {
 		folder, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID())
 		if err != nil {
 			return err
