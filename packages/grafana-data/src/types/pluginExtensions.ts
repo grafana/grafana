@@ -85,6 +85,19 @@ export type PluginExtensionAddedComponentConfig<Props = {}> = PluginExtensionCon
    * The React component that will added to the target extension points
    */
   component: React.ComponentType<Props>;
+
+  /**
+   * Minimum width for the sidebar when this component is active (only applies to sidebar extension points)
+   * Can be a number (pixels) or a CSS width string (e.g., "320px", "20rem")
+   */
+  minWidth?: number | string;
+
+  /**
+   * Initial width for the sidebar when this component is first opened (only applies to sidebar extension points)
+   * Can be a number (pixels) or a CSS width string (e.g., "400px", "25rem")
+   * If not specified, uses the stored width from localStorage or the global default
+   */
+  initialWidth?: number | string;
 };
 export type PluginExtensionAddedFunctionConfig<Signature = unknown> = PluginExtensionConfigBase & {
   /**
