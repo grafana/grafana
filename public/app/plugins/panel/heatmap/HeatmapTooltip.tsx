@@ -325,7 +325,9 @@ const HeatmapHoverCell = ({
         links = getDataLinks(linksField, xValueIdx);
       }
 
-      actions = canExecuteActions ? getFieldActions(data.series!, linksField, replaceVariables, xValueIdx) : [];
+      actions = canExecuteActions
+        ? getFieldActions(data.series!, linksField, replaceVariables, xValueIdx, 'heatmap')
+        : [];
     }
 
     footer = <VizTooltipFooter dataLinks={links} annotate={annotate} actions={actions} />;
