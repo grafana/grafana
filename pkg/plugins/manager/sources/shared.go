@@ -2,7 +2,6 @@ package sources
 
 import (
 	"context"
-	"sync"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/storage"
@@ -11,8 +10,7 @@ import (
 )
 
 var (
-	versionCache sync.Map // pluginID -> resolved version
-	tracer       = otel.Tracer("github.com/grafana/grafana/pkg/plugins/manager/sources")
+	tracer = otel.Tracer("github.com/grafana/grafana/pkg/plugins/manager/sources")
 
 	installRequestCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "plugins",

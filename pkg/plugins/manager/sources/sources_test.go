@@ -9,8 +9,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -131,4 +133,35 @@ type mockClientGenerator struct{}
 
 func (m *mockClientGenerator) ClientFor(k resource.Kind) (resource.Client, error) {
 	return nil, nil
+}
+
+// mockConfigProvider is a test implementation of configprovider.ConfigProvider
+type mockConfigProvider struct {
+	pCfg           *config.PluginManagementCfg
+	staticRootPath string
+}
+
+func (m *mockConfigProvider) Get(ctx context.Context) (*setting.Cfg, error) {
+	// Use configprovider.ConfigProvider interface to satisfy the linter
+	var _ configprovider.ConfigProvider = m
+	return &setting.Cfg{
+		PreinstallPluginsSync:  []setting.InstallPlugin{},
+		PreinstallPluginsAsync: []setting.InstallPlugin{},
+		PluginsPath:            m.pCfg.PluginsPath,
+		BuildVersion:           "10.0.0",
+		PluginSettings:         m.pCfg.PluginSettings,
+		StaticRootPath:         m.staticRootPath,
+		Env:                    setting.Prod,
+	}, nil
+}
+
+// mockDownloader is a test implementation of PluginDownloader
+type mockDownloader struct{}
+
+func (m *mockDownloader) Download(ctx context.Context, pluginID, version string, opts plugins.AddOpts) (*storage.ExtractedPluginArchive, error) {
+	return &storage.ExtractedPluginArchive{
+		ID:      pluginID,
+		Version: version,
+		Path:    filepath.Join("/tmp/plugins", pluginID),
+	}, nil
 }
