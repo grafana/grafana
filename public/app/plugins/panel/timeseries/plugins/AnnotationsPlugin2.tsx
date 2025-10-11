@@ -67,7 +67,7 @@ export const AnnotationsPlugin2 = ({
   const [plot, setPlot] = useState<uPlot>();
 
   const [portalRoot] = useState(() => getPortalContainer());
-
+  const [annoIdx, setAnnoIdx] = useState<string | undefined>();
   const styles = useStyles2(getStyles);
   const getColorByName = useTheme2().visualization.getColorByName;
 
@@ -209,6 +209,11 @@ export const AnnotationsPlugin2 = ({
     }
   }, [annos, plot]);
 
+  // Set active annotation tooltip state
+  const setAnnotationIndex = useCallback((annoIdx: string | undefined) => {
+    setAnnoIdx(annoIdx);
+  }, []);
+
   if (plot) {
     let markers = annos.flatMap((frame, frameIdx) => {
       let vals = getVals(frame);
@@ -245,10 +250,20 @@ export const AnnotationsPlugin2 = ({
 
         // @TODO: Reset newRange after annotation is saved
         if (isVisible) {
-          let isWip = frame.meta?.custom?.isWip;
+          const isWip = frame.meta?.custom?.isWip;
+          const setAnnotation = (active: boolean) => {
+            if (active) {
+              setAnnotationIndex(`${frameIdx}:${i}`);
+            } else {
+              setAnnotationIndex(undefined);
+            }
+          };
 
           markers.push(
             <AnnotationMarker2
+              pinAnnotation={setAnnotation}
+              isPinned={annoIdx === `${frameIdx}:${i}`}
+              showOnHover={!annoIdx}
               annoIdx={i}
               annoVals={vals}
               className={className}
@@ -276,6 +291,7 @@ const getStyles = () => ({
     position: 'absolute',
     width: 0,
     height: 0,
+    border: 'none',
     borderLeft: '5px solid transparent',
     borderRight: '5px solid transparent',
     borderBottomWidth: '5px',
@@ -283,11 +299,16 @@ const getStyles = () => ({
     transform: 'translateX(-50%)',
     cursor: 'pointer',
     zIndex: 1,
+    padding: 0,
+    background: 'none',
   }),
   annoRegion: css({
+    border: 'none',
     position: 'absolute',
     height: '5px',
     cursor: 'pointer',
     zIndex: 1,
+    padding: 0,
+    background: 'none',
   }),
 });
