@@ -55,7 +55,17 @@ describe('ScopesSelectorService', () => {
     } as unknown as jest.Mocked<ScopesApiClient>;
 
     dashboardsService = {
-      fetchDashboards: jest.fn(),
+      fetchDashboards: jest.fn().mockResolvedValue(undefined),
+      state: {
+        scopeNavigations: [],
+        dashboards: [],
+        drawerOpened: false,
+        filteredFolders: {},
+        folders: {},
+        forScopeNames: [],
+        loading: false,
+        searchQuery: '',
+      },
     } as unknown as jest.Mocked<ScopesDashboardsService>;
 
     storeValue = {};
