@@ -1,34 +1,30 @@
-import { DisplayProcessor, FieldDisplay } from '@grafana/data';
+import { FieldDisplay } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialArcPath } from './RadialArcPath';
-import { RadialGradientMode } from './RadialGauge';
+import { RadialColorDefs } from './RadialColorDefs';
 import { GaugeDimensions } from './utils';
 
 export interface RadialBarSegmentedProps {
   fieldDisplay: FieldDisplay;
   dimensions: GaugeDimensions;
+  colorDefs: RadialColorDefs;
   angleRange: number;
   startAngle: number;
-  color: string;
   glowFilter?: string;
   segmentCount: number;
   segmentSpacing: number;
-  displayProcessor: DisplayProcessor;
-  gradient: RadialGradientMode;
 }
 export function RadialBarSegmented({
   fieldDisplay,
   dimensions,
   startAngle,
   angleRange,
-  color,
   glowFilter,
   segmentCount,
   segmentSpacing,
-  displayProcessor,
-  gradient,
+  colorDefs,
 }: RadialBarSegmentedProps) {
   const segments: React.ReactNode[] = [];
   const theme = useTheme2();
@@ -40,13 +36,9 @@ export function RadialBarSegmented({
   const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing);
   const segmentArcLengthDeg = angleRange / segmentCountAdjusted - angleBetweenSegments;
 
-  const getColorForValue = (value: number) => {
-    return displayProcessor(value).color ?? color;
-  };
-
   for (let i = 0; i < segmentCountAdjusted; i++) {
     const angleValue = ((max - min) / segmentCountAdjusted) * i;
-    const angleColor = getColorForValue(angleValue);
+    const angleColor = colorDefs.getColor(angleValue);
     const segmentAngle = startAngle + (angleRange / segmentCountAdjusted) * i + 0.01;
     const segmentColor = angleValue > value ? theme.colors.action.hover : angleColor;
 
@@ -62,7 +54,12 @@ export function RadialBarSegmented({
     );
   }
 
-  return <g>{segments}</g>;
+  return (
+    <>
+      <g>{segments}</g>
+      <defs>{colorDefs.getDefs()}</defs>
+    </>
+  );
 }
 
 export function getAngleBetweenSegments(segmentSpacing: number) {

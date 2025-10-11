@@ -7,9 +7,9 @@ import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 
-import { GradientDef } from './GradientDef';
 import { RadialBar } from './RadialBar';
 import { RadialBarSegmented } from './RadialBarSegmented';
+import { RadialColorDefs } from './RadialColorDefs';
 import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
@@ -107,20 +107,15 @@ export function RadialGauge(props: RadialGaugeProps) {
     const displayProcessor = getFieldDisplayProcessor(displayValue);
     const spotlightGradientId = `spotlight-${barIndex}-${gaugeId}`;
     const glowFilterId = `glow-${gaugeId}`;
-    const colorGradientId = `bar-color-${barIndex}-${gaugeId}`;
-    const barColor = gradient === 'none' ? color : `url(#${colorGradientId})`;
-
-    defs.push(
-      <GradientDef
-        key={`gradient-${barIndex}`}
-        fieldDisplay={displayValue}
-        id={colorGradientId}
-        theme={theme}
-        gradient={gradient}
-        dimensions={dimensions}
-        shape={shape}
-      />
-    );
+    const colorDefs = new RadialColorDefs({
+      gradient,
+      fieldDisplay: displayValue,
+      theme,
+      dimensions,
+      shape,
+      gaugeId,
+      displayProcessor,
+    });
 
     if (spotlight) {
       defs.push(
@@ -143,12 +138,10 @@ export function RadialGauge(props: RadialGaugeProps) {
           fieldDisplay={displayValue}
           angleRange={angleRange}
           startAngle={startAngle}
-          color={barColor}
           glowFilter={`url(#${glowFilterId})`}
           segmentCount={segmentCount}
           segmentSpacing={segmentSpacing}
-          displayProcessor={displayProcessor}
-          gradient={gradient}
+          colorDefs={colorDefs}
         />
       );
     } else {
@@ -156,10 +149,10 @@ export function RadialGauge(props: RadialGaugeProps) {
         <RadialBar
           key={`radial-bar-${barIndex}-${gaugeId}`}
           dimensions={dimensions}
+          colorDefs={colorDefs}
           angle={angle}
           angleRange={angleRange}
           startAngle={startAngle}
-          color={barColor}
           roundedBars={roundedBars}
           spotlightStroke={`url(#${spotlightGradientId})`}
           glowFilter={`url(#${glowFilterId})`}
@@ -168,7 +161,6 @@ export function RadialGauge(props: RadialGaugeProps) {
     }
 
     // These elements are only added for first value / bar
-
     if (barIndex === 0) {
       if (glowBar) {
         defs.push(<GlowGradient key="glow-filter" id={glowFilterId} radius={dimensions.radius} />);
@@ -222,7 +214,7 @@ export function RadialGauge(props: RadialGaugeProps) {
   return (
     <div className={styles.vizWrapper} style={{ width, height }}>
       <svg width={width} height={height} role="img" aria-label={t('gauge.category-gauge', 'Gauge')}>
-        <defs> {defs}</defs>
+        <defs>{defs}</defs>
         {graphics}
       </svg>
       {sparklineElement}

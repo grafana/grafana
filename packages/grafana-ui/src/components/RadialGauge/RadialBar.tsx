@@ -3,24 +3,25 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialArcPath } from './RadialArcPath';
+import { RadialColorDefs } from './RadialColorDefs';
 import { GaugeDimensions, toRad } from './utils';
 
 export interface RadialBarProps {
   dimensions: GaugeDimensions;
+  colorDefs: RadialColorDefs;
   angleRange: number;
   angle: number;
   startAngle: number;
-  color: string;
   roundedBars?: boolean;
   spotlightStroke: string;
   glowFilter?: string;
 }
 export function RadialBar({
   dimensions,
+  colorDefs,
   angleRange,
   angle,
   startAngle,
-  color,
   roundedBars,
   spotlightStroke,
   glowFilter,
@@ -28,35 +29,38 @@ export function RadialBar({
   const theme = useTheme2();
 
   return (
-    <g>
-      {/** Track */}
-      <RadialArcPath
-        startAngle={startAngle + angle}
-        dimensions={dimensions}
-        arcLengthDeg={angleRange - angle}
-        color={theme.colors.action.hover}
-        roundedBars={roundedBars}
-      />
-      {/** The colored bar */}
-      <RadialArcPath
-        dimensions={dimensions}
-        startAngle={startAngle}
-        arcLengthDeg={angle}
-        color={color}
-        roundedBars={roundedBars}
-        glowFilter={glowFilter}
-      />
-      {spotlightStroke && angle > 8 && (
-        <SpotlightSquareEffect
+    <>
+      <g>
+        {/** Track */}
+        <RadialArcPath
+          startAngle={startAngle + angle}
           dimensions={dimensions}
-          angle={startAngle + angle}
-          glowFilter={glowFilter}
-          spotlightStroke={spotlightStroke}
-          theme={theme}
+          arcLengthDeg={angleRange - angle}
+          color={theme.colors.action.hover}
           roundedBars={roundedBars}
         />
-      )}
-    </g>
+        {/** The colored bar */}
+        <RadialArcPath
+          dimensions={dimensions}
+          startAngle={startAngle}
+          arcLengthDeg={angle}
+          color={colorDefs.getColor()}
+          roundedBars={roundedBars}
+          glowFilter={glowFilter}
+        />
+        {spotlightStroke && angle > 8 && (
+          <SpotlightSquareEffect
+            dimensions={dimensions}
+            angle={startAngle + angle}
+            glowFilter={glowFilter}
+            spotlightStroke={spotlightStroke}
+            theme={theme}
+            roundedBars={roundedBars}
+          />
+        )}
+      </g>
+      <defs>{colorDefs.getDefs()}</defs>
+    </>
   );
 }
 
