@@ -40,7 +40,7 @@ composableKinds: PanelCfg: {
 					sparkline?: bool | *false
 					shape: "circle" | *"gauge"	
 					barWidthFactor: number | *0.4
-					gradient: *"none" | "hue" | "shade" |"scheme" 
+					gradient: *"none" | "hue" | "shade" 
 					effects: GaugePanelEffects | *{}
 				} @cuetsy(kind="interface")
 			}

@@ -41,12 +41,7 @@ export function RadialBarSegmented({
   const segmentArcLengthDeg = angleRange / segmentCountAdjusted - angleBetweenSegments;
 
   const getColorForValue = (value: number) => {
-    if (gradient === 'scheme') {
-      return displayProcessor(value).color ?? 'green';
-    }
-
-    // For non scheme gradients the color is always the same
-    return color;
+    return displayProcessor(value).color ?? color;
   };
 
   for (let i = 0; i < segmentCountAdjusted; i++) {

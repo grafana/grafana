@@ -40,7 +40,6 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
           { value: 'none', label: t('radialbar.config.gradient-none', 'None') },
           { value: 'hue', label: t('radialbar.config.gradient-hue', 'Hue') },
           { value: 'shade', label: t('radialbar.config.gradient-shade', 'Shade') },
-          { value: 'scheme', label: t('radialbar.config.gradient-scheme', 'Scheme') },
         ],
       },
     });

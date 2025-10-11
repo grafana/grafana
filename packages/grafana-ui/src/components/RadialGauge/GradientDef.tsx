@@ -27,10 +27,24 @@ export function GradientDef({ fieldDisplay, id, theme, gradient, dimensions, sha
       ? `rotate(${360 * valuePercent - 180} ${dimensions.centerX} ${dimensions.centerY})`
       : `translate(-${dimensions.radius * 2 * (1 - valuePercent)}, 0)`;
 
+  if (colorMode.isByValue && colorMode.getColors) {
+    const colors = colorMode.getColors(theme);
+    const count = colors.length;
+
+    return (
+      <linearGradient x1="0" y1="0" x2={1 / valuePercent} y2="0" id={id}>
+        {colors.map((stopColor, i) => (
+          <stop key={i} offset={`${(i / (count - 1)).toFixed(2)}`} stopColor={stopColor} stopOpacity={1} />
+        ))}
+      </linearGradient>
+    );
+  }
+
+  const baseColor = fieldDisplay.display.color ?? 'gray';
+
   switch (gradient) {
     case 'shade': {
-      const color = fieldDisplay.display.color ?? 'gray';
-      const color1 = tinycolor(color).darken(5);
+      const color1 = tinycolor(baseColor).darken(5);
 
       return (
         <linearGradient
@@ -43,14 +57,13 @@ export function GradientDef({ fieldDisplay, id, theme, gradient, dimensions, sha
           gradientTransform={transform}
         >
           <stop offset="0%" stopColor={color1.toString()} stopOpacity={1} />
-          <stop offset="100%" stopColor={tinycolor(color).lighten(15).toString()} stopOpacity={1} />
+          <stop offset="100%" stopColor={tinycolor(baseColor).lighten(15).toString()} stopOpacity={1} />
         </linearGradient>
       );
     }
     case 'hue': {
-      const color = fieldDisplay.display.color ?? 'gray';
-      const color1 = tinycolor(color).spin(-20).darken(5);
-      const color2 = tinycolor(color).saturate(20).spin(20).brighten(10);
+      const color1 = tinycolor(baseColor).spin(-20).darken(5);
+      const color2 = tinycolor(baseColor).saturate(20).spin(20).brighten(10);
 
       return (
         <linearGradient
@@ -76,26 +89,14 @@ export function GradientDef({ fieldDisplay, id, theme, gradient, dimensions, sha
         </linearGradient>
       );
     }
-    case 'scheme': {
-      if (colorMode.getColors) {
-        const colors = colorMode.getColors(theme);
-        const count = colors.length;
-
-        return (
-          <linearGradient x1="0" y1="0" x2={1 / valuePercent} y2="0" id={id}>
-            {colors.map((stopColor, i) => (
-              <stop key={i} offset={`${(i / (count - 1)).toFixed(2)}`} stopColor={stopColor} stopOpacity={1} />
-            ))}
-          </linearGradient>
-        );
-      } else {
-        return (
-          <linearGradient x1="0" y1="1" x2={0} y2="1" id={id}>
-            <stop stopColor={fieldDisplay.display.color ?? 'gray'} stopOpacity={1} />
-          </linearGradient>
-        );
-      }
+    default: {
+      return (
+        <linearGradient x1="0" y1="1" x2={0} y2="1" id={id}>
+          <stop stopColor={baseColor} stopOpacity={1} />
+        </linearGradient>
+      );
     }
+
     // case 'radial': {
     // const color = fieldDisplay.display.color ?? 'gray';
     //  const color1 = tinycolor(color).darken(5);
@@ -113,6 +114,4 @@ export function GradientDef({ fieldDisplay, id, theme, gradient, dimensions, sha
     //     </radialGradient>
     // }
   }
-
-  return null;
 }

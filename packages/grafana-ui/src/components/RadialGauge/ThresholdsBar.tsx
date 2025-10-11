@@ -21,7 +21,7 @@ export function ThresholdsBar({ dimensions, fieldDisplay, startAngle, angleRange
   const decimals = fieldConfig.decimals ?? 2;
   const min = fieldConfig.min ?? 0;
   const max = fieldConfig.max ?? 100;
-  const thresholds = getFormattedThresholds(decimals, fieldConfig, fieldDisplay.display, theme);
+  const thresholds = getFormattedThresholds(decimals, fieldConfig, theme);
 
   const outerRadius = dimensions.radius + dimensions.barWidth / 2;
   const thresholdDimensions = {

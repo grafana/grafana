@@ -8,7 +8,7 @@ import {
   GrafanaTheme2,
   toDataFrame,
 } from '@grafana/data';
-import { FieldColorModeId, GraphGradientMode } from '@grafana/schema';
+import { FieldColorModeId } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Stack } from '../Layout/Stack/Stack';
@@ -19,6 +19,7 @@ interface StoryProps extends RadialGaugeProps {
   value: number;
   seriesCount: number;
   sparkline: boolean;
+  colorScheme: FieldColorModeId;
 }
 
 const meta: Meta<StoryProps> = {
@@ -45,6 +46,7 @@ const meta: Meta<StoryProps> = {
     segmentSpacing: 0.4,
     roundedBars: true,
     thresholdsBar: false,
+    colorScheme: FieldColorModeId.Thresholds,
   },
   argTypes: {
     barWidthFactor: { control: { type: 'range', min: 0.1, max: 1, step: 0.01 } },
@@ -55,10 +57,19 @@ const meta: Meta<StoryProps> = {
     roundedBars: { control: 'boolean' },
     sparkline: { control: 'boolean' },
     thresholdsBar: { control: 'boolean' },
-    gradient: { control: { type: 'radio', options: ['none', 'hue', 'shade', 'scheme'] } },
+    gradient: { control: { type: 'radio' } },
     seriesCount: { control: { type: 'range', min: 1, max: 20 } },
     segmentCount: { control: { type: 'range', min: 0, max: 100 } },
     segmentSpacing: { control: { type: 'range', min: 0, max: 1, step: 0.01 } },
+    colorScheme: {
+      control: { type: 'select' },
+      options: [
+        FieldColorModeId.Thresholds,
+        FieldColorModeId.Fixed,
+        FieldColorModeId.ContinuousGrYlRd,
+        FieldColorModeId.ContinuousBlYlRd,
+      ],
+    },
   },
 };
 
@@ -121,7 +132,6 @@ export const Examples: StoryFn = (args) => {
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
         <RadialGaugeExample
           colorMode={FieldColorModeId.ContinuousGrYlRd}
-          gradient={GraphGradientMode.Scheme}
           value={40}
           shape="gauge"
           roundedBars={false}
@@ -131,7 +141,6 @@ export const Examples: StoryFn = (args) => {
         />
         <RadialGaugeExample
           colorMode={FieldColorModeId.ContinuousGrYlRd}
-          gradient={GraphGradientMode.Scheme}
           value={90}
           barWidthFactor={0.6}
           roundedBars={false}
@@ -220,7 +229,6 @@ export const Examples: StoryFn = (args) => {
         <RadialGaugeExample
           value={70}
           {...args}
-          gradient="scheme"
           colorMode={FieldColorModeId.ContinuousGrYlRd}
           spotlight
           glowBar={true}
@@ -231,7 +239,6 @@ export const Examples: StoryFn = (args) => {
         <RadialGaugeExample
           value={70}
           {...args}
-          gradient="scheme"
           colorMode={FieldColorModeId.ContinuousGrYlRd}
           spotlight
           shape="gauge"
@@ -246,7 +253,6 @@ export const Examples: StoryFn = (args) => {
         <RadialGaugeExample
           value={70}
           {...args}
-          gradient="scheme"
           colorMode={FieldColorModeId.Thresholds}
           thresholdsBar={true}
           roundedBars={false}
@@ -257,7 +263,6 @@ export const Examples: StoryFn = (args) => {
         <RadialGaugeExample
           value={70}
           {...args}
-          gradient="scheme"
           colorMode={FieldColorModeId.Thresholds}
           glowCenter={true}
           thresholdsBar={true}
@@ -268,7 +273,6 @@ export const Examples: StoryFn = (args) => {
         <RadialGaugeExample
           value={70}
           {...args}
-          gradient="scheme"
           colorMode={FieldColorModeId.Thresholds}
           glowCenter={true}
           thresholdsBar={true}
@@ -304,7 +308,6 @@ export const Temp: StoryFn<StoryProps> = (args) => {
     <Stack direction={'column'} gap={3}>
       <RadialGaugeExample
         {...args}
-        gradient="scheme"
         colorMode={FieldColorModeId.ContinuousReds}
         color="red"
         shape="gauge"
@@ -339,10 +342,10 @@ interface ExampleProps {
   segmentSpacing?: number;
   roundedBars?: boolean;
   thresholdsBar?: boolean;
+  colorScheme?: FieldColorModeId;
 }
 
 export function RadialGaugeExample({
-  colorMode = FieldColorModeId.Fixed,
   gradient = 'none',
   color = 'blue',
   seriesName = 'Server A',
@@ -364,16 +367,9 @@ export function RadialGaugeExample({
   segmentSpacing = 0.1,
   roundedBars = true,
   thresholdsBar = false,
+  colorScheme = FieldColorModeId.Thresholds,
 }: ExampleProps) {
   const theme = useTheme2();
-
-  if (gradient === 'scheme' && colorMode === FieldColorModeId.Fixed) {
-    colorMode = FieldColorModeId.ContinuousGrYlRd;
-  }
-
-  if (thresholdsBar) {
-    colorMode = FieldColorModeId.Thresholds;
-  }
 
   const frame = toDataFrame({
     name: 'TestData',
@@ -396,7 +392,7 @@ export function RadialGaugeExample({
           min: min,
           max: max,
           unit: 'percent',
-          color: { mode: colorMode, fixedColor: theme.visualization.getColorByName(color) },
+          color: { mode: colorScheme, fixedColor: theme.visualization.getColorByName(color) },
           thresholds: {
             mode: 'absolute',
             steps: [
@@ -410,7 +406,7 @@ export function RadialGaugeExample({
         state: {},
         getLinks: () => [],
       },
-      ...getExtraSeries(seriesCount, colorMode, theme),
+      ...getExtraSeries(seriesCount, colorScheme, theme),
     ],
   });
 
@@ -455,7 +451,7 @@ export function RadialGaugeExample({
   );
 }
 
-function getExtraSeries(seriesCount: number, colorMode: FieldColorModeId, theme: GrafanaTheme2) {
+function getExtraSeries(seriesCount: number, colorScheme: FieldColorModeId, theme: GrafanaTheme2) {
   const fields: Field[] = [];
   const colors = ['blue', 'green', 'purple', 'orange', 'yellow'];
 
@@ -468,7 +464,7 @@ function getExtraSeries(seriesCount: number, colorMode: FieldColorModeId, theme:
         min: 0,
         max: 100,
         unit: 'percent',
-        color: { mode: colorMode, fixedColor: theme.visualization.getColorByName(colors[i % colors.length]) },
+        color: { mode: colorScheme, fixedColor: theme.visualization.getColorByName(colors[i % colors.length]) },
       },
       // Add state and getLinks
       state: {},

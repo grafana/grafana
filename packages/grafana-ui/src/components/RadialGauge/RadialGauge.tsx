@@ -3,6 +3,7 @@ import { isNumber } from 'lodash';
 import { useId } from 'react';
 
 import { FieldDisplay, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 
@@ -14,7 +15,6 @@ import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { calculateDimensions, getValueAngleForValue } from './utils';
-import { t } from '@grafana/i18n';
 
 export interface RadialGaugeProps {
   values: FieldDisplay[];
@@ -56,7 +56,7 @@ export interface RadialGaugeProps {
   vizCount?: number; // Not implemented yet
 }
 
-export type RadialGradientMode = 'none' | 'scheme' | 'hue' | 'shade';
+export type RadialGradientMode = 'none' | 'hue' | 'shade';
 export type RadialTextMode = 'auto' | 'value_and_name' | 'value' | 'name' | 'none';
 export type RadialShape = 'circle' | 'gauge';
 
@@ -108,7 +108,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     const spotlightGradientId = `spotlight-${barIndex}-${gaugeId}`;
     const glowFilterId = `glow-${gaugeId}`;
     const colorGradientId = `bar-color-${barIndex}-${gaugeId}`;
-    const barColor = gradient !== 'none' ? `url(#${colorGradientId})` : color;
+    const barColor = gradient === 'none' ? color : `url(#${colorGradientId})`;
 
     defs.push(
       <GradientDef
