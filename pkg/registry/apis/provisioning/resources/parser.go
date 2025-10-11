@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path"
 
+	"go.opentelemetry.io/otel/attribute"
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -302,10 +304,14 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	}
 
 	// Always use the provisioning identity when writing
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
+	identityCtx, identitySpan := tracing.Start(ctx, "provisioning.resources.run_resource.set_identity")
+	ctx, _, err := identity.WithProvisioningIdentity(identityCtx, f.Obj.GetNamespace())
 	if err != nil {
+		identitySpan.RecordError(err)
+		identitySpan.End()
 		return err
 	}
+	identitySpan.End()
 
 	fieldValidation := "Strict"
 	if f.GVR == DashboardResource {
@@ -318,12 +324,17 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		Identity: f.Repo.Name,
 	}
 
+	actionsCtx, actionsSpan := tracing.Start(ctx, "provisioning.resources.run_resource.actions")
+	defer actionsSpan.End()
+
 	// Handle deletion action
 	if f.Action == provisioning.ResourceActionDelete {
+		actionsSpan.SetAttributes(attribute.String("action", string(f.Action)))
 		// If we don't have existing resource from DryRun, fetch it now
 		if f.DryRunResponse == nil {
-			f.Existing, err = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+			f.Existing, err = f.Client.Get(actionsCtx, f.Obj.GetName(), metav1.GetOptions{})
 			if err != nil {
+				actionsSpan.RecordError(err)
 				if apierrors.IsNotFound(err) {
 					// Resource doesn't exist, nothing to delete - this is fine
 					return nil
@@ -334,13 +345,17 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 
 		// Check ownership with the existing resource
 		if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+			actionsSpan.RecordError(err)
 			return err
 		}
 
 		// Perform the actual delete
-		err = f.Client.Delete(ctx, f.Obj.GetName(), metav1.DeleteOptions{})
+		err = f.Client.Delete(actionsCtx, f.Obj.GetName(), metav1.DeleteOptions{})
 		if apierrors.IsNotFound(err) {
 			err = nil // ignorable - resource was already deleted
+		}
+		if err != nil {
+			actionsSpan.RecordError(err)
 		}
 
 		// Set the deleted resource as the result
@@ -353,7 +368,7 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 
 	// If we don't have existing resource from DryRun, fetch it now
 	if f.DryRunResponse == nil {
-		f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+		f.Existing, _ = f.Client.Get(actionsCtx, f.Obj.GetName(), metav1.GetOptions{})
 	}
 
 	// Check ownership with the existing resource (if any)
@@ -364,9 +379,13 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	// If we have already tried loading existing, start with create
 	if f.DryRunResponse != nil && f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
-		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
+		actionsSpan.SetAttributes(attribute.String("action", string(f.Action)))
+		f.Upsert, err = f.Client.Create(actionsCtx, f.Obj, metav1.CreateOptions{
 			FieldValidation: fieldValidation,
 		})
+		if err != nil {
+			actionsSpan.RecordError(err)
+		}
 		if err == nil {
 			return nil // it worked, return
 		}
@@ -374,14 +393,22 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 
 	// Try update, otherwise create
 	f.Action = provisioning.ResourceActionUpdate
-	f.Upsert, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
+	actionsSpan.SetAttributes(attribute.String("action", string(f.Action)))
+	f.Upsert, err = f.Client.Update(actionsCtx, f.Obj, metav1.UpdateOptions{
 		FieldValidation: fieldValidation,
 	})
+	if err != nil {
+		actionsSpan.RecordError(err)
+	}
+
 	if apierrors.IsNotFound(err) {
 		f.Action = provisioning.ResourceActionCreate
-		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
+		f.Upsert, err = f.Client.Create(actionsCtx, f.Obj, metav1.CreateOptions{
 			FieldValidation: fieldValidation,
 		})
+		if err != nil {
+			actionsSpan.RecordError(err)
+		}
 	}
 	return err
 }
