@@ -6803,7 +6803,7 @@
       }
     },
     "/org/invites/{invitation_code}/revoke": {
-      "delete": {
+      "patch": {
         "tags": [
           "org",
           "invites"
