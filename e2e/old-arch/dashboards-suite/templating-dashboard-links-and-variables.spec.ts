@@ -8,11 +8,19 @@ describe('Templating', () => {
   it('Tests dashboard links and variables in links', () => {
     cy.intercept({
       method: 'GET',
-      url: '/api/search?tag=templating&limit=100',
+      pathname: /search/,
+      query: {
+        tag: 'templating',
+        limit: '100',
+      },
     }).as('tagsTemplatingSearch');
     cy.intercept({
       method: 'GET',
-      url: '/api/search?tag=demo&limit=100',
+      pathname: /search/,
+      query: {
+        tag: 'demo',
+        limit: '100',
+      },
     }).as('tagsDemoSearch');
 
     e2e.flows.openDashboard({ uid: 'yBCC3aKGk' });
