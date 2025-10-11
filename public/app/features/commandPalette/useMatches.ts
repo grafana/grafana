@@ -191,12 +191,14 @@ function useInternalMatches(filtered: ActionImpl[], search: string): Match[] {
 
     // Convert indices back to Match objects with proper scoring
     const results: Match[] = matchingIndices.map((index, order) => {
-      const name = throttledFiltered[index].name;
-      const fullNameMatch = name.toLowerCase() === throttledSearch.toLowerCase();
-      let score = matchingIndices.length - order; // Higher score for better ranked matches
-      if (fullNameMatch) {
-        score += 100; // Bumping for exact matches
-      }
+      // Sections with higher priority should be ranked higher even if they don't match the search term to the same extent
+      const priority = throttledFiltered[index].priority;
+
+      // Weigh priority to have less impact for fewer results than more
+      const weightedPriority = priority * (matchingIndices.length / 10);
+
+      const score = matchingIndices.length + weightedPriority - order;
+
       return {
         action: throttledFiltered[index],
         score,
