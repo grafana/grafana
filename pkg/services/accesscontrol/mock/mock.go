@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -68,21 +67,6 @@ type Mock struct {
 	SyncUserRolesFunc                  func(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error
 
 	scopeResolvers accesscontrol.Resolvers
-}
-
-// Ensure the mock stays in line with the interface
-var _ fullAccessControl = New()
-
-// Deprecated: use fake service and real access control evaluator instead
-func New() *Mock {
-	mock := &Mock{
-		Calls:          Calls{},
-		permissions:    []accesscontrol.Permission{},
-		builtInRoles:   []string{},
-		scopeResolvers: accesscontrol.NewResolvers(log.NewNopLogger()),
-	}
-
-	return mock
 }
 
 func (m *Mock) GetRoleByName(ctx context.Context, orgID int64, roleName string) (*accesscontrol.RoleDTO, error) {

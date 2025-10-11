@@ -9,7 +9,7 @@ import (
 	"github.com/go-openapi/loads"
 	"github.com/stretchr/testify/require"
 
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -43,7 +43,7 @@ func TestAuthorize(t *testing.T) {
 	}
 	require.Len(t, paths, 64)
 
-	ac := acmock.New()
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	api := &API{AccessControl: ac, FeatureManager: featuremgmt.WithFeatures()}
 
 	t.Run("should not panic on known routes", func(t *testing.T) {
