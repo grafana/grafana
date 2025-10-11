@@ -498,6 +498,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesHistory",
+			Description:     "Adds support for Kubernetes query history",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,

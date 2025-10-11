@@ -267,6 +267,10 @@ const (
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
 
+	// FlagKubernetesHistory
+	// Adds support for Kubernetes query history
+	FlagKubernetesHistory = "kubernetesHistory"
+
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
 	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
