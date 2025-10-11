@@ -23,6 +23,7 @@ import { AnnotationsPlugin2 } from './plugins/AnnotationsPlugin2';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
+import { getAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields } from './utils';
 
@@ -131,6 +132,7 @@ export const TimeSeriesPanel = ({
       replaceVariables={replaceVariables}
       dataLinkPostProcessor={dataLinkPostProcessor}
       cursorSync={cursorSync}
+      annotationLanes={getAnnotationFrames(data.annotations).length}
     >
       {(uplotConfig, alignedFrame) => {
         return (
@@ -191,6 +193,7 @@ export const TimeSeriesPanel = ({
             {!isVerticallyOriented && (
               <>
                 <AnnotationsPlugin2
+                  annotationsConfig={options.annotations}
                   annotations={data.annotations ?? []}
                   config={uplotConfig}
                   timeZone={timeZone}
