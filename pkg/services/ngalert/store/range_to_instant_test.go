@@ -1,16 +1,18 @@
 package store
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 
+	json "github.com/goccy/go-json"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+// Note: Using goccy/go-json imported as 'json' for tests (same as production code)
 
 const (
 	promIsInstant    = true

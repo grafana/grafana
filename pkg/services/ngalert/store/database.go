@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -43,6 +44,7 @@ type DBstore struct {
 	DashboardService dashboards.DashboardService
 	AccessControl    accesscontrol.AccessControl
 	Bus              bus.Bus
+	CacheService     *localcache.CacheService
 }
 
 func ProvideDBStore(
@@ -53,6 +55,7 @@ func ProvideDBStore(
 	dashboards dashboards.DashboardService,
 	ac accesscontrol.AccessControl,
 	bus bus.Bus,
+	cacheService *localcache.CacheService,
 ) (*DBstore, error) {
 	store := DBstore{
 		Cfg:              cfg.UnifiedAlerting,
@@ -63,6 +66,7 @@ func ProvideDBStore(
 		DashboardService: dashboards,
 		AccessControl:    ac,
 		Bus:              bus,
+		CacheService:     cacheService,
 	}
 	if err := folderService.RegisterService(store); err != nil {
 		return nil, err

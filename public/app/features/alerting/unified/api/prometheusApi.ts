@@ -34,14 +34,19 @@ type PromRulesOptions = WithNotificationOptions<{
   groupNextToken?: string;
 }>;
 
-type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace' | 'excludeAlerts'> & {
-  folderUid?: string;
+type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'excludeAlerts'> & {
+  folderUid?: string; // Folder UID for exact match filtering
+  namespace?: string; // Folder name for substring matching
   dashboardUid?: string;
   panelId?: number;
   limitAlerts?: number;
   contactPoint?: string;
   health?: RuleHealth[];
   state?: PromAlertingRuleState[];
+  type?: 'alerting' | 'recording';
+  labels?: string[];
+  hidePlugins?: boolean;
+  datasourceUids?: string[];
 };
 
 export const prometheusApi = alertingApi.injectEndpoints({
@@ -83,6 +88,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
     getGrafanaGroups: build.query<PromRulesResponse<GrafanaPromRuleGroupDTO>, GrafanaPromRulesOptions>({
       query: ({
         folderUid,
+        namespace,
         groupName,
         ruleName,
         contactPoint,
@@ -91,10 +97,17 @@ export const prometheusApi = alertingApi.injectEndpoints({
         groupLimit,
         limitAlerts,
         groupNextToken,
+        type,
+        labels,
+        hidePlugins,
+        dashboardUid,
+        panelId,
+        datasourceUids,
       }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
-          folder_uid: folderUid,
+          folder_uid: folderUid, // Folder UID for exact match filtering
+          namespace: namespace, // Folder name for substring matching
           rule_group: groupName,
           rule_name: ruleName,
           receiver_name: contactPoint,
@@ -103,6 +116,37 @@ export const prometheusApi = alertingApi.injectEndpoints({
           limit_alerts: limitAlerts,
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,
+          type: type,
+          // Labels need to be sent as JSON matchers - convert to matcher format
+          // Prometheus MatchType: MatchEqual=0, MatchNotEqual=1, MatchRegexp=2, MatchNotRegexp=3
+          matcher: labels?.map((label) => {
+            // Parse label matchers like "key=value", "key!=value", "key=~regex", "key!~regex"
+            let name: string, value: string, type: number;
+
+            if (label.includes('=~')) {
+              [name, value] = label.split('=~');
+              type = 2; // MatchRegexp
+            } else if (label.includes('!~')) {
+              [name, value] = label.split('!~');
+              type = 3; // MatchNotRegexp
+            } else if (label.includes('!=')) {
+              [name, value] = label.split('!=');
+              type = 1; // MatchNotEqual
+            } else {
+              [name, value] = label.split('=');
+              type = 0; // MatchEqual
+            }
+
+            return JSON.stringify({
+              Name: name?.trim() || '',
+              Value: value?.trim() || '',
+              Type: type,
+            });
+          }),
+          hide_plugins: hidePlugins?.toString(),
+          dashboard_uid: dashboardUid,
+          panel_id: panelId,
+          datasource_uid: datasourceUids,
         },
       }),
       providesTags: (_result, _error, { folderUid, groupName, ruleName }) => {

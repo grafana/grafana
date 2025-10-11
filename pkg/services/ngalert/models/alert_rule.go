@@ -989,6 +989,19 @@ type ListAlertRulesExtendedQuery struct {
 
 	Limit         int64
 	ContinueToken string
+
+	// Filter fields for in-memory filtering
+	Namespace        string   // folder UID or name
+	GroupName        string   // rule group name
+	RuleName         string   // rule title
+	Labels           []string // label matcher strings like "severity=critical"
+	ContactPointName string   // notification receiver name
+	HidePluginRules  bool     // hide rules with __pluginId__ annotation
+	DatasourceUIDs   []string // datasource UIDs to filter by
+
+	// DisableCache forces the query to bypass cache and fetch from DB
+	// Used by APIs that require real-time data (e.g., Ruler API)
+	DisableCache bool
 }
 
 // CountAlertRulesQuery is the query for counting alert rules
