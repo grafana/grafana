@@ -784,8 +784,12 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 func (c *K8sTestHelper) CreateDS(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {
 	c.t.Helper()
 
+	require.NotZero(c.t, cmd.OrgID, "requires a non zero orgId")
 	dataSource, err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)
 	require.NoError(c.t, err)
+	if cmd.UID != "" {
+		require.Equal(c.t, cmd.UID, dataSource.UID)
+	}
 	return dataSource
 }
 
