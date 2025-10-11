@@ -2,9 +2,12 @@ package team
 
 import (
 	"context"
+	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,14 +30,19 @@ var (
 	_ rest.SingularNameProvider = (*LegacyBindingStore)(nil)
 	_ rest.Getter               = (*LegacyBindingStore)(nil)
 	_ rest.Lister               = (*LegacyBindingStore)(nil)
+	_ rest.Creater              = (*LegacyBindingStore)(nil)
+	_ rest.Updater              = (*LegacyBindingStore)(nil)
+	_ rest.GracefulDeleter      = (*LegacyBindingStore)(nil)
+	_ rest.CollectionDeleter    = (*LegacyBindingStore)(nil)
 )
 
-func NewLegacyBindingStore(store legacy.LegacyIdentityStore) *LegacyBindingStore {
-	return &LegacyBindingStore{store}
+func NewLegacyBindingStore(store legacy.LegacyIdentityStore, enableAuthnMutation bool) *LegacyBindingStore {
+	return &LegacyBindingStore{store, enableAuthnMutation}
 }
 
 type LegacyBindingStore struct {
-	store legacy.LegacyIdentityStore
+	store               legacy.LegacyIdentityStore
+	enableAuthnMutation bool
 }
 
 // Destroy implements rest.Storage.
@@ -65,6 +73,81 @@ func (l *LegacyBindingStore) ConvertToTable(ctx context.Context, object runtime.
 	return bindingResource.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
+func (l *LegacyBindingStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+}
+
+func (l *LegacyBindingStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+}
+
+func (l *LegacyBindingStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "deleteCollection")
+}
+
+func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	if !l.enableAuthnMutation {
+		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	teamMemberObj, ok := obj.(*iamv0alpha1.TeamBinding)
+	if !ok {
+		return nil, fmt.Errorf("expected TeamBinding object, got %T", obj)
+	}
+
+	if createValidation != nil {
+		if err := createValidation(ctx, teamMemberObj); err != nil {
+			return nil, err
+		}
+	}
+
+	// Fetch the user by ID
+	userObj, err := l.store.GetUserInternalID(ctx, ns, legacy.GetUserInternalIDQuery{
+		UID: teamMemberObj.Spec.Subject.Name,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user by id %s: %w", teamMemberObj.Spec.Subject.Name, err)
+	}
+
+	// Fetch the team by ID
+	teamObj, err := l.store.GetTeamInternalID(ctx, ns, legacy.GetTeamInternalIDQuery{
+		UID: teamMemberObj.Spec.TeamRef.Name,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch team by id %s: %w", teamMemberObj.Spec.TeamRef.Name, err)
+	}
+
+	var permission team.PermissionType
+	switch teamMemberObj.Spec.Permission {
+	case iamv0alpha1.TeamBindingTeamPermissionAdmin:
+		permission = team.PermissionTypeAdmin
+	case iamv0alpha1.TeamBindingTeamPermissionMember:
+		permission = team.PermissionTypeMember
+	}
+
+	createCmd := legacy.CreateTeamMemberCommand{
+		TeamID:     teamObj.ID,
+		TeamUID:    teamMemberObj.Spec.TeamRef.Name,
+		UserID:     userObj.ID,
+		UserUID:    teamMemberObj.Spec.Subject.Name,
+		Permission: permission,
+		External:   false,
+	}
+
+	result, err := l.store.CreateTeamMember(ctx, ns, createCmd)
+	if err != nil {
+		return nil, err
+	}
+
+	iamTeam := mapToBindingObject(ns, result.TeamMember)
+	return &iamTeam, nil
+}
+
 // Get implements rest.Getter.
 func (l *LegacyBindingStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -72,8 +155,11 @@ func (l *LegacyBindingStore) Get(ctx context.Context, name string, options *meta
 		return nil, err
 	}
 
+	teamUID, userUID := mapFromBindingName(name)
+
 	res, err := l.store.ListTeamBindings(ctx, ns, legacy.ListTeamBindingsQuery{
-		UID:        name,
+		TeamUID:    teamUID,
+		UserUID:    userUID,
 		Pagination: common.Pagination{Limit: 1},
 	})
 	if err != nil {
@@ -130,7 +216,7 @@ func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alph
 
 	return iamv0alpha1.TeamBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              tm.TeamUID,
+			Name:              mapToBindingName(tm.TeamUID, tm.UserUID),
 			Namespace:         ns.Value,
 			ResourceVersion:   strconv.FormatInt(rv.UnixMilli(), 10),
 			CreationTimestamp: metav1.NewTime(ct),
@@ -145,6 +231,19 @@ func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alph
 			Permission: common.MapTeamPermission(tm.Permission),
 		},
 	}
+}
+
+func mapToBindingName(teamUID string, userUID string) string {
+	return fmt.Sprintf("%s-%s", teamUID, userUID)
+}
+
+func mapFromBindingName(name string) (string, string) {
+	parts := strings.Split(name, "-")
+	if len(parts) != 2 {
+		return "", ""
+	}
+
+	return parts[0], parts[1]
 }
 
 func mapPermisson(p team.PermissionType) iamv0.TeamPermission {
