@@ -3,6 +3,7 @@ package pluginsintegration
 import (
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
@@ -59,7 +60,10 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	disc := pipeline.ProvideDiscoveryStage(pCfg, reg)
 	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pCfg, cdn, pluginassets.ProvideService()))
 	valid := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector)
-	init := pipeline.ProvideInitializationStage(pCfg, reg, provider.ProvideService(coreRegistry), proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest(), provisionedplugins.NewNoop())
+	// Create a mock client generator for testing
+	clientGenerator := &mockClientGenerator{}
+
+	init := pipeline.ProvideInitializationStage(pCfg, reg, provider.ProvideService(coreRegistry), proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest(), provisionedplugins.NewNoop(), clientGenerator)
 	term, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
 	require.NoError(t, err)
 
@@ -78,7 +82,8 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	sourcesService, err := sources.ProvideService(cfgProvider, pCfg, installer, prometheus.NewRegistry())
+
+	sourcesService, err := sources.ProvideService(cfgProvider, pCfg, installer, prometheus.NewRegistry(), clientGenerator)
 	require.NoError(t, err)
 	ps, err := pluginstore.NewPluginStoreForTest(reg, l, sourcesService)
 	require.NoError(t, err)
@@ -114,7 +119,8 @@ func CreateTestLoader(t *testing.T, cfg *config.PluginManagementCfg, opts Loader
 	if opts.Initializer == nil {
 		reg := registry.ProvideService()
 		coreRegistry := coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))
-		opts.Initializer = pipeline.ProvideInitializationStage(cfg, reg, provider.ProvideService(coreRegistry), process.ProvideService(), &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest(), provisionedplugins.NewNoop())
+		clientGenerator := &mockClientGenerator{}
+		opts.Initializer = pipeline.ProvideInitializationStage(cfg, reg, provider.ProvideService(coreRegistry), process.ProvideService(), &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest(), provisionedplugins.NewNoop(), clientGenerator)
 	}
 
 	if opts.Terminator == nil {
@@ -125,4 +131,12 @@ func CreateTestLoader(t *testing.T, cfg *config.PluginManagementCfg, opts Loader
 	}
 
 	return loader.New(cfg, opts.Discoverer, opts.Bootstrapper, opts.Validator, opts.Initializer, opts.Terminator, pluginerrs.ProvideErrorTracker())
+}
+
+// mockClientGenerator is a mock implementation of resource.ClientGenerator for testing
+type mockClientGenerator struct{}
+
+func (m *mockClientGenerator) ClientFor(kind resource.Kind) (resource.Client, error) {
+	// Return a mock client that doesn't do anything for testing
+	return nil, nil
 }

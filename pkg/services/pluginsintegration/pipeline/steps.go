@@ -9,6 +9,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
+	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -333,4 +335,27 @@ func (d *DuplicatePluginIDValidation) Filter(ctx context.Context, bundles []*plu
 	}
 
 	return res, nil
+}
+
+// InstallSourceAPIRegistrationStep returns a new InitializeFunc for registering install source plugins with the API.
+func InstallSourceAPIRegistrationStep(clientGenerator resource.ClientGenerator) initialization.InitializeFunc {
+	registrar := install.NewInstallSourceAPIRegistration(clientGenerator)
+
+	return func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		pluginInstall := &install.PluginInstall{
+			ID:      p.ID,
+			Version: p.Info.Version,
+			Class:   install.Class(p.Class),
+			Source:  install.SourcePluginPipeline,
+		}
+
+		err := registrar.Register(ctx, "default", pluginInstall)
+		if err != nil {
+			// Log error but don't fail the plugin initialization
+			log := log.New("plugins.install.api.registration")
+			log.Warn("Failed to register plugin with install API", "pluginId", p.ID, "error", err)
+		}
+
+		return p, nil
+	}
 }

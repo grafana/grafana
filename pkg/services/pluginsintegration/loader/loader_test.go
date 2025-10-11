@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
@@ -1559,7 +1560,7 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
-		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop(), &mockClientGenerator{}),
 		terminate, errTracker)
 }
 
@@ -1590,7 +1591,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
-		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop(), &mockClientGenerator{}),
 		terminate, errTracker)
 }
 
@@ -1641,4 +1642,12 @@ func corePluginDir(t *testing.T) string {
 		return ""
 	}
 	return dir
+}
+
+// mockClientGenerator is a mock implementation of resource.ClientGenerator for testing
+type mockClientGenerator struct{}
+
+func (m *mockClientGenerator) ClientFor(kind resource.Kind) (resource.Client, error) {
+	// Return a mock client that doesn't do anything for testing
+	return nil, nil
 }

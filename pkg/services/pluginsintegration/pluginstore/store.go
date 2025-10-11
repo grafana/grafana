@@ -295,7 +295,10 @@ func (s *Service) reloadPlugins(ctx context.Context) error {
 				))
 
 				logger.Info("New plugin discovered, loading", "pluginId", pluginID, "version", bundleVersion)
-				_, err := s.pluginLoader.Load(ctx, ps)
+
+				// Create a bundle source for just this plugin to avoid reloading other plugins from the same source
+				bundleSource := sources.NewBundleSource(bundle, ps)
+				_, err := s.pluginLoader.Load(ctx, bundleSource)
 				if err != nil {
 					span.RecordError(err)
 					span.SetAttributes(
@@ -355,7 +358,9 @@ func (s *Service) reloadPlugins(ctx context.Context) error {
 				}
 
 				// Load new version
-				_, err = s.pluginLoader.Load(ctx, ps)
+				// Create a bundle source for just this plugin to avoid reloading other plugins from the same source
+				bundleSource := sources.NewBundleSource(bundle, ps)
+				_, err = s.pluginLoader.Load(ctx, bundleSource)
 				if err != nil {
 					span.RecordError(err)
 					span.SetAttributes(attribute.String("plugin.id", pluginID))

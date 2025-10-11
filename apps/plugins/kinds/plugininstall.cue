@@ -8,6 +8,8 @@ pluginInstallV0Alpha1: {
 		spec: {
 			id:       string
 			version:  string
+			url: string
+			class: "core" | "external" | "cdn"
 		}
 	}
 }

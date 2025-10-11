@@ -198,17 +198,17 @@ func Test_readPluginSettings(t *testing.T) {
 				rawInput:     "plugin1",
 				disableAsync: true,
 				expected:     nil,
-				expectedSync: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", ""}),
+				expectedSync: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", "", ""}),
 			},
 			{
 				name:     "should parse a plugin with version and URL",
 				rawInput: "plugin1@1.0.1@https://example.com/plugin1.tar.gz",
-				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "1.0.1", URL: "https://example.com/plugin1.tar.gz"}),
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "1.0.1", URL: "https://example.com/plugin1.tar.gz", Class: ""}),
 			},
 			{
 				name:     "should parse a plugin with URL",
 				rawInput: "plugin1@@https://example.com/plugin1.tar.gz",
-				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "", URL: "https://example.com/plugin1.tar.gz"}),
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "", URL: "https://example.com/plugin1.tar.gz", Class: ""}),
 			},
 			{
 				name:         "when preinstall_async is false, should add all plugins to preinstall_sync",
@@ -216,7 +216,7 @@ func Test_readPluginSettings(t *testing.T) {
 				rawInputSync: "plugin2",
 				disableAsync: true,
 				expected:     nil,
-				expectedSync: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", ""}, InstallPlugin{"plugin2", "", ""}),
+				expectedSync: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", "", ""}, InstallPlugin{"plugin2", "", "", ""}),
 			},
 			{
 				name:     "should overwrite default when user pins a version",
@@ -225,7 +225,7 @@ func Test_readPluginSettings(t *testing.T) {
 					var plugins []InstallPlugin
 					for _, p := range defaultPreinstallPlugins {
 						if p.ID == "grafana-pyroscope-app" {
-							plugins = append(plugins, InstallPlugin{"grafana-pyroscope-app", "4.0.0", ""})
+							plugins = append(plugins, InstallPlugin{"grafana-pyroscope-app", "4.0.0", "", ""})
 						} else {
 							plugins = append(plugins, p)
 						}
