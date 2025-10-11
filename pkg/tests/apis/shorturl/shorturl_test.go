@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -81,8 +82,8 @@ func TestIntegrationShortURL(t *testing.T) {
 	for _, mode := range []grafanarest.DualWriterMode{
 		grafanarest.Mode1,
 		grafanarest.Mode2,
-		// grafanarest.Mode3, TODO: the /goto function needs to use an UpdateStatus client
-		// grafanarest.Mode4,
+		grafanarest.Mode3,
+		grafanarest.Mode4,
 	} {
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %d)", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -280,6 +281,8 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 			Path:   "/goto/" + uid + "?orgId=default",
 		}, (*interface{})(nil))
 		assert.Equal(t, 302, redirectResponse.Response.StatusCode)
+
+		time.Sleep(100 * time.Microsecond)
 
 		// Verify lastSeenAt was updated (should be > 0 now)
 		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
