@@ -21,7 +21,7 @@ test.describe(
         await expect(
           panelEditPage.panel.fieldNames,
           formatExpectError('Could not locate header elements in table panel')
-        ).toContainText(['Field', 'Max', 'Mean', 'Last']);
+        ).toContainText(['!Field', 'Max', 'Mean', 'Last']);
       });
 
       test('table panel data assertions', async ({ panelEditPage }) => {
