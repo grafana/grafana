@@ -1,3 +1,4 @@
+import { SelectableValue } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 
 export type User = {
@@ -33,3 +34,10 @@ export type SavedQuery = {
   datasourceRef?: DataSourceRef | null;
   datasourceType?: string;
 } & Omit<Partial<SavedQueryBase>, 'targets'>;
+
+export enum QueryLibraryTab {
+  ALL = 'all',
+  FAVORITES = 'favorites',
+  RECENT = 'history',
+  FEEDBACK = 'feedback',
+}
