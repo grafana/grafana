@@ -1,3 +1,9 @@
+# Unreleased
+
+### Features and enhancements
+
+- **Tempo:** Enhance gRPC client with full OpenTelemetry tracing and Prometheus metrics support, [@QuentinBisson](https://github.com/QuentinBisson)
+
 <!-- 12.2.0 START -->
 
 # 12.2.0 (2025-09-23)
