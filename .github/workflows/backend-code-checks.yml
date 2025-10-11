@@ -9,6 +9,10 @@ on:
   push:
     branches:
       - main
+      - release-*.*.*
+      - steady
+      - fast
+      - slow
     paths-ignore:
       - '*.md'
       - 'docs/**'
