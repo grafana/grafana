@@ -55,18 +55,18 @@ export function getResourceDimension(
   }
 
   // mode === ResourceDimensionMode.Field case
-  const getIcon = (value: string): string => {
+  const getImageOrIcon = (value: string): string => {
+    let icon = '';
     if (field && field.display) {
-      const icon = field.display(value).icon;
-      return getPublicOrAbsoluteUrl(icon ?? '');
+      icon = field.display(value).icon ?? '';
     }
 
-    return '';
+    return getPublicOrAbsoluteUrl(icon || value);
   };
 
   return {
     field,
-    get: (index: number): string => getIcon(field.values[index]),
-    value: () => getIcon(getLastNotNullFieldValue(field)),
+    get: (index: number): string => getImageOrIcon(field.values[index]),
+    value: () => getImageOrIcon(getLastNotNullFieldValue(field)),
   };
 }
