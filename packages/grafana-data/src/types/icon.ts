@@ -285,6 +285,7 @@ export const availableIconsIndex = {
   'ai-sparkle': true,
   bitbucket: true,
   git: true,
+  'tachometer-fast': true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

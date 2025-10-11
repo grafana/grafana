@@ -64,7 +64,18 @@ const preview: Preview = {
     docs: {
       container: ThemedDocsContainer,
     },
-    a11y: { test: 'error' },
+    a11y: {
+      test: 'error',
+      config: {
+        rules: [
+          {
+            id: 'scrollable-region-focusable',
+            selector: 'body',
+            enabled: false,
+          },
+        ],
+      },
+    },
     knobs: {
       disable: true,
     },

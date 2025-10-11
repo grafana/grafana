@@ -113,7 +113,7 @@ export class Gauge extends PureComponent<Props> {
           layout: { margin: 0, thresholdWidth: 0, vMargin: 0 },
           cell: { border: { width: 0 } },
           threshold: {
-            values: getFormattedThresholds(decimals, field, value, theme),
+            values: getFormattedThresholds(decimals, field, theme),
             label: {
               show: showThresholdLabels,
               margin: thresholdMarkersWidth + 1,
