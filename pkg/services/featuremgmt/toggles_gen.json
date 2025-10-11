@@ -2214,6 +2214,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesLogsDrilldown",
+        "resourceVersion": "1759865168805",
+        "creationTimestamp": "2025-10-07T19:26:08Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes logs drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesShortURLs",
         "resourceVersion": "1756914263808",
         "creationTimestamp": "2025-08-04T12:12:12Z",
@@ -3156,7 +3169,8 @@
       "metadata": {
         "name": "queryServiceWithConnections",
         "resourceVersion": "1756367172351",
-        "creationTimestamp": "2025-08-28T07:46:12Z"
+        "creationTimestamp": "2025-08-28T19:28:26Z",
+        "deletionTimestamp": "2025-08-29T12:49:57Z"
       },
       "spec": {
         "description": "Adds datasource connections to the query service",
