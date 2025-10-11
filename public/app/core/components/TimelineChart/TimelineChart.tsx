@@ -66,7 +66,15 @@ export class TimelineChart extends Component<TimelineProps> {
 
     return (
       <VizLayout.Legend placement={legend.placement}>
-        <VizLegend placement={legend.placement} items={legendItems} displayMode={legend.displayMode} readonly />
+        <VizLegend
+          placement={legend.placement}
+          items={legendItems}
+          displayMode={legend.displayMode}
+          sortBy={legend.sortBy}
+          sortDesc={legend.sortDesc}
+          readonly
+          isSortable={true}
+        />
       </VizLayout.Legend>
     );
   };
