@@ -15,8 +15,9 @@ type MultiOrgAlertmanager struct {
 	Registerer prometheus.Registerer
 	registries *metrics.TenantRegistries
 
-	ActiveConfigurations     prometheus.Gauge
-	DiscoveredConfigurations prometheus.Gauge
+	ActiveConfigurations         prometheus.Gauge
+	DiscoveredConfigurations     prometheus.Gauge
+	SyncAlertmanagersTimeSeconds prometheus.Gauge // LOGZ.IO GRAFANA CHANGE :: AI-40 - Add observability to alertmanagers load time
 
 	aggregatedMetrics *AlertmanagerAggregatedMetrics
 }
@@ -38,6 +39,14 @@ func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanag
 			Name:      "active_configurations",
 			Help:      "The number of active Alertmanager configurations.",
 		}),
+		// LOGZ.IO GRAFANA CHANGE :: AI-40 - Add observability to alertmanagers load time
+		SyncAlertmanagersTimeSeconds: promauto.With(r).NewGauge(prometheus.GaugeOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "sync_alertmanagers_time_seconds",
+			Help:      "The time it took to load and sync all Alertmanagers.",
+		}),
+		// LOGZ.IO GRAFANA CHANGE :: End
 		aggregatedMetrics: NewAlertmanagerAggregatedMetrics(registries),
 	}
 

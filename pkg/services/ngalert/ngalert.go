@@ -164,7 +164,8 @@ type AlertNG struct {
 
 func (ng *AlertNG) init() error {
 	// AlertNG should be initialized before the cancellation deadline of initCtx
-	initCtx, cancelFunc := context.WithTimeout(context.Background(), 300*time.Second) // LOGZ.IO GRAFANA CHANGE :: DEV-48976 - Make context deadline on AlertNG service startup configurable - cherrypick from: 1fdc48fabafe8b8480a58fb4a169d01ebb535fb2
+	ng.Log.Debug("Initializing context with timeout from config", "init_timeout_duration", ng.Cfg.UnifiedAlerting.InitializationTimeout) // LOGZ.IO GRAFANA CHANGE :: AI-40 - Add observability to alertmanagers load time
+	initCtx, cancelFunc := context.WithTimeout(context.Background(), ng.Cfg.UnifiedAlerting.InitializationTimeout)                       // LOGZ.IO GRAFANA CHANGE :: DEV-48976 - Make context deadline on AlertNG service startup configurable - cherrypick from: 1fdc48fabafe8b8480a58fb4a169d01ebb535fb2
 	defer cancelFunc()
 
 	ng.store.Logger = ng.Log

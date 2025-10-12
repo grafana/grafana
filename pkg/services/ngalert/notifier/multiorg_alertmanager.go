@@ -226,6 +226,7 @@ func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
 }
 
 func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Context) error {
+	startTime := time.Now() // LOGZ.IO GRAFANA CHANGE :: AI-40 - Add observability to alertmanagers load time
 	moa.logger.Debug("Synchronizing Alertmanagers for orgs")
 	// First, load all the organizations from the database.
 	orgIDs, err := moa.orgStore.GetOrgs(ctx)
@@ -237,7 +238,11 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 	moa.metrics.DiscoveredConfigurations.Set(float64(len(orgIDs)))
 	moa.SyncAlertmanagersForOrgs(ctx, orgIDs)
 
-	moa.logger.Debug("Done synchronizing Alertmanagers for orgs")
+	// LOGZ.IO GRAFANA CHANGE :: AI-40 - Add observability to alertmanagers load time
+	loadingTime := time.Since(startTime).Seconds()
+	moa.metrics.SyncAlertmanagersTimeSeconds.Set(loadingTime)
+	moa.logger.Debug("Done synchronizing Alertmanagers for orgs", "duration_seconds", loadingTime)
+	// LOGZ.IO GRAFANA CHANGE :: End
 
 	return nil
 }
