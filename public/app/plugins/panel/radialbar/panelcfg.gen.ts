@@ -27,7 +27,7 @@ export const defaultGaugePanelEffects: Partial<GaugePanelEffects> = {
 export interface Options extends common.SingleStatBaseOptions {
   barWidthFactor: number;
   effects: GaugePanelEffects;
-  gradient: ('none' | 'hue' | 'shade');
+  gradient: ('none' | 'auto');
   segmentCount: number;
   segmentSpacing: number;
   shape: ('circle' | 'gauge');

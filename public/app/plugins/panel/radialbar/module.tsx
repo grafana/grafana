@@ -38,8 +38,7 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       settings: {
         options: [
           { value: 'none', label: t('radialbar.config.gradient-none', 'None') },
-          { value: 'hue', label: t('radialbar.config.gradient-hue', 'Hue') },
-          { value: 'shade', label: t('radialbar.config.gradient-shade', 'Shade') },
+          { value: 'auto', label: t('radialbar.config.gradient-auto', 'Auto') },
         ],
       },
     });

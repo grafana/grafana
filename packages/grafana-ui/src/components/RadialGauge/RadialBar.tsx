@@ -44,7 +44,7 @@ export function RadialBar({
           dimensions={dimensions}
           startAngle={startAngle}
           arcLengthDeg={angle}
-          color={colorDefs.getColor()}
+          color={colorDefs.getMainBarColor()}
           roundedBars={roundedBars}
           glowFilter={glowFilter}
         />

@@ -40,7 +40,7 @@ const meta: Meta<StoryProps> = {
     width: 200,
     height: 200,
     shape: 'circle',
-    gradient: 'hue',
+    gradient: 'auto',
     seriesCount: 1,
     segmentCount: 0,
     segmentSpacing: 0.4,
@@ -101,32 +101,25 @@ export const Examples: StoryFn = (args) => {
     <Stack direction={'column'} gap={3} wrap="wrap">
       <div>Bar width</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialGaugeExample seriesName="0.1" value={60} gradient="hue" color="blue" barWidthFactor={0.1} />
-        <RadialGaugeExample seriesName="0.4" value={60} gradient="hue" color="green" barWidthFactor={0.4} />
-        <RadialGaugeExample seriesName="0.6" value={60} gradient="hue" color="red" barWidthFactor={0.6} />
-        <RadialGaugeExample seriesName="0.8" value={60} gradient="hue" color="purple" barWidthFactor={0.8} />
+        <RadialGaugeExample seriesName="0.1" value={60} color="blue" barWidthFactor={0.1} />
+        <RadialGaugeExample seriesName="0.4" value={60} color="green" barWidthFactor={0.4} />
+        <RadialGaugeExample seriesName="0.6" value={60} color="red" barWidthFactor={0.6} />
+        <RadialGaugeExample seriesName="0.8" value={60} color="purple" barWidthFactor={0.8} />
       </Stack>
 
       <div>Gradient: Hue</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialGaugeExample value={30} gradient="hue" color="blue" />
-        <RadialGaugeExample value={50} gradient="hue" color="green" />
-        <RadialGaugeExample value={60} gradient="hue" color="red" />
-        <RadialGaugeExample value={90} gradient="hue" color="purple" />
-      </Stack>
-      <div>Gradient: Shade</div>
-      <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialGaugeExample value={30} gradient="shade" color="blue" />
-        <RadialGaugeExample value={40} gradient="shade" color="green" />
-        <RadialGaugeExample value={60} gradient="shade" color="red" />
-        <RadialGaugeExample value={70} gradient="shade" color="purple" />
+        <RadialGaugeExample value={30} color="blue" />
+        <RadialGaugeExample value={50} color="green" />
+        <RadialGaugeExample value={60} color="red" />
+        <RadialGaugeExample value={90} color="purple" />
       </Stack>
       <div>Spotlight + glow + centerGlow</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialGaugeExample value={30} gradient="shade" spotlight glowBar glowCenter color="blue" />
-        <RadialGaugeExample value={40} gradient="shade" spotlight glowBar glowCenter color="green" />
-        <RadialGaugeExample value={60} gradient="shade" spotlight glowBar glowCenter color="red" />
-        <RadialGaugeExample value={70} gradient="shade" spotlight glowBar glowCenter color="purple" />
+        <RadialGaugeExample value={30} spotlight glowBar glowCenter color="blue" />
+        <RadialGaugeExample value={40} spotlight glowBar glowCenter color="green" />
+        <RadialGaugeExample value={60} spotlight glowBar glowCenter color="red" />
+        <RadialGaugeExample value={70} spotlight glowBar glowCenter color="purple" />
       </Stack>
       <div>Gradient: Scheme, startAngle: 240° endAngle: 120°</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
@@ -153,7 +146,6 @@ export const Examples: StoryFn = (args) => {
       <Stack direction={'row'} gap={3}>
         <RadialGaugeExample
           value={70}
-          gradient="hue"
           color="blue"
           shape="gauge"
           {...args}
@@ -164,7 +156,6 @@ export const Examples: StoryFn = (args) => {
         />
         <RadialGaugeExample
           value={30}
-          gradient="hue"
           color="green"
           shape="gauge"
           {...args}
@@ -176,7 +167,6 @@ export const Examples: StoryFn = (args) => {
         />
         <RadialGaugeExample
           value={50}
-          gradient="hue"
           color="red"
           shape="gauge"
           {...args}
@@ -191,7 +181,6 @@ export const Examples: StoryFn = (args) => {
       <Stack direction={'row'} gap={3}>
         <RadialGaugeExample
           value={70}
-          gradient="shade"
           color="green"
           {...args}
           spotlight
@@ -202,7 +191,6 @@ export const Examples: StoryFn = (args) => {
         />
         <RadialGaugeExample
           value={30}
-          gradient="hue"
           color="green"
           {...args}
           segmentCount={20}
@@ -213,7 +201,6 @@ export const Examples: StoryFn = (args) => {
         />
         <RadialGaugeExample
           value={50}
-          gradient="hue"
           color="red"
           {...args}
           segmentCount={40}
@@ -294,7 +281,7 @@ Examples.parameters = {
 export const MultiSeries: StoryFn<StoryProps> = (args) => {
   return (
     <Stack direction={'column'} gap={3}>
-      <RadialGaugeExample gradient="hue" color="red" {...args} />
+      <RadialGaugeExample color="red" {...args} />
     </Stack>
   );
 };

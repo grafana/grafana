@@ -56,7 +56,7 @@ export interface RadialGaugeProps {
   vizCount?: number; // Not implemented yet
 }
 
-export type RadialGradientMode = 'none' | 'hue' | 'shade';
+export type RadialGradientMode = 'none' | 'auto';
 export type RadialTextMode = 'auto' | 'value_and_name' | 'value' | 'name' | 'none';
 export type RadialShape = 'circle' | 'gauge';
 
@@ -181,6 +181,7 @@ export function RadialGauge(props: RadialGaugeProps) {
             angleRange={angleRange}
             roundedBars={roundedBars}
             glowFilter={`url(#${glowFilterId})`}
+            colorDefs={colorDefs}
           />
         );
       }

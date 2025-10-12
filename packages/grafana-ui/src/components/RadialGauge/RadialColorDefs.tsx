@@ -21,63 +21,54 @@ export class RadialColorDefs {
 
   constructor(private options: RadialColorDefsOptions) {}
 
-  private getBaseColor(forValue?: number): string {
-    const { fieldDisplay, displayProcessor } = this.options;
+  getSegmentColor(forValue: number): string {
+    const { displayProcessor } = this.options;
+    const baseColor = displayProcessor(forValue).color ?? FALLBACK_COLOR;
 
-    if (forValue === undefined && fieldDisplay.display.color) {
-      return fieldDisplay.display.color ?? FALLBACK_COLOR;
-    }
-
-    return displayProcessor(forValue).color ?? FALLBACK_COLOR;
+    return this.getColor(baseColor, true);
   }
 
-  getColor(forValue?: number): string {
-    const { theme, gradient, dimensions, shape, fieldDisplay, gaugeId } = this.options;
-    const baseColor = this.getBaseColor(forValue);
+  getColor(baseColor: string, forSegment?: boolean): string {
+    const { gradient, dimensions, gaugeId, fieldDisplay, shape, theme } = this.options;
 
-    if (this.colorToIds[baseColor]) {
-      return this.colorToIds[baseColor];
+    const id = `value-color-${baseColor}-${gaugeId}`;
+
+    if (this.colorToIds[id]) {
+      return this.colorToIds[id];
     }
 
     // If no gradient, just return the base color
     if (gradient === 'none') {
-      this.colorToIds[baseColor] = baseColor;
+      this.colorToIds[id] = baseColor;
       return baseColor;
     }
 
+    const returnColor = (this.colorToIds[id] = `url(#${id})`);
     const colorModeId = fieldDisplay.field.color?.mode;
     const colorMode = getFieldColorMode(colorModeId);
-    const id = `bar-color-${baseColor}-${gaugeId}`;
     const valuePercent = fieldDisplay.display.percent ?? 0;
-    const x2 = shape === 'circle' ? 0 : dimensions.centerX + dimensions.radius;
-    const y2 = shape === 'circle' ? dimensions.centerY + dimensions.radius : 0;
 
-    const transform =
-      shape === 'circle'
-        ? `rotate(${360 * valuePercent - 180} ${dimensions.centerX} ${dimensions.centerY})`
-        : `translate(-${dimensions.radius * 2 * (1 - valuePercent)}, 0)`;
+    // Handle continusous color modes first
+    // If it's a segment color we don't want to do continuous gradients
+    if (colorMode.isContinuous && colorMode.getColors && !forSegment) {
+      const colors = colorMode.getColors(theme);
+      const count = colors.length;
 
-    const returnColor = (this.colorToIds[baseColor] = `url(#${id})`);
+      this.defs.push(
+        <linearGradient x1="0" y1="0" x2={1 / valuePercent} y2="0" id={id}>
+          {colors.map((stopColor, i) => (
+            <stop key={i} offset={`${(i / (count - 1)).toFixed(2)}`} stopColor={stopColor} stopOpacity={1} />
+          ))}
+        </linearGradient>
+      );
 
-    // If gradient set to shade we don't care about the colorMode
-    // It will just shade the base color
-    if (gradient === 'shade') {
+      return returnColor;
+    }
+
+    // For value based colors we want to stay more true to the specific color
+    // So a radial gradient that adds a bit of light and shade works best
+    if (colorMode.isByValue) {
       const color1 = tinycolor(baseColor).darken(5);
-
-      // this.defs.push(
-      //   <linearGradient
-      //     x1="0"
-      //     y1="0"
-      //     x2={x2}
-      //     y2={y2}
-      //     id={id}
-      //     gradientUnits="userSpaceOnUse"
-      //     gradientTransform={transform}
-      //   >
-      //     <stop offset="0%" stopColor={color1.toString()} stopOpacity={1} />
-      //     <stop offset="100%" stopColor={tinycolor(baseColor).lighten(15).toString()} stopOpacity={1} />
-      //   </linearGradient>
-      // );
 
       this.defs.push(
         <radialGradient
@@ -87,65 +78,57 @@ export class RadialColorDefs {
           fr={dimensions.radius - dimensions.barWidth / 2}
           id={id}
           gradientUnits="userSpaceOnUse"
-          //gradientTransform={transform}
         >
-          <stop offset="0%" stopColor={tinycolor(baseColor).lighten(20).toString()} stopOpacity={1} />
-          <stop offset="50%" stopColor={color1.toString()} stopOpacity={1} />
+          <stop offset="0%" stopColor={tinycolor(baseColor).lighten(15).toString()} stopOpacity={1} />
+          <stop offset="60%" stopColor={color1.toString()} stopOpacity={1} />
           <stop offset="100%" stopColor={color1.toString()} stopOpacity={1} />
         </radialGradient>
       );
-
-      return returnColor;
     }
 
-    // Hue is a bit more complex because we need to consider the color scheme. / color mode
-    // If color scheme is continuous we build a gradient from getColors
-    // If color scheme is thresholds we build a gradient from the threshold colors
-    if (gradient === 'hue') {
-      if (colorMode.isContinuous && colorMode.getColors) {
-        const colors = colorMode.getColors(theme);
-        const count = colors.length;
+    // For fixed / palette based color scales we can create a more fun
+    // hue and light based linear gradient that we rotate/move with the value
 
-        this.defs.push(
-          <linearGradient x1="0" y1="0" x2={1 / valuePercent} y2="0" id={id}>
-            {colors.map((stopColor, i) => (
-              <stop key={i} offset={`${(i / (count - 1)).toFixed(2)}`} stopColor={stopColor} stopOpacity={1} />
-            ))}
-          </linearGradient>
-        );
+    const x2 = shape === 'circle' ? 0 : dimensions.centerX + dimensions.radius;
+    const y2 = shape === 'circle' ? dimensions.centerY + dimensions.radius : 0;
+    const color1 = tinycolor(baseColor).spin(-20).darken(5);
+    const color2 = tinycolor(baseColor).saturate(20).spin(20).brighten(10);
 
-        return returnColor;
-      }
+    // this makes it so the gradient is always brightest at the current value
+    const transform =
+      shape === 'circle'
+        ? `rotate(${360 * valuePercent - 180} ${dimensions.centerX} ${dimensions.centerY})`
+        : `translate(-${dimensions.radius * 2 * (1 - valuePercent)}, 0)`;
 
-      const color1 = tinycolor(baseColor).spin(-20).darken(5);
-      const color2 = tinycolor(baseColor).saturate(20).spin(20).brighten(10);
-
-      this.defs.push(
-        <linearGradient
-          x1="0"
-          y1="0"
-          x2={x2}
-          y2={y2}
-          id={id}
-          gradientUnits="userSpaceOnUse"
-          gradientTransform={transform}
-        >
-          {theme.isDark ? (
-            <>
-              <stop offset="0%" stopColor={color1.darken(10).toString()} stopOpacity={1} />
-              <stop offset="100%" stopColor={color2.lighten(10).toString()} stopOpacity={1} />
-            </>
-          ) : (
-            <>
-              <stop offset="0%" stopColor={color2.lighten(10).toString()} stopOpacity={1} />
-              <stop offset="100%" stopColor={color1.toString()} stopOpacity={1} />
-            </>
-          )}
-        </linearGradient>
-      );
-    }
+    this.defs.push(
+      <linearGradient
+        x1="0"
+        y1="0"
+        x2={x2}
+        y2={y2}
+        id={id}
+        gradientUnits="userSpaceOnUse"
+        gradientTransform={transform}
+      >
+        {theme.isDark ? (
+          <>
+            <stop offset="0%" stopColor={color1.darken(10).toString()} stopOpacity={1} />
+            <stop offset="100%" stopColor={color2.lighten(10).toString()} stopOpacity={1} />
+          </>
+        ) : (
+          <>
+            <stop offset="0%" stopColor={color2.lighten(10).toString()} stopOpacity={1} />
+            <stop offset="100%" stopColor={color1.toString()} stopOpacity={1} />
+          </>
+        )}
+      </linearGradient>
+    );
 
     return returnColor;
+  }
+
+  getMainBarColor(): string {
+    return this.getColor(this.options.fieldDisplay.display.color ?? FALLBACK_COLOR);
   }
 
   getDefs(): React.ReactNode[] {

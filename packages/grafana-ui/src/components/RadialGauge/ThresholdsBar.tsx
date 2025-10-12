@@ -4,6 +4,7 @@ import { useTheme2 } from '../../themes/ThemeContext';
 import { getFormattedThresholds } from '../Gauge/utils';
 
 import { RadialArcPath } from './RadialArcPath';
+import { RadialColorDefs } from './RadialColorDefs';
 import { GaugeDimensions } from './utils';
 
 export interface Props {
@@ -14,8 +15,17 @@ export interface Props {
   fieldDisplay: FieldDisplay;
   roundedBars?: boolean;
   glowFilter?: string;
+  colorDefs: RadialColorDefs;
 }
-export function ThresholdsBar({ dimensions, fieldDisplay, startAngle, angleRange, roundedBars, glowFilter }: Props) {
+export function ThresholdsBar({
+  dimensions,
+  fieldDisplay,
+  startAngle,
+  angleRange,
+  roundedBars,
+  glowFilter,
+  colorDefs,
+}: Props) {
   const theme = useTheme2();
   const fieldConfig = fieldDisplay.field;
   const decimals = fieldConfig.decimals ?? 2;
@@ -46,12 +56,17 @@ export function ThresholdsBar({ dimensions, fieldDisplay, startAngle, angleRange
         dimensions={thresholdDimensions}
         roundedBars={roundedBars}
         glowFilter={glowFilter}
-        color={threshold.color}
+        color={colorDefs.getColor(threshold.color, true)}
       />
     );
 
     currentStart += lengthDeg;
   }
 
-  return <g>{paths}</g>;
+  return (
+    <>
+      <g>{paths}</g>
+      <defs>{colorDefs.getDefs()}</defs>
+    </>
+  );
 }
