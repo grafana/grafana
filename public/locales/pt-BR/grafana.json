@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Adicionar uma permissão",
+      "loading": "",
       "no-permissions": "Não há permissões",
       "permissions-change-warning": "Isto irá alterar as permissões para este diretório e todos os seus descendentes. No total, isto afetará:",
       "role": "Função",
       "serviceaccount": "Conta de serviço",
       "team": "Equipe",
-      "title": "Permissões",
       "user": "Usuário"
     }
   },
@@ -3504,7 +3504,7 @@
       "delete-button": "Excluir",
       "delete-modal-invalid-text": "Uma ou mais pastas contêm painéis de biblioteca, ou regras de alerta. Exclua-as primeiro para prosseguir.",
       "delete-modal-invalid-title": "Não é possível excluir pasta",
-      "delete-modal-restore-dashboards-text": "Esta ação excluirá as pastas selecionadas imediatamente, mas os painéis de controle selecionados serão marcados para exclusão em 30 dias. O administrador da sua organização pode restaurar os painéis de controle a qualquer momento antes do término do prazo de 30 dias. As pastas não podem ser restauradas.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Esta ação apagará o seguinte conteúdo:",
       "delete-modal-title": "Excluir",
       "delete-provisioned-folder": "Excluir pasta provisionada",
@@ -4496,6 +4496,8 @@
     },
     "canvas-actions": {
       "add-panel": "Adicionar painel",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Agrupar em linha",
       "group-into-tab": "Agrupar em aba",
       "group-panels": "Painéis de grupo",
@@ -4504,7 +4506,8 @@
       "paste-panel": "Colar painel",
       "paste-row": "Colar linha",
       "paste-tab": "Colar aba",
-      "un-group-panels": "Desagrupar"
+      "un-group-panels": "Desagrupar",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4572,7 +4575,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "O elemento está oculto devido à renderização condicional."
+        "tooltip": ""
       },
       "root": {
         "title": "Exibir/Ocultar regras"
@@ -4746,8 +4749,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Valores separados por vírgula",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "",
+          "modal-title": "",
+          "values": "Valores separados por vírgula"
         },
         "datasource-options": {
           "name-filter": "Filtro de nome",
@@ -5167,10 +5171,16 @@
       "title-row-options": "Opções de linha"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "A exclusão desta linha também removerá todos os painéis. Tem certeza de que deseja continuar?",
       "delete-row-title": "Deseja excluir a linha?",
       "delete-row-yes": "Excluir",
       "description": "Grupos de painéis recolhíveis com cabeçalhos",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "O cabeçalho da linha só pode ser visualizado no modo de edição",
       "name": "Linhas",
       "row": {
@@ -5200,7 +5210,11 @@
       },
       "row-warning": {
         "title-not-unique": "Este título não é exclusivo"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Painel de controle salvo"
@@ -5819,6 +5833,7 @@
         "dynamically-switch-source-multiple-panels": "Alternar dinamicamente a fonte de dados para vários painéis",
         "group": "Adicionar chaves para agrupar em tempo real",
         "hidden-constant-variable": "Uma variável constante oculta, útil para prefixos métricos em painéis de controle que você deseja compartilhar",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Os usuários podem inserir qualquer string arbitrária em uma caixa de texto",
         "values-are-static-and-defined-manually": "Os valores são estáticos e definidos manualmente",
         "values-fetched-source-query": "Os valores são obtidos a partir de uma consulta de fonte de dados",
@@ -5832,6 +5847,7 @@
         "group-by": "Agrupar por",
         "interval": "Intervalo",
         "query": "Consulta",
+        "switch": "",
         "textbox": "Caixa de texto"
       }
     },
@@ -6175,6 +6191,17 @@
       "title": {
         "copy-to-clipboard-failed": "Falha ao copiar para a área de transferência"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Valor padrão"
@@ -10355,7 +10382,7 @@
       "title": "Perfis"
     },
     "recently-deleted": {
-      "subtitle": "Todos os itens listados aqui por mais de 30 dias serão excluídos automaticamente.",
+      "subtitle": "",
       "title": "Excluídos recentemente"
     },
     "recorded-queries": {
@@ -11571,6 +11598,7 @@
       "active-jobs": "tarefas ativas",
       "column-action": "Ação",
       "column-duration": "Duração",
+      "column-job-id": "",
       "column-message": "Mensagem",
       "column-started": "Iniciado",
       "column-status": "Status",
@@ -11589,12 +11617,6 @@
       "settings": "Configurações",
       "view": "Visualizar"
     },
-    "repository-health": {
-      "details": "Detalhes:",
-      "no-errors-found": "Nenhum erro encontrado",
-      "title-repository-is-healthy": "O repositório está estável",
-      "title-repository-is-unhealthy": "O repositório está instável"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Comparar branch",
@@ -11609,7 +11631,7 @@
     },
     "repository-overview": {
       "checked": "Verificado:",
-      "finished": "Finalizado:",
+      "finished": "",
       "health": "Integridade",
       "healthy": "Estável",
       "job-id": "ID da tarefa:",
@@ -11618,7 +11640,6 @@
       "not-available": "Não se aplica",
       "pull-status": "Status da extração",
       "resources": "Fontes",
-      "started": "Iniciado:",
       "status": "Status:",
       "unhealthy": "Instável",
       "view-folder": "Visualizar pasta",
@@ -12277,9 +12298,6 @@
       "title-disable-service-account": "Desativar conta de serviço",
       "tokens": "Tokens",
       "tooltip-managed-service-account-cannot-modified": "Esta é uma conta de serviço gerenciada e não pode ser modificada"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Permissões"
     },
     "service-account-profile": {
       "information": "Informações",
@@ -12954,6 +12972,10 @@
     "name-mode": "Modo",
     "name-show-line-numbers": "Exibir números das linhas",
     "name-show-mini-map": "Mostrar minimapa"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -14118,14 +14140,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Adicionar opção",
-      "description": "Adicionar opções personalizadas além dos resultados da consulta",
-      "label-placeholder": "exibir rótulo",
-      "remove-option-button-label": "Remover opção",
-      "value-placeholder": "valor, string vazia padrão"
+      "description": "Adicionar opções personalizadas além dos resultados da consulta"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Como classificar opções estáticas com resultados de consulta"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Valor padrão",

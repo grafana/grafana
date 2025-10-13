@@ -146,7 +146,7 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 			protocol = "unix"
 		}
 
-		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
+		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=true",
 			dbCfg.User, dbCfg.Pwd, protocol, dbCfg.Host, dbCfg.Name)
 
 		if dbCfg.SslMode == "true" || dbCfg.SslMode == "skip-verify" {
