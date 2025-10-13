@@ -85,7 +85,15 @@ export const getContentItems = (
   // needed for computing percentage on stacked fields, null means 'NotAvailable'
   let stackingGroupSums: Record<string, number | null> = {};
   // allowed field types for stacking accumulation
-  const STACKING_ACCUM_FIELD_TYPES = new Set([FieldType.number, FieldType.boolean, FieldType.enum]);
+  const ALLOWED_FIELD_TYPES_FOR_ACCUM = new Set([FieldType.number, FieldType.boolean, FieldType.enum]);
+
+  // structure to hold rows and group info for percent calculation
+  type BufferedRow = {
+    row: VizTooltipItem;
+    stackingGroup?: string;
+  };
+  const bufferedRows: BufferedRow[] = [];
+  let allNumeric = true;
 
   for (let i = 0; i < fields.length; i++) {
     const field = fields[i];
@@ -96,49 +104,24 @@ export const getContentItems = (
 
     // only accum those in 'percent' stacking mode
     const stackingConfig = field.config.custom?.stacking;
-    if (!stackingConfig || stackingConfig.mode !== StackingMode.Percent) {
-      continue;
+    if (stackingConfig && stackingConfig.mode === StackingMode.Percent) {
+      const dataIdx = dataIdxs[i];
+
+      // not available when group type is non-numeric or contains non-hovered
+      if (!ALLOWED_FIELD_TYPES_FOR_ACCUM.has(field.type) || dataIdx === null) {
+        stackingGroupSums[stackingConfig.group] = null;
+      } else {
+        const v = fields[i].values[dataIdx];
+        if (v !== null) {
+          if (stackingGroupSums[stackingConfig.group] !== null) {
+            stackingGroupSums[stackingConfig.group] ??= 0;
+            stackingGroupSums[stackingConfig.group] += v;
+          }
+        }
+      }
     }
 
-    if (!STACKING_ACCUM_FIELD_TYPES.has(field.type)) {
-      stackingGroupSums[stackingConfig.group] = null;
-      continue;
-    }
-
-    const dataIdx = dataIdxs[i];
-
-    // not available when group contains non-hovered
-    if (dataIdx == null) {
-      stackingGroupSums[stackingConfig.group] = null;
-      continue;
-    }
-
-    const v = fields[i].values[dataIdx];
-
-    if (v === null) {
-      continue;
-    }
-
-    if (stackingGroupSums[stackingConfig.group] !== null) {
-      stackingGroupSums[stackingConfig.group] ??= 0;
-      stackingGroupSums[stackingConfig.group] += v;
-    }
-  }
-
-  let rows: VizTooltipItem[] = [];
-
-  let allNumeric = true;
-
-  for (let i = 0; i < fields.length; i++) {
-    const field = fields[i];
-
-    if (
-      field === xField ||
-      field.type === FieldType.time ||
-      !fieldFilter(field) ||
-      field.config.custom?.hideFrom?.tooltip ||
-      field.config.custom?.hideFrom?.viz
-    ) {
+    if (!fieldFilter(field) || field.config.custom?.hideFrom?.tooltip) {
       continue;
     }
 
@@ -183,32 +166,39 @@ export const getContentItems = (
       colorPlacement = ColorPlacement.trailing;
     }
 
-    const stackingConfig = field.config.custom?.stacking;
-    if (stackingConfig && stackingConfig.mode === StackingMode.Percent && stackingGroupSums[stackingConfig.group]) {
-      const percentage = (numeric / stackingGroupSums[stackingConfig.group]!) * 100;
-      if (isFinite(percentage)) {
-        const suffixForPercentage = ` (${percentage.toFixed()}%)`;
-        display.suffix = display.suffix ? `${display.suffix}${suffixForPercentage}` : suffixForPercentage;
-      }
-    }
-
-    rows.push({
-      label: field.state?.displayName ?? field.name,
-      value: formattedValueToString(display),
-      color: display.color ?? FALLBACK_COLOR,
-      colorIndicator,
-      colorPlacement,
-      isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
-      numeric,
-      lineStyle: field.config.custom?.lineStyle,
+    bufferedRows.push({
+      row: {
+        label: field.state?.displayName ?? field.name,
+        value: formattedValueToString(display),
+        color: display.color ?? FALLBACK_COLOR,
+        colorIndicator,
+        colorPlacement,
+        isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
+        numeric,
+        lineStyle: field.config.custom?.lineStyle,
+      },
+      stackingGroup: stackingConfig && stackingConfig.mode === StackingMode.Percent ? stackingConfig.group : undefined,
     });
   }
 
-  if (sortOrder !== SortOrder.None && rows.length > 1) {
-    const cmp = allNumeric ? numberCmp : stringCmp;
-    const mult = sortOrder === SortOrder.Descending ? -1 : 1;
-    rows.sort((a, b) => mult * cmp(a, b));
+  // append percent suffixes where applicable
+  for (const buffered of bufferedRows) {
+    const group = buffered.stackingGroup;
+    if (buffered.row.numeric === undefined || !group || !stackingGroupSums[group]) {
+      continue;
+    }
+    const percent = (buffered.row.numeric / stackingGroupSums[group]) * 100;
+    if (isFinite(percent)) {
+      const suffix = ` (${percent.toFixed()}%)`;
+      buffered.row.value = `${buffered.row.value}${suffix}`;
+    }
   }
 
-  return rows;
+  if (sortOrder !== SortOrder.None && bufferedRows.length > 1) {
+    const cmp = allNumeric ? numberCmp : stringCmp;
+    const mult = sortOrder === SortOrder.Descending ? -1 : 1;
+    bufferedRows.sort((a, b) => mult * cmp(a.row, b.row));
+  }
+
+  return bufferedRows.map(({ row }) => row);
 };
