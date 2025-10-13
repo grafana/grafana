@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Tambahkan izin",
+      "loading": "",
       "no-permissions": "Tidak ada izin",
       "permissions-change-warning": "Ini akan mengubah izin untuk folder ini dan semua turunannya. Secara keseluruhan, ini akan memengaruhi:",
       "role": "Peran",
       "serviceaccount": "Akun Layanan",
       "team": "Tim",
-      "title": "Izin",
       "user": "Pengguna"
     }
   },
@@ -3492,7 +3492,7 @@
       "delete-button": "Hapus",
       "delete-modal-invalid-text": "Satu atau beberapa folder berisi panel pustaka atau aturan peringatan. Hapus ini terlebih dahulu untuk melanjutkan.",
       "delete-modal-invalid-title": "Tidak dapat menghapus folder",
-      "delete-modal-restore-dashboards-text": "Tindakan ini akan segera menghapus folder yang dipilih tetapi dasbor yang dipilih akan ditandai untuk dihapus dalam 30 hari. Administrator organisasi Anda dapat memulihkan dasbor kapan saja sebelum 30 hari kedaluwarsa. Folder tidak dapat dipulihkan.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Tindakan ini akan menghapus konten berikut:",
       "delete-modal-title": "Hapus",
       "delete-provisioned-folder": "Hapus folder yang disediakan",
@@ -4476,6 +4476,8 @@
     },
     "canvas-actions": {
       "add-panel": "Tambah panel",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Kelompokkan ke dalam baris",
       "group-into-tab": "Kelompokkan ke dalam tab",
       "group-panels": "Panel grup",
@@ -4484,7 +4486,8 @@
       "paste-panel": "Tempel panel",
       "paste-row": "Tempel baris",
       "paste-tab": "Tempel tab",
-      "un-group-panels": "Pisah grup"
+      "un-group-panels": "Pisah grup",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4552,7 +4555,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "Elemen disembunyikan karena rendering bersyarat."
+        "tooltip": ""
       },
       "root": {
         "title": "Tampilkan/sembunyikan aturan"
@@ -4726,8 +4729,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Nilai dipisahkan dengan koma",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "",
+          "modal-title": "",
+          "values": "Nilai dipisahkan dengan koma"
         },
         "datasource-options": {
           "name-filter": "Filter nama",
@@ -5146,10 +5150,16 @@
       "title-row-options": "Opsi baris"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Menghapus baris ini juga akan menghapus semua panel. Anda yakin ingin melanjutkan?",
       "delete-row-title": "Hapus baris?",
       "delete-row-yes": "Hapus",
       "description": "Grup panel yang dapat diciutkan dengan judul",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Header baris hanya terlihat dalam mode edit",
       "name": "Baris",
       "row": {
@@ -5179,7 +5189,11 @@
       },
       "row-warning": {
         "title-not-unique": "Judul ini tidak unik"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dasbor disimpan"
@@ -5798,6 +5812,7 @@
         "dynamically-switch-source-multiple-panels": "Beralih sumber data secara dinamis untuk beberapa panel",
         "group": "Tambahkan kunci ke grup dengan cepat",
         "hidden-constant-variable": "Variabel konstan tersembunyi, berguna untuk awalan metrik di dasbor yang ingin Anda bagikan",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Pengguna dapat memasukkan string acak apa pun dalam kotak teks",
         "values-are-static-and-defined-manually": "Nilai bersifat statis dan ditentukan secara manual",
         "values-fetched-source-query": "Nilai diambil dari kueri sumber data",
@@ -5811,6 +5826,7 @@
         "group-by": "Kelompokkan berdasarkan",
         "interval": "Interval",
         "query": "Kueri",
+        "switch": "",
         "textbox": "Kotak teks"
       }
     },
@@ -6152,6 +6168,17 @@
       "title": {
         "copy-to-clipboard-failed": "Gagal menyalin ke papan klip"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Nilai default"
@@ -10324,7 +10351,7 @@
       "title": "Profil"
     },
     "recently-deleted": {
-      "subtitle": "Setiap item yang tercantum di sini selama lebih dari 30 hari akan dihapus secara otomatis.",
+      "subtitle": "",
       "title": "Baru dihapus"
     },
     "recorded-queries": {
@@ -11531,6 +11558,7 @@
       "active-jobs": "pekerjaan aktif",
       "column-action": "Tindakan",
       "column-duration": "Durasi",
+      "column-job-id": "",
       "column-message": "Pesan",
       "column-started": "Dimulai",
       "column-status": "Status",
@@ -11549,12 +11577,6 @@
       "settings": "Pengaturan",
       "view": "Lihat"
     },
-    "repository-health": {
-      "details": "Detail:",
-      "no-errors-found": "Tidak ada kesalahan yang ditemukan",
-      "title-repository-is-healthy": "Repositori sehat",
-      "title-repository-is-unhealthy": "Repositori tidak sehat"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Bandingkan cabang",
@@ -11569,7 +11591,7 @@
     },
     "repository-overview": {
       "checked": "Diperiksa:",
-      "finished": "Selesai:",
+      "finished": "",
       "health": "Kesehatan",
       "healthy": "Sehat",
       "job-id": "ID Pekerjaan:",
@@ -11578,7 +11600,6 @@
       "not-available": "N/A",
       "pull-status": "Status pull",
       "resources": "Sumber Daya",
-      "started": "Dimulai:",
       "status": "Status:",
       "unhealthy": "Tidak Sehat",
       "view-folder": "Lihat Folder",
@@ -12234,9 +12255,6 @@
       "title-disable-service-account": "Nonaktifkan akun layanan",
       "tokens": "Token",
       "tooltip-managed-service-account-cannot-modified": "Ini adalah akun layanan terkelola dan tidak dapat dimodifikasi"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Izin"
     },
     "service-account-profile": {
       "information": "Informasi",
@@ -12909,6 +12927,10 @@
     "name-mode": "Mode",
     "name-show-line-numbers": "Tampilkan nomor baris",
     "name-show-mini-map": "Tampilkan peta mini"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -14073,14 +14095,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Tambahkan opsi",
-      "description": "Tambahkan opsi kustom selain hasil kueri",
-      "label-placeholder": "tampilkan label",
-      "remove-option-button-label": "Hapus opsi",
-      "value-placeholder": "nilai, string kosong default"
+      "description": "Tambahkan opsi kustom selain hasil kueri"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Cara mengurutkan opsi statis dengan hasil kueri"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Nilai default",
