@@ -150,6 +150,8 @@ export {
   applyRawFieldOverrides,
   useFieldOverrides,
   getFieldDataContextClone,
+  DataLinksContext,
+  useDataLinksContext,
 } from './field/fieldOverrides';
 export { getFieldDisplayValuesProxy } from './field/getFieldDisplayValuesProxy';
 export {
@@ -531,6 +533,7 @@ export {
   type QueryVariableModel,
   type TextBoxVariableModel,
   type ConstantVariableModel,
+  type SwitchVariableModel,
   type VariableWithMultiSupport,
   type VariableWithOptions,
   type DashboardProps,
@@ -571,6 +574,7 @@ export {
   PluginExtensionTypes,
   PluginExtensionPoints,
   PluginExtensionExposedComponents,
+  PluginExtensionPointPatterns,
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,

@@ -44,7 +44,6 @@ func TestMutateOnCreate_LoginEmail(t *testing.T) {
 				},
 			},
 			expectedLogin: "only.login",
-			expectedEmail: "only.login",
 		},
 		{
 			name: "login and email already lowercase",
@@ -69,10 +68,72 @@ func TestMutateOnCreate_LoginEmail(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := MutateOnCreate(context.Background(), tc.inputUser)
+			err := MutateOnCreateAndUpdate(context.Background(), tc.inputUser)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedLogin, tc.inputUser.Spec.Login)
 			require.Equal(t, tc.expectedEmail, tc.inputUser.Spec.Email)
+		})
+	}
+}
+
+func TestMutateOnCreate_Role(t *testing.T) {
+	testCases := []struct {
+		name         string
+		inputUser    *iamv0alpha1.User
+		expectedRole string
+	}{
+		{
+			name: "role is lowercase",
+			inputUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{
+					Role: "admin",
+				},
+			},
+			expectedRole: "Admin",
+		},
+		{
+			name: "role is uppercase",
+			inputUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{
+					Role: "ADMIN",
+				},
+			},
+			expectedRole: "Admin",
+		},
+		{
+			name: "role is mixed case",
+			inputUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{
+					Role: "aDmIn",
+				},
+			},
+			expectedRole: "Admin",
+		},
+		{
+			name: "role is already title case",
+			inputUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{
+					Role: "Admin",
+				},
+			},
+			expectedRole: "Admin",
+		},
+		{
+			name: "role is empty",
+			inputUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{
+					Role: "",
+				},
+			},
+			expectedRole: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := MutateOnCreateAndUpdate(context.Background(), tc.inputUser)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedRole, tc.inputUser.Spec.Role)
 		})
 	}
 }

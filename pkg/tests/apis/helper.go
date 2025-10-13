@@ -59,9 +59,10 @@ const (
 )
 
 type K8sTestHelper struct {
-	t          *testing.T
-	env        server.TestEnv
-	Namespacer request.NamespaceMapper
+	t               *testing.T
+	listenerAddress string
+	env             server.TestEnv
+	Namespacer      request.NamespaceMapper
 
 	Org1 OrgUsers // default
 	OrgB OrgUsers // some other id
@@ -88,12 +89,13 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	// The flag only exists to support the transition from the old to the new behavior in dev/ops/prod.
 	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
 	dir, path := testinfra.CreateGrafDir(t, opts)
-	_, env := testinfra.StartGrafanaEnv(t, dir, path)
+	listenerAddress, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	c := &K8sTestHelper{
-		env:        *env,
-		t:          t,
-		Namespacer: request.GetNamespaceMapper(nil),
+		env:             *env,
+		listenerAddress: listenerAddress,
+		t:               t,
+		Namespacer:      request.GetNamespaceMapper(nil),
 	}
 
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
@@ -149,6 +151,10 @@ func (c *K8sTestHelper) loadAPIGroups() {
 
 func (c *K8sTestHelper) GetEnv() server.TestEnv {
 	return c.env
+}
+
+func (c *K8sTestHelper) GetListenerAddress() string {
+	return c.listenerAddress
 }
 
 func (c *K8sTestHelper) Shutdown() {
@@ -331,6 +337,7 @@ type OrgUsers struct {
 	Admin  User
 	Editor User
 	Viewer User
+	None   User
 
 	OrgID int64
 
@@ -560,6 +567,7 @@ func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 		Admin:  c.CreateUser("admin2", orgName, org.RoleAdmin, nil),
 		Editor: c.CreateUser("editor", orgName, org.RoleEditor, nil),
 		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
+		None:   c.CreateUser("none", orgName, org.RoleNone, nil),
 	}
 	users.OrgID = users.Admin.Identity.GetOrgID()
 
@@ -615,13 +623,20 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 
 	// make org1 admins grafana admins
 	isGrafanaAdmin := basicRole == identity.RoleAdmin && orgId == 1
+	login := name
+	if isGrafanaAdmin {
+		login = "grafana-admin"
+	} else if orgId > 1 {
+		login = fmt.Sprintf("%s-%s", login, c.Namespacer(orgId))
+	}
 
 	u, err := c.userSvc.Create(context.Background(), &user.CreateUserCommand{
 		DefaultOrgRole: string(basicRole),
 		Password:       user.Password(name),
-		Login:          fmt.Sprintf("%s-%d", name, orgId),
+		Login:          login,
 		OrgID:          orgId,
 		IsAdmin:        isGrafanaAdmin,
+		Name:           name,
 	})
 
 	// for tests to work we need to add grafana admins to every org
@@ -656,6 +671,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	require.NoError(c.t, err)
 	s.IDToken = idToken
 	s.IDTokenClaims = idClaims
+	s.Namespace = c.Namespacer(orgId)
 
 	usr := User{
 		Identity: s,

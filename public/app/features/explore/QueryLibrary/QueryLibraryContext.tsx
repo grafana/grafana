@@ -30,7 +30,7 @@ export type QueryLibraryContextType = {
    * @param newQuery New query to be added to the library.
    */
   openDrawer: (options: QueryLibraryDrawerOptions) => void;
-  closeDrawer: () => void;
+  closeDrawer: (isSelectingQuery?: boolean, isEditingQuery?: boolean) => void;
   isDrawerOpen: boolean;
   onSave?: () => void;
 
@@ -73,6 +73,8 @@ export type QueryLibraryContextType = {
   ) => void;
   setNewQuery: (query?: SavedQuery) => void;
   onSelectQuery: (query: DataQuery) => void;
+  /** Set a guard function that returns true to allow closing, false to prevent closing */
+  setCloseGuard: (shouldAllowClose: () => boolean) => void;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
@@ -95,6 +97,7 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   context: 'unknown',
   triggerAnalyticsEvent: () => {},
   onSelectQuery: () => {},
+  setCloseGuard: () => {},
 });
 
 export function useQueryLibraryContext() {

@@ -9,11 +9,12 @@ import (
 	"net/http"
 	"path"
 	"slices"
-	"sort"
 	"strings"
 	"testing"
 
-	"github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/line"
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -21,30 +22,27 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/alerting/notify"
 
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
-
-	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -131,8 +129,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 	helper := getTestHelper(t)
 
 	org1 := helper.Org1
-
-	noneUser := helper.CreateUser("none", apis.Org1, org.RoleNone, nil)
+	noneUser := org1.None
 
 	creator := helper.CreateUser("creator", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		createWildcardPermission(
@@ -206,7 +203,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			name:          "Admin creates, assigns read, noneUser has no metadata but has access",
 			creatingUser:  admin,
 			testUser:      noneUser,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionView)}},
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(ngmodels.PermissionView)}},
 			expACMetadata: nil,
 			expRead:       true,
 		},
@@ -214,7 +211,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			name:          "Admin creates, assigns write, noneUser has write metadata and access",
 			creatingUser:  admin,
 			testUser:      noneUser,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionEdit)}},
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(ngmodels.PermissionEdit)}},
 			expACMetadata: writeACMetadata,
 			expRead:       true,
 		},
@@ -222,7 +219,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			name:          "Admin creates, assigns admin, noneUser has all metadata and access",
 			creatingUser:  admin,
 			testUser:      noneUser,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(ngmodels.PermissionAdmin)}},
 			expACMetadata: allACMetadata,
 			expRead:       true,
 		},
@@ -231,7 +228,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			name:          "Admin creates, assigns read to noneUser, creator has no metadata and no access",
 			creatingUser:  admin,
 			testUser:      creator,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionView)}},
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(ngmodels.PermissionView)}},
 			expACMetadata: nil,
 			expRead:       false,
 		},
@@ -239,7 +236,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			name:          "Admin creates, assigns write to noneUser, creator has no metadata and no access",
 			creatingUser:  admin,
 			testUser:      creator,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionEdit)}},
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(ngmodels.PermissionEdit)}},
 			expACMetadata: nil,
 			expRead:       false,
 		},
@@ -247,7 +244,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			name:          "Admin creates, assigns admin to noneUser, creator has no metadata and no access",
 			creatingUser:  admin,
 			testUser:      creator,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(ngmodels.PermissionAdmin)}},
 			expACMetadata: nil,
 			expRead:       false,
 		},
@@ -256,7 +253,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			name:          "Admin creates, assigns editor, viewer has write metadata and access",
 			creatingUser:  admin,
 			testUser:      viewer,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(viewer), Permission: string(alertingac.ReceiverPermissionEdit)}},
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(viewer), Permission: string(ngmodels.PermissionEdit)}},
 			expACMetadata: writeACMetadata,
 			expRead:       true,
 		},
@@ -264,7 +261,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			name:          "Admin creates, assigns admin, viewer has all metadata and access",
 			creatingUser:  admin,
 			testUser:      viewer,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(viewer), Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(viewer), Permission: string(ngmodels.PermissionAdmin)}},
 			expACMetadata: allACMetadata,
 			expRead:       true,
 		},
@@ -272,7 +269,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			name:          "Admin creates, assigns admin, editor has all metadata and access",
 			creatingUser:  admin,
 			testUser:      editor,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(editor), Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(editor), Permission: string(ngmodels.PermissionAdmin)}},
 			expACMetadata: allACMetadata,
 			expRead:       true,
 		},
@@ -281,7 +278,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			name:          "Admin creates, assigns admin to staff, viewer has no metadata and access",
 			creatingUser:  admin,
 			testUser:      viewer,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{TeamID: org1.Staff.ID, Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{TeamID: org1.Staff.ID, Permission: string(ngmodels.PermissionAdmin)}},
 			expACMetadata: nil,
 			expRead:       true,
 		},
@@ -289,7 +286,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			name:          "Admin creates, assigns admin to staff, editor has all metadata and access",
 			creatingUser:  admin,
 			testUser:      editor,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{TeamID: org1.Staff.ID, Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{TeamID: org1.Staff.ID, Permission: string(ngmodels.PermissionAdmin)}},
 			expACMetadata: allACMetadata,
 			expRead:       true,
 		},
@@ -608,6 +605,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				// Set expected metadata.
 				expectedWithMetadata := expected.Copy().(*v0alpha1.Receiver)
 				expectedWithMetadata.SetInUse(0, nil)
+				expectedWithMetadata.SetCanUse(true)
 				if tc.canUpdate {
 					expectedWithMetadata.SetAccessControl("canWrite")
 				}
@@ -1227,7 +1225,7 @@ func TestIntegrationCRUD(t *testing.T) {
 	t.Run("should be able to update default receiver", func(t *testing.T) {
 		require.NotNil(t, defaultReceiver)
 		newDefault := defaultReceiver.Copy().(*v0alpha1.Receiver)
-		newDefault.Spec.Integrations = append(newDefault.Spec.Integrations, createIntegration(t, "line"))
+		newDefault.Spec.Integrations = append(newDefault.Spec.Integrations, createIntegration(t, line.Type))
 
 		updatedReceiver, err := adminClient.Update(ctx, newDefault, v1.UpdateOptions{})
 		require.NoError(t, err)
@@ -1268,10 +1266,10 @@ func TestIntegrationCRUD(t *testing.T) {
 
 	var receiver *v0alpha1.Receiver
 	t.Run("should correctly persist all known integrations", func(t *testing.T) {
-		integrations := make([]v0alpha1.ReceiverIntegration, 0, len(notify.AllKnownConfigsForTesting))
-		keysIter := maps.Keys(notify.AllKnownConfigsForTesting)
+		integrations := make([]v0alpha1.ReceiverIntegration, 0, len(notifytest.AllKnownV1ConfigsForTesting))
+		keysIter := maps.Keys(notifytest.AllKnownV1ConfigsForTesting)
 		keys := slices.Collect(keysIter)
-		sort.Strings(keys)
+		slices.Sort(keys)
 		for _, key := range keys {
 			integrations = append(integrations, createIntegration(t, key))
 		}
@@ -1294,6 +1292,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		receiver.SetAccessControl("canReadSecrets")
 		receiver.SetAccessControl("canAdmin")
 		receiver.SetInUse(0, nil)
+		receiver.SetCanUse(true)
 
 		// Use export endpoint because it's the only way to get decrypted secrets fast.
 		cliCfg := helper.Org1.Admin.NewRestConfig()
@@ -1301,7 +1300,7 @@ func TestIntegrationCRUD(t *testing.T) {
 
 		export := legacyCli.ExportReceiverTyped(t, receiver.Spec.Title, true)
 		for _, integration := range export.Receivers {
-			expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)] // to lower because there is LINE that is in different casing in API
+			expected := notifytest.AllKnownV1ConfigsForTesting[schema.IntegrationType(integration.Type)]
 			assert.JSONEqf(t, expected.Config, string(integration.Settings), "integration %s", integration.Type)
 		}
 	})
@@ -1312,13 +1311,16 @@ func TestIntegrationCRUD(t *testing.T) {
 		require.Equal(t, receiver, get)
 		t.Run("should return secrets in secureFields but not settings", func(t *testing.T) {
 			for _, integration := range get.Spec.Integrations {
+				integrationType := schema.IntegrationType(integration.Type)
 				t.Run(integration.Type, func(t *testing.T) {
-					expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)]
+					expected := notifytest.AllKnownV1ConfigsForTesting[schema.IntegrationType(integration.Type)]
 					var fields map[string]any
 					require.NoError(t, json.Unmarshal([]byte(expected.Config), &fields))
-					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type)
-					require.NoError(t, err)
-					for _, field := range secretFields {
+					typeSchema, ok := notify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+					require.True(t, ok)
+					secretFields := typeSchema.GetSecretFieldsPaths()
+					for _, fieldPath := range secretFields {
+						field := fieldPath.String()
 						if _, ok := fields[field]; !ok { // skip field that is not in the original setting
 							continue
 						}
@@ -1335,11 +1337,11 @@ func TestIntegrationCRUD(t *testing.T) {
 	})
 
 	t.Run("should fail to persist receiver with invalid config", func(t *testing.T) {
-		keysIter := maps.Keys(notify.AllKnownConfigsForTesting)
+		keysIter := maps.Keys(notifytest.AllKnownV1ConfigsForTesting)
 		keys := slices.Collect(keysIter)
-		sort.Strings(keys)
+		slices.Sort(keys)
 		for _, key := range keys {
-			t.Run(key, func(t *testing.T) {
+			t.Run(string(key), func(t *testing.T) {
 				integration := createIntegration(t, key)
 				// Make the integration invalid, so it fails to create. This is usually done by sending empty settings.
 				clear(integration.Settings)
@@ -1415,6 +1417,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	require.Len(t, receivers.Items, 3) // Includes default.
 
 	t.Run("should filter by receiver name", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: "spec.title=" + recv1.Spec.Title,
 		})
@@ -1433,6 +1436,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	})
 
 	t.Run("should filter by multiple filters", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: fmt.Sprintf("metadata.name=%s,spec.title=%s", recv2.Name, recv2.Spec.Title),
 		})
@@ -1500,18 +1504,18 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 	require.NoError(t, err)
 }
 
-func createIntegration(t *testing.T, integrationType string) v0alpha1.ReceiverIntegration {
-	cfg, ok := notify.AllKnownConfigsForTesting[integrationType]
+func createIntegration(t *testing.T, integrationType schema.IntegrationType) v0alpha1.ReceiverIntegration {
+	cfg, ok := notifytest.AllKnownV1ConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)
-	return createIntegrationWithSettings(t, integrationType, "v1", cfg.Config)
+	return createIntegrationWithSettings(t, integrationType, schema.V1, cfg.Config)
 }
-func createIntegrationWithSettings(t *testing.T, integrationType string, integrationVersion string, settingsJson string) v0alpha1.ReceiverIntegration {
+func createIntegrationWithSettings(t *testing.T, integrationType schema.IntegrationType, integrationVersion schema.Version, settingsJson string) v0alpha1.ReceiverIntegration {
 	settings := common.Unstructured{}
 	require.NoError(t, settings.UnmarshalJSON([]byte(settingsJson)))
 	return v0alpha1.ReceiverIntegration{
 		Settings:              settings.Object,
-		Type:                  integrationType,
-		Version:               integrationVersion,
+		Type:                  string(integrationType),
+		Version:               string(integrationVersion),
 		DisableResolveMessage: util.Pointer(false),
 	}
 }

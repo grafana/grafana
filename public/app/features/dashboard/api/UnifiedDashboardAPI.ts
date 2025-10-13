@@ -8,10 +8,10 @@ import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
 import {
+  failedFromVersion,
   isDashboardV2Spec,
   isV1DashboardCommand,
   isV2DashboardCommand,
-  failedFromVersion,
   isV2StoredVersion,
 } from './utils';
 import { K8sDashboardAPI } from './v1';
@@ -69,18 +69,19 @@ export class UnifiedDashboardAPI
     options: ListDeletedDashboardsOptions
   ): Promise<ResourceList<Dashboard | DashboardV2Spec>> {
     const v1Response = await this.v1Client.listDeletedDashboards(options);
-    const filteredV1Items = v1Response.items.filter((item) => !failedFromVersion(item, 'v2'));
+    const filteredV1Items = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
 
     if (filteredV1Items.length === v1Response.items.length) {
       return v1Response;
     }
 
     const v2Response = await this.v2Client.listDeletedDashboards(options);
-    const filteredV2Items = v2Response.items.filter((item) => !failedFromVersion(item, 'v1'));
+    const filteredV2Items = v2Response.items.filter((item) => !failedFromVersion(item, ['v0', 'v1']));
 
     return {
       ...v2Response,
-      items: [...filteredV1Items, ...filteredV2Items],
+      // Make sure we display only valid resources
+      items: [...filteredV1Items, ...filteredV2Items].filter(isResource),
     };
   }
 

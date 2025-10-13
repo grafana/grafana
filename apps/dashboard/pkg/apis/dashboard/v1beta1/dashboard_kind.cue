@@ -284,16 +284,76 @@ lineage: schemas: [{
 			tags: [...string]
 			// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 			asDropdown: bool | *false
+			// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+			placement?: #DashboardLinkPlacement
 			// If true, the link will be opened in a new tab
 			targetBlank: bool | *false
 			// If true, includes current template variables values in the link as query params
 			includeVars: bool | *false
 			// If true, includes current time range in the link as query params
 			keepTime: bool | *false
+
 		} @cuetsy(kind="interface")
 
 		// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 		#DashboardLinkType: "link" | "dashboards" @cuetsy(kind="type")
+
+		// Dashboard Link placement. Defines where the link should be displayed. 
+		// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu 
+		#DashboardLinkPlacement: "inControlsMenu" @cuetsy(kind="type")
+
+		// Dashboard action type
+		#ActionType: "fetch" | "infinity" @cuetsy(kind="type")
+
+		// Fetch options
+		#FetchOptions: {
+			method: #HttpRequestMethod
+			url: string
+			body?: string
+			// These are 2D arrays of strings, each representing a key-value pair
+			// We are defining this way because we can't generate a go struct that 
+			// that would have exactly two strings in each sub-array
+			queryParams?: [...[...string]]
+			headers?: [...[...string]]
+		} @cuetsy(kind="interface")
+
+		// Infinity options
+		#InfinityOptions: {
+			method: #HttpRequestMethod
+			url: string
+			body?: string
+			// These are 2D arrays of strings, each representing a key-value pair
+			// We are defining them this way because we can't generate a go struct that 
+			// that would have exactly two strings in each sub-array
+			queryParams?: [...[...string]]
+			headers?: [...[...string]]
+			datasourceUid: string
+		} @cuetsy(kind="interface")
+
+		#HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH" @cuetsy(kind="type")
+
+		// Action variable type
+		#ActionVariableType: "string" @cuetsy(kind="type")
+
+		#ActionVariable: {
+			key: string
+			name: string
+			type: #ActionVariableType
+		} @cuetsy(kind="interface")
+
+		// Dashboard action
+		#Action: {
+			type: #ActionType
+			title: string
+			fetch?: #FetchOptions
+			infinity?: #InfinityOptions
+			confirmation?: string
+			oneClick?: bool
+			variables?: [...#ActionVariable]
+			style?: {
+				backgroundColor?: string
+			}
+		} @cuetsy(kind="interface")
 
 		// Dashboard variable type
 		// `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
@@ -304,8 +364,9 @@ lineage: schemas: [{
 		// `textbox`: Display a free text input field with an optional default value.
 		// `custom`: Define the variable options manually using a comma-separated list.
 		// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+		// `switch`: Boolean variables rendered as a switch
 		#VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
-			"system" | "snapshot" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
+			"system" | "snapshot" | "switch" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
 		// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
 		// Continuous color interpolates a color using the percentage of a value relative to min and max.
@@ -723,6 +784,9 @@ lineage: schemas: [{
 
 			// The behavior when clicking on a result
 			links?: [...] @grafanamaturity(NeedsExpertReview)
+
+			// Define interactive HTTP requests that can be triggered from data visualizations.
+			actions?: [...#Action] @grafanamaturity(NeedsExpertReview)
 
 			// Alternative to empty string
 			noValue?: string @grafanamaturity(NeedsExpertReview)

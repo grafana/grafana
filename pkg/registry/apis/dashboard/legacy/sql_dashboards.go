@@ -255,7 +255,7 @@ func generateFallbackDashboard(data []byte, title, uid string) ([]byte, error) {
 				"type":  "text",
 			},
 		},
-		"schemaVersion": 41,
+		"schemaVersion": 42,
 		"title":         title,
 		"uid":           uid,
 		"version":       3,
@@ -460,7 +460,7 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 	}
 
 	var userID int64
-	if claims.IsIdentityType(user.GetIdentityType(), claims.TypeUser) {
+	if claims.IsIdentityType(user.GetIdentityType(), claims.TypeUser) || claims.IsIdentityType(user.GetIdentityType(), claims.TypeServiceAccount) {
 		var err error
 		userID, err = identity.UserIdentifier(user.GetSubject())
 		if err != nil {

@@ -664,10 +664,6 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('interpolateVariablesInQueries', () => {
-    afterEach(() => {
-      config.featureToggles.promQLScope = undefined;
-    });
-
     it('should call replace function 3 times', () => {
       const query: PromQuery = {
         expr: 'test{job="testjob"}',
@@ -695,17 +691,32 @@ describe('PrometheusDatasource', () => {
       expect(ds.enhanceExprWithAdHocFilters).toHaveBeenCalled();
     });
 
-    it('should not apply adhoc filters when promQLScope is enabled', () => {
-      config.featureToggles.promQLScope = true;
+    it('should not apply adhoc filters when scopes with filters are present', () => {
       ds.enhanceExprWithAdHocFilters = jest.fn();
       ds.generateScopeFilters = jest.fn();
-      const queries = [
+      // Fix: Use correct types for scopes and filters
+      const typedScopes = [
+        {
+          name: 'test-scope',
+          title: 'Test Scope',
+          type: 'test',
+          filters: [
+            {
+              key: 'bar',
+              operator: 'equals' as const,
+              value: 'baz',
+            },
+          ],
+        },
+      ];
+      const typedQueries: PromQuery[] = [
         {
           refId: 'A',
           expr: 'rate({bar="baz", job="foo"} [5m]',
+          scopes: typedScopes,
         },
       ];
-      ds.interpolateVariablesInQueries(queries, {});
+      ds.interpolateVariablesInQueries(typedQueries, {});
       expect(ds.enhanceExprWithAdHocFilters).not.toHaveBeenCalled();
       expect(ds.generateScopeFilters).toHaveBeenCalled();
     });
@@ -714,10 +725,6 @@ describe('PrometheusDatasource', () => {
   describe('applyTemplateVariables', () => {
     afterAll(() => {
       replaceMock.mockImplementation((a: string, ...rest: unknown[]) => a);
-    });
-
-    afterEach(() => {
-      config.featureToggles.promQLScope = false;
     });
 
     it('should call replace function for legendFormat', () => {
@@ -783,7 +790,21 @@ describe('PrometheusDatasource', () => {
     });
 
     it('should generate scope filters and **not** apply ad-hoc filters to expr', () => {
-      config.featureToggles.promQLScope = true;
+      const scopes = [
+        {
+          name: 'test-scope',
+          title: 'Test Scope',
+          type: 'test',
+          filters: [
+            {
+              key: 'bar',
+              operator: 'equals' as const,
+              value: 'baz',
+            },
+          ],
+        },
+      ];
+
       replaceMock.mockImplementation((a: string) => a);
       const filters = [
         {
@@ -801,17 +822,18 @@ describe('PrometheusDatasource', () => {
       const query = {
         expr: 'test{job="bar"}',
         refId: 'A',
+        scopes: scopes,
       };
 
       const expectedScopeFilters: ScopeSpecFilter[] = [
         {
           key: 'k1',
-          operator: 'equals',
+          operator: 'equals' as const,
           value: 'v1',
         },
         {
           key: 'k2',
-          operator: 'not-equals',
+          operator: 'not-equals' as const,
           value: 'v2',
         },
       ];
@@ -891,13 +913,27 @@ describe('PrometheusDatasource', () => {
     });
 
     it('should replace variables in adhoc filters on backend when promQLScope is enabled', () => {
-      config.featureToggles.promQLScope = true;
+      const scopes = [
+        {
+          name: 'test-scope',
+          title: 'Test Scope',
+          type: 'test',
+          filters: [
+            {
+              key: 'bar',
+              operator: 'equals' as const,
+              value: 'baz',
+            },
+          ],
+        },
+      ];
       const searchPattern = /\$A/g;
       replaceMock.mockImplementation((a: string) => a?.replace(searchPattern, '99') ?? a);
 
       const query = {
         expr: 'test',
         refId: 'A',
+        scopes: scopes,
       };
       const filters = [
         {
@@ -906,6 +942,7 @@ describe('PrometheusDatasource', () => {
           value: '$A',
         },
       ];
+
       const result = ds.applyTemplateVariables(query, {}, filters);
       expect(result).toMatchObject({
         expr: 'test',
@@ -1304,6 +1341,13 @@ describe('PrometheusDatasource incremental query logic', () => {
 
   it('should disable incremental query when query contains $__range', async () => {
     const request = createDataRequest([{ expr: 'rate(up[$__range])', refId: 'A' }]);
+    await lastValueFrom(ds.query(request));
+    expect(mockCache.requestInfo).not.toHaveBeenCalled();
+  });
+
+  it('should disable incremental query when public dashboards are being used', async () => {
+    config.publicDashboardAccessToken = 'token';
+    const request = createDataRequest([{ expr: 'rate(up[5m])', refId: 'A' }]);
     await lastValueFrom(ds.query(request));
     expect(mockCache.requestInfo).not.toHaveBeenCalled();
   });

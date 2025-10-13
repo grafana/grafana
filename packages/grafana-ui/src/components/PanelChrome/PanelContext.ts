@@ -96,6 +96,7 @@ export interface PanelContext {
   /**
    * Optional supplier for internal data links. If not provided a link pointing to Explore will be generated.
    * @internal
+   * @deprecated Please use DataLinksContext instead. This property will be removed in next major.
    */
   dataLinkPostProcessor?: DataLinkPostProcessor;
 }

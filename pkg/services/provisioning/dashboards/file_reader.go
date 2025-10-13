@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -40,6 +41,7 @@ type FileReader struct {
 	dashboardStore               utils.DashboardStore
 	FoldersFromFilesStructure    bool
 	folderService                folder.Service
+	foldersInUnified             bool
 
 	mux                     sync.RWMutex
 	usageTracker            *usageTracker
@@ -79,17 +81,62 @@ func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.Dash
 
 // pollChanges periodically runs walkDisk based on interval specified in the config.
 func (fr *FileReader) pollChanges(ctx context.Context) {
-	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
+	interval := fr.Cfg.UpdateIntervalSeconds
+	if interval <= 10 { // the minimum time
+		err := fr.watchChanges(ctx)
+		if err == nil {
+			return // finished
+		}
+		fr.log.Warn("error watching folder: %w", err)
+		interval = 30
+	}
+
+	ticker := time.NewTicker(time.Duration(int64(time.Second) * interval))
 	for {
 		select {
 		case <-ticker.C:
 			if err := fr.walkDisk(ctx); err != nil {
-				fr.log.Error("failed to search for dashboards", "error", err)
+				fr.log.Error("failed to walk provisioned dashboards", "error", err)
 			}
 		case <-ctx.Done():
 			return
 		}
 	}
+}
+
+func (fr *FileReader) watchChanges(ctx context.Context) error {
+	watcher, err := local.NewFileWatcher(fr.resolvedPath(), func(name string) bool {
+		return strings.HasSuffix(name, ".json")
+	})
+	if err != nil {
+		return err
+	}
+
+	changed := false
+	events := make(chan string, 10)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case _, ok := <-events:
+				// channel closed
+				if !ok {
+					return
+				}
+				changed = true
+			case <-time.After(time.Second * 5): // 5s maximum refresh
+				if changed {
+					if err := fr.walkDisk(ctx); err != nil {
+						fr.log.Error("failed to walk provisioned dashboards", "error", err)
+					}
+					changed = false
+				}
+			}
+		}
+	}()
+	watcher.Watch(ctx, events)
+	return nil
 }
 
 // walkDisk traverses the file system for the defined path, reading dashboard definition files,
@@ -382,6 +429,14 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 		return 0, "", dashboards.ErrFolderInvalidUID
 	}
 
+	// When we expect folders in unified storage, they should have a manager indicated
+	if err == nil && result != nil && result.ManagedBy == "" && fr.foldersInUnified {
+		result, err = service.UpdateFolderWithManagedByAnnotation(ctx, result, fr.Cfg.Name)
+		if err != nil {
+			return 0, "", fmt.Errorf("unable to update provisioned folder")
+		}
+	}
+
 	// dashboard folder not found. create one.
 	if errors.Is(err, dashboards.ErrFolderNotFound) {
 		createCmd := &folder.CreateFolderCommand{
@@ -391,7 +446,7 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 			SignedInUser: user,
 		}
 
-		f, err := service.SaveFolderForProvisionedDashboards(ctx, createCmd)
+		f, err := service.SaveFolderForProvisionedDashboards(ctx, createCmd, fr.Cfg.Name)
 		if err != nil {
 			return 0, "", err
 		}
