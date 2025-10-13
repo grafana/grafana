@@ -5,7 +5,7 @@ import { wellFormedTree } from '../../../fixtures/folders';
 const [mockTree] = wellFormedTree();
 
 const getDashboardHandler = () =>
-  http.get<{ uid: string }>('/api/dashboards/uid/:uid', ({ params, request }) => {
+  http.get<{ uid: string }>('/api/dashboards/uid/:uid', ({ params }) => {
     const { uid } = params;
     const dashboard = mockTree.find((v) => v.item.uid === uid);
 

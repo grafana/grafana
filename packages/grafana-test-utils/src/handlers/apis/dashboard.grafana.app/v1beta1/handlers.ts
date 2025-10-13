@@ -19,9 +19,7 @@ const dashboardToAppPlatform = (dashboard: (typeof mockTree)[number]['item']) =>
         // TODO: Eventually generalise annotations in fixture data, as required by tests
         'grafana.app/folder': dashboard.kind === 'dashboard' ? dashboard.parentUID : undefined,
       },
-      labels: {
-        'grafana.app/deprecatedInternalID': '1234',
-      },
+      labels: {},
     },
     spec: {
       title: dashboard.title,

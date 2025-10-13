@@ -1,16 +1,15 @@
 import memoizeOne from 'memoize-one';
 import { useEffect, useState } from 'react';
 
-import { Dashboard } from '@grafana/schema';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardMeta } from 'app/types/dashboard';
+import { DashboardDTO } from 'app/types/dashboard';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 
-const convertToDashboardModel = memoizeOne((rawDashboard: { dashboard: Dashboard; meta: DashboardMeta }) => {
+const convertToDashboardModel = memoizeOne((dashboardDTO: DashboardDTO) => {
   // RTKQuery freezes all returned objects. DashboardModel constructor runs migrations which might change the internal object
   // Hence we need to add structuredClone to make a deep copy of the API response object
-  const { dashboard, meta } = structuredClone(rawDashboard);
+  const { dashboard, meta } = structuredClone(dashboardDTO);
   return new DashboardModel(dashboard, meta);
 });
 
