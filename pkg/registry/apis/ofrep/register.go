@@ -319,8 +319,12 @@ func writeResponse(statusCode int, result any, logger log.Logger, w http.Respons
 }
 
 func (b *APIBuilder) namespaceFromEvalCtx(body []byte) string {
-	// Extract namespace from request body without consuming it
+	// TODO: eval ctx should be added to span attributes, not log
+	// Adding it temporary for debugging
+	b.logger.Debug("evaluation context from request", "ctx", body)
+
 	var evalCtx struct {
+		// Extract namespace from request body without consuming it
 		Context struct {
 			Namespace string `json:"namespace"`
 		} `json:"context"`
@@ -330,6 +334,9 @@ func (b *APIBuilder) namespaceFromEvalCtx(body []byte) string {
 		b.logger.Debug("Failed to unmarshal evaluation context", "error", err, "body", string(body))
 		return ""
 	}
+
+	// Adding it temporary for debugging
+	b.logger.Debug("evaluation context decoded", "namespace", evalCtx.Context.Namespace)
 
 	if evalCtx.Context.Namespace == "" {
 		b.logger.Debug("namespace missing from evaluation context", "namespace", evalCtx.Context.Namespace)
