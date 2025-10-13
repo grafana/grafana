@@ -76,30 +76,3 @@ exports[`RuleEditor cloud can create a new cloud alert 1`] = `
   },
 ]
 `;
-
-exports[`RuleEditor cloud should keep existing rule interval duration when attaching new rules 1`] = `
-[
-  {
-    "body": "",
-    "headers": [
-      [
-        "accept",
-        "application/json, text/plain, */*",
-      ],
-    ],
-    "method": "GET",
-    "url": "http://localhost/api/datasources/proxy/uid/mimir/api/v1/status/buildinfo",
-  },
-  {
-    "body": "",
-    "headers": [
-      [
-        "accept",
-        "application/json, text/plain, */*",
-      ],
-    ],
-    "method": "GET",
-    "url": "http://localhost/api/ruler/mimir/api/v1/rules?subtype=mimir",
-  },
-]
-`;
