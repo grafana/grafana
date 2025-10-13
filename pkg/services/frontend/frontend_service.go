@@ -46,7 +46,7 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 		return nil, err
 	}
 
-	index, err := NewIndexProvider(cfg, assetsManifest)
+	index, err := NewIndexProvider(cfg, assetsManifest, license)
 	if err != nil {
 		return nil, err
 	}

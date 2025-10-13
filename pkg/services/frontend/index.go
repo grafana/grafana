@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -51,10 +52,28 @@ var (
 	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `*.html`))
 )
 
-func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets) (*IndexProvider, error) {
+func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets, license licensing.Licensing) (*IndexProvider, error) {
 	t := htmlTemplates.Lookup("index.html")
 	if t == nil {
 		return nil, fmt.Errorf("missing index template")
+	}
+
+	logger := logging.DefaultLogger.With("logger", "index-provider")
+
+	version := setting.BuildVersion
+	commit := setting.BuildCommit
+	commitShort := getShortCommitHash(setting.BuildCommit, 10)
+	buildstamp := setting.BuildStamp
+	versionString := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, version, commitShort)
+
+	buildInfo := dtos.FrontendSettingsBuildInfoDTO{
+		Version:       version,
+		VersionString: versionString,
+		Commit:        commit,
+		CommitShort:   commitShort,
+		Buildstamp:    buildstamp,
+		Edition:       license.Edition(),
+		Env:           cfg.Env,
 	}
 
 	// subset of frontend settings needed for the login page
@@ -87,30 +106,34 @@ func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets) (*
 		RudderstackWriteKey:                 cfg.RudderstackWriteKey,
 		TrustedTypesDefaultPolicyEnabled:    (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for")),
 		VerifyEmailEnabled:                  cfg.VerifyEmailEnabled,
+		BuildInfo:                           buildInfo,
 	}
 
-	defaultUser := dtos.CurrentUser{}
+	indexViewData := IndexViewData{
+		AppTitle:     "Grafana",
+		AppSubUrl:    cfg.AppSubURL, // Based on the request?
+		BuildVersion: cfg.BuildVersion,
+		BuildCommit:  cfg.BuildCommit,
+		Config:       cfg,
+
+		CSPEnabled:           cfg.CSPEnabled,
+		CSPContent:           cfg.CSPTemplate,
+		CSPReportOnlyContent: cfg.CSPReportOnlyTemplate,
+
+		IsDevelopmentEnv: cfg.Env == setting.Dev,
+
+		Assets:      assetsManifest,
+		Settings:    frontendSettings,
+		DefaultUser: dtos.CurrentUser{},
+	}
+
+	processIndexViewData(&indexViewData)
+	logger.Info("josh index view data processed by hooks", "versionString", buildInfo.VersionString, "indexViewDataVersionString", indexViewData.Settings.BuildInfo.VersionString)
 
 	return &IndexProvider{
-		log:   logging.DefaultLogger.With("logger", "index-provider"),
+		log:   logger,
 		index: t,
-		data: IndexViewData{
-			AppTitle:     "Grafana",
-			AppSubUrl:    cfg.AppSubURL, // Based on the request?
-			BuildVersion: cfg.BuildVersion,
-			BuildCommit:  cfg.BuildCommit,
-			Config:       cfg,
-
-			CSPEnabled:           cfg.CSPEnabled,
-			CSPContent:           cfg.CSPTemplate,
-			CSPReportOnlyContent: cfg.CSPReportOnlyTemplate,
-
-			IsDevelopmentEnv: cfg.Env == setting.Dev,
-
-			Assets:      assetsManifest,
-			Settings:    frontendSettings,
-			DefaultUser: defaultUser,
-		},
+		data:  indexViewData,
 	}, nil
 }
 
@@ -150,4 +173,11 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		}
 		panic(fmt.Sprintf("Error rendering index\n %s", err.Error()))
 	}
+}
+
+func getShortCommitHash(commitHash string, maxLength int) string {
+	if len(commitHash) > maxLength {
+		return commitHash[:maxLength]
+	}
+	return commitHash
 }
