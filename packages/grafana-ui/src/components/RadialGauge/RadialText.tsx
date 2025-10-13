@@ -53,16 +53,20 @@ export function RadialText({
   const showName = textMode === 'name' || textMode === 'value_and_name';
   const maxTextWidth = radius * 2 - barWidth - radius / 7;
 
-  let maxValueHeight = 0.6 * Math.pow(radius, 0.92);
+  // Not sure where this comes from but svg text is not using body line-height
+  const lineHeight = 1.21;
+  const valueWidthToRadiusFactor = 0.6;
+  const nameToHeightFactor = 0.3;
+  const largeRadiusScalingDecay = 0.92;
+
+  // This pow 0.92 factor is to create a decay so the font size does not become rediculously large for very large panels
+  let maxValueHeight = valueWidthToRadiusFactor * Math.pow(radius, largeRadiusScalingDecay);
   let maxNameHeight = radius / 4;
 
   if (showValue && showName) {
-    maxValueHeight = 0.6 * Math.pow(radius, 0.92);
-    maxNameHeight = 0.3 * Math.pow(radius, 0.92);
+    maxValueHeight = valueWidthToRadiusFactor * Math.pow(radius, largeRadiusScalingDecay);
+    maxNameHeight = nameToHeightFactor * Math.pow(radius, largeRadiusScalingDecay);
   }
-
-  // Not sure where this comes from but svg text is not using body line-height
-  const lineHeight = 1.21;
 
   const valueFontSize = calculateFontSize(
     valueToAlignTo,

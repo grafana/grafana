@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 523,
+  "id": 525,
   "links": [],
   "panels": [
     {
@@ -602,419 +602,6 @@
         "x": 0,
         "y": 13
       },
-      "id": 24,
-      "panels": [],
-      "title": "Thresholds",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 65
-              },
-              {
-                "color": "red",
-                "value": 85
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 6,
-        "x": 0,
-        "y": 14
-      },
-      "id": 25,
-      "maxDataPoints": 20,
-      "options": {
-        "barWidthFactor": 0.9,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": false,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
-        "showThresholdMarkers": true,
-        "sparkline": false
-      },
-      "pluginVersion": "12.2.0-pre",
-      "targets": [
-        {
-          "alias": "1",
-          "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
-          },
-          "refId": "A",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "1,20,90,30,5,70"
-        }
-      ],
-      "title": "Plain thresholds",
-      "type": "radialbar"
-    },
-    {
-      "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 65
-              },
-              {
-                "color": "red",
-                "value": 85
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 6,
-        "x": 6,
-        "y": 14
-      },
-      "id": 26,
-      "maxDataPoints": 20,
-      "options": {
-        "barWidthFactor": 0.72,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": false,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "segmentCount": 37,
-        "segmentSpacing": 0.19,
-        "shape": "gauge",
-        "showThresholdMarkers": true,
-        "sparkline": false
-      },
-      "pluginVersion": "12.2.0-pre",
-      "targets": [
-        {
-          "alias": "1",
-          "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
-          },
-          "refId": "A",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "1,20,90,30,5,70"
-        }
-      ],
-      "title": "Thresholds segmented",
-      "type": "radialbar"
-    },
-    {
-      "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 65
-              },
-              {
-                "color": "red",
-                "value": 85
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 6,
-        "x": 12,
-        "y": 14
-      },
-      "id": 29,
-      "maxDataPoints": 20,
-      "options": {
-        "barWidthFactor": 0.72,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": false,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "scheme",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "segmentCount": 62,
-        "segmentSpacing": 0.19,
-        "shape": "gauge",
-        "showThresholdMarkers": true,
-        "sparkline": false
-      },
-      "pluginVersion": "12.2.0-pre",
-      "targets": [
-        {
-          "alias": "1",
-          "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
-          },
-          "refId": "A",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "1,20,90,30,5,70"
-        }
-      ],
-      "title": "Segmented + Scheme color mode",
-      "type": "radialbar"
-    },
-    {
-      "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 65
-              },
-              {
-                "color": "red",
-                "value": 85
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 0,
-        "y": 20
-      },
-      "id": 27,
-      "maxDataPoints": 20,
-      "options": {
-        "barWidthFactor": 0.43,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": false,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "segmentCount": 1,
-        "segmentSpacing": 0.19,
-        "shape": "circle",
-        "showThresholdMarkers": true,
-        "sparkline": false
-      },
-      "pluginVersion": "12.2.0-pre",
-      "targets": [
-        {
-          "alias": "1",
-          "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
-          },
-          "refId": "A",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "1,20,90,30,5,70"
-        }
-      ],
-      "title": "Thresholds circle",
-      "type": "radialbar"
-    },
-    {
-      "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 65
-              },
-              {
-                "color": "red",
-                "value": 85
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 6,
-        "y": 20
-      },
-      "id": 28,
-      "maxDataPoints": 20,
-      "options": {
-        "barWidthFactor": 0.72,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": false,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "segmentCount": 62,
-        "segmentSpacing": 0.19,
-        "shape": "circle",
-        "showThresholdMarkers": true,
-        "sparkline": false
-      },
-      "pluginVersion": "12.2.0-pre",
-      "targets": [
-        {
-          "alias": "1",
-          "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
-          },
-          "refId": "A",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "1,20,90,30,5,70"
-        }
-      ],
-      "title": "Thresholds circle segmented",
-      "type": "radialbar"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 27
-      },
       "id": 17,
       "panels": [],
       "title": "Bar width",
@@ -1053,7 +640,7 @@
         "h": 6,
         "w": 5,
         "x": 0,
-        "y": 28
+        "y": 14
       },
       "id": 18,
       "maxDataPoints": 20,
@@ -1133,7 +720,7 @@
         "h": 6,
         "w": 5,
         "x": 5,
-        "y": 28
+        "y": 14
       },
       "id": 19,
       "maxDataPoints": 20,
@@ -1213,7 +800,7 @@
         "h": 6,
         "w": 5,
         "x": 10,
-        "y": 28
+        "y": 14
       },
       "id": 20,
       "maxDataPoints": 20,
@@ -1293,7 +880,7 @@
         "h": 6,
         "w": 5,
         "x": 15,
-        "y": 28
+        "y": 14
       },
       "id": 21,
       "maxDataPoints": 20,
@@ -1338,6 +925,419 @@
         }
       ],
       "title": "Bar width 0,8",
+      "type": "radialbar"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "id": 24,
+      "panels": [],
+      "title": "Thresholds",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 65
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 21
+      },
+      "id": 25,
+      "maxDataPoints": 20,
+      "options": {
+        "barWidthFactor": 0.9,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "rounded": false,
+          "spotlight": false
+        },
+        "gradient": "none",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "gauge",
+        "showThresholdMarkers": true,
+        "sparkline": false
+      },
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "alias": "1",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,70"
+        }
+      ],
+      "title": "Plain thresholds",
+      "type": "radialbar"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 65
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 21
+      },
+      "id": 26,
+      "maxDataPoints": 20,
+      "options": {
+        "barWidthFactor": 0.72,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "rounded": false,
+          "spotlight": false
+        },
+        "gradient": "none",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 37,
+        "segmentSpacing": 0.19,
+        "shape": "gauge",
+        "showThresholdMarkers": true,
+        "sparkline": false
+      },
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "alias": "1",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,70"
+        }
+      ],
+      "title": "Thresholds segmented",
+      "type": "radialbar"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 65
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 5,
+        "x": 12,
+        "y": 21
+      },
+      "id": 29,
+      "maxDataPoints": 20,
+      "options": {
+        "barWidthFactor": 0.72,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "rounded": false,
+          "spotlight": false
+        },
+        "gradient": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 46,
+        "segmentSpacing": 0.19,
+        "shape": "gauge",
+        "showThresholdMarkers": true,
+        "sparkline": false
+      },
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "alias": "1",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,70"
+        }
+      ],
+      "title": "Segmented + gradient",
+      "type": "radialbar"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 65
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 27
+      },
+      "id": 27,
+      "maxDataPoints": 20,
+      "options": {
+        "barWidthFactor": 0.43,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "rounded": false,
+          "spotlight": false
+        },
+        "gradient": "none",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 1,
+        "segmentSpacing": 0.19,
+        "shape": "circle",
+        "showThresholdMarkers": true,
+        "sparkline": false
+      },
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "alias": "1",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,70"
+        }
+      ],
+      "title": "Thresholds circle",
+      "type": "radialbar"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 65
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 6,
+        "y": 27
+      },
+      "id": 28,
+      "maxDataPoints": 20,
+      "options": {
+        "barWidthFactor": 0.72,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "rounded": false,
+          "spotlight": false
+        },
+        "gradient": "none",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 62,
+        "segmentSpacing": 0.19,
+        "shape": "circle",
+        "showThresholdMarkers": true,
+        "sparkline": false
+      },
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "alias": "1",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,70"
+        }
+      ],
+      "title": "Thresholds circle segmented",
       "type": "radialbar"
     },
     {
@@ -1403,7 +1403,7 @@
           "spotlight": true
         },
         "glow": "both",
-        "gradient": "hue",
+        "gradient": "auto",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1437,94 +1437,7 @@
           "startValue": 50
         }
       ],
-      "title": "Gradient hue",
-      "type": "radialbar"
-    },
-    {
-      "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "fixedColor": "blue",
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 24,
-        "x": 0,
-        "y": 41
-      },
-      "id": 10,
-      "maxDataPoints": 20,
-      "options": {
-        "barWidth": 12,
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": true,
-          "centerGlow": true,
-          "rounded": true,
-          "spotlight": true
-        },
-        "glow": "both",
-        "gradient": "shade",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "circle",
-        "showThresholdMarkers": false,
-        "sparkline": false,
-        "spotlight": true
-      },
-      "pluginVersion": "12.2.0-pre",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
-          },
-          "hide": false,
-          "max": 98,
-          "min": 5,
-          "noise": 22,
-          "refId": "A",
-          "scenarioId": "random_walk",
-          "seriesCount": 5,
-          "spread": 12,
-          "startValue": 50
-        }
-      ],
-      "title": "Gradient Shade",
+      "title": "Auto gradient + classic palette",
       "type": "radialbar"
     },
     {
@@ -1563,7 +1476,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 47
+        "y": 41
       },
       "id": 11,
       "maxDataPoints": 20,
@@ -1611,7 +1524,7 @@
           "startValue": 50
         }
       ],
-      "title": "Gradient Scheme",
+      "title": "Continuous color scheme ",
       "type": "radialbar"
     },
     {
@@ -1620,7 +1533,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 47
       },
       "id": 12,
       "panels": [],
@@ -1664,7 +1577,7 @@
         "h": 7,
         "w": 4,
         "x": 0,
-        "y": 54
+        "y": 48
       },
       "id": 13,
       "maxDataPoints": 20,
@@ -1752,7 +1665,7 @@
         "h": 7,
         "w": 5,
         "x": 4,
-        "y": 54
+        "y": 48
       },
       "id": 14,
       "maxDataPoints": 20,
@@ -1840,7 +1753,7 @@
         "h": 7,
         "w": 5,
         "x": 9,
-        "y": 54
+        "y": 48
       },
       "id": 15,
       "maxDataPoints": 20,
@@ -1927,7 +1840,7 @@
         "h": 7,
         "w": 6,
         "x": 14,
-        "y": 54
+        "y": 48
       },
       "id": 16,
       "maxDataPoints": 20,

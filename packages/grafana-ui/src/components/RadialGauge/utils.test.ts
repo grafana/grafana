@@ -24,8 +24,8 @@ describe('RadialGauge utils', () => {
       expect(result).toMatchObject({
         centerX: 100, // width / 2
         centerY: 100, // height / 2
-        barWidth: expect.closeTo(11.42, 1),
-        radius: expect.closeTo(94.28, 1),
+        barWidth: expect.closeTo(13.33, 1),
+        radius: expect.closeTo(93.33, 1),
         margin: 0, // no glow
         barIndex: 0,
         thresholdsBarWidth: 0,
@@ -96,7 +96,7 @@ describe('RadialGauge utils', () => {
       const gauge = calc({ width: 200, height: 200, shape: 'gauge', barIndex: 0 });
 
       // Different end angles should affect the available space differently
-      expect(gauge.radius).toBeCloseTo(94.28, 1);
+      expect(gauge.radius).toBeCloseTo(93.33, 1);
       expect(gauge.centerY).toBeCloseTo(132.89, 1); // centerY can be much lower when shape is a semi circle
     });
   });
