@@ -7,6 +7,7 @@ export const AGENTS_MAIN_COLUMNS = [
   'type',
   'status',
   'is_connected',
+  'disabled',
 ];
 
 export const AGENT_LABELS_SKIP_KEYS: string[] = [

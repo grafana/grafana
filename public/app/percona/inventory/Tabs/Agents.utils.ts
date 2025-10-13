@@ -104,5 +104,14 @@ export const getAgentStatusText = (status: ServiceAgentStatus): string => capita
 export const beautifyAgentType = (type: AgentType): string =>
   type.replace(/^\w/, (c) => c.toUpperCase()).replace(/[_-]/g, ' ');
 
-export const getAgentStatusColor = (status: ServiceAgentStatus): BadgeColor =>
-  status === ServiceAgentStatus.STARTING || status === ServiceAgentStatus.RUNNING ? 'green' : 'red';
+export const getAgentStatusColor = (status: ServiceAgentStatus): BadgeColor => {
+  if (status === ServiceAgentStatus.STARTING || status === ServiceAgentStatus.RUNNING) {
+    return 'green';
+  }
+
+  if (status === ServiceAgentStatus.DONE) {
+    return 'darkgrey';
+  }
+
+  return 'red';
+};

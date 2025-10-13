@@ -139,7 +139,7 @@ export const NodesTab = () => {
           <StatusLink
             type="nodes"
             strippedId={row.original.nodeId === 'pmm-server' ? 'pmm-server' : row.original.nodeId}
-            agentsStatus={value}
+            agentsStatus={value as MonitoringStatus}
           />
         ),
         type: FilterFieldTypes.RADIO_BUTTON,

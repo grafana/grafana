@@ -1,5 +1,7 @@
+import { MonitoringStatus } from '../../Inventory.types';
+
 export interface StatusLinkProps {
-  agentsStatus?: string;
+  agentsStatus?: MonitoringStatus;
   strippedId: string;
   type: 'services' | 'nodes';
 }
