@@ -92,7 +92,7 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
   const PanelComponent = plugin.panel;
 
   return (
-    <ErrorBoundaryAlert dependencies={[plugin, data]}>
+    <ErrorBoundaryAlert boundaryName="panel-renderer" dependencies={[plugin, data]}>
       <PluginContextProvider meta={plugin.meta}>
         <PanelComponent
           id={1}
