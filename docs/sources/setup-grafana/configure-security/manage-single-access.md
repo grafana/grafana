@@ -50,7 +50,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION/administration/data-source-management/teamlbac
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/label-access-policies  
+      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/label-access-policies
 ---
 
 # Manage multi-team access in a single Grafana instance
