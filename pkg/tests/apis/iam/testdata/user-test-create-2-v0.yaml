@@ -2,10 +2,10 @@ apiVersion: iam.grafana.app/v0alpha1
 kind: User
 metadata:
   namespace: default
-  name: abcdefghijkl
+  name: user2
 spec:
-  email: testuser1@example123.com
-  login: testuser1
-  name: Test User 1
+  email: testuser2@example.com
+  login: testuser2
+  name: Test User 2
   provisioned: false
-  role: None
+  role: Viewer
