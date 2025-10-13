@@ -80,7 +80,7 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 }
 
 func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResponse, error) {
-	u, err := url.JoinPath(j.url, "/api/v3/traces")
+	u, err := url.JoinPath(j.url, "/api/traces")
 	if err != nil {
 		return []TraceResponse{}, backend.DownstreamError(fmt.Errorf("failed to join url path: %w", err))
 	}
@@ -176,8 +176,7 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 		return trace, backend.DownstreamError(fmt.Errorf("traceID is empty"))
 	}
 
-	traceUrl, err := url.JoinPath(j.url, "/api/v3/traces", url.QueryEscape(traceID))
-	// traceUrl, err := url.JoinPath(j.url, "/api/traces", url.QueryEscape(traceID))
+	traceUrl, err := url.JoinPath(j.url, "/api/traces", url.QueryEscape(traceID))
 	if err != nil {
 		return trace, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
 	}
