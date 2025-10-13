@@ -3,10 +3,10 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 
-import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
-import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../utils/dashboard';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../../utils/dashboard';
 
-import DashboardEmpty, { Props } from './DashboardEmpty';
+import DashboardEmpty, { type Props } from './DashboardEmpty';
 
 jest.mock('app/types/store', () => ({
   ...jest.requireActual('app/types/store'),
