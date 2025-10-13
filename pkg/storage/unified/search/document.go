@@ -65,6 +65,11 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 		}, nil
 	})
 
+	users, err := GetUserBuilder()
+	if err != nil {
+		return nil, err
+	}
+
 	return []resource.DocumentBuilderInfo{
 		// The default builder
 		{
@@ -72,5 +77,7 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 		},
 		// Dashboard builder
 		dashboards,
+		// User builder
+		users,
 	}, err
 }
