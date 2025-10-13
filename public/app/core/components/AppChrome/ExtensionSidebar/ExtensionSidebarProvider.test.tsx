@@ -60,6 +60,7 @@ jest.mock('@grafana/runtime', () => ({
         title: mockComponent.title,
       },
     ],
+    isLoading: false,
   })),
 }));
 
