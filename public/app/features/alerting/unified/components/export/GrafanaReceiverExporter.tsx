@@ -1,7 +1,5 @@
 import { useState } from 'react';
-
-import { t } from '@grafana/i18n';
-import { LoadingPlaceholder } from '@grafana/ui';
+import { useToggle } from 'react-use';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
@@ -13,33 +11,39 @@ interface GrafanaReceiverExportPreviewProps {
   exportFormat: ExportFormats;
   onClose: () => void;
   receiverName: string;
-  decrypt: boolean;
 }
 
-const GrafanaReceiverExportPreview = ({
-  receiverName,
-  decrypt,
-  exportFormat,
-  onClose,
-}: GrafanaReceiverExportPreviewProps) => {
-  const { currentData: receiverDefinition = '', isFetching } = alertRuleApi.useExportReceiverQuery({
+const GrafanaReceiverExportPreview = ({ receiverName, exportFormat, onClose }: GrafanaReceiverExportPreviewProps) => {
+  const [shouldDecrypt, toggleDecrypt] = useToggle(false);
+
+  const {
+    currentData: receiverDefinition,
+    isFetching,
+    isSuccess,
+  } = alertRuleApi.useExportReceiverQuery({
     receiverName: receiverName,
-    decrypt: decrypt,
+    decrypt: shouldDecrypt,
     format: exportFormat,
   });
 
   const downloadFileName = `cp-${receiverName}-${new Date().getTime()}`;
 
+  let textContents = '';
   if (isFetching) {
-    return <LoadingPlaceholder text={t('alerting.grafana-receiver-export-preview.text-loading', 'Loading....')} />;
+    textContents = t('alerting.grafana-receivers-export-preview.text-loading', 'Loading....');
+  } else if (isSuccess) {
+    textContents = receiverDefinition;
   }
 
   return (
     <FileExportPreview
+      supportsDecryption={true}
       format={exportFormat}
-      textDefinition={receiverDefinition}
+      textDefinition={textContents}
       downloadFileName={downloadFileName}
       onClose={onClose}
+      decrypt={shouldDecrypt}
+      onToggleDecrypt={toggleDecrypt}
     />
   );
 };
@@ -47,10 +51,9 @@ const GrafanaReceiverExportPreview = ({
 interface GrafanaReceiverExporterProps {
   onClose: () => void;
   receiverName: string;
-  decrypt: boolean;
 }
 
-export const GrafanaReceiverExporter = ({ onClose, receiverName, decrypt }: GrafanaReceiverExporterProps) => {
+export const GrafanaReceiverExporter = ({ onClose, receiverName }: GrafanaReceiverExporterProps) => {
   const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
   return (
@@ -60,12 +63,7 @@ export const GrafanaReceiverExporter = ({ onClose, receiverName, decrypt }: Graf
       onClose={onClose}
       formatProviders={Object.values(allGrafanaExportProviders)}
     >
-      <GrafanaReceiverExportPreview
-        receiverName={receiverName}
-        decrypt={decrypt}
-        exportFormat={activeTab}
-        onClose={onClose}
-      />
+      <GrafanaReceiverExportPreview receiverName={receiverName} exportFormat={activeTab} onClose={onClose} />
     </GrafanaExportDrawer>
   );
 };

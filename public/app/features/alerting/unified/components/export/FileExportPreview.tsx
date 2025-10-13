@@ -6,21 +6,62 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, ClipboardButton, CodeEditor, TextLink, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  ClipboardButton,
+  CodeEditor,
+  Field,
+  InlineField,
+  InlineFieldRow,
+  InlineFormLabel,
+  InlineLabel,
+  Label,
+  Stack,
+  Switch,
+  TextLink,
+  useStyles2,
+} from '@grafana/ui';
+
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { Spacer } from '../Spacer';
 
 import { ExportFormats, ExportProvider, ProvisioningType, allGrafanaExportProviders } from './providers';
 
-interface FileExportPreviewProps {
+type DecryptProps =
+  | {
+      supportsDecryption: true;
+      decrypt: boolean;
+      onToggleDecrypt: () => void;
+    }
+  | {
+      supportsDecryption?: false;
+      decrypt?: never;
+      onToggleDecrypt?: never;
+    };
+
+type FileExportPreviewProps = {
   format: ExportFormats;
   textDefinition: string;
 
   /*** Filename without extension ***/
   downloadFileName: string;
   onClose: () => void;
-}
+} & DecryptProps;
 
-export function FileExportPreview({ format, textDefinition, downloadFileName, onClose }: FileExportPreviewProps) {
+export function FileExportPreview({
+  format,
+  textDefinition,
+  downloadFileName,
+  supportsDecryption = false,
+  decrypt,
+  onToggleDecrypt,
+  onClose,
+}: FileExportPreviewProps) {
   const styles = useStyles2(fileExportPreviewStyles);
+  const [decryptSecretsSupported, decryptSecretsAllowed] = useAlertmanagerAbility(AlertmanagerAction.DecryptSecrets);
+  const canReadSecrets = decryptSecretsSupported && decryptSecretsAllowed;
+
   const provider = allGrafanaExportProviders[format];
 
   const onDownload = useCallback(() => {
@@ -59,6 +100,15 @@ export function FileExportPreview({ format, textDefinition, downloadFileName, on
         </AutoSizer>
       </div>
       <div className={styles.actions}>
+        {canReadSecrets && supportsDecryption && (
+          <Stack direction="row" alignItems="center">
+            <Switch id="toggleDecryption" onClick={onToggleDecrypt} value={decrypt} />
+            <label htmlFor="toggleDecryption">
+              {t('alerting.file-export-preview.label-decrypt-values', 'Show secret values')}
+            </label>
+          </Stack>
+        )}
+        <Spacer />
         <Button variant="secondary" onClick={onClose}>
           <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
         </Button>
