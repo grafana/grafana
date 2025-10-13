@@ -19,9 +19,15 @@ const mockComponent = {
   targets: [],
 };
 
+const mockDifferentComponent = {
+  title: 'Different Component',
+  description: 'Different Description',
+  targets: [],
+};
+
 const mockPluginMeta = {
   pluginId: 'grafana-investigations-app',
-  addedComponents: [mockComponent],
+  addedComponents: [mockComponent, mockDifferentComponent],
   addedLinks: [],
 };
 
@@ -419,7 +425,10 @@ describe('ExtensionSidebarProvider', () => {
 
     act(() => {
       // Find the ToggleExtensionSidebarEvent subscriber
-      const toggleEventSubscriberCall = subscribeSpy.mock.calls.find((call) => call[0] === ToggleExtensionSidebarEvent);
+      const toggleEventSubscriberCall = subscribeSpy.mock.calls
+        .slice()
+        .reverse()
+        .find((call) => call[0] === ToggleExtensionSidebarEvent);
       expect(toggleEventSubscriberCall).toBeDefined();
       const [, subscriberFn] = toggleEventSubscriberCall!;
 
@@ -466,7 +475,10 @@ describe('ExtensionSidebarProvider', () => {
 
     act(() => {
       // Find the ToggleExtensionSidebarEvent subscriber
-      const toggleEventSubscriberCall = subscribeSpy.mock.calls.find((call) => call[0] === ToggleExtensionSidebarEvent);
+      const toggleEventSubscriberCall = subscribeSpy.mock.calls
+        .slice()
+        .reverse()
+        .find((call) => call[0] === ToggleExtensionSidebarEvent);
       expect(toggleEventSubscriberCall).toBeDefined();
       const [, subscriberFn] = toggleEventSubscriberCall!;
 

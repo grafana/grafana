@@ -38,6 +38,7 @@ export class KeybindingSrv {
   }
   /** string for VizPanel key and number for panelId */
   private panelId: string | number | null = null;
+
   clearAndInitGlobalBindings(route: RouteDescriptor) {
     mousetrap.reset();
 
