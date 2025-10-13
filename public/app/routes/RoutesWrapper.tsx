@@ -9,6 +9,7 @@ import { AppChrome } from '../core/components/AppChrome/AppChrome';
 import { AppChromeExtensionPoint } from '../core/components/AppChrome/AppChromeExtensionPoint';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
+import { EchoSrvLocationReporter } from '../core/services/echo/EchoSrvLocation';
 import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
 
 function ExtraProviders(props: { children: ReactNode; providers: Array<ComponentType<{ children: ReactNode }>> }) {
@@ -28,6 +29,8 @@ export function RouterWrapper(props: RouterWrapperProps) {
     <Router history={locationService.getHistory()}>
       <LocationServiceProvider service={locationService}>
         <CompatRouter>
+          <EchoSrvLocationReporter />
+
           <QueriesDrawerContextProvider>
             <ExtraProviders providers={props.providers}>
               <ModalsContextProvider>
