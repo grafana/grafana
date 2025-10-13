@@ -2173,6 +2173,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzZanzanaSync",
+        "resourceVersion": "1758887751768",
+        "creationTimestamp": "2025-09-26T09:35:02Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-26 11:55:51.768754 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesCorrelations",
         "resourceVersion": "1757513374180",
         "creationTimestamp": "2025-09-10T14:09:34Z"
@@ -2255,6 +2272,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesZanzanaPopulate",
+        "resourceVersion": "1758879077577",
+        "creationTimestamp": "2025-09-26T09:31:17Z",
+        "deletionTimestamp": "2025-09-26T09:35:02Z"
+      },
+      "spec": {
+        "description": "Populate Zanzana on AuthZ CRDs creation or update",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
