@@ -97,10 +97,18 @@ async function initFaroBackend() {
 
   registerEchoBackend(
     new GrafanaJavascriptAgentBackend({
-      ...config.grafanaJavascriptAgent,
       buildInfo: config.buildInfo,
       userIdentifier: contextSrv.user.analytics.identifier,
       ignoreUrls: rudderstackUrls,
+
+      apiKey: config.grafanaJavascriptAgent.apiKey,
+      customEndpoint: config.grafanaJavascriptAgent.customEndpoint,
+      consoleInstrumentalizationEnabled: config.grafanaJavascriptAgent.consoleInstrumentalizationEnabled,
+      performanceInstrumentalizationEnabled: config.grafanaJavascriptAgent.performanceInstrumentalizationEnabled,
+      cspInstrumentalizationEnabled: config.grafanaJavascriptAgent.cspInstrumentalizationEnabled,
+      tracingInstrumentalizationEnabled: config.grafanaJavascriptAgent.tracingInstrumentalizationEnabled,
+      webVitalsAttribution: config.grafanaJavascriptAgent.webVitalsAttribution,
+      internalLoggerLevel: config.grafanaJavascriptAgent.internalLoggerLevel,
     })
   );
 }
