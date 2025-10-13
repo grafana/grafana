@@ -1,4 +1,4 @@
-import { each, find, findIndex, flattenDeep, isArray, isBoolean, isNumber, isString, map, max, some } from 'lodash';
+import { each, find, findIndex, flattenDeep, isArray, isBoolean, isString, map, max, some } from 'lodash';
 
 import {
   AnnotationQuery,
@@ -15,7 +15,6 @@ import {
   isDataSourceRef,
   isEmptyObject,
   MappingType,
-  PanelPlugin,
   ReducerID,
   SpecialValueMatch,
   standardEditorsRegistry,
@@ -33,7 +32,6 @@ import { DataTransformerConfig } from '@grafana/schema';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
 import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/internal';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
-import { config } from 'app/core/config';
 import {
   DEFAULT_PANEL_SPAN,
   DEFAULT_ROW_HEIGHT,
@@ -53,8 +51,6 @@ import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
 import { CloudWatchMetricsQuery, LegacyAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
-import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 
 import {
   migrateCloudWatchQuery,
@@ -233,17 +229,6 @@ export class DashboardMigrator {
       if (old.nav && old.nav.length) {
         this.dashboard.timepicker = old.nav[0];
       }
-
-      // ensure query refIds
-      panelUpgrades.push((panel: any) => {
-        each(panel.targets, (target) => {
-          if (!target.refId) {
-            target.refId = panel.getNextQueryLetter && panel.getNextQueryLetter();
-          }
-        });
-
-        return panel;
-      });
     }
 
     if (oldVersion < 8 && finalTargetVersion >= 8) {
@@ -293,23 +278,8 @@ export class DashboardMigrator {
 
     // schema version 9 changes
     if (oldVersion < 9 && finalTargetVersion >= 9) {
-      // move aliasYAxis changes
-      panelUpgrades.push((panel: PanelModel) => {
-        if (panel.type !== 'singlestat' && panel.thresholds !== '') {
-          return panel;
-        }
-
-        if (panel.thresholds) {
-          const k = panel.thresholds.split(',');
-
-          if (k.length >= 3) {
-            k.shift();
-            panel.thresholds = k.join(',');
-          }
-        }
-
-        return panel;
-      });
+      // singlestat panel is automigrated to stat panel
+      // see autoMigrateAngular map in public/app/features/dashboard/state/PanelModel.ts
     }
 
     // schema version 10 changes
@@ -351,124 +321,9 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 12 && finalTargetVersion >= 12) {
-      // update graph yaxes changes
-      panelUpgrades.push((panel: any) => {
-        if (panel.type !== 'graph') {
-          return panel;
-        }
-        if (!panel.grid) {
-          return panel;
-        }
-
-        if (!panel.yaxes) {
-          panel.yaxes = [
-            {
-              show: panel['y-axis'],
-              min: panel.grid.leftMin,
-              max: panel.grid.leftMax,
-              logBase: panel.grid.leftLogBase,
-              format: panel.y_formats[0],
-              label: panel.leftYAxisLabel,
-            },
-            {
-              show: panel['y-axis'],
-              min: panel.grid.rightMin,
-              max: panel.grid.rightMax,
-              logBase: panel.grid.rightLogBase,
-              format: panel.y_formats[1],
-              label: panel.rightYAxisLabel,
-            },
-          ];
-
-          panel.xaxis = {
-            show: panel['x-axis'],
-          };
-
-          delete panel.grid.leftMin;
-          delete panel.grid.leftMax;
-          delete panel.grid.leftLogBase;
-          delete panel.grid.rightMin;
-          delete panel.grid.rightMax;
-          delete panel.grid.rightLogBase;
-          delete panel.y_formats;
-          delete panel.leftYAxisLabel;
-          delete panel.rightYAxisLabel;
-          delete panel['y-axis'];
-          delete panel['x-axis'];
-        }
-
-        return panel;
-      });
-    }
-
     if (oldVersion < 13 && finalTargetVersion >= 13) {
-      // update graph yaxes changes
-      panelUpgrades.push((panel: any) => {
-        if (panel.type !== 'graph') {
-          return panel;
-        }
-        if (!panel.grid) {
-          return panel;
-        }
-
-        if (!panel.thresholds) {
-          panel.thresholds = [];
-        }
-        const t1: any = {},
-          t2: any = {};
-
-        if (panel.grid.threshold1 !== null) {
-          t1.value = panel.grid.threshold1;
-          if (panel.grid.thresholdLine) {
-            t1.line = true;
-            t1.lineColor = panel.grid.threshold1Color;
-            t1.colorMode = 'custom';
-          } else {
-            t1.fill = true;
-            t1.fillColor = panel.grid.threshold1Color;
-            t1.colorMode = 'custom';
-          }
-        }
-
-        if (panel.grid.threshold2 !== null) {
-          t2.value = panel.grid.threshold2;
-          if (panel.grid.thresholdLine) {
-            t2.line = true;
-            t2.lineColor = panel.grid.threshold2Color;
-            t2.colorMode = 'custom';
-          } else {
-            t2.fill = true;
-            t2.fillColor = panel.grid.threshold2Color;
-            t2.colorMode = 'custom';
-          }
-        }
-
-        if (isNumber(t1.value)) {
-          if (isNumber(t2.value)) {
-            if (t1.value > t2.value) {
-              t1.op = t2.op = 'lt';
-              panel.thresholds.push(t1);
-              panel.thresholds.push(t2);
-            } else {
-              t1.op = t2.op = 'gt';
-              panel.thresholds.push(t1);
-              panel.thresholds.push(t2);
-            }
-          } else {
-            t1.op = 'gt';
-            panel.thresholds.push(t1);
-          }
-        }
-
-        delete panel.grid.threshold1;
-        delete panel.grid.threshold1Color;
-        delete panel.grid.threshold2;
-        delete panel.grid.threshold2Color;
-        delete panel.grid.thresholdLine;
-
-        return panel;
-      });
+      // graph panel auto migrates to either barchart, bargauge, histogram or timeseries (all standard Grafana plugins)
+      // see public/app/features/dashboard/state/getPanelPluginToMigrateTo.ts
     }
 
     if (oldVersion < 14 && finalTargetVersion >= 14) {
@@ -693,14 +548,6 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 28 && finalTargetVersion >= 28) {
-      panelUpgrades.push((panel: PanelModel) => {
-        if (panel.type === 'singlestat') {
-          return migrateSinglestat(panel);
-        }
-
-        return panel;
-      });
-
       for (const variable of this.dashboard.templating.list) {
         if (variable.tags) {
           delete variable.tags;
@@ -1263,40 +1110,6 @@ function updateVariablesSyntax(text: string) {
     }
     return match;
   });
-}
-
-function migrateSinglestat(panel: PanelModel) {
-  // If   'grafana-singlestat-panel' exists, move to that
-  if (config.panels['grafana-singlestat-panel']) {
-    panel.type = 'grafana-singlestat-panel';
-    return panel;
-  }
-
-  let returnSaveModel = false;
-
-  if (!panel.changePlugin) {
-    returnSaveModel = true;
-    panel = new PanelModel(panel);
-  }
-
-  // To make sure PanelModel.isAngularPlugin logic thinks the current panel is angular
-  // And since this plugin no longer exist we just fake it here
-  panel.plugin = { angularPanelCtrl: {} } as PanelPlugin;
-
-  // Otheriwse use gauge or stat panel
-  if ((panel as any).gauge?.show) {
-    gaugePanelPlugin.meta = config.panels['gauge'];
-    panel.changePlugin(gaugePanelPlugin);
-  } else {
-    statPanelPlugin.meta = config.panels['stat'];
-    panel.changePlugin(statPanelPlugin);
-  }
-
-  if (returnSaveModel) {
-    return panel.getSaveModel();
-  }
-
-  return panel;
 }
 
 interface MigrateDatasourceNameOptions {

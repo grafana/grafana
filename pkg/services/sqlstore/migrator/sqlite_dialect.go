@@ -87,6 +87,17 @@ func (db *SQLite3) IndexCheckSQL(tableName, indexName string) (string, []any) {
 	return sql, args
 }
 
+func (db *SQLite3) ColumnCheckSQL(tableName, columnName string) (string, []any) {
+	// Use PRAGMA table_info to check if a column exists on a table. In SQLite, quoting with backticks inside
+	// pragma_table_info(<expr>) can be interpreted as an identifier/column. Instead, pass the table name as a
+	// string literal to avoid ambiguity. We cannot parameterize identifiers, but pragma_table_info accepts string
+	// literals, so we embed a single-quoted literal safely by replacing single quotes if any.
+	// Note: tableName is expected to be a trusted identifier from migrations.
+	safeTable := strings.ReplaceAll(tableName, "'", "''")
+	sql := "SELECT 1 FROM pragma_table_info('" + safeTable + "') WHERE name = ?"
+	return sql, []any{columnName}
+}
+
 func (db *SQLite3) DropIndexSQL(tableName string, index *Index) string {
 	quote := db.Quote
 	// var unique string
