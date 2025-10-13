@@ -416,11 +416,12 @@ describe('ExtensionSidebarProvider', () => {
     );
 
     // First open the sidebar manually
-    screen.getByText('Open Sidebar');
-    fireEvent.click(screen.getByText('Open Sidebar'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('Open Sidebar'));
+    });
 
-    expect(await screen.findByTestId('is-open')).toHaveTextContent('true');
-    expect(await screen.findByTestId('docked-component-id')).toHaveTextContent(componentId);
+    expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+    expect(screen.getByTestId('docked-component-id')).toHaveTextContent(componentId);
 
     act(() => {
       // Find the ToggleExtensionSidebarEvent subscriber
@@ -465,11 +466,12 @@ describe('ExtensionSidebarProvider', () => {
     );
 
     // First open the sidebar manually
-    screen.getByText('Open Sidebar');
-    fireEvent.click(screen.getByText('Open Sidebar'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('Open Sidebar'));
+    });
 
-    expect(await screen.findByTestId('is-open')).toHaveTextContent('true');
-    expect(await screen.findByTestId('docked-component-id')).toHaveTextContent(componentId);
+    expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+    expect(screen.getByTestId('docked-component-id')).toHaveTextContent(componentId);
 
     act(() => {
       // Find the ToggleExtensionSidebarEvent subscriber
