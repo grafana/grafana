@@ -21,8 +21,6 @@ type GlobalRoleBinding struct {
 
 	// Spec is the spec of the GlobalRoleBinding
 	Spec GlobalRoleBindingSpec `json:"spec" yaml:"spec"`
-
-	Status GlobalRoleBindingStatus `json:"status" yaml:"status"`
 }
 
 func (o *GlobalRoleBinding) GetSpec() any {
@@ -39,15 +37,11 @@ func (o *GlobalRoleBinding) SetSpec(spec any) error {
 }
 
 func (o *GlobalRoleBinding) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *GlobalRoleBinding) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,13 +49,6 @@ func (o *GlobalRoleBinding) GetSubresource(name string) (any, bool) {
 
 func (o *GlobalRoleBinding) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(GlobalRoleBindingStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type GlobalRoleBindingStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -233,7 +220,6 @@ func (o *GlobalRoleBinding) DeepCopyInto(dst *GlobalRoleBinding) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check
@@ -303,17 +289,5 @@ func (s *GlobalRoleBindingSpec) DeepCopy() *GlobalRoleBindingSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *GlobalRoleBindingSpec) DeepCopyInto(dst *GlobalRoleBindingSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of GlobalRoleBindingStatus
-func (s *GlobalRoleBindingStatus) DeepCopy() *GlobalRoleBindingStatus {
-	cpy := &GlobalRoleBindingStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies GlobalRoleBindingStatus into another GlobalRoleBindingStatus object
-func (s *GlobalRoleBindingStatus) DeepCopyInto(dst *GlobalRoleBindingStatus) {
 	resource.CopyObjectInto(dst, s)
 }

@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -118,7 +117,7 @@ func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 							ElementID:    1,
 							ConnectionID: 1,
 							Created:      res.Result[0].Created,
-							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+							CreatedBy: model.LibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
 								AvatarUrl: userInDbAvatar,

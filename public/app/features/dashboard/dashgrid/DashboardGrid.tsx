@@ -16,7 +16,7 @@ import { DashboardRow } from '../components/DashboardRow';
 import { DashboardModel } from '../state/DashboardModel';
 import { GridPos, PanelModel } from '../state/PanelModel';
 
-import DashboardEmpty from './DashboardEmpty';
+import DashboardEmpty from './DashboardEmpty/DashboardEmpty';
 import { DashboardPanel } from './DashboardPanel';
 
 export const PANEL_FILTER_VARIABLE = 'systemPanelFilterVar';

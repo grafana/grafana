@@ -1,0 +1,687 @@
+{
+  "__requires": [
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "8.0.0"
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "editable": false,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "hideControls": false,
+  "links": [
+    {
+      "icon": "external link",
+      "targetBlank": true,
+      "title": "External Documentation",
+      "type": "link",
+      "url": "https://example.com/docs"
+    }
+  ],
+  "panels": [
+    {
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "content": "This dashboard demonstrates various monitoring components for application observability and performance metrics.\n",
+        "mode": "markdown"
+      },
+      "title": "Application Monitoring",
+      "type": "text"
+    }
+  ],
+  "refresh": "10s",
+  "rows": [
+    {
+      "collapse": false,
+      "collapsed": false,
+      "height": "250px",
+      "panels": [
+        {
+          "gridPos": {
+            "h": 11,
+            "w": 24,
+            "x": 0,
+            "y": 5
+          },
+          "id": 6,
+          "options": {
+            "content": "This service handles background processing tasks for the application system. It manages various types of operations including data synchronization, resource management, and batch processing.\n\nSupported operation types:\n1. Sync: Synchronizes data between different systems\n2. Process: Handles batch data processing tasks\n3. Cleanup: Removes outdated or temporary resources\n4. Update: Applies configuration changes across services\n\nService dependencies:\n- Data API: For reading and writing application data\n- Configuration Service: For managing system settings\n- Queue Service: For handling task scheduling\n- Storage Service: For persistent data management\n- Auth Service: For authentication and authorization\n- Metrics Service: For collecting operational statistics\n",
+            "mode": "markdown"
+          },
+          "span": 0,
+          "title": "Service Overview",
+          "type": "text"
+        },
+        {
+          "gridPos": {
+            "h": 3,
+            "w": 24,
+            "x": 0,
+            "y": 16
+          },
+          "id": 7,
+          "options": {
+            "content": "Error monitoring helps identify issues in the system. This section displays error logs and success rates for operations.",
+            "mode": "markdown"
+          },
+          "span": 0,
+          "title": "Error Monitoring",
+          "type": "text"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": 0
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.95
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            }
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 3,
+            "x": 0,
+            "y": 19
+          },
+          "id": 8,
+          "span": 0,
+          "targets": [
+            {
+              "expr": "sum by (action) (app_jobs_processed_total{outcome=\"success\", cluster=\"$cluster\", namespace=\"default\"})\n/\nsum by (action) (app_jobs_processed_total{cluster=\"$cluster\", namespace=\"default\"})\n",
+              "legendFormat": "{{action}}"
+            }
+          ],
+          "title": "Job Success Rate",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${loki}"
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 10,
+            "x": 3,
+            "y": 19
+          },
+          "id": 9,
+          "options": {
+            "enableLogDetails": true,
+            "showTime": false,
+            "sortOrder": "Descending",
+            "wrapLogMessage": true
+          },
+          "span": 0,
+          "targets": [
+            {
+              "expr": "{namespace=\"default\", cluster=\"$cluster\", job=\"app-service\"} | logfmt | level=\"error\""
+            }
+          ],
+          "title": "Errors",
+          "type": "logs"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${loki}"
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 11,
+            "x": 13,
+            "y": 19
+          },
+          "id": 10,
+          "options": {
+            "enableLogDetails": true,
+            "showTime": false,
+            "sortOrder": "Descending",
+            "wrapLogMessage": true
+          },
+          "span": 0,
+          "targets": [
+            {
+              "expr": "{namespace=\"default\", cluster=\"$cluster\", job=\"app-service\"} | logfmt"
+            }
+          ],
+          "title": "All",
+          "type": "logs"
+        },
+        {
+          "gridPos": {
+            "h": 3,
+            "w": 24,
+            "x": 0,
+            "y": 28
+          },
+          "id": 11,
+          "options": {
+            "content": "Performance monitoring examines factors that affect system response times, including operation duration, queue lengths, and processing delays. This section provides metrics and traces for performance analysis.\n",
+            "mode": "markdown"
+          },
+          "span": 0,
+          "title": "Performance Analysis",
+          "type": "text"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom}"
+          },
+          "description": "Number of concurrent processing threads available for handling operations",
+          "gridPos": {
+            "h": 6,
+            "w": 5,
+            "x": 0,
+            "y": 31
+          },
+          "id": 12,
+          "span": 0,
+          "targets": [
+            {
+              "expr": "max(app_worker_threads_active{cluster=\"$cluster\", namespace=\"default\"})",
+              "instant": true
+            }
+          ],
+          "title": "Concurrent Job Drivers",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "${tempo}"
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 19,
+            "x": 5,
+            "y": 31
+          },
+          "id": 13,
+          "span": 0,
+          "targets": [
+            {
+              "filters": [
+                {
+                  "id": "span-name",
+                  "operator": "=",
+                  "scope": "span",
+                  "tag": "name",
+                  "value": [
+                    "provisioning.sync.process"
+                  ]
+                },
+                {
+                  "id": "k8s-cluster-name",
+                  "operator": "=",
+                  "scope": "resource",
+                  "tag": "k8s.cluster.name",
+                  "value": [
+                    "$cluster"
+                  ]
+                }
+              ],
+              "query": "{name=\"app.operation.process\"}",
+              "queryType": "traceqlSearch"
+            }
+          ],
+          "title": "Recent Operation Traces",
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom}"
+          },
+          "description": "Histogram showing p99, p95, p50, and p10 percentiles for job processing duration based on number of resources changed",
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 2
+                  },
+                  {
+                    "color": "red",
+                    "value": 5
+                  }
+                ]
+              },
+              "unit": "s"
+            }
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 8,
+            "x": 0,
+            "y": 55
+          },
+          "id": 14,
+          "span": 0,
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le, resources_changed_bucket, action)) and on(resources_changed_bucket, action) sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (resources_changed_bucket, action) > 0",
+              "legendFormat": "{{action}} q0.99 - size {{resources_changed_bucket}}",
+              "refId": "B"
+            },
+            {
+              "expr": "histogram_quantile(0.9, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le, resources_changed_bucket, action)) and on(resources_changed_bucket, action) sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (resources_changed_bucket, action) > 0",
+              "legendFormat": "{{action}} q0.95 - size {{resources_changed_bucket}}",
+              "refId": "C"
+            },
+            {
+              "expr": "histogram_quantile(0.5, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le, resources_changed_bucket, action)) and on(resources_changed_bucket, action) sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (resources_changed_bucket, action) > 0",
+              "legendFormat": "{{action}} q0.5 - size {{resources_changed_bucket}}",
+              "refId": "D"
+            },
+            {
+              "expr": "histogram_quantile(0.1, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le, resources_changed_bucket, action)) and on(resources_changed_bucket, action) sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (resources_changed_bucket, action) > 0",
+              "legendFormat": "{{action}} q0.1 - size {{resources_changed_bucket}}",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": "7d",
+          "title": "7d avg of job durations",
+          "transformations": [
+            {
+              "id": "reduce",
+              "options": {
+                "mode": "seriesToRows",
+                "reducers": [
+                  "mean"
+                ]
+              }
+            },
+            {
+              "id": "seriesToRows"
+            },
+            {
+              "id": "organize",
+              "options": {
+                "renameByName": {
+                  "Field": "Type",
+                  "Mean": "Avg Duration",
+                  "Metric": "Legend",
+                  "Value": "Duration"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom}"
+          },
+          "description": "Histogram showing p99, p95, p50, and p10 percentiles for job processing duration based on number of resources changed",
+          "gridPos": {
+            "h": 10,
+            "w": 16,
+            "x": 8,
+            "y": 55
+          },
+          "id": 15,
+          "span": 0,
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[5m])) by (le, resources_changed_bucket, action))",
+              "legendFormat": "{{action}} q0.99 - size {{resources_changed_bucket}}",
+              "refId": "B"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[5m])) by (le, resources_changed_bucket, action))",
+              "legendFormat": "{{action}} q0.95 - size {{resources_changed_bucket}}",
+              "refId": "C"
+            },
+            {
+              "expr": "histogram_quantile(0.5, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[5m])) by (le, resources_changed_bucket, action))",
+              "legendFormat": "{{action}} q0.5 - size {{resources_changed_bucket}}",
+              "refId": "D"
+            },
+            {
+              "expr": "histogram_quantile(0.1, sum(rate(app_operation_duration_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[5m])) by (le, resources_changed_bucket, action))",
+              "legendFormat": "{{action}} q0.1 - size {{resources_changed_bucket}}",
+              "refId": "E"
+            }
+          ],
+          "title": "Job Duration",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom}"
+          },
+          "description": "Total number of jobs waiting to be processed",
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 0,
+            "y": 65
+          },
+          "id": 16,
+          "span": 0,
+          "targets": [
+            {
+              "expr": "clamp_min(sum(app_operation_queue_size{cluster=\"$cluster\", namespace=\"default\"}), 0)",
+              "legendFormat": "Queue size"
+            }
+          ],
+          "title": "Queue Size",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            }
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 4,
+            "y": 65
+          },
+          "id": 17,
+          "span": 0,
+          "targets": [
+            {
+              "expr": "avg(histogram_quantile(0.5, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[7d])) by (le)))",
+              "legendFormat": "Queue size"
+            }
+          ],
+          "timeFrom": "7d",
+          "title": "7d avg Queue Wait Time",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom}"
+          },
+          "description": "How long a job is in the queue before being picked up",
+          "gridPos": {
+            "h": 5,
+            "w": 16,
+            "x": 8,
+            "y": 65
+          },
+          "id": 18,
+          "span": 0,
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[$__rate_interval])) by (le))",
+              "legendFormat": "q0.99",
+              "refId": "B"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[$__rate_interval])) by (le))",
+              "legendFormat": "q0.95",
+              "refId": "C"
+            },
+            {
+              "expr": "histogram_quantile(0.5, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[$__rate_interval])) by (le))",
+              "legendFormat": "q0.5",
+              "refId": "D"
+            },
+            {
+              "expr": "histogram_quantile(0.1, sum(rate(app_operation_queue_wait_seconds_bucket{cluster=\"$cluster\", namespace=\"default\"}[$__rate_interval])) by (le))",
+              "legendFormat": "q0.1",
+              "refId": "E"
+            }
+          ],
+          "title": "Queue Wait Time",
+          "type": "timeseries"
+        },
+        {
+          "gridPos": {
+            "h": 3,
+            "w": 24,
+            "x": 0,
+            "y": 52
+          },
+          "id": 19,
+          "options": {
+            "content": "Resource utilization monitoring for application containers",
+            "mode": "markdown"
+          },
+          "span": 0,
+          "title": "Resource Monitoring",
+          "type": "text"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom}"
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 7,
+            "x": 0,
+            "y": 55
+          },
+          "id": 20,
+          "span": 0,
+          "targets": [
+            {
+              "expr": "count by (cluster, channel)(label_replace(label_replace(kube_pod_container_info{namespace=\"default\", container=\"app-worker\", pod=~\"app-worker.*\", cluster=~\"$cluster\"}, \"version\", \"$1\", \"image\", \".+:(.+)\"), \"channel\", \"$1\", \"container\", \".+-(.+)\"))",
+              "legendFormat": "{{cluster}}"
+            }
+          ],
+          "title": "Running Pod(s)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom}"
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 8,
+            "x": 7,
+            "y": 55
+          },
+          "id": 21,
+          "span": 0,
+          "targets": [
+            {
+              "expr": "max(kube_pod_container_resource_requests{namespace=\"default\", resource=\"memory\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker.*\"})",
+              "legendFormat": "Memory Request"
+            },
+            {
+              "expr": "max(kube_pod_container_resource_limits{namespace=\"default\", resource=\"memory\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker.*\"})",
+              "legendFormat": "Memory Limit"
+            },
+            {
+              "expr": "max(container_memory_usage_bytes{namespace=\"default\",cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker.*\"}) by (pod)",
+              "legendFormat": "Container usage {{pod}}"
+            }
+          ],
+          "title": "Memory Utilization",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom}"
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 9,
+            "x": 15,
+            "y": 55
+          },
+          "id": 22,
+          "span": 0,
+          "targets": [
+            {
+              "expr": "sum(irate(container_cpu_usage_seconds_total{namespace=\"default\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker-.*\"}[$__rate_interval])) by (pod, container, cpu)",
+              "legendFormat": "Usage {{pod}}"
+            },
+            {
+              "expr": "sum(irate(container_cpu_cfs_throttled_seconds_total{namespace=\"default\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker-.*\"}[$__rate_interval])) by (pod, container)",
+              "legendFormat": "Throttling {{pod}}"
+            },
+            {
+              "expr": "max(kube_pod_container_resource_limits{namespace=\"default\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker-.*\", resource=\"cpu\"})",
+              "legendFormat": "CPU limit"
+            },
+            {
+              "expr": "max(kube_pod_container_resource_requests{namespace=\"default\", cluster=~\"$cluster\", container=\"app-worker\", pod=~\"app-worker-.*\", resource=\"cpu\"})",
+              "legendFormat": "CPU request"
+            }
+          ],
+          "title": "CPU Utilization",
+          "type": "timeseries"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "Application Service",
+      "titleSize": "h6"
+    }
+  ],
+  "schemaVersion": 15,
+  "style": "dark",
+  "tags": [
+    "as-code"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "value": "prometheus-datasource"
+        },
+        "hide": 0,
+        "label": "Data source",
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "value": "prometheus-datasource"
+        },
+        "name": "prom",
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "value": "loki-datasource"
+        },
+        "name": "loki",
+        "query": "loki",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "text": "tempo-datasource",
+          "value": "tempo-datasource"
+        },
+        "name": "tempo",
+        "query": "tempo",
+        "refresh": 1,
+        "regex": ".*tempo.*",
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "text": "demo-cluster",
+          "value": "demo-cluster"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom}"
+        },
+        "name": "cluster",
+        "query": "label_values(app_worker_threads_active,cluster)",
+        "refresh": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "utc",
+  "title": "Span Zero Demo Dashboard",
+  "uid": "span-zero-demo-dashboard",
+  "version": 0
+}

@@ -59,7 +59,8 @@ type NavigationAppConfig struct {
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
 	features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
-	license licensing.Licensing, authnService authn.Service) navtree.Service {
+	license licensing.Licensing, authnService authn.Service,
+) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
@@ -243,9 +244,10 @@ func isSupportBundlesEnabled(s *ServiceImpl) bool {
 	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
 }
 
+// addHelpLinks adds a help menu item to the navigation bar.
+// If the Grafana Pathfinder plugin is installed, it will handle enriching the help menu.
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) {
 	if s.cfg.HelpEnabled {
-		// The version subtitle is set later by NavTree.ApplyHelpVersion
 		helpNode := &navtree.NavLink{
 			Text:       "Help",
 			Id:         "help",
@@ -256,6 +258,16 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 		}
 
 		treeRoot.AddSection(helpNode)
+
+		ctx := c.Req.Context()
+		// The docs plugin ID is going to transition from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
+		// Support both until that migration is complete.
+		_, oldPathfinderInstalled := s.pluginStore.Plugin(ctx, "grafana-grafanadocsplugin-app")
+		_, newPathfinderInstalled := s.pluginStore.Plugin(ctx, "grafana-pathfinder-app")
+		if oldPathfinderInstalled || newPathfinderInstalled {
+			// Add a custom property to indicate this should open Grafana Pathfinder.
+			helpNode.HideFromTabs = true
+		}
 
 		hasAccess := ac.HasAccess(s.accessControl, c)
 		supportBundleAccess := ac.EvalAny(

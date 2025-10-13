@@ -165,6 +165,8 @@ export type PluginExtensionOpenModalOptions = {
 
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
+  // The ID of the extension point that triggered this event
+  extensionPointId: string;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
   /**
@@ -193,6 +195,7 @@ export enum PluginExtensionPoints {
   AlertingRuleQueryEditor = 'grafana/alerting/alertingrule/queryeditor',
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
+  DashboardEmpty = 'grafana/dashboard/empty',
   DataSourceConfig = 'grafana/datasources/config',
   DataSourceConfigActions = 'grafana/datasources/config/actions',
   DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',

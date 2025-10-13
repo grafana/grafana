@@ -10,6 +10,30 @@ Check if strings are marked for translation inside JSX Elements, in certain JSX 
 
 ### Options
 
+#### `basePaths`
+
+Allows specifying base paths that should be stripped when generating i18n keys. Defaults to `['src']`.
+
+#### Example
+
+```tsx
+// For a file located at public/app/features/search/EmptyState.tsx
+
+// Specifying basePaths:
+// {
+//   '@grafana/i18n/no-untranslated-strings': ['error', { basePaths: ['public/app/features'] }],
+// }
+
+<Trans i18nKey="search.empty-state.no-results-found">No results found</Trans>
+
+// Without basePaths:
+// {
+//   '@grafana/i18n/no-untranslated-strings': ['error'],
+// }
+
+<Trans i18nKey="public.app.features.search.empty-state.no-results-found">No results found</Trans>
+```
+
 #### `forceFix`
 
 Allows specifying directories that, if the file is present within, then the rule will automatically fix the errors. This is primarily a workaround to allow for automatic mark up of new violations as the rule evolves.

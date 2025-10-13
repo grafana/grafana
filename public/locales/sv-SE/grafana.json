@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Lägg till en behörighet",
+      "loading": "",
       "no-permissions": "Det finns inga behörigheter",
       "permissions-change-warning": "Detta kommer att ändra behörigheter för den här mappen och alla dess underordnade. Totalt kommer detta att påverka:",
       "role": "Roll",
       "serviceaccount": "Servicekonto",
       "team": "Team",
-      "title": "Behörigheter",
       "user": "Användare"
     }
   },
@@ -1535,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "Gruppen raderas"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Ta bort uttryck ”{{refId}}”"
     },
@@ -1709,6 +1712,9 @@
       },
       "placeholder-key": "nyckel",
       "placeholder-value": "värde"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Visa eller skapa kontaktpunkter",
@@ -2024,6 +2030,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "Vald Alertmanager finns inte längre eller så kanske du inte har behörighet att komma åt den. Du kan välja en annan larmhanterare i rullgardinsmenyn.",
       "title-selected-alertmanager-not-found": "Vald Alertmanager hittades inte."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2916,6 +2928,13 @@
         "title-warning": "Varning"
       }
     },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
+    },
     "type-selector-button": {
       "add-expression": "Lägg till uttryck"
     },
@@ -3240,7 +3259,7 @@
       "define-allowed-teams-ids-label": "Definiera tillåtna team-ID",
       "display-name-description": "Kommer att visas på inloggningssidan som ”Logga in med …” Användbart om du använder fler än en identitetsleverantör eller SSO-protokoll.",
       "display-name-label": "Visningsnamn",
-      "domain-hint-description": "Parameter som anger användarens domän i Azure AD/Entra ID-klienten och effektiviserar inloggningsprocessen.",
+      "domain-hint-description": "",
       "domain-hint-label": "Domäntips",
       "domain-hint-valid-domain": "Detta fält måste vara en giltig domän.",
       "email-attribute-name-description": "Namn på nyckeln som ska användas för användarens e-postsökning inom attributkartan för OAuth2 ID-token.",
@@ -3485,7 +3504,7 @@
       "delete-button": "Ta bort",
       "delete-modal-invalid-text": "En eller flera mappar innehåller bibliotekspaneler eller varningsregler. Ta först bort dessa innan du fortsätter.",
       "delete-modal-invalid-title": "Det går inte att ta bort mapp",
-      "delete-modal-restore-dashboards-text": "Denna åtgärd raderar de valda mapparna omedelbart, men de valda instrumentpanelerna markeras för radering om 30 dagar. Din organisationsadministratör kan återställa instrumentpanelerna när som helst innan de 30 dagarna löper ut. Mappar kan inte återställas.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Denna åtgärd raderar följande innehåll:",
       "delete-modal-title": "Ta bort",
       "delete-provisioned-folder": "Ta bort provisionerad mapp",
@@ -3496,6 +3515,7 @@
       "move-modal-field-label": "Mappnamn",
       "move-modal-text": "Denna åtgärd flyttar följande innehåll:",
       "move-modal-title": "Flytta",
+      "move-provisioned-folder": "",
       "moving": "Flyttar ...",
       "new-folder-name-required-phrase": "Mappnamn krävs.",
       "selected-mix-resources-modal-text": "Du har valt både provisionerade och icke-provisionerade resurser. Dessa kan inte hanteras tillsammans. Välj enbart provisionerade eller enbart icke-provisionerade resurser och försök igen.",
@@ -4141,6 +4161,13 @@
       "body": "Prova den nya rådgivaren för att upptäcka potentiella problem med dina datakällor och plugin-program.",
       "go-to-advisor": "Gå till rådgivare"
     },
+    "cache-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
+    },
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
@@ -4189,6 +4216,20 @@
         "unknown-datasource": "Okänd datakälla"
       }
     },
+    "feature-highlight-page": {
+      "foot-note": "",
+      "footer": "",
+      "footer-link": "",
+      "link-button-label": ""
+    },
+    "insights-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "item-4": "",
+      "title": ""
+    },
     "new-data-source-page": {
       "subTitle": {
         "choose-a-data-source-type": "Välj en typ av datakälla"
@@ -4218,6 +4259,13 @@
         },
         "subtitle": "Hantera dina datakällanslutningar på ett ställe. Använd den här sidan för att lägga till en ny datakälla eller hantera dina befintliga anslutningar."
       }
+    },
+    "permissions-feature-highlight-page": {
+      "header": "",
+      "item-1": "",
+      "item-2": "",
+      "item-3": "",
+      "title": ""
     },
     "search": {
       "aria-label-search-all": "Sök alla",
@@ -4448,6 +4496,8 @@
     },
     "canvas-actions": {
       "add-panel": "Lägg till panel",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Gruppera i rad",
       "group-into-tab": "Gruppera i flik",
       "group-panels": "Gruppaneler",
@@ -4456,7 +4506,8 @@
       "paste-panel": "Klistra in panel",
       "paste-row": "Klistra in rad",
       "paste-tab": "Klistra in flik",
-      "un-group-panels": "Ta bort gruppering"
+      "un-group-panels": "Ta bort gruppering",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4524,7 +4575,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "Elementet är dolt på grund av villkorsstyrd rendering."
+        "tooltip": ""
       },
       "root": {
         "title": "Visa/dölj regler"
@@ -4698,8 +4749,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Värden åtskilda med kommatecken",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "",
+          "modal-title": "",
+          "values": "Värden åtskilda med kommatecken"
         },
         "datasource-options": {
           "name-filter": "Namnfilter",
@@ -5119,10 +5171,16 @@
       "title-row-options": "Radalternativ"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Om du tar bort denna rad tas också alla paneler bort. Är du säker på att du vill fortsätta?",
       "delete-row-title": "Radera rad?",
       "delete-row-yes": "Ta bort",
       "description": "Döljbara panelgrupper med rubriker",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Radrubrik endast synlig i redigeringsläge",
       "name": "Rader",
       "row": {
@@ -5152,7 +5210,11 @@
       },
       "row-warning": {
         "title-not-unique": "Den här titeln är inte unik"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Kontrollpanelen sparades"
@@ -5771,6 +5833,7 @@
         "dynamically-switch-source-multiple-panels": "Byt datakälla dynamiskt för flera paneler",
         "group": "Lägg till nycklar att gruppera efter i farten",
         "hidden-constant-variable": "En dold konstant variabel, användbar för metriska prefix i kontrollpaneler som du vill dela",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Användare kan ange valfria strängar i en textruta",
         "values-are-static-and-defined-manually": "Värdena är statiska och definieras manuellt",
         "values-fetched-source-query": "Värden hämtas från en datakällfråga",
@@ -5784,6 +5847,7 @@
         "group-by": "Gruppera efter",
         "interval": "Intervall",
         "query": "Fråga",
+        "switch": "",
         "textbox": "Textfält"
       }
     },
@@ -6127,6 +6191,17 @@
       "title": {
         "copy-to-clipboard-failed": "Kopiering till urklipp misslyckades"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Standardvärde"
@@ -6576,6 +6651,7 @@
         "service-now-integration-and-data-source": "ServiceNow-integrering och datakälla",
         "signal-fx-integration-and-datasource": "SignalFx-integrering och datakälla",
         "snowflake-integration-and-data-source": "Snowflake-integrering och datakälla",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic-integrering och datakälla",
         "visualize-and-explore-dynatrace-data": "Visualisera och utforska Dynatrace-data",
         "visualize-and-explore-oracle-sql": "Visualisera och utforska Oracle SQL",
@@ -8696,6 +8772,9 @@
       "tooltip-hide": "Dölj lösenord",
       "tooltip-show": "Visa lösenord"
     },
+    "range-slider": {
+      "drag-handle-aria-label": ""
+    },
     "row-expander": {
       "aria-label-expand": "Expandera rad",
       "collapse": "Dölj rad",
@@ -8723,6 +8802,9 @@
     },
     "series-color-picker-popover": {
       "y-axis-usage": "Använd höger y-axel"
+    },
+    "slider": {
+      "drag-handle-aria-label": ""
     },
     "spinner": {
       "aria-label": "Laddar"
@@ -9411,6 +9493,7 @@
     "description-enable-infinite-scrolling": "Experimentellt. Begär fler resultat genom att bläddra till längst ner i logglistan.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Visa kontroller för att hoppa till den sista eller första loggraden och filtrera efter loggnivå",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9461,9 +9544,6 @@
       "collapse": "Dölj etiketter",
       "expand": "Expandera etiketter"
     },
-    "log-labels-list": {
-      "log-line": "loggrad"
-    },
     "log-line": {
       "has-error": "Innehåller fel",
       "is-sampled": "Är samplad",
@@ -9503,6 +9583,7 @@
       "inline-mode": "Visa inline",
       "link-value-tooltip": "",
       "links-section": "Länkar",
+      "log-attributes-field": "",
       "log-line-field": "Loggrad",
       "log-line-section": "Loggrad",
       "move-displayed-field-down": "Flytta ner",
@@ -9709,6 +9790,7 @@
       "line-contains": "Lägg till som rad innehåller filter",
       "line-contains-not": "Lägg till som rad innehåller inte filter"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Tidsstämpelupplösning",
     "un-themed-log-details": {
       "aria-label-data-links": "Datalänkar",
@@ -10166,7 +10248,7 @@
       "title": "Datakällor"
     },
     "databases": {
-      "title": "Databaser"
+      "title": ""
     },
     "datasources": {
       "subtitle": "Lägg till och konfigurera datakällor",
@@ -10300,7 +10382,7 @@
       "title": "Profiler"
     },
     "recently-deleted": {
-      "subtitle": "Alla objekt som listas här i fler än 30 dagar raderas automatiskt.",
+      "subtitle": "",
       "title": "Nyligen raderat"
     },
     "recorded-queries": {
@@ -11516,6 +11598,7 @@
       "active-jobs": "aktiva jobb",
       "column-action": "Åtgärd",
       "column-duration": "Varaktighet",
+      "column-job-id": "",
       "column-message": "Meddelande",
       "column-started": "Startat",
       "column-status": "Status",
@@ -11534,12 +11617,6 @@
       "settings": "Inställningar",
       "view": "Visa"
     },
-    "repository-health": {
-      "details": "Detaljer:",
-      "no-errors-found": "Inga fel hittades",
-      "title-repository-is-healthy": "Lagringsplatsen är hälsosam",
-      "title-repository-is-unhealthy": "Lagringsplatsen är ohälsosam"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Jämför gren",
@@ -11554,7 +11631,7 @@
     },
     "repository-overview": {
       "checked": "Kontrollerad:",
-      "finished": "Avslutad:",
+      "finished": "",
       "health": "Hälsa",
       "healthy": "Hälsosamma",
       "job-id": "Jobb-ID:",
@@ -11563,7 +11640,6 @@
       "not-available": "Ej tillgängligt",
       "pull-status": "Pull-status",
       "resources": "Resurser",
-      "started": "Startad:",
       "status": "Status:",
       "unhealthy": "Ohälsosamma",
       "view-folder": "Visa mapp",
@@ -11692,6 +11768,8 @@
       "button-cancelling": "",
       "button-next": "Slutför",
       "button-start": "Påbörja synkronisering",
+      "check-status-button": "",
+      "check-status-message": "",
       "discard-modal": {
         "body": "Detta kommer att radera lagringsplatskonfigurationen och du kommer att förlora alla ändringar. Är du säker på att du vill kassera dina ändringar?",
         "confirm": "Ja, kassera",
@@ -12220,9 +12298,6 @@
       "title-disable-service-account": "Inaktivera servicekonto",
       "tokens": "Polletter",
       "tooltip-managed-service-account-cannot-modified": "Detta är ett hanterat servicekonto och kan inte ändras"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Behörigheter"
     },
     "service-account-profile": {
       "information": "Information",
@@ -12897,6 +12972,10 @@
     "name-mode": "Läge",
     "name-show-line-numbers": "Visa radnummer",
     "name-show-mini-map": "Visa minikarta"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -13648,6 +13727,7 @@
         }
       }
     },
+    "query-validation-message": "",
     "range-matcher-editor": {
       "and": "och",
       "placeholder-from": "",
@@ -14060,14 +14140,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Lägg till alternativ",
-      "description": "Lägg till anpassade alternativ utöver frågeresultat",
-      "label-placeholder": "displayetikett",
-      "remove-option-button-label": "Ta bort alternativ",
-      "value-placeholder": "värde, tom sträng som standard"
+      "description": "Lägg till anpassade alternativ utöver frågeresultat"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Hur man sorterar statiska alternativ med frågeresultat"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Standardvärde",

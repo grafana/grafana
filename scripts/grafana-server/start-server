@@ -26,7 +26,7 @@ echo starting server
 # see https://github.com/air-verse/air/issues/525
 # if this gets resolved, we could remove the go build and rely on the binary being present as before
 if [[ ! -f ./bin/"$ARCH"grafana ]]; then
-  make GO_BUILD_DEV=1 build-go-fast
+  make GO_BUILD_DEV=1 build-go
 fi
 
 cp -r ./bin $RUNDIR

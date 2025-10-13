@@ -3,11 +3,12 @@ import { useMemo } from 'react';
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Badge, Box, Card, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
-import { Job, Repository, SyncStatus } from 'app/api/clients/provisioning/v0alpha1';
+import { Job, Repository } from 'app/api/clients/provisioning/v0alpha1';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
+import { getStatusColor } from '../utils/repositoryStatus';
 import { formatTimestamp } from '../utils/time';
 
 import { JobSummary } from './JobSummary';
@@ -22,24 +23,12 @@ type JobCell = {
   };
 };
 
-const getStatusColor = (state?: SyncStatus['state']) => {
-  switch (state) {
-    case 'success':
-      return 'green';
-    case 'working':
-      return 'blue';
-    case 'warning':
-      return 'orange';
-    case 'pending':
-      return 'darkgrey';
-    case 'error':
-      return 'red';
-    default:
-      return 'darkgrey';
-  }
-};
-
 const getJobColumns = () => [
+  {
+    id: 'jobId',
+    header: t('provisioning.recent-jobs.column-job-id', 'Job ID'),
+    cell: ({ row: { original: job } }: JobCell) => <Text variant="body">{job.metadata?.name || ''}</Text>,
+  },
   {
     id: 'status',
     header: t('provisioning.recent-jobs.column-status', 'Status'),

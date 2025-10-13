@@ -39,11 +39,6 @@ func afterCreatePermissionCreator(ctx context.Context,
 		return nil, errors.New("missing auth info")
 	}
 
-	idtype := auth.GetIdentityType()
-	if idtype != authtypes.TypeUser && idtype != authtypes.TypeServiceAccount && idtype != authtypes.TypeAccessPolicy {
-		return nil, fmt.Errorf("only users, service accounts, and access policies may grant permissions using an annotation")
-	}
-
 	return func(ctx context.Context) error {
 		return setter(ctx, key, auth, val)
 	}, nil

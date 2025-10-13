@@ -7,7 +7,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
+import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
 import { ObjectMeta } from 'app/features/apiserver/types';

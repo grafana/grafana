@@ -1,24 +1,22 @@
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+
 import { CustomVariableModel } from '@grafana/data';
-import { Monaco, monacoTypes } from '@grafana/ui';
+import { monacoTypes } from '@grafana/ui';
 
 import { setupMockedTemplateService, logGroupNamesVariable } from '../../../mocks/CloudWatchDataSource';
+import { logsTestDataDiffModifierQuery } from '../../../mocks/cloudwatch-logs-test-data/diffModifierQuery';
+import { logsTestDataDiffQuery } from '../../../mocks/cloudwatch-logs-test-data/diffQuery';
 import { logsTestDataEmptyQuery } from '../../../mocks/cloudwatch-logs-test-data/empty';
 import { logsTestDataFilterQuery } from '../../../mocks/cloudwatch-logs-test-data/filterQuery';
 import { logsTestDataNewCommandQuery } from '../../../mocks/cloudwatch-logs-test-data/newCommandQuery';
 import { logsTestDataSortQuery } from '../../../mocks/cloudwatch-logs-test-data/sortQuery';
-import MonacoMock from '../../../mocks/monarch/Monaco';
-import TextModel from '../../../mocks/monarch/TextModel';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';
 import { ResourceResponse } from '../../../resources/types';
 import { LogGroup, LogGroupField } from '../../../types';
-import cloudWatchLogsLanguageDefinition from '../definition';
-import { LOGS_COMMANDS, LOGS_FUNCTION_OPERATORS, SORT_DIRECTION_KEYWORDS } from '../language';
+import cloudWatchLogsLanguageDefinition, { CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID } from '../definition';
+import { DIFF_MODIFIERS, LOGS_COMMANDS, LOGS_FUNCTION_OPERATORS, SORT_DIRECTION_KEYWORDS, language } from '../language';
 
 import { LogsCompletionItemProvider } from './CompletionItemProvider';
-
-jest.mock('monaco-editor/esm/vs/editor/editor.api', () => ({
-  Token: jest.fn((offset, type, language) => ({ offset, type, language })),
-}));
 
 const getSuggestions = async (
   value: string,
@@ -36,16 +34,30 @@ const getSuggestions = async (
   );
 
   setup.resources.getLogGroupFields = jest.fn().mockResolvedValue(fields);
-  const monaco = MonacoMock as Monaco;
   const provider = setup.getCompletionProvider(monaco, cloudWatchLogsLanguageDefinition);
-  const { suggestions } = await provider.provideCompletionItems(
-    TextModel(value) as monacoTypes.editor.ITextModel,
-    position
-  );
+  const model = monaco.editor.createModel(value, CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID);
+  const { suggestions } = await provider.provideCompletionItems(model, position);
   return suggestions;
 };
 
 describe('LogsCompletionItemProvider', () => {
+  let tokenizer: monaco.IDisposable;
+
+  beforeAll(() => {
+    monaco.languages.register({ id: CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID });
+    tokenizer = monaco.languages.setMonarchTokensProvider(CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID, language);
+  });
+
+  afterEach(() => {
+    for (const m of monaco.editor.getModels()) {
+      m.dispose();
+    }
+  });
+
+  afterAll(() => {
+    tokenizer?.dispose();
+  });
+
   describe('getSuggestions', () => {
     it('returns commands for an empty query', async () => {
       const suggestions = await getSuggestions(logsTestDataEmptyQuery.query, logsTestDataEmptyQuery.position);
@@ -69,6 +81,21 @@ describe('LogsCompletionItemProvider', () => {
       const suggestions = await getSuggestions(logsTestDataSortQuery.query, logsTestDataSortQuery.position);
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining(LOGS_FUNCTION_OPERATORS));
+    });
+
+    it('returns diff modifiers after the diff keyword', async () => {
+      const suggestions = await getSuggestions(logsTestDataDiffQuery.query, logsTestDataDiffQuery.position);
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(DIFF_MODIFIERS));
+    });
+
+    it('returns diff modifiers when partially typed', async () => {
+      const suggestions = await getSuggestions(
+        logsTestDataDiffModifierQuery.query,
+        logsTestDataDiffModifierQuery.position
+      );
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(DIFF_MODIFIERS));
     });
 
     it('returns `in []` snippet for the `in` keyword', async () => {

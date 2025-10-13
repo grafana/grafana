@@ -430,7 +430,7 @@ export class PrometheusDatasource
       utcOffsetSec: utcOffset * 60,
     };
 
-    if (config.featureToggles.promQLScope) {
+    if (request.scopes) {
       processedTarget.scopes = (request.scopes ?? []).map((scope) => ({
         name: scope.metadata.name,
         ...scope.spec,
@@ -543,7 +543,7 @@ export class PrometheusDatasource
       options.timeRange = getDefaultTimeRange();
     }
 
-    if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
+    if ((options?.scopes?.length ?? 0) > 0) {
       const suggestions = await this.languageProvider.fetchSuggestions(
         options.timeRange,
         options.queries,
@@ -574,7 +574,7 @@ export class PrometheusDatasource
     }
 
     const requestId = `[${this.uid}][${options.key}]`;
-    if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
+    if ((options?.scopes?.length ?? 0) > 0) {
       return (
         await this.languageProvider.fetchSuggestions(
           options.timeRange,
@@ -609,7 +609,7 @@ export class PrometheusDatasource
           scopedVars,
           this.interpolateExploreMetrics(query.fromExploreMetrics)
         );
-        const replacedInterpolatedQuery = config.featureToggles.promQLScope
+        const replacedInterpolatedQuery = targetHasScopes(query)
           ? interpolatedQuery
           : this.templateSrv.replace(
               this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
@@ -619,7 +619,7 @@ export class PrometheusDatasource
 
         const expandedQuery = {
           ...query,
-          ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
+          ...(query.scopes && query.scopes.length > 0 ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
           datasource: this.getRef(),
           expr: replacedInterpolatedQuery,
           interval: this.templateSrv.replace(query.interval, scopedVars),
@@ -791,13 +791,13 @@ export class PrometheusDatasource
 
     // Apply ad-hoc filters
     // When ad-hoc filters are applied, we replace again the variables in case the ad-hoc filters also reference a variable
-    const exprWithAdhoc = config.featureToggles.promQLScope
+    const exprWithAdhoc = targetHasScopes(target)
       ? expr
       : this.templateSrv.replace(this.enhanceExprWithAdHocFilters(filters, expr), variables, this.interpolateQueryExpr);
 
     return {
       ...target,
-      ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
+      ...(targetHasScopes(target) ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
       expr: exprWithAdhoc,
       interval: this.templateSrv.replace(target.interval, variables),
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),
@@ -860,6 +860,10 @@ export class PrometheusDatasource
 
     return defaults;
   }
+}
+
+function targetHasScopes(target: PromQuery): boolean {
+  return !!(target.scopes && target.scopes.length > 0);
 }
 
 export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQueryMapping {

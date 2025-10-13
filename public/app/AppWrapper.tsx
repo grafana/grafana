@@ -108,7 +108,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
 
     return (
       <Provider store={store}>
-        <ErrorBoundaryAlert style="page">
+        <ErrorBoundaryAlert boundaryName="app-wrapper" style="page">
           <GrafanaContext.Provider value={app.context}>
             <ThemeProvider value={config.theme2}>
               <CacheProvider name={this.iconCacheID}>

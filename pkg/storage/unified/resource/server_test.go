@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -21,6 +22,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -586,4 +588,31 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 		log: slog.Default(),
 	}
 	return s, q
+}
+
+func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
+	s := &server{artificialSuccessfulWriteDelay: 1 * time.Millisecond}
+
+	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {
+		slept := s.sleepAfterSuccessfulWriteOperation(res, err)
+		require.Equal(t, expectedSleep, slept)
+	}
+
+	// Successful responses should sleep
+	check(t, true, nil, nil)
+
+	check(t, true, (responseWithErrorResult)((*resourcepb.CreateResponse)(nil)), nil)
+	check(t, true, &resourcepb.CreateResponse{}, nil)
+
+	check(t, true, (responseWithErrorResult)((*resourcepb.UpdateResponse)(nil)), nil)
+	check(t, true, &resourcepb.UpdateResponse{}, nil)
+
+	check(t, true, (responseWithErrorResult)((*resourcepb.DeleteResponse)(nil)), nil)
+	check(t, true, &resourcepb.DeleteResponse{}, nil)
+
+	// Failed responses should return without sleeping
+	check(t, false, nil, errors.New("some error"))
+	check(t, false, &resourcepb.CreateResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
+	check(t, false, &resourcepb.UpdateResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
+	check(t, false, &resourcepb.DeleteResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
 }

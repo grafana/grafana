@@ -9,7 +9,6 @@ import { config } from 'app/core/config';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { DashboardSearchItemType } from 'app/features/search/types';
-import { PermissionLevelString } from 'app/types/acl';
 import { FolderInfo } from 'app/types/folders';
 
 export interface FolderFilterProps {
@@ -69,7 +68,7 @@ async function getFoldersAsOptions(
       query: searchString,
       kind: ['folder'],
       limit: 100,
-      permission: PermissionLevelString.View,
+      permission: 'view',
     });
 
     const options = queryResponse.view.map((item) => ({
@@ -89,7 +88,7 @@ async function getFoldersAsOptions(
   const params = {
     query: searchString,
     type: DashboardSearchItemType.DashFolder,
-    permission: PermissionLevelString.View,
+    permission: 'view',
   };
 
   const searchHits = await getBackendSrv().search(params);

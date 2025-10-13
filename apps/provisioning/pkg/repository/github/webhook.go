@@ -119,13 +119,24 @@ func (r *githubWebhookRepository) parsePushEvent(event *github.PushEvent) (*prov
 		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 	}
 
+	// whenever possible, we want to do incremental syncs to keep things performant.
+	// however, if we get an event where just a .keep file is being deleted, and no other files in the folder
+	// are being deleted, the folder could be gone from git, but not from grafana and we do not have a way
+	// to get the grafana uid to delete the folder. so, instead, we will queue a full sync to clean things up.
+	var deletedPaths []string
+	for _, change := range event.GetCommits() {
+		deletedPaths = append(deletedPaths, change.Removed...)
+	}
+
+	incremental := repository.CanUseIncrementalSync(deletedPaths)
+
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
 		Job: &provisioning.JobSpec{
 			Repository: r.config.GetName(),
 			Action:     provisioning.JobActionPull,
 			Pull: &provisioning.SyncJobOptions{
-				Incremental: true,
+				Incremental: incremental,
 			},
 		},
 	}, nil
@@ -274,11 +285,15 @@ func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
 	id := r.config.Status.Webhook.ID
 
 	err := r.gh.DeleteWebhook(ctx, r.owner, r.repo, id)
-	if err != nil && !errors.Is(err, ErrResourceNotFound) {
+	if err != nil && !errors.Is(err, ErrResourceNotFound) && !errors.Is(err, ErrUnauthorized) {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
 	if errors.Is(err, ErrResourceNotFound) {
-		logger.Info("webhook does not exist", "url", r.config.Status.Webhook.URL, "id", id)
+		logger.Warn("webhook no longer exists", "url", r.config.Status.Webhook.URL, "id", id)
+		return nil
+	}
+	if errors.Is(err, ErrUnauthorized) {
+		logger.Warn("webhook deletion failed. no longer authorized to delete this webhook", "url", r.config.Status.Webhook.URL, "id", id)
 		return nil
 	}
 

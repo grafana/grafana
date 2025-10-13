@@ -114,18 +114,20 @@ func (s *Service) RemoveUsersMemberships(ctx context.Context, userID int64) erro
 	return s.store.RemoveUsersMemberships(ctx, userID)
 }
 
-func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error) {
+func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
 	ctx, span := s.tracer.Start(ctx, "team.GetUserTeamMemberships", trace.WithAttributes(
 		attribute.Int64("orgID", orgID),
 		attribute.Int64("userID", userID),
 	))
 	defer span.End()
 	cacheKey := fmt.Sprintf("teams:%d:%d:%t", orgID, userID, external)
-	if cached, found := s.cache.Get(cacheKey); found {
-		if teams, ok := cached.([]*team.TeamMemberDTO); ok {
-			return teams, nil
+	if !bypassCache {
+		if cached, found := s.cache.Get(cacheKey); found {
+			if teams, ok := cached.([]*team.TeamMemberDTO); ok {
+				return teams, nil
+			}
+			s.cache.Delete(cacheKey)
 		}
-		s.cache.Delete(cacheKey)
 	}
 	teams, err := s.store.GetMemberships(ctx, orgID, userID, external)
 	if err != nil {
@@ -137,7 +139,9 @@ func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int6
 		return []*team.TeamMemberDTO{}, nil
 	}
 
-	s.cache.Set(cacheKey, teams, defaultCacheDuration)
+	if !bypassCache {
+		s.cache.Set(cacheKey, teams, defaultCacheDuration)
+	}
 	return teams, nil
 }
 

@@ -5,7 +5,7 @@ import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { CommandPaletteAction } from '../types';
 import { RECENT_SCOPES_PRIORITY } from '../values';
 
-export function getRecentScopesActions(): CommandPaletteAction[] {
+export function useRecentScopesActions(): CommandPaletteAction[] {
   const services = useScopesServices();
 
   if (!(config.featureToggles.scopeFilters && services)) {

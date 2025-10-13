@@ -144,7 +144,7 @@
     "name": "datasource/grafana-pyroscope",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/221"
+      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {

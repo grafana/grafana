@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/utils/ptr"
 
@@ -97,18 +99,23 @@ func (s *DashboardStarsStorage) List(ctx context.Context, options *internalversi
 		return nil, err
 	}
 
-	user := userInfo.GetUID()
-	if userInfo.GetIsGrafanaAdmin() || userInfo.GetIdentityType() == authlib.TypeAccessPolicy {
+	user := userInfo.GetIdentifier()
+	if userInfo.GetIdentityType() == authlib.TypeAccessPolicy {
 		user = "" // can see everything
 	}
 
 	list := &preferences.StarsList{}
-	found, rv, err := s.sql.GetStars(ctx, ns.OrgID, user)
+	found, rv, err := s.sql.getDashboardStars(ctx, ns.OrgID, user)
+	if err != nil {
+		return nil, err
+	}
+	history, err := s.sql.getHistoryStars(ctx, ns.OrgID, "")
 	if err != nil {
 		return nil, err
 	}
 	for _, v := range found {
-		list.Items = append(list.Items, asStarsResource(s.namespacer(v.OrgID), &v))
+		list.Items = append(list.Items,
+			asStarsResource(s.namespacer(v.OrgID), &v, history[v.UserUID]))
 	}
 	if rv > 0 {
 		list.ResourceVersion = strconv.FormatInt(rv, 10)
@@ -137,23 +144,29 @@ func (s *DashboardStarsStorage) Get(ctx context.Context, name string, options *m
 		return nil, err
 	}
 
-	found, _, err := s.sql.GetStars(ctx, ns.OrgID, owner.Identifier)
+	found, _, err := s.sql.getDashboardStars(ctx, ns.OrgID, owner.Identifier)
 	if err != nil {
 		return nil, err
 	}
+
+	history, err := s.sql.getHistoryStars(ctx, ns.OrgID, owner.Identifier)
+	if err != nil {
+		return nil, err
+	}
+
 	if len(found) == 0 || len(found[0].Dashboards) == 0 {
 		return nil, apiserrors.NewNotFound(preferences.StarsResourceInfo.GroupResource(), name)
 	}
-	obj := asStarsResource(ns.Value, &found[0])
+	obj := asStarsResource(ns.Value, &found[0], history[owner.Identifier])
 	return &obj, nil
 }
 
-func getDashboardStars(stars *preferences.Stars) []string {
+func getStars(stars *preferences.Stars, gk schema.GroupKind) []string {
 	if stars == nil || len(stars.Spec.Resource) == 0 {
 		return []string{}
 	}
 	for _, r := range stars.Spec.Resource {
-		if r.Group == "dashboard.grafana.app" && r.Kind == "Dashboard" {
+		if r.Group == gk.Group && r.Kind == gk.Kind {
 			return r.Names
 		}
 	}
@@ -161,7 +174,7 @@ func getDashboardStars(stars *preferences.Stars) []string {
 }
 
 // Create implements rest.Creater.
-func (s *DashboardStarsStorage) write(ctx context.Context, obj *preferences.Stars, old *preferences.Stars) (runtime.Object, error) {
+func (s *DashboardStarsStorage) write(ctx context.Context, obj *preferences.Stars) (runtime.Object, error) {
 	ns, owner, err := getNamespaceAndOwner(ctx, obj.Name)
 	if err != nil {
 		return nil, err
@@ -177,7 +190,7 @@ func (s *DashboardStarsStorage) write(ctx context.Context, obj *preferences.Star
 		return nil, fmt.Errorf("namespace mismatch")
 	}
 
-	stars := getDashboardStars(obj)
+	stars := getStars(obj, schema.GroupKind{Group: "dashboard.grafana.app", Kind: "Dashboard"})
 	if len(stars) == 0 {
 		err = s.stars.DeleteByUser(ctx, user.ID)
 		return &preferences.Stars{ObjectMeta: metav1.ObjectMeta{
@@ -187,7 +200,7 @@ func (s *DashboardStarsStorage) write(ctx context.Context, obj *preferences.Star
 		}}, err
 	}
 
-	current, _, err := s.sql.GetStars(ctx, ns.OrgID, owner.Identifier)
+	current, _, err := s.sql.getDashboardStars(ctx, ns.OrgID, owner.Identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -232,6 +245,31 @@ func (s *DashboardStarsStorage) write(ctx context.Context, obj *preferences.Star
 		changed = true
 	}
 
+	// Apply history stars
+	stars = getStars(obj, schema.GroupKind{Group: "history.grafana.app", Kind: "Query"})
+	res, err := s.sql.getHistoryStars(ctx, user.OrgID, user.UID)
+	if err != nil {
+		return nil, err
+	}
+	history := res[user.UID]
+	if !slices.Equal(stars, history) {
+		changed = true
+		if len(stars) == 0 {
+			err = s.sql.removeHistoryStar(ctx, user, nil)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			added, removed, _ := preferences.Changes(history, stars)
+			if len(removed) > 0 {
+				_ = s.sql.removeHistoryStar(ctx, user, nil)
+			}
+			for _, v := range added {
+				_ = s.sql.addHistoryStar(ctx, user, v) // one at a time so duplicates do not fail everything
+			}
+		}
+	}
+
 	if changed {
 		return s.Get(ctx, obj.Name, &metav1.GetOptions{})
 	}
@@ -245,7 +283,7 @@ func (s *DashboardStarsStorage) Create(ctx context.Context, obj runtime.Object, 
 		return nil, fmt.Errorf("expected stars object")
 	}
 
-	return s.write(ctx, stars, nil)
+	return s.write(ctx, stars)
 }
 
 // Update implements rest.Updater.
@@ -265,13 +303,13 @@ func (s *DashboardStarsStorage) Update(ctx context.Context, name string, objInfo
 		return nil, false, fmt.Errorf("expected stars object")
 	}
 
-	obj, err = s.write(ctx, stars, old.(*preferences.Stars))
+	obj, err = s.write(ctx, stars)
 	return obj, false, err
 }
 
 // Delete implements rest.GracefulDeleter.
 func (s *DashboardStarsStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	obj, err := s.write(ctx, &preferences.Stars{ObjectMeta: metav1.ObjectMeta{Name: name}}, nil)
+	obj, err := s.write(ctx, &preferences.Stars{ObjectMeta: metav1.ObjectMeta{Name: name}})
 	if err != nil {
 		return nil, false, err
 	}
@@ -283,8 +321,8 @@ func (s *DashboardStarsStorage) DeleteCollection(ctx context.Context, deleteVali
 	return nil, fmt.Errorf("not implemented yet")
 }
 
-func asStarsResource(ns string, v *dashboardStars) preferences.Stars {
-	return preferences.Stars{
+func asStarsResource(ns string, v *dashboardStars, history []string) preferences.Stars {
+	stars := preferences.Stars{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              fmt.Sprintf("user-%s", v.UserUID),
 			Namespace:         ns,
@@ -299,4 +337,13 @@ func asStarsResource(ns string, v *dashboardStars) preferences.Stars {
 			}},
 		},
 	}
+	if len(history) > 0 {
+		stars.Spec.Resource = append(stars.Spec.Resource, preferences.StarsResource{
+			Group: "history.grafana.app",
+			Kind:  "Query",
+			Names: history,
+		})
+	}
+	stars.Spec.Normalize()
+	return stars
 }

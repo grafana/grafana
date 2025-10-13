@@ -77,7 +77,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'exploreMain',
       // Is needed for some transition animations to work.
       position: 'relative',
-      marginTop: '21px',
+      marginTop: theme.spacing(3),
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
@@ -707,29 +707,59 @@ export class Explore extends PureComponent<Props, ExploreState> {
 
                         return (
                           <main className={cx(styles.exploreMain)} style={{ width }}>
-                            <ErrorBoundaryAlert>
+                            <ErrorBoundaryAlert boundaryName="explore-main">
                               {showPanels && (
                                 <>
                                   {showMetrics && graphResult && (
-                                    <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-graph-panel">
+                                      {this.renderGraphPanel(width)}
+                                    </ErrorBoundaryAlert>
                                   )}
                                   {showRawPrometheus && (
-                                    <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-raw-prometheus">
+                                      {this.renderRawPrometheus(width)}
+                                    </ErrorBoundaryAlert>
                                   )}
-                                  {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
-                                  {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
+                                  {showTable && (
+                                    <ErrorBoundaryAlert boundaryName="explore-table-panel">
+                                      {this.renderTablePanel(width)}
+                                    </ErrorBoundaryAlert>
+                                  )}
+                                  {showLogs && (
+                                    <ErrorBoundaryAlert boundaryName="explore-logs-panel">
+                                      {this.renderLogsPanel(width)}
+                                    </ErrorBoundaryAlert>
+                                  )}
                                   {showNodeGraph && (
-                                    <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-node-graph-panel">
+                                      {this.renderNodeGraphPanel()}
+                                    </ErrorBoundaryAlert>
                                   )}
                                   {showFlameGraph && (
-                                    <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-flame-graph-panel">
+                                      {this.renderFlameGraphPanel()}
+                                    </ErrorBoundaryAlert>
                                   )}
-                                  {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
+                                  {showTrace && (
+                                    <ErrorBoundaryAlert boundaryName="explore-trace-view-panel">
+                                      {this.renderTraceViewPanel()}
+                                    </ErrorBoundaryAlert>
+                                  )}
                                   {showLogsSample && (
-                                    <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-logs-sample-panel">
+                                      {this.renderLogsSamplePanel()}
+                                    </ErrorBoundaryAlert>
                                   )}
-                                  {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
-                                  {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
+                                  {showCustom && (
+                                    <ErrorBoundaryAlert boundaryName="explore-custom-panel">
+                                      {this.renderCustom(width)}
+                                    </ErrorBoundaryAlert>
+                                  )}
+                                  {showNoData && (
+                                    <ErrorBoundaryAlert boundaryName="explore-no-data">
+                                      {this.renderNoData()}
+                                    </ErrorBoundaryAlert>
+                                  )}
                                 </>
                               )}
                             </ErrorBoundaryAlert>

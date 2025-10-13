@@ -6,8 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 )
 
 // Bootstrapper is responsible for the Bootstrap stage of the plugin loader pipeline.
@@ -44,7 +44,7 @@ type Opts struct {
 // New returns a new Bootstrap stage.
 func New(cfg *config.PluginManagementCfg, opts Opts) *Bootstrap {
 	if opts.ConstructFunc == nil {
-		opts.ConstructFunc = DefaultConstructFunc(cfg, signature.DefaultCalculator(cfg), assetpath.DefaultService(cfg))
+		opts.ConstructFunc = DefaultConstructFunc(cfg, signature.DefaultCalculator(cfg), pluginassets.NewLocalProvider())
 	}
 
 	if opts.DecorateFuncs == nil {

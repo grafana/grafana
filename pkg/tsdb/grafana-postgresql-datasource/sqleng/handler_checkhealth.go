@@ -10,17 +10,11 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/lib/pq"
 )
 
-func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest, features featuremgmt.FeatureToggles) (*backend.CheckHealthResult, error) {
-	var err error
-	if features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
-		err = e.PingPGX(ctx)
-	} else {
-		err = e.Ping()
-	}
+func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	err := e.Ping()
 	if err != nil {
 		logCheckHealthError(ctx, e.dsInfo, err)
 		if strings.EqualFold(req.PluginContext.User.Role, "Admin") {

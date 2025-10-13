@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"slices"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -149,6 +150,23 @@ func ReportFSMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, err
 	}
 
 	metrics.SetPluginFSInformation(p.ID, p.FS.Type())
+	return p, nil
+}
+
+// ReportAssetMetrics reports plugin asset information for all non-core plugins.
+func ReportAssetMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if p.IsCorePlugin() {
+		// No metrics for core plugins
+		return p, nil
+	}
+
+	u, err := url.ParseRequestURI(p.BaseURL)
+	if err == nil && u.Host != "" {
+		metrics.SetPluginAssetInformation(p.ID, "remote")
+		return p, nil
+	}
+
+	metrics.SetPluginAssetInformation(p.ID, "local")
 	return p, nil
 }
 

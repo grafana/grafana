@@ -120,6 +120,16 @@ func TestFrontendService_Routes(t *testing.T) {
 
 		assert.Contains(t, recorder.Body.String(), "\nshrimp_count 1\n")
 	})
+
+	t.Run("should return health status correctly", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/-/health", nil)
+		recorder := httptest.NewRecorder()
+
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		assert.Equal(t, "OK", strings.TrimSpace(recorder.Body.String()))
+	})
 }
 
 func TestFrontendService_Middleware(t *testing.T) {

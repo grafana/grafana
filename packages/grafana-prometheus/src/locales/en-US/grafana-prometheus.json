@@ -486,11 +486,6 @@
         "message-no-metrics-found": "There are no metrics found in the data source.",
         "name": "Name",
         "type": "Type"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Query parsing is ambiguous."
-        }
       }
     }
   }

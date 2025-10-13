@@ -24,14 +24,6 @@ export function assertPluginExtensionLink(
   }
 }
 
-export function assertLinkPathIsValid(pluginId: string, path: string) {
-  if (!isLinkPathValid(pluginId, path)) {
-    throw new Error(
-      `Invalid link extension. The "path" is required and should start with "/a/${pluginId}/" (currently: "${path}"). Skipping the extension.`
-    );
-  }
-}
-
 export function assertIsReactComponent(component: React.ComponentType) {
   if (!isReactComponent(component)) {
     throw new Error(`Invalid component extension, the "component" property needs to be a valid React component.`);
@@ -60,10 +52,6 @@ export function assertIsNotPromise(value: unknown, errorMessage = 'The provided 
   if (isPromise(value)) {
     throw new Error(errorMessage);
   }
-}
-
-export function isLinkPathValid(pluginId: string, path: string) {
-  return Boolean(typeof path === 'string' && path.length > 0 && path.startsWith(`/a/${pluginId}/`));
 }
 
 export function isExtensionPointIdValid({

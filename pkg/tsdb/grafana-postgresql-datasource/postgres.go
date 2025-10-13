@@ -15,56 +15,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	sqlengpgx "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/pgx"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 )
-
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *Service {
-	logger := backend.NewLoggerWith("logger", "tsdb.postgres")
-	s := &Service{
-		tlsManager:    newTLSManager(logger, cfg.DataPath),
-		pgxTlsManager: newPgxTlsManager(logger),
-		logger:        logger,
-		features:      features,
-	}
-	s.im = datasource.NewInstanceManager(s.newInstanceSettings())
-	return s
-}
-
-type Service struct {
-	tlsManager    tlsSettingsProvider
-	pgxTlsManager *pgxTlsManager
-	im            instancemgmt.InstanceManager
-	logger        log.Logger
-	features      featuremgmt.FeatureToggles
-}
-
-func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
-	i, err := s.im.Get(ctx, pluginCtx)
-	if err != nil {
-		return nil, err
-	}
-	instance := i.(*sqleng.DataSourceHandler)
-	return instance, nil
-}
-
-func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	if err != nil {
-		return nil, err
-	}
-
-	if s.features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
-		return dsInfo.QueryDataPGX(ctx, req)
-	}
-
-	return dsInfo.QueryData(ctx, req)
-}
 
 func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit int64, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger, settings backend.DataSourceInstanceSettings) (*sql.DB, *sqleng.DataSourceHandler, error) {
 	connector, err := pq.NewConnector(cnnstr)
@@ -115,7 +72,7 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 	return db, handler, nil
 }
 
-func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit int64, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger, settings backend.DataSourceInstanceSettings) (*pgxpool.Pool, *sqleng.DataSourceHandler, error) {
+func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit int64, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger, settings backend.DataSourceInstanceSettings) (*pgxpool.Pool, *sqlengpgx.DataSourceHandler, error) {
 	pgxConf, err := pgxpool.ParseConfig(cnnstr)
 	if err != nil {
 		logger.Error("postgres config creation failed", "error", err)
@@ -144,7 +101,7 @@ func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit
 		return []string{host}, nil
 	}
 
-	config := sqleng.DataPluginConfiguration{
+	config := sqlengpgx.DataPluginConfiguration{
 		DSInfo:            dsInfo,
 		MetricColumnTypes: []string{"unknown", "text", "varchar", "char", "bpchar"},
 		RowLimit:          rowLimit,
@@ -160,7 +117,7 @@ func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit
 		return nil, nil, err
 	}
 
-	handler, err := sqleng.NewQueryDataHandlerPGX(userFacingDefaultError, p, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
+	handler, err := sqlengpgx.NewQueryDataHandler(userFacingDefaultError, p, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
 		logger)
 	if err != nil {
 		logger.Error("Failed connecting to Postgres", "err", err)
@@ -171,8 +128,7 @@ func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit
 	return p, handler, nil
 }
 
-func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
-	logger := s.logger
+func NewInstanceSettings(logger log.Logger, dataPath string) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		cfg := backend.GrafanaConfigFromContext(ctx)
 		sqlCfg, err := cfg.SQL()
@@ -210,49 +166,53 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}
 
-		isPGX := s.features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX)
-
 		userFacingDefaultError, err := cfg.UserFacingDefaultError()
 		if err != nil {
 			return nil, err
 		}
 
-		var handler instancemgmt.Instance
-		if isPGX {
-			pgxTlsSettings, err := s.pgxTlsManager.getTLSSettings(dsInfo)
+		usePGX := cfg.FeatureToggles().IsEnabled("postgresDSUsePGX")
+
+		if usePGX {
+			pgxlogger := logger.FromContext(ctx).With("driver", "pgx")
+			pgxTlsManager := newPgxTlsManager(pgxlogger)
+			pgxTlsSettings, err := pgxTlsManager.getTLSSettings(dsInfo)
 			if err != nil {
 				return "", err
 			}
 
 			// Ensure cleanupCertFiles is called after the connection is opened
-			defer s.pgxTlsManager.cleanupCertFiles(pgxTlsSettings)
-			cnnstr, err := s.generateConnectionString(dsInfo, pgxTlsSettings, isPGX)
+			defer pgxTlsManager.cleanupCertFiles(pgxTlsSettings)
+			cnnstr, err := generateConnectionString(dsInfo, pgxTlsSettings, usePGX, pgxlogger)
 			if err != nil {
 				return "", err
 			}
-			_, handler, err = newPostgresPGX(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
+			_, handler, err := newPostgresPGX(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, pgxlogger, settings)
 			if err != nil {
-				logger.Error("Failed connecting to Postgres", "err", err)
+				pgxlogger.Error("Failed connecting to Postgres", "err", err)
 				return nil, err
 			}
+			pgxlogger.Debug("Successfully connected to Postgres")
+			return handler, nil
 		} else {
-			tlsSettings, err := s.tlsManager.getTLSSettings(dsInfo)
+			pqlogger := logger.FromContext(ctx).With("driver", "libpq")
+			tlsManager := newTLSManager(pqlogger, dataPath)
+			tlsSettings, err := tlsManager.getTLSSettings(dsInfo)
 			if err != nil {
 				return "", err
 			}
-			cnnstr, err := s.generateConnectionString(dsInfo, tlsSettings, isPGX)
+			cnnstr, err := generateConnectionString(dsInfo, tlsSettings, usePGX, pqlogger)
 			if err != nil {
 				return nil, err
 			}
-			_, handler, err = newPostgres(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
+			_, handler, err := newPostgres(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, pqlogger, settings)
 			if err != nil {
-				logger.Error("Failed connecting to Postgres", "err", err)
+				pqlogger.Error("Failed connecting to Postgres", "err", err)
 				return nil, err
 			}
+			pqlogger.Debug("Successfully connected to Postgres")
+			return handler, nil
 		}
-
-		logger.Debug("Successfully connected to Postgres")
-		return handler, nil
 	}
 }
 
@@ -342,9 +302,7 @@ func buildBaseConnectionString(params connectionParams) string {
 	return connStr
 }
 
-func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo, tlsSettings tlsSettings, isPGX bool) (string, error) {
-	logger := s.logger
-
+func generateConnectionString(dsInfo sqleng.DataSourceInfo, tlsSettings tlsSettings, isPGX bool, logger log.Logger) (string, error) {
 	params, err := parseConnectionParams(dsInfo, logger)
 	if err != nil {
 		return "", err
@@ -385,15 +343,6 @@ type postgresQueryResultTransformer struct{}
 
 func (t *postgresQueryResultTransformer) TransformQueryError(_ log.Logger, err error) error {
 	return err
-}
-
-// CheckHealth pings the connected SQL database
-func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	dsHandler, err := s.getDSInfo(ctx, req.PluginContext)
-	if err != nil {
-		return sqleng.ErrToHealthCheckResult(err)
-	}
-	return dsHandler.CheckHealth(ctx, req, s.features)
 }
 
 func (t *postgresQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {

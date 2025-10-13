@@ -7,16 +7,16 @@ package v0alpha1
 // JobResourceSummaryApplyConfiguration represents a declarative configuration of the JobResourceSummary type for use
 // with apply.
 type JobResourceSummaryApplyConfiguration struct {
-	Group    *string  `json:"group,omitempty"`
-	Resource *string  `json:"resource,omitempty"`
-	Total    *int64   `json:"total,omitempty"`
-	Create   *int64   `json:"create,omitempty"`
-	Update   *int64   `json:"update,omitempty"`
-	Delete   *int64   `json:"delete,omitempty"`
-	Write    *int64   `json:"write,omitempty"`
-	Error    *int64   `json:"error,omitempty"`
-	Noop     *int64   `json:"noop,omitempty"`
-	Errors   []string `json:"errors,omitempty"`
+	Group  *string  `json:"group,omitempty"`
+	Kind   *string  `json:"kind,omitempty"`
+	Total  *int64   `json:"total,omitempty"`
+	Create *int64   `json:"create,omitempty"`
+	Update *int64   `json:"update,omitempty"`
+	Delete *int64   `json:"delete,omitempty"`
+	Write  *int64   `json:"write,omitempty"`
+	Error  *int64   `json:"error,omitempty"`
+	Noop   *int64   `json:"noop,omitempty"`
+	Errors []string `json:"errors,omitempty"`
 }
 
 // JobResourceSummaryApplyConfiguration constructs a declarative configuration of the JobResourceSummary type for use with
@@ -33,11 +33,11 @@ func (b *JobResourceSummaryApplyConfiguration) WithGroup(value string) *JobResou
 	return b
 }
 
-// WithResource sets the Resource field in the declarative configuration to the given value
+// WithKind sets the Kind field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Resource field is set to the value of the last call.
-func (b *JobResourceSummaryApplyConfiguration) WithResource(value string) *JobResourceSummaryApplyConfiguration {
-	b.Resource = &value
+// If called multiple times, the Kind field is set to the value of the last call.
+func (b *JobResourceSummaryApplyConfiguration) WithKind(value string) *JobResourceSummaryApplyConfiguration {
+	b.Kind = &value
 	return b
 }
 

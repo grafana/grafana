@@ -144,16 +144,17 @@ policies:
       - label_keys_not_$$escaped
     # <list> a list of prometheus-like matchers that an alert rule has to fulfill to match the node (allowed chars
     #        [a-zA-Z_:])
-    matchers:
-      - alertname = Watchdog
-      - service_id_X = serviceX
-      - severity =~ "warning|critical"
-    # <list> a list of grafana-like matchers that an alert rule has to fulfill to match the node
-    object_matchers:
-      - ["alertname", "=", "CPUUsage"]
-      - ["service_id-X", "=", "serviceX"]
-      - ["severity", "=~", "warning|critical"]
     group_wait: 30s
     group_interval: 5m
     repeat_interval: 4h
-    routes: []
+    routes:
+      - matchers:
+          - alertname = Watchdog
+          - service_id_X = serviceX
+          - severity =~ "warning|critical"
+        # <list> a list of grafana-like matchers that an alert rule has to fulfill to match the node
+        object_matchers:
+          - [ "alertname", "=", "CPUUsage" ]
+          - [ "service_id-X", "=", "serviceX" ]
+          - [ "severity", "=~", "warning|critical" ]
+

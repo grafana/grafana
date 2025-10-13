@@ -324,6 +324,15 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx conte
 	}
 	cleanPermissionsErr := err
 
+	if previousConfig != nil {
+		// If there is a previous configuration, we need to copy its extra configs to the new one.
+		extraConfigs, err := extractExtraConfigs(previousConfig.AlertmanagerConfiguration)
+		if err != nil {
+			return fmt.Errorf("failed to extract extra configs from previous configuration: %w", err)
+		}
+		config.ExtraConfigs = extraConfigs
+	}
+
 	if err := moa.Crypto.ProcessSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
 	}
@@ -571,4 +580,19 @@ func extractReceiverNames(rawConfig string) (sets.Set[string], error) {
 	}
 
 	return receiverNames, nil
+}
+
+// extractExtraConfigs extracts encrypted (does not decrypt) extra configurations from the raw Alertmanager config.
+func extractExtraConfigs(rawConfig string) ([]definitions.ExtraConfiguration, error) {
+	// Slimmed down version of the Alertmanager configuration to extract extra configs.
+	type extraConfigUserConfig struct {
+		ExtraConfigs []definitions.ExtraConfiguration `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
+	}
+
+	cfg := &extraConfigUserConfig{}
+	if err := json.Unmarshal([]byte(rawConfig), cfg); err != nil {
+		return nil, fmt.Errorf("unable to parse Alertmanager configuration: %w", err)
+	}
+
+	return cfg.ExtraConfigs, nil
 }

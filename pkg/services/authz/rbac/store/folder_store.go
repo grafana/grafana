@@ -3,7 +3,9 @@ package store
 import (
 	"context"
 	"fmt"
+	"sync"
 
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
@@ -11,12 +13,41 @@ import (
 	"k8s.io/client-go/tools/pager"
 
 	"github.com/grafana/authlib/types"
+
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+const (
+	metricsNamespace = "iam"
+	metricsSubSystem = "authz_folder_store"
+)
+
+var (
+	registerOnce sync.Once
+	logger       = log.New("authz_folder_store")
+	requestCount = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubSystem,
+			Name:      "requests_total",
+			Help:      "Total number of requests to the folder API server",
+		},
+		[]string{"status"},
+	)
+)
+
+func registerMetrics(reg prometheus.Registerer) {
+	registerOnce.Do(func() {
+		if err := reg.Register(requestCount); err != nil {
+			logger.Warn("failed to register folder store metrics", "error", err)
+		}
+	})
+}
 
 type FolderStore interface {
 	ListFolders(ctx context.Context, ns types.NamespaceInfo) ([]Folder, error)
@@ -102,7 +133,8 @@ func (s *SQLFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 
 var _ FolderStore = (*APIFolderStore)(nil)
 
-func NewAPIFolderStore(tracer tracing.Tracer, configProvider func(ctx context.Context) (*rest.Config, error)) *APIFolderStore {
+func NewAPIFolderStore(tracer tracing.Tracer, reg prometheus.Registerer, configProvider func(ctx context.Context) (*rest.Config, error)) *APIFolderStore {
+	registerMetrics(reg)
 	return &APIFolderStore{tracer, configProvider}
 }
 
@@ -121,7 +153,13 @@ func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 	}
 
 	p := pager.New(func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
-		return client.List(ctx, opts)
+		obj, err := client.List(ctx, opts)
+		if err != nil {
+			requestCount.WithLabelValues("error").Inc()
+		} else {
+			requestCount.WithLabelValues("success").Inc()
+		}
+		return obj, err
 	})
 
 	const defaultPageSize = 500

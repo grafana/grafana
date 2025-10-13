@@ -221,9 +221,9 @@ func (in JobStatus) ToSyncStatus(jobId string) SyncStatus {
 }
 
 type JobResourceSummary struct {
-	Group    string `json:"group,omitempty"`
-	Resource string `json:"resource,omitempty"`
-	Total    int64  `json:"total,omitempty"` // the count (if known)
+	Group string `json:"group,omitempty"`
+	Kind  string `json:"kind,omitempty"`
+	Total int64  `json:"total,omitempty"` // the count (if known)
 
 	Create int64 `json:"create,omitempty"`
 	Update int64 `json:"update,omitempty"`

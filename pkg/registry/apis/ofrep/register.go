@@ -10,6 +10,9 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -30,6 +33,8 @@ import (
 var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
 var _ builder.APIGroupRouteProvider = (*APIBuilder)(nil)
 var _ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/registry/apis/ofrep")
 
 const ofrepPath = "/ofrep/v1/evaluate/flags"
 
@@ -240,7 +245,13 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 }
 
 func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracer.Start(r.Context(), "ofrep.handler.evalFlag")
+	defer span.End()
+
+	r = r.WithContext(ctx)
+
 	if !b.validateNamespace(r) {
+		_ = tracing.Errorf(span, namespaceMismatchMsg)
 		b.logger.Error(namespaceMismatchMsg)
 		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
@@ -248,42 +259,54 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 
 	flagKey := mux.Vars(r)["flagKey"]
 	if flagKey == "" {
+		_ = tracing.Errorf(span, "flagKey parameter is required")
 		http.Error(w, "flagKey parameter is required", http.StatusBadRequest)
 		return
 	}
 
+	span.SetAttributes(attribute.String("flag_key", flagKey))
+
 	isAuthedReq := b.isAuthenticatedRequest(r)
+	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
 	// Unless the request is authenticated, we only allow public flags evaluations
 	if !isAuthedReq && !isPublicFlag(flagKey) {
+		_ = tracing.Errorf(span, "unauthorized to evaluate flag: %s", flagKey)
 		b.logger.Error("Unauthorized to evaluate flag", "flagKey", flagKey)
 		http.Error(w, "unauthorized to evaluate flag", http.StatusUnauthorized)
 		return
 	}
 
 	if b.providerType == setting.GOFFProviderType {
-		b.proxyFlagReq(flagKey, isAuthedReq, w, r)
+		b.proxyFlagReq(ctx, flagKey, isAuthedReq, w, r)
 		return
 	}
 
-	b.evalFlagStatic(flagKey, w, r)
+	b.evalFlagStatic(ctx, flagKey, w)
 }
 
 func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracer.Start(r.Context(), "ofrep.handler.evalAllFlags")
+	defer span.End()
+
+	r = r.WithContext(ctx)
+
 	if !b.validateNamespace(r) {
+		_ = tracing.Errorf(span, namespaceMismatchMsg)
 		b.logger.Error(namespaceMismatchMsg)
 		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
 	}
 
 	isAuthedReq := b.isAuthenticatedRequest(r)
+	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
 	if b.providerType == setting.GOFFProviderType {
-		b.proxyAllFlagReq(isAuthedReq, w, r)
+		b.proxyAllFlagReq(ctx, isAuthedReq, w, r)
 		return
 	}
 
-	b.evalAllFlagsStatic(isAuthedReq, w, r)
+	b.evalAllFlagsStatic(ctx, isAuthedReq, w)
 }
 
 func writeResponse(statusCode int, result any, logger log.Logger, w http.ResponseWriter) {
@@ -296,8 +319,12 @@ func writeResponse(statusCode int, result any, logger log.Logger, w http.Respons
 }
 
 func (b *APIBuilder) namespaceFromEvalCtx(body []byte) string {
-	// Extract namespace from request body without consuming it
+	// TODO: eval ctx should be added to span attributes, not log
+	// Adding it temporary for debugging
+	b.logger.Debug("evaluation context from request", "ctx", body)
+
 	var evalCtx struct {
+		// Extract namespace from request body without consuming it
 		Context struct {
 			Namespace string `json:"namespace"`
 		} `json:"context"`
@@ -307,6 +334,9 @@ func (b *APIBuilder) namespaceFromEvalCtx(body []byte) string {
 		b.logger.Debug("Failed to unmarshal evaluation context", "error", err, "body", string(body))
 		return ""
 	}
+
+	// Adding it temporary for debugging
+	b.logger.Debug("evaluation context decoded", "namespace", evalCtx.Context.Namespace)
 
 	if evalCtx.Context.Namespace == "" {
 		b.logger.Debug("namespace missing from evaluation context", "namespace", evalCtx.Context.Namespace)

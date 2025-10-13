@@ -7,7 +7,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -84,12 +83,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -120,12 +119,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -187,12 +186,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -223,12 +222,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -312,12 +311,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -348,12 +347,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -462,12 +461,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -562,12 +561,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -598,12 +597,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -665,12 +664,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -732,12 +731,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -800,12 +799,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -878,12 +877,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -954,12 +953,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -990,12 +989,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -1059,12 +1058,12 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,

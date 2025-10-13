@@ -21,8 +21,6 @@ type GlobalRole struct {
 
 	// Spec is the spec of the GlobalRole
 	Spec GlobalRoleSpec `json:"spec" yaml:"spec"`
-
-	Status GlobalRoleStatus `json:"status" yaml:"status"`
 }
 
 func (o *GlobalRole) GetSpec() any {
@@ -39,15 +37,11 @@ func (o *GlobalRole) SetSpec(spec any) error {
 }
 
 func (o *GlobalRole) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *GlobalRole) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,13 +49,6 @@ func (o *GlobalRole) GetSubresource(name string) (any, bool) {
 
 func (o *GlobalRole) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(GlobalRoleStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type GlobalRoleStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -233,7 +220,6 @@ func (o *GlobalRole) DeepCopyInto(dst *GlobalRole) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check
@@ -303,17 +289,5 @@ func (s *GlobalRoleSpec) DeepCopy() *GlobalRoleSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *GlobalRoleSpec) DeepCopyInto(dst *GlobalRoleSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of GlobalRoleStatus
-func (s *GlobalRoleStatus) DeepCopy() *GlobalRoleStatus {
-	cpy := &GlobalRoleStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies GlobalRoleStatus into another GlobalRoleStatus object
-func (s *GlobalRoleStatus) DeepCopyInto(dst *GlobalRoleStatus) {
 	resource.CopyObjectInto(dst, s)
 }

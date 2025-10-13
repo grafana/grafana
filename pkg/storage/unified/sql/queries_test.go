@@ -495,5 +495,25 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlResourceLastImportTimeInsert: {
+				{
+					Name: "insert",
+					Data: &sqlResourceLastImportTimeInsertRequest{
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						Namespace:      "ns",
+						Group:          "group",
+						Resource:       "res",
+						LastImportTime: time.Date(2025, 10, 07, 22, 30, 05, 0, time.UTC),
+					},
+				},
+			},
+			sqlResourceLastImportTimeQuery: {
+				{
+					Name: "insert",
+					Data: &sqlResourceLastImportTimeQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+					},
+				},
+			},
 		}})
 }

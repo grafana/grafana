@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"fmt"
 	"maps"
 	"strings"
 
@@ -351,8 +352,20 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 		return nil
 	case admission.Update:
 		switch typedObj := a.GetObject().(type) {
+		case *iamv0.User:
+			oldUserObj, ok := a.GetOldObject().(*iamv0.User)
+			if !ok {
+				return fmt.Errorf("expected old object to be a User, got %T", oldUserObj)
+			}
+			return user.ValidateOnUpdate(ctx, oldUserObj, typedObj)
 		case *iamv0.ResourcePermission:
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
+		case *iamv0.Team:
+			oldTeamObj, ok := a.GetOldObject().(*iamv0.Team)
+			if !ok {
+				return fmt.Errorf("expected old object to be a Team, got %T", oldTeamObj)
+			}
+			return team.ValidateOnUpdate(ctx, typedObj, oldTeamObj)
 		}
 		return nil
 	case admission.Delete:
@@ -372,12 +385,15 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 	case admission.Create:
 		switch typedObj := a.GetObject().(type) {
 		case *iamv0.User:
-			return user.MutateOnCreate(ctx, typedObj)
+			return user.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.ServiceAccount:
 			return serviceaccount.MutateOnCreate(ctx, typedObj)
 		}
 	case admission.Update:
-		return nil
+		switch typedObj := a.GetObject().(type) {
+		case *iamv0.User:
+			return user.MutateOnCreateAndUpdate(ctx, typedObj)
+		}
 	case admission.Delete:
 		return nil
 	case admission.Connect:

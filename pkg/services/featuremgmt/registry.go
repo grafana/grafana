@@ -536,6 +536,13 @@ var (
 			RequiresRestart: true, // Adds a route at startup
 		},
 		{
+			Name:            "queryServiceWithConnections",
+			Description:     "Adds datasource connections to the query service",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: true, // Adds a route at startup
+		},
+		{
 			Name:            "queryServiceRewrite",
 			Description:     "Rewrite requests targeting /ds/query to the query service",
 			Stage:           FeatureStageExperimental,
@@ -646,6 +653,13 @@ var (
 		{
 			Name:         "dashboardUndoRedo",
 			Description:  "Enables undo/redo in dynamic dashboards",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "unlimitedLayoutsNesting",
+			Description:  "Enables unlimited dashboard panel grouping",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
@@ -782,7 +796,7 @@ var (
 		},
 		{
 			Name:         "alertingSaveStateCompressed",
-			Description:  "Enables the compressed protobuf-based alert state storage",
+			Description:  "Enables the compressed protobuf-based alert state storage. Default is enabled.",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
@@ -813,15 +827,6 @@ var (
 			Owner:             grafanaOperatorExperienceSquad,
 			Expression:        "false",
 			FrontendOnly:      true,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
-			Name:              "promQLScope",
-			Description:       "In-development feature that will allow injection of labels into prometheus queries.",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaOSSBigTent,
-			Expression:        "true",
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
@@ -1521,6 +1526,16 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:              "alertingUseNewSimplifiedRoutingHashAlgorithm",
+			Description:       "",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+			Expression:        "true",
+		},
+		{
 			Name:              "useScopesNavigationEndpoint",
 			Description:       "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
 			Stage:             FeatureStageExperimental,
@@ -1668,13 +1683,6 @@ var (
 			Owner:        awsDatasourcesSquad,
 		},
 		{
-			Name:         "localizationForPlugins",
-			Description:  "Enables localization for plugins",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaPluginsPlatformSquad,
-			FrontendOnly: false,
-		},
-		{
 			Name:         "unifiedNavbars",
 			Description:  "Enables unified navbars",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1735,13 +1743,6 @@ var (
 		{
 			Name:        "alertRuleUseFiredAtForStartsAt",
 			Description: "Use FiredAt for StartsAt when sending alerts to Alertmaanger",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "alertingGenerateSimplifiedRoutingWithOldHashes",
-			Description: "Generate simplified routing with old hashes",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
@@ -1891,6 +1892,16 @@ var (
 			Expression:        "false", // extensions will be disabled by default
 		},
 		{
+			Name:              "enableDashboardEmptyExtensions",
+			Description:       "Set this to true to enable all dashboard empty state extensions registered by plugins.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+			Expression:        "false", // extensions will be disabled by default
+		},
+		{
 			Name:              "foldersAppPlatformAPI",
 			Description:       "Enables use of app platform API for folders",
 			Stage:             FeatureStageExperimental,
@@ -1925,16 +1936,6 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			Expression:        "false",
-		},
-		{
-			Name:              "pluginAssetProvider",
-			Description:       "Allows decoupled core plugins to load from the Grafana CDN",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaPluginsPlatformSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			Expression:        "false",
-			RequiresRestart:   true,
 		},
 		{
 			Name:              "unifiedStorageSearchDualReaderEnabled",
@@ -2076,6 +2077,14 @@ var (
 		{
 			Name:         "cdnPluginsLoadFirst",
 			Description:  "Prioritize loading plugins from the CDN before other sources",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "cdnPluginsUrls",
+			Description:  "Enable loading plugins via declarative URLs",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,

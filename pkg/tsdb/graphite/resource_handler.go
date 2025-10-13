@@ -294,7 +294,13 @@ func (s *Service) handleFunctions(ctx context.Context, dsInfo *datasourceInfo, _
 
 	_, rawBody, statusCode, err := doGraphiteRequest[map[string]any](ctx, dsInfo, s.logger, req, true)
 	if err != nil {
-		return nil, statusCode, fmt.Errorf("version request failed: %v", err)
+		return nil, statusCode, fmt.Errorf("functions request failed: %v", err)
+	}
+
+	// It's possible that a HTML response may be returned
+	// This isn't valid so we'll return an error and use the default functions
+	if strings.HasPrefix(string(*rawBody), "<") {
+		return []byte{}, http.StatusNotAcceptable, fmt.Errorf("invalid functions response received from Graphite")
 	}
 
 	if rawBody == nil {

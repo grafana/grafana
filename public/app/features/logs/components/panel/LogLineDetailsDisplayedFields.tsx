@@ -6,11 +6,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Card, IconButton, useStyles2 } from '@grafana/ui';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-
 import { LogLineDetailsMode } from './LogLineDetails';
 import { useLogListContext } from './LogListContext';
 import { reportInteractionOnce } from './analytics';
+import { getNormalizedFieldName } from './processing';
 
 export const LogLineDetailsDisplayedFields = () => {
   const { displayedFields, setDisplayedFields } = useLogListContext();
@@ -98,9 +97,7 @@ const DisplayedField = ({
     <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
       <Card noMargin className={styles.fieldCard}>
         <div className={styles.fieldWrapper}>
-          <div className={styles.field}>
-            {field === LOG_LINE_BODY_FIELD_NAME ? t('logs.log-line-details.log-line-field', 'Log line') : field}
-          </div>
+          <div className={styles.field}>{getNormalizedFieldName(field)}</div>
           {displayedFields.length > 1 && (
             <>
               <IconButton

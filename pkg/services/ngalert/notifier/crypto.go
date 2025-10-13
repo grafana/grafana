@@ -113,7 +113,7 @@ func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt defini
 				if !ok {
 					return fmt.Errorf("failed to get secret keys for contact point type %s", gr.Type)
 				}
-				secretKeys := typeSchema.GetSecretFieldsPaths()
+				secretPaths := typeSchema.GetSecretFieldsPaths()
 				secureSettings := gr.SecureSettings
 				if secureSettings == nil {
 					secureSettings = make(map[string]string)
@@ -121,7 +121,8 @@ func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt defini
 
 				settingsChanged := false
 				secureSettingsChanged := false
-				for _, secretKey := range secretKeys {
+				for _, secretPath := range secretPaths {
+					secretKey := secretPath.String()
 					settingsValue, ok := settings[secretKey]
 					if !ok {
 						continue

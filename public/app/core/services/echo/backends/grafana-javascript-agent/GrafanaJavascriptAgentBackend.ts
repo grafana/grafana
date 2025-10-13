@@ -1,23 +1,18 @@
 import { BuildInfo, escapeRegex } from '@grafana/data';
-import { BaseTransport, defaultInternalLoggerLevel } from '@grafana/faro-core';
+import { BaseTransport, defaultInternalLoggerLevel, InternalLoggerLevel } from '@grafana/faro-core';
 import {
   initializeFaro,
   BrowserConfig,
-  ErrorsInstrumentation,
-  ConsoleInstrumentation,
-  WebVitalsInstrumentation,
-  SessionInstrumentation,
   FetchTransport,
-  type Instrumentation,
   getWebInstrumentations,
-  Config,
+  type Instrumentation,
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
-import { GrafanaJavascriptAgentEchoEvent, User } from './types';
+import { GrafanaJavascriptAgentEchoEvent } from './types';
 
 function isCrossOriginIframe() {
   try {
@@ -27,15 +22,19 @@ function isCrossOriginIframe() {
   }
 }
 
-export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
-  buildInfo: BuildInfo;
-  customEndpoint: string;
-  user: User;
-  allInstrumentationsEnabled: boolean;
-  errorInstrumentalizationEnabled: boolean;
+export interface GrafanaJavascriptAgentBackendOptions {
+  apiKey?: string;
+  customEndpoint?: string;
+  internalLoggerLevel?: InternalLoggerLevel;
+
+  webVitalsAttribution: boolean;
   consoleInstrumentalizationEnabled: boolean;
-  webVitalsInstrumentalizationEnabled: boolean;
+  performanceInstrumentalizationEnabled: boolean;
+  cspInstrumentalizationEnabled: boolean;
   tracingInstrumentalizationEnabled: boolean;
+
+  buildInfo: BuildInfo;
+  userIdentifier: string;
   ignoreUrls: RegExp[];
 }
 
@@ -49,62 +48,52 @@ export class GrafanaJavascriptAgentBackend
   implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions>
 {
   supportedEvents = [EchoEventType.GrafanaJavascriptAgent];
-  private faroInstance;
 
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
     // configure instrumentations.
-    const instrumentations: Instrumentation[] = [];
-
-    const ignoreUrls = [
-      new RegExp(`.*${escapeRegex(options.customEndpoint)}.*`),
-      ...TRACKING_URLS,
-      ...options.ignoreUrls,
+    const instrumentations: Instrumentation[] = [
+      ...getWebInstrumentations({
+        captureConsole: options.consoleInstrumentalizationEnabled,
+        enablePerformanceInstrumentation: options.performanceInstrumentalizationEnabled,
+        enableContentSecurityPolicyInstrumentation: options.cspInstrumentalizationEnabled,
+      }),
     ];
 
+    if (options.tracingInstrumentalizationEnabled) {
+      instrumentations.push(new TracingInstrumentation());
+    }
+
+    const ignoreUrls = [...TRACKING_URLS, ...options.ignoreUrls];
+    if (options.customEndpoint) {
+      ignoreUrls.unshift(new RegExp(`.*${escapeRegex(options.customEndpoint)}.*`));
+    }
+
     const transports: BaseTransport[] = [new EchoSrvTransport({ ignoreUrls })];
-    const consoleInstrumentationOptions: Config['consoleInstrumentation'] =
-      options.allInstrumentationsEnabled || options.consoleInstrumentalizationEnabled
-        ? {
-            serializeErrors: true,
-          }
-        : {};
 
     // If in cross origin iframe, default to writing to instance logging endpoint
     if (options.customEndpoint && !isCrossOriginIframe()) {
       transports.push(new FetchTransport({ url: options.customEndpoint, apiKey: options.apiKey }));
     }
 
-    if (options.errorInstrumentalizationEnabled) {
-      instrumentations.push(new ErrorsInstrumentation());
-    }
-    if (options.consoleInstrumentalizationEnabled) {
-      instrumentations.push(new ConsoleInstrumentation());
-    }
-    if (options.webVitalsInstrumentalizationEnabled) {
-      instrumentations.push(new WebVitalsInstrumentation());
-    }
-    if (options.tracingInstrumentalizationEnabled) {
-      instrumentations.push(new TracingInstrumentation());
-    }
-
-    // session instrumentation must be added!
-    instrumentations.push(new SessionInstrumentation());
-
     // initialize GrafanaJavascriptAgent so it can set up its hooks and start collecting errors
     const grafanaJavaScriptAgentOptions: BrowserConfig = {
-      globalObjectKey: options.globalObjectKey || 'faro',
-      preventGlobalExposure: options.preventGlobalExposure || false,
       app: {
         name: 'grafana-frontend',
         version: options.buildInfo.version,
         environment: options.buildInfo.env,
       },
-      instrumentations: options.allInstrumentationsEnabled
-        ? [...getWebInstrumentations(), new TracingInstrumentation()]
-        : instrumentations,
-      consoleInstrumentation: consoleInstrumentationOptions,
-      trackWebVitalsAttribution: options.webVitalsInstrumentalizationEnabled || options.allInstrumentationsEnabled,
+
+      user: {
+        id: options.userIdentifier,
+      },
+
+      instrumentations: instrumentations,
       transports,
+
+      consoleInstrumentation: {
+        serializeErrors: true,
+      },
+      trackWebVitalsAttribution: options.webVitalsAttribution,
       ignoreErrors: [
         'ResizeObserver loop limit exceeded',
         'ResizeObserver loop completed',
@@ -118,19 +107,11 @@ export class GrafanaJavascriptAgentBackend
       batching: {
         sendTimeout: 1000,
       },
-      internalLoggerLevel: options.internalLoggerLevel || defaultInternalLoggerLevel,
       beforeSend: beforeSendHandler,
+      internalLoggerLevel: options.internalLoggerLevel ?? defaultInternalLoggerLevel,
     };
-    this.faroInstance = initializeFaro(grafanaJavaScriptAgentOptions);
 
-    if (options.user) {
-      this.faroInstance.api.setUser({
-        id: options.user.id,
-        attributes: {
-          orgId: String(options.user.orgId) || '',
-        },
-      });
-    }
+    initializeFaro(grafanaJavaScriptAgentOptions);
   }
 
   // noop because the EchoSrvTransport registered in Faro will already broadcast all signals emitted by the Faro API

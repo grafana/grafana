@@ -11,9 +11,11 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -66,8 +68,14 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
+
+	allowedTargets := []v0alpha1.SyncTargetType{}
+	for _, target := range controllerCfg.allowedTargets {
+		allowedTargets = append(allowedTargets, v0alpha1.SyncTargetType(target))
+	}
+	validator := repository.NewValidator(controllerCfg.minSyncInterval, allowedTargets, controllerCfg.allowImageRendering)
 	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
-	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer)
+	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer, repository.NewSimpleRepositoryTester(validator))
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
 	controller, err := controller.NewRepositoryController(
@@ -98,7 +106,10 @@ func RunRepoController(deps server.OperatorDependencies) error {
 
 type repoControllerConfig struct {
 	provisioningControllerConfig
-	workerCount int
+	workerCount         int
+	allowedTargets      []string
+	allowImageRendering bool
+	minSyncInterval     time.Duration
 }
 
 func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*repoControllerConfig, error) {
@@ -106,8 +117,18 @@ func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (
 	if err != nil {
 		return nil, err
 	}
+
+	allowedTargets := []string{}
+	cfg.SectionWithEnvOverrides("provisioning").Key("allowed_targets").Strings("|")
+	if len(allowedTargets) == 0 {
+		allowedTargets = []string{"folder"}
+	}
+
 	return &repoControllerConfig{
 		provisioningControllerConfig: *controllerCfg,
+		allowedTargets:               allowedTargets,
 		workerCount:                  cfg.SectionWithEnvOverrides("operator").Key("worker_count").MustInt(1),
+		allowImageRendering:          cfg.SectionWithEnvOverrides("provisioning").Key("allow_image_rendering").MustBool(false),
+		minSyncInterval:              cfg.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1 * time.Minute),
 	}, nil
 }

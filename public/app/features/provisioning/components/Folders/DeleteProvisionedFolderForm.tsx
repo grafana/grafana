@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { Job, RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
@@ -60,6 +60,12 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
       showError();
       return;
     }
+
+    reportInteraction('grafana_provisioning_folder_delete_submitted', {
+      workflow,
+      repositoryName: repo,
+      repositoryType: repository?.type ?? 'unknown',
+    });
 
     // Branch workflow: use /files API for direct file operations
     if (workflow === 'branch') {

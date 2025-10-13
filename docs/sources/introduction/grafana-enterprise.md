@@ -107,6 +107,7 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [SAP HANA®](/grafana/plugins/grafana-saphana-datasource)
 - [ServiceNow](/grafana/plugins/grafana-servicenow-datasource)
 - [Snowflake](/grafana/plugins/grafana-snowflake-datasource)
+- [SolarWinds](/grafana/plugins/grafana-solarwinds-datasource)
 - [Splunk](/grafana/plugins/grafana-splunk-datasource)
 - [Splunk Infrastructure monitoring (SignalFx)](/grafana/plugins/grafana-splunk-monitoring-datasource)
 - [Sqlyze Datasource](/grafana/plugins/grafana-odbc-datasource)

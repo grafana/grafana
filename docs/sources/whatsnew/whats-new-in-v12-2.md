@@ -51,6 +51,9 @@ posts:
   - title: Authentication and authorization
     items:
       - whats-new/2025-09-10-scim-configuration-ui.md
+  - title: Auditing
+    items:
+      - whats-new/2025-10-09-auditing-options-for-recording-data-sources-queries.md
 whats_new_grafana_version: 12.2
 weight: -51
 ---

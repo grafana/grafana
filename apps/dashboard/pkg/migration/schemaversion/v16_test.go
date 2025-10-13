@@ -1532,6 +1532,123 @@ func TestV16(t *testing.T) {
 				// rows field should be removed
 			},
 		},
+		{
+			name: "should handle span zero by defaulting to DEFAULT_PANEL_SPAN",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"collapse":  false,
+						"showTitle": true, // Need this to create row panel
+						"title":     "Test Row",
+						"height":    250,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":   1,
+								"type": "graph",
+								"span": 0, // This should be defaulted to 4 (DEFAULT_PANEL_SPAN)
+							},
+							map[string]interface{}{
+								"id":   2,
+								"type": "stat",
+								"span": 6, // Normal span value
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "graph",
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 1,
+							"w": 8, // span 0 -> DEFAULT_PANEL_SPAN (4) -> 4 * 2 = 8 width
+							"h": 7, // default height
+						},
+					},
+					map[string]interface{}{
+						"id":   2,
+						"type": "stat",
+						"gridPos": map[string]interface{}{
+							"x": 8, // After first panel
+							"y": 1,
+							"w": 12, // span 6 -> 6 * 2 = 12 width
+							"h": 7,  // default height
+						},
+					},
+					// Row panel should be created because showTitle is true
+					map[string]interface{}{
+						"id":        3,
+						"type":      "row",
+						"title":     "Test Row",
+						"collapsed": false, // Set because input has "collapse": false
+						"repeat":    "",
+						"panels":    []interface{}{},
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 0,
+							"w": 24,
+							"h": 7,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should not set collapsed property when input row has no collapse property",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows": []interface{}{
+					map[string]interface{}{
+						// No "collapse" property in input
+						"showTitle": true,
+						"title":     "Test Row",
+						"height":    250,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":   1,
+								"type": "graph",
+								"span": 12,
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "graph",
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 1,
+							"w": 24, // span 12 -> 12 * 2 = 24 width
+							"h": 7,  // default height
+						},
+					},
+					// Row panel should be created because showTitle is true
+					map[string]interface{}{
+						"id":    2,
+						"type":  "row",
+						"title": "Test Row",
+						// No "collapsed" property because input had no "collapse" property
+						"repeat": "",
+						"panels": []interface{}{},
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 0,
+							"w": 24,
+							"h": 7,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	runMigrationTests(t, tests, schemaversion.V16)

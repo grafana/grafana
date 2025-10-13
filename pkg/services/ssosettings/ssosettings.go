@@ -22,6 +22,8 @@ type Service interface {
 	ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSettings, error)
 	// GetForProvider returns the SSO settings for a given provider (DB or config file)
 	GetForProvider(ctx context.Context, provider string) (*models.SSOSettings, error)
+	// GetForProviderFromCache returns the SSO settings for a given provider from cache. It falls back to GetForProvider if the settings are not in the cache.
+	GetForProviderFromCache(ctx context.Context, provider string) (*models.SSOSettings, error)
 	// GetForProviderWithRedactedSecrets returns the SSO settings for a given provider (DB or config file) with secret values redacted
 	GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error)
 	// Upsert creates or updates the SSO settings for a given provider

@@ -520,6 +520,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
       ),
     },
+    {
+      path: '/theme-playground',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ThemePlayground"*/ 'app/features/theme-playground/ThemePlayground')
+      ),
+    },
     config.featureToggles.restoreDashboards && {
       path: '/dashboard/recently-deleted',
       roles: () => ['Admin', 'ServerAdmin'],

@@ -12,6 +12,7 @@ import (
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -49,7 +50,7 @@ func NewLegacySQL(db legacysql.LegacyDatabaseProvider) *LegacySQL {
 }
 
 // NOTE: this does not support paging -- lets check if that will be a problem in cloud
-func (s *LegacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]dashboardStars, int64, error) {
+func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user string) ([]dashboardStars, int64, error) {
 	var max sql.NullString
 	sql, err := s.db(ctx)
 	if err != nil {
@@ -58,13 +59,16 @@ func (s *LegacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]d
 
 	req := newStarQueryReq(sql, user, orgId)
 
-	q, err := sqltemplate.Execute(sqlStarsQuery, req)
+	q, err := sqltemplate.Execute(sqlDashboardStarsQuery, req)
 	if err != nil {
-		return nil, 0, fmt.Errorf("execute template %q: %w", sqlStarsQuery.Name(), err)
+		return nil, 0, fmt.Errorf("execute template %q: %w", sqlDashboardStarsQuery.Name(), err)
 	}
 
 	sess := sql.DB.GetSqlxSession()
 	rows, err := sess.Query(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return nil, 0, err
+	}
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
@@ -111,7 +115,7 @@ func (s *LegacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]d
 	// Find the RV unless it is a user query
 	if userUID == "" {
 		req.Reset()
-		q, err = sqltemplate.Execute(sqlStarsRV, req)
+		q, err = sqltemplate.Execute(sqlDashboardStarsRV, req)
 		if err != nil {
 			return nil, 0, fmt.Errorf("execute template %q: %w", sqlPreferencesRV.Name(), err)
 		}
@@ -120,13 +124,100 @@ func (s *LegacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]d
 			return nil, 0, fmt.Errorf("unable to get RV %w", err)
 		}
 		if max.Valid && max.String != "" {
-			fmt.Printf("max RV: %s\n", max.String)
+			t, _ := time.Parse(time.RFC3339, max.String)
+			if !t.IsZero() {
+				updated = t
+			}
 		} else {
 			updated = s.startup
 		}
 	}
 
 	return stars, updated.UnixMilli(), err
+}
+
+func (s *LegacySQL) getHistoryStars(ctx context.Context, orgId int64, user string) (map[string][]string, error) {
+	sql, err := s.db(ctx)
+	if err != nil {
+		return nil, err
+	}
+	req := newStarQueryReq(sql, user, orgId)
+
+	q, err := sqltemplate.Execute(sqlHistoryStarsQuery, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlHistoryStarsQuery.Name(), err)
+	}
+
+	sess := sql.DB.GetSqlxSession()
+	rows, err := sess.Query(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+
+	last := user
+	res := make(map[string][]string)
+	buffer := make([]string, 0, 10)
+	var uid string
+
+	for rows.Next() {
+		err := rows.Scan(&uid, &user)
+		if err != nil {
+			return nil, err
+		}
+		if user != last && len(buffer) > 0 {
+			res[last] = buffer
+			buffer = make([]string, 0, 10)
+		}
+		buffer = append(buffer, uid)
+		last = user
+	}
+	res[last] = buffer
+	return res, nil
+}
+
+func (s *LegacySQL) removeHistoryStar(ctx context.Context, user *user.User, stars []string) error {
+	sql, err := s.db(ctx)
+	if err != nil {
+		return err
+	}
+	req := newStarQueryReq(sql, "", user.OrgID)
+	req.UserID = user.ID
+	if len(stars) > 0 {
+		req.QueryUIDs = stars
+	}
+
+	q, err := sqltemplate.Execute(sqlHistoryStarsDelete, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlHistoryStarsDelete.Name(), err)
+	}
+
+	sess := sql.DB.GetSqlxSession()
+	_, err = sess.Exec(ctx, q, req.GetArgs()...)
+	return err
+}
+
+func (s *LegacySQL) addHistoryStar(ctx context.Context, user *user.User, star string) error {
+	sql, err := s.db(ctx)
+	if err != nil {
+		return err
+	}
+	req := newStarQueryReq(sql, "", user.OrgID)
+	req.UserID = user.ID
+	req.QueryUID = star
+
+	q, err := sqltemplate.Execute(sqlHistoryStarsDelete, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlHistoryStarsDelete.Name(), err)
+	}
+
+	sess := sql.DB.GetSqlxSession()
+	_, err = sess.Exec(ctx, q, req.GetArgs()...)
+	return err
 }
 
 // List all defined preferences in an org (valid for admin users only)
@@ -206,7 +297,10 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 			return nil, 0, fmt.Errorf("unable to get RV %w", err)
 		}
 		if max.Valid && max.String != "" {
-			fmt.Printf("max RV: %s\n", max.String)
+			t, _ := time.Parse(time.RFC3339, max.String)
+			if !t.IsZero() {
+				rv.Time = t
+			}
 		} else {
 			rv.Time = s.startup
 		}
@@ -229,7 +323,7 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 	found, rv, err := s.listPreferences(ctx, ns, info.OrgID,
 		func(req *preferencesQuery) (bool, error) {
 			if user != nil {
-				req.UserUID = user.GetRawIdentifier()
+				req.UserUID = user.GetIdentifier()
 				teams, err = s.GetTeams(ctx, &identity.StaticRequester{
 					OrgID:   info.OrgID,
 					UserUID: req.UserUID,
@@ -243,7 +337,7 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 				return true
 			}
 			if p.UserUID.String != "" {
-				return user.GetRawIdentifier() == p.UserUID.String
+				return user.GetIdentifier() == p.UserUID.String
 			}
 			if p.TeamUID.String != "" {
 				return slices.Contains(teams, p.TeamUID.String)
@@ -292,4 +386,16 @@ func (s *LegacySQL) GetTeams(ctx context.Context, id authlib.AuthInfo, admin boo
 	sess := sql.DB.GetSqlxSession()
 	err = sess.Select(ctx, &teams, q, req.GetArgs()...)
 	return teams, err
+}
+
+func (s *LegacySQL) getLegacyTeamID(ctx context.Context, orgId int64, team string) (int64, error) {
+	sql, err := s.db(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	var id int64
+	sess := sql.DB.GetSqlxSession()
+	err = sess.Select(ctx, &id, "SELECT id FROM team WHERE org_id=? AND uid=?", orgId, team)
+	return id, err
 }

@@ -4,15 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func FullSync(
@@ -92,9 +93,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 				deleteSpan.End()
 				continue
 			}
-
 			result.Name = change.Existing.Name
-			result.Resource = change.Existing.Resource
 			result.Group = change.Existing.Group
 
 			versionlessGVR := schema.GroupVersionResource{
@@ -103,15 +102,17 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 			}
 
 			// TODO: should we use the clients or the resource manager instead?
-			client, _, err := clients.ForResource(deleteCtx, versionlessGVR)
+			client, gvk, err := clients.ForResource(deleteCtx, versionlessGVR)
 			if err != nil {
+				result.Kind = versionlessGVR.Resource // could not find a kind
 				result.Error = fmt.Errorf("get client for deleted object: %w", err)
 				progress.Record(deleteCtx, result)
 				continue
 			}
+			result.Kind = gvk.Kind
 
 			if err := client.Delete(deleteCtx, change.Existing.Name, metav1.DeleteOptions{}); err != nil {
-				result.Error = fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, change.Existing.Resource, change.Existing.Name, err)
+				result.Error = fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err)
 			}
 			progress.Record(deleteCtx, result)
 			deleteSpan.End()
@@ -122,10 +123,10 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 		if safepath.IsDir(change.Path) {
 			ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.ensure_folder_exists")
 			result := jobs.JobResourceResult{
-				Path:     change.Path,
-				Action:   change.Action,
-				Resource: resources.FolderResource.Resource,
-				Group:    resources.FolderResource.Group,
+				Path:   change.Path,
+				Action: change.Action,
+				Group:  resources.FolderKind.Group,
+				Kind:   resources.FolderKind.Kind,
 			}
 
 			folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path)
@@ -147,11 +148,11 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 		writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
 		name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
 		result := jobs.JobResourceResult{
-			Path:     change.Path,
-			Action:   change.Action,
-			Name:     name,
-			Resource: gvk.Kind,
-			Group:    gvk.Group,
+			Path:   change.Path,
+			Action: change.Action,
+			Name:   name,
+			Group:  gvk.Group,
+			Kind:   gvk.Kind,
 		}
 
 		if err != nil {

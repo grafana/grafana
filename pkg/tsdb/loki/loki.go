@@ -21,8 +21,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
 
-	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
@@ -73,9 +73,9 @@ type datasourceInfo struct {
 
 type QueryJSONModel struct {
 	dataquery.LokiDataQuery
-	Direction           *string              `json:"direction,omitempty"`
-	SupportingQueryType *string              `json:"supportingQueryType"`
-	Scopes              []models.ScopeFilter `json:"scopes"`
+	Direction           *string             `json:"direction,omitempty"`
+	SupportingQueryType *string             `json:"supportingQueryType"`
+	Scopes              []scope.ScopeFilter `json:"scopes"`
 }
 
 type ResponseOpts struct {

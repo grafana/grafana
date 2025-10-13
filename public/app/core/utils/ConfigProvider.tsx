@@ -21,6 +21,10 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
     return () => sub.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    setTheme(value);
+  }, [value]);
+
   return (
     <ThemeContext.Provider value={theme}>
       <SkeletonTheme
