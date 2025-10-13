@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -13,6 +14,26 @@ const (
 	AlertRuleCacheTTL = 5 * time.Minute
 )
 
+// ServerTimingCollector interface for recording metrics (avoids circular import)
+type ServerTimingCollector interface {
+	RecordCacheHit(duration time.Duration)
+	RecordCacheMiss(duration time.Duration)
+	RecordDBQuery(duration time.Duration)
+	RecordStateManagerQuery(duration time.Duration)
+}
+
+// Context key for Server-Timing collector (must match api package exactly)
+// Using string to avoid type mismatch across packages
+const serverTimingCollectorKey = "grafana.server-timing-collector"
+
+// getTimingCollectorFromContext extracts timing collector from context
+func getTimingCollectorFromContext(ctx context.Context) ServerTimingCollector {
+	if collector, ok := ctx.Value(serverTimingCollectorKey).(ServerTimingCollector); ok {
+		return collector
+	}
+	return nil
+}
+
 // alertRuleCacheKey generates a cache key for alert rules based on orgID only
 // We cache all rules together (alerting + recording) and filter by type in-memory
 func alertRuleCacheKey(orgID int64, ruleType ngmodels.RuleTypeFilter) string {
@@ -20,7 +41,18 @@ func alertRuleCacheKey(orgID int64, ruleType ngmodels.RuleTypeFilter) string {
 }
 
 // getCachedAlertRules retrieves cached alert rules for an organization and rule type
-func (st *DBstore) getCachedAlertRules(orgID int64, ruleType ngmodels.RuleTypeFilter) (ngmodels.RulesGroup, bool) {
+// This version accepts a context to report timing metrics to Server-Timing collector if present
+func (st *DBstore) getCachedAlertRules(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter) (ngmodels.RulesGroup, bool) {
+	start := time.Now()
+	defer func() {
+		// Report cache timing to Server-Timing collector if present in context
+		if collector := getTimingCollectorFromContext(ctx); collector != nil {
+			duration := time.Since(start)
+			// Record will be done by caller based on hit/miss
+			_ = duration
+		}
+	}()
+
 	if st.CacheService == nil {
 		st.Logger.Info("Cache service is nil")
 		return nil, false
@@ -28,7 +60,20 @@ func (st *DBstore) getCachedAlertRules(orgID int64, ruleType ngmodels.RuleTypeFi
 
 	key := alertRuleCacheKey(orgID, ruleType)
 	st.Logger.Info("Cache get", "key", key)
+
+	start = time.Now() // Start timing just the cache lookup
 	cached, found := st.CacheService.Get(key)
+	cacheDuration := time.Since(start)
+
+	// Report cache hit/miss to timing collector
+	if collector := getTimingCollectorFromContext(ctx); collector != nil {
+		if found {
+			collector.RecordCacheHit(cacheDuration)
+		} else {
+			collector.RecordCacheMiss(cacheDuration)
+		}
+	}
+
 	if !found {
 		st.Logger.Info("Cache miss", "key", key)
 		return nil, false

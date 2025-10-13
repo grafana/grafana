@@ -610,7 +610,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 
 	if canUseCache {
 		// Try to get from cache
-		if cachedRules, found := st.getCachedAlertRules(query.OrgID, query.RuleType); found {
+		if cachedRules, found := st.getCachedAlertRules(ctx, query.OrgID, query.RuleType); found {
 			st.Logger.Info("Store ListAlertRulesByGroup cache hit", "orgID", query.OrgID, "cachedCount", len(cachedRules))
 			allRules = cachedRules
 		}
@@ -619,6 +619,9 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 	// If not in cache, fetch from DB
 	if allRules == nil {
 		st.Logger.Info("Store ListAlertRulesByGroup cache miss, fetching from DB", "orgID", query.OrgID)
+
+		// Time the database query
+		dbStart := time.Now()
 		err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 			// Create a modified query that fetches ALL rules for the org (for caching)
 			// We'll filter by namespace, dashboard, etc. in-memory
@@ -639,9 +642,14 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			// We'll apply pagination after filtering in-memory
 
 			rule := new(alertRule)
+			queryStart := time.Now()
 			rows, err := q.Rows(rule)
 			if err != nil {
 				return err
+			}
+			// Record query timing to Server-Timing collector if present
+			if collector := getTimingCollectorFromContext(ctx); collector != nil {
+				collector.RecordDBQuery(time.Since(queryStart))
 			}
 			defer func() {
 				_ = rows.Close()
@@ -651,6 +659,12 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			allRules = st.convertAlertRulesBatched(rows, dbQuery, groupsSet, 1000)
 			return nil
 		})
+
+		// Record total DB operation time including row processing
+		if collector := getTimingCollectorFromContext(ctx); collector != nil {
+			dbDuration := time.Since(dbStart)
+			st.Logger.Debug("Database operation completed", "duration_ms", float64(dbDuration.Microseconds())/1000.0)
+		}
 
 		if err != nil {
 			return nil, "", err
@@ -990,7 +1004,7 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 
 	if canUseCache {
 		startCache := time.Now()
-		if cachedRules, found := st.getCachedAlertRules(query.OrgID, query.RuleType); found {
+		if cachedRules, found := st.getCachedAlertRules(ctx, query.OrgID, query.RuleType); found {
 			cacheRetrievalDuration = time.Since(startCache)
 			cacheHit = true
 
