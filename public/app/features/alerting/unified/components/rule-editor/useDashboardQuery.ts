@@ -1,28 +1,37 @@
 import memoizeOne from 'memoize-one';
+import { useEffect, useState } from 'react';
 
-import { DashboardDTO } from 'app/types/dashboard';
+import { Dashboard } from '@grafana/schema';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { DashboardMeta } from 'app/types/dashboard';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
-import { dashboardApi } from '../../api/dashboardApi';
 
-const convertToDashboardModel = memoizeOne((dashboardDTO: DashboardDTO) => {
+const convertToDashboardModel = memoizeOne((rawDashboard: { dashboard: Dashboard; meta: DashboardMeta }) => {
   // RTKQuery freezes all returned objects. DashboardModel constructor runs migrations which might change the internal object
   // Hence we need to add structuredClone to make a deep copy of the API response object
-  const { dashboard, meta } = structuredClone(dashboardDTO);
+  const { dashboard, meta } = structuredClone(rawDashboard);
   return new DashboardModel(dashboard, meta);
 });
 
 export function useDashboardQuery(dashboardUid?: string) {
-  const queryData = dashboardApi.endpoints.dashboard.useQuery(
-    { uid: dashboardUid ?? '' },
-    {
-      skip: !dashboardUid,
-      selectFromResult: ({ currentData, data, ...rest }) => ({
-        dashboardModel: currentData ? convertToDashboardModel(currentData) : undefined,
-        ...rest,
-      }),
+  const [dashboardModel, setDashboardModel] = useState<DashboardModel>();
+  const [isFetching, setIsFetching] = useState(false);
+  useEffect(() => {
+    if (dashboardUid) {
+      setIsFetching(true);
+      getDashboardAPI()
+        .getDashboardDTO(dashboardUid)
+        .then((dashboard) => {
+          if (!('dashboard' in dashboard)) {
+            console.error('Something went wrong, unexpected dashboard format');
+          } else {
+            setDashboardModel(convertToDashboardModel(dashboard));
+          }
+          setIsFetching(false);
+        });
     }
-  );
+  }, [dashboardUid]);
 
-  return queryData;
+  return { dashboardModel, isFetching };
 }
