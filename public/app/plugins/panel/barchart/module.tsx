@@ -255,7 +255,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
 
     commonOptionsBuilder.addTooltipOptions(builder, false, false, optsWithHideZeros);
     commonOptionsBuilder.addLegendOptions(builder);
-    commonOptionsBuilder.addTextSizeOptions(builder, false);
+    commonOptionsBuilder.addTextSizeOptions(builder, { withValue: true });
   })
   .setSuggestionsSupplier(new BarChartSuggestionsSupplier());
 

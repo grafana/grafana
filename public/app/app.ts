@@ -37,6 +37,7 @@ import {
   setCurrentUser,
   setChromeHeaderHeightHook,
   setPluginLinksHook,
+  setHelpNavItemHook,
   setFolderPicker,
   setCorrelationsService,
   setPluginFunctionsHook,
@@ -60,6 +61,7 @@ import { AppWrapper } from './AppWrapper';
 import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { useChromeHeaderHeight } from './core/components/AppChrome/TopBar/useChromeHeaderHeight';
+import { useHelpNode } from './core/components/AppChrome/TopBar/useHelpNode';
 import { LazyFolderPicker } from './core/components/NestedFolderPicker/LazyFolderPicker';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
@@ -260,6 +262,7 @@ export class GrafanaApp {
         await preloadPlugins(appPluginsToAwait);
       }
 
+      setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);
       setPluginComponentHook(usePluginComponent);
       setPluginComponentsHook(usePluginComponents);
