@@ -87,7 +87,7 @@ For more information on how to install a Grafana instance:
 - If you’re using Grafana Cloud, refer to [Your Grafana Cloud stack](https://grafana.com/docs/grafana-cloud/security-and-account-management/cloud-stacks).
 
 {{< admonition type="note" >}}
-For guidance on when to use one stack vs. multiple, refer to [Stack architecture guidance](https://grafana.com/docs/grafana-cloud/security-and-account-management/cloud-stacks/stack-architecture-guidance/).
+For guidance on when to use one stack versus multiple, refer to [Stack architecture guidance](https://grafana.com/docs/grafana-cloud/security-and-account-management/cloud-stacks/stack-architecture-guidance/).
 {{< /admonition >}}
 
 ### Create teams and configure user access
