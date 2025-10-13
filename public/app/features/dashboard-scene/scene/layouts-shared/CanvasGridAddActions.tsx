@@ -9,7 +9,6 @@ import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
-import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
@@ -109,10 +108,6 @@ function renderUngroupAction(layoutManager: DashboardLayoutManager) {
     return <UngroupButtonTabs parentLayout={parentLayout} onClick={onUngroup} />;
   }
 
-  if (parentLayout instanceof RowsLayoutManager) {
-    return <UngroupButtonRows parentLayout={parentLayout} onClick={onUngroup} />;
-  }
-
   return null;
 }
 
@@ -125,26 +120,6 @@ function UngroupButtonTabs({ parentLayout, onClick }: UngroupButtonProps<TabsLay
   const { tabs } = parentLayout.useState();
 
   if (tabs.length > 1) {
-    return null;
-  }
-
-  return (
-    <Button
-      variant="primary"
-      fill="text"
-      icon="layers-slash"
-      onClick={onClick}
-      data-testid={selectors.components.CanvasGridAddActions.ungroup}
-    >
-      <Trans i18nKey="dashboard.canvas-actions.un-group-panels">Ungroup</Trans>
-    </Button>
-  );
-}
-
-function UngroupButtonRows({ parentLayout, onClick }: UngroupButtonProps<RowsLayoutManager>) {
-  const { rows } = parentLayout.useState();
-
-  if (rows.length > 1) {
     return null;
   }
 

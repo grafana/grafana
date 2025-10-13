@@ -1,8 +1,12 @@
 import { useEffect, useRef } from 'react';
 
+import { t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
+import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
+import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
+import { ConvertMixedGridsModal } from '../layout-rows/ConvertMixedGridsModal';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 
@@ -80,4 +84,80 @@ export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: Dashb
 export function getIsLazy(preload: boolean | undefined): boolean {
   // We don't want to lazy load panels in the case of image renderer
   return !(preload || (contextSrv.user && contextSrv.user.authenticatedBy === 'render'));
+}
+
+export enum GridLayoutType {
+  AutoGridLayout = 'AutoGridLayout',
+  GridLayout = 'GridLayout',
+}
+
+export function mapIdToGridLayoutType(id?: string): GridLayoutType | undefined {
+  switch (id) {
+    case GridLayoutType.AutoGridLayout:
+      return GridLayoutType.AutoGridLayout;
+    case GridLayoutType.GridLayout:
+      return GridLayoutType.GridLayout;
+    default:
+      return undefined;
+  }
+}
+
+export interface UngroupConfirmationOptions {
+  hasNonGridLayout: boolean;
+  gridTypes: Set<string>;
+  onConfirm: (gridLayoutType: GridLayoutType) => void;
+  onConvertMixedGrids: (availableIds: Set<string>) => void;
+}
+
+export function showUngroupConfirmation({
+  hasNonGridLayout,
+  gridTypes,
+  onConfirm,
+  onConvertMixedGrids,
+}: UngroupConfirmationOptions) {
+  if (hasNonGridLayout) {
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard.layout.ungroup-nested-title', 'Ungroup nested groups?'),
+        text: t('dashboard.layout.ungroup-nested-text', 'This will ungroup all nested groups.'),
+        yesText: t('dashboard.layout.continue', 'Continue'),
+        noText: t('dashboard.layout.cancel', 'Cancel'),
+        onConfirm: () => {
+          if (gridTypes.size > 1) {
+            requestAnimationFrame(() => {
+              onConvertMixedGrids(gridTypes);
+            });
+          } else {
+            const gridLayoutType = mapIdToGridLayoutType(gridTypes.values().next().value);
+            if (gridLayoutType) {
+              onConfirm(gridLayoutType);
+            }
+          }
+        },
+      })
+    );
+    return;
+  }
+
+  if (gridTypes.size > 1) {
+    onConvertMixedGrids(gridTypes);
+    return;
+  } else {
+    const gridLayoutType = mapIdToGridLayoutType(gridTypes.values().next().value);
+    if (gridLayoutType) {
+      onConfirm(gridLayoutType);
+    }
+  }
+}
+
+export function showConvertMixedGridsModal(availableIds: Set<string>, onSelect: (id: string) => void) {
+  appEvents.publish(
+    new ShowModalReactEvent({
+      component: ConvertMixedGridsModal,
+      props: {
+        availableIds,
+        onSelect,
+      },
+    })
+  );
 }
