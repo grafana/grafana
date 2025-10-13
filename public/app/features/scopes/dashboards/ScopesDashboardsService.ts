@@ -1,4 +1,5 @@
 import { isEqual } from 'lodash';
+import { Subscription } from 'rxjs';
 
 import { ScopeDashboardBinding } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
@@ -8,7 +9,6 @@ import { ScopesServiceBase } from '../ScopesServiceBase';
 
 import { isCurrentPath } from './scopeNavgiationUtils';
 import { ScopeNavigation, SuggestedNavigationsFoldersMap } from './types';
-import { Subscription } from 'rxjs';
 
 interface ScopesDashboardsServiceState {
   // State of the drawer showing related dashboards
