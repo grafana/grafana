@@ -40,6 +40,9 @@ const mockUseGetResourceRepositoryView = jest.mocked(
   require('app/features/provisioning/hooks/useGetResourceRepositoryView').useGetResourceRepositoryView
 );
 
+const mockSearchParams = new URLSearchParams();
+jest.spyOn(require('react-router-dom-v5-compat'), 'useSearchParams').mockReturnValue([mockSearchParams]);
+
 function setup(options?: Partial<Props>) {
   const props = {
     dashboard: createDashboardModelFixture(defaultDashboard),
@@ -159,8 +162,7 @@ describe('wrapperMaxWidth CSS class', () => {
   it('applies wrapperMaxWidth class when dashboardLibrary feature is disabled', () => {
     config.featureToggles.dashboardLibrary = false;
 
-    const mockSearchParams = new URLSearchParams();
-    jest.spyOn(require('react-router-dom-v5-compat'), 'useSearchParams').mockReturnValue([mockSearchParams]);
+    mockSearchParams.delete('dashboardLibraryDatasourceUid');
 
     const { container } = render(
       <DashboardEmpty dashboard={createDashboardModelFixture(defaultDashboard)} canCreate={true} />
@@ -174,8 +176,7 @@ describe('wrapperMaxWidth CSS class', () => {
   it('applies wrapperMaxWidth class when dashboardLibrary feature is enabled but no dashboardLibraryDatasourceUid param', () => {
     config.featureToggles.dashboardLibrary = true;
 
-    const mockSearchParams = new URLSearchParams();
-    jest.spyOn(require('react-router-dom-v5-compat'), 'useSearchParams').mockReturnValue([mockSearchParams]);
+    mockSearchParams.delete('dashboardLibraryDatasourceUid');
 
     const { container } = render(
       <DashboardEmpty dashboard={createDashboardModelFixture(defaultDashboard)} canCreate={true} />
@@ -189,8 +190,7 @@ describe('wrapperMaxWidth CSS class', () => {
   it('does not apply wrapperMaxWidth class when dashboardLibrary feature is enabled and dashboardLibraryDatasourceUid param exists', () => {
     config.featureToggles.dashboardLibrary = true;
 
-    const mockSearchParams = new URLSearchParams('dashboardLibraryDatasourceUid=test-uid');
-    jest.spyOn(require('react-router-dom-v5-compat'), 'useSearchParams').mockReturnValue([mockSearchParams]);
+    mockSearchParams.set('dashboardLibraryDatasourceUid', 'test-uid');
 
     const { container } = render(
       <DashboardEmpty dashboard={createDashboardModelFixture(defaultDashboard)} canCreate={true} />
