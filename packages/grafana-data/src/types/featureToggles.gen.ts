@@ -1093,6 +1093,11 @@ export interface FeatureToggles {
   */
   enableAppChromeExtensions?: boolean;
   /**
+  * Set this to true to enable all dashboard empty state extensions registered by plugins.
+  * @default false
+  */
+  enableDashboardEmptyExtensions?: boolean;
+  /**
   * Enables use of app platform API for folders
   * @default false
   */
