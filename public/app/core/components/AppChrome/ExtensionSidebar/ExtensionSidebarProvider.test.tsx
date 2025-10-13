@@ -395,18 +395,7 @@ describe('ExtensionSidebarProvider', () => {
     expect(screen.getByTestId('docked-component-id')).toHaveTextContent(expectedComponentId);
   });
 
-  it('should toggle sidebar closed when receiving ToggleExtensionSidebarEvent for currently open component', async () => {
-    // Mock usePluginLinks to return a link that matches our test component
-    jest.requireMock('@grafana/runtime').usePluginLinks.mockImplementation(() => ({
-      links: [
-        {
-          pluginId: mockPluginMeta.pluginId,
-          title: mockComponent.title,
-        },
-      ],
-      isLoading: false,
-    }));
-
+  it('should toggle sidebar closed when receiving ToggleExtensionSidebarEvent for currently open component', () => {
     const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
 
     const TestComponentWithProps = () => {
@@ -427,8 +416,8 @@ describe('ExtensionSidebarProvider', () => {
     );
 
     // First open the sidebar manually
-    await act(async () => {
-      fireEvent.click(screen.getByText('Open Sidebar'));
+    act(() => {
+      screen.getByText('Open Sidebar').click();
     });
 
     expect(screen.getByTestId('is-open')).toHaveTextContent('true');
@@ -452,26 +441,11 @@ describe('ExtensionSidebarProvider', () => {
       );
     });
 
-    expect(await screen.findByTestId('is-open')).toHaveTextContent('false');
-    expect(await screen.findByTestId('docked-component-id')).toHaveTextContent('undefined');
+    expect(screen.getByTestId('is-open')).toHaveTextContent('false');
+    expect(screen.getByTestId('docked-component-id')).toHaveTextContent('undefined');
   });
 
   it('should toggle to different component when receiving ToggleExtensionSidebarEvent for different component', async () => {
-    // Mock usePluginLinks to return links that match both test components
-    jest.requireMock('@grafana/runtime').usePluginLinks.mockImplementation(() => ({
-      links: [
-        {
-          pluginId: mockPluginMeta.pluginId,
-          title: mockComponent.title,
-        },
-        {
-          pluginId: mockPluginMeta.pluginId,
-          title: mockDifferentComponent.title,
-        },
-      ],
-      isLoading: false,
-    }));
-
     const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
 
     const TestComponentWithProps = () => {
@@ -492,8 +466,8 @@ describe('ExtensionSidebarProvider', () => {
     );
 
     // First open the sidebar manually
-    await act(async () => {
-      fireEvent.click(screen.getByText('Open Sidebar'));
+    act(() => {
+      screen.getByText('Open Sidebar').click();
     });
 
     expect(screen.getByTestId('is-open')).toHaveTextContent('true');
@@ -517,12 +491,12 @@ describe('ExtensionSidebarProvider', () => {
       );
     });
 
-    expect(await screen.findByTestId('is-open')).toHaveTextContent('true');
+    expect(screen.getByTestId('is-open')).toHaveTextContent('true');
     const expectedComponentId = JSON.stringify({
       pluginId: mockPluginMeta.pluginId,
       componentTitle: 'Different Component',
     });
-    expect(await screen.findByTestId('docked-component-id')).toHaveTextContent(expectedComponentId);
+    expect(screen.getByTestId('docked-component-id')).toHaveTextContent(expectedComponentId);
   });
 
   it('should unsubscribe from all event subscriptions on unmount', () => {
