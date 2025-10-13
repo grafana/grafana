@@ -20,6 +20,7 @@ interface StoryProps extends RadialGaugeProps {
   seriesCount: number;
   sparkline: boolean;
   colorScheme: FieldColorModeId;
+  decimals: number;
 }
 
 const meta: Meta<StoryProps> = {
@@ -47,6 +48,7 @@ const meta: Meta<StoryProps> = {
     roundedBars: true,
     thresholdsBar: false,
     colorScheme: FieldColorModeId.Thresholds,
+    decimals: 0,
   },
   argTypes: {
     barWidthFactor: { control: { type: 'range', min: 0.1, max: 1, step: 0.01 } },
@@ -68,8 +70,10 @@ const meta: Meta<StoryProps> = {
         FieldColorModeId.Fixed,
         FieldColorModeId.ContinuousGrYlRd,
         FieldColorModeId.ContinuousBlYlRd,
+        FieldColorModeId.ContinuousBlPu,
       ],
     },
+    decimals: { control: { type: 'range', min: 0, max: 7 } },
   },
 };
 
@@ -330,6 +334,7 @@ interface ExampleProps {
   roundedBars?: boolean;
   thresholdsBar?: boolean;
   colorScheme?: FieldColorModeId;
+  decimals?: number;
 }
 
 export function RadialGaugeExample({
@@ -355,6 +360,7 @@ export function RadialGaugeExample({
   roundedBars = true,
   thresholdsBar = false,
   colorScheme = FieldColorModeId.Thresholds,
+  decimals = 0,
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -379,6 +385,7 @@ export function RadialGaugeExample({
           min: min,
           max: max,
           unit: 'percent',
+          decimals: decimals,
           color: { mode: colorScheme, fixedColor: theme.visualization.getColorByName(color) },
           thresholds: {
             mode: 'absolute',
@@ -393,7 +400,7 @@ export function RadialGaugeExample({
         state: {},
         getLinks: () => [],
       },
-      ...getExtraSeries(seriesCount, colorScheme, theme),
+      ...getExtraSeries(seriesCount, colorScheme, decimals, theme),
     ],
   });
 
@@ -438,7 +445,7 @@ export function RadialGaugeExample({
   );
 }
 
-function getExtraSeries(seriesCount: number, colorScheme: FieldColorModeId, theme: GrafanaTheme2) {
+function getExtraSeries(seriesCount: number, colorScheme: FieldColorModeId, decimals: number, theme: GrafanaTheme2) {
   const fields: Field[] = [];
   const colors = ['blue', 'green', 'purple', 'orange', 'yellow'];
 
@@ -450,6 +457,7 @@ function getExtraSeries(seriesCount: number, colorScheme: FieldColorModeId, them
       config: {
         min: 0,
         max: 100,
+        decimals: decimals,
         unit: 'percent',
         color: { mode: colorScheme, fixedColor: theme.visualization.getColorByName(colors[i % colors.length]) },
       },

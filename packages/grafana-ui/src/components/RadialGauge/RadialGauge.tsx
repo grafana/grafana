@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { isNumber } from 'lodash';
 import { useId } from 'react';
 
-import { FieldDisplay, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
+import { DisplayValueAlignmentFactors, FieldDisplay, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -38,7 +38,6 @@ export interface RadialGaugeProps {
   glowCenter?: boolean;
   roundedBars?: boolean;
   thresholdsBar?: boolean;
-  textMode?: RadialTextMode;
   /**
    * Number of segments depends on size of gauge but this
    * factor 1-10 gives you relative control
@@ -53,7 +52,15 @@ export interface RadialGaugeProps {
    * If multiple is shown in a group (via VizRepeater).
    * This impacts the auto textMode
    */
-  vizCount?: number; // Not implemented yet
+  vizCount?: number;
+  /** Factors that should influence the positioning of the text  */
+  alignmentFactors?: DisplayValueAlignmentFactors;
+  /** Explicit font size control */
+  valueFontSize?: number;
+  /** Explicit font size control */
+  nameFontSize?: number;
+  /** Specify which text should be visible  */
+  textMode?: RadialTextMode;
 }
 
 export type RadialGradientMode = 'none' | 'auto';

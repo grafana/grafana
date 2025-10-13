@@ -15,7 +15,7 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
     const category = [t('gauge.category-radial-bar', 'Gauge')];
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder, category);
-    commonOptionsBuilder.addTextSizeOptions(builder);
+    commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true });
 
     builder.addRadio({
       path: 'shape',

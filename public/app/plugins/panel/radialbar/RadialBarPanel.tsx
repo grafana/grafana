@@ -1,4 +1,10 @@
-import { FieldDisplay, getFieldDisplayValues, PanelProps } from '@grafana/data';
+import {
+  DisplayValueAlignmentFactors,
+  FieldDisplay,
+  getDisplayValueAlignmentFactors,
+  getFieldDisplayValues,
+  PanelProps,
+} from '@grafana/data';
 import { DataLinksContextMenu, Stack, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
 import { config } from 'app/core/config';
@@ -15,7 +21,10 @@ export function RadialBarPanel({
   fieldConfig,
   timeZone,
 }: PanelProps<Options>) {
-  function renderComponent(valueProps: VizRepeaterRenderValueProps<FieldDisplay>, menuProps: DataLinksContextMenuApi) {
+  function renderComponent(
+    valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
+    menuProps: DataLinksContextMenuApi
+  ) {
     const { width, height, value } = valueProps;
 
     return (
@@ -34,11 +43,14 @@ export function RadialBarPanel({
         segmentCount={options.segmentCount}
         segmentSpacing={options.segmentSpacing}
         thresholdsBar={options.showThresholdMarkers}
+        alignmentFactors={valueProps.alignmentFactors}
       />
     );
   }
 
-  function renderValue(valueProps: VizRepeaterRenderValueProps<FieldDisplay>): JSX.Element {
+  function renderValue(
+    valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>
+  ): JSX.Element {
     const { value } = valueProps;
     const { getLinks, hasLinks } = value;
 
@@ -84,6 +96,7 @@ export function RadialBarPanel({
         orientation={options.orientation}
         minVizHeight={minVizHeight}
         minVizWidth={minVizWidth}
+        getAlignmentFactors={getDisplayValueAlignmentFactors}
       />
     </Stack>
   );

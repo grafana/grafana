@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 
-import { DisplayValue, GrafanaTheme2 } from '@grafana/data';
+import { DisplayValue, DisplayValueAlignmentFactors, formattedValueToString, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { calculateFontSize } from '../../utils/measureText';
 
 import { RadialShape, RadialTextMode } from './RadialGauge';
 import { GaugeDimensions } from './utils';
@@ -22,11 +23,20 @@ interface RadialTextProps {
   textMode: RadialTextMode;
   vizCount: number;
   shape: RadialShape;
+  alignmentFactors?: DisplayValueAlignmentFactors;
 }
 
-export function RadialText({ displayValue, theme, dimensions, textMode, vizCount, shape }: RadialTextProps) {
+export function RadialText({
+  displayValue,
+  theme,
+  dimensions,
+  textMode,
+  vizCount,
+  shape,
+  alignmentFactors,
+}: RadialTextProps) {
   const styles = useStyles2(getStyles);
-  const { centerX, centerY, radius } = dimensions;
+  const { centerX, centerY, radius, barWidth } = dimensions;
 
   if (textMode === 'none') {
     return null;
@@ -36,18 +46,48 @@ export function RadialText({ displayValue, theme, dimensions, textMode, vizCount
     textMode = vizCount === 1 ? 'value' : 'value_and_name';
   }
 
+  const nameToAlignTo = (alignmentFactors ? alignmentFactors.title : displayValue.title) ?? '';
+  const valueToAlignTo = formattedValueToString(alignmentFactors ? alignmentFactors : displayValue);
+
   const showValue = textMode === 'value' || textMode === 'value_and_name';
   const showName = textMode === 'name' || textMode === 'value_and_name';
+  const maxTextWidth = radius * 2 - barWidth - radius / 7;
 
-  const valueFontSize = Math.max(radius / 3.5, 12);
+  let maxValueHeight = 0.6 * Math.pow(radius, 0.92);
+  let maxNameHeight = radius / 4;
+
+  if (showValue && showName) {
+    maxValueHeight = 0.6 * Math.pow(radius, 0.92);
+    maxNameHeight = 0.3 * Math.pow(radius, 0.92);
+  }
+
+  // Not sure where this comes from but svg text is not using body line-height
+  const lineHeight = 1.21;
+
+  const valueFontSize = calculateFontSize(
+    valueToAlignTo,
+    maxTextWidth,
+    maxValueHeight,
+    lineHeight,
+    undefined,
+    theme.typography.body.fontWeight
+  );
+
+  const nameFontSize = calculateFontSize(
+    nameToAlignTo,
+    maxTextWidth,
+    maxNameHeight,
+    lineHeight,
+    undefined,
+    theme.typography.body.fontWeight
+  );
+
   const unitFontSize = Math.max(valueFontSize * 0.7, 12);
-  const nameFontSize = Math.max(valueFontSize * 0.5, 12);
-
-  const valueHeight = valueFontSize * 1.2;
-  const nameHeight = nameFontSize * 1.2;
+  const valueHeight = valueFontSize * lineHeight;
+  const nameHeight = nameFontSize * lineHeight;
 
   const valueY = showName ? centerY - nameHeight / 2 : centerY;
-  const nameY = showValue ? valueY + valueHeight * 0.85 : centerY;
+  const nameY = showValue ? valueY + valueHeight * 0.7 : centerY;
   const nameColor = showValue ? theme.colors.text.secondary : theme.colors.text.primary;
   const suffixShift = (valueFontSize - unitFontSize * 1.2) / 2;
 

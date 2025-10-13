@@ -12027,10 +12027,8 @@
         "spotlight": "Spotlight"
       },
       "gradient": "Gradient",
-      "gradient-hue": "Hue",
+      "gradient-auto": "Auto",
       "gradient-none": "None",
-      "gradient-scheme": "Scheme",
-      "gradient-shade": "Shade",
       "segment-count": "Segments",
       "segment-spacing": "Segment spacing",
       "shape": "Shape",

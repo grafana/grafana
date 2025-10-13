@@ -58,7 +58,7 @@ export function calculateDimensions(
 
   let maxRadius = Math.min(maxRadiusH, maxRadiusV);
 
-  const barWidth = Math.max(barWidthFactor * (maxRadius / 3.5), 2);
+  const barWidth = Math.max(barWidthFactor * (maxRadius / 3), 2);
   const thresholdsToBarWidth = 1 / 5;
   const thresholdsBarWidth = thresholdBar ? Math.min(Math.max(barWidth * thresholdsToBarWidth, 4), 12) : 0;
   const thresholdsBarSpacing = Math.min(Math.max(thresholdsBarWidth / 2, 2), 12);
@@ -67,7 +67,7 @@ export function calculateDimensions(
 
   // If rounded bars is enabled they need a bit more vertical space
   if (yMaxAngle < 180 && roundedBars) {
-    outerRadius -= barWidth / 4;
+    outerRadius -= barWidth;
   }
 
   if (thresholdsBarWidth > 0) {
