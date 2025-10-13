@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useToggle } from 'react-use';
 
+import { t } from '@grafana/i18n';
+
 import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
