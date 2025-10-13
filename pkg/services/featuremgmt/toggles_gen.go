@@ -1081,4 +1081,8 @@ const (
 	// FlagCdnPluginsUrls
 	// Enable loading plugins via declarative URLs
 	FlagCdnPluginsUrls = "cdnPluginsUrls"
+
+	// FlagJaegerEnableGrpcEndpoint
+	// Enable querying trace data through Jaeger&#39;s gRPC endpoint (HTTP)
+	FlagJaegerEnableGrpcEndpoint = "jaegerEnableGrpcEndpoint"
 )
