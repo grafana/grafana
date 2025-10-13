@@ -548,10 +548,18 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Batch get all keys
 		keys := []string{"key1", "key2", "key3"}
-		var results []resource.KeyValue
+		type result struct {
+			key   string
+			value string
+		}
+		var results []result
 		for kv, err := range kv.BatchGet(ctx, section, keys) {
 			require.NoError(t, err)
-			results = append(results, kv)
+			value, err := io.ReadAll(kv.Value)
+			require.NoError(t, err)
+			err = kv.Value.Close()
+			require.NoError(t, err)
+			results = append(results, result{key: kv.Key, value: string(value)})
 		}
 
 		// Verify results
@@ -560,18 +568,14 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 		// Check that all keys are present and in order
 		expectedKeys := []string{"key1", "key2", "key3"}
 		actualKeys := make([]string, len(results))
-		for i, kv := range results {
-			actualKeys[i] = kv.Key
+		for i, r := range results {
+			actualKeys[i] = r.key
 		}
 		assert.Equal(t, expectedKeys, actualKeys)
 
 		// Verify values
-		for _, kv := range results {
-			value, err := io.ReadAll(kv.Value)
-			require.NoError(t, err)
-			assert.Equal(t, testData[kv.Key], string(value))
-			err = kv.Value.Close()
-			require.NoError(t, err)
+		for _, r := range results {
+			assert.Equal(t, testData[r.key], r.value)
 		}
 	})
 
@@ -581,21 +585,24 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Batch get with mix of existing and non-existent keys
 		keys := []string{"existing-key", "non-existent-1", "non-existent-2"}
-		var results []resource.KeyValue
+		type result struct {
+			key   string
+			value string
+		}
+		var results []result
 		for kv, err := range kv.BatchGet(ctx, section, keys) {
 			require.NoError(t, err)
-			results = append(results, kv)
+			value, err := io.ReadAll(kv.Value)
+			require.NoError(t, err)
+			err = kv.Value.Close()
+			require.NoError(t, err)
+			results = append(results, result{key: kv.Key, value: string(value)})
 		}
 
 		// Should only return the existing key
 		assert.Len(t, results, 1)
-		assert.Equal(t, "existing-key", results[0].Key)
-
-		value, err := io.ReadAll(results[0].Value)
-		require.NoError(t, err)
-		assert.Equal(t, "existing-value", string(value))
-		err = results[0].Value.Close()
-		require.NoError(t, err)
+		assert.Equal(t, "existing-key", results[0].key)
+		assert.Equal(t, "existing-value", results[0].value)
 	})
 
 	t.Run("batch get with all non-existent keys", func(t *testing.T) {
@@ -651,20 +658,18 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Batch get in specific order
 		keys := []string{"z-key", "a-key", "m-key"}
-		var results []resource.KeyValue
+		var results []string
 		for kv, err := range kv.BatchGet(ctx, section, keys) {
 			require.NoError(t, err)
-			results = append(results, kv)
+			err = kv.Value.Close()
+			require.NoError(t, err)
+			results = append(results, kv.Key)
 		}
 
 		// Verify order is preserved
 		assert.Len(t, results, 3)
 		expectedOrder := []string{"z-key", "a-key", "m-key"}
-		actualOrder := make([]string, len(results))
-		for i, kv := range results {
-			actualOrder[i] = kv.Key
-		}
-		assert.Equal(t, expectedOrder, actualOrder)
+		assert.Equal(t, expectedOrder, results)
 	})
 }
 
