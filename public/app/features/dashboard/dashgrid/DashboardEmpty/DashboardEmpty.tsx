@@ -1,70 +1,37 @@
 import { css, cx } from '@emotion/css';
+import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import {
-  onAddLibraryPanel as onAddLibraryPanelImpl,
-  onCreateNewPanel,
-  onImportDashboard,
-} from 'app/features/dashboard/utils/dashboard';
-import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { useDispatch, useSelector } from 'app/types/store';
 
-import { setInitialDatasource } from '../state/reducers';
+import { DashboardLibrarySection } from '../DashboardLibrary/DashboardLibrarySection';
 
-import { DashboardLibrarySection } from './DashboardLibrary/DashboardLibrarySection';
+import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
+import {
+  useIsReadOnlyRepo,
+  useOnAddVisualization,
+  useOnAddLibraryPanel,
+  useOnImportDashboard,
+} from './DashboardEmptyHooks';
 
-export interface Props {
-  dashboard: DashboardModel | DashboardScene;
-  canCreate: boolean;
+interface InternalProps {
+  onAddVisualization?: () => void;
+  onAddLibraryPanel?: () => void;
+  onImportDashboard?: () => void;
 }
 
-const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
+const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImportDashboard }: InternalProps) => {
   const styles = useStyles2(getStyles);
-  const dispatch = useDispatch();
-  const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
 
   const [searchParams] = useSearchParams();
   const dashboardLibraryDatasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
 
-  // Get repository information to check if it's read-only
-  const { isReadOnlyRepo } = useGetResourceRepositoryView({
-    folderName: dashboard instanceof DashboardScene ? dashboard.state.meta.folderUid : dashboard.meta.folderUid,
-  });
-
-  const onAddVisualization = () => {
-    let id;
-    if (dashboard instanceof DashboardScene) {
-      const panel = dashboard.onCreateNewPanel();
-      dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
-      locationService.partial({ firstPanel: true });
-    } else {
-      id = onCreateNewPanel(dashboard, initialDatasource);
-      dispatch(setInitialDatasource(undefined));
-      locationService.partial({ editPanel: id, firstPanel: true });
-    }
-
-    DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
-  };
-
-  const onAddLibraryPanel = () => {
-    DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_from_library' });
-    if (dashboard instanceof DashboardScene) {
-      dashboard.onShowAddLibraryPanelDrawer();
-    } else {
-      onAddLibraryPanelImpl(dashboard);
-    }
-  };
-
-  const isProvisioned = dashboard instanceof DashboardScene && dashboard.isManagedRepository();
   return (
     <Stack alignItems="center" justifyContent="center">
       <div
@@ -93,7 +60,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 icon="plus"
                 data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
                 onClick={onAddVisualization}
-                disabled={!canCreate || isReadOnlyRepo}
+                disabled={!onAddVisualization}
               >
                 <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
               </Button>
@@ -118,7 +85,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   fill="outline"
                   data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
                   onClick={onAddLibraryPanel}
-                  disabled={!canCreate || isProvisioned || isReadOnlyRepo}
+                  disabled={!onAddLibraryPanel}
                 >
                   <Trans i18nKey="dashboard.empty.add-library-panel-button">Add library panel</Trans>
                 </Button>
@@ -144,11 +111,8 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   icon="upload"
                   fill="outline"
                   data-testid={selectors.pages.AddDashboard.itemButton('Import dashboard button')}
-                  onClick={() => {
-                    DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_dashboard' });
-                    onImportDashboard();
-                  }}
-                  disabled={!canCreate || isReadOnlyRepo}
+                  onClick={onImportDashboard}
+                  disabled={!onImportDashboard}
                 >
                   <Trans i18nKey="dashboard.empty.import-dashboard-button">Import dashboard</Trans>
                 </Button>
@@ -158,6 +122,38 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
         </Stack>
       </div>
     </Stack>
+  );
+};
+
+export interface Props {
+  dashboard: DashboardModel | DashboardScene;
+  canCreate: boolean;
+}
+
+// We pass the default empty UI through to the extension point so that the extension can conditionally render it if needed.
+// For example, an extension might want to render custom UI for a specific experiment cohort, and the default UI for everyone else.
+const DashboardEmpty = (props: Props) => {
+  const isReadOnlyRepo = useIsReadOnlyRepo(props);
+  const onAddVisualization = useOnAddVisualization({ ...props, isReadOnlyRepo });
+  const onAddLibraryPanel = useOnAddLibraryPanel({ ...props, isReadOnlyRepo });
+  const onImportDashboard = useOnImportDashboard({ ...props, isReadOnlyRepo });
+
+  return (
+    <DashboardEmptyExtensionPoint
+      renderDefaultUI={useCallback(
+        () => (
+          <InternalDashboardEmpty
+            onAddVisualization={onAddVisualization}
+            onAddLibraryPanel={onAddLibraryPanel}
+            onImportDashboard={onImportDashboard}
+          />
+        ),
+        [onAddVisualization, onAddLibraryPanel, onImportDashboard]
+      )}
+      onAddVisualization={onAddVisualization}
+      onAddLibraryPanel={onAddLibraryPanel}
+      onImportDashboard={onImportDashboard}
+    />
   );
 };
 

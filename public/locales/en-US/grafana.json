@@ -4496,6 +4496,8 @@
     },
     "canvas-actions": {
       "add-panel": "Add panel",
+      "disabled-nested-grouping": "Grouping is limited to 2 levels",
+      "disabled-nested-tabs": "Tabs cannot be nested inside other tabs",
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
       "group-panels": "Group panels",
@@ -4504,7 +4506,8 @@
       "paste-panel": "Paste panel",
       "paste-row": "Paste row",
       "paste-tab": "Paste tab",
-      "un-group-panels": "Ungroup"
+      "un-group-panels": "Ungroup",
+      "ungroup-rows": "Ungroup rows"
     },
     "conditional-rendering": {
       "conditions": {
@@ -4746,8 +4749,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Values separated by comma",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "Close",
+          "modal-title": "Custom Variable",
+          "values": "Values separated by comma"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -5171,10 +5175,16 @@
       "title-row-options": "Row options"
     },
     "rows-layout": {
+      "cancel": "Cancel",
+      "continue": "Continue",
+      "convert-to": "Convert to {{name}}",
       "delete-row-text": "Deleting this row will also remove all panels. Are you sure you want to continue?",
       "delete-row-title": "Delete row?",
       "delete-row-yes": "Delete",
       "description": "Collapsable panel groups with headings",
+      "edit": {
+        "ungroup-rows": "Ungroup rows"
+      },
       "header-hidden-tooltip": "Row header only visible in edit mode",
       "name": "Rows",
       "row": {
@@ -5204,7 +5214,11 @@
       },
       "row-warning": {
         "title-not-unique": "This title is not unique"
-      }
+      },
+      "ungroup-convert-text": "All grids must be converted to the same type and positions will be lost.",
+      "ungroup-convert-title": "Convert mixed grids?",
+      "ungroup-nested-text": "This will ungroup all nested groups.",
+      "ungroup-nested-title": "Ungroup nested groups?"
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
@@ -14130,14 +14144,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Add option",
-      "description": "Add custom options in addition to query results",
-      "label-placeholder": "display label",
-      "remove-option-button-label": "Remove option",
-      "value-placeholder": "value, default empty string"
+      "description": "Add custom options in addition to query results"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "How to sort static options with query results"
+    },
+    "static-options": {
+      "add-option-button-label": "Add new option",
+      "drag-and-drop": "Drag and drop to reorder",
+      "label-header": "Display text",
+      "label-placeholder": "Defaults to value",
+      "remove-option-button-label": "Remove option",
+      "value-header": "Value",
+      "value-placeholder": "Value"
     },
     "text-box-variable-editor": {
       "name-default-value": "Default value",

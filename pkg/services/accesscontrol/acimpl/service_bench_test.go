@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,12 +30,14 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 	sqlStore := db.InitTestDB(b)
 	store := database.ProvideService(sqlStore)
 	acService := &Service{
-		cfg:           setting.NewCfg(),
-		log:           log.New("accesscontrol-test"),
-		registrations: accesscontrol.RegistrationList{},
-		store:         store,
-		roles:         accesscontrol.BuildBasicRoleDefinitions(),
-		cache:         localcache.New(1*time.Second, 1*time.Second),
+		cfg:            setting.NewCfg(),
+		log:            log.New("accesscontrol-test"),
+		registrations:  accesscontrol.RegistrationList{},
+		store:          store,
+		roles:          accesscontrol.BuildBasicRoleDefinitions(),
+		cache:          localcache.New(1*time.Second, 1*time.Second),
+		permRegistry:   permreg.ProvidePermissionRegistry(),
+		actionResolver: resourcepermissions.NewActionSetService(),
 	}
 
 	// Prepare default permissions
