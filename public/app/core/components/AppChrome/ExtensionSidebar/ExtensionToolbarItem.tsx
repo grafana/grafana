@@ -47,7 +47,9 @@ export function ExtensionToolbarItem({ compact }: Props) {
           isOpen={isActive}
           title={component.title}
           onClick={() => {
-            const event = isActive ? new CloseExtensionSidebarEvent() : new OpenExtensionSidebarEvent({ pluginId, componentTitle: component.title });
+            const event = isActive
+              ? new CloseExtensionSidebarEvent()
+              : new OpenExtensionSidebarEvent({ pluginId, componentTitle: component.title });
             getAppEvents().publish(event);
           }}
           pluginId={pluginId}
@@ -66,7 +68,10 @@ export function ExtensionToolbarItem({ compact }: Props) {
               active={dockedComponentId === id}
               label={c.title}
               onClick={() => {
-                const event = dockedComponentId === id ? new CloseExtensionSidebarEvent() : new OpenExtensionSidebarEvent({ pluginId, componentTitle: c.title });
+                const event =
+                  dockedComponentId === id
+                    ? new CloseExtensionSidebarEvent()
+                    : new OpenExtensionSidebarEvent({ pluginId, componentTitle: c.title });
                 getAppEvents().publish(event);
               }}
             />
