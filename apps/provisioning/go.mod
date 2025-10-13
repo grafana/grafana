@@ -3,6 +3,7 @@ module github.com/grafana/grafana/apps/provisioning
 go 1.25.2
 
 require (
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/google/go-github/v70 v70.0.0
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f
