@@ -1,5 +1,7 @@
 import { ExtensionInfo } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import { Dropdown, Menu } from '@grafana/ui';
+import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent } from 'app/types/events';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
@@ -19,7 +21,7 @@ type Props = {
 const compactAllowedComponents = ['grafana-assistant-app'];
 
 export function ExtensionToolbarItem({ compact }: Props) {
-  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
+  const { availableComponents, dockedComponentId } = useExtensionSidebarContext();
 
   if (availableComponents.size === 0) {
     return null;
@@ -44,7 +46,14 @@ export function ExtensionToolbarItem({ compact }: Props) {
           key={pluginId}
           isOpen={isActive}
           title={component.title}
-          onClick={() => setDockedComponentId(isActive ? undefined : componentId)}
+          onClick={() => {
+            const appEvents = getAppEvents();
+            if (isActive) {
+              appEvents.publish(new CloseExtensionSidebarEvent());
+            } else {
+              appEvents.publish(new OpenExtensionSidebarEvent({ pluginId, componentTitle: component.title }));
+            }
+          }}
           pluginId={pluginId}
         />
       );
@@ -60,7 +69,14 @@ export function ExtensionToolbarItem({ compact }: Props) {
               key={id}
               active={dockedComponentId === id}
               label={c.title}
-              onClick={() => setDockedComponentId(dockedComponentId === id ? undefined : id)}
+              onClick={() => {
+                const appEvents = getAppEvents();
+                if (dockedComponentId === id) {
+                  appEvents.publish(new CloseExtensionSidebarEvent());
+                } else {
+                  appEvents.publish(new OpenExtensionSidebarEvent({ pluginId, componentTitle: c.title }));
+                }
+              }}
             />
           );
         })}
@@ -72,7 +88,9 @@ export function ExtensionToolbarItem({ compact }: Props) {
         key={pluginId}
         isOpen
         title={dockedMeta?.componentTitle}
-        onClick={() => setDockedComponentId(undefined)}
+        onClick={() => {
+          getAppEvents().publish(new CloseExtensionSidebarEvent());
+        }}
         pluginId={pluginId}
       />
     ) : (
