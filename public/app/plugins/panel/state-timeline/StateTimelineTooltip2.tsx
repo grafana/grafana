@@ -11,11 +11,13 @@ import {
   getContentItems,
   VizTooltipItem,
 } from '@grafana/ui/internal';
-import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
+import { fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 import { getFieldActions } from '../status-history/utils';
 import { TimeSeriesTooltipProps } from '../timeseries/TimeSeriesTooltip';
 import { isTooltipScrollable } from '../timeseries/utils';
+
+import { getStateTimeRange } from './utils';
 
 interface StateTimelineTooltip2Props extends TimeSeriesTooltipProps {
   timeRange: TimeRange;
@@ -48,27 +50,14 @@ export const StateTimelineTooltip2 = ({
   let endTime = null;
 
   // append duration in single mode
-  if (withDuration && mode === TooltipDisplayMode.Single) {
-    const field = series.fields[seriesIdx!];
-    const nextStateIdx = findNextStateIndex(field, dataIdx!);
-    let nextStateTs;
-    if (nextStateIdx) {
-      nextStateTs = xField.values[nextStateIdx!];
+  if (withDuration && mode === TooltipDisplayMode.Single && seriesIdx != null && dataIdx != null) {
+    const field = series.fields[seriesIdx];
+    const stateTimeRange = getStateTimeRange(series, field, dataIdx, timeRange);
+
+    if (stateTimeRange) {
+      endTime = stateTimeRange.endTime;
+      contentItems.push({ label: 'Duration', value: fmtDuration(stateTimeRange.duration) });
     }
-
-    const stateTs = xField.values[dataIdx!];
-    let duration: string;
-
-    if (nextStateTs) {
-      duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
-      endTime = nextStateTs;
-    } else {
-      const to = timeRange.to.valueOf();
-      duration = fmtDuration(to - stateTs);
-      endTime = to;
-    }
-
-    contentItems.push({ label: 'Duration', value: duration });
   }
 
   let footer: ReactNode;

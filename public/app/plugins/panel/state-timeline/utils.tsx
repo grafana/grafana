@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame } from '@grafana/data';
+import { DataFrame, Field, TimeRange } from '@grafana/data';
 import { Pagination } from '@grafana/ui';
-import { makeFramePerSeries } from 'app/core/components/TimelineChart/utils';
+import { findNextStateIndex, makeFramePerSeries } from 'app/core/components/TimelineChart/utils';
 
 import { defaultOptions } from './panelcfg.gen';
 
@@ -25,6 +25,38 @@ const styles = {
     marginTop: '8px',
   }),
 };
+
+export function getStateTimeRange(
+  alignedFrame: DataFrame,
+  field: Field,
+  dataIdx: number,
+  timeRange: TimeRange
+): { startTime: number; endTime: number; duration: number } | null {
+  if (dataIdx == null) {
+    return null;
+  }
+  const xField = alignedFrame.fields[0];
+  const nextStateIdx = findNextStateIndex(field, dataIdx);
+  let nextStateTs;
+  if (nextStateIdx != null) {
+    nextStateTs = xField.values[nextStateIdx];
+  }
+
+  const startTime = xField.values[dataIdx];
+  let duration: number;
+  let endTime: number;
+
+  if (nextStateTs != null) {
+    duration = nextStateTs - startTime;
+    endTime = nextStateTs;
+  } else {
+    const to = timeRange.to.valueOf();
+    duration = to - startTime;
+    endTime = to;
+  }
+
+  return { startTime, endTime, duration };
+}
 
 export function usePagination(frames?: DataFrame[], perPage?: number) {
   const [currentPage, setCurrentPage] = useState(1);
