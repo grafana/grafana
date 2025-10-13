@@ -190,4 +190,6 @@ The following table lists how private data source connect fixed roles are assign
 | ------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Grafana Admin | `plugins:grafana-pdc-app.private-networks:write`, `plugins:grafana-pdc-app.private-networks:read` | Default [Grafana server administrator](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) assignments. |
 
-> **Note:** These private data source connect fixed roles must be granted alongside the `fixed:datasources:writer` role for the permissions to take effect.
+{{< admonition type="note" >}}
+These private data source connect fixed roles must be granted alongside the `fixed:datasources:writer` role for the permissions to take effect.
+{{< /admonition >}}
