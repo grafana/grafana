@@ -6,22 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Alert,
-  Button,
-  ClipboardButton,
-  CodeEditor,
-  Field,
-  InlineField,
-  InlineFieldRow,
-  InlineFormLabel,
-  InlineLabel,
-  Label,
-  Stack,
-  Switch,
-  TextLink,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Button, ClipboardButton, CodeEditor, Stack, Switch, TextLink, useStyles2 } from '@grafana/ui';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { Spacer } from '../Spacer';
