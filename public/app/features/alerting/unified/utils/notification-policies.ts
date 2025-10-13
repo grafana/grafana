@@ -1,5 +1,5 @@
 import { findMatchingRoutes } from '@grafana/alerting/unstable';
-import { AlertmanagerGroup, Route } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { normalizeMatchers, unquoteWithUnescape } from './matchers';
 import { routeAdapter } from './routeAdapter';
@@ -39,21 +39,27 @@ export function unquoteRouteMatchers<T extends Route>(route: T): T {
  * (and their grouping) for the given route
  */
 function findMatchingAlertGroups(
-  routeTree: Route,
-  route: Route,
+  routeTree: RouteWithID,
+  route: RouteWithID,
   alertGroups: AlertmanagerGroup[]
 ): AlertmanagerGroup[] {
   const matchingGroups: AlertmanagerGroup[] = [];
+
+  // Convert routes once outside the loop for efficiency
+  // findMatchingRoutes expects the alerting package Route type, so we need to convert
+  const alertingRouteTree = routeAdapter.toPackage(routeTree);
+  const alertingRoute = routeAdapter.toPackage(route);
 
   return alertGroups.reduce((acc, group) => {
     // find matching alerts in the current group
     const matchingAlerts = group.alerts.filter((alert) => {
       const labels = Object.entries(alert.labels);
-      const alertingRouteTree = routeAdapter.toPackage(routeTree);
-      const alertingRoute = routeAdapter.toPackage(route);
-      return findMatchingRoutes(alertingRouteTree, labels).some(
-        (matchingRoute) => matchingRoute.route === alertingRoute
-      );
+      const matchingRoutes = findMatchingRoutes(alertingRouteTree, labels);
+
+      // Compare routes by id - we must use ID comparison because routeAdapter.toPackage()
+      // creates new objects, so reference equality would always be false.
+      // The ID is preserved during conversion and uniquely identifies each route.
+      return matchingRoutes.some((matchingRoute) => matchingRoute.route.id === alertingRoute.id);
     });
 
     // if the groups has any alerts left after matching, add it to the results
