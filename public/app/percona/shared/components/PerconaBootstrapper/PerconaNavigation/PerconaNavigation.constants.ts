@@ -435,10 +435,10 @@ export const PMM_NAV_MYSQL: NavModelItem = {
       url: `${config.appSubUrl}/d/mysql-table/mysql-table-details`,
     },
     {
-      id: 'mysql-tokudb-details',
-      text: 'TokuDB details',
+      id: 'mysql-myrocks-details',
+      text: 'MyRocks details',
       icon: 'sitemap',
-      url: `${config.appSubUrl}/d/mysql-tokudb/mysql-tokudb-details`,
+      url: `${config.appSubUrl}/d/mysql-myrocks/mysql-myrocks-details`,
     },
   ],
 };
