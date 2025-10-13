@@ -332,7 +332,7 @@ func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.Nam
 	cmd.OrgID = ns.OrgID
 	cmd.Email = cmd.Login
 
-	now := time.Now().UTC().Truncate(time.Second)
+	now := time.Now().UTC()
 	lastSeenAt := now.AddDate(-10, 0, 0) // Set last seen 10 years ago like in user service
 
 	cmd.Created = NewDBTime(now)

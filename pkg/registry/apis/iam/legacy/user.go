@@ -321,6 +321,13 @@ type CreateOrgUserCommand struct {
 	Updated DBTime
 }
 
+type UpdateOrgUserCommand struct {
+	OrgID   int64
+	UserID  int64
+	Role    string
+	Updated DBTime
+}
+
 type DeleteUserCommand struct {
 	UID string
 }
@@ -329,6 +336,8 @@ var sqlCreateUserTemplate = mustTemplate("create_user.sql")
 var sqlCreateOrgUserTemplate = mustTemplate("create_org_user.sql")
 var sqlDeleteUserTemplate = mustTemplate("delete_user.sql")
 var sqlDeleteOrgUserTemplate = mustTemplate("delete_org_user.sql")
+var sqlUpdateUserTemplate = mustTemplate("update_user.sql")
+var sqlUpdateOrgUserTemplate = mustTemplate("update_org_user.sql")
 
 func newCreateUser(sql *legacysql.LegacyDatabaseHelper, cmd *CreateUserCommand) createUserQuery {
 	return createUserQuery{
@@ -381,7 +390,7 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 		return nil, err
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 	lastSeenAt := now.AddDate(-10, 0, 0) // Set last seen 10 years ago like in user service
 
 	cmd.Salt = salt
@@ -389,7 +398,6 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	cmd.Created = NewDBTime(now)
 	cmd.Updated = NewDBTime(now)
 	cmd.LastSeenAt = NewDBTime(lastSeenAt)
-	cmd.Role = "Viewer" // TODO: https://github.com/grafana/identity-access-team/issues/1552
 
 	sql, err := s.sql(ctx)
 	if err != nil {
@@ -597,4 +605,127 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 	}
 
 	return nil
+}
+
+type UpdateUserCommand struct {
+	UID           string
+	Login         string
+	Email         string
+	Name          string
+	IsAdmin       bool
+	IsDisabled    bool
+	EmailVerified bool
+	Role          string
+	Updated       DBTime
+}
+
+type UpdateUserResult struct {
+	User common.UserWithRole
+}
+
+func newUpdateUser(sql *legacysql.LegacyDatabaseHelper, cmd *UpdateUserCommand) updateUserQuery {
+	return updateUserQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		UserTable:   sql.Table("user"),
+		Command:     cmd,
+	}
+}
+
+type updateUserQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable string
+	Command   *UpdateUserCommand
+}
+
+func (r updateUserQuery) Validate() error {
+	return nil
+}
+
+func newUpdateOrgUser(sql *legacysql.LegacyDatabaseHelper, cmd *UpdateOrgUserCommand) updateOrgUserQuery {
+	return updateOrgUserQuery{
+		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+		OrgUserTable: sql.Table("org_user"),
+		Command:      cmd,
+	}
+}
+
+type updateOrgUserQuery struct {
+	sqltemplate.SQLTemplate
+	OrgUserTable string
+	Command      *UpdateOrgUserCommand
+}
+
+func (r updateOrgUserQuery) Validate() error {
+	return nil
+}
+
+// UpdateUser implements LegacyIdentityStore.
+func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateUserCommand) (*UpdateUserResult, error) {
+	now := time.Now().UTC()
+	cmd.Updated = NewDBTime(now)
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newUpdateUser(sql, &cmd)
+
+	var updatedUser common.UserWithRole
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		userInternalID, err := s.GetUserInternalID(ctx, ns, GetUserInternalIDQuery{UID: cmd.UID})
+		if err != nil {
+			return fmt.Errorf("user not found: %w", err)
+		}
+
+		userQuery, err := sqltemplate.Execute(sqlUpdateUserTemplate, req)
+		if err != nil {
+			return fmt.Errorf("execute user template %q: %w", sqlUpdateUserTemplate.Name(), err)
+		}
+
+		_, err = st.Exec(ctx, userQuery, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to update user: %w", err)
+		}
+
+		orgUserCmd := &UpdateOrgUserCommand{
+			OrgID:   ns.OrgID,
+			UserID:  userInternalID.ID,
+			Role:    cmd.Role,
+			Updated: cmd.Updated,
+		}
+		orgUserReq := newUpdateOrgUser(sql, orgUserCmd)
+		orgUserQuery, err := sqltemplate.Execute(sqlUpdateOrgUserTemplate, orgUserReq)
+		if err != nil {
+			return fmt.Errorf("execute org_user update template %q: %w", sqlUpdateOrgUserTemplate.Name(), err)
+		}
+		_, err = st.Exec(ctx, orgUserQuery, orgUserReq.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to update org_user relationship: %w", err)
+		}
+
+		updatedUser = common.UserWithRole{
+			User: user.User{
+				ID:            userInternalID.ID,
+				UID:           cmd.UID,
+				Login:         cmd.Login,
+				Email:         cmd.Email,
+				Name:          cmd.Name,
+				OrgID:         ns.OrgID,
+				IsAdmin:       cmd.IsAdmin,
+				IsDisabled:    cmd.IsDisabled,
+				EmailVerified: cmd.EmailVerified,
+				Updated:       cmd.Updated.Time,
+			},
+			Role: cmd.Role,
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &UpdateUserResult{User: updatedUser}, nil
 }

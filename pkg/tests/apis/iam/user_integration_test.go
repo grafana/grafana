@@ -91,14 +91,60 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, createdUID, fetched.GetName())
 		require.Equal(t, "default", fetched.GetNamespace())
 
-		// TODO: Uncomment when we know how to handle global scope (global.users:)
-		// err = userClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
-		// require.NoError(t, err)
+		err = userClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		require.NoError(t, err)
 
 		// Verify deletion
-		// _, err = userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
-		// require.Error(t, err)
-		// require.Contains(t, err.Error(), "not found")
+		_, err = userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not found")
+	})
+
+	t.Run("should update user using the new APIs as a GrafanaAdmin", func(t *testing.T) {
+		ctx := context.Background()
+
+		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		// Create the user
+		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-2-v0.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		// Get the user to update
+		createdUID := created.GetName()
+		userToUpdate, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		// Modify the user spec
+		spec := userToUpdate.Object["spec"].(map[string]interface{})
+		spec["name"] = "Updated Test User"
+		spec["email"] = "updated.test.user@example.com"
+		userToUpdate.Object["spec"] = spec
+
+		// Update the user
+		updated, err := userClient.Resource.Update(ctx, userToUpdate, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, updated)
+
+		// Verify the update response
+		updatedSpec := updated.Object["spec"].(map[string]interface{})
+		require.Equal(t, "Updated Test User", updatedSpec["name"])
+		require.Equal(t, "updated.test.user@example.com", updatedSpec["email"])
+
+		// Fetch again to confirm
+		fetched, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
+		require.Equal(t, "Updated Test User", fetchedSpec["name"])
+		require.Equal(t, "updated.test.user@example.com", fetchedSpec["email"])
+
+		// Cleanup
+		err = userClient.Resource.Delete(ctx, fetched.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err)
 	})
 
 	t.Run("should not be able to create user when using a user with insufficient permissions", func(t *testing.T) {
@@ -135,9 +181,9 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 		})
 
 		legacyUserPayload := `{
-			"name": "Test User 2",
-			"email": "testuser2@example.com",
-			"login": "testuser2",
+			"name": "Legacy User 3",
+			"email": "legacyuser3@example.com",
+			"login": "legacyuser3",
 			"password": "password123"
 		}`
 
@@ -159,9 +205,9 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 
 		// Verify fetched user matches created user
 		userSpec := user.Object["spec"].(map[string]interface{})
-		require.Equal(t, "testuser2@example.com", userSpec["email"])
-		require.Equal(t, "testuser2", userSpec["login"])
-		require.Equal(t, "Test User 2", userSpec["name"])
+		require.Equal(t, "legacyuser3@example.com", userSpec["email"])
+		require.Equal(t, "legacyuser3", userSpec["login"])
+		require.Equal(t, "Legacy User 3", userSpec["name"])
 		require.Equal(t, false, userSpec["provisioned"])
 
 		// Verify metadata
