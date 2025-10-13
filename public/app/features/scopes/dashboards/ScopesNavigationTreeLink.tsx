@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, IconName, locationUtil } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
+
 import { isCurrentPath } from './scopeNavgiationUtils';
 
 export interface ScopesNavigationTreeLinkProps {
