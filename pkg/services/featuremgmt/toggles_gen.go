@@ -447,10 +447,6 @@ const (
 	// Makes the frontend use the &#39;names&#39; param for fetching multiple scope nodes at once
 	FlagUseMultipleScopeNodesEndpoint = "useMultipleScopeNodesEndpoint"
 
-	// FlagPromQLScope
-	// In-development feature that will allow injection of labels into prometheus queries.
-	FlagPromQLScope = "promQLScope"
-
 	// FlagLogQLScope
 	// In-development feature that will allow injection of labels into loki queries.
 	FlagLogQLScope = "logQLScope"
@@ -989,6 +985,10 @@ const (
 	// FlagEnableAppChromeExtensions
 	// Set this to true to enable all app chrome extensions registered by plugins.
 	FlagEnableAppChromeExtensions = "enableAppChromeExtensions"
+
+	// FlagEnableDashboardEmptyExtensions
+	// Set this to true to enable all dashboard empty state extensions registered by plugins.
+	FlagEnableDashboardEmptyExtensions = "enableDashboardEmptyExtensions"
 
 	// FlagFoldersAppPlatformAPI
 	// Enables use of app platform API for folders
