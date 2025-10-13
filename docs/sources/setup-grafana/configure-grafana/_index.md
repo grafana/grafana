@@ -1641,11 +1641,35 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 #### `enabled`
 
-Faro JavaScript agent is initialized. Default is `false`.
+Grafana Faro instrumentation is initialized. Default is `false`. Enables the default set of instrumentations from `getWebInstrumentations`. See the options below to selectively disable some of these.
 
 #### `custom_endpoint`
 
-Custom HTTP endpoint to send events captured by the Faro agent to. Default, `/log-grafana-javascript-agent`, logs the events to standard output.
+Custom HTTP endpoint to send events captured by the Grafana Faro agent to. Default, `/log-grafana-javascript-agent`, logs the events to standard output.
+
+#### `api_key`
+
+If `custom_endpoint` required authentication, you can set the API key here. Only relevant for Grafana JavaScript Agent provider.
+
+#### `instrumentations_console_enabled`
+
+Enables the [Console instrumentation](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/console-instrumentation/) for Grafana Faro, defaults to `true`.
+
+#### `instrumentations_performance_enabled`
+
+Enables the [Performance instrumentation](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/performance-instrumentation/) for Grafana Faro, defaults to `true`.
+
+#### `instrumentations_csp_enabled`
+
+Enables the [Content Security Policy Violations instrumentation](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/csp-violation-tracking/) for Grafana Faro, defaults to `true`.
+
+#### `instrumentations_tracing_enabled`
+
+Enables the [Tracing instrumentation](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/tracing-instrumentation/) for Grafana Faro, defaults to `true`.
+
+#### `web_vitals_attribution_enabled`
+
+Enables sending [attribution data for web vitals](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/web-vitals/#web-vitals-attribution-data) with the Performance instrumentation, defaults to `true`.
 
 #### `log_endpoint_requests_per_second_limit`
 
@@ -1654,30 +1678,6 @@ Requests per second limit enforced per an extended period, for Grafana backend l
 #### `log_endpoint_burst_limit`
 
 Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log-grafana-javascript-agent`. Default is `15`.
-
-#### `instrumentations_all_enabled`
-
-Enables all Faro default instrumentation by using `getWebInstrumentations`. Overrides other instrumentation flags.
-
-#### `instrumentations_errors_enabled`
-
-Turn on error instrumentation. Only affects Grafana JavaScript Agent.
-
-#### `instrumentations_console_enabled`
-
-Turn on console instrumentation. Only affects Grafana JavaScript Agent
-
-#### `instrumentations_webvitals_enabled`
-
-Turn on web vitals instrumentation. Only affects Grafana JavaScript Agent
-
-#### `instrumentations_tracing_enabled`
-
-Turns on tracing instrumentation. Only affects Grafana JavaScript Agent.
-
-#### `api_key`
-
-If `custom_endpoint` required authentication, you can set the API key here. Only relevant for Grafana JavaScript Agent provider.
 
 <hr>
 
