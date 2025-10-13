@@ -96,8 +96,8 @@ export const processPluginDataToAddedLinksGraph = (
         (Array.isArray(link.targets) ? link.targets : [link.targets]).forEach((target: string) => {
           // Create dependency from this plugin to the target extension point
           dependencies.push({
-            source: pluginId,
-            target: target,
+            from: pluginId,
+            to: target,
             type: 'extends',
             description: `${getDisplayName(pluginId)} provides link to ${target}`,
           });
@@ -142,7 +142,7 @@ export const processPluginDataToAddedLinksGraph = (
   let filteredDependencies = dependencies;
   if (options.selectedContentProviders && options.selectedContentProviders.length > 0) {
     // Filter dependencies to only include selected content providers
-    filteredDependencies = dependencies.filter((dep) => options.selectedContentProviders.includes(dep.source));
+    filteredDependencies = dependencies.filter((dep) => options.selectedContentProviders.includes(dep.from));
 
     // Update extension points to only include those that still have providers after filtering
     filteredExtensionPoints = filteredExtensionPoints
@@ -159,7 +159,7 @@ export const processPluginDataToAddedLinksGraph = (
     // Default: show only consumers that have providers extending to them
     const activeConsumers = new Set<string>();
     filteredDependencies.forEach((dep) => {
-      const extensionPoint = filteredExtensionPoints.find((ep) => ep.id === dep.target);
+      const extensionPoint = filteredExtensionPoints.find((ep) => ep.id === dep.to);
       if (extensionPoint) {
         activeConsumers.add(extensionPoint.definingPlugin);
       }
@@ -174,7 +174,7 @@ export const processPluginDataToAddedLinksGraph = (
 
   // Filter dependencies to only include those targeting remaining extension points
   const remainingExtensionPointIds = new Set(filteredExtensionPoints.map((ep) => ep.id));
-  filteredDependencies = filteredDependencies.filter((dep) => remainingExtensionPointIds.has(dep.target));
+  filteredDependencies = filteredDependencies.filter((dep) => remainingExtensionPointIds.has(dep.to));
 
   // Filter nodes to only include those that are relevant to link extensions and filtering
   const filteredNodes = Array.from(nodes.values()).filter((node) => {

@@ -106,7 +106,7 @@ export function DependencyGraph({ data, options, width, height }: DependencyGrap
   }
 
   return (
-    <div className={styles.container.toString()}>
+    <div className={styles.container}>
       <svg width={width} height={contentHeight} onClick={handleSvgClick}>
         <ArrowMarkers theme={theme} />
 
@@ -115,7 +115,7 @@ export function DependencyGraph({ data, options, width, height }: DependencyGrap
           width={width}
           isExposeMode={isExposeMode}
           isExtensionPointMode={isExtensionPointMode}
-          styles={styles}
+          styles={{ sectionHeader: styles.sectionHeader }}
         />
 
         <NodeRenderer
@@ -130,7 +130,7 @@ export function DependencyGraph({ data, options, width, height }: DependencyGrap
           selectedContentProvider={selectedContentProvider}
           onContentConsumerClick={handleContentConsumerClick}
           onContentProviderClick={handleContentProviderClick}
-          styles={styles}
+          styles={{ node: styles.node, nodeBox: styles.nodeBox, appIdLabel: styles.appIdLabel }}
         />
 
         <ExtensionRenderer
@@ -152,7 +152,14 @@ export function DependencyGraph({ data, options, width, height }: DependencyGrap
           onContentConsumerClick={handleContentConsumerClick}
           onContentProviderClick={handleContentProviderClick}
           onHighlightedExtensionPointChange={handleHighlightedExtensionPointChange}
-          styles={styles}
+          styles={{
+            extensionGroupBox: styles.extensionGroupBox,
+            extensionPointsBox: styles.extensionPointsBox,
+            extensionPointsLabel: styles.extensionPointsLabel,
+            extensionTypeBadge: styles.extensionTypeBadge,
+            definingPluginLabel: styles.definingPluginLabel,
+            descriptionInlineText: styles.descriptionInlineText,
+          }}
         />
 
         <LinkRenderer
@@ -170,7 +177,7 @@ export function DependencyGraph({ data, options, width, height }: DependencyGrap
           selectedContentConsumer={selectedContentConsumer}
           selectedContentProvider={selectedContentProvider}
           highlightedExtensionPointId={highlightedExtensionPointId}
-          styles={styles}
+          styles={{ link: styles.link, linkHighlighted: styles.linkHighlighted }}
         />
       </svg>
     </div>

@@ -7,7 +7,6 @@
 import {
   LAYOUT_CONSTANTS,
   getResponsiveGroupSpacing,
-  getResponsiveMargin,
   getResponsiveNodeSpacing,
   getResponsiveNodeWidth,
   getRightMargin,

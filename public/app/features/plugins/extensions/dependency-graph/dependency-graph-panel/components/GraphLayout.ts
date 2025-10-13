@@ -163,7 +163,7 @@ const calculateExposeLayout = (
   }
 
   data.dependencies.forEach((dep) => {
-    contentConsumers.add(dep.target); // Target is the consumer in expose mode
+    contentConsumers.add(dep.to); // Target is the consumer in expose mode
   });
 
   const providerNodes = data.nodes.filter((node) => contentProviders.has(node.id));
@@ -312,9 +312,9 @@ const calculateAddLayout = (
   // Identify content providers
   const contentProviders = new Set<string>();
   data.dependencies.forEach((dep) => {
-    const extensionPoint = data.extensionPoints?.find((ep) => ep.id === dep.target);
+    const extensionPoint = data.extensionPoints?.find((ep) => ep.id === dep.to);
     if (extensionPoint) {
-      contentProviders.add(dep.source);
+      contentProviders.add(dep.from);
     }
   });
 

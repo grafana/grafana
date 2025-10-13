@@ -4,8 +4,6 @@
  * Defines SVG arrow markers for dependency links.
  */
 
-import React from 'react';
-
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { VISUAL_CONSTANTS } from '../constants';

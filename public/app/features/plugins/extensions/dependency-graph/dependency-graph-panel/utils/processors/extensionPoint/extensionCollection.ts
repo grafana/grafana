@@ -58,10 +58,9 @@ export function collectExtensions(
                 id: extensionId,
                 providingPlugin: pluginId,
                 targetExtensionPoint: target,
-                extensionType: 'link',
+                type: 'link',
                 title: link.title || 'Link Extension',
                 description: link.description || '',
-                consumers: [], // Will be populated later
               });
             }
           });
@@ -91,10 +90,9 @@ export function collectExtensions(
                 id: extensionId,
                 providingPlugin: pluginId,
                 targetExtensionPoint: target,
-                extensionType: 'component',
+                type: 'component',
                 title: comp.title || 'Component Extension',
                 description: comp.description || '',
-                consumers: [], // Will be populated later
               });
             }
           });
@@ -124,10 +122,9 @@ export function collectExtensions(
                 id: extensionId,
                 providingPlugin: pluginId,
                 targetExtensionPoint: target,
-                extensionType: 'function',
+                type: 'function',
                 title: func.title || 'Function Extension',
                 description: func.description || '',
-                consumers: [], // Will be populated later
               });
             }
           });

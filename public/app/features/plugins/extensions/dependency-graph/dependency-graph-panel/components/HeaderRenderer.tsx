@@ -4,8 +4,6 @@
  * Renders section headers and divider lines for the dependency graph.
  */
 
-import { SerializedStyles } from '@emotion/react';
-
 import { GrafanaTheme2 } from '@grafana/data';
 
 import {
@@ -22,7 +20,7 @@ interface HeaderRendererProps {
   isExposeMode: boolean;
   isExtensionPointMode: boolean;
   styles: {
-    sectionHeader: SerializedStyles;
+    sectionHeader: string;
   };
 }
 

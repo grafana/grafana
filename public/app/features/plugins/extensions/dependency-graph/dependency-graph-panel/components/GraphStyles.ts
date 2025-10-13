@@ -143,13 +143,21 @@ export const getGraphStyles = (theme: GrafanaTheme2) => {
       },
     }),
 
-    extensionPointBox: css({
+    extensionPointsBox: css({
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['filter']),
       },
       '&:hover': {
         filter: `brightness(${INTERACTION_CONSTANTS.HOVER_BRIGHTNESS})`,
       },
+    }),
+
+    extensionPointsLabel: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      fontFamily: TYPOGRAPHY_CONSTANTS.MONOSPACE_FAMILY,
+      pointerEvents: 'none',
+      userSelect: 'none',
     }),
 
     definingPluginLabel: css({

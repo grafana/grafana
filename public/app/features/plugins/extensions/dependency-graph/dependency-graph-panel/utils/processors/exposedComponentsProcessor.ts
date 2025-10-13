@@ -83,8 +83,8 @@ export const processPluginDataToExposeGraph = (
 
             // Create dependency - this represents the flow from provider through component to consumer
             const dependency = {
-              source: exposedComponent.providingPlugin, // Provider is the source
-              target: pluginId, // Consumer is the target
+              from: exposedComponent.providingPlugin, // Provider is the source
+              to: pluginId, // Consumer is the target
               type: 'depends' as const,
               description: `${getDisplayName(pluginId)} consumes ${exposedComponent.title} from ${getDisplayName(
                 exposedComponent.providingPlugin
@@ -129,13 +129,13 @@ export const processPluginDataToExposeGraph = (
 
     // Filter dependencies to only include those where the provider is in selected providers
     filteredDependencies = filteredDependencies.filter((dep) => {
-      return options.selectedContentProviders.includes(dep.source);
+      return options.selectedContentProviders.includes(dep.from);
     });
   }
 
   // Filter by selected content consumers (plugins that consume exposed components)
   if (options.selectedContentConsumers && options.selectedContentConsumers.length > 0) {
-    filteredDependencies = filteredDependencies.filter((dep) => options.selectedContentConsumers.includes(dep.target));
+    filteredDependencies = filteredDependencies.filter((dep) => options.selectedContentConsumers.includes(dep.to));
     // Also filter exposed components to only show those consumed by selected consumers
     filteredExposedComponents = filteredExposedComponents.filter((comp) =>
       comp.consumers.some((consumer) => options.selectedContentConsumers.includes(consumer))
@@ -144,7 +144,7 @@ export const processPluginDataToExposeGraph = (
 
   // Get the set of active plugins based on filtered data
   const activeProviders = new Set(filteredExposedComponents.map((comp) => comp.providingPlugin));
-  const activeConsumers = new Set(filteredDependencies.map((dep) => dep.target));
+  const activeConsumers = new Set(filteredDependencies.map((dep) => dep.to));
 
   if (ENABLE_DEBUG_LOGS) {
     console.log('[Expose Mode Debug]');

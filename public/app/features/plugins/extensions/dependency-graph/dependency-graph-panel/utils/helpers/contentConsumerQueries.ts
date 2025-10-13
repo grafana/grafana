@@ -4,8 +4,6 @@
  * Functions for querying content consumer plugins based on visualization mode.
  */
 
-import { ExposedComponent } from '../../types';
-
 import { getPluginData } from './dataAccess';
 import {
   getCachedActiveConsumers,
@@ -39,7 +37,15 @@ export const getAvailableContentConsumers = (
       const consumesComponents =
         extensions.exposedComponents &&
         extensions.exposedComponents.length > 0 &&
-        extensions.exposedComponents.some((comp) => comp && comp.consumers && comp.consumers.length > 0);
+        extensions.exposedComponents.some((comp) => {
+          if (!comp || typeof comp !== 'object') {
+            return false;
+          }
+          // Type assertion needed because AppPluginConfig.extensions.exposedComponents is not fully typed
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const exposedComp = comp as { consumers?: unknown[] };
+          return Array.isArray(exposedComp.consumers) && exposedComp.consumers.length > 0;
+        });
 
       if (consumesComponents) {
         contentConsumers.add(pluginId);

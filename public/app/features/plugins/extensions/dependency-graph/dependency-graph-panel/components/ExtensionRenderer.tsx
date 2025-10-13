@@ -4,7 +4,6 @@
  * Renders extension points and exposed components in the dependency graph.
  */
 
-import { SerializedStyles } from '@emotion/react';
 import React, { useState } from 'react';
 import semver from 'semver';
 
@@ -75,12 +74,12 @@ interface ExtensionRendererProps {
   onContentProviderClick: (id: string | null) => void;
   onHighlightedExtensionPointChange: (id: string | null) => void;
   styles: {
-    extensionGroupBox: SerializedStyles;
-    extensionPointsBox: SerializedStyles;
-    extensionPointsLabel: SerializedStyles;
-    extensionTypeBadge: SerializedStyles;
-    definingPluginLabel: SerializedStyles;
-    descriptionInlineText: SerializedStyles;
+    extensionGroupBox: string;
+    extensionPointsBox: string;
+    extensionPointsLabel: string;
+    extensionTypeBadge: string;
+    definingPluginLabel: string;
+    descriptionInlineText: string;
   };
 }
 
@@ -453,7 +452,7 @@ export function ExtensionRenderer({
     }
 
     // Count dependencies that target this extension point
-    return data.dependencies.filter((dep) => dep.target === extensionPointsId).length;
+    return data.dependencies.filter((dep) => dep.to === extensionPointsId).length;
   };
   const renderContextMenu = () => {
     if (!contextMenuOpen) {
@@ -501,9 +500,13 @@ export function ExtensionRenderer({
         renderMenuItems={() => (
           <>
             <Menu.Item
-              label={t('extensions.dependency-graph.highlight-connections', 'Highlight {{appName}} connections', {
-                appName,
-              })}
+              label={t(
+                'extensions.dependency-graph.highlight-plugin-connections',
+                'Highlight {{appName}} connections',
+                {
+                  appName,
+                }
+              )}
               onClick={handleHighlightArrowsToContentConsumer}
               icon="arrow-right"
             />
@@ -549,9 +552,13 @@ export function ExtensionRenderer({
         renderMenuItems={() => (
           <>
             <Menu.Item
-              label={t('extensions.dependency-graph.highlight-connections', 'Highlight {{appName}} connections', {
-                appName,
-              })}
+              label={t(
+                'extensions.dependency-graph.highlight-plugin-connections',
+                'Highlight {{appName}} connections',
+                {
+                  appName,
+                }
+              )}
               onClick={handleHighlightArrowsToContentProvider}
               icon="arrow-right"
             />
@@ -636,7 +643,10 @@ export function ExtensionRenderer({
               />
             ) : (
               <Menu.Item
-                label={t('extensions.dependency-graph.filter-by-extension-point', 'Filter by this extension point')}
+                label={t(
+                  'extensions.dependency-graph.filter-by-this-extension-point',
+                  'Filter by this extension point'
+                )}
                 onClick={handleFilterOnExtensionPoint}
                 icon="filter"
               />
@@ -685,7 +695,10 @@ export function ExtensionRenderer({
               />
             ) : (
               <Menu.Item
-                label={t('extensions.dependency-graph.filter-by-extension-point', 'Filter by this extension point')}
+                label={t(
+                  'extensions.dependency-graph.filter-by-this-extension-point',
+                  'Filter by this extension point'
+                )}
                 onClick={handleFilterOnExtensionPoint}
                 icon="filter"
               />

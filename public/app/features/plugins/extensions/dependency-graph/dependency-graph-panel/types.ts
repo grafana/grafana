@@ -29,13 +29,21 @@ export interface PluginNode {
  */
 export interface PluginDependency {
   /** Plugin ID that provides content/functionality */
-  source: string;
+  from: string;
   /** Plugin ID that consumes content/functionality */
-  target: string;
+  to: string;
   /** Type of dependency relationship */
-  type: 'extends' | 'depends' | 'integrates';
+  type: 'extends' | 'depends' | 'integrates' | 'extension';
   /** Description of the dependency relationship */
   description?: string;
+  /** Label for the dependency relationship */
+  label?: string;
+  /** Extension type for extension dependencies */
+  extensionType?: 'link' | 'component' | 'function';
+  /** Extension ID for extension dependencies */
+  extensionId?: string;
+  /** Target extension point for extension dependencies */
+  targetExtensionPoint?: string;
 }
 
 /**

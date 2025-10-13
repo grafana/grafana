@@ -43,12 +43,12 @@ export function AddDependencyLinkRenderer({
   const groupedDeps = new Map<string, Map<string, string[]>>();
 
   data.dependencies.forEach((dep) => {
-    const extensionPoint = data.extensionPoints?.find((ep) => ep.id === dep.target);
+    const extensionPoint = data.extensionPoints?.find((ep) => ep.id === dep.to);
     if (!extensionPoint) {
       return;
     }
 
-    const sourceId = dep.source;
+    const sourceId = dep.from;
     const definingPlugin = extensionPoint.definingPlugin;
 
     if (!groupedDeps.has(sourceId)) {
@@ -57,7 +57,7 @@ export function AddDependencyLinkRenderer({
     if (!groupedDeps.get(sourceId)!.has(definingPlugin)) {
       groupedDeps.get(sourceId)!.set(definingPlugin, []);
     }
-    groupedDeps.get(sourceId)!.get(definingPlugin)!.push(dep.target);
+    groupedDeps.get(sourceId)!.get(definingPlugin)!.push(dep.to);
   });
 
   const arrows: React.JSX.Element[] = [];

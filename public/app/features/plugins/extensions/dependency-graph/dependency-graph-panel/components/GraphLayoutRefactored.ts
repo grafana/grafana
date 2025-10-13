@@ -7,7 +7,6 @@
 
 import { getResponsiveMargin, getResponsiveNodeSpacing } from '../constants';
 import { GraphData, PanelOptions } from '../types';
-import { calculateContentHeight } from '../utils/layout/contentHeightCalculations';
 import {
   calculateAddLayout,
   calculateExposeLayout,

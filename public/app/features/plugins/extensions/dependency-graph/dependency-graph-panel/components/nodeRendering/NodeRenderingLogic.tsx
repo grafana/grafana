@@ -60,9 +60,9 @@ export function NodeRenderingLogic({
     // In add mode, render only content provider apps on the left
     const contentProviders = new Set<string>();
     data.dependencies.forEach((dep) => {
-      if (data.extensionPoints?.some((ep) => ep.id === dep.target)) {
+      if (data.extensionPoints?.some((ep) => ep.id === dep.to)) {
         // Check if target is an actual extension point
-        contentProviders.add(dep.source);
+        contentProviders.add(dep.from);
       }
     });
     nodesToRender = nodes.filter((node) => contentProviders.has(node.id));

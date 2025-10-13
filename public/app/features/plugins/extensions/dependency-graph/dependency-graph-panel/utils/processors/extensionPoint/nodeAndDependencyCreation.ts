@@ -29,10 +29,10 @@ export function createNodes(
       if (pluginInfo) {
         nodes.set(pluginId, {
           id: pluginId,
-          name: pluginInfo.name || pluginId,
-          type: pluginInfo.type || 'app',
-          version: pluginInfo.info?.version || 'unknown',
-          description: pluginInfo.info?.description || '',
+          name: pluginId, // AppPluginConfig doesn't have name property
+          type: 'app', // AppPluginConfig doesn't have type property
+          version: 'unknown', // AppPluginConfig doesn't have info.version
+          description: '', // AppPluginConfig doesn't have info.description
         });
       }
     }
@@ -46,10 +46,10 @@ export function createNodes(
       if (pluginInfo) {
         nodes.set(pluginId, {
           id: pluginId,
-          name: pluginInfo.name || pluginId,
-          type: pluginInfo.type || 'app',
-          version: pluginInfo.info?.version || 'unknown',
-          description: pluginInfo.info?.description || '',
+          name: pluginId, // AppPluginConfig doesn't have name property
+          type: 'app', // AppPluginConfig doesn't have type property
+          version: 'unknown', // AppPluginConfig doesn't have info.version
+          description: '', // AppPluginConfig doesn't have info.description
         });
       }
     }
@@ -74,9 +74,9 @@ export function createDependencies(
       dependencies.push({
         from: extension.providingPlugin,
         to: targetExtensionPoint.definingPlugin,
-        type: 'extension',
-        label: `${extension.extensionType}: ${extension.title}`,
-        extensionType: extension.extensionType,
+        type: 'extension' as const,
+        label: `${extension.type}: ${extension.title}`,
+        extensionType: extension.type, // Use 'type' instead of 'extensionType'
         extensionId: extension.id,
         targetExtensionPoint: extension.targetExtensionPoint,
       });

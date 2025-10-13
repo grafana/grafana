@@ -4,7 +4,6 @@
  * Renders dependency links/arrows between nodes in the dependency graph.
  */
 
-import { SerializedStyles } from '@emotion/react';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -30,8 +29,8 @@ interface LinkRendererProps {
   selectedContentProvider: string | null;
   highlightedExtensionPointId: string | null;
   styles: {
-    link: SerializedStyles;
-    linkHighlighted: SerializedStyles;
+    link: string;
+    linkHighlighted: string;
   };
 }
 
@@ -67,12 +66,12 @@ export function LinkRenderer({
     const groupedDeps = new Map<string, Map<string, string[]>>();
 
     data.dependencies.forEach((dep) => {
-      const extensionPoint = data.extensionPoints?.find((ep) => ep.id === dep.target);
+      const extensionPoint = data.extensionPoints?.find((ep) => ep.id === dep.to);
       if (!extensionPoint) {
         return;
       }
 
-      const sourceId = dep.source;
+      const sourceId = dep.from;
       const definingPlugin = extensionPoint.definingPlugin;
 
       if (!groupedDeps.has(sourceId)) {
@@ -81,7 +80,7 @@ export function LinkRenderer({
       if (!groupedDeps.get(sourceId)!.has(definingPlugin)) {
         groupedDeps.get(sourceId)!.set(definingPlugin, []);
       }
-      groupedDeps.get(sourceId)!.get(definingPlugin)!.push(dep.target);
+      groupedDeps.get(sourceId)!.get(definingPlugin)!.push(dep.to);
     });
 
     const arrows: React.JSX.Element[] = [];
@@ -156,8 +155,7 @@ export function LinkRenderer({
         if (extensionPointPos) {
           // Find all content providers that extend this extension point
           const contentProviders =
-            data.dependencies?.filter((dep) => dep.target === highlightedExtensionPointId).map((dep) => dep.source) ||
-            [];
+            data.dependencies?.filter((dep) => dep.to === highlightedExtensionPointId).map((dep) => dep.from) || [];
 
           contentProviders.forEach((providerId) => {
             const providerNode = nodes.find((n) => n.id === providerId);
