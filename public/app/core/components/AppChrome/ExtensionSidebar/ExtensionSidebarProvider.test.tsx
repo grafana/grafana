@@ -396,6 +396,17 @@ describe('ExtensionSidebarProvider', () => {
   });
 
   it('should toggle sidebar closed when receiving ToggleExtensionSidebarEvent for currently open component', async () => {
+    // Mock usePluginLinks to return a link that matches our test component
+    jest.requireMock('@grafana/runtime').usePluginLinks.mockImplementation(() => ({
+      links: [
+        {
+          pluginId: mockPluginMeta.pluginId,
+          title: mockComponent.title,
+        },
+      ],
+      isLoading: false,
+    }));
+
     const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
 
     const TestComponentWithProps = () => {
@@ -446,6 +457,21 @@ describe('ExtensionSidebarProvider', () => {
   });
 
   it('should toggle to different component when receiving ToggleExtensionSidebarEvent for different component', async () => {
+    // Mock usePluginLinks to return links that match both test components
+    jest.requireMock('@grafana/runtime').usePluginLinks.mockImplementation(() => ({
+      links: [
+        {
+          pluginId: mockPluginMeta.pluginId,
+          title: mockComponent.title,
+        },
+        {
+          pluginId: mockPluginMeta.pluginId,
+          title: mockDifferentComponent.title,
+        },
+      ],
+      isLoading: false,
+    }));
+
     const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
 
     const TestComponentWithProps = () => {
