@@ -83,6 +83,7 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	client, err := s.getDSInfo(ctx, backend.PluginConfigFromContext(ctx))
+	cfg := backend.GrafanaConfigFromContext(ctx)
 	if err != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
@@ -91,9 +92,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	}
 
 	var servicesErr error
-	// TODO: migrate this to feature toggle
-	useGrpc := true
-	if useGrpc {
+	if cfg.FeatureToggles().IsEnabled("jaegerEnableGrpcEndpoint") {
 		_, servicesErr = client.JaegerClient.GrpcServices()
 	} else {
 		_, servicesErr = client.JaegerClient.Services()
