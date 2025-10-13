@@ -26,6 +26,7 @@ interface StoryProps extends RadialGaugeProps {
 const meta: Meta<StoryProps> = {
   title: 'Plugins/RadialGauge',
   component: RadialGauge,
+  excludeStories: ['RadialGaugeExample'],
   parameters: {
     controls: {
       exclude: ['theme', 'values', 'vizCount'],
