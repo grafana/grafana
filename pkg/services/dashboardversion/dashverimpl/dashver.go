@@ -593,19 +593,19 @@ func unstructuredToLegacyDashboardVersionWithUsers(
 
 	obj := vspec.MetaAccessor
 
-	var createdBy *user.User
+	createdByID := int64(0)
 	if creator, ok := users[obj.GetCreatedBy()]; ok {
-		createdBy = creator
+		createdByID = creator.ID
 	}
 	// if updated by is set, then this version of the dashboard was "created"
-	// by that user
-	if updater, ok := users[obj.GetUpdatedBy()]; ok {
-		createdBy = updater
-	}
-
-	createdByID := int64(0)
-	if createdBy != nil {
-		createdByID = createdBy.ID
+	// by that user. note: this will be empty for the first version of a dashboard in unistore,
+	// but will be set in legacy
+	if obj.GetUpdatedBy() != "" {
+		if updater, ok := users[obj.GetUpdatedBy()]; ok {
+			createdByID = updater.ID
+		} else {
+			createdByID = -1
+		}
 	}
 
 	created := obj.GetCreationTimestamp().Time
