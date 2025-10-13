@@ -38,6 +38,7 @@ function shouldBeActive(
 export const CONTENT_OUTLINE_LOCAL_STORAGE_KEYS = {
   visible: 'grafana.explore.contentOutline.visible',
   expanded: 'grafana.explore.contentOutline.expanded',
+  autoCollapse: 'grafana.explore.contentOutline.autoCollapse', // New key for auto-collapse preference
 };
 
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
@@ -51,6 +52,10 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   const [activeSectionId, setActiveSectionId] = useState(outlineItems[0]?.id);
   const [activeSectionChildId, setActiveSectionChildId] = useState(outlineItems[0]?.children?.[0]?.id);
 
+  // New state for auto-collapse feature
+  const [shouldAutoCollapse, setShouldAutoCollapse] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+
   const outlineItemsShouldIndent = outlineItems.some(
     (item) => item.children && !(item.mergeSingleChild && item.children?.length === 1) && item.children.length > 0
   );
@@ -63,6 +68,37 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       return acc;
     }, {});
   });
+
+  // Check if content height is less than viewport height for auto-collapse
+  useEffect(() => {
+    const checkContentHeight = () => {
+      if (contentRef.current && scroller) {
+        const contentHeight = contentRef.current.scrollHeight;
+        const viewportHeight = scroller.clientHeight;
+        
+        // Only auto-collapse if user hasn't manually expanded/collapsed recently
+        const autoCollapsePreference = store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.autoCollapse, true);
+        setShouldAutoCollapse(contentHeight < viewportHeight && autoCollapsePreference);
+      }
+    };
+
+    // Check on mount and when outline items change
+    checkContentHeight();
+    
+    // Also check when window resizes
+    window.addEventListener('resize', checkContentHeight);
+    
+    // Set up a MutationObserver to watch for content changes
+    const observer = new MutationObserver(checkContentHeight);
+    if (scroller) {
+      observer.observe(scroller, { childList: true, subtree: true });
+    }
+    
+    return () => {
+      window.removeEventListener('resize', checkContentHeight);
+      observer.disconnect();
+    };
+  }, [outlineItems, scroller]);
 
   const scrollIntoView = (ref: HTMLElement | null, customOffsetTop = 0) => {
     let scrollValue = 0;
@@ -103,6 +139,8 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
 
   const toggle = () => {
     store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, !contentOutlineExpanded);
+    // When user manually toggles, disable auto-collapse until page reload
+    store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.autoCollapse, false);
     toggleContentOutlineExpanded();
     reportInteraction('explore_toolbar_contentoutline_clicked', {
       item: 'outline',
@@ -153,23 +191,26 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     }
   }, [outlineItems, verticalScroll]);
 
+  // Determine if the content outline should be expanded
+  const isExpanded = shouldAutoCollapse ? false : contentOutlineExpanded;
+
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
       <ScrollContainer>
-        <div className={styles.content}>
+        <div ref={contentRef} className={styles.content}>
           <ContentOutlineItemButton
             icon={'arrow-from-right'}
             tooltip={
-              contentOutlineExpanded
+              isExpanded
                 ? t('explore.content-outline.tooltip-collapse-outline', 'Collapse outline')
                 : t('explore.content-outline.tooltip-expand-outline', 'Expand outline')
             }
-            tooltipPlacement={contentOutlineExpanded ? 'right' : 'bottom'}
+            tooltipPlacement={isExpanded ? 'right' : 'bottom'}
             onClick={toggle}
             className={cx(styles.toggleContentOutlineButton, {
-              [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsShouldIndent,
+              [styles.justifyCenter]: !isExpanded && !outlineItemsShouldIndent,
             })}
-            aria-expanded={contentOutlineExpanded}
+            aria-expanded={isExpanded}
           />
 
           {outlineItems.map((item) => {
@@ -177,16 +218,16 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
               <Fragment key={item.id}>
                 <ContentOutlineItemButton
                   key={item.id}
-                  title={contentOutlineExpanded ? item.title : undefined}
-                  contentOutlineExpanded={contentOutlineExpanded}
+                  title={isExpanded ? item.title : undefined}
+                  contentOutlineExpanded={isExpanded}
                   className={cx(styles.buttonStyles, {
-                    [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
-                    [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
+                    [styles.justifyCenter]: !isExpanded && !outlineItemsHaveDeleteButton,
+                    [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !isExpanded,
                   })}
                   indentStyle={cx({
                     [styles.indentRoot]: !isCollapsible(item) && outlineItemsShouldIndent,
                     [styles.sectionHighlighter]:
-                      isChildActive(item, activeSectionChildId) && !contentOutlineExpanded && sectionsExpanded[item.id],
+                      isChildActive(item, activeSectionChildId) && !isExpanded && sectionsExpanded[item.id],
                   })}
                   icon={item.icon}
                   onClick={() => handleItemClicked(item)}
@@ -204,7 +245,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                     sectionsExpanded[item.id] &&
                     item.children.map((child, i) => (
                       <div key={child.id} className={styles.itemWrapper}>
-                        {contentOutlineExpanded && (
+                        {isExpanded && (
                           <div
                             className={cx(styles.itemConnector, {
                               [styles.firstItemConnector]: i === 0,
@@ -214,13 +255,13 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                         )}
                         <ContentOutlineItemButton
                           key={child.id}
-                          title={contentOutlineExpanded ? child.title : undefined}
-                          contentOutlineExpanded={contentOutlineExpanded}
-                          icon={contentOutlineExpanded ? undefined : item.icon}
+                          title={isExpanded ? child.title : undefined}
+                          contentOutlineExpanded={isExpanded}
+                          icon={isExpanded ? undefined : item.icon}
                           className={cx(styles.buttonStyles, {
-                            [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
+                            [styles.justifyCenter]: !isExpanded && !outlineItemsHaveDeleteButton,
                             [styles.sectionHighlighter]:
-                              isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
+                              isChildActive(item, activeSectionChildId) && !isExpanded,
                           })}
                           indentStyle={styles.indentChild}
                           onClick={(e) => {
@@ -245,6 +286,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   );
 }
 
+// ... existing styles and helper functions remain the same ...
 const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
   return {
     wrapper: css({
