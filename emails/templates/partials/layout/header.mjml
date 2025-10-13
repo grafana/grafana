@@ -1,0 +1,4 @@
+<mj-column background-color="transparent">
+  <!-- @PERCONA -->
+  <mj-image padding="0" width="200px" src="https://www.percona.com/wp-content/uploads/product-logos/PMM-logo-horizontal-400-dark-text.png" align="left" />
+</mj-column>

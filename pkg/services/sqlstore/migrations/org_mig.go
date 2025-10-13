@@ -8,7 +8,7 @@ func addOrgMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "version", Type: DB_Int, Nullable: false},
-			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "address1", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "address2", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "city", Type: DB_NVarchar, Length: 255, Nullable: true},
@@ -41,6 +41,7 @@ func addOrgMigrations(mg *Migrator) {
 		Indices: []*Index{
 			{Cols: []string{"org_id"}},
 			{Cols: []string{"org_id", "user_id"}, Type: UniqueIndex},
+			{Cols: []string{"user_id"}},
 		},
 	}
 
@@ -48,24 +49,21 @@ func addOrgMigrations(mg *Migrator) {
 	mg.AddMigration("create org_user table v1", NewAddTableMigration(orgUserV1))
 	addTableIndicesMigrations(mg, "v1", orgUserV1)
 
-	//-------  copy data from old table-------------------
-	mg.AddMigration("copy data account to org", NewCopyTableDataMigration("org", "account", map[string]string{
-		"id":      "id",
-		"version": "version",
-		"name":    "name",
-		"created": "created",
-		"updated": "updated",
-	}).IfTableExists("account"))
+	mg.AddMigration("Update org table charset", NewTableCharsetMigration("org", []*Column{
+		{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "address1", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "address2", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "city", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "state", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "zip_code", Type: DB_NVarchar, Length: 50, Nullable: true},
+		{Name: "country", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "billing_email", Type: DB_NVarchar, Length: 255, Nullable: true},
+	}))
 
-	mg.AddMigration("copy data account_user to org_user", NewCopyTableDataMigration("org_user", "account_user", map[string]string{
-		"id":      "id",
-		"org_id":  "account_id",
-		"user_id": "user_id",
-		"role":    "role",
-		"created": "created",
-		"updated": "updated",
-	}).IfTableExists("account_user"))
+	mg.AddMigration("Update org_user table charset", NewTableCharsetMigration("org_user", []*Column{
+		{Name: "role", Type: DB_NVarchar, Length: 20},
+	}))
 
-	mg.AddMigration("Drop old table account", NewDropTableMigration("account"))
-	mg.AddMigration("Drop old table account_user", NewDropTableMigration("account_user"))
+	const migrateReadOnlyViewersToViewers = `UPDATE org_user SET role = 'Viewer' WHERE role = 'Read Only Editor'`
+	mg.AddMigration("Migrate all Read Only Viewers to Viewers", NewRawSQLMigration(migrateReadOnlyViewersToViewers))
 }

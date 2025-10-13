@@ -1,60 +1,71 @@
 package commands
 
 import (
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
-	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
-	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	"context"
+
 	"github.com/hashicorp/go-version"
+
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func ShouldUpgrade(installed string, remote m.Plugin) bool {
-	installedVersion, err1 := version.NewVersion(installed)
-
-	if err1 != nil {
+func shouldUpgrade(installed plugins.FoundPlugin, remote models.Plugin) bool {
+	installedVer := installed.JSONData.Info.Version
+	if installedVer == "" {
+		installedVer = "0.0.0"
+	}
+	installedVersion, err := version.NewVersion(installedVer)
+	if err != nil {
 		return false
 	}
 
-	for _, v := range remote.Versions {
-		remoteVersion, err2 := version.NewVersion(v.Version)
-
-		if err2 == nil {
-			if installedVersion.LessThan(remoteVersion) {
-				return true
-			}
-		}
+	latest := latestSupportedVersion(remote)
+	latestVersion, err := version.NewVersion(latest.Version)
+	if err != nil {
+		return false
 	}
-
-	return false
+	return installedVersion.LessThan(latestVersion)
 }
 
-func upgradeAllCommand(c CommandLine) error {
-	pluginsDir := c.GlobalString("pluginsDir")
+func upgradeAllCommand(c utils.CommandLine) error {
+	pluginsDir := c.PluginDirectory()
 
-	localPlugins := s.GetLocalPlugins(pluginsDir)
+	localPlugins := services.GetLocalPlugins(pluginsDir)
 
-	remotePlugins, err := s.ListAllPlugins(c.GlobalString("repo"))
-
+	remotePlugins, err := services.ListAllPlugins(c.String("repo"))
 	if err != nil {
 		return err
 	}
 
-	pluginsToUpgrade := make([]m.InstalledPlugin, 0)
+	pluginsToUpgrade := make([]plugins.FoundPlugin, 0)
 
 	for _, localPlugin := range localPlugins {
-		for _, remotePlugin := range remotePlugins.Plugins {
-			if localPlugin.Id == remotePlugin.Id {
-				if ShouldUpgrade(localPlugin.Info.Version, remotePlugin) {
-					pluginsToUpgrade = append(pluginsToUpgrade, localPlugin)
-				}
+		for _, p := range remotePlugins.Plugins {
+			remotePlugin := p
+			if localPlugin.Primary.JSONData.ID != remotePlugin.ID {
+				continue
+			}
+			if shouldUpgrade(localPlugin.Primary, remotePlugin) {
+				pluginsToUpgrade = append(pluginsToUpgrade, localPlugin.Primary)
 			}
 		}
 	}
 
+	ctx := context.Background()
 	for _, p := range pluginsToUpgrade {
-		log.Infof("Updating %v \n", p.Id)
+		logger.Infof("Updating %v \n", p.JSONData.ID)
 
-		s.RemoveInstalledPlugin(pluginsDir, p.Id)
-		InstallPlugin(p.Id, "", c)
+		err = installPlugin(ctx, p.JSONData.ID, "", newInstallPluginOpts(c))
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(pluginsToUpgrade) > 0 {
+		logRestartNotice()
 	}
 
 	return nil

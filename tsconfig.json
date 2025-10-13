@@ -1,18 +1,36 @@
 {
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "baseUrl": "public/",
+    "outDir": "public/dist",
+    "rootDirs": ["public/"],
+    "allowJs": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "useUnknownInCatchVariables": true,
+    "incremental": true,
+    "isolatedModules": true,
+    "moduleResolution": "bundler",
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
+    "paths": {
+      "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
+    }
+  },
+  "ts-node": {
     "compilerOptions": {
-        "sourceMap": true,
-        "declaration": true,
-        "outDir": "public_gen",
-        "noImplicitAny": false,
-        "target": "es5",
-        "rootDir": "public/",
-        "sourceRoot": "public/",
-        "module": "system",
-        "noEmitOnError": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true
-    },
-    "files": [
-        "public/app/**/*.ts"
-    ]
+      "module": "ESNext",
+      "moduleResolution": "Node"
+    }
+  },
+  "extends": "@grafana/tsconfig/base.json",
+  "include": [
+    "public/app/**/*.ts*",
+    "public/swagger/**/*.ts*",
+    "public/e2e-test/**/*.ts",
+    "public/test/**/*.ts*",
+    "public/vendor/**/*.ts",
+    "packages/grafana-data/typings",
+    "packages/grafana-ui/src/types"
+  ],
+  "exclude": ["public/app/**/webpack.config.ts"]
 }

@@ -1,0 +1,4 @@
+{
+  "status": "success",
+  "warnings": ["Some logs may have been dropped by Adaptive Logs sampling"]
+}

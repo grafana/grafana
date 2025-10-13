@@ -1,7 +1,6 @@
 package migrator
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -22,40 +21,72 @@ func (m *MigrationBase) GetCondition() MigrationCondition {
 	return m.Condition
 }
 
-type RawSqlMigration struct {
+func (m *MigrationBase) SkipMigrationLog() bool {
+	return false
+}
+
+type RawSQLMigration struct {
 	MigrationBase
 
-	sqlite   string
-	mysql    string
-	postgres string
+	sql map[string]string
 }
 
-func (m *RawSqlMigration) Sql(dialect Dialect) string {
-	switch dialect.DriverName() {
-	case MYSQL:
-		return m.mysql
-	case SQLITE:
-		return m.sqlite
-	case POSTGRES:
-		return m.postgres
+// NewRawSQLMigration should be used carefully, the usage
+// of SQL statements that cause breaking changes like renaming
+// a table or a column, or changing a column type should not be used.
+func NewRawSQLMigration(sql string) *RawSQLMigration {
+	m := &RawSQLMigration{}
+	if sql != "" {
+		m.Default(sql)
+	}
+	return m
+}
+
+func (m *RawSQLMigration) SQL(dialect Dialect) string {
+	if m.sql != nil {
+		if val := m.sql[dialect.DriverName()]; val != "" {
+			return val
+		}
+
+		if val := m.sql["default"]; val != "" {
+			return val
+		}
 	}
 
-	panic("db type not supported")
+	return dialect.NoOpSQL()
 }
 
-func (m *RawSqlMigration) Sqlite(sql string) *RawSqlMigration {
-	m.sqlite = sql
+func (m *RawSQLMigration) Set(dialect string, sql string) *RawSQLMigration {
+	if m.sql == nil {
+		m.sql = make(map[string]string)
+	}
+
+	m.sql[dialect] = sql
 	return m
 }
 
-func (m *RawSqlMigration) Mysql(sql string) *RawSqlMigration {
-	m.mysql = sql
-	return m
+func (m *RawSQLMigration) Default(sql string) *RawSQLMigration {
+	return m.Set("default", sql)
 }
 
-func (m *RawSqlMigration) Postgres(sql string) *RawSqlMigration {
-	m.postgres = sql
-	return m
+func (m *RawSQLMigration) SQLite(sql string) *RawSQLMigration {
+	return m.Set(SQLite, sql)
+}
+
+func (m *RawSQLMigration) Mysql(sql string) *RawSQLMigration {
+	return m.Set(MySQL, sql)
+}
+
+func (m *RawSQLMigration) Postgres(sql string) *RawSQLMigration {
+	return m.Set(Postgres, sql)
+}
+
+func (m *RawSQLMigration) Mssql(sql string) *RawSQLMigration {
+	return m.Set(MSSQL, sql)
+}
+
+func (m *RawSQLMigration) Spanner(sql string) *RawSQLMigration {
+	return m.Set(Spanner, sql)
 }
 
 type AddColumnMigration struct {
@@ -65,7 +96,9 @@ type AddColumnMigration struct {
 }
 
 func NewAddColumnMigration(table Table, col *Column) *AddColumnMigration {
-	return &AddColumnMigration{tableName: table.Name, column: col}
+	m := &AddColumnMigration{tableName: table.Name, column: col}
+	m.Condition = &IfColumnNotExistsCondition{TableName: table.Name, ColumnName: col.Name}
+	return m
 }
 
 func (m *AddColumnMigration) Table(tableName string) *AddColumnMigration {
@@ -78,8 +111,40 @@ func (m *AddColumnMigration) Column(col *Column) *AddColumnMigration {
 	return m
 }
 
-func (m *AddColumnMigration) Sql(dialect Dialect) string {
-	return dialect.AddColumnSql(m.tableName, m.column)
+func (m *AddColumnMigration) SQL(dialect Dialect) string {
+	return dialect.AddColumnSQL(m.tableName, m.column)
+}
+
+type RenameColumnMigration struct {
+	MigrationBase
+	table   Table
+	column  *Column
+	newName string
+}
+
+// NewRenameColumnMigration may cause breaking changes.
+// DEPRECATED: It should no longer be used. Kept only for legacy reasons.
+func NewRenameColumnMigration(table Table, column *Column, newName string) *RenameColumnMigration {
+	return &RenameColumnMigration{table: table, column: column, newName: newName}
+}
+
+func (m *RenameColumnMigration) Table(table Table) *RenameColumnMigration {
+	m.table = table
+	return m
+}
+
+func (m *RenameColumnMigration) Column(column *Column) *RenameColumnMigration {
+	m.column = column
+	return m
+}
+
+func (m *RenameColumnMigration) Rename(newName string) *RenameColumnMigration {
+	m.newName = newName
+	return m
+}
+
+func (m *RenameColumnMigration) SQL(d Dialect) string {
+	return d.RenameColumn(m.table, m.column, m.newName)
 }
 
 type AddIndexMigration struct {
@@ -89,7 +154,9 @@ type AddIndexMigration struct {
 }
 
 func NewAddIndexMigration(table Table, index *Index) *AddIndexMigration {
-	return &AddIndexMigration{tableName: table.Name, index: index}
+	m := &AddIndexMigration{tableName: table.Name, index: index}
+	m.Condition = &IfIndexNotExistsCondition{TableName: table.Name, IndexName: index.XName(table.Name)}
+	return m
 }
 
 func (m *AddIndexMigration) Table(tableName string) *AddIndexMigration {
@@ -97,8 +164,8 @@ func (m *AddIndexMigration) Table(tableName string) *AddIndexMigration {
 	return m
 }
 
-func (m *AddIndexMigration) Sql(dialect Dialect) string {
-	return dialect.CreateIndexSql(m.tableName, m.index)
+func (m *AddIndexMigration) SQL(dialect Dialect) string {
+	return dialect.CreateIndexSQL(m.tableName, m.index)
 }
 
 type DropIndexMigration struct {
@@ -108,14 +175,16 @@ type DropIndexMigration struct {
 }
 
 func NewDropIndexMigration(table Table, index *Index) *DropIndexMigration {
-	return &DropIndexMigration{tableName: table.Name, index: index}
+	m := &DropIndexMigration{tableName: table.Name, index: index}
+	m.Condition = &IfIndexExistsCondition{TableName: table.Name, IndexName: index.XName(table.Name)}
+	return m
 }
 
-func (m *DropIndexMigration) Sql(dialect Dialect) string {
+func (m *DropIndexMigration) SQL(dialect Dialect) string {
 	if m.index.Name == "" {
-		m.index.Name = fmt.Sprintf("%s", strings.Join(m.index.Cols, "_"))
+		m.index.Name = strings.Join(m.index.Cols, "_")
 	}
-	return dialect.DropIndexSql(m.tableName, m.index)
+	return dialect.DropIndexSQL(m.tableName, m.index)
 }
 
 type AddTableMigration struct {
@@ -132,8 +201,8 @@ func NewAddTableMigration(table Table) *AddTableMigration {
 	return &AddTableMigration{table: table}
 }
 
-func (m *AddTableMigration) Sql(d Dialect) string {
-	return d.CreateTableSql(&m.table)
+func (m *AddTableMigration) SQL(d Dialect) string {
+	return d.CreateTableSQL(&m.table)
 }
 
 type DropTableMigration struct {
@@ -145,7 +214,7 @@ func NewDropTableMigration(tableName string) *DropTableMigration {
 	return &DropTableMigration{tableName: tableName}
 }
 
-func (m *DropTableMigration) Sql(d Dialect) string {
+func (m *DropTableMigration) SQL(d Dialect) string {
 	return d.DropTable(m.tableName)
 }
 
@@ -155,13 +224,10 @@ type RenameTableMigration struct {
 	newName string
 }
 
+// NewRenameTableMigration may cause breaking changes.
+// DEPRECATED: It should no longer be used. Kept only for legacy reasons.
 func NewRenameTableMigration(oldName string, newName string) *RenameTableMigration {
 	return &RenameTableMigration{oldName: oldName, newName: newName}
-}
-
-func (m *RenameTableMigration) IfTableExists(tableName string) *RenameTableMigration {
-	m.Condition = &IfTableExistsCondition{TableName: tableName}
-	return m
 }
 
 func (m *RenameTableMigration) Rename(oldName string, newName string) *RenameTableMigration {
@@ -170,7 +236,7 @@ func (m *RenameTableMigration) Rename(oldName string, newName string) *RenameTab
 	return m
 }
 
-func (m *RenameTableMigration) Sql(d Dialect) string {
+func (m *RenameTableMigration) SQL(d Dialect) string {
 	return d.RenameTable(m.oldName, m.newName)
 }
 
@@ -180,7 +246,7 @@ type CopyTableDataMigration struct {
 	targetTable string
 	sourceCols  []string
 	targetCols  []string
-	colMap      map[string]string
+	// colMap      map[string]string
 }
 
 func NewCopyTableDataMigration(targetTable string, sourceTable string, colMap map[string]string) *CopyTableDataMigration {
@@ -192,11 +258,20 @@ func NewCopyTableDataMigration(targetTable string, sourceTable string, colMap ma
 	return m
 }
 
-func (m *CopyTableDataMigration) IfTableExists(tableName string) *CopyTableDataMigration {
-	m.Condition = &IfTableExistsCondition{TableName: tableName}
-	return m
+func (m *CopyTableDataMigration) SQL(d Dialect) string {
+	return d.CopyTableData(m.sourceTable, m.targetTable, m.sourceCols, m.targetCols)
 }
 
-func (m *CopyTableDataMigration) Sql(d Dialect) string {
-	return d.CopyTableData(m.sourceTable, m.targetTable, m.sourceCols, m.targetCols)
+type TableCharsetMigration struct {
+	MigrationBase
+	tableName string
+	columns   []*Column
+}
+
+func NewTableCharsetMigration(tableName string, columns []*Column) *TableCharsetMigration {
+	return &TableCharsetMigration{tableName: tableName, columns: columns}
+}
+
+func (m *TableCharsetMigration) SQL(d Dialect) string {
+	return d.UpdateTableSQL(m.tableName, m.columns)
 }

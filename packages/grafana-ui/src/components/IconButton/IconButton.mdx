@@ -1,0 +1,27 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { IconButton } from './IconButton';
+import { Icon } from '../Icon/Icon';
+import { Alert } from '../Alert/Alert';
+
+<Meta title="MDX|IconButton" component={IconButton} />
+
+# IconButton
+
+This component looks just like an icon but behaves like a button. It fulfils an action when you click it and has a hover as well a focus states. You can choose which icon size you would like to use.
+
+`IconButton` is best used when you only want an icon instead of a button with text, for example when you want to place a solitary clickable icon next to text. An example where an `IconButton` is used in Grafana is the hamburger icon at the top left which opens the new navigation.
+When using `IconButton` right next to a text element consider wrapping both in a flex container and use `align-items: center;` to make them align properly.
+
+There are two options to use the IconButton:
+
+- with `Tooltip`: This is the preferred option since we don't want to rely on assumptions when it comes to the meaning an `Icon` has. Add a text for the `Tooltip`. It will be used for the `aria-label` as well.
+- without `Tooltip`: This is an option for use cases where the `Icon` is unambiguous e.g <Icon name="angle-down" /> for expanding a folder. Add a text for the `aria-label` and there will **not** be a `Tooltip`.
+
+The IconButton used to have a property called `ariaLabel` which got deprecated. You can now use the regular property `aria-label` instead.
+
+<Alert severity="warning" title={'Please note:'}>
+  After reviewing this component we would like you to know that there are only 5 sizes available (sizes xs to xl). Sizes
+  xxl and xxxl are now shown in size xl as well and will be deprecated in the future.
+</Alert>
+
+<ArgTypes of={IconButton} />

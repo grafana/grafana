@@ -1,0 +1,7 @@
+apiVersion: 1
+templates:
+  - orgId: 1337
+    name: my_first_template
+    template: "test"
+  - name: my_second_template
+    template: "test"

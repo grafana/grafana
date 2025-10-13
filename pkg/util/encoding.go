@@ -1,88 +1,67 @@
 package util
 
 import (
-	"crypto/hmac"
-	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"fmt"
-	"hash"
+	"io"
+	"mime/quotedprintable"
 	"strings"
+
+	"golang.org/x/crypto/pbkdf2"
 )
 
-// source: https://github.com/gogits/gogs/blob/9ee80e3e5426821f03a4e99fad34418f5c736413/modules/base/tool.go#L58
-func GetRandomString(n int, alphabets ...byte) string {
-	const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	var bytes = make([]byte, n)
-	rand.Read(bytes)
-	for i, b := range bytes {
-		if len(alphabets) == 0 {
-			bytes[i] = alphanum[b%byte(len(alphanum))]
-		} else {
-			bytes[i] = alphabets[b%byte(len(alphabets))]
-		}
+const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+
+// GetRandomString generates a random alphanumeric string of the specified length,
+// optionally using only specified characters
+func GetRandomString(n int, alphabets ...byte) (string, error) {
+	chars := alphanum
+	if len(alphabets) > 0 {
+		chars = string(alphabets)
 	}
-	return string(bytes)
-}
+	cnt := len(chars)
+	max := 255 / cnt * cnt
 
-func EncodePassword(password string, salt string) string {
-	newPasswd := PBKDF2([]byte(password), []byte(salt), 10000, 50, sha256.New)
-	return fmt.Sprintf("%x", newPasswd)
-}
+	bytes := make([]byte, n)
 
-// Encode string to md5 hex value.
-func EncodeMd5(str string) string {
-	m := md5.New()
-	m.Write([]byte(str))
-	return hex.EncodeToString(m.Sum(nil))
-}
+	randread := n * 5 / 4
+	randbytes := make([]byte, randread)
 
-// http://code.google.com/p/go/source/browse/pbkdf2/pbkdf2.go?repo=crypto
-func PBKDF2(password, salt []byte, iter, keyLen int, h func() hash.Hash) []byte {
-	prf := hmac.New(h, password)
-	hashLen := prf.Size()
-	numBlocks := (keyLen + hashLen - 1) / hashLen
+	for i := 0; i < n; {
+		if _, err := rand.Read(randbytes); err != nil {
+			return "", err
+		}
 
-	var buf [4]byte
-	dk := make([]byte, 0, numBlocks*hashLen)
-	U := make([]byte, hashLen)
-	for block := 1; block <= numBlocks; block++ {
-		// N.B.: || means concatenation, ^ means XOR
-		// for each block T_i = U_1 ^ U_2 ^ ... ^ U_iter
-		// U_1 = PRF(password, salt || uint(i))
-		prf.Reset()
-		prf.Write(salt)
-		buf[0] = byte(block >> 24)
-		buf[1] = byte(block >> 16)
-		buf[2] = byte(block >> 8)
-		buf[3] = byte(block)
-		prf.Write(buf[:4])
-		dk = prf.Sum(dk)
-		T := dk[len(dk)-hashLen:]
-		copy(U, T)
-
-		// U_n = PRF(password, U_(n-1))
-		for n := 2; n <= iter; n++ {
-			prf.Reset()
-			prf.Write(U)
-			U = U[:0]
-			U = prf.Sum(U)
-			for x := range U {
-				T[x] ^= U[x]
+		for j := 0; i < n && j < randread; j++ {
+			b := int(randbytes[j])
+			if b >= max {
+				continue
 			}
+
+			bytes[i] = chars[b%cnt]
+			i++
 		}
 	}
-	return dk[:keyLen]
+
+	return string(bytes), nil
 }
 
+// EncodePassword encodes a password using PBKDF2.
+func EncodePassword(password string, salt string) (string, error) {
+	newPasswd := pbkdf2.Key([]byte(password), []byte(salt), 10000, 50, sha256.New)
+	return hex.EncodeToString(newPasswd), nil
+}
+
+// GetBasicAuthHeader returns a base64 encoded string from user and password.
 func GetBasicAuthHeader(user string, password string) string {
 	var userAndPass = user + ":" + password
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(userAndPass))
 }
 
+// DecodeBasicAuthHeader decodes user and password from a basic auth header.
 func DecodeBasicAuthHeader(header string) (string, string, error) {
 	var code string
 	parts := strings.SplitN(header, " ", 2)
@@ -97,8 +76,26 @@ func DecodeBasicAuthHeader(header string) (string, string, error) {
 
 	userAndPass := strings.SplitN(string(decoded), ":", 2)
 	if len(userAndPass) != 2 {
-		return "", "", errors.New("Invalid basic auth header")
+		return "", "", errors.New("invalid basic auth header")
 	}
 
 	return userAndPass[0], userAndPass[1], nil
+}
+
+// RandomHex returns a hex encoding of n random bytes.
+func RandomHex(n int) (string, error) {
+	bytes := make([]byte, n)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+// decodeQuotedPrintable decodes quoted-printable UTF-8 string
+func DecodeQuotedPrintable(encodedValue string) string {
+	decodedBytes, err := io.ReadAll(quotedprintable.NewReader(strings.NewReader(encodedValue)))
+	if err != nil {
+		return encodedValue
+	}
+	return string(decodedBytes)
 }

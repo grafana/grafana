@@ -1,0 +1,28 @@
+[[servers]]
+host = "127.0.0.1"
+port = 389
+use_ssl = false
+start_tls = false
+ssl_skip_verify = false
+tls_ciphers = ["TLS_CHACHA20_POLY1305_SHA256", "TLS_AES_128_GCM_SHA256"]
+min_tls_version = "tls1.3"
+bind_dn = "cn=admin,dc=grafana,dc=org"
+bind_password = '${ENV_PASSWORD}'
+search_filter = "(cn=%s)"
+search_base_dns = ["dc=grafana,dc=org"]
+
+[servers.attributes]
+name = "givenName"
+surname = "sn"
+username = "cn"
+member_of = "memberOf"
+email =  "email"
+
+[[servers.group_mappings]]
+group_dn = "cn=admins,ou=groups,dc=grafana,dc=org"
+org_role = "Admin"
+grafana_admin = true
+
+[[servers.group_mappings]]
+group_dn = "cn=users,ou=groups,dc=grafana,dc=org"
+org_role = "Editor"

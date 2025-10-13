@@ -1,0 +1,11 @@
+  collectd:
+    build: docker/blocks/collectd
+    environment:
+      HOST_NAME: myserver
+      GRAPHITE_HOST: graphite
+      GRAPHITE_PORT: 2003
+      GRAPHITE_PREFIX: collectd.
+      REPORT_BY_CPU: 'false'
+      COLLECT_INTERVAL: 10
+    links:
+      - graphite

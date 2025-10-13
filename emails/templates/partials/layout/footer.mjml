@@ -1,0 +1,9 @@
+<mj-column background-color="transparent">
+  <!-- @PERCONA -->
+  <mj-text align="center">
+    From <a style="color:#e67612;text-decoration:none;" href="{{ .AppUrl }}" target="_blank">Percona Monitoring and Management</a> © 2025 <a style="color:#e67612;text-decoration:none;" href="https://hubs.ly/Q034_Dvp0" target="_blank">Percona, LLC</a>
+  </mj-text>
+  <mj-text align="center">
+   &copy; {{ now | date "2006" }} Grafana Labs. Sent by <a target="_blank" style="text-decoration:none;color:#999999;" href="{{ .AppUrl }}">Grafana v{{ .BuildVersion }}</a>.
+  </mj-text>
+</mj-column>

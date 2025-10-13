@@ -1,0 +1,12 @@
+example.com/foo/wire.go:x:y: inject injectMissingOutputType: no provider found for example.com/foo.Foo, output of injector
+
+example.com/foo/wire.go:x:y: inject injectMultipleMissingTypes: no provider found for example.com/foo.Foo
+needed by example.com/foo.Baz in provider "provideBaz" (example.com/foo/foo.go:x:y)
+
+example.com/foo/wire.go:x:y: inject injectMultipleMissingTypes: no provider found for example.com/foo.Bar
+needed by example.com/foo.Baz in provider "provideBaz" (example.com/foo/foo.go:x:y)
+
+example.com/foo/wire.go:x:y: inject injectMissingRecursiveType: no provider found for example.com/foo.Foo
+needed by example.com/foo.Zip in provider "provideZip" (example.com/foo/foo.go:x:y)
+needed by example.com/foo.Zap in provider "provideZap" (example.com/foo/foo.go:x:y)
+needed by example.com/foo.Zop in provider "provideZop" (example.com/foo/foo.go:x:y)

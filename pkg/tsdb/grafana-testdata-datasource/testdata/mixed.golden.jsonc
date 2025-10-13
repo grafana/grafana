@@ -1,0 +1,80 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: mixed
+//  Dimensions: 4 Fields by 2 Rows
+//  +---------------+-----------------+-----------------+----------------+
+//  | Name: Field1  | Name: Field2    | Name: Field3    | Name: 123      |
+//  | Labels:       | Labels:         | Labels:         | Labels:        |
+//  | Type: []*bool | Type: []*string | Type: []*string | Type: []*int64 |
+//  +---------------+-----------------+-----------------+----------------+
+//  | true          | Hello           | 6               | null           |
+//  | false         | 6               | World           | 6              |
+//  +---------------+-----------------+-----------------+----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "mixed",
+        "fields": [
+          {
+            "name": "Field1",
+            "type": "boolean",
+            "typeInfo": {
+              "frame": "bool",
+              "nullable": true
+            }
+          },
+          {
+            "name": "Field2",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "Field3",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "123",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            true,
+            false
+          ],
+          [
+            "Hello",
+            "6"
+          ],
+          [
+            "6",
+            "World"
+          ],
+          [
+            null,
+            6
+          ]
+        ]
+      }
+    }
+  ]
+}

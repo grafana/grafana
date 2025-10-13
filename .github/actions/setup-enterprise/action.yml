@@ -1,0 +1,48 @@
+name: 'Setup Grafana Enterprise'
+description: 'Clones and sets up Grafana Enterprise repository for testing'
+
+inputs:
+  github-app-name:
+    description: 'Name of the GitHub App in Vault'
+    required: false
+    default: 'grafana-ci-bot'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Retrieve GitHub App secrets
+      id: get-secrets
+      uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1 # zizmor: ignore[unpinned-uses]
+      with:
+        repo_secrets: |
+          APP_ID=${{ inputs.github-app-name }}:app-id
+          APP_INSTALLATION_ID=${{ inputs.github-app-name }}:app-installation-id
+          PRIVATE_KEY=${{ inputs.github-app-name }}:private-key
+
+    - name: Generate GitHub App token
+      id: generate_token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ env.APP_ID }}
+        private-key: ${{ env.PRIVATE_KEY }}
+        repositories: "grafana-enterprise"
+        owner: "grafana"
+
+    - name: Setup Enterprise
+      shell: bash
+      env:
+        GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+      run: |
+        git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise;
+        
+        cd ../grafana-enterprise
+        
+        if git checkout ${GITHUB_HEAD_REF}; then
+          echo "checked out ${GITHUB_HEAD_REF}"
+        elif git checkout ${GITHUB_BASE_REF}; then
+          echo "checked out ${GITHUB_BASE_REF}"
+        else
+          git checkout main
+        fi
+        
+        ./build.sh

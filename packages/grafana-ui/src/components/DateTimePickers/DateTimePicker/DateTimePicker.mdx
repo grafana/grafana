@@ -1,0 +1,45 @@
+import { ArgTypes } from '@storybook/blocks';
+import { DateTimePicker } from './DateTimePicker';
+
+# DateTimePicker
+
+A component for selecting a date _and_ time.
+
+### Usage
+
+```tsx
+import { useState } from 'react';
+import { DateTime, dateTime } from '@grafana/data';
+import { DateTimePicker } from '@grafana/ui';
+
+const [date, setDate] = useState<DateTime>(dateTime('2021-05-05 12:00:00'));
+return <DateTimePicker label="Date" date={date} onChange={setDate} />;
+```
+
+### With disabled hours, minutes or seconds
+
+```tsx
+import { useState } from 'react';
+import { DateTime, dateTime } from '@grafana/data';
+import { DateTimePicker } from '@grafana/ui';
+
+const [date, setDate] = useState<DateTime>(dateTime('2021-05-05 12:00:00'));
+return (
+  <DateTimePicker
+    label="Date"
+    date={date}
+    onChange={setDate}
+    disabledHours={() => [0, 1, 2]}
+    disabledMinutes={() => [10, 15, 30]}
+    disabledSeconds={() => [5, 10, 15, 20]}
+  />
+);
+```
+
+### Clearable
+
+You can set the `clearable` prop to `true` to enable the clearing of selected values and allow the component to have an empty value instead of the current date/time.
+
+### Props
+
+<ArgTypes of={DateTimePicker} />

@@ -1,0 +1,28 @@
+###
+# set external Alertmanager
+POST http://admin:admin@localhost:3000/api/v1/ngalert/admin_config
+content-type: application/json
+
+{
+  "alertmanagers": ["http://localhost:9093"]
+}
+
+###
+GET http://admin:admin@localhost:3000/api/v1/ngalert/admin_config
+
+###
+# after a few minutes it should be discovered
+GET http://admin:admin@localhost:3000/api/v1/ngalert/alertmanagers
+
+###
+# remove it
+POST http://admin:admin@localhost:3000/api/v1/ngalert/admin_config
+content-type: application/json
+
+{
+  "alertmanagers": []
+}
+
+###
+# check again
+GET http://admin:admin@localhost:3000/api/v1/ngalert/alertmanagers

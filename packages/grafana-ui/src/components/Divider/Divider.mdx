@@ -1,0 +1,83 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { Divider } from './Divider';
+
+<Meta title="MDX|Divider" component={Divider} />
+
+# Divider
+
+### Usage
+
+#### When to use
+
+When creating separation between large sections of page content or smaller parts of components like in the page info section of the header.
+
+#### When not to use
+
+Dividers should be used sparingly.
+
+Don’t use dividers when white space (padding / margins) is sufficient to separate out sections. When sections are related to each other, they may not need dividers (ex: filtering / search related to a table).
+
+### Variants
+
+- Horizontal
+
+```tsx
+import { Divider } from '@grafana/ui';
+
+    <header>
+        <h1>My title here</h1>
+        <img src="logo.png" alt="logo" />
+    </header>
+    <Divider />
+    <main>
+        <p>Main content goes here</p>
+    </main>
+
+
+```
+
+- Vertical
+
+```tsx
+import { Divider } from '@grafana/ui';
+
+    <header>
+        <h1>My title here</h1>
+        <Divider direction="vertical" />
+        <img src="logo.png" alt="logo" />
+    </header>
+    <main>
+        <p>Main content goes here</p>
+    </main>
+
+```
+
+### Modifiers
+
+Pass a spacing token into the `spacing` prop to adjust the margin.
+
+```tsx
+import { Divider } from '@grafana/ui';
+
+    <header>
+        <h1>My title here</h1>
+        <Divider direction="vertical" spacing={0.5}/>
+        <img src="logo.png" alt="logo" />
+    </header>
+    <main>
+        <p>Main content goes here</p>
+    </main>
+
+```
+
+### Dos
+
+    - Import and add the Divider component inside the code where you would normally add an hr or a div.
+
+### Don'ts
+
+    - Do not modify the color of the divider
+
+### Props
+
+<ArgTypes of={Divider} />

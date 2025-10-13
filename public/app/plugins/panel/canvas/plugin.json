@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Canvas",
+  "id": "canvas",
+
+  "info": {
+    "description": "Explicit element placement",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-canvas.svg",
+      "large": "img/icn-canvas.svg"
+    }
+  }
+}

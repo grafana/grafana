@@ -1,0 +1,14 @@
+FROM ubuntu:22.04
+
+ARG REPO_CONFIG=grafana.list.oss
+ARG PACKAGE=grafana
+
+RUN apt update && \
+    apt install -y curl                \
+                   ca-certificates     \
+                   gnupg               && \
+    curl https://packages.grafana.com/gpg.key | apt-key add -
+
+COPY "./$REPO_CONFIG" /etc/apt/sources.list.d/grafana.list
+RUN apt update && \
+    apt install -y $PACKAGE

@@ -1,0 +1,152 @@
+[
+  {
+    "id": "896312ce-65b0-4b50-ade1-e7f04fa22c66",
+    "title": "Thursday morning investigation",
+    "hasCustomName": false,
+    "isFavorite": false,
+    "collectables": [
+      {
+        "origin": "Explore Logs",
+        "type": "timeseries",
+        "queries": [
+          {
+            "refId": "LABEL_BREAKDOWN_VALUES",
+            "queryType": "range",
+            "editorMode": "code",
+            "supportingQueryType": "grafana-lokiexplore-app",
+            "legendFormat": "{{detected_level}}",
+            "expr": "sum(count_over_time({service_name=\"web_app_1\"} | detected_level != \"\"[$__auto])) by (detected_level)"
+          }
+        ],
+        "timeRange": {
+          "to": "2025-02-13T11:31:20.536Z",
+          "from": "2025-02-13T11:16:20.536Z",
+          "raw": {
+            "from": "now-15m",
+            "to": "now"
+          }
+        },
+        "datasource": {
+          "uid": "fe9k7u07b1a0wc"
+        },
+        "url": "http://localhost:3000/a/grafana-lokiexplore-app/explore/service/web_app_1/labels?patterns=%5B%5D&from=now-15m&to=now&var-ds=fe9k7u07b1a0wc&var-filters=service_name%7C%3D%7Cweb_app_1&var-fields=&var-levels=&var-metadata=&var-patterns=&var-lineFilterV2=&var-lineFilters=&urlColumns=%5B%5D&visualizationType=%22logs%22&displayedFields=%5B%5D&timezone=browser&var-all-fields=&var-labelBy=$__all",
+        "id": "LABEL_BREAKDOWN_VALUES_detected_level",
+        "title": "detected_level",
+        "logoPath": "public/plugins/grafana-lokiexplore-app/img/img/logo.svg",
+        "createdAt": "2025-02-13T11:31:23.637Z"
+      }
+    ],
+    "createdAt": "2025-02-13T11:31:23.636Z",
+    "updatedAt": "2025-02-13T11:31:23.637Z",
+    "viewMode": {
+      "mode": "compact",
+      "showComments": true,
+      "showTooltips": false
+    }
+  },
+  {
+    "id": "e9cf1958-d0ed-46b7-b597-9052c7648656",
+    "title": "Thursday morning investigation",
+    "hasCustomName": false,
+    "isFavorite": false,
+    "collectables": [
+      {
+        "origin": "Explore Logs",
+        "type": "timeseries",
+        "queries": [
+          {
+            "refId": "LABEL_BREAKDOWN_VALUES",
+            "queryType": "range",
+            "editorMode": "code",
+            "supportingQueryType": "grafana-lokiexplore-app",
+            "legendFormat": "{{detected_level}}",
+            "expr": "sum(count_over_time({service_name=\"web_app_1\"} | detected_level != \"\"[$__auto])) by (detected_level)"
+          }
+        ],
+        "timeRange": {
+          "to": "2025-02-13T11:31:20.536Z",
+          "from": "2025-02-13T11:16:20.536Z",
+          "raw": {
+            "from": "now-15m",
+            "to": "now"
+          }
+        },
+        "datasource": {
+          "uid": "fe9k7u07b1a0wc"
+        },
+        "url": "http://localhost:3000/a/grafana-lokiexplore-app/explore/service/web_app_1/labels?patterns=%5B%5D&from=now-15m&to=now&var-ds=fe9k7u07b1a0wc&var-filters=service_name%7C%3D%7Cweb_app_1&var-fields=&var-levels=&var-metadata=&var-patterns=&var-lineFilterV2=&var-lineFilters=&urlColumns=%5B%5D&visualizationType=%22logs%22&displayedFields=%5B%5D&timezone=browser&var-all-fields=&var-labelBy=$__all",
+        "id": "LABEL_BREAKDOWN_VALUES_detected_level",
+        "title": "detected_level",
+        "logoPath": "public/plugins/grafana-lokiexplore-app/img/img/logo.svg",
+        "createdAt": "2025-02-13T11:31:23.638Z"
+      },
+      {
+        "origin": "Explore Logs",
+        "type": "timeseries",
+        "queries": [
+          {
+            "refId": "LABEL_BREAKDOWN_VALUES",
+            "queryType": "range",
+            "editorMode": "code",
+            "supportingQueryType": "grafana-lokiexplore-app",
+            "legendFormat": "{{service_name}}",
+            "expr": "sum(count_over_time({service_name=\"web_app_1\",service_name != \"\"} [$__auto])) by (service_name)"
+          }
+        ],
+        "timeRange": {
+          "to": "2025-02-13T11:31:20.536Z",
+          "from": "2025-02-13T11:16:20.536Z",
+          "raw": {
+            "from": "now-15m",
+            "to": "now"
+          }
+        },
+        "datasource": {
+          "uid": "fe9k7u07b1a0wc"
+        },
+        "url": "http://localhost:3000/a/grafana-lokiexplore-app/explore/service/web_app_1/labels?patterns=%5B%5D&from=now-15m&to=now&var-ds=fe9k7u07b1a0wc&var-filters=service_name%7C%3D%7Cweb_app_1&var-fields=&var-levels=&var-metadata=&var-patterns=&var-lineFilterV2=&var-lineFilters=&urlColumns=%5B%5D&visualizationType=%22logs%22&displayedFields=%5B%5D&timezone=browser&var-all-fields=&var-labelBy=$__all",
+        "id": "LABEL_BREAKDOWN_VALUES_service_name",
+        "title": "service_name",
+        "logoPath": "public/plugins/grafana-lokiexplore-app/img/img/logo.svg",
+        "createdAt": "2025-02-13T11:31:41.507Z"
+      },
+      {
+        "origin": "Explore Logs",
+        "type": "timeseries",
+        "queries": [
+          {
+            "refId": "LABEL_BREAKDOWN_VALUES",
+            "queryType": "range",
+            "editorMode": "code",
+            "supportingQueryType": "grafana-lokiexplore-app",
+            "legendFormat": "{{service}}",
+            "expr": "sum(count_over_time({service_name=\"web_app_1\",service != \"\"} [$__auto])) by (service)"
+          }
+        ],
+        "timeRange": {
+          "to": "2025-02-13T11:31:20.536Z",
+          "from": "2025-02-13T11:16:20.536Z",
+          "raw": {
+            "from": "now-15m",
+            "to": "now"
+          }
+        },
+        "datasource": {
+          "uid": "fe9k7u07b1a0wc"
+        },
+        "url": "http://localhost:3000/a/grafana-lokiexplore-app/explore/service/web_app_1/labels?patterns=%5B%5D&from=now-15m&to=now&var-ds=fe9k7u07b1a0wc&var-filters=service_name%7C%3D%7Cweb_app_1&var-fields=&var-levels=&var-metadata=&var-patterns=&var-lineFilterV2=&var-lineFilters=&urlColumns=%5B%5D&visualizationType=%22logs%22&displayedFields=%5B%5D&timezone=browser&var-all-fields=&var-labelBy=$__all",
+        "id": "LABEL_BREAKDOWN_VALUES_service",
+        "title": "service",
+        "logoPath": "public/plugins/grafana-lokiexplore-app/img/img/logo.svg",
+        "createdAt": "2025-02-13T11:31:43.698Z"
+      }
+    ],
+    "createdAt": "2025-02-13T11:31:23.637Z",
+    "updatedAt": "2025-02-13T11:31:43.698Z",
+    "viewMode": {
+      "mode": "compact",
+      "showComments": true,
+      "showTooltips": false
+    }
+  }
+]

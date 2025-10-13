@@ -1,0 +1,1 @@
+hostfs /.dockerinit ext4 ro,relatime,user_xattr,barrier=1,data=ordered 0 0

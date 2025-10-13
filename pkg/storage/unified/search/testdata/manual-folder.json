@@ -1,0 +1,87 @@
+{
+  "metadata": {},
+  "columnDefinitions": [
+    {
+      "name": "_id",
+      "type": "string",
+      "format": "",
+      "description": "Unique Identifier. {namespace}/{group}/{resource}/{name}",
+      "priority": 0
+    },
+    {
+      "name": "title",
+      "type": "string",
+      "format": "",
+      "description": "Display name for the resource",
+      "priority": 0
+    },
+    {
+      "name": "tags",
+      "type": "string",
+      "format": "",
+      "description": "Unique tags",
+      "priority": 0
+    },
+    {
+      "name": "folder",
+      "type": "string",
+      "format": "",
+      "description": "Kubernetes name for the folder",
+      "priority": 0
+    },
+    {
+      "name": "rv",
+      "type": "number",
+      "format": "int64",
+      "description": "resource version",
+      "priority": 0
+    },
+    {
+      "name": "created",
+      "type": "number",
+      "format": "int64",
+      "description": "created timestamp",
+      "priority": 0
+    }
+  ],
+  "rows": [
+    {
+      "cells": [
+        "ns/folder.grafana.app/folders/yyy",
+        "yyy (folder)",
+        null,
+        null,
+        null,
+        null
+      ],
+      "object": {
+        "kind": "folders",
+        "apiVersion": "folder.grafana.app",
+        "metadata": {
+          "name": "yyy",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "ns/folder.grafana.app/folders/zzz",
+        "zzz (folder)",
+        null,
+        null,
+        null,
+        null
+      ],
+      "object": {
+        "kind": "folders",
+        "apiVersion": "folder.grafana.app",
+        "metadata": {
+          "name": "zzz",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+version: v1
+plugins:
+  - plugin: go
+    out: pkg/plugins/backendplugin/secretsmanagerplugin
+    opt: paths=source_relative
+  - plugin: go-grpc
+    out: pkg/plugins/backendplugin/secretsmanagerplugin
+    opt:
+      - paths=source_relative

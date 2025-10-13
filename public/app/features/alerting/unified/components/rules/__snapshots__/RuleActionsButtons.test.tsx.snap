@@ -1,0 +1,28 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`RuleActionsButtons renders correct options for Cloud rule 1`] = `
+[
+  "Duplicate",
+  "Copy link",
+  "Delete",
+  "Declare incident",
+]
+`;
+
+exports[`RuleActionsButtons renders correct options for grafana managed rule 1`] = `
+[
+  "Pause evaluation",
+  "Silence notifications",
+  "Duplicate",
+  "Copy link",
+  "Export",
+  "Delete",
+  "Declare incident",
+]
+`;
+
+exports[`RuleActionsButtons renders minimal "More" menu when appropriate 1`] = `
+[
+  "Copy link",
+]
+`;

@@ -1,0 +1,9 @@
+apiVersion: 1
+
+providers:
+ - name: 'Bulk folders'
+   type: file
+   updateIntervalSeconds: 3600
+   options:
+     foldersFromFilesStructure: true
+     path: devenv/bulk-folders

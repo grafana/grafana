@@ -94,11 +94,11 @@ The plugin allso adds the following methods to the plot object:
         var savedhandlers = {};
 
         var mouseUpHandler = null;
-        
+
         function onMouseMove(e) {
             if (selection.active) {
                 updateSelection(e);
-                
+
                 plot.getPlaceholder().trigger("plotselecting", [ getSelection() ]);
             }
         }
@@ -106,7 +106,7 @@ The plugin allso adds the following methods to the plot object:
         function onMouseDown(e) {
             if (e.which != 1)  // only accept left-click
                 return;
-            
+
             // cancel out any text selections
             document.body.focus();
 
@@ -127,13 +127,13 @@ The plugin allso adds the following methods to the plot object:
             // this is a bit silly, but we have to use a closure to be
             // able to whack the same handler again
             mouseUpHandler = function (e) { onMouseUp(e); };
-            
+
             $(document).one("mouseup", mouseUpHandler);
         }
 
         function onMouseUp(e) {
             mouseUpHandler = null;
-            
+
             // revert drag stuff for old-school browsers
             if (document.onselectstart !== undefined)
                 document.onselectstart = savedhandlers.onselectstart;
@@ -145,12 +145,16 @@ The plugin allso adds the following methods to the plot object:
             updateSelection(e);
 
             if (selectionIsSane())
-                triggerSelectedEvent();
+                triggerSelectedEvent(e);
             else {
                 // this counts as a clear
                 plot.getPlaceholder().trigger("plotunselected", [ ]);
                 plot.getPlaceholder().trigger("plotselecting", [ null ]);
             }
+
+            setTimeout(function() {
+              plot.isSelecting = false;
+            }, 10);
 
             return false;
         }
@@ -158,21 +162,34 @@ The plugin allso adds the following methods to the plot object:
         function getSelection() {
             if (!selectionIsSane())
                 return null;
-            
+
             if (!selection.show) return null;
 
             var r = {}, c1 = selection.first, c2 = selection.second;
-            $.each(plot.getAxes(), function (name, axis) {
-                if (axis.used) {
-                    var p1 = axis.c2p(c1[axis.direction]), p2 = axis.c2p(c2[axis.direction]); 
+            var axes = plot.getAxes();
+            // look if no axis is used
+            var noAxisInUse = true;
+            $.each(axes, function (name, axis) {
+              if (axis.used) {
+                anyUsed = false;
+              }
+            })
+
+            $.each(axes, function (name, axis) {
+                if (axis.used || noAxisInUse) {
+                    var p1 = axis.c2p(c1[axis.direction]), p2 = axis.c2p(c2[axis.direction]);
                     r[name] = { from: Math.min(p1, p2), to: Math.max(p1, p2) };
                 }
             });
             return r;
         }
 
-        function triggerSelectedEvent() {
+        function triggerSelectedEvent(event) {
             var r = getSelection();
+
+            // Add ctrlKey and metaKey to event
+            r.ctrlKey = event.ctrlKey;
+            r.metaKey = event.metaKey;
 
             plot.getPlaceholder().trigger("plotselected", [ r ]);
 
@@ -205,6 +222,7 @@ The plugin allso adds the following methods to the plot object:
 
             setSelectionPos(selection.second, pos);
             if (selectionIsSane()) {
+                plot.isSelecting = true;
                 selection.show = true;
                 plot.triggerRedrawOverlay();
             }
@@ -252,10 +270,10 @@ The plugin allso adds the following methods to the plot object:
                 from = to;
                 to = tmp;
             }
-            
+
             return { from: from, to: to, axis: axis };
         }
-        
+
         function setSelection(ranges, preventEvent) {
             var axis, range, o = plot.getOptions();
 
@@ -305,7 +323,6 @@ The plugin allso adds the following methods to the plot object:
             }
         });
 
-
         plot.hooks.drawOverlay.push(function (plot, ctx) {
             // draw selection
             if (selection.show && selectionIsSane()) {
@@ -333,13 +350,28 @@ The plugin allso adds the following methods to the plot object:
                 ctx.restore();
             }
         });
-        
+
         plot.hooks.shutdown.push(function (plot, eventHolder) {
             eventHolder.unbind("mousemove", onMouseMove);
             eventHolder.unbind("mousedown", onMouseDown);
-            
-            if (mouseUpHandler)
+
+            if (mouseUpHandler) {
                 $(document).unbind("mouseup", mouseUpHandler);
+                // grafana addition
+                // In L114 this plugin is overrinding document.onselectstart handler to prevent default or custom behaviour
+                // Then this patch is being restored during mouseup event. But, mouseup handler is unbound when this plugin is destroyed
+                // and the overridden onselectstart handler is not restored.  The problematic behaviour surfaces when flot is re-rendered
+                // as a consequence of panel's model update. When i.e. options are applied via onBlur
+                // event on some input which results in flot re-render. The mouseup handler should be called to resture the original handlers
+                //  but by the time the document mouseup event occurs, the event handler is no longer there, so onselectstart is permanently overridden.
+                // To fix that we are making sure that the overrides are reverted when this plugin is destroyed, the same way as they would
+                // via mouseup event handler (L138)
+
+                if (document.onselectstart !== undefined)
+                    document.onselectstart = savedhandlers.onselectstart;
+                if (document.ondrag !== undefined)
+                    document.ondrag = savedhandlers.ondrag;
+            }
         });
 
     }

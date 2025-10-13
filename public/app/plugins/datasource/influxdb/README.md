@@ -1,13 +1,9 @@
-# InfluxDB Datasource -  Native Plugin
+# InfluxDB data source
 
-Grafana ships with **built in** support for InfluxDB 0.9. 
+Grafana ships with built-in support for InfluxDB releases >0.9.x.
 
-There are currently two separate datasources for InfluxDB in Grafana: InfluxDB 0.8.x and InfluxDB 0.9.x. The API and capabilities of InfluxDB 0.9.x are completely different from InfluxDB 0.8.x which is why Grafana handles them as different data sources.
+There are separate data sources for InfluxDB in Grafana: the latest InfluxDB release and [InfluxDB 0.8.x](https://grafana.com/plugins/grafana-influxdb-08-datasource) that Grafana maintains support for as a convenience for its existing users. InfluxDB no longer maintains release 0.8.
 
-This is the plugin for InfluxDB 0.9. It is rapidly evolving and we continue to track its API. 
+The API and capabilities of the latest release of InfluxDB are completely different from those of InfluxDB 0.8.x, which is why Grafana handles them as different data sources.
 
-InfluxDB 0.8 is no longer maintained by InfluxDB Inc, but we provide support as a convenience to existing users. You can find it [here](https://grafana.net/plugins/grafana-influxdb-08-datasource).
-
-Read more about InfluxDB here:
-
-[http://docs.grafana.org/datasources/influxdb/](http://docs.grafana.org/datasources/influxdb/)
+For more information, refer to [Using InfluxDB in Grafana](http://docs.grafana.org/datasources/influxdb/).

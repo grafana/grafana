@@ -1,0 +1,1 @@
+export { LoginFooter } from './LoginFooter';

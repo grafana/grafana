@@ -1,0 +1,11 @@
+  postgrestest:
+    build:
+      context: docker/blocks/postgres_tests
+      args:
+        - postgres_version=${postgres_version}
+    environment:
+      POSTGRES_USER: grafanatest
+      POSTGRES_PASSWORD: grafanatest
+    ports:
+      - "5432:5432"
+    tmpfs: /var/lib/postgresql/data:rw

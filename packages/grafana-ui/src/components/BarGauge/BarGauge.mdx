@@ -1,0 +1,48 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { BarGauge } from './BarGauge';
+
+<Meta title="MDX|BarGauge" component={BarGauge} />
+
+# BarGauge
+
+## Usage
+
+```tsx
+import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
+import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
+
+const field: Partial<Field> = {
+  type: FieldType.number,
+  config: {
+    min: 0,
+    max: 100,
+    thresholds: {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 20, color: 'blue' },
+        { value: 90, color: 'red' },
+      ],
+    },
+  },
+};
+
+field.display = getDisplayProcessor({ theme, field });
+
+return (
+  <BarGauge
+    theme={theme}
+    field={field.config}
+    display={field.display}
+    value={{
+      text: '70',
+      title: 'Title of data point',
+      numeric: 70,
+    }}
+    orientation={VizOrientation.Vertical}
+    displayMode={BarGaugeDisplayMode.Basic}
+  />
+);
+```
+
+<ArgTypes of={BarGauge} />

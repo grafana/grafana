@@ -2,15 +2,24 @@
   "type": "datasource",
   "name": "InfluxDB",
   "id": "influxdb",
+  "category": "tsdb",
 
   "defaultMatchFormat": "regex values",
   "metrics": true,
+  "logs": true,
   "annotations": true,
+  "alerting": true,
+  "backend": true,
+
+  "queryOptions": {
+    "minInterval": true
+  },
 
   "info": {
+    "description": "Open source time series database",
     "author": {
-      "name": "Grafana Project",
-      "url": "http://grafana.org"
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
     },
     "logos": {
       "small": "img/influxdb_logo.svg",

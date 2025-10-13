@@ -1,0 +1,24 @@
+{
+    "apiVersion": "provisioning.grafana.app/v0alpha1",
+    "kind": "Repository",
+    "metadata": {
+        "name": "github-example"
+    },
+    "spec": {
+        "title": "Github Example",
+        "description": "load resources from github",
+        "type": "github",
+        "github": {
+            "url": "https://github.com/grafana/git-ui-sync-demo",
+            "branch": "dummy-branch",
+            "generateDashboardPreviews": true,
+            "token": "github_pat_dummy"
+        },
+        "sync": {
+            "enabled": false,
+            "target": "",
+            "intervalSeconds": 60
+        },
+        "workflows": ["push"]
+    }
+}

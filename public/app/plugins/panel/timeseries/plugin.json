@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Time series",
+  "id": "timeseries",
+
+  "info": {
+    "description": "Time based line, area and bar charts",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-timeseries-panel.svg",
+      "large": "img/icn-timeseries-panel.svg"
+    }
+  }
+}

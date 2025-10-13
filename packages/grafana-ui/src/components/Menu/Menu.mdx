@@ -1,0 +1,34 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { Overlay } from 'ol';
+
+import { Menu } from './Menu';
+
+<Meta title="MDX|Menu" component={Menu} />
+
+# Menu
+
+A simple menu component.
+
+### When to use
+
+When you need to display a list of actions or navigation options in a dropdown.
+
+### Usage
+
+```tsx
+import { Dropdown, Menu, Button } from '@grafana/ui';
+const menu = (
+  <Menu>
+    <Menu.Item label="Google" />
+    <Menu.Divider />
+    <Menu.Item label="Delete" icon="trash-alt" destructive />
+  </Menu>
+);
+return (
+  <Dropdown overlay={menu}>
+    <Button icon="bars" />
+  </Dropdown>
+);
+```
+
+<ArgTypes of={Menu} />

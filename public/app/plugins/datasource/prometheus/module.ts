@@ -1,17 +1,9 @@
-import {PrometheusDatasource} from './datasource';
-import {PrometheusQueryCtrl} from './query_ctrl';
+import { DataSourcePlugin } from '@grafana/data';
+import { PrometheusDatasource, PromQueryEditorByApp, PromCheatSheet } from '@grafana/prometheus';
 
-class PrometheusConfigCtrl {
-  static templateUrl = 'partials/config.html';
-}
+import { ConfigEditor } from './configuration/ConfigEditorPackage';
 
-class PrometheusAnnotationsQueryCtrl {
-  static templateUrl = 'partials/annotations.editor.html';
-}
-
-export {
-  PrometheusDatasource as Datasource,
-  PrometheusQueryCtrl as QueryCtrl,
-  PrometheusConfigCtrl as ConfigCtrl,
-  PrometheusAnnotationsQueryCtrl as AnnotationsQueryCtrl,
-};
+export const plugin = new DataSourcePlugin(PrometheusDatasource)
+  .setQueryEditor(PromQueryEditorByApp)
+  .setConfigEditor(ConfigEditor)
+  .setQueryEditorHelp(PromCheatSheet);

@@ -1,0 +1,27 @@
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - '8086:8086'
+    environment:
+      INFLUXD_REPORTING_DISABLED: 'true'
+      INFLUXD_HTTP_BIND_ADDRESS: ':8086'
+      DOCKER_INFLUXDB_INIT_MODE: 'setup'
+      DOCKER_INFLUXDB_INIT_USERNAME: 'grafana'
+      DOCKER_INFLUXDB_INIT_PASSWORD: 'grafana12345'
+      DOCKER_INFLUXDB_INIT_ORG: 'myorg'
+      DOCKER_INFLUXDB_INIT_BUCKET: 'mybucket'
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: 'mytoken'
+    volumes:
+      - ./docker/blocks/influxdb/setup_influxql.sh:/docker-entrypoint-initdb.d/setup_influxql.sh
+
+  telegraf:
+    image: telegraf:latest
+    links:
+      - influxdb
+    depends_on:
+      - influxdb
+    volumes:
+      - ./docker/blocks/influxdb/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /var/log:/var/log/host
+      - ../data/log:/var/log/grafana

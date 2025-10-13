@@ -1,54 +1,11 @@
 package events
 
 import (
-	"reflect"
 	"time"
 )
 
 // Events can be passed to external systems via for example AMQP
 // Treat these events as basically DTOs so changes has to be backward compatible
-
-type Priority string
-
-const (
-	PRIO_DEBUG Priority = "DEBUG"
-	PRIO_INFO  Priority = "INFO"
-	PRIO_ERROR Priority = "ERROR"
-)
-
-type Event struct {
-	Timestamp time.Time `json:"timestamp"`
-}
-
-type OnTheWireEvent struct {
-	EventType string      `json:"event_type"`
-	Priority  Priority    `json:"priority"`
-	Timestamp time.Time   `json:"timestamp"`
-	Payload   interface{} `json:"payload"`
-}
-
-type EventBase interface {
-	ToOnWriteEvent() *OnTheWireEvent
-}
-
-func ToOnWriteEvent(event interface{}) (*OnTheWireEvent, error) {
-	eventType := reflect.TypeOf(event).Elem()
-
-	wireEvent := OnTheWireEvent{
-		Priority:  PRIO_INFO,
-		EventType: eventType.Name(),
-		Payload:   event,
-	}
-
-	baseField := reflect.Indirect(reflect.ValueOf(event)).FieldByName("Timestamp")
-	if baseField.IsValid() {
-		wireEvent.Timestamp = baseField.Interface().(time.Time)
-	} else {
-		wireEvent.Timestamp = time.Now()
-	}
-
-	return &wireEvent, nil
-}
 
 type OrgCreated struct {
 	Timestamp time.Time `json:"timestamp"`
@@ -88,4 +45,39 @@ type UserUpdated struct {
 	Name      string    `json:"name"`
 	Login     string    `json:"login"`
 	Email     string    `json:"email"`
+}
+
+type DataSourceDeleted struct {
+	Timestamp time.Time `json:"timestamp"`
+	Name      string    `json:"name"`
+	ID        int64     `json:"id"`
+	UID       string    `json:"uid"`
+	OrgID     int64     `json:"org_id"`
+}
+
+type DataSourceSecretDeleted struct {
+	Timestamp time.Time `json:"timestamp"`
+	Name      string    `json:"name"`
+	ID        int64     `json:"id"`
+	UID       string    `json:"uid"`
+	OrgID     int64     `json:"org_id"`
+}
+
+type DataSourceCreated struct {
+	Timestamp time.Time `json:"timestamp"`
+	Name      string    `json:"name"`
+	ID        int64     `json:"id"`
+	UID       string    `json:"uid"`
+	OrgID     int64     `json:"org_id"`
+}
+
+// FolderFullPathUpdated is emitted when the full path of the folder(s) is updated.
+// For example, when the folder is renamed or moved to another folder.
+// It does not contain the full path of the folders because calculating
+// it requires more resources and not needed in the event at the moment.
+type FolderFullPathUpdated struct {
+	Timestamp time.Time `json:"timestamp"`
+	ID        int64     `json:"id"`
+	UIDs      []string  `json:"uids"`
+	OrgID     int64     `json:"org_id"`
 }

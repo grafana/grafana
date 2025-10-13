@@ -1,0 +1,14 @@
+{
+    debug
+}
+
+localhost:2081 {
+    log
+    tls /etc/caddy/server.pem /etc/caddy/server.key {
+      ca_root /etc/caddy/ca.pem
+      client_auth {
+        mode require_and_verify
+        trust_pool file /etc/caddy/client.pem /etc/caddy/ca.pem
+      }
+    }
+}

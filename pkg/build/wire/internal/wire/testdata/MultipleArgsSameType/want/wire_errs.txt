@@ -1,0 +1,5 @@
+example.com/foo/wire.go:x:y: multiple bindings for string
+current:
+<- argument b to injector function inject (example.com/foo/wire.go:x:y)
+previous:
+<- argument a to injector function inject (example.com/foo/wire.go:x:y)

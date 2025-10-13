@@ -1,0 +1,58 @@
+# ldap-admin
+dn: cn=ldap-admin,ou=users,dc=grafana,dc=org
+mail: ldap-admin@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-admin
+cn: ldap-admin
+
+dn: cn=ldap-editor,ou=users,dc=grafana,dc=org
+mail: ldap-editor@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-editor
+cn: ldap-editor
+
+dn: cn=ldap-viewer,ou=users,dc=grafana,dc=org
+mail: ldap-viewer@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-viewer
+cn: ldap-viewer
+
+# admin for posix group (without support for memberOf attribute)
+dn: uid=ldap-posix-admin,ou=users,dc=grafana,dc=org
+mail: ldap-posix-admin@grafana.com
+userPassword: grafana
+objectclass: top
+objectclass: posixAccount
+objectclass: inetOrgPerson
+homedirectory: /home/ldap-posix-admin
+sn: ldap-posix-admin
+cn: ldap-posix-admin
+uid: ldap-posix-admin
+uidnumber: 1
+gidnumber: 1
+
+# user for posix group (without support for memberOf attribute)
+dn: uid=ldap-posix,ou=users,dc=grafana,dc=org
+mail: ldap-posix@grafana.com
+userPassword: grafana
+objectclass: top
+objectclass: posixAccount
+objectclass: inetOrgPerson
+homedirectory: /home/ldap-posix
+sn: ldap-posix
+cn: ldap-posix
+uid: ldap-posix
+uidnumber: 2
+gidnumber: 2

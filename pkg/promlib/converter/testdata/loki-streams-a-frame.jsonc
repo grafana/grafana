@@ -1,0 +1,205 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "stats": {
+//              "ingester": {
+//                  "compressedBytes": 0,
+//                  "decompressedBytes": 0,
+//                  "decompressedLines": 0,
+//                  "headChunkBytes": 0,
+//                  "headChunkLines": 0,
+//                  "totalBatches": 0,
+//                  "totalChunksMatched": 0,
+//                  "totalDuplicates": 0,
+//                  "totalLinesSent": 0,
+//                  "totalReached": 0
+//              },
+//              "store": {
+//                  "chunksDownloadTime": 0.000390958,
+//                  "compressedBytes": 31432,
+//                  "decompressedBytes": 7772,
+//                  "decompressedLines": 55,
+//                  "headChunkBytes": 0,
+//                  "headChunkLines": 0,
+//                  "totalChunksDownloaded": 2,
+//                  "totalChunksRef": 2,
+//                  "totalDuplicates": 0
+//              },
+//              "summary": {
+//                  "bytesProcessedPerSecond": 3507022,
+//                  "execTime": 0.002216125,
+//                  "linesProcessedPerSecond": 24818,
+//                  "totalBytesProcessed": 7772,
+//                  "totalLinesProcessed": 55
+//              }
+//          }
+//      }
+//  }
+//  Name: 
+//  Dimensions: 4 Fields by 6 Rows
+//  +---------------------------------------+-----------------------------------------+------------------+---------------------+
+//  | Name: __labels                        | Name: Time                              | Name: Line       | Name: TS            |
+//  | Labels:                               | Labels:                                 | Labels:          | Labels:             |
+//  | Type: []json.RawMessage               | Type: []time.Time                       | Type: []string   | Type: []string      |
+//  +---------------------------------------+-----------------------------------------+------------------+---------------------+
+//  | {"level":"error","location":"moon🌙"} | 2022-02-16 16:50:44.81075712 +0000 UTC  | log line error 1 | 1645030244810757120 |
+//  | {"level":"info","location":"moon🌙"}  | 2022-02-16 16:50:47.02773504 +0000 UTC  | log line info 1  | 1645030247027735040 |
+//  | {"level":"info","location":"moon🌙"}  | 2022-02-16 16:50:46.277587968 +0000 UTC | log line info 2  | 1645030246277587968 |
+//  | {"level":"info","location":"moon🌙"}  | 2022-02-16 16:50:46.277587968 +0000 UTC | log line info 2  | 1645030246277587968 |
+//  | {"level":"info","location":"moon🌙"}  | 2022-02-16 16:50:45.539423744 +0000 UTC | log line info 3  | 1645030245539423744 |
+//  | {"level":"info","location":"moon🌙"}  | 2022-02-16 16:50:44.091700992 +0000 UTC | log line info 4  | 1645030244091700992 |
+//  +---------------------------------------+-----------------------------------------+------------------+---------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "stats": {
+              "ingester": {
+                "compressedBytes": 0,
+                "decompressedBytes": 0,
+                "decompressedLines": 0,
+                "headChunkBytes": 0,
+                "headChunkLines": 0,
+                "totalBatches": 0,
+                "totalChunksMatched": 0,
+                "totalDuplicates": 0,
+                "totalLinesSent": 0,
+                "totalReached": 0
+              },
+              "store": {
+                "chunksDownloadTime": 0.000390958,
+                "compressedBytes": 31432,
+                "decompressedBytes": 7772,
+                "decompressedLines": 55,
+                "headChunkBytes": 0,
+                "headChunkLines": 0,
+                "totalChunksDownloaded": 2,
+                "totalChunksRef": 2,
+                "totalDuplicates": 0
+              },
+              "summary": {
+                "bytesProcessedPerSecond": 3507022,
+                "execTime": 0.002216125,
+                "linesProcessedPerSecond": 24818,
+                "totalBytesProcessed": 7772,
+                "totalLinesProcessed": 55
+              }
+            }
+          }
+        },
+        "fields": [
+          {
+            "name": "__labels",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Line",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "TS",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            {
+              "level": "error",
+              "location": "moon🌙"
+            },
+            {
+              "level": "info",
+              "location": "moon🌙"
+            },
+            {
+              "level": "info",
+              "location": "moon🌙"
+            },
+            {
+              "level": "info",
+              "location": "moon🌙"
+            },
+            {
+              "level": "info",
+              "location": "moon🌙"
+            },
+            {
+              "level": "info",
+              "location": "moon🌙"
+            }
+          ],
+          [
+            1645030244810,
+            1645030247027,
+            1645030246277,
+            1645030246277,
+            1645030245539,
+            1645030244091
+          ],
+          [
+            "log line error 1",
+            "log line info 1",
+            "log line info 2",
+            "log line info 2",
+            "log line info 3",
+            "log line info 4"
+          ],
+          [
+            "1645030244810757120",
+            "1645030247027735040",
+            "1645030246277587968",
+            "1645030246277587968",
+            "1645030245539423744",
+            "1645030244091700992"
+          ]
+        ],
+        "nanos": [
+          null,
+          [
+            757120,
+            735040,
+            587968,
+            587968,
+            423744,
+            700992
+          ],
+          null,
+          null
+        ]
+      }
+    }
+  ]
+}

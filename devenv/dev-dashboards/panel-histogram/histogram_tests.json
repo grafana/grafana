@@ -1,0 +1,941 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "bucketOffset": 0,
+        "combine": false,
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "spread": 10
+        }
+      ],
+      "title": "Time series + Auto buckets",
+      "type": "histogram"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "bucketOffset": 0,
+        "bucketSize": 3,
+        "combine": false,
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 4,
+          "refId": "A"
+        }
+      ],
+      "title": "Time series + bucket size 3",
+      "type": "histogram"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 5,
+      "options": {
+        "bucketOffset": 0,
+        "bucketSize": 1,
+        "combine": false,
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "csvFileName": "weight_height.csv",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "People height distribution",
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Height"
+              ]
+            }
+          }
+        }
+      ],
+      "type": "histogram"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 6,
+      "options": {
+        "bucketOffset": 0,
+        "bucketSize": 5,
+        "combine": false,
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "csvFileName": "weight_height.csv",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "People weight distribution",
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Weight"
+              ]
+            }
+          }
+        }
+      ],
+      "type": "histogram"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": [],
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Height"
+          }
+        ]
+      },
+      "pluginVersion": "10.4.0-pre",
+      "targets": [
+        {
+          "csvFileName": "weight_height.csv",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "Standalone transform - Height",
+      "transformations": [
+        {
+          "disabled": true,
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Height"
+              ]
+            }
+          }
+        },
+        {
+          "disabled": true,
+          "id": "histogram",
+          "options": {
+            "combine": true,
+            "fields": {}
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 9,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": [],
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "10.4.0-pre",
+      "targets": [
+        {
+          "csvFileName": "weight_height.csv",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "Standalone transform - Weight",
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Weight"
+              ]
+            }
+          }
+        },
+        {
+          "id": "histogram",
+          "options": {
+            "combine": true,
+            "fields": {}
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "count1"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 25
+      },
+      "id": 11,
+      "options": {
+        "bucketOffset": 0,
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "csvContent": "xMin,xMax,count1,abcd\n1,2,10,123\n2,3,20,265\n3,4,30,73\n4,5,10,24",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Explicit xMin,xMax",
+      "type": "histogram"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "count1"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 25
+      },
+      "id": 12,
+      "options": {
+        "bucketOffset": 0,
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "csvContent": "xMin,count1,abcd\n1,10,123\n2,20,265\n3,30,73\n4,10,24",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Implict xMax",
+      "type": "histogram"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "count1"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 25
+      },
+      "id": 13,
+      "options": {
+        "bucketOffset": 0,
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "csvContent": "xMax,count1,abcd\n1,10,123\n2,20,265\n3,30,73\n4,10,24",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Implict xMin",
+      "type": "histogram"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 33
+      },
+      "id": 14,
+      "options": {
+        "bucketOffset": 0,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"meta\": {\n        \"custom\": {\n          \"resultType\": \"matrix\"\n        },\n        \"type\": \"heatmap-rows\",\n        \"typeVersion\": [\n          0,\n          1\n        ]\n      },\n      \"name\": \"0.005\",\n      \"fields\": [\n        {\n          \"config\": {\n            \"interval\": 1200000\n          },\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"0.005\"\n          },\n          \"labels\": {\n            \"le\": \"0.005\"\n          },\n          \"name\": \"0.005\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"0.01\"\n          },\n          \"labels\": {\n            \"le\": \"0.01\"\n          },\n          \"name\": \"0.01\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"0.025\"\n          },\n          \"labels\": {\n            \"le\": \"0.025\"\n          },\n          \"name\": \"0.025\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"0.05\"\n          },\n          \"labels\": {\n            \"le\": \"0.05\"\n          },\n          \"name\": \"0.05\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"0.1\"\n          },\n          \"labels\": {\n            \"le\": \"0.1\"\n          },\n          \"name\": \"0.1\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"0.25\"\n          },\n          \"labels\": {\n            \"le\": \"0.25\"\n          },\n          \"name\": \"0.25\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"0.5\"\n          },\n          \"labels\": {\n            \"le\": \"0.5\"\n          },\n          \"name\": \"0.5\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"1.0\"\n          },\n          \"labels\": {\n            \"le\": \"1.0\"\n          },\n          \"name\": \"1.0\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"2.5\"\n          },\n          \"labels\": {\n            \"le\": \"2.5\"\n          },\n          \"name\": \"2.5\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"5.0\"\n          },\n          \"labels\": {\n            \"le\": \"5.0\"\n          },\n          \"name\": \"5.0\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"10.0\"\n          },\n          \"labels\": {\n            \"le\": \"10.0\"\n          },\n          \"name\": \"10.0\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"25.0\"\n          },\n          \"labels\": {\n            \"le\": \"25.0\"\n          },\n          \"name\": \"25.0\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"50.0\"\n          },\n          \"labels\": {\n            \"le\": \"50.0\"\n          },\n          \"name\": \"50.0\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"100.0\"\n          },\n          \"labels\": {\n            \"le\": \"100.0\"\n          },\n          \"name\": \"100.0\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        },\n        {\n          \"config\": {\n            \"displayNameFromDS\": \"+Inf\"\n          },\n          \"labels\": {\n            \"le\": \"+Inf\"\n          },\n          \"name\": \"+Inf\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1706456400000,\n          1706457600000,\n          1706458800000,\n          1706460000000,\n          1706461200000,\n          1706462400000,\n          1706463600000,\n          1706464800000,\n          1706466000000,\n          1706467200000,\n          1706468400000,\n          1706469600000,\n          1706470800000,\n          1706472000000,\n          1706473200000,\n          1706474400000,\n          1706475600000,\n          1706476800000,\n          1706478000000\n        ],\n        [\n          0.19357429718875502,\n          0.18072289156626506,\n          0.18313253012048192,\n          0.18955823293172688,\n          0.18634538152610441,\n          0.19518072289156624,\n          0.20080321285140562,\n          0.18313253012048192,\n          0.19678714859437751,\n          0.18795180722891563,\n          0.18473895582329317,\n          0.19357429718875502,\n          0.19116465863453813,\n          0.19196787148594374,\n          0.19437751004016063,\n          0.19759036144578312,\n          0.19839357429718874,\n          0.19357429718875502,\n          0.18634538152610441\n        ],\n        [\n          0.22248995983935738,\n          0.229718875502008,\n          0.22248995983935738,\n          0.22168674698795174,\n          0.2305220883534136,\n          0.21285140562248994,\n          0.2128514056224899,\n          0.22891566265060237,\n          0.22570281124497987,\n          0.22088353413654616,\n          0.22088353413654618,\n          0.21927710843373488,\n          0.21686746987951805,\n          0.22248995983935738,\n          0.21847389558232927,\n          0.21124497991967867,\n          0.216867469879518,\n          0.2200803212851405,\n          0.22329317269076304\n        ],\n        [\n          0.017670682730923704,\n          0.02329317269076303,\n          0.027309236947791138,\n          0.02168674698795181,\n          0.016867469879518093,\n          0.025702811244979917,\n          0.02008032128514059,\n          0.018473895582329314,\n          0.01124497991967871,\n          0.024899598393574307,\n          0.025702811244979862,\n          0.0208835341365462,\n          0.02409638554216864,\n          0.01927710843373498,\n          0.0208835341365462,\n          0.02248995983935742,\n          0.016867469879518093,\n          0.02008032128514059,\n          0.02329317269076303\n        ],\n        [\n          0,\n          0,\n          0.0008032128514056658,\n          0.0008032128514056658,\n          0,\n          0,\n          0,\n          0.0032128514056224966,\n          0,\n          0,\n          0.0024096385542168863,\n          0,\n          0.001606425702811276,\n          0,\n          0,\n          0.0024096385542168863,\n          0.001606425702811276,\n          0,\n          0.0008032128514056103\n        ],\n        [\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0\n        ],\n        [\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0\n        ],\n        [\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0\n        ],\n        [\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0\n        ],\n        [\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0\n        ],\n        [\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0\n        ],\n        [\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0\n        ],\n        [\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665,\n          0.06666666666666665\n        ],\n        [\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0\n        ],\n        [\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0\n        ],\n        [\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0\n        ]\n      ]\n    }\n  }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "heatmap-rows frame",
+      "type": "histogram"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "sum(rate(cortex_request_duration_seconds{container=~\"compactor\", route=~\"(debug_pprof|metrics|ready)\"}[4m0s]))"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 33
+      },
+      "id": 15,
+      "options": {
+        "bucketOffset": 0,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"meta\": {\n        \"type\": \"heatmap-cells\",\n        \"typeVersion\": [\n          0,\n          0\n        ],\n        \"executedQueryString\": \"Expr: sum(rate(cortex_request_duration_seconds{container=~\\\"compactor\\\", route=~\\\"(debug_pprof|metrics|ready)\\\"}[4m0s]))\\nStep: 1m0s\",\n        \"preferredVisualisationType\": \"graph\"\n      },\n      \"fields\": [\n        {\n          \"name\": \"xMax\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\"\n          },\n          \"config\": {\n            \"interval\": 60000\n          }\n        },\n        {\n          \"name\": \"yMin\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          },\n          \"labels\": {},\n          \"config\": {\n            \"displayNameFromDS\": \"sum(rate(cortex_request_duration_seconds{container=~\\\"compactor\\\", route=~\\\"(debug_pprof|metrics|ready)\\\"}[4m0s]))\"\n          }\n        },\n        {\n          \"name\": \"yMax\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"count\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\"\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"yLayout\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"int8\"\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483460000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483520000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483580000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483640000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483700000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000,\n          1706483760000\n        ],\n        [\n          0.000012831061023768835,\n          0.000013992371264719713,\n          0.000016639827463764308,\n          0.0000181458605194507,\n          0.000019788201212326197,\n          0.000021579186437577742,\n          0.00002566212204753767,\n          0.000039576402424652394,\n          0.00020529697638030136,\n          0.0002238779402355154,\n          0.00026623723942022893,\n          0.0002903337683112112,\n          0.00031661121939721915,\n          0.00048828125,\n          0.002532889755177753,\n          0.002762135864009951,\n          0.00390625,\n          0.004259795830723663,\n          0.004645340292979379,\n          0.005065779510355506,\n          0.005524271728019902,\n          0.0060242610367497685,\n          0.006569503244169644,\n          0.007164094087536493,\n          0.0078125,\n          0.009290680585958758,\n          0.010131559020711013,\n          0.012048522073499537,\n          0.014328188175072986,\n          0.01703918332289465,\n          0.018581361171917516,\n          0.020263118041422026,\n          13.45434264405943,\n          0.000012831061023768835,\n          0.000013992371264719713,\n          0.000016639827463764308,\n          0.0000181458605194507,\n          0.000019788201212326197,\n          0.000021579186437577742,\n          0.00002566212204753767,\n          0.000039576402424652394,\n          0.0002238779402355154,\n          0.000244140625,\n          0.00026623723942022893,\n          0.0002903337683112112,\n          0.00048828125,\n          0.0021298979153618314,\n          0.002532889755177753,\n          0.002762135864009951,\n          0.00390625,\n          0.004259795830723663,\n          0.004645340292979379,\n          0.005065779510355506,\n          0.005524271728019902,\n          0.0060242610367497685,\n          0.006569503244169644,\n          0.007164094087536493,\n          0.0078125,\n          0.009290680585958758,\n          0.010131559020711013,\n          0.011048543456039804,\n          0.012048522073499537,\n          0.014328188175072986,\n          0.01703918332289465,\n          13.45434264405943,\n          0.000012831061023768835,\n          0.000013992371264719713,\n          0.000016639827463764308,\n          0.0000181458605194507,\n          0.000019788201212326197,\n          0.000021579186437577742,\n          0.00002566212204753767,\n          0.000244140625,\n          0.00026623723942022893,\n          0.0002903337683112112,\n          0.0021298979153618314,\n          0.002532889755177753,\n          0.002762135864009951,\n          0.00390625,\n          0.004259795830723663,\n          0.004645340292979379,\n          0.005065779510355506,\n          0.005524271728019902,\n          0.0060242610367497685,\n          0.006569503244169644,\n          0.007164094087536493,\n          0.0078125,\n          0.009290680585958758,\n          0.010131559020711013,\n          0.011048543456039804,\n          0.012048522073499537,\n          0.014328188175072986,\n          0.01703918332289465,\n          13.45434264405943,\n          0.000012831061023768835,\n          0.000013992371264719713,\n          0.0000152587890625,\n          0.000016639827463764308,\n          0.0000181458605194507,\n          0.000019788201212326197,\n          0.000021579186437577742,\n          0.00002566212204753767,\n          0.000244140625,\n          0.00026623723942022893,\n          0.0002903337683112112,\n          0.0021298979153618314,\n          0.002762135864009951,\n          0.00390625,\n          0.004259795830723663,\n          0.004645340292979379,\n          0.005065779510355506,\n          0.005524271728019902,\n          0.0060242610367497685,\n          0.006569503244169644,\n          0.007164094087536493,\n          0.0078125,\n          0.008519591661447326,\n          0.009290680585958758,\n          0.010131559020711013,\n          0.011048543456039804,\n          0.012048522073499537,\n          0.014328188175072986,\n          0.01703918332289465,\n          13.45434264405943,\n          0.000012831061023768835,\n          0.000013992371264719713,\n          0.0000152587890625,\n          0.000016639827463764308,\n          0.0000181458605194507,\n          0.000019788201212326197,\n          0.000021579186437577742,\n          0.00002566212204753767,\n          0.000244140625,\n          0.00026623723942022893,\n          0.0002903337683112112,\n          0.0005806675366224224,\n          0.0021298979153618314,\n          0.002762135864009951,\n          0.00390625,\n          0.004259795830723663,\n          0.004645340292979379,\n          0.005065779510355506,\n          0.005524271728019902,\n          0.0060242610367497685,\n          0.006569503244169644,\n          0.007164094087536493,\n          0.0078125,\n          0.008519591661447326,\n          0.009290680585958758,\n          0.010131559020711013,\n          0.011048543456039804,\n          0.015625,\n          13.45434264405943,\n          0.000012831061023768835,\n          0.000013992371264719713,\n          0.0000152587890625,\n          0.000016639827463764308,\n          0.0000181458605194507,\n          0.000019788201212326197,\n          0.000021579186437577742,\n          0.00002566212204753767,\n          0.000244140625,\n          0.00026623723942022893,\n          0.0002903337683112112,\n          0.00031661121939721915,\n          0.0003452669830012439,\n          0.0005806675366224224,\n          0.0021298979153618314,\n          0.002762135864009951,\n          0.00390625,\n          0.004259795830723663,\n          0.004645340292979379,\n          0.005065779510355506,\n          0.005524271728019902,\n          0.0060242610367497685,\n          0.006569503244169644,\n          0.007164094087536493,\n          0.0078125,\n          0.008519591661447326,\n          0.009290680585958758,\n          0.010131559020711013,\n          0.011048543456039804,\n          0.015625,\n          13.45434264405943\n        ],\n        [\n          0.000013992371264719713,\n          0.0000152587890625,\n          0.0000181458605194507,\n          0.000019788201212326197,\n          0.000021579186437577742,\n          0.000023532269674803783,\n          0.000027984742529439426,\n          0.000043158372875155485,\n          0.0002238779402355154,\n          0.000244140625,\n          0.0002903337683112112,\n          0.00031661121939721915,\n          0.0003452669830012439,\n          0.0005324744788404579,\n          0.002762135864009951,\n          0.0030121305183748843,\n          0.004259795830723663,\n          0.004645340292979379,\n          0.005065779510355506,\n          0.005524271728019902,\n          0.0060242610367497685,\n          0.006569503244169644,\n          0.007164094087536493,\n          0.0078125,\n          0.008519591661447326,\n          0.010131559020711013,\n          0.011048543456039804,\n          0.013139006488339287,\n          0.015625,\n          0.018581361171917516,\n          0.020263118041422026,\n          0.022097086912079608,\n          14.672064691274738,\n          0.000013992371264719713,\n          0.0000152587890625,\n          0.0000181458605194507,\n          0.000019788201212326197,\n          0.000021579186437577742,\n          0.000023532269674803783,\n          0.000027984742529439426,\n          0.000043158372875155485,\n          0.000244140625,\n          0.00026623723942022893,\n          0.0002903337683112112,\n          0.00031661121939721915,\n          0.0005324744788404579,\n          0.0023226701464896895,\n          0.002762135864009951,\n          0.0030121305183748843,\n          0.004259795830723663,\n          0.004645340292979379,\n          0.005065779510355506,\n          0.005524271728019902,\n          0.0060242610367497685,\n          0.006569503244169644,\n          0.007164094087536493,\n          0.0078125,\n          0.008519591661447326,\n          0.010131559020711013,\n          0.011048543456039804,\n          0.012048522073499537,\n          0.013139006488339287,\n          0.015625,\n          0.018581361171917516,\n          14.672064691274738,\n          0.000013992371264719713,\n          0.0000152587890625,\n          0.0000181458605194507,\n          0.000019788201212326197,\n          0.000021579186437577742,\n          0.000023532269674803783,\n          0.000027984742529439426,\n          0.00026623723942022893,\n          0.0002903337683112112,\n          0.00031661121939721915,\n          0.0023226701464896895,\n          0.002762135864009951,\n          0.0030121305183748843,\n          0.004259795830723663,\n          0.004645340292979379,\n          0.005065779510355506,\n          0.005524271728019902,\n          0.0060242610367497685,\n          0.006569503244169644,\n          0.007164094087536493,\n          0.0078125,\n          0.008519591661447326,\n          0.010131559020711013,\n          0.011048543456039804,\n          0.012048522073499537,\n          0.013139006488339287,\n          0.015625,\n          0.018581361171917516,\n          14.672064691274738,\n          0.000013992371264719713,\n          0.0000152587890625,\n          0.000016639827463764308,\n          0.0000181458605194507,\n          0.000019788201212326197,\n          0.000021579186437577742,\n          0.000023532269674803783,\n          0.000027984742529439426,\n          0.00026623723942022893,\n          0.0002903337683112112,\n          0.00031661121939721915,\n          0.0023226701464896895,\n          0.0030121305183748843,\n          0.004259795830723663,\n          0.004645340292979379,\n          0.005065779510355506,\n          0.005524271728019902,\n          0.0060242610367497685,\n          0.006569503244169644,\n          0.007164094087536493,\n          0.0078125,\n          0.008519591661447326,\n          0.009290680585958758,\n          0.010131559020711013,\n          0.011048543456039804,\n          0.012048522073499537,\n          0.013139006488339287,\n          0.015625,\n          0.018581361171917516,\n          14.672064691274738,\n          0.000013992371264719713,\n          0.0000152587890625,\n          0.000016639827463764308,\n          0.0000181458605194507,\n          0.000019788201212326197,\n          0.000021579186437577742,\n          0.000023532269674803783,\n          0.000027984742529439426,\n          0.00026623723942022893,\n          0.0002903337683112112,\n          0.00031661121939721915,\n          0.0006332224387944383,\n          0.0023226701464896895,\n          0.0030121305183748843,\n          0.004259795830723663,\n          0.004645340292979379,\n          0.005065779510355506,\n          0.005524271728019902,\n          0.0060242610367497685,\n          0.006569503244169644,\n          0.007164094087536493,\n          0.0078125,\n          0.008519591661447326,\n          0.009290680585958758,\n          0.010131559020711013,\n          0.011048543456039804,\n          0.012048522073499537,\n          0.01703918332289465,\n          14.672064691274738,\n          0.000013992371264719713,\n          0.0000152587890625,\n          0.000016639827463764308,\n          0.0000181458605194507,\n          0.000019788201212326197,\n          0.000021579186437577742,\n          0.000023532269674803783,\n          0.000027984742529439426,\n          0.00026623723942022893,\n          0.0002903337683112112,\n          0.00031661121939721915,\n          0.0003452669830012439,\n          0.00037651631479686053,\n          0.0006332224387944383,\n          0.0023226701464896895,\n          0.0030121305183748843,\n          0.004259795830723663,\n          0.004645340292979379,\n          0.005065779510355506,\n          0.005524271728019902,\n          0.0060242610367497685,\n          0.006569503244169644,\n          0.007164094087536493,\n          0.0078125,\n          0.008519591661447326,\n          0.009290680585958758,\n          0.010131559020711013,\n          0.011048543456039804,\n          0.012048522073499537,\n          0.01703918332289465,\n          14.672064691274738\n        ],\n        [\n          0.0044444444444444444,\n          0.017777777777777778,\n          0.0044444444444444444,\n          0.035555555555555556,\n          0.017777777777777778,\n          0.013333333333333332,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.008888888888888889,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.008888888888888889,\n          0.0044444444444444444,\n          0.017777777777777778,\n          0.03111111111111111,\n          0.013333333333333332,\n          0.05333333333333334,\n          0.035555555555555556,\n          0.022222222222222223,\n          0.022222222222222223,\n          0.022222222222222223,\n          0.017777777777777778,\n          0.013333333333333332,\n          0.013333333333333332,\n          0.008888888888888889,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.06666666666666667,\n          0.008888888888888889,\n          0.017777777777777778,\n          0.008888888888888889,\n          0.04,\n          0.0044444444444444444,\n          0.013333333333333332,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.013333333333333332,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.008888888888888889,\n          0.0044444444444444444,\n          0.026666666666666665,\n          0.035555555555555556,\n          0.008888888888888889,\n          0.044444444444444446,\n          0.035555555555555556,\n          0.026666666666666665,\n          0.022222222222222223,\n          0.022222222222222223,\n          0.013333333333333332,\n          0.008888888888888889,\n          0.017777777777777778,\n          0.0044444444444444444,\n          0.008888888888888889,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.06666666666666667,\n          0.008888888888888889,\n          0.017777777777777778,\n          0.017777777777777778,\n          0.04,\n          0.0044444444444444444,\n          0.008888888888888889,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.008888888888888889,\n          0.017777777777777778,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.008888888888888889,\n          0.022222222222222223,\n          0.03111111111111111,\n          0.008888888888888889,\n          0.044444444444444446,\n          0.035555555555555556,\n          0.026666666666666665,\n          0.026666666666666665,\n          0.022222222222222223,\n          0.017777777777777778,\n          0.008888888888888889,\n          0.017777777777777778,\n          0.0044444444444444444,\n          0.008888888888888889,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.06666666666666667,\n          0.008888888888888889,\n          0.017777777777777778,\n          0.0044444444444444444,\n          0.017777777777777778,\n          0.03111111111111111,\n          0.008888888888888889,\n          0.008888888888888889,\n          0.0044444444444444444,\n          0.008888888888888889,\n          0.013333333333333332,\n          0.008888888888888889,\n          0.008888888888888889,\n          0.008888888888888889,\n          0.022222222222222223,\n          0.013333333333333332,\n          0.008888888888888889,\n          0.044444444444444446,\n          0.04,\n          0.022222222222222223,\n          0.022222222222222223,\n          0.022222222222222223,\n          0.03111111111111111,\n          0.0044444444444444444,\n          0.013333333333333332,\n          0.017777777777777778,\n          0.008888888888888889,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.06666666666666667,\n          0.008888888888888889,\n          0.026666666666666665,\n          0.0044444444444444444,\n          0.013333333333333332,\n          0.022222222222222223,\n          0.008888888888888889,\n          0.013333333333333332,\n          0.0044444444444444444,\n          0.008888888888888889,\n          0.008888888888888889,\n          0.008888888888888889,\n          0.0044444444444444444,\n          0.008888888888888889,\n          0.008888888888888889,\n          0.026666666666666665,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.035555555555555556,\n          0.057777777777777775,\n          0.026666666666666665,\n          0.03111111111111111,\n          0.03111111111111111,\n          0.022222222222222223,\n          0.0044444444444444444,\n          0.013333333333333332,\n          0.013333333333333332,\n          0.008888888888888889,\n          0.0044444444444444444,\n          0.06666666666666667,\n          0.0044444444444444444,\n          0.026666666666666665,\n          0.0044444444444444444,\n          0.022222222222222223,\n          0.022222222222222223,\n          0.0044444444444444444,\n          0.013333333333333332,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.008888888888888889,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.013333333333333332,\n          0.017777777777777778,\n          0.013333333333333332,\n          0.008888888888888889,\n          0.035555555555555556,\n          0.05333333333333333,\n          0.022222222222222223,\n          0.026666666666666665,\n          0.035555555555555556,\n          0.022222222222222223,\n          0.008888888888888889,\n          0.02222222222222222,\n          0.008888888888888889,\n          0.0044444444444444444,\n          0.0044444444444444444,\n          0.06666666666666667\n        ],\n        [\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0,\n          0\n        ]\n      ]\n    }\n  }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "heatmap-cells frame",
+      "type": "histogram"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Panel Tests - Histogram",
+  "uid": "UTv--wqMk",
+  "version": 29,
+  "weekStart": ""
+}

@@ -13,6 +13,7 @@ var (
 	regexEmail = regexp.MustCompile(emailRegexPattern)
 )
 
+// IsEmail checks if a string is a valid email address.
 func IsEmail(str string) bool {
 	return regexEmail.MatchString(strings.ToLower(str))
 }

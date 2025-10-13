@@ -1,0 +1,37 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CustomScrollbar renders correctly 1`] = `
+<div>
+  <div
+    class="css-rzpihd"
+    style="position: relative; overflow: hidden; width: 100%; height: auto; min-height: 0; max-height: 100%;"
+  >
+    <div
+      class="scrollbar-view"
+      style="position: relative; overflow: scroll; margin-right: 0px; margin-bottom: 0px; min-height: calc(0 + 0px); max-height: calc(100% + 0px);"
+    >
+      <p>
+        Scrollable content
+      </p>
+    </div>
+    <div
+      class="track-horizontal"
+      style="position: absolute; height: 6px; display: none;"
+    >
+      <div
+        class="thumb-horizontal"
+        style="position: relative; display: block; height: 100%;"
+      />
+    </div>
+    <div
+      class="track-vertical"
+      style="position: absolute; width: 6px; display: none;"
+    >
+      <div
+        class="thumb-vertical"
+        style="position: relative; display: block; width: 100%;"
+      />
+    </div>
+  </div>
+</div>
+`;

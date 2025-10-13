@@ -1,0 +1,178 @@
+/***
+ * !!! THIS FILE WAS GENERATED AUTOMATICALLY !!!
+ *
+ * Do not modify this file!
+ * - Edit grafana-ui/src/themes/light.ts to regenerate
+ * - Edit grafana-ui/src/themes/_variable.light.scss.tmpl.ts to update template
+ *
+ * !!! THIS FILE WAS GENERATED AUTOMATICALLY !!!
+ */
+
+@use 'sass:color';
+// Global values
+// --------------------------------------------------
+
+$theme-name: light;
+
+// New Colors
+// -------------------------
+$blue-base: #3871dc;
+$red-base: #e0226e;
+$green-base: #1b855e;
+
+// Grays
+// -------------------------
+$black: #000000;
+
+$dark-2: #161719;
+$dark-10: #424345;
+$gray-1: #555555;
+$gray-2: #8e8e8e;
+$gray-4: #d8d9da;
+$gray-5: #ececec;
+$gray-6: #f4f5f8;
+$gray-7: #fbfbfb;
+
+$white: #ffffff;
+
+$layer2: #f4f5f5;
+
+// Accent colors
+// -------------------------
+$blue: #1f62e0;
+$red: $red-base;
+$yellow: #ecbb13;
+$purple: #9933cc;
+
+// Scaffolding
+// -------------------------
+$body-bg: #f4f5f5;
+
+$text-color: rgba(36, 41, 46, 1);
+$text-color-weak: rgba(36, 41, 46, 0.75);
+$text-color-emphasis: #000000;
+
+// Links
+// -------------------------
+$link-color: rgba(36, 41, 46, 1);
+$link-color-disabled: rgba(36, 41, 46, 0.64);
+$link-hover-color: #000000;
+
+// Typography
+// -------------------------
+$text-muted: $text-color-weak;
+
+// Panel
+// -------------------------
+$panel-bg: #ffffff;
+
+// Page header
+$page-header-bg: #f4f5f5;
+$page-header-shadow: inset 0px -3px 10px $gray-6;
+$page-header-border-color: #f4f5f5;
+
+// Graphite Target Editor
+$tight-form-func-bg: #f4f5f5;
+
+$code-tag-bg: $gray-6;
+$code-tag-border: $gray-4;
+
+// cards
+$card-background: #f4f5f5;
+$card-background-hover: #f4f5f5;
+$card-shadow: none;
+
+// Lists
+$list-item-bg: $gray-7;
+
+$empty-list-cta-bg: $gray-6;
+
+// Scrollbars
+$scrollbarBackground: $gray-4;
+$scrollbarBackground2: $gray-4;
+
+// Tables
+// -------------------------
+$table-bg-accent: #f4f5f5;
+
+// Buttons
+// -------------------------
+$btn-inverse-bg-hl: $gray-4;
+
+$btn-divider-left: $gray-4;
+$btn-divider-right: $gray-7;
+
+$btn-drag-image: '../img/grab_light.svg';
+
+// Forms
+// -------------------------
+$input-bg: #ffffff;
+
+$input-color: rgba(36, 41, 46, 1);
+$input-border-color: rgba(36, 41, 46, 0.3);
+
+// Dropdowns
+// -------------------------
+$dropdownBackground: #ffffff;
+$dropdownBorder: rgba(36, 41, 46, 0.12);
+$dropdownDividerTop: rgba(36, 41, 46, 0.12);
+$dropdownDividerBottom: rgba(36, 41, 46, 0.12);
+
+$dropdownLinkColor: $dark-2;
+$dropdownLinkColorHover: $link-color;
+$dropdownLinkColorActive: $link-color;
+
+$dropdownLinkBackgroundHover: $gray-6;
+
+// Menu dropdowns
+// -------------------------
+$menu-dropdown-bg: #ffffff;
+$menu-dropdown-hover-bg: rgba(36, 41, 46, 0.12);
+$menu-dropdown-shadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
+
+// Form states and alerts
+// -------------------------
+$alert-error-bg: #e0226e;
+$alert-success-bg: #1b855e;
+$alert-warning-bg: #ff9900;
+$alert-info-bg: #ff9900;
+
+// Tooltips and popovers
+$tooltipBackground: #ffffff;
+$tooltipColor: rgba(36, 41, 46, 1);
+
+$popover-bg: #ffffff;
+$popover-color: rgba(36, 41, 46, 1);
+$popover-border-color: rgba(36, 41, 46, 0.12);
+$popover-header-bg: #f4f5f5;
+$popover-shadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
+
+$graph-tooltip-bg: $gray-5;
+
+$tooltipLinkColor: color.adjust($tooltipColor, $lightness: 5%);
+$tooltipExternalLinkColor: #6e9fff;
+
+$popover-error-bg: $red-base;
+$popover-help-bg: $tooltipBackground;
+$popover-help-color: $tooltipColor;
+
+// images
+$checkboxImageUrl: '../img/checkbox_white.png';
+
+// info box
+$info-box-border-color: $blue-base;
+
+//Switch Slider
+// -------------------------
+$switch-bg: $white;
+$switch-slider-color: $gray-7;
+$switch-slider-off-bg: $gray-5;
+$switch-slider-on-bg: #1f60c4;
+$switch-slider-shadow: 0 0 3px $dark-2;
+
+//Checkbox
+// -------------------------
+$checkbox-bg: $gray-6;
+$checkbox-border: 1px solid #b3b3b3;
+$checkbox-checked-bg: linear-gradient(0deg, #ff9830, #e55400);
+$checkbox-color: $gray-7;

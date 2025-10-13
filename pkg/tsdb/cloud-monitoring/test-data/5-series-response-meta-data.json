@@ -1,0 +1,78 @@
+{
+  "timeSeries": [{
+    "metric": {
+      "type": "compute.googleapis.com/firewall/dropped_bytes_count"
+    },
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "instance_id": "114250375703598695",
+        "project_id": "raintank-dev"
+      }
+    },
+    "metricKind": "DELTA",
+    "valueType": "INT64",
+    "metadata": {
+      "systemLabels": {
+        "region": "us-west1",
+        "name": "diana-debian9",
+        "test": ["value1", "value2"],
+        "spot_instance": false
+      },
+      "userLabels": {
+        "name": "name1",
+        "region": "region1"
+      }
+    }
+  },
+  {
+    "metric": {
+      "type": "compute.googleapis.com/firewall/dropped_bytes_count"
+    },
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "instance_id": "2268399396335228490",
+        "project_id": "raintank-dev"
+      }
+    },
+    "metricKind": "DELTA",
+    "valueType": "INT64",
+    "metadata": {
+      "systemLabels": {
+        "region": "us-west1",
+        "name": "diana-ubuntu1910",
+        "test": ["value1", "value2","value3"],
+        "spot_instance": false
+      }
+    }
+  },
+  {
+    "metric": {
+      "type": "compute.googleapis.com/firewall/dropped_bytes_count"
+    },
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "instance_id": "2390486324245305300",
+        "project_id": "raintank-dev"
+      }
+    },
+    "metricKind": "DELTA",
+    "valueType": "INT64",
+    "metadata": {
+      "systemLabels": {
+        "name": "premium-plugin-staging",
+        "region": "us-central1",
+        "test": ["value1", "value2","value4", "value5"],
+        "test2": ["testvalue"],
+        "spot_instance": true
+      },
+      "userLabels": {
+        "name": "name3",
+        "region": "region3"
+      }
+    }
+  }
+  ]
+}

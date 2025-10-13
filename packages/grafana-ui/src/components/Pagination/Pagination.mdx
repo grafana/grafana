@@ -1,0 +1,19 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { Pagination } from './Pagination';
+
+<Meta title="MDX|Pagination" component={Pagination} />
+
+# Pagination
+
+Component used for rendering a page selector below paginated content.
+
+### Usage
+
+```tsx
+<div>
+  <div>Page 1 content</div>
+  <Pagination currentPage={1} numberOfPages={5} onNavigate={() => fetchPage(2)} />
+</div>
+```
+
+<ArgTypes of={Pagination} />

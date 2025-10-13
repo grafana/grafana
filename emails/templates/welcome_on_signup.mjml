@@ -1,0 +1,51 @@
+<mjml>
+  <!-- global variables -->
+  <mj-include path="./partials/_globals.mjml" />
+  <!-- css styling -->
+  <mj-include path="./partials/layout/theme.css" type="css" css-inline="inline" />
+  <mj-head>
+    <!-- ⬇ Don't forget to specify an email subject below! ⬇ -->
+    <mj-title>
+      {{ Subject .Subject .TemplateData "Welcome to Percona Monitoring and Management (PMM)!" }}
+    </mj-title>
+    <mj-include path="./partials/layout/head.mjml" />
+  </mj-head>
+  <mj-body>
+    <mj-section>
+      <mj-include path="./partials/layout/header.mjml" />
+    </mj-section>
+    <mj-section css-class="background">
+      <mj-column>
+        <mj-text>
+          <h2>Hi {{ .Name }},</h2>
+        </mj-text>
+        <mj-text>
+          Welcome to PMM! You're now ready to monitor and optimize your database performance with PMM’s powerful suite of tools and analytics dashboards.
+        </mj-text>
+        <mj-text>
+          As a new PMM user, here are some key resources to help you get started:
+        </mj-text>
+        <mj-text>
+          <ul style="margin:0;">
+            <li><a href="https://per.co.na/pmm/about-PMM">Getting Started Guide</a> - Learn how to leverage PMM’s monitoring capabilities effectively.</li>
+            <li><a href="{{ .AppUrl }}dashboards">Pre-built dashboards</a> - Explore dashboards tailored for MySQL, MongoDB, and PostgreSQL.</li>
+          </ul>
+        </mj-text>
+        <mj-text>
+          Need help? Join our <a href="https://forums.percona.com/c/percona-monitoring-and-management-pmm/pmm-3/84">Community Forum</a> to connect with fellow PMM users and get expert support.
+        </mj-text>
+        <mj-text>
+          Thank you for choosing PMM for your databases!
+        </mj-text>
+        <mj-text>
+          <strong>Best regards</strong>,
+          <br />
+          The Percona Team
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section>
+      <mj-include path="./partials/layout/footer.mjml" />
+    </mj-section>
+  </mj-body>
+</mjml>

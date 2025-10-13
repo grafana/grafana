@@ -1,0 +1,31 @@
+  srv1-openldap:
+    container_name: srv1-ldap
+    image: osixia/openldap
+    environment:
+      LDAP_ORGANISATION: grafana
+      LDAP_DOMAIN: srv1-grafana.org
+      LDAP_ADMIN_PASSWORD: grafana
+      LDAP_SEED_INTERNAL_LDIF_PATH: /tmp/smt/
+    ports:
+      - 389:389
+      - 636:636
+    restart: unless-stopped
+    volumes:
+      - ./docker/blocks/auth/openldap-multiple/srv1_prepopulate/:/tmp/smt/
+
+  srv2-openldap:
+    container_name: srv2-ldap
+    image: osixia/openldap
+    environment:
+      LDAP_ORGANISATION: grafana
+      LDAP_DOMAIN: srv2-grafana.org
+      LDAP_ADMIN_PASSWORD: grafana
+      LDAP_SEED_INTERNAL_LDIF_PATH: /tmp/smt/
+    ports:
+      - 1389:389
+      - 1636:636
+    restart: unless-stopped
+    volumes:
+      - ./docker/blocks/auth/openldap-multiple/srv2_prepopulate/:/tmp/smt/
+
+

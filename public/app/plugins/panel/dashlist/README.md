@@ -1,4 +1,4 @@
-# Dashlist Panel -  Native Plugin
+# Dashlist Panel - Native Plugin
 
 This Dashlist panel is **included** with Grafana.
 
@@ -6,4 +6,4 @@ The dashboard list panel allows you to display dynamic links to other dashboards
 
 Read more about it here:
 
-[http://docs.grafana.org/reference/dashlist/](http://docs.grafana.org/reference/dashlist/)
+[https://grafana.com/docs/grafana/latest/features/panels/dashlist/](https://grafana.com/docs/grafana/latest/features/panels/dashlist/)

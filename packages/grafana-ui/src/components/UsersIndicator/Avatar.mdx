@@ -1,0 +1,27 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { Avatar } from './Avatar';
+
+<Meta title="MDX|Avatar" component={Avatar} />
+
+# Avatar
+
+A basic component for displaying a user's avatar. The default dimensions (width and height) of this component are set to 24 pixels, but these can be overridden by passing a `width` and `height` prop. Both props are `ThemeSpacingTokens`, meaning that instead of passing a specific pixel value, you should pass a token value which will be converted into pixels by multiplying it with the base spacing value - `8`.
+
+## Usage
+
+```jsx
+import { Avatar } from '@grafana/ui';
+
+const user = {
+  id: 5,
+  name: 'Admin',
+  email: 'admin@org.com',
+  avatarUrl: 'https://secure.gravatar.com/avatar',
+};
+
+const Example = () => {
+  return <Avatar src={user.avatarUrl} alt={`Avatar for the user ${user.name}`} width={4} height={4} />;
+};
+```
+
+<ArgTypes of={Avatar} />

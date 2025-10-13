@@ -1,0 +1,9 @@
+apiVersion: 1
+contactPoints:
+  - name: cp_1
+    orgId: 1337
+    receivers:
+    - uid: first_uid
+      type: prometheus-alertmanager
+      settings:
+        url: http://test:9000

@@ -1,0 +1,122 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "adfbg6f",
+    "namespace": "default",
+    "uid": "b396894e-56bf-4a01-837b-64157912ca00",
+    "creationTimestamp": "2024-10-30T18:30:54Z",
+    "annotations": {
+        "grafana.app/createdBy": "user:be2g71ke8yoe8b",
+        "grafana.app/originHash": "Grafana v9.2.0 (NA)",
+        "grafana.app/originName": "UI",
+        "grafana.app/originPath": "/dashboard/new"
+    }
+  },
+  "spec": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 141,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+      {
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "libraryPanel": {
+          "name": "green pie",
+          "uid": "a7975b7a-fb53-4ab7-951d-15810953b54f"
+        },
+        "title": "green pie"
+      },
+      {
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "id": 2,
+        "libraryPanel": {
+          "name": "red pie",
+          "uid": "e1d5f519-dabd-47c6-9ad7-83d181ce1cee"
+        },
+        "title": "green pie"
+      },
+      {
+        "id": 7,
+        "type": "barchart"
+      },
+      {
+        "id": 8,
+        "type": "graph"
+      },
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 9
+        },
+        "id": 3,
+        "panels": [
+          {
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 12,
+              "y": 0
+            },
+            "id": 42,
+            "libraryPanel": {
+              "name": "blue pie",
+              "uid": "l3d2s634-fdgf-75u4-3fg3-67j966ii7jur"
+            },
+            "title": "blue pie"
+          }
+        ],
+        "title": "collapsed row",
+        "type": "row"
+      }
+    ],
+    "refresh": "",
+    "schemaVersion": 38,
+      "tags": [],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "pppp",
+    "uid": "adfbg6f",
+    "version": 3,
+    "weekStart": ""
+  }
+}

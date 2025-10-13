@@ -1,0 +1,13 @@
+{
+  "type": "panel",
+  "name": "Test Panel",
+  "id": "test-panel",
+  "state": "alpha",
+  "info": {
+    "version": "1.0.0",
+    "description": "Test",
+    "author": {
+      "name": "Giuseppe Guerra"
+    }
+  }
+}

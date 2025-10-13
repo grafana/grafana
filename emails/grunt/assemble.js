@@ -1,16 +1,17 @@
-module.exports = function() {
+module.exports = function () {
   'use strict';
-  return  {
+  return {
     options: {
-      layout: 'templates/layouts/default.html',
-      partials: ['templates/partials/*.hbs'],
-      helpers: ['templates/helpers/**/*.js'],
       data: [],
-      flatten: true
+      flatten: true,
     },
-    pages: {
-      src: ['templates/*.html'],
-      dest: 'dist/'
-    }
+    txt: {
+      options: {
+        layout: 'templates/partials/layout/default.txt',
+        ext: '.txt',
+      },
+      src: ['templates/*.txt'],
+      dest: 'dist/',
+    },
   };
 };

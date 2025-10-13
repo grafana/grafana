@@ -1,0 +1,25 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { ToolbarButtonRow } from './ToolbarButtonRow';
+
+# ToolbarButtonRow
+
+A container for multiple `ToolbarButton`s. Provides automatic overflow behaviour when the buttons no longer fit in the container.
+
+## Usage
+
+This example shows how to use several buttons in a `ToolbarButtonRow`.
+
+```jsx
+<ToolbarButtonRow>
+  <ToolbarButton variant="default" iconOnly={false} isOpen={false}>
+    Last 6 hours
+  </ToolbarButton>
+  <ButtonGroup>
+    <ToolbarButton icon="search-minus" variant="default" />
+    <ToolbarButton icon="search-plus" variant="default" />
+  </ButtonGroup>
+  <ToolbarButton icon="sync" isOpen={false} variant="primary" />
+</ToolbarButtonRow>
+```
+
+<ArgTypes of={ToolbarButtonRow} />

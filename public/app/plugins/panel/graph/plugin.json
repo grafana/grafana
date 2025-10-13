@@ -1,17 +1,18 @@
 {
   "type": "panel",
-  "name": "Graph",
+  "name": "Graph (old)",
   "id": "graph",
+  "state": "deprecated",
 
   "info": {
+    "description": "The old default graph panel",
     "author": {
-      "name": "Grafana Project",
-      "url": "http://grafana.org"
-},
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
     "logos": {
       "small": "img/icn-graph-panel.svg",
       "large": "img/icn-graph-panel.svg"
     }
   }
 }
-

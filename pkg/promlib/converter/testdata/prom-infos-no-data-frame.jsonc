@@ -1,0 +1,55 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "notices": [
+//          {
+//              "severity": "info",
+//              "text": "info 1"
+//          },
+//          {
+//              "severity": "info",
+//              "text": "info 2"
+//          }
+//      ]
+//  }
+//  Name: Warnings
+//  Dimensions: 0 Fields by 0 Rows
+//  +
+//  +
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "Warnings",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "notices": [
+            {
+              "severity": "info",
+              "text": "info 1"
+            },
+            {
+              "severity": "info",
+              "text": "info 2"
+            }
+          ]
+        },
+        "fields": []
+      },
+      "data": {
+        "values": []
+      }
+    }
+  ]
+}

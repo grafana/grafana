@@ -1,0 +1,27 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { Grid } from './Grid';
+
+<Meta title="MDX|Grid" component={Grid} />
+
+# Grid
+
+The Grid component is a layout component that allows you to create a grid of columns and rows to organize content and elements. It is a wrapper around the [CSS Grid](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Grid_Layout) specification.
+
+## Usage
+
+### When to use
+
+Use the Grid component when you want to create structured and organized layouts where content or elements need to be aligned in rows and columns for clarity and consistency.
+
+### When not to use
+
+Use the `Stack` component instead for these use cases:
+
+- **Alignment:** More options for item alignment.
+- **Flex items:** Custom flex basis or configure how items stretch and wrap.
+
+## Properties
+
+_Note: There is no support for using `columns` and `minColumnWidth` props at the same time. The correct behaviour is working just with one of them not both._
+
+<ArgTypes of={Grid} />
