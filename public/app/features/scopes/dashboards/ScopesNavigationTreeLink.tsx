@@ -4,29 +4,12 @@ import { Link, useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, IconName, locationUtil } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
+import { isCurrentPath } from './scopeNavgiationUtils';
 
 export interface ScopesNavigationTreeLinkProps {
   to: string;
   title: string;
   id: string;
-}
-
-// Helper function to get the base path for a dashboard URL for comparison purposes.
-// e.g., /d/dashboardId/slug -> /d/dashboardId
-//       /d/dashboardId      -> /d/dashboardId
-export function getDashboardPathForComparison(pathname: string): string {
-  return pathname.split('/').slice(0, 3).join('/');
-}
-
-export function isCurrentPath(pathname: string, to: string): boolean {
-  const isDashboard = to.startsWith('/d/');
-
-  if (isDashboard) {
-    // For dashboards, the title is appended to the path when we navigate to just the dashboard id, hence we need to disregard this
-    return getDashboardPathForComparison(pathname) === to.split('?')[0];
-  }
-  //Ignore query params
-  return pathname === to.split('?')[0];
 }
 
 export function ScopesNavigationTreeLink({ to, title, id }: ScopesNavigationTreeLinkProps) {

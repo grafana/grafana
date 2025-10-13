@@ -6,7 +6,7 @@ import { config, locationService } from '@grafana/runtime';
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
-import { isCurrentPath } from './ScopesNavigationTreeLink';
+import { isCurrentPath } from './scopeNavgiationUtils';
 import { ScopeNavigation, SuggestedNavigationsFoldersMap } from './types';
 import { Subscription } from 'rxjs';
 
