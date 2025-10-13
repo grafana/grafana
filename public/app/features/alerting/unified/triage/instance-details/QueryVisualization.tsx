@@ -93,11 +93,18 @@ export function QueryVisualization({ query, instanceLabels, thresholds, annotati
 
 // Helper function to check if frame labels match instance labels
 function frameMatchesInstanceLabels(frame: DataFrame, instanceLabels: Labels): boolean {
-  // Check if any field in the frame has labels that match all instance labels
+  // Check if any field in the frame has labels that are a subset of instance labels
+  // (i.e., all field labels exist in instanceLabels with matching values)
+  //
+  // Note: We check if field.labels ⊆ instanceLabels (subset) rather than equality because
+  // the alert rule evaluation engine might apply additional rule-specific labels coming from
+  // rule labels and labels templating. Currently, we have no way of knowing these additional
+  // labels when querying the datasource directly, so instanceLabels may contain more labels
+  // than what appears in the raw query results.
   for (const field of frame.fields) {
     if (field.labels) {
-      const allLabelsMatch = Object.entries(instanceLabels).every(([key, value]) => field.labels![key] === value);
-      if (allLabelsMatch) {
+      const allFieldLabelsMatch = Object.entries(field.labels).every(([key, value]) => instanceLabels[key] === value);
+      if (allFieldLabelsMatch) {
         return true;
       }
     }
