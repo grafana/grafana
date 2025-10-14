@@ -19,8 +19,7 @@ import { AnnotationValue } from '../../rule-viewer/tabs/Details';
 import { ErrorMessageRow } from '../state-history/ErrorMessageRow';
 import { LogTimelineViewer } from '../state-history/LogTimelineViewer';
 import { useFrameSubset } from '../state-history/LokiStateHistory';
-import { LogRecord } from '../state-history/common';
-import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
+import { LogRecord, historyDataFrameToLogRecords } from '../state-history/common';
 
 import { EventState, FilterType, LIMIT_EVENTS } from './EventListSceneObject';
 import { HistoryErrorMessage } from './HistoryErrorMessage';
@@ -87,20 +86,7 @@ function useRuleHistoryRecordsForTheInstance(labelsForTheInstance: string, state
   const theme = useTheme2();
 
   return useMemo(() => {
-    // merge timestamp with "line"
-    const tsValues = stateHistory?.data?.values[0] ?? [];
-    const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
-    const lines = stateHistory?.data?.values[1] ?? [];
-
-    const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
-      const line = lines[index];
-      // values property can be undefined for some instance states (e.g. NoData)
-      if (isLine(line)) {
-        acc.push({ timestamp, line });
-      }
-
-      return acc;
-    }, []);
+    const logRecords = historyDataFrameToLogRecords(stateHistory);
 
     // group all records by alert instance (unique set of labels)
     const logRecordsByInstance = groupBy(logRecords, (record: LogRecord) => {
