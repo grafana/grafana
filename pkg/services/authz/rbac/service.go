@@ -119,6 +119,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		ctxLogger.Debug("Check execution time", "duration", time.Since(start).Milliseconds())
 	}(time.Now())
 
+	allow := &authzv1.CheckResponse{Allowed: true}
 	deny := &authzv1.CheckResponse{Allowed: false}
 
 	checkReq, err := s.validateCheckRequest(ctx, req)
@@ -135,13 +136,14 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		attribute.String("action", checkReq.Action),
 		attribute.String("name", checkReq.Name),
 		attribute.String("folder", checkReq.ParentFolder),
+		attribute.Bool("allowed", false),
 	)
 
 	permDenialKey := userPermDenialCacheKey(checkReq.Namespace.Value, checkReq.UserUID, checkReq.Action, checkReq.Name, checkReq.ParentFolder)
 	if _, ok := s.permDenialCache.Get(ctx, permDenialKey); ok {
 		s.metrics.permissionCacheUsage.WithLabelValues("true", checkReq.Action).Inc()
 		s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
-		return &authzv1.CheckResponse{Allowed: false}, nil
+		return deny, nil
 	}
 
 	cachedPerms, err := s.getCachedIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
@@ -155,7 +157,8 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		if allowed {
 			s.metrics.permissionCacheUsage.WithLabelValues("true", checkReq.Action).Inc()
 			s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
-			return &authzv1.CheckResponse{Allowed: allowed}, nil
+			span.SetAttributes(attribute.Bool("allowed", true))
+			return allow, nil
 		}
 	}
 	s.metrics.permissionCacheUsage.WithLabelValues("false", checkReq.Action).Inc()
@@ -179,6 +182,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	}
 
 	s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+	span.SetAttributes(attribute.Bool("allowed", allowed))
 	return &authzv1.CheckResponse{Allowed: allowed}, nil
 }
 
@@ -678,6 +682,11 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 			ctxLogger.Error("could not build folder and dashboard tree", "error", err)
 			return false, err
 		}
+		if !s.isFolderInTree(tree, req.ParentFolder) {
+			// Not erroring here as the permission might exist but the folder wasn't synchronized yet
+			// Once in mode 5 we can deny access here
+			ctxLogger.Error("parent folder not found in folder tree", "folder", req.ParentFolder)
+		}
 	}
 
 	if scopeMap["folders:uid:"+req.ParentFolder] {
@@ -724,6 +733,9 @@ func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (
 		span.SetAttributes(attribute.Int("num_folders", len(folders)))
 
 		tree := newFolderTree(folders)
+		if len(tree.Nodes) != len(folders) {
+			s.logger.FromContext(ctx).Warn("mismatched folder count when building tree", "namespace", ns.Value, "expected", len(folders), "got", len(tree.Nodes))
+		}
 
 		s.folderCache.Set(ctx, folderCacheKey(ns.Value), tree)
 		return tree, nil

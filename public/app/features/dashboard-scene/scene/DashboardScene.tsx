@@ -629,15 +629,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return vizPanel;
   }
 
-  public switchLayout(layout: DashboardLayoutManager) {
+  public switchLayout(layout: DashboardLayoutManager, skipUndo?: boolean) {
     const currentLayout = this.state.body;
-
-    dashboardEditActions.edit({
-      description: t('dashboard.edit-actions.switch-layout', 'Switch layout'),
-      source: this,
-      perform: () => this.setState({ body: layout }),
-      undo: () => this.setState({ body: currentLayout }),
-    });
+    const perform = () => this.setState({ body: layout });
+    const undo = () => this.setState({ body: currentLayout });
+    if (skipUndo) {
+      perform();
+    } else {
+      dashboardEditActions.edit({
+        description: t('dashboard.edit-actions.switch-layout', 'Switch layout'),
+        source: this,
+        perform,
+        undo,
+      });
+    }
   }
 
   public getLayout(): DashboardLayoutManager {
