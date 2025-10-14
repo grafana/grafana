@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -56,16 +57,12 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 	}
 
 	// Initialize metrics
-	bootErrorMetric := prometheus.NewCounter(prometheus.CounterOpts{
+	bootErrorMetric := promauto.NewCounter(prometheus.CounterOpts{
 		Namespace: "grafana",
 		Subsystem: "frontend",
 		Name:      "boot_errors_total",
 		Help:      "Total number of frontend boot errors",
 	})
-
-	if err := promRegister.Register(bootErrorMetric); err != nil {
-		return nil, err
-	}
 
 	s := &frontendService{
 		cfg:             cfg,
