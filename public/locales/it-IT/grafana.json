@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Aggiungi un'autorizzazione",
+      "loading": "",
       "no-permissions": "Non sono presenti autorizzazioni",
       "permissions-change-warning": "Questa operazione modificherà le autorizzazioni per questa cartella e tutti i suoi discendenti. In totale, questo influenzerà:",
       "role": "Ruolo",
       "serviceaccount": "Account del servizio",
       "team": "Team",
-      "title": "Autorizzazioni",
       "user": "Utente"
     }
   },
@@ -1535,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "Il gruppo è in fase di eliminazione"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Rimuovi l'espressione \"{{refId}}\""
     },
@@ -1709,6 +1712,9 @@
       },
       "placeholder-key": "chiave",
       "placeholder-value": "valore"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Visualizza o crea punti di contatto",
@@ -2024,6 +2030,12 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "L'Alertmanager selezionato non esiste più o potresti non avere l'autorizzazione per accedervi. È possibile selezionare un diverso Alertmanager dal menu a discesa.",
       "title-selected-alertmanager-not-found": "Alertmanager selezionato non trovato."
+    },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
     },
     "panel-alert-tab-content": {
       "alert": {
@@ -2916,6 +2928,13 @@
         "title-warning": "Attenzione"
       }
     },
+    "triage": {
+      "alert-instances": "",
+      "firing-instances-count": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "pending-instances-count": ""
+    },
     "type-selector-button": {
       "add-expression": "Aggiungi espressione"
     },
@@ -3485,7 +3504,7 @@
       "delete-button": "Elimina",
       "delete-modal-invalid-text": "Una o più cartelle contengono pannelli della libreria o regole di avviso. Eliminarli prima di procedere.",
       "delete-modal-invalid-title": "Impossibile eliminare la cartella",
-      "delete-modal-restore-dashboards-text": "Questa azione eliminerà immediatamente le cartelle selezionate, ma i dashboard selezionati verranno contrassegnati per l'eliminazione tra 30 giorni. L'amministratore dell'organizzazione può ripristinare i dashboard in qualsiasi momento prima della scadenza dei 30 giorni. Non è possibile ripristinare le cartelle.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Questa azione eliminerà il seguente contenuto:",
       "delete-modal-title": "Elimina",
       "delete-provisioned-folder": "Elimina cartella fornita",
@@ -4477,6 +4496,8 @@
     },
     "canvas-actions": {
       "add-panel": "Aggiungi pannello",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Raggruppa in riga",
       "group-into-tab": "Raggruppa in scheda",
       "group-panels": "Raggruppa pannelli",
@@ -4485,7 +4506,8 @@
       "paste-panel": "Incolla pannello",
       "paste-row": "Incolla riga",
       "paste-tab": "Incolla scheda",
-      "un-group-panels": "Annulla raggruppamento"
+      "un-group-panels": "Annulla raggruppamento",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4553,7 +4575,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "L'elemento è nascosto a causa del rendering condizionale."
+        "tooltip": ""
       },
       "root": {
         "title": "Mostra/nascondi regole"
@@ -4727,8 +4749,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Valori separati da virgola",
-          "values-placeholder": "1, 10, mykey: myvalue, myvalue, escaped, value"
+          "close": "",
+          "modal-title": "",
+          "values": "Valori separati da virgola"
         },
         "datasource-options": {
           "name-filter": "Filtro nome",
@@ -5148,10 +5171,16 @@
       "title-row-options": "Opzioni riga"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "L'eliminazione di questa riga rimuoverà anche tutti i pannelli. Desideri continuare?",
       "delete-row-title": "Elimina riga?",
       "delete-row-yes": "Elimina",
       "description": "Gruppi di pannelli comprimibili con intestazioni",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Intestazione di riga visibile solo in modalità di modifica",
       "name": "Righe",
       "row": {
@@ -5181,7 +5210,11 @@
       },
       "row-warning": {
         "title-not-unique": "Questo titolo non è univoco"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard salvata"
@@ -5800,6 +5833,7 @@
         "dynamically-switch-source-multiple-panels": "Cambia dinamicamente l'origine dati per più pannelli",
         "group": "Aggiungi chiavi per raggruppare al volo",
         "hidden-constant-variable": "Una variabile costante nascosta, utile per i prefissi metrici nelle dashboard che desideri condividere",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Gli utenti possono inserire qualsiasi stringa arbitraria in una casella di testo",
         "values-are-static-and-defined-manually": "I valori sono statici e definiti manualmente",
         "values-fetched-source-query": "I valori vengono recuperati da una query dell'origine dati",
@@ -5813,6 +5847,7 @@
         "group-by": "Raggruppa per",
         "interval": "Intervallo",
         "query": "Query",
+        "switch": "",
         "textbox": "Casella di testo"
       }
     },
@@ -6156,6 +6191,17 @@
       "title": {
         "copy-to-clipboard-failed": "Copia negli appunti non riuscita"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Valore predefinito"
@@ -6605,6 +6651,7 @@
         "service-now-integration-and-data-source": "Integrazione e origine dati ServiceNow",
         "signal-fx-integration-and-datasource": "Integrazione e origine dati SignalFx",
         "snowflake-integration-and-data-source": "Integrazione e origine dati Snowflake",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "Integrazione e origine dati SumoLogic",
         "visualize-and-explore-dynatrace-data": "Visualizza ed esplora i dati Dynatrace",
         "visualize-and-explore-oracle-sql": "Visualizza ed esplora Oracle SQL",
@@ -9446,6 +9493,7 @@
     "description-enable-infinite-scrolling": "Sperimentale. Richiedi più risultati scorrendo fino alla fine dell'elenco dei registri.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Visualizza i controlli per passare all'ultima o alla prima riga del registro e filtra per livello di registro",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9496,9 +9544,6 @@
       "collapse": "Riduci etichette",
       "expand": "Ingrandisci etichette"
     },
-    "log-labels-list": {
-      "log-line": "riga registro"
-    },
     "log-line": {
       "has-error": "Sono presenti errori",
       "is-sampled": "È campionato",
@@ -9538,6 +9583,7 @@
       "inline-mode": "Visualizza in linea",
       "link-value-tooltip": "",
       "links-section": "Collegamenti",
+      "log-attributes-field": "",
       "log-line-field": "Riga registro",
       "log-line-section": "Riga registro",
       "move-displayed-field-down": "Sposta in basso",
@@ -9744,6 +9790,7 @@
       "line-contains": "Aggiungi come riga contenente filtro",
       "line-contains-not": "Aggiungi come riga non contenente filtro"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Risoluzione marca temporale",
     "un-themed-log-details": {
       "aria-label-data-links": "Collegamenti dati",
@@ -10335,7 +10382,7 @@
       "title": "Profili"
     },
     "recently-deleted": {
-      "subtitle": "Tutti gli elementi elencati qui per più di 30 giorni verranno eliminati automaticamente.",
+      "subtitle": "",
       "title": "Eliminati di recente"
     },
     "recorded-queries": {
@@ -11551,6 +11598,7 @@
       "active-jobs": "attività attive",
       "column-action": "Azione",
       "column-duration": "Durata",
+      "column-job-id": "",
       "column-message": "Messaggio",
       "column-started": "Iniziata",
       "column-status": "Stato",
@@ -11569,12 +11617,6 @@
       "settings": "Impostazioni",
       "view": "Visualizza"
     },
-    "repository-health": {
-      "details": "Dettagli:",
-      "no-errors-found": "Nessun errore trovato",
-      "title-repository-is-healthy": "Il repository è integro",
-      "title-repository-is-unhealthy": "Il repository non è integro"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Confronta settore",
@@ -11589,7 +11631,7 @@
     },
     "repository-overview": {
       "checked": "Verificato:",
-      "finished": "Terminato:",
+      "finished": "",
       "health": "Stato",
       "healthy": "Correttamente funzionante",
       "job-id": "ID attività:",
@@ -11598,7 +11640,6 @@
       "not-available": "N/D",
       "pull-status": "Stato del pull",
       "resources": "Risorse",
-      "started": "Iniziato:",
       "status": "Stato:",
       "unhealthy": "Malfunzionante",
       "view-folder": "Visualizza cartella",
@@ -12257,9 +12298,6 @@
       "title-disable-service-account": "Disabilita account di servizio",
       "tokens": "Token",
       "tooltip-managed-service-account-cannot-modified": "Questo è un account di servizio gestito e non può essere modificato"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Autorizzazioni"
     },
     "service-account-profile": {
       "information": "Informazioni",
@@ -12934,6 +12972,10 @@
     "name-mode": "Modalità",
     "name-show-line-numbers": "Mostra numeri di riga",
     "name-show-mini-map": "Mostra mini mappa"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -14098,14 +14140,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Aggiungi opzione",
-      "description": "Aggiungi opzioni personalizzate oltre ai risultati della query",
-      "label-placeholder": "visualizza etichetta",
-      "remove-option-button-label": "Rimuovi opzione",
-      "value-placeholder": "valore, stringa vuota predefinita"
+      "description": "Aggiungi opzioni personalizzate oltre ai risultati della query"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Come ordinare le opzioni statiche con i risultati della query"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Valore predefinito",

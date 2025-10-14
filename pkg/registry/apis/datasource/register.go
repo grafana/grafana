@@ -24,10 +24,10 @@ import (
 	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/configprovider"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/promlib/models"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource/hardcoded"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -51,7 +51,6 @@ type DataSourceAPIBuilder struct {
 	accessControl        accesscontrol.AccessControl
 	queryTypes           *queryV0.QueryTypeDefinitionList
 	schemaProvider       func() (*datasourceV0.DataSourceOpenAPIExtension, error)
-	log                  log.Logger
 	configCrudUseNewApis bool
 }
 
@@ -66,10 +65,10 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 ) (*DataSourceAPIBuilder, error) {
 	// We want to expose just a limited set of plugins
-	explictPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
+	explicitPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
 
 	// This requires devmode!
-	if !explictPluginList && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !explicitPluginList && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
@@ -92,7 +91,7 @@ func RegisterAPIService(
 	}
 
 	for _, pluginJSON := range pluginJSONs {
-		if explictPluginList && !slices.Contains(ids, pluginJSON.ID) {
+		if explicitPluginList && !slices.Contains(ids, pluginJSON.ID) {
 			continue // skip this one
 		}
 
@@ -119,6 +118,12 @@ func RegisterAPIService(
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		// Hardcoded schemas for testdata
+		// NOTE: this will be driven by the pluginJSON/manifest soon
+		if "grafana-testdata-datasource" == pluginJSON.ID {
+			builder.schemaProvider = hardcoded.TestdataOpenAPIExtension
 		}
 
 		apiRegistrar.RegisterAPI(builder)
@@ -156,7 +161,6 @@ func NewDataSourceAPIBuilder(
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
-		log:                    log.New("grafana-apiserver.datasource"),
 		configCrudUseNewApis:   configCrudUseNewApis,
 	}
 	if loadQueryTypes {

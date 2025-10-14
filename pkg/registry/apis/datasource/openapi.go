@@ -153,9 +153,13 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 				return nil, fmt.Errorf("path must have slash prefix")
 			}
 			v.Parameters = append(v.Parameters, ds.Parameters[0:2]...)
-			for _, op := range builder.GetPathOperations(v) {
+			for m, op := range builder.GetPathOperations(v) {
 				if op != nil {
 					op.Tags = append(op.Tags, "Route") // Custom resource?
+					if op.Extensions == nil {
+						op.Extensions = make(spec.Extensions)
+					}
+					op.OperationId = fmt.Sprintf("%s_route%s", strings.ToLower(m), strings.ReplaceAll(k, "/", "_"))
 				}
 			}
 			oas.Paths.Paths[prefix+k] = v

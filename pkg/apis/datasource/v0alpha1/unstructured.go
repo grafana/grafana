@@ -136,6 +136,10 @@ func (UnstructuredSpec) OpenAPIDefinition() openapi.OpenAPIDefinition {
 	s := schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(func(path string) spec.Ref {
 		return spec.MustCreateRef(path)
 	})
+	jsonData := spec.MapProperty(nil)
+	jsonData.AdditionalProperties = &spec.SchemaOrBool{Allows: true}
+	jsonData.Extensions = map[string]any{"x-kubernetes-preserve-unknown-fields": true}
+	s.Schema.Properties["jsonData"] = *jsonData
 	s.Schema.AdditionalProperties = &spec.SchemaOrBool{
 		Allows: true,
 	}

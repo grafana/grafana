@@ -3,6 +3,8 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { monacoTypes } from '@grafana/ui';
 
 import { logsTestDataCommentOnlyQuery } from '../../../mocks/cloudwatch-logs-test-data/commentOnlyQuery';
+import { logsTestDataDiffModifierQuery } from '../../../mocks/cloudwatch-logs-test-data/diffModifierQuery';
+import { logsTestDataDiffQuery } from '../../../mocks/cloudwatch-logs-test-data/diffQuery';
 import { logsTestDataEmptyQuery } from '../../../mocks/cloudwatch-logs-test-data/empty';
 import { logsTestDataMultiLineFullQuery } from '../../../mocks/cloudwatch-logs-test-data/multiLineFullQuery';
 import { logsTestDataSingleLineFullQuery } from '../../../mocks/cloudwatch-logs-test-data/singleLineFullQuery';
@@ -163,5 +165,23 @@ describe('getStatementPosition', () => {
     expect(
       getStatementPosition(generateToken(logsTestDataMultiLineFullQuery.query, { lineNumber: 5, column: 3 }))
     ).toEqual(StatementPosition.Comment);
+  });
+
+  it('should return StatementPosition.DiffKeyword inside the `diff` keyword', () => {
+    expect(getStatementPosition(generateToken(logsTestDataDiffQuery.query, { lineNumber: 1, column: 22 }))).toEqual(
+      StatementPosition.DiffKeyword
+    );
+  });
+
+  it('should return StatementPosition.AfterDiffKeyword after the `diff` keyword', () => {
+    expect(getStatementPosition(generateToken(logsTestDataDiffQuery.query, { lineNumber: 1, column: 25 }))).toEqual(
+      StatementPosition.AfterDiffKeyword
+    );
+  });
+
+  it('should return StatementPosition.DiffModifierArg when typing a diff modifier', () => {
+    expect(
+      getStatementPosition(generateToken(logsTestDataDiffModifierQuery.query, { lineNumber: 1, column: 28 }))
+    ).toEqual(StatementPosition.DiffModifierArg);
   });
 });

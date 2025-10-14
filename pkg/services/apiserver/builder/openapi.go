@@ -3,7 +3,9 @@ package builder
 import (
 	"bytes"
 	"encoding/json"
+	"iter"
 	"maps"
+	"net/http"
 	"strings"
 	"sync"
 
@@ -201,10 +203,9 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 							keep := make([]map[string]any, 0, len(gvks))
 							for _, val := range gvks {
 								gvk, ok := val.(map[string]any)
-								if ok && gvk["version"] == "__internal" {
-									continue
+								if ok && gvk["group"] == gv.Group && gvk["version"] != "__internal" {
+									keep = append(keep, gvk) // only expose real versions in the same group
 								}
-								keep = append(keep, gvk)
 							}
 							v.Extensions["x-kubernetes-group-version-kind"] = keep
 						}
@@ -235,15 +236,37 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 	}
 }
 
-func GetPathOperations(path *spec3.Path) []*spec3.Operation {
-	return []*spec3.Operation{
-		path.Get,
-		path.Head,
-		path.Delete,
-		path.Patch,
-		path.Post,
-		path.Put,
-		path.Trace,
-		path.Options,
+func GetPathOperations(path *spec3.Path) iter.Seq2[string, *spec3.Operation] {
+	return func(yield func(string, *spec3.Operation) bool) {
+		if path.Get != nil && !yield(http.MethodGet, path.Get) {
+			return
+		}
+		if path.Get != nil && !yield(http.MethodGet, path.Get) {
+			return
+		}
+		if path.Head != nil && !yield(http.MethodHead, path.Head) {
+			return
+		}
+		if path.Delete != nil && !yield(http.MethodDelete, path.Delete) {
+			return
+		}
+		if path.Patch != nil && !yield(http.MethodPatch, path.Patch) {
+			return
+		}
+		if path.Post != nil && !yield(http.MethodPost, path.Post) {
+			return
+		}
+		if path.Post != nil && !yield(http.MethodPost, path.Post) {
+			return
+		}
+		if path.Put != nil && !yield(http.MethodPut, path.Put) {
+			return
+		}
+		if path.Trace != nil && !yield(http.MethodTrace, path.Trace) {
+			return
+		}
+		if path.Options != nil && !yield(http.MethodOptions, path.Options) {
+			return
+		}
 	}
 }
