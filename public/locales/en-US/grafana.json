@@ -4607,7 +4607,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "{{dashboardName}} dashboard"
+      "aria-label-dashboard-name": "{{dashboardName}} dashboard",
+      "label-no-dashboards-found": "No dashboards found"
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Cancel loading dashboard"
