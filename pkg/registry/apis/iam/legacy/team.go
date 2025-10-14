@@ -414,8 +414,8 @@ func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo
 }
 
 type ListTeamBindingsQuery struct {
-	TeamUID    string
-	UserUID    string
+	TeamID     int64
+	UserID     int64
 	OrgID      int64
 	Pagination common.Pagination
 }

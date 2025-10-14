@@ -155,11 +155,11 @@ func (l *LegacyBindingStore) Get(ctx context.Context, name string, options *meta
 		return nil, err
 	}
 
-	teamUID, userUID := mapFromBindingName(name)
+	teamID, userID := mapFromBindingName(name)
 
 	res, err := l.store.ListTeamBindings(ctx, ns, legacy.ListTeamBindingsQuery{
-		TeamUID:    teamUID,
-		UserUID:    userUID,
+		TeamID:     teamID,
+		UserID:     userID,
 		Pagination: common.Pagination{Limit: 1},
 	})
 	if err != nil {
@@ -216,7 +216,7 @@ func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alph
 
 	return iamv0alpha1.TeamBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              mapToBindingName(tm.TeamUID, tm.UserUID),
+			Name:              mapToBindingName(tm.TeamID, tm.UserID),
 			Namespace:         ns.Value,
 			ResourceVersion:   strconv.FormatInt(rv.UnixMilli(), 10),
 			CreationTimestamp: metav1.NewTime(ct),
@@ -233,17 +233,31 @@ func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alph
 	}
 }
 
-func mapToBindingName(teamUID string, userUID string) string {
-	return fmt.Sprintf("%s-%s", teamUID, userUID)
+func mapToBindingName(teamID, userID int64) string {
+	return fmt.Sprintf("teambinding-%d-%d", teamID, userID)
 }
 
-func mapFromBindingName(name string) (string, string) {
+func mapFromBindingName(name string) (int64, int64) {
 	parts := strings.Split(name, "-")
-	if len(parts) != 2 {
-		return "", ""
+	if len(parts) != 3 {
+		return 0, 0
 	}
 
-	return parts[0], parts[1]
+	if parts[0] != "teambinding" {
+		return 0, 0
+	}
+
+	teamID, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return 0, 0
+	}
+
+	userID, err := strconv.ParseInt(parts[2], 10, 64)
+	if err != nil {
+		return 0, 0
+	}
+
+	return teamID, userID
 }
 
 func mapPermisson(p team.PermissionType) iamv0.TeamPermission {

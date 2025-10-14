@@ -4,11 +4,11 @@ INNER JOIN {{ .Ident .TeamTable }} t ON tm.team_id = t.id
 INNER JOIN {{ .Ident .UserTable }} u ON tm.user_id  = u.id
 WHERE
   tm.org_id = {{ .Arg .Query.OrgID}}
-  {{ if .Query.TeamUID }}
-    AND t.uid = {{ .Arg .Query.TeamUID }}
+  {{ if .Query.TeamID }}
+    AND t.id = {{ .Arg .Query.TeamID }}
   {{ end }}
-  {{ if .Query.UserUID }}
-    AND u.uid = {{ .Arg .Query.UserUID }}
+  {{ if .Query.UserID }}
+    AND u.id = {{ .Arg .Query.UserID }}
   {{ end }}
   {{- if .Query.Pagination.Continue }}
     AND tm.id >= {{ .Arg .Query.Pagination.Continue }}
