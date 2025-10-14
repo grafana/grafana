@@ -71,7 +71,7 @@ func TestTeamHTTPHeaders(t *testing.T) {
 			want: &TeamHTTPHeaders{
 				Headers: TeamHeaders{
 					"101": {
-						{Header: "X-CUSTOM-HEADER", Value: "foo"},
+						{Header: "X-CUSTOM-HEADER", LBACRule: "foo"},
 					},
 				},
 			},

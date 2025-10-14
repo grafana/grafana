@@ -242,10 +242,10 @@ func TestAddDataSourceTeamHTTPHeaders(t *testing.T) {
 	jsonData := simplejson.New()
 	jsonData.Set("teamHttpHeaders", datasources.TeamHTTPHeaders{
 		Headers: datasources.TeamHeaders{
-			tenantID: []datasources.TeamHTTPHeader{
+			tenantID: []datasources.AccessRule{
 				{
-					Header: "Authorization",
-					Value:  "foo!=bar",
+					Header:   "Authorization",
+					LBACRule: "foo!=bar",
 				},
 			},
 		},
