@@ -43,24 +43,27 @@ func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query 
 	dsInfo, err := s.getDSInfo(ctx, pCtx)
 	if err != nil {
 		ctxLogger.Error("Failed to get datasource information", "error", err, "function", logEntrypoint())
-		return nil, err
+		return nil, backend.DownstreamError(fmt.Errorf("Failed to get datasource information: %w", err))
 	}
 
 	err = json.Unmarshal(query.JSON, model)
 	if err != nil {
 		ctxLogger.Error("Failed to unmarshall Tempo query model", "error", err, "function", logEntrypoint())
-		return nil, err
+		return nil, backend.DownstreamError(fmt.Errorf("Failed to unmarshall Tempo query model: %w", err))
 	}
 
 	req, err := createSearchRequest(ctx, dsInfo, model, query.TimeRange.From.Unix(), query.TimeRange.To.Unix())
 	if err != nil {
 		ctxLogger.Error("Failed to create search request", "error", err, "function", logEntrypoint())
-		return nil, err
+		return nil, backend.DownstreamError(fmt.Errorf("Failed to create search request: %w", err))
 	}
 
 	resp, err := dsInfo.HTTPClient.Do(req)
 	if err != nil {
 		ctxLogger.Error("Failed to send request to Tempo", "error", err, "function", logEntrypoint())
+		if backend.IsDownstreamHTTPError(err) {
+			return nil, backend.DownstreamError(err)
+		}
 		return nil, err
 	}
 
@@ -75,6 +78,16 @@ func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		ctxLogger.Error("Failed to read response body", "error", err, "function", logEntrypoint())
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		ctxLogger.Error("Failed to execute search query", "error", err, "function", logEntrypoint())
+		err := backend.DownstreamError(fmt.Errorf("failed to execute search query status: %s", resp.Status))
+		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
+			return nil, backend.DownstreamError(err)
+		}
+
 		return nil, err
 	}
 
