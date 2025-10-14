@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -48,13 +47,21 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 		}
 
 		// Handle "Search" query type
+		// TODO: migrate this to use gRPC feature toggle
+		useGrpc := true
 		if query.QueryType == "search" {
-			traces, err := dsInfo.JaegerClient.Search(&query, q.TimeRange.From.UnixMicro(), q.TimeRange.To.UnixMicro())
+			var frames *data.Frame
+			var err error
+			if useGrpc {
+				// call grpc client search function
+				frames, err = dsInfo.JaegerClient.GrpcSearch(&query, q.TimeRange.From, q.TimeRange.To)
+			} else {
+				frames, err = dsInfo.JaegerClient.Search(&query, q.TimeRange.From.UnixMicro(), q.TimeRange.To.UnixMicro())
+			}
 			if err != nil {
 				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
 				continue
 			}
-			frames := transformSearchResponse(traces, dsInfo)
 			response.Responses[q.RefID] = backend.DataResponse{
 				Frames: data.Frames{frames},
 			}

@@ -11,7 +11,9 @@ import (
 	"github.com/go-logfmt/logfmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/jaeger/types"
+	"github.com/grafana/grafana/pkg/tsdb/jaeger/utils"
 )
 
 type JaegerClient struct {
@@ -87,15 +89,15 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 	return operations, err
 }
 
-func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResponse, error) {
+func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) (*data.Frame, error) {
 	u, err := url.JoinPath(j.url, "/api/traces")
 	if err != nil {
-		return []TraceResponse{}, backend.DownstreamError(fmt.Errorf("failed to join url path: %w", err))
+		return nil, backend.DownstreamError(fmt.Errorf("failed to join url path: %w", err))
 	}
 
 	jaegerURL, err := url.Parse(u)
 	if err != nil {
-		return []TraceResponse{}, backend.DownstreamError(fmt.Errorf("failed to parse Jaeger URL: %w", err))
+		return nil, backend.DownstreamError(fmt.Errorf("failed to parse Jaeger URL: %w", err))
 	}
 
 	var queryTags string
@@ -112,7 +114,7 @@ func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResp
 
 		marshaledTags, err := json.Marshal(tagMap)
 		if err != nil {
-			return []TraceResponse{}, backend.DownstreamError(fmt.Errorf("failed to convert tags to JSON: %w", err))
+			return nil, backend.DownstreamError(fmt.Errorf("failed to convert tags to JSON: %w", err))
 		}
 
 		queryTags = string(marshaledTags)
@@ -148,9 +150,9 @@ func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResp
 	resp, err := j.httpClient.Get(jaegerURL.String())
 	if err != nil {
 		if backend.IsDownstreamHTTPError(err) {
-			return []TraceResponse{}, backend.DownstreamError(err)
+			return nil, backend.DownstreamError(err)
 		}
-		return []TraceResponse{}, err
+		return nil, err
 	}
 
 	defer func() {
@@ -162,20 +164,21 @@ func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResp
 	if resp.StatusCode != http.StatusOK {
 		err := backend.DownstreamError(fmt.Errorf("request failed: %s", resp.Status))
 		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
-			return []TraceResponse{}, backend.DownstreamError(err)
+			return nil, backend.DownstreamError(err)
 		}
-		return []TraceResponse{}, err
+		return nil, err
 	}
 
 	var result types.TracesResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return []TraceResponse{}, fmt.Errorf("failed to decode Jaeger response: %w", err)
+		return nil, fmt.Errorf("failed to decode Jaeger response: %w", err)
 	}
 
-	return result.Data, nil
+	frames := utils.TransformSearchResponse(result.Data, j.settings.UID, j.settings.Name)
+	return frames, nil
 }
 
-func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int64) (TraceResponse, error) {
+func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int64) (types.TraceResponse, error) {
 	logger := j.logger.FromContext(ctx)
 	var response types.TracesResponse
 	trace := types.TraceResponse{}
