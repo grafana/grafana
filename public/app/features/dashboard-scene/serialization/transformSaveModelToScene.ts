@@ -26,8 +26,6 @@ import {
   getDashboardSceneProfilerWithMetadata,
   enablePanelProfilingForDashboard,
   getDashboardComponentInteractionCallback,
-  getDashboardInteractionCallback,
-  getDashboardSceneProfiler,
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
