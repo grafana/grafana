@@ -38,7 +38,7 @@ func TestDashboardsWithVisibleAnnotations(t *testing.T) {
 	dashSvc := &dashboards.FakeDashboardService{}
 
 	// First call, without DashboardUID
-	dashSvc.On("SearchDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+	queryNoDashboardUID := &dashboards.FindPersistedDashboardsQuery{
 		OrgId:        1,
 		SignedInUser: user,
 		Type:         "dash-db",
@@ -48,13 +48,14 @@ func TestDashboardsWithVisibleAnnotations(t *testing.T) {
 			p1,
 			p2,
 		},
-	}).Return(model.HitList{
+	}
+	dashSvc.On("SearchDashboards", mock.Anything, queryNoDashboardUID).Return(model.HitList{
 		&model.Hit{UID: "uid1", ID: 101},
 		&model.Hit{UID: "uid2", ID: 102},
 	}, nil)
 
 	// Second call, with DashboardUID filter
-	dashSvc.On("SearchDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+	queryWithDashboardUID := &dashboards.FindPersistedDashboardsQuery{
 		OrgId:        1,
 		SignedInUser: user,
 		Type:         "dash-db",
@@ -67,7 +68,9 @@ func TestDashboardsWithVisibleAnnotations(t *testing.T) {
 			p3,
 		},
 		DashboardUIDs: []string{"uid1"},
-	}).Return(model.HitList{
+	}
+
+	dashSvc.On("SearchDashboards", mock.Anything, queryWithDashboardUID).Return(model.HitList{
 		&model.Hit{UID: "uid1", ID: 101},
 	}, nil)
 
@@ -80,21 +83,27 @@ func TestDashboardsWithVisibleAnnotations(t *testing.T) {
 	}
 
 	// First call without DashboardUID
-	query := annotations.ItemQuery{
+	result, err := authz.dashboardsWithVisibleAnnotations(context.Background(), annotations.ItemQuery{
 		SignedInUser: user,
 		OrgID:        1,
 		Page:         1,
-	}
-
-	result, err := authz.dashboardsWithVisibleAnnotations(context.Background(), query)
+	})
 	assert.NoError(t, err)
 	// Should return two dashboards
 	assert.Equal(t, map[string]int64{"uid1": 101, "uid2": 102}, result)
+	// Ensure SearchDashboards was called with correct query
+	dashSvc.AssertCalled(t, "SearchDashboards", mock.Anything, queryNoDashboardUID)
 
 	// Second call with DashboardUID
-	query.DashboardUID = "uid1"
-	result, err = authz.dashboardsWithVisibleAnnotations(context.Background(), query)
+	result, err = authz.dashboardsWithVisibleAnnotations(context.Background(), annotations.ItemQuery{
+		SignedInUser: user,
+		OrgID:        1,
+		Page:         1,
+		DashboardUID: "uid1",
+	})
 	assert.NoError(t, err)
 	// Should only return one dashboard
 	assert.Equal(t, map[string]int64{"uid1": 101}, result)
+	// Ensure SearchDashboards was called with correct query (including DashboardUID filter)
+	dashSvc.AssertCalled(t, "SearchDashboards", mock.Anything, queryWithDashboardUID)
 }
