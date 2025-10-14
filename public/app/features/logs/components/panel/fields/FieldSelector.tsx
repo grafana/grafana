@@ -1,25 +1,25 @@
 import { css } from '@emotion/css';
 import { Resizable, ResizeCallback } from 're-resizable';
-import { startTransition, useCallback, useState } from 'react';
+import { startTransition, useCallback, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { getDragStyles, useStyles2 } from '@grafana/ui';
+import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { useLogListContext } from '../LogListContext';
-import { LogListModel } from '../processing';
 
+import { FieldList } from './FieldList';
 import { FieldSearch } from './FieldSearch';
-import { LogsTableMultiSelect } from './LogsTableMultiSelect';
 
 interface LogListFieldSelectorProps {
   containerElement: HTMLDivElement;
-  logs: LogListModel[];
+  dataFrames: DataFrame[];
 }
 
 /**
  * FieldSelector wrapper for the LogList visualization.
  */
-export const LogListFieldSelector = ({ containerElement, logs }: LogListFieldSelectorProps) => {
+export const LogListFieldSelector = ({ containerElement, dataFrames }: LogListFieldSelectorProps) => {
   const [sidebarWidth, setSidebarWidth] = useState(220);
   const { onClickShowField, onClickHideField, setDisplayedFields } = useLogListContext();
 
@@ -32,10 +32,13 @@ export const LogListFieldSelector = ({ containerElement, logs }: LogListFieldSel
     }
   }, []);
 
+  const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
+
   if (!onClickShowField || !onClickHideField || !setDisplayedFields) {
     console.warn('Missing required props: onClickShowField, onClickHideField, setDisplayedFields');
     return null;
   }
+
 
   return (
     <Resizable
@@ -43,16 +46,28 @@ export const LogListFieldSelector = ({ containerElement, logs }: LogListFieldSel
         right: true,
       }}
       handleClasses={{ right: dragStyles.dragHandleVertical }}
-      defaultSize={{ width: sidebarWidth, height: containerElement.clientHeight }}
+      defaultSize={{ width: sidebarWidth }}
       onResize={getOnResize}
-    ></Resizable>
+    >
+      <FieldSelector fields={fields} hideField={onClickHideField} showField={onClickShowField} setFields={setDisplayedFields} />
+    </Resizable>
   );
 };
 
+interface FieldStats {
+  percentOfLinesWithLabel: number;
+}
+
+export interface FieldWithStats {
+  name: string;
+  stats: FieldStats;
+}
+
 export interface FieldSelectorProps {
-  showField: (key: string) => void;
+  fields: FieldWithStats[];
   hideField: (key: string) => void;
   setFields: (displayedFields: string[]) => void;
+  showField: (key: string) => void;
 }
 
 export const FieldSelector = ({ showField, hideField, setFields }: FieldSelectorProps) => {
@@ -68,7 +83,7 @@ export const FieldSelector = ({ showField, hideField, setFields }: FieldSelector
   return (
     <section className={styles.sidebar}>
       <FieldSearch value={searchValue} onChange={onSearchInputChange} />
-      <LogsTableMultiSelect
+      <FieldList
         reorderColumn={() => {}}
         toggleColumn={() => {}}
         filteredColumnsWithMeta={{}}
@@ -86,4 +101,24 @@ function getStyles(theme: GrafanaTheme2) {
       paddingRight: theme.spacing(3),
     }),
   };
+}
+
+function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
+  const cardinality = new Map<string, number>();
+  const allFields = dataFrames.flatMap((dataFrame) => {
+    const logsFrame = parseLogsFrame(dataFrame);
+
+    const labelValues = logsFrame?.getLogFrameLabelsAsLabels();
+    const labels = labelValues?.flatMap(labels => Object.keys(labels)) ?? [];
+
+    const fields = (logsFrame?.extraFields ?? [])
+      .filter((field) => !field?.config?.custom?.hidden)
+      .map((field) => field.name);
+
+    return [...labels, ...fields];
+  });
+
+  const labels = [...new Set(allFields)];
+  console.log(labels);
+  return [];
 }

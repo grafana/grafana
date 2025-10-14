@@ -31,6 +31,7 @@ import { LogListContextProvider, LogListState, useLogListContext } from './LogLi
 import { LogListControls } from './LogListControls';
 import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
 import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
+import { LogListFieldSelector } from './fields/FieldSelector';
 import { preProcessLogs, LogListModel, getLevelsFromLogs } from './processing';
 import { useKeyBindings } from './useKeyBindings';
 import { usePopoverMenu } from './usePopoverMenu';
@@ -40,6 +41,7 @@ export interface Props {
   app: CoreApp;
   containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
+  dataFrames: DataFrame[];
   detailsMode?: LogLineDetailsMode;
   displayedFields: string[];
   enableLogDetails: boolean;
@@ -114,6 +116,7 @@ type LogListComponentProps = Omit<
 export const LogList = ({
   app,
   displayedFields,
+  dataFrames,
   containerElement,
   logOptionsStorageKey,
   detailsMode,
@@ -210,6 +213,7 @@ export const LogList = ({
       <LogListSearchContextProvider>
         <LogListComponent
           containerElement={containerElement}
+          dataFrames={dataFrames}
           eventBus={eventBus}
           getFieldLinks={getFieldLinks}
           grammar={grammar}
@@ -229,6 +233,7 @@ export const LogList = ({
 
 const LogListComponent = ({
   containerElement,
+  dataFrames,
   eventBus = new EventBusSrv(),
   getFieldLinks,
   grammar,
@@ -524,6 +529,7 @@ const LogListComponent = ({
           )}
         </InfiniteScroll>
       </div>
+      <LogListFieldSelector containerElement={containerElement} dataFrames={dataFrames} />
     </div>
   );
 };

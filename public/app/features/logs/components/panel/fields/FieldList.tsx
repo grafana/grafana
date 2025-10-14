@@ -8,44 +8,7 @@ import { FieldNameMeta } from 'app/features/explore/Logs/LogsTableWrap';
 import { LogsTableActiveFields } from './LogsTableActiveFields';
 import { LogsTableAvailableFields } from './LogsTableAvailableFields';
 
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    sidebarWrap: css({
-      overflowY: 'scroll',
-      height: 'calc(100% - 50px)',
-      /* Hide scrollbar for Chrome, Safari, and Opera */
-      '&::-webkit-scrollbar': {
-        display: 'none',
-      },
-      /* Hide scrollbar for Firefox */
-      scrollbarWidth: 'none',
-    }),
-    columnHeaderButton: css({
-      appearance: 'none',
-      background: 'none',
-      border: 'none',
-      fontSize: theme.typography.pxToRem(11),
-    }),
-    columnHeader: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-      fontSize: theme.typography.h6.fontSize,
-      background: theme.colors.background.secondary,
-      position: 'sticky',
-      top: 0,
-      left: 0,
-      paddingTop: theme.spacing(0.75),
-      paddingRight: theme.spacing(0.75),
-      paddingBottom: theme.spacing(0.75),
-      paddingLeft: theme.spacing(1.5),
-      zIndex: 3,
-      marginBottom: theme.spacing(2),
-    }),
-  };
-}
-
-export const LogsTableMultiSelect = (props: {
+export const FieldList = (props: {
   toggleColumn: (columnName: string) => void;
   filteredColumnsWithMeta: Record<string, FieldNameMeta> | undefined;
   columnsWithMeta: Record<string, FieldNameMeta>;
@@ -85,3 +48,39 @@ export const LogsTableMultiSelect = (props: {
     </div>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    sidebarWrap: css({
+      overflowY: 'scroll',
+      height: 'calc(100% - 50px)',
+      /* Hide scrollbar for Chrome, Safari, and Opera */
+      '&::-webkit-scrollbar': {
+        display: 'none',
+      },
+      /* Hide scrollbar for Firefox */
+      scrollbarWidth: 'none',
+    }),
+    columnHeaderButton: css({
+      appearance: 'none',
+      background: 'none',
+      border: 'none',
+      fontSize: theme.typography.pxToRem(11),
+    }),
+    columnHeader: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      fontSize: theme.typography.h6.fontSize,
+      background: theme.colors.background.secondary,
+      position: 'sticky',
+      top: 0,
+      left: 0,
+      paddingTop: theme.spacing(0.75),
+      paddingRight: theme.spacing(0.75),
+      paddingBottom: theme.spacing(0.75),
+      paddingLeft: theme.spacing(1.5),
+      zIndex: 3,
+      marginBottom: theme.spacing(2),
+    }),
+  };
+}

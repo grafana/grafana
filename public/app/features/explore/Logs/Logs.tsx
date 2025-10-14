@@ -1134,6 +1134,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   app={CoreApp.Explore}
                   containerElement={logsContainerRef.current}
                   enableLogDetails={true}
+                  dataFrames={props.logsFrames ?? []}
                   dedupStrategy={dedupStrategy}
                   displayedFields={displayedFields}
                   filterLevels={filterLevels}

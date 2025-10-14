@@ -5,14 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, Input, useTheme2 } from '@grafana/ui';
 
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    searchWrap: css({
-      padding: `${theme.spacing(0.4)} 0 ${theme.spacing(0.4)} ${theme.spacing(0.4)}`,
-    }),
-  };
-}
-
 export function FieldSearch(props: { onChange: (e: React.FormEvent<HTMLInputElement>) => void; value: string }) {
   const theme = useTheme2();
 
@@ -27,4 +19,13 @@ export function FieldSearch(props: { onChange: (e: React.FormEvent<HTMLInputElem
       />
     </Field>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    searchWrap: css({
+      padding: `${theme.spacing(0.4)} 0 ${theme.spacing(0.4)} ${theme.spacing(0.4)}`,
+      marginBottom: theme.spacing(2),
+    }),
+  };
 }
