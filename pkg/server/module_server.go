@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/frontend"
+	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -45,8 +46,9 @@ func NewModule(opts Options,
 	tracer tracing.Tracer, // Ensures tracing is initialized
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
+	hooksService *hooks.HooksService,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, hooksService)
 	if err != nil {
 		return nil, err
 	}
@@ -68,6 +70,7 @@ func newModuleServer(opts Options,
 	promGatherer prometheus.Gatherer,
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
+	hooksService *hooks.HooksService,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -90,6 +93,7 @@ func newModuleServer(opts Options,
 		registerer:       reg,
 		license:          license,
 		moduleRegisterer: moduleRegisterer,
+		hooksService:     hooksService,
 	}
 
 	return s, nil
@@ -130,6 +134,8 @@ type ModuleServer struct {
 
 	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
 	moduleRegisterer ModuleRegisterer
+
+	hooksService *hooks.HooksService
 }
 
 // init initializes the server and its services.
@@ -201,7 +207,7 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
-		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license)
+		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license, s.hooksService)
 	})
 
 	m.RegisterModule(modules.OperatorServer, s.initOperatorServer)
