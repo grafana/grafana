@@ -9,7 +9,7 @@ include .bingo/Variables.mk
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.25.2
+GO_VERSION = 1.25.3
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
