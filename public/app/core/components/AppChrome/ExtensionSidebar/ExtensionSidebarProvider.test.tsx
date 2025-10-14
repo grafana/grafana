@@ -1,4 +1,4 @@
-import { render, screen, act, fireEvent } from '@testing-library/react';
+import { render, screen, act, fireEvent, waitFor } from '@testing-library/react';
 
 import { store, EventBusSrv, EventBus } from '@grafana/data';
 import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
@@ -396,7 +396,7 @@ describe('ExtensionSidebarProvider', () => {
     expect(screen.getByTestId('docked-component-id')).toHaveTextContent(expectedComponentId);
   });
 
-  it('should toggle sidebar closed when receiving ToggleExtensionSidebarEvent for currently open component', () => {
+  it('should toggle sidebar closed when receiving ToggleExtensionSidebarEvent for currently open component', async () => {
     const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
 
     const TestComponentWithProps = () => {
@@ -417,12 +417,15 @@ describe('ExtensionSidebarProvider', () => {
     );
 
     // First open the sidebar manually
-    act(() => {
-      screen.getByText('Open Sidebar').click();
+    await act(async () => {
+      fireEvent.click(screen.getByText('Open Sidebar'));
     });
 
-    expect(screen.getByTestId('is-open')).toHaveTextContent('true');
-    expect(screen.getByTestId('docked-component-id')).toHaveTextContent(componentId);
+    // Wait for the sidebar to open
+    await waitFor(() => {
+      expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+      expect(screen.getByTestId('docked-component-id')).toHaveTextContent(componentId);
+    });
 
     // Find the ToggleExtensionSidebarEvent subscriber outside of act()
     const toggleCalls = subscribeSpy.mock.calls.filter((call) => call[0] === ToggleExtensionSidebarEvent);
@@ -432,8 +435,7 @@ describe('ExtensionSidebarProvider', () => {
     const [, subscriberFn] = toggleEventSubscriberCall;
 
     // Toggle the sidebar closed
-    act(() => {
-      // Call the toggle event handler with the same component
+    await act(async () => {
       subscriberFn(
         new ToggleExtensionSidebarEvent({
           pluginId: mockPluginMeta.pluginId,
@@ -442,8 +444,11 @@ describe('ExtensionSidebarProvider', () => {
       );
     });
 
-    expect(screen.getByTestId('is-open')).toHaveTextContent('false');
-    expect(screen.getByTestId('docked-component-id')).toHaveTextContent('undefined');
+    // Wait for the sidebar to close
+    await waitFor(() => {
+      expect(screen.getByTestId('is-open')).toHaveTextContent('false');
+      expect(screen.getByTestId('docked-component-id')).toHaveTextContent('undefined');
+    });
   });
 
   it('should toggle to different component when receiving ToggleExtensionSidebarEvent for different component', async () => {
