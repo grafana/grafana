@@ -486,11 +486,6 @@
         "message-no-metrics-found": "No se han encontrado métricas en la fuente de datos.",
         "name": "Nombre",
         "type": "Tipo"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "El análisis de la consulta es ambiguo."
-        }
       }
     }
   }
