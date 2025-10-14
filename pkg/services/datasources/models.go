@@ -85,23 +85,41 @@ func (ds *DataSource) IsSecureSocksDSProxyEnabled() bool {
 }
 
 type TeamHTTPHeadersJSONData struct {
-	TeamHTTPHeaders TeamHTTPHeaders `json:"teamHttpHeaders"`
+	TeamHTTPHeaders DataSourceAccessRules `json:"teamHttpHeaders"`
 }
 
-type TeamHTTPHeaders struct {
-	Headers        TeamHeaders `json:"headers"`
-	RestrictAccess bool        `json:"restrictAccess"`
+// DataSourceAccessRules defines access control rules per team
+type DataSourceAccessRules struct {
+	Headers TeamAccessRules `json:"headers"`
 }
 
-type TeamHeaders map[string][]TeamHTTPHeader
+// TeamAccessRules is a map of teamID to a list of TeamHTTPHeaders
+// the key is the teamID
+// the value is a list of TeamHTTPHeaders
+// the TeamHTTPHeaders is a list of TeamHTTPHeader
+// the TeamHTTPHeader is a header that is used to restrict access to the data source
+// the header is the header name
+// the LBACRule is the rule that is used to restrict access to the data source
+// currently <tenantid>:<promqlrule>
+/*
 
-type TeamHTTPHeader struct {
-	Header string `json:"header"`
-	Value  string `json:"value"`
+ */
+type TeamAccessRules map[string][]AccessRule
+
+// a header is composed of a key:value. the key is the headername X-Prom-Label-Policy
+// a header value is composed of a tenantID:rule. the tenantID is the tenantID of the tenant that the rule is for.
+// the value is taken from https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/#acl
+// and each rule is
+
+type AccessRule struct {
+	// the LBACRule is the rule that is used to restrict access to the data source
+	// currently <tenantid>:<promqlrule>
+	// LBAC rule (e.g., "tenant:{ label=value }")
+	Value string `json:"value"`
 }
 
-func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
-	teamHTTPHeaders := &TeamHTTPHeaders{}
+func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*DataSourceAccessRules, error) {
+	teamHTTPHeaders := &DataSourceAccessRules{}
 	if jsonData == nil {
 		return nil, nil
 	}
@@ -117,16 +135,13 @@ func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
 	if err != nil {
 		return nil, err
 	}
-	for teamID, headers := range teamHTTPHeaders.Headers {
+	for teamID, rules := range teamHTTPHeaders.Headers {
 		if teamID == "" {
 			return nil, errors.New("teamID is missing or empty in teamHttpHeaders")
 		}
 
-		for _, header := range headers {
-			if header.Header == "" {
-				return nil, errors.New("header name is missing or empty")
-			}
-			if header.Value == "" {
+		for _, rule := range rules {
+			if rule.Value == "" {
 				return nil, errors.New("header value is missing or empty")
 			}
 		}

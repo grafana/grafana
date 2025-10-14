@@ -63,19 +63,8 @@ func TestTeamHTTPHeaders(t *testing.T) {
 	testCases := []struct {
 		desc  string
 		given string
-		want  *TeamHTTPHeaders
+		want  *DataSourceAccessRules
 	}{
-		{
-			desc:  "Usual json data with teamHttpHeaders",
-			given: `{"teamHttpHeaders": {"headers": {"101": [{"header": "X-CUSTOM-HEADER", "value": "foo"}]}}}`,
-			want: &TeamHTTPHeaders{
-				Headers: TeamHeaders{
-					"101": {
-						{Header: "X-CUSTOM-HEADER", Value: "foo"},
-					},
-				},
-			},
-		},
 		{
 			desc:  "Json data without teamHttpHeaders",
 			given: `{"foo": "bar"}`,

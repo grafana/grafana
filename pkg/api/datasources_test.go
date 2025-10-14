@@ -240,12 +240,12 @@ func TestAddDataSourceTeamHTTPHeaders(t *testing.T) {
 	hs.Cfg.AuthProxy.Enabled = true
 
 	jsonData := simplejson.New()
-	jsonData.Set("teamHttpHeaders", datasources.TeamHTTPHeaders{
-		Headers: datasources.TeamHeaders{
-			tenantID: []datasources.TeamHTTPHeader{
+	jsonData.Set("teamHttpHeaders", datasources.DataSourceAccessRules{
+		Headers: datasources.TeamAccessRules{
+			tenantID: []datasources.AccessRule{
 				{
-					Header: "Authorization",
-					Value:  "foo!=bar",
+					// Header:   "Authorization",
+					Value: "foo!=bar",
 				},
 			},
 		},
