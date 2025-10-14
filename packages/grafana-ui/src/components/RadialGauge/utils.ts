@@ -59,8 +59,8 @@ export function calculateDimensions(
   let maxRadius = Math.min(maxRadiusH, maxRadiusV);
 
   const barWidth = Math.max(barWidthFactor * (maxRadius / 3), 2);
-  const thresholdsToBarWidth = 1 / 5;
-  const thresholdsBarWidth = thresholdBar ? Math.min(Math.max(barWidth * thresholdsToBarWidth, 4), 12) : 0;
+  const thresholdsToBarWidth = 0.2 * Math.pow(barWidth, 0.92);
+  const thresholdsBarWidth = thresholdBar ? Math.min(Math.max(thresholdsToBarWidth, 4), 12) : 0;
   const thresholdsBarSpacing = Math.min(Math.max(thresholdsBarWidth / 2, 2), 12);
 
   let outerRadius = maxRadius;

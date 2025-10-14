@@ -86,7 +86,7 @@ export function RadialText({
     theme.typography.body.fontWeight
   );
 
-  const unitFontSize = Math.max(valueFontSize * 0.7, 12);
+  const unitFontSize = Math.max(valueFontSize * 0.7, 5);
   const valueHeight = valueFontSize * lineHeight;
   const nameHeight = nameFontSize * lineHeight;
 

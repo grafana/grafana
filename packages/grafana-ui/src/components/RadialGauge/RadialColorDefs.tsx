@@ -79,7 +79,7 @@ export class RadialColorDefs {
           id={id}
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0%" stopColor={tinycolor(baseColor).lighten(15).toString()} stopOpacity={1} />
+          <stop offset="0%" stopColor={tinycolor(baseColor).spin(20).lighten(10).toString()} stopOpacity={1} />
           <stop offset="60%" stopColor={color1.toString()} stopOpacity={1} />
           <stop offset="100%" stopColor={color1.toString()} stopOpacity={1} />
         </radialGradient>

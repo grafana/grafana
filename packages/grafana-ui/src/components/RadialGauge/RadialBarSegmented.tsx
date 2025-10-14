@@ -33,7 +33,7 @@ export function RadialBarSegmented({
   const min = fieldDisplay.field.min ?? 0;
   const max = fieldDisplay.field.max ?? 100;
   const value = fieldDisplay.display.numeric;
-  const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing);
+  const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing, segmentCount, angleRange);
   const segmentArcLengthDeg = angleRange / segmentCountAdjusted - angleBetweenSegments;
 
   for (let i = 0; i < segmentCountAdjusted; i++) {
@@ -62,11 +62,10 @@ export function RadialBarSegmented({
   );
 }
 
-export function getAngleBetweenSegments(segmentSpacing: number) {
+export function getAngleBetweenSegments(segmentSpacing: number, segmentCount: number, range: number) {
   // Max spacing is 8 degrees between segments
   // Changing this constant could be considered a breaking change
-  const maxAngleBetweenSegments = 8;
-
+  const maxAngleBetweenSegments = Math.max(range / 4 / segmentCount, 2);
   return segmentSpacing * maxAngleBetweenSegments;
 }
 
@@ -76,7 +75,7 @@ function getOptimalSegmentCount(
   segmentCount: number,
   range: number
 ) {
-  const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing);
+  const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing, segmentCount, range);
 
   const innerRadius = dimensions.radius - dimensions.barWidth / 2;
   const circumference = Math.PI * innerRadius * 2 * (range / 360);

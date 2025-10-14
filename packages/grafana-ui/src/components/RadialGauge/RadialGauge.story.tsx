@@ -42,11 +42,11 @@ const meta: Meta<StoryProps> = {
     width: 200,
     height: 200,
     shape: 'circle',
-    gradient: 'auto',
+    gradient: 'none',
     seriesCount: 1,
     segmentCount: 0,
     segmentSpacing: 0.4,
-    roundedBars: true,
+    roundedBars: false,
     thresholdsBar: false,
     colorScheme: FieldColorModeId.Thresholds,
     decimals: 0,
@@ -83,14 +83,10 @@ export const Basic: StoryFn<StoryProps> = (args) => {
   const colors = ['blue', 'green', 'red', 'purple', 'orange', 'yellow', 'dark-red', 'dark-blue', 'dark-green'];
 
   for (let i = 0; i < args.seriesCount; i++) {
+    const color = args.colorScheme === FieldColorModeId.Fixed ? colors[i % colors.length] : undefined;
+
     visualizations.push(
-      <RadialGaugeExample
-        {...args}
-        key={i}
-        color={colors[i % colors.length]}
-        seriesCount={0}
-        vizCount={args.seriesCount}
-      />
+      <RadialGaugeExample {...args} key={i} color={color} seriesCount={0} vizCount={args.seriesCount} />
     );
   }
 
@@ -111,34 +107,26 @@ export const Examples: StoryFn = (args) => {
         <RadialGaugeExample seriesName="0.6" value={60} color="red" barWidthFactor={0.6} />
         <RadialGaugeExample seriesName="0.8" value={60} color="purple" barWidthFactor={0.8} />
       </Stack>
-
-      <div>Gradient: Hue</div>
+      <div>Effects</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialGaugeExample value={30} color="blue" />
-        <RadialGaugeExample value={50} color="green" />
-        <RadialGaugeExample value={60} color="red" />
-        <RadialGaugeExample value={90} color="purple" />
+        <RadialGaugeExample value={30} spotlight glowBar glowCenter color="blue" gradient="auto" />
+        <RadialGaugeExample value={40} spotlight glowBar glowCenter color="green" gradient="auto" />
+        <RadialGaugeExample value={60} spotlight glowBar glowCenter color="red" gradient="auto" roundedBars />
+        <RadialGaugeExample value={70} spotlight glowBar glowCenter color="purple" gradient="auto" roundedBars />
       </Stack>
-      <div>Spotlight + glow + centerGlow</div>
-      <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialGaugeExample value={30} spotlight glowBar glowCenter color="blue" />
-        <RadialGaugeExample value={40} spotlight glowBar glowCenter color="green" />
-        <RadialGaugeExample value={60} spotlight glowBar glowCenter color="red" />
-        <RadialGaugeExample value={70} spotlight glowBar glowCenter color="purple" />
-      </Stack>
-      <div>Gradient: Scheme, startAngle: 240° endAngle: 120°</div>
+      <div>Shape: Gauge & color scale</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
         <RadialGaugeExample
-          colorMode={FieldColorModeId.ContinuousGrYlRd}
           value={40}
           shape="gauge"
-          roundedBars={false}
-          glowBar={true}
+          gradient="auto"
+          colorScheme={FieldColorModeId.ContinuousGrYlRd}
           glowCenter={true}
           barWidthFactor={0.6}
         />
         <RadialGaugeExample
-          colorMode={FieldColorModeId.ContinuousGrYlRd}
+          colorScheme={FieldColorModeId.ContinuousGrYlRd}
+          gradient="auto"
           value={90}
           barWidthFactor={0.6}
           roundedBars={false}
@@ -154,32 +142,50 @@ export const Examples: StoryFn = (args) => {
           color="blue"
           shape="gauge"
           {...args}
+          gradient="auto"
           sparkline={true}
           spotlight
           glowBar={true}
           glowCenter={true}
+          barWidthFactor={0.2}
         />
         <RadialGaugeExample
           value={30}
           color="green"
           shape="gauge"
           {...args}
+          gradient="auto"
           sparkline={true}
           spotlight
           glowBar={true}
           glowCenter={true}
-          barWidthFactor={0.4}
+          barWidthFactor={0.8}
         />
         <RadialGaugeExample
           value={50}
           color="red"
-          shape="gauge"
           {...args}
+          shape="gauge"
+          width={250}
+          gradient="auto"
           sparkline={true}
           spotlight
           glowBar={true}
           glowCenter={true}
-          barWidthFactor={0.5}
+          barWidthFactor={0.2}
+        />
+        <RadialGaugeExample
+          value={50}
+          color="red"
+          {...args}
+          width={250}
+          shape="gauge"
+          gradient="auto"
+          sparkline={true}
+          spotlight
+          glowBar={true}
+          glowCenter={true}
+          barWidthFactor={0.8}
         />
       </Stack>
       <div>Segmented</div>
@@ -188,8 +194,7 @@ export const Examples: StoryFn = (args) => {
           value={70}
           color="green"
           {...args}
-          spotlight
-          glowBar={true}
+          gradient="auto"
           glowCenter={true}
           segmentCount={8}
           barWidthFactor={0.4}
@@ -198,9 +203,8 @@ export const Examples: StoryFn = (args) => {
           value={30}
           color="green"
           {...args}
+          gradient="auto"
           segmentCount={20}
-          spotlight
-          glowBar={true}
           glowCenter={true}
           barWidthFactor={0.5}
         />
@@ -208,12 +212,11 @@ export const Examples: StoryFn = (args) => {
           value={50}
           color="red"
           {...args}
+          gradient="auto"
           segmentCount={40}
-          spotlight
-          glowBar={true}
           glowCenter={true}
-          barWidthFactor={0.4}
-          segmentSpacing={0.2}
+          barWidthFactor={0.7}
+          segmentSpacing={0.4}
         />
       </Stack>
       <div>Segmented color scale</div>
@@ -221,7 +224,7 @@ export const Examples: StoryFn = (args) => {
         <RadialGaugeExample
           value={70}
           {...args}
-          colorMode={FieldColorModeId.ContinuousGrYlRd}
+          colorScheme={FieldColorModeId.ContinuousGrYlRd}
           spotlight
           glowBar={true}
           glowCenter={true}
@@ -231,7 +234,8 @@ export const Examples: StoryFn = (args) => {
         <RadialGaugeExample
           value={70}
           {...args}
-          colorMode={FieldColorModeId.ContinuousGrYlRd}
+          width={250}
+          colorScheme={FieldColorModeId.ContinuousGrYlRd}
           spotlight
           shape="gauge"
           glowBar={true}
@@ -245,7 +249,7 @@ export const Examples: StoryFn = (args) => {
         <RadialGaugeExample
           value={70}
           {...args}
-          colorMode={FieldColorModeId.Thresholds}
+          colorScheme={FieldColorModeId.Thresholds}
           thresholdsBar={true}
           roundedBars={false}
           spotlight
@@ -255,7 +259,8 @@ export const Examples: StoryFn = (args) => {
         <RadialGaugeExample
           value={70}
           {...args}
-          colorMode={FieldColorModeId.Thresholds}
+          width={250}
+          colorScheme={FieldColorModeId.Thresholds}
           glowCenter={true}
           thresholdsBar={true}
           roundedBars={false}
@@ -265,7 +270,7 @@ export const Examples: StoryFn = (args) => {
         <RadialGaugeExample
           value={70}
           {...args}
-          colorMode={FieldColorModeId.Thresholds}
+          colorScheme={FieldColorModeId.Thresholds}
           glowCenter={true}
           thresholdsBar={true}
           roundedBars={false}
@@ -300,7 +305,7 @@ export const Temp: StoryFn<StoryProps> = (args) => {
     <Stack direction={'column'} gap={3}>
       <RadialGaugeExample
         {...args}
-        colorMode={FieldColorModeId.ContinuousReds}
+        colorScheme={FieldColorModeId.ContinuousReds}
         color="red"
         shape="gauge"
         roundedBars={false}
@@ -312,7 +317,6 @@ export const Temp: StoryFn<StoryProps> = (args) => {
 };
 
 interface ExampleProps {
-  colorMode?: FieldColorModeId;
   gradient?: RadialGradientMode;
   color?: string;
   seriesName?: string;
@@ -340,7 +344,7 @@ interface ExampleProps {
 
 export function RadialGaugeExample({
   gradient = 'none',
-  color = 'blue',
+  color,
   seriesName = 'Server A',
   value = 70,
   shape = 'circle',
@@ -358,12 +362,16 @@ export function RadialGaugeExample({
   textMode = 'auto',
   segmentCount = 0,
   segmentSpacing = 0.1,
-  roundedBars = true,
+  roundedBars = false,
   thresholdsBar = false,
   colorScheme = FieldColorModeId.Thresholds,
   decimals = 0,
 }: ExampleProps) {
   const theme = useTheme2();
+
+  if (color) {
+    colorScheme = FieldColorModeId.Fixed;
+  }
 
   const frame = toDataFrame({
     name: 'TestData',
@@ -387,7 +395,7 @@ export function RadialGaugeExample({
           max: max,
           unit: 'percent',
           decimals: decimals,
-          color: { mode: colorScheme, fixedColor: theme.visualization.getColorByName(color) },
+          color: { mode: colorScheme, fixedColor: color ? theme.visualization.getColorByName(color) : undefined },
           thresholds: {
             mode: 'absolute',
             steps: [
