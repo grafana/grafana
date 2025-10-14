@@ -214,7 +214,7 @@ func (r createTeamQuery) Validate() error {
 }
 
 func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd CreateTeamCommand) (*CreateTeamResult, error) {
-	now := time.Now().UTC().Truncate(time.Second)
+	now := time.Now().UTC()
 
 	cmd.Created = NewDBTime(now)
 	cmd.Updated = NewDBTime(now)
@@ -300,7 +300,7 @@ func (r updateTeamQuery) Validate() error {
 }
 
 func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateTeamCommand) (*UpdateTeamResult, error) {
-	now := time.Now().UTC().Truncate(time.Second)
+	now := time.Now().UTC()
 
 	cmd.Updated = NewDBTime(now)
 
@@ -563,7 +563,7 @@ func (r createTeamMemberQuery) Validate() error {
 }
 
 func (s *legacySQLStore) CreateTeamMember(ctx context.Context, ns claims.NamespaceInfo, cmd CreateTeamMemberCommand) (*CreateTeamMemberResult, error) {
-	now := time.Now().UTC().Truncate(time.Second)
+	now := time.Now().UTC()
 	cmd.Created = NewDBTime(now)
 	cmd.Updated = NewDBTime(now)
 	cmd.OrgID = ns.OrgID
