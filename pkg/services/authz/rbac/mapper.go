@@ -35,8 +35,8 @@ type translation struct {
 	actionSetMapping  map[string][]string
 	folderSupport     bool
 	skipScopeOnCreate bool
-		// use this option if you need to limit access to users that can access all resources 
-		useWildcardScope  bool
+	// use this option if you need to limit access to users that can access all resources 
+	useWildcardScope  bool
 }
 
 func (t translation) Action(verb string) (string, bool) {
