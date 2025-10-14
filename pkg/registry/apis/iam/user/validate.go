@@ -8,7 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/k8s"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -37,17 +36,6 @@ func ValidateOnCreate(ctx context.Context, userSearchClient resourcepb.ResourceI
 		return err
 	}
 
-	// generator, err := clientGenerator(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// userClient, err := iamv0alpha1.NewUserClientFromGenerator(generator)
-
-	// if err := validateEmailLogin(ctx, userClient, requester.GetNamespace(), obj.Spec.Login, obj.Spec.Email); err != nil {
-	// 	return err
-	// }
-
 	if err := validateEmailLogin(ctx, userSearchClient, requester.GetNamespace(), obj.Spec.Login, obj.Spec.Email); err != nil {
 		return err
 	}
@@ -55,7 +43,7 @@ func ValidateOnCreate(ctx context.Context, userSearchClient resourcepb.ResourceI
 	return nil
 }
 
-func ValidateOnUpdate(ctx context.Context, clientGenerator func(ctx context.Context) (*k8s.ClientRegistry, error), oldObj, newObj *iamv0alpha1.User) error {
+func ValidateOnUpdate(ctx context.Context, oldObj, newObj *iamv0alpha1.User) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -118,28 +106,6 @@ func validateRole(obj *iamv0alpha1.User) error {
 
 	return nil
 }
-
-// func validateEmailLogin(ctx context.Context, userClient *iamv0alpha1.UserClient, namespace, login, email string) error {
-// 	users, err := userClient.ListAll(ctx, namespace, unistore.ListOptions{})
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	for _, user := range users.Items {
-// 		if user.Spec.Login == login {
-// 			return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
-// 				login,
-// 				fmt.Errorf("login '%s' is already taken", login))
-// 		}
-// 		if user.Spec.Email == email {
-// 			return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
-// 				email,
-// 				fmt.Errorf("email '%s' is already taken", email))
-// 		}
-// 	}
-
-// 	return nil
-// }
 
 func validateEmailLogin(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, login, email string) error {
 	userGvr := iamv0alpha1.UserResourceInfo.GroupResource()

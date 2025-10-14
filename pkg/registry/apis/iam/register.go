@@ -20,7 +20,6 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/k8s"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -36,7 +35,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -58,7 +56,6 @@ func RegisterAPIService(
 	coreRolesStorage CoreRoleStorageBackend,
 	rolesStorage RoleStorageBackend,
 	roleBindingsStorage RoleBindingStorageBackend,
-	restConfigProvider apiserver.RestConfigProvider,
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
 ) (*IdentityAccessManagementAPIBuilder, error) {
@@ -86,13 +83,6 @@ func RegisterAPIService(
 		dual:                         dual,
 		unified:                      unified,
 		userSearchClient:             resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), unified, nil, features),
-		clientGenerator: func(ctx context.Context) (*k8s.ClientRegistry, error) {
-			kubeConfig, err := restConfigProvider.GetRestConfig(ctx)
-			if err != nil {
-				return nil, err
-			}
-			return k8s.NewClientRegistry(*kubeConfig, k8s.ClientConfig{}), nil
-		},
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -374,7 +364,7 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			if !ok {
 				return fmt.Errorf("expected old object to be a User, got %T", oldUserObj)
 			}
-			return user.ValidateOnUpdate(ctx, b.clientGenerator, oldUserObj, typedObj)
+			return user.ValidateOnUpdate(ctx, oldUserObj, typedObj)
 		case *iamv0.ResourcePermission:
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
 		case *iamv0.Team:

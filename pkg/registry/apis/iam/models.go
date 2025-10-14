@@ -1,10 +1,7 @@
 package iam
 
 import (
-	"context"
-
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -51,9 +48,6 @@ type IdentityAccessManagementAPIBuilder struct {
 	accessClient types.AccessClient
 
 	reg prometheus.Registerer
-
-	// Client registry to query UniStore
-	clientGenerator func(ctx context.Context) (*k8s.ClientRegistry, error)
 
 	dual             dualwrite.Service
 	unified          resource.ResourceClient
