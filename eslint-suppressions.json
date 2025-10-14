@@ -2189,19 +2189,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/editors/QueryVariableEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/sharing/ShareButton/share-externally/EmailShare/ConfigEmailSharing/ConfigEmailSharing.tsx": {
     "no-restricted-syntax": {
       "count": 1
