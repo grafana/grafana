@@ -1,6 +1,3 @@
-import { css } from '@emotion/css';
-
-import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AuthMethod } from '@grafana/plugin-ui';
 import { ComboboxOption } from '@grafana/ui';

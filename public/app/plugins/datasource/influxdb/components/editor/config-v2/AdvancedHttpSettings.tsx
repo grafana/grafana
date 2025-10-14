@@ -2,18 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
-import {
-  Box,
-  InlineField,
-  InlineSwitch,
-  Field,
-  TagsInput,
-  Input,
-  CustomHeadersSettings,
-  useStyles2,
-  Stack,
-  Button,
-} from '@grafana/ui';
+import { Box, Field, TagsInput, Input, CustomHeadersSettings, useStyles2, Stack, Button } from '@grafana/ui';
 
 import { InfluxOptions } from '../../../types';
 

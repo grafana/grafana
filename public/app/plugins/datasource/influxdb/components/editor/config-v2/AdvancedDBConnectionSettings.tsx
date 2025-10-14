@@ -1,14 +1,12 @@
-import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import {
-  GrafanaTheme2,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionChecked,
   onUpdateDatasourceJsonDataOptionSelect,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { InlineField, Combobox, InlineSwitch, Input, Space, Checkbox, Field, Button, Box } from '@grafana/ui';
+import { Combobox, Input, Space, Checkbox, Field, Button, Box } from '@grafana/ui';
 
 import { InfluxVersion } from '../../../types';
 
@@ -135,26 +133,4 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
       )}
     </>
   );
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    label: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      flexShrink: 0,
-      padding: theme.spacing(0, 1),
-      fontWeight: theme.typography.fontWeightMedium,
-      fontSize: theme.typography.size.md,
-      backgroundColor: theme.colors.background.secondary,
-      height: theme.spacing(theme.components.height.md),
-      lineHeight: theme.spacing(theme.components.height.md),
-      marginRight: theme.spacing(0.5),
-      borderRadius: theme.shape.radius.default,
-      border: 'none',
-      width: '220px',
-      color: theme.colors.text.primary,
-    }),
-  };
 };
