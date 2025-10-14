@@ -49,7 +49,7 @@ func (j *JaegerClient) GrpcSearch(query *JaegerQuery, start, end time.Time) (*da
 	queryParams := map[string]string{
 		"query.service_name":   query.Service,
 		"query.operation_name": query.Operation,
-		"query.attributes":     queryTags,
+		"query.attributes":     queryTags, // TODO: no native support of attributes/tags figure out if we want to do it in post processing.
 		"query.duration_min":   query.MinDuration,
 		"query.duration_max":   query.MaxDuration,
 	}
