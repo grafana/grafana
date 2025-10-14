@@ -191,7 +191,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
-	teamBindingLegacyStore := team.NewLegacyBindingStore(b.store, b.enableAuthnMutation)
+	teamBindingLegacyStore := team.NewLegacyBindingStore(b.store, enableAuthnMutation)
 	storage[teamBindingResource.StoragePath()] = teamBindingLegacyStore
 
 	if b.enableDualWriter {
