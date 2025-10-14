@@ -178,21 +178,9 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         currentComponentMeta?.componentTitle === event.payload.componentTitle;
 
       if (isCurrentlyOpen) {
-        setDockedComponentId(undefined);
+        closeSidebarHandler();
       } else {
-        if (
-          event.payload.pluginId &&
-          event.payload.componentTitle &&
-          PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(event.payload.pluginId) &&
-          availableComponents
-            .get(event.payload.pluginId)
-            ?.addedComponents.some((component) => component.title === event.payload.componentTitle)
-        ) {
-          setDockedComponentWithProps(
-            JSON.stringify({ pluginId: event.payload.pluginId, componentTitle: event.payload.componentTitle }),
-            event.payload.props
-          );
-        }
+        openSidebarHandler(event);
       }
     };
 

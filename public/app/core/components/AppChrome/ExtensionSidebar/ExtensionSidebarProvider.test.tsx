@@ -1,4 +1,5 @@
-import { render, screen, act, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { store, EventBusSrv, EventBus } from '@grafana/data';
 import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
@@ -418,7 +419,7 @@ describe('ExtensionSidebarProvider', () => {
 
     // First open the sidebar manually
     await act(async () => {
-      fireEvent.click(screen.getByText('Open Sidebar'));
+      userEvent.click(screen.getByText('Open Sidebar'));
     });
 
     // Wait for the sidebar to open
