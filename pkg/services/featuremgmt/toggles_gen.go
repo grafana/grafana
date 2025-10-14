@@ -291,6 +291,10 @@ const (
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
 	FlagQueryService = "queryService"
 
+	// FlagQueryServiceWithConnections
+	// Adds datasource connections to the query service
+	FlagQueryServiceWithConnections = "queryServiceWithConnections"
+
 	// FlagQueryServiceRewrite
 	// Rewrite requests targeting /ds/query to the query service
 	FlagQueryServiceRewrite = "queryServiceRewrite"
@@ -354,6 +358,10 @@ const (
 	// FlagDashboardUndoRedo
 	// Enables undo/redo in dynamic dashboards
 	FlagDashboardUndoRedo = "dashboardUndoRedo"
+
+	// FlagUnlimitedLayoutsNesting
+	// Enables unlimited dashboard panel grouping
+	FlagUnlimitedLayoutsNesting = "unlimitedLayoutsNesting"
 
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
@@ -438,10 +446,6 @@ const (
 	// FlagUseMultipleScopeNodesEndpoint
 	// Makes the frontend use the &#39;names&#39; param for fetching multiple scope nodes at once
 	FlagUseMultipleScopeNodesEndpoint = "useMultipleScopeNodesEndpoint"
-
-	// FlagPromQLScope
-	// In-development feature that will allow injection of labels into prometheus queries.
-	FlagPromQLScope = "promQLScope"
 
 	// FlagLogQLScope
 	// In-development feature that will allow injection of labels into loki queries.
@@ -930,6 +934,10 @@ const (
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
 
+	// FlagKubernetesAuthzZanzanaSync
+	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
+	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
+
 	// FlagKubernetesAuthnMutation
 	// Enables create, delete, and update mutations for resources owned by IAM identity
 	FlagKubernetesAuthnMutation = "kubernetesAuthnMutation"
@@ -982,6 +990,10 @@ const (
 	// Set this to true to enable all app chrome extensions registered by plugins.
 	FlagEnableAppChromeExtensions = "enableAppChromeExtensions"
 
+	// FlagEnableDashboardEmptyExtensions
+	// Set this to true to enable all dashboard empty state extensions registered by plugins.
+	FlagEnableDashboardEmptyExtensions = "enableDashboardEmptyExtensions"
+
 	// FlagFoldersAppPlatformAPI
 	// Enables use of app platform API for folders
 	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
@@ -997,10 +1009,6 @@ const (
 	// FlagAlertingNotificationHistory
 	// Enables the notification history feature
 	FlagAlertingNotificationHistory = "alertingNotificationHistory"
-
-	// FlagPluginAssetProvider
-	// Allows decoupled core plugins to load from the Grafana CDN
-	FlagPluginAssetProvider = "pluginAssetProvider"
 
 	// FlagUnifiedStorageSearchDualReaderEnabled
 	// Enable dual reader for unified storage search

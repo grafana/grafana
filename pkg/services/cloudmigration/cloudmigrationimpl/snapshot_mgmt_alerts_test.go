@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -99,7 +98,7 @@ func TestGetContactPoints(t *testing.T) {
 			Permissions: map[int64]map[string][]string{
 				1: {
 					accesscontrol.ActionAlertingNotificationsRead:    nil,
-					accesscontrol.ActionAlertingReceiversReadSecrets: {ac.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversReadSecrets: {models.ScopeReceiversAll},
 				},
 			},
 		}

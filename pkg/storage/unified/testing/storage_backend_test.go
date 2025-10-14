@@ -30,6 +30,8 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 			// TODO: fix these tests and remove this skip
 			TestBlobSupport:       true,
 			TestListModifiedSince: true,
+			// Badger does not support bulk import yet.
+			TestGetResourceLastImportTime: true,
 		},
 	})
 }
