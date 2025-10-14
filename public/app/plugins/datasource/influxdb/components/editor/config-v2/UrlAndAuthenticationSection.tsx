@@ -166,19 +166,10 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       >
         <Text color="secondary">
           Enter the URL of your InfluxDB instance, then select your product and query language. This will determine the
-          available settings and authentication methods in the next steps. If you are unsure of your InfluxDB product,
-          use{' '}
-          <TextLink
-            href="https://docs.influxdata.com/influxdb3/enterprise/visualize-data/grafana/?section=influxdb3%252Fenterprise%252Fvisualize-data&detection_method=url_analysis"
-            external
-          >
-            product detection
-          </TextLink>{' '}
-          to identify it.
+          available settings and authentication methods in the next steps.
         </Text>
-
-        <Box direction="column" gap={2} marginTop={3}>
-          <Field label={<div style={{ marginBottom: '5px' }}>URL *</div>} noMargin required>
+        <Box direction="column" gap={5} marginTop={3}>
+          <Field label="URL" noMargin required>
             <Input
               data-testid="influxdb-v2-config-url-input"
               placeholder="example: http://localhost:8086/"
@@ -190,11 +181,29 @@ export const UrlAndAuthenticationSection = (props: Props) => {
               }}
             />
           </Field>
-
           <Box marginTop={2}>
-            <Stack direction="row" gap={2}>
-              <Box flex={1}>
-                <Field label={<div style={{ marginBottom: '5px' }}>Product *</div>} noMargin required>
+            <Stack direction="row" gap={2} wrap="wrap" width="100%">
+              <div style={{ width: "50%" }}>
+                <Field
+                  label="Product"
+                  description={
+                    <div style={{ display: 'flex', alignItems: 'center', height: '18px' }}>
+                      <Text color="secondary">
+                        Use{' '}
+                        <TextLink
+                          href="https://docs.influxdata.com/influxdb3/enterprise/visualize-data/grafana/?section=influxdb3%252Fenterprise%252Fvisualize-data&detection_method=url_analysis"
+                          variant="bodySmall"
+                          external
+                        >
+                          InfluxDB detection
+                        </TextLink>{' '}
+                        to identify the product
+                      </Text>
+                    </div>
+                  }
+                  noMargin
+                  required
+                >
                   <Combobox
                     data-testid="influxdb-v2-config-product-select"
                     value={options.jsonData.product}
@@ -202,9 +211,14 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                     onChange={onProductChange}
                   />
                 </Field>
-              </Box>
-              <Box flex={1}>
-                <Field label={<div style={{ marginBottom: '5px' }}>Query language *</div>} noMargin>
+              </div>
+              <div style={{ width: "50%" }}>
+                <Field
+                  label="Query language"
+                  description={<div style={{ display: 'flex', alignItems: 'center', height: '18px'}}>The query language depends on product selection</div>}
+                  noMargin
+                  required
+                >
                   <Combobox
                     data-testid="influxdb-v2-config-query-language-select"
                     value={options.jsonData.product !== '' ? options.jsonData.version : ''}
@@ -212,7 +226,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                     onChange={onQueryLanguageChange}
                   />
                 </Field>
-              </Box>
+              </div>
             </Stack>
           </Box>
 
