@@ -89,8 +89,7 @@ type TeamHTTPHeadersJSONData struct {
 }
 
 type TeamHTTPHeaders struct {
-	Headers        TeamHeaders `json:"headers"`
-	RestrictAccess bool        `json:"restrictAccess"`
+	Headers TeamHeaders `json:"headers"`
 }
 
 type TeamHeaders map[string][]AccessRule
