@@ -27,6 +27,14 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/frontend")
 
+// Initialize metrics
+var bootErrorMetric = promauto.NewCounter(prometheus.CounterOpts{
+	Namespace: "grafana",
+	Subsystem: "frontend",
+	Name:      "boot_errors_total",
+	Help:      "Total number of frontend boot errors",
+})
+
 type frontendService struct {
 	*services.BasicService
 	cfg          *setting.Cfg
@@ -40,9 +48,6 @@ type frontendService struct {
 	license      licensing.Licensing
 
 	index *IndexProvider
-
-	// Metrics
-	bootErrorMetric prometheus.Counter
 }
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing) (*frontendService, error) {
@@ -56,24 +61,15 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 		return nil, err
 	}
 
-	// Initialize metrics
-	bootErrorMetric := promauto.NewCounter(prometheus.CounterOpts{
-		Namespace: "grafana",
-		Subsystem: "frontend",
-		Name:      "boot_errors_total",
-		Help:      "Total number of frontend boot errors",
-	})
-
 	s := &frontendService{
-		cfg:             cfg,
-		features:        features,
-		log:             log.New("frontend-server"),
-		promGatherer:    promGatherer,
-		promRegister:    promRegister,
-		tracer:          tracer,
-		license:         license,
-		index:           index,
-		bootErrorMetric: bootErrorMetric,
+		cfg:          cfg,
+		features:     features,
+		log:          log.New("frontend-server"),
+		promGatherer: promGatherer,
+		promRegister: promRegister,
+		tracer:       tracer,
+		license:      license,
+		index:        index,
 	}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
@@ -186,7 +182,7 @@ func (s *frontendService) handleBootError(w http.ResponseWriter, r *http.Request
 	defer r.Body.Close()
 
 	// Increment the Prometheus counter
-	s.bootErrorMetric.Inc()
+	bootErrorMetric.Inc()
 
 	// Log the error details
 	s.log.Error("frontend boot error reported", "error", body)
