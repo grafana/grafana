@@ -32,5 +32,5 @@ const (
 	growthAndOnboarding                         codeowner = "@grafana/growth-and-onboarding"
 	grafanaDatasourcesCoreServicesSquad         codeowner = "@grafana/grafana-datasources-core-services"
 	grafanaBackendGroup                         codeowner = "@grafana/grafana-backend-group"
-	grafanaDocsPluginSquad                      codeowner = "@grafana/wg-docs-in-product"
+	grafanaPathfinderSquad                      codeowner = "@grafana/pathfinder"
 )

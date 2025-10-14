@@ -1932,8 +1932,8 @@ var (
 		{
 			Name:        "grafanaPathfinder",
 			Description: "Enables Pathfinder app",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDocsPluginSquad,
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaPathfinderSquad,
 		},
 	}
 )
