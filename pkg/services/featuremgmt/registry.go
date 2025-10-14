@@ -2067,14 +2067,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:         "filterOutBotsFromFrontendLogs",
-			Description:  "Filter out bots from collecting data for Frontend Observability",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
-			Expression:   "false",
-		},
-		{
 			Name:         "cdnPluginsLoadFirst",
 			Description:  "Prioritize loading plugins from the CDN before other sources",
 			Stage:        FeatureStageExperimental,

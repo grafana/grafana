@@ -12,6 +12,7 @@ type GrafanaJavascriptAgent struct {
 	TracingInstrumentalizationEnabled   bool   `json:"tracingInstrumentalizationEnabled"`
 	InternalLoggerLevel                 int    `json:"internalLoggerLevel"`
 	ApiKey                              string `json:"apiKey"`
+	BotFilterEnabled                    bool   `json:"botFilterEnabled"`
 }
 
 func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
@@ -28,5 +29,6 @@ func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
 		TracingInstrumentalizationEnabled:   raw.Key("instrumentations_tracing_enabled").MustBool(true),
 		InternalLoggerLevel:                 raw.Key("internal_logger_level").MustInt(0),
 		ApiKey:                              raw.Key("api_key").String(),
+		BotFilterEnabled:                    raw.Key("bot_filter_enabled").MustBool(false),
 	}
 }

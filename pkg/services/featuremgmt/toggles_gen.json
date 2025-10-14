@@ -1690,7 +1690,8 @@
       "metadata": {
         "name": "filterOutBotsFromFrontendLogs",
         "resourceVersion": "1758000919535",
-        "creationTimestamp": "2025-09-16T05:35:19Z"
+        "creationTimestamp": "2025-09-16T05:35:19Z",
+        "deletionTimestamp": "2025-10-13T11:09:22Z"
       },
       "spec": {
         "description": "Filter out bots from collecting data for Frontend Observability",
@@ -3172,7 +3173,8 @@
       "metadata": {
         "name": "queryServiceWithConnections",
         "resourceVersion": "1756367172351",
-        "creationTimestamp": "2025-08-28T07:46:12Z"
+        "creationTimestamp": "2025-08-28T19:28:26Z",
+        "deletionTimestamp": "2025-08-29T12:49:57Z"
       },
       "spec": {
         "description": "Adds datasource connections to the query service",

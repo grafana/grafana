@@ -4,14 +4,10 @@ import { Faro, Instrumentation } from '@grafana/faro-core';
 import * as faroWebSdkModule from '@grafana/faro-web-sdk';
 import { BrowserConfig, FetchTransport, SessionInstrumentation } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
-import { config } from '@grafana/runtime';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
-import {
-  GrafanaJavascriptAgentBackend,
-  GrafanaJavascriptAgentBackendOptions,
-  TRACKING_URLS,
-} from './GrafanaJavascriptAgentBackend';
+import { GrafanaJavascriptAgentBackend, TRACKING_URLS } from './GrafanaJavascriptAgentBackend';
+import { GrafanaJavascriptAgentBackendOptions } from './types';
 
 describe('GrafanaJavascriptAgentEchoBackend', () => {
   let mockedSetUser: jest.Mock;
@@ -47,8 +43,6 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
       instrumentations: mockedInstrumentations,
       internalLogger: mockedInternalLogger,
     });
-
-    config.featureToggles.filterOutBotsFromFrontendLogs = false;
   });
 
   afterEach(() => {
@@ -87,6 +81,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
       orgId: 1,
     },
     ignoreUrls: [],
+    botFilterEnabled: false,
   };
 
   it('will set up FetchTransport if customEndpoint is provided', () => {

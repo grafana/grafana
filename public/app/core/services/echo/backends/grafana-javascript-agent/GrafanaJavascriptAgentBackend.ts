@@ -1,4 +1,4 @@
-import { BuildInfo, escapeRegex } from '@grafana/data';
+import { escapeRegex } from '@grafana/data';
 import { BaseTransport, defaultInternalLoggerLevel } from '@grafana/faro-core';
 import {
   initializeFaro,
@@ -17,7 +17,7 @@ import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
-import { GrafanaJavascriptAgentEchoEvent, User } from './types';
+import { GrafanaJavascriptAgentBackendOptions, GrafanaJavascriptAgentEchoEvent } from './types';
 
 function isCrossOriginIframe() {
   try {
@@ -25,18 +25,6 @@ function isCrossOriginIframe() {
   } catch (e) {
     return true;
   }
-}
-
-export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
-  buildInfo: BuildInfo;
-  customEndpoint: string;
-  user: User;
-  allInstrumentationsEnabled: boolean;
-  errorInstrumentalizationEnabled: boolean;
-  consoleInstrumentalizationEnabled: boolean;
-  webVitalsInstrumentalizationEnabled: boolean;
-  tracingInstrumentalizationEnabled: boolean;
-  ignoreUrls: RegExp[];
 }
 
 export const TRACKING_URLS = [
@@ -119,7 +107,7 @@ export class GrafanaJavascriptAgentBackend
         sendTimeout: 1000,
       },
       internalLoggerLevel: options.internalLoggerLevel || defaultInternalLoggerLevel,
-      beforeSend: beforeSendHandler,
+      beforeSend: (item) => beforeSendHandler(options.botFilterEnabled, item),
     };
     this.faroInstance = initializeFaro(grafanaJavaScriptAgentOptions);
 
