@@ -1385,6 +1385,22 @@
     },
     {
       "metadata": {
+        "name": "enableDashboardEmptyExtensions",
+        "resourceVersion": "1759194774156",
+        "creationTimestamp": "2025-09-30T01:12:54Z"
+      },
+      "spec": {
+        "description": "Set this to true to enable all dashboard empty state extensions registered by plugins.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableDatagridEditing",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-04-24T14:46:31Z"
@@ -2157,6 +2173,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzZanzanaSync",
+        "resourceVersion": "1758887751768",
+        "creationTimestamp": "2025-09-26T09:35:02Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-26 11:55:51.768754 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesCorrelations",
         "resourceVersion": "1757513374180",
         "creationTimestamp": "2025-09-10T14:09:34Z"
@@ -2239,6 +2272,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesZanzanaPopulate",
+        "resourceVersion": "1758879077577",
+        "creationTimestamp": "2025-09-26T09:31:17Z",
+        "deletionTimestamp": "2025-09-26T09:35:02Z"
+      },
+      "spec": {
+        "description": "Populate Zanzana on AuthZ CRDs creation or update",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -2814,7 +2862,8 @@
       "metadata": {
         "name": "pluginAssetProvider",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-17T15:20:35Z"
+        "creationTimestamp": "2025-07-17T15:20:35Z",
+        "deletionTimestamp": "2025-10-03T16:13:14Z"
       },
       "spec": {
         "description": "Allows decoupled core plugins to load from the Grafana CDN",
@@ -2959,7 +3008,8 @@
       "metadata": {
         "name": "promQLScope",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-01-29T20:22:17Z"
+        "creationTimestamp": "2024-01-29T20:22:17Z",
+        "deletionTimestamp": "2025-10-05T00:24:17Z"
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into prometheus queries.",
@@ -3894,6 +3944,19 @@
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "unlimitedLayoutsNesting",
+        "resourceVersion": "1760013838902",
+        "creationTimestamp": "2025-10-09T12:43:58Z"
+      },
+      "spec": {
+        "description": "Enables unlimited dashboard panel grouping",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
       }
     },
     {

@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Добавить разрешение",
+      "loading": "",
       "no-permissions": "Нет разрешений",
       "permissions-change-warning": "Изменятся разрешения для этой и всех дочерних папок. В итоге будут затронуты:",
       "role": "Роль",
       "serviceaccount": "Служебная учетная запись",
       "team": "Команда",
-      "title": "Разрешения",
       "user": "Пользователь"
     }
   },
@@ -3528,7 +3528,7 @@
       "delete-button": "Удалить",
       "delete-modal-invalid-text": "Одна или несколько папок содержат панели библиотеки или правила оповещения. Чтобы продолжить, сначала удалите их.",
       "delete-modal-invalid-title": "Невозможно удалить папку",
-      "delete-modal-restore-dashboards-text": "Это действие приведет к немедленному удалению выбранных папок, а выбранные дашборды будут помечены для удаления через 30 дней. Администратор вашей организации может восстановить дашборды в любое время в течение указанных 30 дней. Папки нельзя восстановить.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Это действие приведет к удалению следующего контента:",
       "delete-modal-title": "Удаление",
       "delete-provisioned-folder": "Удалить подготовленную папку",
@@ -4536,6 +4536,8 @@
     },
     "canvas-actions": {
       "add-panel": "Добавить панель",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Группировать в строку",
       "group-into-tab": "Группировать во вкладку",
       "group-panels": "Группировать панели",
@@ -4544,7 +4546,8 @@
       "paste-panel": "Вставка панели",
       "paste-row": "Вставить строку",
       "paste-tab": "Вставить вкладку",
-      "un-group-panels": "Разгруппировать"
+      "un-group-panels": "Разгруппировать",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4612,7 +4615,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "Элемент скрыт из-за условной визуализации."
+        "tooltip": ""
       },
       "root": {
         "title": "Отображение/скрытие правил"
@@ -4786,8 +4789,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Значения, разделенные запятыми",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped, value"
+          "close": "",
+          "modal-title": "",
+          "values": "Значения, разделенные запятыми"
         },
         "datasource-options": {
           "name-filter": "Фильтр по названию",
@@ -5209,10 +5213,16 @@
       "title-row-options": "Параметры строки"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Удаление этой строки также приведет к удалению всех панелей. Действительно продолжить?",
       "delete-row-title": "Удалить строку?",
       "delete-row-yes": "Удалить",
       "description": "Сворачиваемые группы панелей с заголовками",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Заголовок строки отображается только в режиме редактирования",
       "name": "Строки",
       "row": {
@@ -5242,7 +5252,11 @@
       },
       "row-warning": {
         "title-not-unique": "Заголовок не является уникальным"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Дашборд сохранен"
@@ -5861,6 +5875,7 @@
         "dynamically-switch-source-multiple-panels": "Динамическое переключение источника данных для нескольких панелей",
         "group": "Добавляйте ключи для группировки в процессе работы",
         "hidden-constant-variable": "Скрытая константная переменная для префиксов метрик на дашбордах, доступ к которым вы хотите открыть",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Пользователи могут вводить любые произвольные строки в текстовое поле",
         "values-are-static-and-defined-manually": "Значения являются статическими и задаются вручную",
         "values-fetched-source-query": "Значения извлекаются из запроса к источнику данных",
@@ -5874,6 +5889,7 @@
         "group-by": "Группировать по",
         "interval": "Интервал",
         "query": "Запрос",
+        "switch": "",
         "textbox": "Текстовое поле"
       }
     },
@@ -6221,6 +6237,17 @@
       "title": {
         "copy-to-clipboard-failed": "Не удалось скопировать в буфер обмена"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Значение по умолчанию"
@@ -10417,7 +10444,7 @@
       "title": "Профили"
     },
     "recently-deleted": {
-      "subtitle": "Все перечисленные элементы по истечении 30 дней будут автоматически удалены",
+      "subtitle": "",
       "title": "Последние удаленные"
     },
     "recorded-queries": {
@@ -11651,6 +11678,7 @@
       "active-jobs": "активные задания",
       "column-action": "Действие",
       "column-duration": "Длительность",
+      "column-job-id": "",
       "column-message": "Сообщение",
       "column-started": "Запущено",
       "column-status": "Статус",
@@ -11669,12 +11697,6 @@
       "settings": "Параметры",
       "view": "Просмотр"
     },
-    "repository-health": {
-      "details": "Сведения:",
-      "no-errors-found": "Ошибок не обнаружено",
-      "title-repository-is-healthy": "Репозиторий исправен",
-      "title-repository-is-unhealthy": "Репозиторий неисправен"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Сравнить ветвь",
@@ -11689,7 +11711,7 @@
     },
     "repository-overview": {
       "checked": "Проверено:",
-      "finished": "Завершено:",
+      "finished": "",
       "health": "Работоспособность",
       "healthy": "Исправен",
       "job-id": "Идентификатор задания:",
@@ -11698,7 +11720,6 @@
       "not-available": "Н/Д",
       "pull-status": "Состояние включения изменений",
       "resources": "Ресурсы",
-      "started": "Запущено:",
       "status": "Состояние:",
       "unhealthy": "Неисправен",
       "view-folder": "Просмотр папки",
@@ -12363,9 +12384,6 @@
       "title-disable-service-account": "Отключение служебной учетной записи",
       "tokens": "Токены",
       "tooltip-managed-service-account-cannot-modified": "Это управляемая служебная учетная запись, которую невозможно изменить"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Разрешения"
     },
     "service-account-profile": {
       "information": "Информация",
@@ -13044,6 +13062,10 @@
     "name-mode": "Режим",
     "name-show-line-numbers": "Показывать номера строк",
     "name-show-mini-map": "Показать мини-карту"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -14208,14 +14230,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Добавить параметр",
-      "description": "Добавить пользовательские параметры в дополнение к результатам запроса",
-      "label-placeholder": "показать метку",
-      "remove-option-button-label": "Удалить параметр",
-      "value-placeholder": "значение, пустая строка по умолчанию"
+      "description": "Добавить пользовательские параметры в дополнение к результатам запроса"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Как сортировать статические параметры с результатами запроса"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Значение по умолчанию",

@@ -121,6 +121,18 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	updateUser := func(cmd *UpdateUserCommand) sqltemplate.SQLTemplate {
+		v := newUpdateUser(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	updateOrgUser := func(cmd *UpdateOrgUserCommand) sqltemplate.SQLTemplate {
+		v := newUpdateOrgUser(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -543,6 +555,33 @@ func TestIdentityQueries(t *testing.T) {
 						Created:    NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
 						Updated:    NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
 						LastSeenAt: time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC),
+					}),
+				},
+			},
+			sqlUpdateUserTemplate: {
+				{
+					Name: "update_user_basic",
+					Data: updateUser(&UpdateUserCommand{
+						UID:           "user-1",
+						Login:         "newuser1",
+						Email:         "newuser1@example.com",
+						Name:          "New User One",
+						IsAdmin:       true,
+						IsDisabled:    true,
+						EmailVerified: false,
+						Role:          "Editor",
+						Updated:       NewDBTime(time.Date(2023, 1, 1, 13, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			sqlUpdateOrgUserTemplate: {
+				{
+					Name: "update_org_user_basic",
+					Data: updateOrgUser(&UpdateOrgUserCommand{
+						OrgID:   1,
+						UserID:  123,
+						Role:    "Admin",
+						Updated: NewDBTime(time.Date(2023, 1, 1, 14, 0, 0, 0, time.UTC)),
 					}),
 				},
 			},
