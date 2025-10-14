@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"github.com/centrifugal/centrifuge"
-	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api/dtos"

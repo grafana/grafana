@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 )
@@ -73,40 +73,34 @@ func (c *RedisFrameCache) Update(ctx context.Context, orgID int64, channel strin
 
 	key := c.getCacheKey(orgchannel.PrependOrgID(orgID, channel))
 
-	pipe := c.redisClient.TxPipeline()
-	defer func() { _ = pipe.Close() }()
-
-	pipe.HGetAll(ctx, key)
-	pipe.HMSet(ctx, key, map[string]string{
-		"schema": stringSchema,
-		"frame":  string(jsonFrame.Bytes(data.IncludeAll)),
+	var mapReply *redis.MapStringStringCmd
+	replies, err := c.redisClient.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+		mapReply = pipe.HGetAll(ctx, key)
+		pipe.HMSet(ctx, key, map[string]string{
+			"schema": stringSchema,
+			"frame":  string(jsonFrame.Bytes(data.IncludeAll)),
+		})
+		pipe.Expire(ctx, key, frameCacheTTL)
+		return nil
 	})
-	pipe.Expire(ctx, key, frameCacheTTL)
-
-	replies, err := pipe.Exec(ctx)
 	if err != nil {
 		return false, err
 	}
 	if len(replies) == 0 {
 		return false, errors.New("no replies in response")
 	}
-	reply := replies[0]
-
-	if reply.Err() != nil {
+	if mapReply.Err() != nil {
 		return false, err
 	}
 
-	if mapReply, ok := reply.(*redis.StringStringMapCmd); ok {
-		result, err := mapReply.Result()
-		if err != nil {
-			return false, err
-		}
-		if len(result) == 0 {
-			return true, nil
-		}
-		return result["schema"] != stringSchema, nil
+	result, err := mapReply.Result()
+	if err != nil {
+		return false, err
 	}
-	return true, nil
+	if len(result) == 0 {
+		return true, nil
+	}
+	return result["schema"] != stringSchema, nil
 }
 
 func (c *RedisFrameCache) getCacheKey(channelID string) string {
