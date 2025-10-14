@@ -64,24 +64,11 @@ func (f *SourceFactory) List(ctx context.Context) ([]plugins.PluginSource, error
 		return nil, err
 	}
 	sources := make([]plugins.PluginSource, 0, len(pluginInstalls))
-	if coreSource, err := f.buildCoreSource(pluginInstalls); err == nil {
-		sources = append(sources, coreSource)
-	}
 	if externalSource, err := f.buildExternalSource(ctx, pluginInstalls); err == nil {
 		sources = append(sources, externalSource)
 	}
+	f.startupCompleted = true
 	return sources, nil
-}
-
-func (f *SourceFactory) buildCoreSource(installs []install.PluginInstall) (plugins.PluginSource, error) {
-	corePaths := []string{}
-	for _, i := range installs {
-		if i.Class != install.ClassCore {
-			continue
-		}
-		corePaths = append(corePaths, i.URL)
-	}
-	return f.localSourceBuilder(plugins.ClassCore, corePaths)
 }
 
 func (f *SourceFactory) buildExternalSource(ctx context.Context, installs []install.PluginInstall) (plugins.PluginSource, error) {
@@ -92,7 +79,7 @@ func (f *SourceFactory) buildExternalSource(ctx context.Context, installs []inst
 	cacheManager := NewCacheManager(cfg.PluginsPath)
 	orchestrator := NewDownloadOrchestrator(f.downloader, cfg.PluginsPath, cfg.BuildVersion)
 	versionResolver := NewVersionResolver(cacheManager, orchestrator)
-	externalPaths := []string{}
+	externalInstalls := make([]install.PluginInstall, 0, len(installs))
 	for _, i := range installs {
 		if !f.startupCompleted && i.Source == install.SourcePreinstallAsync {
 			continue
@@ -100,11 +87,7 @@ func (f *SourceFactory) buildExternalSource(ctx context.Context, installs []inst
 		if i.Class != install.ClassExternal {
 			continue
 		}
-		externalPaths = append(externalPaths, i.URL)
+		externalInstalls = append(externalInstalls, i)
 	}
-	localSourceBuilder := func(class plugins.Class, paths []string) (plugins.PluginSource, error) {
-		return f.localSourceBuilder(class, paths)
-	}
-	f.startupCompleted = true
-	return NewDownloadSource(installs, cacheManager, orchestrator, versionResolver, localSourceBuilder), nil
+	return NewDownloadSource(externalInstalls, cacheManager, orchestrator, versionResolver, f.localSourceBuilder), nil
 }
