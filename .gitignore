@@ -257,3 +257,6 @@ public/mockServiceWorker.js
 /pkg/storage/secret/metadata/testdata/rapid/TestStateMachine/
 
 /codeowners-manifest/
+
+# Ignore grafana/hippocampus local cache folder
+.hippo

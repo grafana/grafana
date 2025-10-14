@@ -1,13 +1,17 @@
 package iam
 
 import (
-	"github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/authlib/types"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -44,8 +48,14 @@ type IdentityAccessManagementAPIBuilder struct {
 	legacyAccessClient types.AccessClient
 	// accessClient is used for the core role apis
 	accessClient types.AccessClient
+	// zClient is used to populate Zanzana with:
+	// - roles
+	// - permissions
+	// - assignments
+	zClient zanzana.Client
 
-	reg prometheus.Registerer
+	reg    prometheus.Registerer
+	logger log.Logger
 
 	// non-k8s api route
 	display *user.LegacyDisplayREST
@@ -54,11 +64,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	sso ssosettings.Service
 
 	// Toggle for enabling authz management apis
-	enableAuthZApis              bool
-	enableResourcePermissionApis bool
-
-	// Toggle for enabling authn mutation
-	enableAuthnMutation bool
+	features featuremgmt.FeatureToggles
 
 	// Toggle for enabling dual writer
 	enableDualWriter bool
