@@ -191,7 +191,7 @@ export function ignoreChanges(scene: DashboardScene | null) {
 
   const dashboard = scene.getSaveModel();
   // Ignore changes if the dashboard is empty (new dashboard)
-  if (config.featureToggles.dashboardLibrary && isEmptyDashboard(dashboard, scene?.serializer.metadata)) {
+  if (isEmptyDashboard(dashboard, scene?.serializer.metadata)) {
     return true;
   }
 
