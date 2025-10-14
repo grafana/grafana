@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/plugins
 
-go 1.25.2
+go 1.25.3
 
 require (
 	github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43
