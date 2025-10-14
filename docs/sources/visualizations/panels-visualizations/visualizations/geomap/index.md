@@ -1,26 +1,26 @@
 ---
 aliases:
-  - ../../features/panels/geomap/
-  - ../../features/panels/geomap/arcgis/
-  - ../../features/panels/geomap/carto/
-  - ../../features/panels/geomap/controls/
-  - ../../features/panels/geomap/daynight/
-  - ../../features/panels/geomap/geojson/
-  - ../../features/panels/geomap/heatmap/
-  - ../../features/panels/geomap/markers/
-  - ../../features/panels/geomap/osm/
-  - ../../features/panels/geomap/zyx/
-  - ../../panels/visualizations/geomap/
-  - ../../panels/visualizations/geomap/arcgis/
-  - ../../panels/visualizations/geomap/carto/
-  - ../../panels/visualizations/geomap/controls/
-  - ../../panels/visualizations/geomap/daynight/
-  - ../../panels/visualizations/geomap/geojson/
-  - ../../panels/visualizations/geomap/heatmap/
-  - ../../panels/visualizations/geomap/markers/
-  - ../../panels/visualizations/geomap/osm/
-  - ../../panels/visualizations/geomap/zyx/
-  - ../../visualizations/geomap/
+  - ../../../features/panels/geomap/
+  - ../../../features/panels/geomap/arcgis/
+  - ../../../features/panels/geomap/carto/
+  - ../../../features/panels/geomap/controls/
+  - ../../../features/panels/geomap/daynight/
+  - ../../../features/panels/geomap/geojson/
+  - ../../../features/panels/geomap/heatmap/
+  - ../../../features/panels/geomap/markers/
+  - ../../../features/panels/geomap/osm/
+  - ../../../features/panels/geomap/zyx/
+  - ../../../panels/visualizations/geomap/
+  - ../../../panels/visualizations/geomap/arcgis/
+  - ../../../panels/visualizations/geomap/carto/
+  - ../../../panels/visualizations/geomap/controls/
+  - ../../../panels/visualizations/geomap/daynight/
+  - ../../../panels/visualizations/geomap/geojson/
+  - ../../../panels/visualizations/geomap/heatmap/
+  - ../../../panels/visualizations/geomap/markers/
+  - ../../../panels/visualizations/geomap/osm/
+  - ../../../panels/visualizations/geomap/zyx/
+  - ../../../visualizations/geomap/
   - ../../../panels-visualizations/visualizations/geomap/ # /docs/grafana/next/panels-visualizations/visualizations/geomap/
 description: Configure options for Grafana's geomap visualization
 keywords:

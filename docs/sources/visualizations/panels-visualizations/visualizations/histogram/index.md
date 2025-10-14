@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../features/panels/histogram/
-  - ../../panels/visualizations/histogram/
-  - ../../visualizations/histogram/
+  - ../../../features/panels/histogram/ # /docs/grafana/next/features/panels/histogram/
+  - ../../../panels/visualizations/histogram/ # /docs/grafana/next/panels/visualizations/histogram/
+  - ../../../visualizations/histogram/ # /docs/grafana/next/visualizations/histogram/
   - ../../../panels-visualizations/visualizations/histogram/ # /docs/grafana/next/panels-visualizations/visualizations/histogram/
 description: Configure options for Grafana's histogram visualization
 keywords:

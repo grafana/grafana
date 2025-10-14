@@ -1,14 +1,14 @@
 ---
 aliases:
-  - ../panels/configure-value-mappings/
-  - ../panels/format-data/
-  - ../panels/format-data/about-value-mapping/
-  - ../panels/format-data/edit-value-mapping/
-  - ../panels/format-data/map-a-range/
-  - ../panels/format-data/map-a-regular-expression/
-  - ../panels/format-data/map-a-special-value/
-  - ../panels/format-data/map-a-value/
-  - ../panels/value-mappings/ # /docs/grafana/next/panels/value-mappings/
+  - ../../panels/configure-value-mappings/
+  - ../../panels/format-data/
+  - ../../panels/format-data/about-value-mapping/
+  - ../../panels/format-data/edit-value-mapping/
+  - ../../panels/format-data/map-a-range/
+  - ../../panels/format-data/map-a-regular-expression/
+  - ../../panels/format-data/map-a-special-value/
+  - ../../panels/format-data/map-a-value/
+  - ../../panels/value-mappings/ # /docs/grafana/next/panels/value-mappings/
   - ../../panels-visualizations/configure-value-mappings/ # /docs/grafana/next/panels-visualizations/configure-value-mappings/
 labels:
   products:

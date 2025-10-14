@@ -1,10 +1,10 @@
 ---
 aliases:
-  - ../../features/panels/text/
-  - ../../panels/visualizations/text-panel/
-  - ../../reference/alertlist/
-  - ../../visualizations/text-panel/
+  - ../../../features/panels/text/ # /docs/grafana/next/features/panels/text/
   - ../../../panels-visualizations/visualizations/text/ # /docs/grafana/next/panels-visualizations/visualizations/text/
+  - ../../../panels/visualizations/text-panel/ # /docs/grafana/next/panels/visualizations/text-panel/
+  - ../../../reference/alertlist/ # /docs/grafana/next/reference/alertlist/
+  - ../../../visualizations/text-panel/ # /docs/grafana/next/visualizations/text-panel/
 keywords:
   - grafana
   - text

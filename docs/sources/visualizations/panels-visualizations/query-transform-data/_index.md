@@ -1,19 +1,19 @@
 ---
 aliases:
-  - ../panels/expressions/
-  - ../panels/inspect-panel/
-  - ../panels/queries/
-  - ../panels/query-a-data-source/
-  - ../panels/query-a-data-source/about-queries/
-  - ../panels/query-a-data-source/add-a-query/
-  - ../panels/query-a-data-source/manage-queries/
-  - ../panels/query-a-data-source/navigate-query-tab/
-  - ../panels/query-options/
-  - ../panels/reference-query-options/
-  - ../panels/share-query-results/
-  - manage-queries/
-  - query-options/
+  - ../../panels-visualizations/manage-queries/ # /docs/grafana/next/panels-visualizations/manage-queries/
+  - ../../panels-visualizations/query-options/ # /docs/grafana/next/panels-visualizations/query-options/
   - ../../panels-visualizations/query-transform-data/ # /docs/grafana/next/panels-visualizations/query-transform-data/
+  - ../../panels/expressions/ # /docs/grafana/next/panels/expressions/
+  - ../../panels/inspect-panel/ # /docs/grafana/next/panels/inspect-panel/
+  - ../../panels/queries/ # /docs/grafana/next/panels/queries/
+  - ../../panels/query-a-data-source/ # /docs/grafana/next/panels/query-a-data-source/
+  - ../../panels/query-a-data-source/about-queries/ # /docs/grafana/next/panels/query-a-data-source/about-queries/
+  - ../../panels/query-a-data-source/add-a-query/ # /docs/grafana/next/panels/query-a-data-source/add-a-query/
+  - ../../panels/query-a-data-source/manage-queries/ # /docs/grafana/next/panels/query-a-data-source/manage-queries/
+  - ../../panels/query-a-data-source/navigate-query-tab/ # /docs/grafana/next/panels/query-a-data-source/navigate-query-tab/
+  - ../../panels/query-options/ # /docs/grafana/next/panels/query-options/
+  - ../../panels/reference-query-options/ # /docs/grafana/next/panels/reference-query-options/
+  - ../../panels/share-query-results/ # /docs/grafana/next/panels/share-query-results/
 labels:
   products:
     - cloud
@@ -219,6 +219,7 @@ To add a query, follow these steps:
    For more information about query options, refer to [Query options](#query-options).
 
 1. To add a query, do one of the following:
+
    - Write or construct a query in the query language of your data source.
    - Click **+ Add from saved queries** to add a previously saved query.
    - If you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead.

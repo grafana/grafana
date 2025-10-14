@@ -1,10 +1,10 @@
 ---
 aliases:
-  - ../../features/panels/alertlist/
-  - ../../panels/visualizations/alert-list-panel/
-  - ../../reference/alertlist/
-  - ../../visualizations/alert-list-panel/
+  - ../../../features/panels/alertlist/ # /docs/grafana/next/features/panels/alertlist/
   - ../../../panels-visualizations/visualizations/alert-list/ # /docs/grafana/next/panels-visualizations/visualizations/alert-list/
+  - ../../../panels/visualizations/alert-list-panel/ # /docs/grafana/next/panels/visualizations/alert-list-panel/
+  - ../../../reference/alertlist/ # /docs/grafana/next/reference/alertlist/
+  - ../../../visualizations/alert-list-panel/ # /docs/grafana/next/visualizations/alert-list-panel/
 keywords:
   - grafana
   - alert list

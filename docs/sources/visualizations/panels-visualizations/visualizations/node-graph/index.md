@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../panels/visualizations/node-graph/
-  - ../../visualizations/node-graph/
   - ../../../panels-visualizations/visualizations/node-graph/ # /docs/grafana/next/panels-visualizations/visualizations/node-graph/
+  - ../../../panels/visualizations/node-graph/ # /docs/grafana/next/panels/visualizations/node-graph/
+  - ../../../visualizations/node-graph/ # /docs/grafana/next/visualizations/node-graph/
 keywords:
   - grafana
   - dashboard

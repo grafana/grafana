@@ -1,12 +1,12 @@
 ---
 aliases:
-  - ../features/panels/graph/
-  - ../panels/visualizations/
-  - ../panels/visualizations/graph-panel/
-  - ../reference/graph/
-  - ../visualizations/
-  - ../visualizations/graph-panel/
+  - ../../features/panels/graph/ # /docs/grafana/next/features/panels/graph/
   - ../../panels-visualizations/visualizations/ # /docs/grafana/next/panels-visualizations/visualizations/
+  - ../../panels/visualizations/ # /docs/grafana/next/panels/visualizations/
+  - ../../panels/visualizations/graph-panel/ # /docs/grafana/next/panels/visualizations/graph-panel/
+  - ../../reference/graph/ # /docs/grafana/next/reference/graph/
+  - ../../visualizations/ # /docs/grafana/next/visualizations/
+  - ../../visualizations/graph-panel/ # /docs/grafana/next/visualizations/graph-panel/
 labels:
   products:
     - cloud

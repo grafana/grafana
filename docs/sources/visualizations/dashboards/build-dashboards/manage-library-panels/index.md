@@ -1,14 +1,14 @@
 ---
 aliases:
-  - ../../panels/library-panels/
-  - ../../panels/library-panels/add-library-panel/
-  - ../../panels/library-panels/create-library-panel/
-  - ../../panels/library-panels/delete-library-panel/
-  - ../../panels/library-panels/manage-library-panel/
-  - ../../panels/library-panels/unlink-library-panel/
-  - ../../panels/panel-library/
-  - ../manage-library-panels/
   - ../../../dashboards/build-dashboards/manage-library-panels/ # /docs/grafana/next/dashboards/build-dashboards/manage-library-panels/
+  - ../../../panels/library-panels/ # /docs/grafana/next/panels/library-panels
+  - ../../../panels/library-panels/add-library-panel/ # /docs/grafana/next/panels/library-panels/add-library-panel
+  - ../../../panels/library-panels/create-library-panel/ # /docs/grafana/next/panels/library-panels/create-library-panel
+  - ../../../panels/library-panels/delete-library-panel/ # /docs/grafana/next/panels/library-panels/delete-library-panel
+  - ../../../panels/library-panels/manage-library-panel/ # /docs/grafana/next/panels/library-panels/manage-library-panel
+  - ../../../panels/library-panels/unlink-library-panel/ # /docs/grafana/next/panels/library-panels/unlink-library-panel
+  - ../../../panels/panel-library/ # /docs/grafana/next/panels/panels-library/
+  - ../manage-library-panels/ # /docs/grafana/next/visualizations/dashboards/manage-library-panels/
 labels:
   products:
     - cloud

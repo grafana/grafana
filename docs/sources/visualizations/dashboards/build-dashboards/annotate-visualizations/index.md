@@ -1,8 +1,9 @@
 ---
 aliases:
-  - ../../reference/annotations/
-  - ../annotations/
+  - ../../../annotations/ # /docs/grafana/latest/dashboards/annotations/
   - ../../../dashboards/build-dashboards/annotate-visualizations/ # /docs/grafana/next/dashboards/build-dashboards/annotate-visualizations/
+  - ../../../panels/visualizations/annotations/ # /docs/grafana/next/panels/visualizations/annotations/
+  - ../../../reference/annotations/ # /docs/grafana/latest/reference/annotations/
 keywords:
   - grafana
   - annotations
@@ -141,6 +142,7 @@ To add a new annotation query to a dashboard, follow these steps:
 1. If you don't want the annotation query toggle to be displayed in the dashboard, select the **Hidden** checkbox.
 1. Select a color for the event markers.
 1. In the **Show in** drop-down, choose one of the following options:
+
    - **All panels** - The annotations are displayed on all panels that support annotations.
    - **Selected panels** - The annotations are displayed on all the panels you select.
    - **All panels except** - The annotations are displayed on all panels except the ones you select.
