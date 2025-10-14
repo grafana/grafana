@@ -26,6 +26,7 @@ const (
 	dbTypeMySQL    = "mysql"
 	dbTypePostgres = "postgres"
 	dbTypeSQLite   = "sqlite3"
+	dbTypeYDB      = "ydb"
 )
 
 const grafanaDBInstrumentQueriesKey = "instrument_queries"

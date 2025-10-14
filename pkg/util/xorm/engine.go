@@ -718,6 +718,14 @@ func (engine *Engine) nowTime(col *core.Column) (any, time.Time) {
 
 func (engine *Engine) formatColTime(col *core.Column, t time.Time) (v any) {
 	if t.IsZero() {
+		if engine.dialect.DBType() == core.YDB {
+			if col.Nullable {
+				var tf *time.Time
+				return tf
+			}
+			return t
+		}
+
 		if col.Nullable {
 			return nil
 		}
@@ -732,6 +740,10 @@ func (engine *Engine) formatColTime(col *core.Column, t time.Time) (v any) {
 
 // formatTime format time as column type
 func (engine *Engine) formatTime(sqlTypeName string, t time.Time) (v any) {
+	if engine.dialect.DBType() == core.YDB {
+		return t
+	}
+
 	switch sqlTypeName {
 	case core.Time:
 		s := t.Format("2006-01-02 15:04:05") // time.RFC3339

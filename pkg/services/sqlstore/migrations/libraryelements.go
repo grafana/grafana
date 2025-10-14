@@ -76,6 +76,14 @@ func addLibraryElementsMigrations(mg *migrator.Migrator) {
 		)`
 	}
 
+	if mg.Dialect.DriverName() == migrator.YDB {
+		q = `UPDATE library_element ON 
+    			SELECT library_element.id AS id, dashboard.uid AS folder_uid 
+    			FROM library_element 
+    			JOIN dashboard 
+				ON dashboard.id = library_element.folder_id AND library_element.org_id = dashboard.org_id`
+	}
+
 	mg.AddMigration("add library_element folder uid", migrator.NewAddColumnMigration(libraryElementsV1, &migrator.Column{
 		Name: "folder_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: true,
 	}))

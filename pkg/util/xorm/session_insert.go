@@ -419,7 +419,10 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 		}
 	}
 
-	if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == core.POSTGRES {
+	var autoIncReturning = len(table.AutoIncrement) > 0 &&
+		(session.engine.dialect.DBType() == core.POSTGRES || session.engine.dialect.DBType() == core.YDB)
+
+	if autoIncReturning {
 		buf.WriteString(" RETURNING " + session.engine.Quote(table.AutoIncrement))
 	}
 
@@ -484,7 +487,7 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 			return 1, err
 		}
 		rowsAffected = 1
-	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.DBType() == core.POSTGRES) {
+	} else if autoIncReturning {
 		res, err := session.queryBytes(sqlStr, args...)
 
 		if err != nil {

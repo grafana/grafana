@@ -44,11 +44,11 @@ func addDashboardVersionMigration(mg *Migrator) {
 SELECT
 	dashboard.id,
 	dashboard.version,
-	dashboard.version,
-	dashboard.version,
+	dashboard.version as parent_version,
+	dashboard.version as restored_from,
 	dashboard.updated,
 	COALESCE(dashboard.updated_by, -1),
-	'',
+	''u,
 	dashboard.data
 FROM dashboard;`
 	mg.AddMigration("save existing dashboard data in dashboard_version table v1", NewRawSQLMigration(rawSQL))

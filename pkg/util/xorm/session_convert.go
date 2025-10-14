@@ -500,6 +500,11 @@ func (session *Session) value2Interface(col *core.Column, fieldValue reflect.Val
 	k := fieldType.Kind()
 	if k == reflect.Ptr {
 		if fieldValue.IsNil() {
+			sqlType := session.engine.dialect.SqlType(col)
+			if sqlType == yql_Utf8 {
+				var ret *string
+				return ret, nil
+			}
 			return nil, nil
 		} else if !fieldValue.IsValid() {
 			session.engine.logger.Warn("the field[", col.FieldName, "] is invalid")

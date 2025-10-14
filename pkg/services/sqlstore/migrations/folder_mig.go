@@ -49,48 +49,19 @@ func addFolderMigrations(mg *migrator.Migrator) {
 			INSERT INTO folder (uid, org_id, title, created, updated)
 			SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1
 			ON CONFLICT DO UPDATE SET title=excluded.title, updated=excluded.updated
+		`).YDB(`
+			UPSERT INTO folder (uid, org_id, title, created, updated)
+			SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder
 		`))
 
 	mg.AddMigration("Remove ghost folders from the folder table", migrator.NewRawSQLMigration(`
 			DELETE FROM folder WHERE NOT EXISTS
 				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
-	`))
-
-	mg.AddMigration("Remove unique index UQE_folder_uid_org_id", migrator.NewDropIndexMigration(folderv1(), &migrator.Index{
-		Type: migrator.UniqueIndex,
-		Cols: []string{"uid", "org_id"},
-	}))
-
-	mg.AddMigration("Add unique index UQE_folder_org_id_uid", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
-		Type: migrator.UniqueIndex,
-		Cols: []string{"org_id", "uid"},
-	}))
-
-	mg.AddMigration("Remove unique index UQE_folder_title_parent_uid_org_id", migrator.NewDropIndexMigration(folderv1(), &migrator.Index{
-		Type: migrator.UniqueIndex,
-		Cols: []string{"title", "parent_uid", "org_id"},
-	}))
-
-	mg.AddMigration("Add unique index UQE_folder_org_id_parent_uid_title", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
-		Type: migrator.UniqueIndex,
-		Cols: []string{"org_id", "parent_uid", "title"},
-	}))
-
-	// No need to introduce IDX_folder_org_id_parent_uid because is covered by UQE_folder_org_id_parent_uid_title
-	mg.AddMigration("Remove index IDX_folder_parent_uid_org_id", migrator.NewDropIndexMigration(folderv1(), &migrator.Index{
-		Cols: []string{"parent_uid", "org_id"},
-	}))
-
-	// Remove the unique name constraint
-	mg.AddMigration("Remove unique index UQE_folder_org_id_parent_uid_title", migrator.NewDropIndexMigration(folderv1(), &migrator.Index{
-		Type: migrator.UniqueIndex,
-		Cols: []string{"org_id", "parent_uid", "title"},
-	}))
-
-	mg.AddMigration("Add index IDX_folder_org_id_parent_uid", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
-		Name: "IDX_folder_org_id_parent_uid",
-		Cols: []string{"org_id", "parent_uid"},
-	}))
+	`).YDB(`
+			DELETE FROM folder ON 
+    			SELECT folder.id AS id FROM folder JOIN dashboard ON dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id 
+    			WHERE dashboard.is_folder
+	`)) // TODO: YDB case should be non empty
 }
 
 func folderv1() migrator.Table {
@@ -99,7 +70,7 @@ func folderv1() migrator.Table {
 		Name: "folder",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: true},
 			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "title", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "description", Type: migrator.DB_NVarchar, Length: 255, Nullable: true},

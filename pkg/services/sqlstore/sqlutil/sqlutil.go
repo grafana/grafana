@@ -22,11 +22,6 @@ type TestDB struct {
 	DriverName string
 	ConnStr    string
 	Path       string
-	Host       string
-	Port       string
-	User       string
-	Password   string
-	Database   string
 	Cleanup    func()
 }
 
@@ -48,6 +43,8 @@ func GetTestDB(dbType string) (*TestDB, error) {
 		return postgresTestDB()
 	case "sqlite3":
 		return sqLite3TestDB()
+	case "ydb":
+		return ydbTestDB()
 	}
 
 	return nil, fmt.Errorf("unknown test db type: %s", dbType)
@@ -137,11 +134,6 @@ func mySQLTestDB() (*TestDB, error) {
 	return &TestDB{
 		DriverName: "mysql",
 		ConnStr:    conn_str,
-		Host:       host,
-		Port:       port,
-		User:       "grafana",
-		Password:   "password",
-		Database:   "grafana_tests",
 		Cleanup:    func() {},
 	}, nil
 }
@@ -159,11 +151,23 @@ func postgresTestDB() (*TestDB, error) {
 	return &TestDB{
 		DriverName: "postgres",
 		ConnStr:    connStr,
-		Host:       host,
-		Port:       port,
-		User:       "grafanatest",
-		Password:   "grafanatest",
-		Database:   "grafanatest",
+		Cleanup:    func() {},
+	}, nil
+}
+
+func ydbTestDB() (*TestDB, error) {
+	// host := os.Getenv("POSTGRES_HOST")
+	// if host == "" {
+	// 	host = "localhost"
+	// }
+	// port := os.Getenv("POSTGRES_PORT")
+	// if port == "" {
+	// 	port = "5432"
+	// }
+	// connStr := fmt.Sprintf("user=grafanatest password=grafanatest host=%s port=%s dbname=grafanatest sslmode=disable", host, port)
+	return &TestDB{
+		DriverName: "ydb",
+		ConnStr:    "grpc://127.0.0.1:2136/local?go_query_mode=query&go_fake_tx=query&go_query_bind=numeric",
 		Cleanup:    func() {},
 	}, nil
 }

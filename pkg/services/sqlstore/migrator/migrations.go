@@ -85,6 +85,10 @@ func (m *RawSQLMigration) Mssql(sql string) *RawSQLMigration {
 	return m.Set(MSSQL, sql)
 }
 
+func (m *RawSQLMigration) YDB(sql string) *RawSQLMigration {
+	return m.Set(YDB, sql)
+}
+
 type AddColumnMigration struct {
 	MigrationBase
 	tableName string

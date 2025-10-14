@@ -275,6 +275,8 @@ func createTemporaryDatabase(tb TestingTB) (*testDB, error) {
 		driver, connString = newMySQLConnString(env("MYSQL_DB", "grafana_tests"))
 	case "postgres":
 		driver, connString = newPostgresConnString(env("POSTGRES_DB", "grafanatest"))
+	case "ydb":
+		driver, connString = newYDBConnString(env("YDB_DB", "grafanatest"))
 	default:
 		return nil, fmt.Errorf("unknown test db type: %s", dbType)
 	}
@@ -349,6 +351,10 @@ func newMySQLConnString(dbname string) (driver, connString string) {
 		env("MYSQL_PORT", "3306"),
 		dbname,
 	)
+}
+
+func newYDBConnString(_ string) (driver, connString string) {
+	return "ydb", "TODO" // TODO: ...
 }
 
 func newSQLite3DB(tb TestingTB) (*testDB, error) {

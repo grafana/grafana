@@ -72,6 +72,8 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
               AND is_service_account = 1
               AND login NOT LIKE 'sa-' || CAST(org_id AS TEXT) || '-%';
         `)
+	case migrator.YDB:
+		return nil
 
 	default:
 		return fmt.Errorf("dialect not supported: %s", p.dialect)
@@ -129,6 +131,8 @@ func (p *ServiceAccountsDeduplicateOrgInLogin) Exec(sess *xorm.Session, mg *migr
                     WHERE u2.login = 'sa-' || CAST(u.org_id AS TEXT) || SUBSTRING(u.login, LENGTH('sa-'||CAST(u.org_id AS TEXT)||'-'||CAST(u.org_id AS TEXT))+1)
                 );;
         `)
+	case migrator.YDB:
+		return nil
 	default:
 		return fmt.Errorf("dialect not supported: %s", dialect)
 	}

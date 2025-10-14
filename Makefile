@@ -360,6 +360,14 @@ test-go-integration-mysql: devenv-mysql ## Run integration tests for mysql backe
 	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m \
 		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
 
+
+.PHONY: test-go-integration-ydb
+test-go-integration-ydb: devenv-ydb ## Run integration tests for ydb backend with flags.
+	@echo "test backend integration ydb tests"
+	GRAFANA_TEST_DB=ydb \
+	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m \
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
+
 .PHONY: test-go-integration-redis
 test-go-integration-redis: ## Run integration tests for redis cache.
 	@echo "test backend integration redis tests"
@@ -511,6 +519,11 @@ devenv-postgres:
 devenv-mysql:
 	@cd devenv; \
 	sources=mysql_tests
+
+.PHONY: devenv-ydb
+devenv-ydb:
+	@cd devenv; \
+	sources=ydb_tests
 
 ##@ Helpers
 

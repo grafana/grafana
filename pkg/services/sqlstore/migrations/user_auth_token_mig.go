@@ -15,10 +15,10 @@ func addUserAuthTokenMigrations(mg *Migrator) {
 			{Name: "user_agent", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "client_ip", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "auth_token_seen", Type: DB_Bool, Nullable: false},
-			{Name: "seen_at", Type: DB_Int, Nullable: true},
-			{Name: "rotated_at", Type: DB_Int, Nullable: false},
-			{Name: "created_at", Type: DB_Int, Nullable: false},
-			{Name: "updated_at", Type: DB_Int, Nullable: false},
+			{Name: "seen_at", Type: DB_BigInt, Nullable: true},
+			{Name: "rotated_at", Type: DB_BigInt, Nullable: false},
+			{Name: "created_at", Type: DB_BigInt, Nullable: false},
+			{Name: "updated_at", Type: DB_BigInt, Nullable: false},
 		},
 		Indices: []*Index{
 			{Cols: []string{"auth_token"}, Type: UniqueIndex},
@@ -39,7 +39,7 @@ func addUserAuthTokenMigrations(mg *Migrator) {
 			userAuthTokenV1,
 			&Column{
 				Name:     "revoked_at",
-				Type:     DB_Int,
+				Type:     DB_BigInt,
 				Nullable: true,
 			},
 		),

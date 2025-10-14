@@ -67,6 +67,9 @@ func (c setRuleGuidMigration) SQL(migrator.Dialect) string {
 }
 
 func (c setRuleGuidMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	if mg.DBEngine.DriverName() == migrator.YDB {
+		return nil
+	}
 	var lastId *int64
 	for {
 		var results []int64

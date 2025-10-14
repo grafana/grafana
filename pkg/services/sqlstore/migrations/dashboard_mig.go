@@ -303,6 +303,8 @@ func RunDashboardTagMigrations(sess *xorm.Session, driverName string) error {
 		SET dashboard_tag.dashboard_uid = dashboard.uid,
 			dashboard_tag.org_id = dashboard.org_id
 		WHERE dashboard_tag.dashboard_uid IS NULL OR dashboard_tag.org_id IS NULL;`
+	case YDB:
+		return nil // TODO:
 	}
 
 	if _, err := sess.Exec(sql); err != nil {

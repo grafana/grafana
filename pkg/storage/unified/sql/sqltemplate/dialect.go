@@ -23,6 +23,8 @@ func DialectForDriver(driverName string) Dialect {
 		return PostgreSQL
 	case "sqlite", "sqlite3":
 		return SQLite
+	case "ydb":
+		return YDB
 	default:
 		return nil
 	}

@@ -176,6 +176,9 @@ func (s *AnonDBStore) CreateOrUpdateDevice(ctx context.Context, device *Device) 
 					client_ip = excluded.client_ip,
 					user_agent = excluded.user_agent,
 					updated_at = excluded.updated_at`
+	case migrator.YDB:
+		query = `UPSERT INTO anon_device (device_id, client_ip, user_agent, created_at, updated_at)
+					VALUES ($1, $2, $3, $4, $5)`
 	default:
 		return fmt.Errorf("unsupported database driver: %s", s.sqlStore.GetDBType())
 	}

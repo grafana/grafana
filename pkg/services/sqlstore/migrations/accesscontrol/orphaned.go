@@ -32,7 +32,7 @@ func (m *orphanedServiceAccountPermissions) Exec(sess *xorm.Session, mg *migrato
 	var idents []string
 
 	// find all permissions that are scopes directly to a service account
-	err := sess.SQL("SELECT DISTINCT p.identifier FROM permission AS p WHERE p.kind  = 'serviceaccounts' AND NOT p.identifier = '*'").Find(&idents)
+	err := sess.SQL("SELECT DISTINCT p.identifier FROM permission AS p WHERE p.kind  = 'serviceaccounts' AND p.identifier != '*'").Find(&idents)
 	if err != nil {
 		return fmt.Errorf("failed to fetch permissinos scoped to service accounts: %w", err)
 	}

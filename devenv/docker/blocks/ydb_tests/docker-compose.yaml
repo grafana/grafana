@@ -1,0 +1,7 @@
+  ydbtest:
+    image: ydbplatform/local-ydb:${ydb_version}
+    hostname: localhost
+    ports:
+      - "2136:2136" # Simple      
+      - "8765:8765" # Monitor
+    tmpfs: /ydb_data:rw

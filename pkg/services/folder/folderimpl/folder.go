@@ -169,6 +169,12 @@ func (s *Service) DBMigration(db db.DB) {
 				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
 				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
 			`)
+		} else if db.GetDialect().DriverName() == migrator.YDB {
+			// covered by UQE_folder_org_id_uid
+			_, err = sess.Exec(`
+				UPSERT INTO folder (uid, org_id, title, created, updated)
+				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder			
+			`)
 		} else {
 			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`
@@ -183,10 +189,18 @@ func (s *Service) DBMigration(db db.DB) {
 
 		if deleteOldFolders {
 			// covered by UQE_folder_org_id_uid
-			_, err = sess.Exec(`
+			q := `
 			DELETE FROM folder WHERE NOT EXISTS
 				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
-		`)
+			`
+
+			if db.GetDialect().DriverName() == migrator.YDB {
+				q = `
+				DELETE FROM folder ON
+    				SELECT folder.id AS id FROM folder JOIN dashboard ON dashboard.uid = folder.uid 
+        				WHERE dashboard.org_id = folder.org_id AND dashboard.is_folder = true`
+			}
+			_, err = sess.Exec(q)
 		}
 		return err
 	})

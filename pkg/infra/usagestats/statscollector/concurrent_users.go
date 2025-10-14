@@ -36,11 +36,11 @@ func (s *Service) concurrentUsers(ctx context.Context) (*concurrentUsersStats, e
 		// Retrieves concurrent users stats as a histogram. Buckets are accumulative and upper bound is inclusive.
 		rawSQL := `
 SELECT
-    COUNT(CASE WHEN tokens <= 3 THEN 1 END) AS bucket_le_3,
-    COUNT(CASE WHEN tokens <= 6 THEN 1 END) AS bucket_le_6,
-    COUNT(CASE WHEN tokens <= 9 THEN 1 END) AS bucket_le_9,
-    COUNT(CASE WHEN tokens <= 12 THEN 1 END) AS bucket_le_12,
-    COUNT(CASE WHEN tokens <= 15 THEN 1 END) AS bucket_le_15,
+    COUNT(CASE WHEN tokens <= 3 THEN 1 ELSE NULL END) AS bucket_le_3,
+    COUNT(CASE WHEN tokens <= 6 THEN 1 ELSE NULL END) AS bucket_le_6,
+    COUNT(CASE WHEN tokens <= 9 THEN 1 ELSE NULL END) AS bucket_le_9,
+    COUNT(CASE WHEN tokens <= 12 THEN 1 ELSE NULL END) AS bucket_le_12,
+    COUNT(CASE WHEN tokens <= 15 THEN 1 ELSE NULL END) AS bucket_le_15,
     COUNT(1) AS bucket_le_inf
 FROM (select count(1) as tokens from user_auth_token group by user_id) uat;`
 		_, err := sess.SQL(rawSQL).Get(s.concurrentUserStatsCache.stats)

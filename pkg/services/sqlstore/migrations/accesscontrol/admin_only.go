@@ -32,13 +32,15 @@ func (m *adminOnlyMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) erro
 
 	// Find all dashboards and folders that should have only admin permission in acl
 	// When a dashboard or folder only has admin permission the acl table should be empty and the has_acl set to true
+
+	// TODO: check in Postgres
 	sql := `
 	SELECT res.uid, res.is_folder, res.org_id
-	FROM (SELECT dashboard.id, dashboard.uid, dashboard.is_folder, dashboard.org_id, count(dashboard_acl.id) as count
+	FROM (SELECT dashboard.id, dashboard.uid AS uid, dashboard.is_folder AS is_folder, dashboard.org_id AS org_id, count(dashboard_acl.id) as count
 		  FROM dashboard
 				LEFT JOIN dashboard_acl ON dashboard.id = dashboard_acl.dashboard_id
 		  WHERE dashboard.has_acl IS TRUE
-		  GROUP BY dashboard.id) as res
+		  GROUP BY dashboard.id, dashboard.uid, dashboard.is_folder, dashboard.org_id) as res
 	WHERE res.count = 0
 	`
 

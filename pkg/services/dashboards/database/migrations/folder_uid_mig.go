@@ -40,6 +40,14 @@ func (m *FolderUIDMigration) Exec(sess *xorm.Session, mgrtr *migrator.Migrator) 
 		WHERE d.is_folder = ?`
 	}
 
+	if mgrtr.Dialect.DriverName() == migrator.YDB {
+		q = `
+		UPSERT INTO dashboard SELECT folder.uid AS folder_uid, d.created AS created,
+ 		d.data as data, d.org_id as org_id, d.slug as slug, 
+ 		d.title as title, d.updated as updated, d.version as version
+ 		FROM dashboard folder JOIN dashboard d ON d.folder_id = folder.id WHERE d.is_folder = ?`
+	}
+
 	r, err := sess.Exec(q, mgrtr.Dialect.BooleanValue(false))
 	if err != nil {
 		mgrtr.Logger.Error("Failed to migrate dashboard folder_uid for dashboards", "error", err)
@@ -68,6 +76,15 @@ func (m *FolderUIDMigration) Exec(sess *xorm.Session, mgrtr *migrator.Migrator) 
 		)
 		WHERE is_folder = ?`
 	}
+
+	if mgrtr.Dialect.DriverName() == migrator.YDB {
+		q = `
+		UPSERT INTO dashboard SELECT folder.parent_uid AS folder_uid, d.created AS created,
+ 		d.data as data, d.org_id as org_id, d.slug as slug, 
+ 		d.title as title, d.updated as updated, d.version as version
+ 		FROM folder JOIN dashboard d ON d.org_id = folder.org_id WHERE d.is_folder = ?`
+	}
+
 	r, err = sess.Exec(q, mgrtr.Dialect.BooleanValue(true))
 	if err != nil {
 		mgrtr.Logger.Error("Failed to migrate dashboard folder_uid for folders", "error", err)

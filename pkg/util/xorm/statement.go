@@ -350,7 +350,15 @@ func (statement *Statement) buildUpdates(bean any,
 		if fieldType.Kind() == reflect.Ptr {
 			if fieldValue.IsNil() {
 				if includeNil {
-					args = append(args, nil)
+					var nilValue any
+
+					sqlType := statement.Engine.dialect.SqlType(col)
+					if sqlType == yql_Utf8 {
+						var ret *string
+						nilValue = ret
+					}
+
+					args = append(args, nilValue)
 					colNames = append(colNames, fmt.Sprintf("%v=?", engine.Quote(col.Name)))
 				}
 				continue

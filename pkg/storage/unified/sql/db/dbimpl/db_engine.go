@@ -11,7 +11,7 @@ import (
 
 func getEngine(config *sqlstore.DatabaseConfig) (*xorm.Engine, error) {
 	switch config.Type {
-	case dbTypeMySQL, dbTypePostgres, dbTypeSQLite:
+	case dbTypeMySQL, dbTypePostgres, dbTypeSQLite, dbTypeYDB:
 		engine, err := xorm.NewEngine(config.Type, config.ConnectionString)
 		if err != nil {
 			return nil, fmt.Errorf("open database: %w", err)

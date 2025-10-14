@@ -74,7 +74,7 @@ func addAnnotationMig(mg *Migrator) {
 	annotationTagTable := Table{
 		Name: "annotation_tag",
 		Columns: []*Column{
-			{Name: "annotation_id", Type: DB_BigInt, Nullable: false},
+			{Name: "annotation_id", Type: DB_BigInt, Nullable: false, IsPrimaryKey: true},
 			{Name: "tag_id", Type: DB_BigInt, Nullable: false},
 		},
 		Indices: []*Index{
@@ -118,7 +118,7 @@ func addAnnotationMig(mg *Migrator) {
 	//
 	// clear alert text
 	//
-	updateTextFieldSQL := "UPDATE annotation SET TEXT = '' WHERE alert_id > 0"
+	updateTextFieldSQL := "UPDATE annotation SET text = '' WHERE alert_id > 0"
 	mg.AddMigration("Update alert annotations and set TEXT to empty", NewRawSQLMigration(updateTextFieldSQL))
 
 	//
@@ -263,6 +263,8 @@ func RunDashboardUIDMigrations(sess *xorm.Session, driverName string) error {
 		LEFT JOIN dashboard ON annotation.dashboard_id = dashboard.id
 		SET annotation.dashboard_uid = dashboard.uid
 		WHERE annotation.dashboard_uid IS NULL and annotation.dashboard_id != 0;`
+	case YDB:
+		return nil
 	}
 	if _, err := sess.Exec(sql); err != nil {
 		return fmt.Errorf("failed to set dashboard_uid for annotation: %w", err)

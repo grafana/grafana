@@ -6,7 +6,7 @@ func addDbFileStorageMigration(mg *migrator.Migrator) {
 	filesTable := migrator.Table{
 		Name: "file",
 		Columns: []*migrator.Column{
-			{Name: "path", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+			{Name: "path", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false, IsPrimaryKey: true},
 
 			// path_hash is used for indexing. we are using it to circumvent the max length limit of 191 for varchar2 fields in MySQL 5.6
 			{Name: "path_hash", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
@@ -48,7 +48,7 @@ func addDbFileStorageMigration(mg *migrator.Migrator) {
 			{Name: "path_hash", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
 
 			// 191 is the maximum length of indexable VARCHAR fields in MySQL 5.6 <= with utf8mb4 encoding
-			{Name: "key", Type: migrator.DB_NVarchar, Length: 191, Nullable: false},
+			{Name: "key", Type: migrator.DB_NVarchar, Length: 191, Nullable: false, IsPrimaryKey: true},
 			{Name: "value", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 		},
 		Indices: []*migrator.Index{

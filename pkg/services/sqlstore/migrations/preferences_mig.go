@@ -98,6 +98,8 @@ func RunPreferencesMigration(sess *xorm.Session, driverName string) error {
 		LEFT JOIN dashboard ON preferences.home_dashboard_id = dashboard.id
 		SET preferences.home_dashboard_uid = dashboard.uid
 		WHERE preferences.home_dashboard_uid IS NULL;`
+	case YDB:
+		return nil
 	}
 
 	if _, err := sess.Exec(sql); err != nil {

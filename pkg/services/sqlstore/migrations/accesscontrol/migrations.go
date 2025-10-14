@@ -157,15 +157,16 @@ func AddMigration(mg *migrator.Migrator) {
 			{Name: "builtin_role", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "role_name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 		},
-		Indices: []*migrator.Index{
-			{Cols: []string{"builtin_role", "role_name"}, Type: migrator.UniqueIndex},
-		},
+	}
+
+	if mg.DBEngine.DriverName() == migrator.YDB {
+		seedAssignmentV1.Columns[0].IsPrimaryKey = true
+		seedAssignmentV1.Columns[1].IsPrimaryKey = true
 	}
 
 	mg.AddMigration("create seed assignment table", migrator.NewAddTableMigration(seedAssignmentV1))
 
 	//-------  indexes ------------------
-	mg.AddMigration("add unique index builtin_role_role_name", migrator.NewAddIndexMigration(seedAssignmentV1, seedAssignmentV1.Indices[0]))
 
 	mg.AddMigration("add column hidden to role table", migrator.NewAddColumnMigration(roleV1, &migrator.Column{
 		Name: "hidden", Type: migrator.DB_Bool, Nullable: false, Default: "0",
@@ -209,13 +210,5 @@ func AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("remove user_role org ID, user ID, role ID index", migrator.NewDropIndexMigration(userRoleV1, &migrator.Index{
 		Type: migrator.UniqueIndex,
 		Cols: []string{"org_id", "user_id", "role_id"},
-	}))
-
-	mg.AddMigration("add permission role_id action index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
-		Cols: []string{"role_id", "action"},
-	}))
-
-	mg.AddMigration("Remove permission role_id index", migrator.NewDropIndexMigration(permissionV1, &migrator.Index{
-		Cols: []string{"role_id"},
 	}))
 }

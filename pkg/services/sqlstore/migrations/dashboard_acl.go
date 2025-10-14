@@ -49,8 +49,8 @@ INSERT INTO dashboard_acl
 		updated
 	)
 	VALUES
-		(-1,-1, 1,'Viewer','2017-06-20','2017-06-20'),
-		(-1,-1, 2,'Editor','2017-06-20','2017-06-20')
+		(-1,-1, 1,'Viewer',Date('2017-06-20'),Date('2017-06-20')),
+		(-1,-1, 2,'Editor',Date('2017-06-20'),Date('2017-06-20'))
 	`
 
 	mg.AddMigration("save default acl rules in dashboard_acl table", NewRawSQLMigration(rawSQL))

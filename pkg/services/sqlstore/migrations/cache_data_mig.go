@@ -11,12 +11,7 @@ func addCacheMigration(mg *migrator.Migrator) {
 			{Name: "expires", Type: migrator.DB_Integer, Length: 255, Nullable: false},
 			{Name: "created_at", Type: migrator.DB_Integer, Length: 255, Nullable: false},
 		},
-		Indices: []*migrator.Index{
-			{Cols: []string{"cache_key"}, Type: migrator.UniqueIndex},
-		},
 	}
 
 	mg.AddMigration("create cache_data table", migrator.NewAddTableMigration(cacheDataV1))
-
-	mg.AddMigration("add unique index cache_data.cache_key", migrator.NewAddIndexMigration(cacheDataV1, cacheDataV1.Indices[0]))
 }

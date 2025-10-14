@@ -102,7 +102,7 @@ func (gtx *SessionTx) ExecWithReturningId(ctx context.Context, query string, arg
 
 func execWithReturningId(ctx context.Context, driverName string, query string, sess Session, args ...any) (int64, error) {
 	var id int64
-	if driverName == "postgres" {
+	if driverName == "postgres" || driverName == "ydb" {
 		query = fmt.Sprintf("%s RETURNING id", query)
 		err := sess.Get(ctx, &id, query, args...)
 		if err != nil {

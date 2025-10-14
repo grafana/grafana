@@ -1868,6 +1868,7 @@ const (
 	MYSQL    = "mysql"
 	MSSQL    = "mssql"
 	ORACLE   = "oracle"
+	YDB      = "ydb"
 )
 
 // xorm SQL types
