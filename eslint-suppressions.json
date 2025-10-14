@@ -650,11 +650,6 @@
       "count": 3
     }
   },
-  "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Forms/Form.story.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 9
