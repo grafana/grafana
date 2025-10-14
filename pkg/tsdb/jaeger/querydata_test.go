@@ -3,39 +3,22 @@ package jaeger
 import (
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/grafana/grafana/pkg/tsdb/jaeger/types"
+	"github.com/grafana/grafana/pkg/tsdb/jaeger/utils"
 )
 
 func TestTransformSearchResponse(t *testing.T) {
 	t.Run("empty_response", func(t *testing.T) {
-		dsInfo := &datasourceInfo{
-			JaegerClient: JaegerClient{
-				settings: backend.DataSourceInstanceSettings{
-					UID:  "test-uid",
-					Name: "test-name",
-				},
-			},
-		}
-
-		frame := transformSearchResponse([]TraceResponse{}, dsInfo)
+		frame := utils.TransformSearchResponse([]types.TraceResponse{}, "test-uid", "test-name")
 		experimental.CheckGoldenJSONFrame(t, "./testdata", "search_empty_response.golden", frame, false)
 	})
 
 	t.Run("single_trace", func(t *testing.T) {
-		dsInfo := &datasourceInfo{
-			JaegerClient: JaegerClient{
-				settings: backend.DataSourceInstanceSettings{
-					UID:  "test-uid",
-					Name: "test-name",
-				},
-			},
-		}
-
-		response := []TraceResponse{
+		response := []types.TraceResponse{
 			{
 				TraceID: "test-trace-id",
-				Spans: []Span{
+				Spans: []types.Span{
 					{
 						TraceID:       "test-trace-id",
 						ProcessID:     "p1",
@@ -44,7 +27,7 @@ func TestTransformSearchResponse(t *testing.T) {
 						Duration:      1000,
 					},
 				},
-				Processes: map[string]TraceProcess{
+				Processes: map[string]types.TraceProcess{
 					"p1": {
 						ServiceName: "test-service",
 					},
@@ -52,24 +35,15 @@ func TestTransformSearchResponse(t *testing.T) {
 			},
 		}
 
-		frame := transformSearchResponse(response, dsInfo)
+		frame := utils.TransformSearchResponse(response, "test-uid", "test-name")
 		experimental.CheckGoldenJSONFrame(t, "./testdata", "search_single_response.golden", frame, false)
 	})
 
 	t.Run("multiple_traces", func(t *testing.T) {
-		dsInfo := &datasourceInfo{
-			JaegerClient: JaegerClient{
-				settings: backend.DataSourceInstanceSettings{
-					UID:  "test-uid",
-					Name: "test-name",
-				},
-			},
-		}
-
-		response := []TraceResponse{
+		response := []types.TraceResponse{
 			{
 				TraceID: "trace-1",
-				Spans: []Span{
+				Spans: []types.Span{
 					{
 						TraceID:       "trace-1",
 						ProcessID:     "p1",
@@ -78,7 +52,7 @@ func TestTransformSearchResponse(t *testing.T) {
 						Duration:      1000,
 					},
 				},
-				Processes: map[string]TraceProcess{
+				Processes: map[string]types.TraceProcess{
 					"p1": {
 						ServiceName: "service-1",
 					},
@@ -86,7 +60,7 @@ func TestTransformSearchResponse(t *testing.T) {
 			},
 			{
 				TraceID: "trace-2",
-				Spans: []Span{
+				Spans: []types.Span{
 					{
 						TraceID:       "trace-2",
 						ProcessID:     "p2",
@@ -95,7 +69,7 @@ func TestTransformSearchResponse(t *testing.T) {
 						Duration:      2000,
 					},
 				},
-				Processes: map[string]TraceProcess{
+				Processes: map[string]types.TraceProcess{
 					"p2": {
 						ServiceName: "service-2",
 					},
@@ -103,27 +77,27 @@ func TestTransformSearchResponse(t *testing.T) {
 			},
 		}
 
-		frame := transformSearchResponse(response, dsInfo)
+		frame := utils.TransformSearchResponse(response, "test-uid", "test-name")
 		experimental.CheckGoldenJSONFrame(t, "./testdata", "search_multiple_response.golden", frame, false)
 	})
 }
 
 func TestTransformTraceResponse(t *testing.T) {
 	t.Run("simple_trace", func(t *testing.T) {
-		trace := TraceResponse{
+		trace := types.TraceResponse{
 			TraceID: "3fa414edcef6ad90",
-			Spans: []Span{
+			Spans: []types.Span{
 				{
 					TraceID:       "3fa414edcef6ad90",
 					SpanID:        "3fa414edcef6ad90",
 					OperationName: "HTTP GET - api_traces_traceid",
 					StartTime:     1605873894680409,
 					Duration:      1049141,
-					Tags: []TraceKeyValuePair{
+					Tags: []types.TraceKeyValuePair{
 						{Key: "sampler.type", Type: "string", Value: "probabilistic"},
 						{Key: "sampler.param", Type: "float64", Value: 1},
 					},
-					Logs:      []TraceLog{},
+					Logs:      []types.TraceLog{},
 					ProcessID: "p1",
 					Warnings:  nil,
 					Flags:     0,
@@ -132,7 +106,7 @@ func TestTransformTraceResponse(t *testing.T) {
 					TraceID:       "3fa414edcef6ad90",
 					SpanID:        "0f5c1808567e4403",
 					OperationName: "/tempopb.Querier/FindTraceByID",
-					References: []TraceSpanReference{
+					References: []types.TraceSpanReference{
 						{
 							RefType: "CHILD_OF",
 							TraceID: "3fa414edcef6ad90",
@@ -141,20 +115,20 @@ func TestTransformTraceResponse(t *testing.T) {
 					},
 					StartTime: 1605873894680587,
 					Duration:  1847,
-					Tags: []TraceKeyValuePair{
+					Tags: []types.TraceKeyValuePair{
 						{Key: "component", Type: "string", Value: "gRPC"},
 						{Key: "span.kind", Type: "string", Value: "client"},
 					},
-					Logs:      []TraceLog{},
+					Logs:      []types.TraceLog{},
 					ProcessID: "p1",
 					Warnings:  nil,
 					Flags:     0,
 				},
 			},
-			Processes: map[string]TraceProcess{
+			Processes: map[string]types.TraceProcess{
 				"p1": {
 					ServiceName: "tempo-querier",
-					Tags: []TraceKeyValuePair{
+					Tags: []types.TraceKeyValuePair{
 						{Key: "cluster", Type: "string", Value: "ops-tools1"},
 						{Key: "container", Type: "string", Value: "tempo-query"},
 					},
@@ -168,26 +142,26 @@ func TestTransformTraceResponse(t *testing.T) {
 	})
 
 	t.Run("complex_trace", func(t *testing.T) {
-		trace := TraceResponse{
+		trace := types.TraceResponse{
 			TraceID: "3fa414edcef6ad90",
-			Spans: []Span{
+			Spans: []types.Span{
 				{
 					TraceID:       "3fa414edcef6ad90",
 					SpanID:        "3fa414edcef6ad90",
 					OperationName: "HTTP GET - api_traces_traceid",
-					References:    []TraceSpanReference{},
+					References:    []types.TraceSpanReference{},
 					StartTime:     1605873894680409,
 					Duration:      1049141,
-					Tags: []TraceKeyValuePair{
+					Tags: []types.TraceKeyValuePair{
 						{Key: "sampler.type", Type: "string", Value: "probabilistic"},
 						{Key: "sampler.param", Type: "float64", Value: 1},
 						{Key: "error", Type: "bool", Value: true},
 						{Key: "http.status_code", Type: "int", Value: 500},
 					},
-					Logs: []TraceLog{
+					Logs: []types.TraceLog{
 						{
 							Timestamp: 1605873894681000,
-							Fields: []TraceKeyValuePair{
+							Fields: []types.TraceKeyValuePair{
 								{Key: "event", Type: "string", Value: "error"},
 								{Key: "message", Type: "string", Value: "Internal server error"},
 							},
@@ -201,7 +175,7 @@ func TestTransformTraceResponse(t *testing.T) {
 					TraceID:       "3fa414edcef6ad90",
 					SpanID:        "0f5c1808567e4403",
 					OperationName: "/tempopb.Querier/FindTraceByID",
-					References: []TraceSpanReference{
+					References: []types.TraceSpanReference{
 						{
 							RefType: "CHILD_OF",
 							TraceID: "3fa414edcef6ad90",
@@ -210,16 +184,16 @@ func TestTransformTraceResponse(t *testing.T) {
 					},
 					StartTime: 1605873894680587,
 					Duration:  1847,
-					Tags: []TraceKeyValuePair{
+					Tags: []types.TraceKeyValuePair{
 						{Key: "component", Type: "string", Value: "gRPC"},
 						{Key: "span.kind", Type: "string", Value: "client"},
 						{Key: "error", Type: "bool", Value: true},
 						{Key: "grpc.status_code", Type: "int", Value: 13},
 					},
-					Logs: []TraceLog{
+					Logs: []types.TraceLog{
 						{
 							Timestamp: 1605873894680700,
-							Fields: []TraceKeyValuePair{
+							Fields: []types.TraceKeyValuePair{
 								{Key: "event", Type: "string", Value: "error"},
 								{Key: "message", Type: "string", Value: "gRPC error: INTERNAL"},
 							},
@@ -233,7 +207,7 @@ func TestTransformTraceResponse(t *testing.T) {
 					TraceID:       "3fa414edcef6ad90",
 					SpanID:        "1a2b3c4d5e6f7g8h",
 					OperationName: "db.query",
-					References: []TraceSpanReference{
+					References: []types.TraceSpanReference{
 						{
 							RefType: "CHILD_OF",
 							TraceID: "3fa414edcef6ad90",
@@ -242,15 +216,15 @@ func TestTransformTraceResponse(t *testing.T) {
 					},
 					StartTime: 1605873894680800,
 					Duration:  500,
-					Tags: []TraceKeyValuePair{
+					Tags: []types.TraceKeyValuePair{
 						{Key: "db.type", Type: "string", Value: "postgresql"},
 						{Key: "db.statement", Type: "string", Value: "SELECT * FROM traces WHERE id = $1"},
 						{Key: "error", Type: "bool", Value: true},
 					},
-					Logs: []TraceLog{
+					Logs: []types.TraceLog{
 						{
 							Timestamp: 1605873894680850,
-							Fields: []TraceKeyValuePair{
+							Fields: []types.TraceKeyValuePair{
 								{Key: "event", Type: "string", Value: "error"},
 								{Key: "message", Type: "string", Value: "Database connection timeout"},
 							},
@@ -261,10 +235,10 @@ func TestTransformTraceResponse(t *testing.T) {
 					Flags:     0,
 				},
 			},
-			Processes: map[string]TraceProcess{
+			Processes: map[string]types.TraceProcess{
 				"p1": {
 					ServiceName: "tempo-querier",
-					Tags: []TraceKeyValuePair{
+					Tags: []types.TraceKeyValuePair{
 						{Key: "cluster", Type: "string", Value: "ops-tools1"},
 						{Key: "container", Type: "string", Value: "tempo-query"},
 						{Key: "version", Type: "string", Value: "1.2.3"},
@@ -272,7 +246,7 @@ func TestTransformTraceResponse(t *testing.T) {
 				},
 				"p2": {
 					ServiceName: "tempo-storage",
-					Tags: []TraceKeyValuePair{
+					Tags: []types.TraceKeyValuePair{
 						{Key: "cluster", Type: "string", Value: "ops-tools1"},
 						{Key: "container", Type: "string", Value: "tempo-storage"},
 						{Key: "version", Type: "string", Value: "2.0.1"},
@@ -289,8 +263,8 @@ func TestTransformTraceResponse(t *testing.T) {
 
 func TestTransformDependenciesResponse(t *testing.T) {
 	t.Run("simple_dependencies", func(t *testing.T) {
-		dependencies := DependenciesResponse{
-			Data: []ServiceDependency{
+		dependencies := types.DependenciesResponse{
+			Data: []types.ServiceDependency{
 				{
 					Parent:    "serviceA",
 					Child:     "serviceB",
@@ -315,8 +289,8 @@ func TestTransformDependenciesResponse(t *testing.T) {
 	})
 
 	t.Run("empty_dependencies", func(t *testing.T) {
-		dependencies := DependenciesResponse{
-			Data: []ServiceDependency{},
+		dependencies := types.DependenciesResponse{
+			Data: []types.ServiceDependency{},
 		}
 
 		frames := transformDependenciesResponse(dependencies, "test")
@@ -325,8 +299,8 @@ func TestTransformDependenciesResponse(t *testing.T) {
 	})
 
 	t.Run("complex_dependencies", func(t *testing.T) {
-		dependencies := DependenciesResponse{
-			Data: []ServiceDependency{
+		dependencies := types.DependenciesResponse{
+			Data: []types.ServiceDependency{
 				{
 					Parent:    "frontend",
 					Child:     "auth-service",
