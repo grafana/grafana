@@ -77,6 +77,10 @@ SCIM uses a specific process to establish and maintain user identity between the
 
 This process ensures secure and consistent user identification across both systems, preventing security issues that could arise from email changes or other user attribute modifications.
 
+{{< admonition type="note" >}}
+During provisioning, if the identity provider sends user attributes that has no use in Grafana, those attributes will be gracefully ignored.
+{{< /admonition >}}
+
 ### Existing Grafana users
 
 For users who already exist in the Grafana instance:
@@ -219,7 +223,7 @@ Team provisioning requires `group_sync_enabled = true` in the SCIM configuration
 {{< /admonition >}}
 
 {{< admonition type="warning" >}}
-Teams provisioned through SCIM cannot be deleted manually from Grafana - they can only be deleted by removing their corresponding groups from the identity provider.
+Teams provisioned through SCIM cannot be deleted manually from Grafana - they can only be deleted by removing their corresponding groups from the identity provider. Optionally, you can disable SCIM group sync to allow manual deletion of teams.
 {{< /admonition >}}
 
 For detailed configuration steps specific to the identity provider, see:

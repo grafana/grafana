@@ -726,6 +726,8 @@ Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 
 Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is to mitigate the risk of cross-origin information leakage. This setting also provides some protection against cross-site request forgery attacks (CSRF), [read more about SameSite here](https://owasp.org/www-community/SameSite). Valid values are `lax`, `strict`, `none`, and `disabled`. Default is `lax`. Using value `disabled` does not add any `SameSite` attribute to cookies.
 
+If you want to use OAuth/SAML for login, it is necessary to configure this attribute as `lax`.
+
 #### `allow_embedding`
 
 When `false`, the HTTP header `X-Frame-Options: deny` is set in Grafana HTTP responses which instructs browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`.
@@ -791,20 +793,6 @@ The following example allows access to all plugins that have a backend:
 The following example limits access to the backend of a single plugin:
 
 `actions_allow_post_url=/api/plugins/grafana-special-app`
-
-<hr />
-
-#### `angular_support_enabled`
-
-This is set to false by default, meaning that the angular framework and support components aren't loaded.
-This means that all [plugins](../../developers/angular_deprecation/angular-plugins/) and core features that depend on angular support won't work.
-
-The core features that depend on angular are:
-
-- Old graph panel
-- Old table panel
-
-These features each have supported alternatives, and we recommend using them.
 
 #### `csrf_trusted_origins`
 
@@ -1927,7 +1915,40 @@ The timeout string is a possibly signed sequence of decimal numbers, followed by
 
 #### `max_attempts`
 
-Sets a maximum number of times Grafana attempts to evaluate an alert rule before giving up on that evaluation. The default value is `3`.
+The maximum number of times Grafana retries evaluating an alert rule before giving up on that evaluation. Default is `3`.
+
+The retry mechanism:
+
+- Adds jitter to retry delays to prevent thundering herd problems when multiple rules fail simultaneously.
+- Stops when either `max_attempts` is reached or the rule’s evaluation interval is exceeded.
+
+You can customize retry behaviour with `initial_retry_delay`, `max_retry_delay`, and `randomization_factor`.
+
+#### `initial_retry_delay`
+
+The initial delay before retrying a failed alert evaluation. Default is `1s`.
+
+This value is the starting point for exponential backoff.
+
+#### `max_retry_delay`
+
+The maximum delay between retries during exponential backoff. Default is `4s`.
+
+After the retry delay reaches `max_retry_delay`, all subsequent retries use this delay.
+
+To avoid overlapping retries with scheduled evaluations, `max_retry_delay` must be less than the rule’s evaluation interval.
+
+#### `randomization_factor`
+
+The randomization factor for exponential backoff retries. Default is `0.1`.
+
+The value must be between `0` and `1`.
+
+The actual retry delay is chosen randomly between:
+
+```
+[current_delay*(1-randomization_factor), current_delay*(1+randomization_factor)]
+```
 
 #### `min_interval`
 
