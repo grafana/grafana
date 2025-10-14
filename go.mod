@@ -67,7 +67,7 @@ require (
 	github.com/go-openapi/loads v0.22.0 // @grafana/alerting-backend
 	github.com/go-openapi/runtime v0.28.0 // @grafana/alerting-backend
 	github.com/go-openapi/strfmt v0.23.0 // @grafana/alerting-backend
-	github.com/go-redis/redis/v8 v8.11.5 // @grafana/grafana-backend-group
+	github.com/go-redis/redis/v8 v8.11.5 // indirect; @grafana/grafana-backend-group
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // @grafana/grafana-backend-group
 	github.com/go-sql-driver/mysql v1.9.3 // @grafana/grafana-search-and-storage
 	github.com/go-stack/stack v1.8.1 // @grafana/grafana-backend-group
@@ -630,6 +630,8 @@ require (
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/yaml v1.5.0 // indirect
 )
+
+require github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0-00010101000000-000000000000
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
