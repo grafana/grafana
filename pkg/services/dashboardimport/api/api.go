@@ -56,6 +56,16 @@ func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteR
 	}, middleware.ReqSignedIn)
 }
 
+// swagger:route POST /dashboards/interpolate dashboards interpolateDashboard
+//
+// Interpolate dashboard. This is an experimental endpoint under dashboardLibrary FF and is subject to change.
+//
+// Responses:
+// 200: interpolateDashboardResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 422: unprocessableEntityError
+// 500: internalServerError
 func (api *ImportDashboardAPI) InterpolateDashboard(c *contextmodel.ReqContext) response.Response {
 	req := dashboardimport.ImportDashboardRequest{}
 	if err := web.Bind(c.Req, &req); err != nil {
@@ -141,4 +151,10 @@ type ImportDashboardParams struct {
 type ImportDashboardResponse struct {
 	// in: body
 	Body dashboardimport.ImportDashboardResponse `json:"body"`
+}
+
+// swagger:response interpolateDashboardResponse
+type InterpolateDashboardResponse struct {
+	// in: body
+	Body interface{} `json:"body"`
 }
