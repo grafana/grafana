@@ -4,8 +4,9 @@ keywords:
   - Simplified exploration
   - queryless
   - Explore apps
-title: Simplified exploration
-menuTitle: Simplified exploration
+  - Drilldown apps
+title: Drilldown
+menuTitle: Drilldown
 weight: 100
 hero:
   title: Simplified exploration with the Drilldown apps
