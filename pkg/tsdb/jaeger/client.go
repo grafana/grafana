@@ -178,23 +178,22 @@ func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) (*data.Frame
 	return frames, nil
 }
 
-func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int64) (types.TraceResponse, error) {
+func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int64, refID string) (*data.Frame, error) {
 	logger := j.logger.FromContext(ctx)
 	var response types.TracesResponse
-	trace := types.TraceResponse{}
 
 	if traceID == "" {
-		return trace, backend.DownstreamError(fmt.Errorf("traceID is empty"))
+		return nil, backend.DownstreamError(fmt.Errorf("traceID is empty"))
 	}
 
 	traceUrl, err := url.JoinPath(j.url, "/api/traces", url.QueryEscape(traceID))
 	if err != nil {
-		return trace, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+		return nil, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
 	}
 
 	var jsonData types.SettingsJSONData
 	if err := json.Unmarshal(j.settings.JSONData, &jsonData); err != nil {
-		return trace, backend.DownstreamError(fmt.Errorf("failed to parse settings JSON data: %w", err))
+		return nil, backend.DownstreamError(fmt.Errorf("failed to parse settings JSON data: %w", err))
 	}
 
 	// Add time parameters if trace ID time is enabled and time range is provided
@@ -202,7 +201,7 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 		if start > 0 || end > 0 {
 			parsedURL, err := url.Parse(traceUrl)
 			if err != nil {
-				return trace, backend.DownstreamError(fmt.Errorf("failed to parse url: %w", err))
+				return nil, backend.DownstreamError(fmt.Errorf("failed to parse url: %w", err))
 			}
 
 			query := parsedURL.Query()
@@ -221,9 +220,9 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 	res, err := j.httpClient.Get(traceUrl)
 	if err != nil {
 		if backend.IsDownstreamHTTPError(err) {
-			return trace, backend.DownstreamError(err)
+			return nil, backend.DownstreamError(err)
 		}
-		return trace, err
+		return nil, err
 	}
 
 	defer func() {
@@ -235,19 +234,19 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 	if res != nil && res.StatusCode/100 != 2 {
 		err := backend.DownstreamError(fmt.Errorf("request failed: %s", res.Status))
 		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
-			return trace, backend.DownstreamError(err)
+			return nil, backend.DownstreamError(err)
 		}
-		return trace, err
+		return nil, err
 	}
 
 	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
-		return trace, err
+		return nil, err
 	}
 
 	// We only support one trace at a time
 	// this is how it was implemented in the frontend before
-	trace = response.Data[0]
-	return trace, err
+	frames := utils.TransformTraceResponse(response.Data[0], refID)
+	return frames, err
 }
 
 func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (types.DependenciesResponse, error) {
