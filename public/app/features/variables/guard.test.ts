@@ -24,6 +24,7 @@ import {
   createOrgVariable,
   createQueryVariable,
   createSnapshotVariable,
+  createSwitchVariable,
   createTextBoxVariable,
   createUserVariable,
 } from './state/__tests__/fixtures';
@@ -177,6 +178,7 @@ describe('type guards', () => {
     dashboard: { variable: createDashboardVariable(), isMulti: false, hasOptions: false, hasCurrent: true },
     custom: { variable: createCustomVariable(), isMulti: true, hasOptions: true, hasCurrent: true },
     snapshot: { variable: createSnapshotVariable(), isMulti: false, hasOptions: true, hasCurrent: true },
+    switch: { variable: createSwitchVariable(), isMulti: false, hasOptions: true, hasCurrent: true },
   };
 
   const variableFacts = Object.values(variableFactsObj);
