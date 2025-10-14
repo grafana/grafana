@@ -76,6 +76,7 @@ func (a *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) r
 			Definition: []metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
 				{Name: "Source", Type: "string", Format: "string"},
+				{Name: "Target", Type: "string", Format: "string"},
 				{Name: "Description", Type: "string", Format: "string"},
 			},
 			Reader: func(obj any) ([]any, error) {
@@ -85,7 +86,8 @@ func (a *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) r
 				}
 				return []any{
 					m.Name,
-					m.Spec.Datasource.Name,
+					m.Spec.Source.Name,
+					m.Spec.Target.Name,
 					m.Spec.Description,
 				}, nil
 			},
