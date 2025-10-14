@@ -106,7 +106,7 @@ func (cfg *Cfg) processPreinstallPlugins(rawInstallPlugins []string, preinstallP
 			}
 		}
 
-		preinstallPlugins[id] = InstallPlugin{id, version, url}
+		preinstallPlugins[id] = InstallPlugin{id, version, url, ""}
 	}
 }
 
@@ -151,7 +151,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 			preinstallPluginsAsync[plugin.ID] = plugin
 		}
 		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
-			preinstallPluginsAsync["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
+			preinstallPluginsAsync["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", "", ""}
 		}
 		cfg.processPreinstallPlugins(rawInstallPluginsAsync, preinstallPluginsAsync)
 

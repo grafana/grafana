@@ -538,7 +538,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	service13 := service6.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service13)
 	noop := provisionedplugins.NewNoop()
-	initialize := pipeline.ProvideInitializationStage(pluginManagementCfg, inMemory, providerService, processService, serviceregistrationService, acimplService, actionSetService, envVarsProvider, tracingService, noop)
+	clientGenerator := appregistry.ProvideClientGenerator(eventualRestConfigProvider)
+	initialize := pipeline.ProvideInitializationStage(pluginManagementCfg, inMemory, providerService, processService, serviceregistrationService, acimplService, actionSetService, envVarsProvider, tracingService, noop, clientGenerator)
 	terminate, err := pipeline.ProvideTerminationStage(pluginManagementCfg, inMemory, processService)
 	if err != nil {
 		return nil, err
@@ -550,7 +551,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService)
-	sourcesService, err := sources.ProvideService(configProvider, pluginManagementCfg, pluginInstaller, registerer)
+	sourcesService, err := sources.ProvideService(configProvider, pluginManagementCfg, pluginInstaller, registerer, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
@@ -1139,7 +1140,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	service13 := service6.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service13)
 	noop := provisionedplugins.NewNoop()
-	initialize := pipeline.ProvideInitializationStage(pluginManagementCfg, inMemory, providerService, processService, serviceregistrationService, acimplService, actionSetService, envVarsProvider, tracingService, noop)
+	clientGenerator := appregistry.ProvideClientGenerator(eventualRestConfigProvider)
+	initialize := pipeline.ProvideInitializationStage(pluginManagementCfg, inMemory, providerService, processService, serviceregistrationService, acimplService, actionSetService, envVarsProvider, tracingService, noop, clientGenerator)
 	terminate, err := pipeline.ProvideTerminationStage(pluginManagementCfg, inMemory, processService)
 	if err != nil {
 		return nil, err
@@ -1151,7 +1153,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService)
-	sourcesService, err := sources.ProvideService(configProvider, pluginManagementCfg, pluginInstaller, registerer)
+	sourcesService, err := sources.ProvideService(configProvider, pluginManagementCfg, pluginInstaller, registerer, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
