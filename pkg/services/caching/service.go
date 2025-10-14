@@ -235,9 +235,6 @@ func (c *CachingServiceClient) WithCallResourceCaching(ctx context.Context, name
 	}
 
 	reqCtx := contexthandler.FromContext(ctx)
-	// if reqCtx == nil {
-	// 	return f(sender)
-	// }
 
 	// time how long this request takes
 	start := time.Now()
