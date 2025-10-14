@@ -10,7 +10,7 @@ import (
 
 func TestTransformGrpcSearchResponse(t *testing.T) {
 	t.Run("empty_response", func(t *testing.T) {
-		frame := TransformGrpcSearchResponse(types.GrpcTracesResult{}, "test-uid", "test-name")
+		frame := TransformGrpcSearchResponse(types.GrpcTracesResult{}, "test-uid", "test-name", 0)
 		experimental.CheckGoldenJSONFrame(t, "../testdata", "search_empty_response.golden", frame, false)
 	})
 
@@ -45,7 +45,7 @@ func TestTransformGrpcSearchResponse(t *testing.T) {
 			},
 		}
 
-		frame := TransformGrpcSearchResponse(response, "test-uid", "test-name")
+		frame := TransformGrpcSearchResponse(response, "test-uid", "test-name", 0)
 		experimental.CheckGoldenJSONFrame(t, "../testdata", "search_single_response.golden", frame, false)
 	})
 
@@ -104,7 +104,7 @@ func TestTransformGrpcSearchResponse(t *testing.T) {
 				},
 			},
 		}
-		frame := TransformGrpcSearchResponse(response, "test-uid", "test-name")
+		frame := TransformGrpcSearchResponse(response, "test-uid", "test-name", 0)
 		experimental.CheckGoldenJSONFrame(t, "../testdata", "search_multiple_response.golden", frame, false)
 	})
 }

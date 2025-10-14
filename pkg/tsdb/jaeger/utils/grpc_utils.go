@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/jaeger/types"
 )
 
-func TransformGrpcSearchResponse(response types.GrpcTracesResult, dsUID string, dsName string) *data.Frame {
+func TransformGrpcSearchResponse(response types.GrpcTracesResult, dsUID string, dsName string, limit int) *data.Frame {
 	// Create a frame for the traces
 	frame := data.NewFrame("traces",
 		data.NewField("traceID", nil, []string{}).SetConfig(&data.FieldConfig{
@@ -71,6 +71,9 @@ func TransformGrpcSearchResponse(response types.GrpcTracesResult, dsUID string, 
 		return rootSpanI.StartTimeUnixNano > rootSpanJ.StartTimeUnixNano
 	})
 
+	if limit > 0 {
+		resourceSpans = resourceSpans[:limit]
+	}
 	// process each individual resource
 	for _, res := range resourceSpans {
 		serviceName := getAttribute(res.Resource.Attributes, "service.name")

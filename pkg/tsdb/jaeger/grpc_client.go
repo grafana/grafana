@@ -55,9 +55,6 @@ func (j *JaegerClient) GrpcSearch(query *JaegerQuery, start, end time.Time) (*da
 	}
 
 	urlQuery := jaegerURL.Query()
-	if query.Limit > 0 {
-		urlQuery.Set("limit", fmt.Sprintf("%d", query.Limit))
-	}
 
 	for key, value := range queryParams {
 		if value != "" {
@@ -95,6 +92,6 @@ func (j *JaegerClient) GrpcSearch(query *JaegerQuery, start, end time.Time) (*da
 		}
 		return nil, err
 	}
-	frames := utils.TransformGrpcSearchResponse(result.Result, j.settings.UID, j.settings.Name)
+	frames := utils.TransformGrpcSearchResponse(result.Result, j.settings.UID, j.settings.Name, query.Limit)
 	return frames, nil
 }
