@@ -88,12 +88,12 @@ func TransformGrpcSearchResponse(response types.GrpcTracesResult, dsUID string, 
 			}
 
 			// get trace name
-			traceName := fmt.Sprintf("%s: %s", serviceName.StringValue, scopeSpan.Scope.Name)
+			traceName := fmt.Sprintf("%s: %s", serviceName.StringValue, rootSpan.Name)
 			startTimeInt, startErr := strconv.ParseInt(rootSpan.StartTimeUnixNano, 10, 64)
 			endTimeInt, endErr := strconv.ParseInt(rootSpan.EndTimeUnixNano, 10, 64)
 			duration := int64(0)
 			if startErr == nil && endErr == nil {
-				duration = endTimeInt - startTimeInt
+				duration = (endTimeInt - startTimeInt) / 1000 // convert to microseconds
 			}
 
 			frame.AppendRow(
