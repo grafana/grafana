@@ -149,16 +149,6 @@ LIMIT
   }, [metadata?.data]);
 
   const onEditorChange = (expression: string) => {
-    if (expression !== initialQuery) {
-      reportInteraction('dashboards_expression_interaction', {
-        action: 'edit_expression',
-        expression_type: 'sql',
-        expressionRef: query.refId,
-        content: expression,
-        context: 'expression_editor',
-      });
-    }
-
     onChange({
       ...query,
       expression,
@@ -179,6 +169,7 @@ LIMIT
         expression_type: 'sql',
         expressionRef: query.refId,
         context: 'expression_editor',
+        content: query.expression,
       });
 
       onRunQuery();

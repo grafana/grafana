@@ -93,7 +93,7 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
         action: 'add_expression',
         expression_type: query.type,
         expressionRef: query.refId,
-        context: 'expression_editor',
+        context: 'panel_query_section',
       });
       hasTrackedAddExpression.current = true;
     }
@@ -105,14 +105,6 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
 
   const onSelectExpressionType = useCallback(
     (value: ExpressionQueryType) => {
-      reportInteraction('dashboards_expression_interaction', {
-        action: 'change_expression_type',
-        from_type: query.type,
-        expression_type: value,
-        expressionRef: query.refId,
-        context: 'expression_editor',
-      });
-
       const cachedExpression = getCachedExpression(value!);
       const defaults = getDefaults({ ...query, type: value! });
 
