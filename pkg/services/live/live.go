@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/centrifugal/centrifuge"
-	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
