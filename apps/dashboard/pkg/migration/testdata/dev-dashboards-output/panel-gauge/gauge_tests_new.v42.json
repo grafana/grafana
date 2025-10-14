@@ -1079,7 +1079,7 @@
           "values": false
         },
         "segmentCount": 37,
-        "segmentSpacing": 0.19,
+        "segmentSpacing": 0.31,
         "shape": "gauge",
         "showThresholdMarkers": true,
         "sparkline": false
@@ -1159,7 +1159,7 @@
           "values": false
         },
         "segmentCount": 46,
-        "segmentSpacing": 0.19,
+        "segmentSpacing": 0.3,
         "shape": "gauge",
         "showThresholdMarkers": true,
         "sparkline": false
@@ -1319,7 +1319,7 @@
           "values": false
         },
         "segmentCount": 62,
-        "segmentSpacing": 0.19,
+        "segmentSpacing": 0.3,
         "shape": "circle",
         "showThresholdMarkers": true,
         "sparkline": false

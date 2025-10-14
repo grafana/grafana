@@ -34,6 +34,7 @@ export interface GaugeDimensions {
   barIndex: number;
   thresholdsBarWidth: number;
   thresholdsBarSpacing: number;
+  showScaleLabels?: boolean;
 }
 
 export function calculateDimensions(
@@ -44,7 +45,8 @@ export function calculateDimensions(
   roundedBars: boolean,
   barWidthFactor: number,
   barIndex: number,
-  thresholdBar?: boolean
+  thresholdBar?: boolean,
+  showScaleLabels?: boolean
 ): GaugeDimensions {
   const yMaxAngle = endAngle > 180 ? 180 : endAngle;
   let margin = 0;
@@ -76,6 +78,10 @@ export function calculateDimensions(
     outerRadius = Math.min(maxRadiusH, maxRadiusV);
   }
 
+  if (showScaleLabels) {
+    outerRadius -= 30;
+  }
+
   if (glow) {
     margin = 0.04 * outerRadius;
     outerRadius -= (margin * 2) / (1 + heightRatioV);
@@ -101,5 +107,13 @@ export function calculateDimensions(
     barIndex,
     thresholdsBarWidth,
     thresholdsBarSpacing,
+  };
+}
+
+export function toCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
+  let radian = ((angleInDegrees - 90) * Math.PI) / 180.0;
+  return {
+    x: centerX + radius * Math.cos(radian),
+    y: centerY + radius * Math.sin(radian),
   };
 }

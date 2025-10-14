@@ -1,7 +1,4 @@
-import { FieldDisplay } from '@grafana/data';
-
-import { useTheme2 } from '../../themes/ThemeContext';
-import { getFormattedThresholds } from '../Gauge/utils';
+import { FieldDisplay, Threshold } from '@grafana/data';
 
 import { RadialArcPath } from './RadialArcPath';
 import { RadialColorDefs } from './RadialColorDefs';
@@ -16,6 +13,7 @@ export interface Props {
   roundedBars?: boolean;
   glowFilter?: string;
   colorDefs: RadialColorDefs;
+  thresholds: Threshold[];
 }
 export function ThresholdsBar({
   dimensions,
@@ -25,13 +23,11 @@ export function ThresholdsBar({
   roundedBars,
   glowFilter,
   colorDefs,
+  thresholds,
 }: Props) {
-  const theme = useTheme2();
   const fieldConfig = fieldDisplay.field;
-  const decimals = fieldConfig.decimals ?? 2;
   const min = fieldConfig.min ?? 0;
   const max = fieldConfig.max ?? 100;
-  const thresholds = getFormattedThresholds(decimals, fieldConfig, theme);
 
   const outerRadius = dimensions.radius + dimensions.barWidth / 2;
   const thresholdDimensions = {

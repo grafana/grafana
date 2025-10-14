@@ -340,6 +340,7 @@ interface ExampleProps {
   thresholdsBar?: boolean;
   colorScheme?: FieldColorModeId;
   decimals?: number;
+  showScaleLabels?: boolean;
 }
 
 export function RadialGaugeExample({
@@ -366,6 +367,7 @@ export function RadialGaugeExample({
   thresholdsBar = false,
   colorScheme = FieldColorModeId.Thresholds,
   decimals = 0,
+  showScaleLabels,
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -450,6 +452,7 @@ export function RadialGaugeExample({
       segmentSpacing={segmentSpacing}
       roundedBars={roundedBars}
       thresholdsBar={thresholdsBar}
+      showScaleLabels={showScaleLabels}
     />
   );
 }
