@@ -38,7 +38,7 @@ Use the right place to ask questions, report problems, and propose changes.
 
 We welcome your technical contributions! You can contribute in several ways:
 
-### 1. Contribute Code to Grafana
+### Contribute Code to Grafana
 
 **What you will need:**
 
@@ -54,7 +54,7 @@ We welcome your technical contributions! You can contribute in several ways:
 1. Ensure you include and run the appropriate tests as part of your Pull Request.
 1. Commit and push your changes. If you encounter merge conflicts, you may rebase your branch onto the main branch.
 
-### 2. Develop a Plugin
+### Develop a Plugin
 
 Grafana plugins let you extend the platform with new data sources, panels, and more. This is a great way to share your ideas and make a real impact on the Grafana ecosystem.
 
@@ -66,7 +66,7 @@ Grafana plugins let you extend the platform with new data sources, panels, and m
 4. Follow best practices for code style, testing, and documentation.
 5. Publish your plugin or submit it for review as described in the guide.
 
-### 3. Contribute without code
+### Contribute without code
 
 You can help even if you don't write code:
 
