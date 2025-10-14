@@ -1,0 +1,106 @@
+{
+  "title": "V6 Pulldowns and Template Variables Migration Test",
+  "schemaVersion": 5,
+  "pulldowns": [
+    {
+      "type": "filtering",
+      "enable": true
+    },
+    {
+      "type": "annotations",
+      "enable": true,
+      "annotations": [
+        {
+          "name": "deployment",
+          "datasource": "prometheus",
+          "enable": true,
+          "iconColor": "red",
+          "query": "ALERTS{alertname=\"DeploymentStarted\"}"
+        },
+        {
+          "name": "alerts",
+          "datasource": "loki",
+          "enable": false,
+          "iconColor": "yellow",
+          "query": "{job=\"alertmanager\"}"
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "type": "filter",
+        "allFormat": null
+      },
+      {
+        "name": "service",
+        "datasource": "prometheus",
+        "allFormat": "glob"
+      },
+      {
+        "name": "region",
+        "type": "custom",
+        "options": [
+          {
+            "text": "us-east-1",
+            "value": "us-east-1"
+          },
+          {
+            "text": "us-west-2", 
+            "value": "us-west-2"
+          }
+        ]
+      },
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": "prometheus",
+        "query": "label_values(up, instance)",
+        "refresh": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "CPU Usage",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "cpu_usage{environment=\"$environment\", service=\"$service\"}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": 2,
+      "title": "Memory Usage",
+      "type": "singlestat",
+      "targets": [
+        {
+          "expr": "memory_usage{region=\"$region\"}",
+          "refId": "B"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      }
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "30s"
+}
