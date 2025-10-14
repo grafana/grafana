@@ -399,6 +399,7 @@ describe('ExtensionSidebarProvider', () => {
 
   it('should toggle sidebar closed when receiving ToggleExtensionSidebarEvent for currently open component', async () => {
     const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
+    (store.get as jest.Mock).mockReturnValue(componentId);
 
     const TestComponentWithProps = () => {
       const context = useExtensionSidebarContext();
@@ -417,18 +418,8 @@ describe('ExtensionSidebarProvider', () => {
       </ExtensionSidebarContextProvider>
     );
 
-    // First open the sidebar manually
-    await act(async () => {
-      userEvent.click(screen.getByText('Open Sidebar'));
-    });
-
-    // Wait for the sidebar to open
-    await waitFor(() => {
-      expect(screen.getByTestId('is-open')).toHaveTextContent('true');
-      expect(screen.getByTestId('docked-component-id')).toHaveTextContent(componentId);
-    });
-
-    // Find the ToggleExtensionSidebarEvent subscriber outside of act()
+    expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+    expect(screen.getByTestId('docked-component-id')).toHaveTextContent(componentId);
     const toggleCalls = subscribeSpy.mock.calls.filter((call) => call[0] === ToggleExtensionSidebarEvent);
     expect(toggleCalls.length).toBeGreaterThan(0); // We expect at least one subscriber
     const toggleEventSubscriberCall = toggleCalls[toggleCalls.length - 1]; // Get the last one
@@ -454,6 +445,7 @@ describe('ExtensionSidebarProvider', () => {
 
   it('should toggle to different component when receiving ToggleExtensionSidebarEvent for different component', async () => {
     const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
+    (store.get as jest.Mock).mockReturnValue(componentId);
 
     const TestComponentWithProps = () => {
       const context = useExtensionSidebarContext();
@@ -471,14 +463,6 @@ describe('ExtensionSidebarProvider', () => {
         <TestComponentWithProps />
       </ExtensionSidebarContextProvider>
     );
-
-    // First open the sidebar manually
-    act(() => {
-      screen.getByText('Open Sidebar').click();
-    });
-
-    expect(screen.getByTestId('is-open')).toHaveTextContent('true');
-    expect(screen.getByTestId('docked-component-id')).toHaveTextContent(componentId);
 
     act(() => {
       // Find the ToggleExtensionSidebarEvent subscriber
