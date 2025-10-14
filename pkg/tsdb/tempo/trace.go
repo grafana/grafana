@@ -35,19 +35,19 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	err := json.Unmarshal(query.JSON, model)
 	if err != nil {
 		ctxLogger.Error("Failed to unmarshall Tempo query model", "error", err, "function", logEntrypoint())
-		return result, backend.DownstreamError(fmt.Errorf("Failed to unmarshall Tempo query model: %w", err))
+		return result, backend.DownstreamErrorf("failed to unmarshall Tempo query model: %w", err)
 	}
 
 	dsInfo, err := s.getDSInfo(ctx, pCtx)
 	if err != nil {
 		ctxLogger.Error("Failed to get datasource information", "error", err, "function", logEntrypoint())
-		return nil, backend.DownstreamError(fmt.Errorf("Failed to get datasource information: %w", err))
+		return nil, backend.DownstreamErrorf("failed to get datasource information: %w", err)
 	}
 
 	if model.Query == nil || *model.Query == "" {
 		err := fmt.Errorf("trace id is required")
 		ctxLogger.Error("Failed to validate model query", "error", err, "function", logEntrypoint())
-		return result, backend.DownstreamError(fmt.Errorf("Failed to validate model query: %w", err))
+		return result, backend.DownstreamErrorf("failed to validate model query: %w", err)
 	}
 
 	var apiVersion = TraceRequestApiVersionV2
@@ -149,7 +149,7 @@ func (s *Service) performTraceRequest(ctx context.Context, dsInfo *DatasourceInf
 		ctxLogger.Error("Failed to create request", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, backend.DownstreamError(fmt.Errorf("Failed to create request: %w", err))
+		return nil, nil, backend.DownstreamErrorf("failed to create request: %w", err)
 	}
 
 	resp, err := dsInfo.HTTPClient.Do(request)

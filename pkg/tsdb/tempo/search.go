@@ -43,19 +43,19 @@ func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query 
 	dsInfo, err := s.getDSInfo(ctx, pCtx)
 	if err != nil {
 		ctxLogger.Error("Failed to get datasource information", "error", err, "function", logEntrypoint())
-		return nil, backend.DownstreamError(fmt.Errorf("Failed to get datasource information: %w", err))
+		return nil, backend.DownstreamErrorf("failed to get datasource information: %w", err)
 	}
 
 	err = json.Unmarshal(query.JSON, model)
 	if err != nil {
 		ctxLogger.Error("Failed to unmarshall Tempo query model", "error", err, "function", logEntrypoint())
-		return nil, backend.DownstreamError(fmt.Errorf("Failed to unmarshall Tempo query model: %w", err))
+		return nil, backend.DownstreamErrorf("failed to unmarshall Tempo query model: %w", err)
 	}
 
 	req, err := createSearchRequest(ctx, dsInfo, model, query.TimeRange.From.Unix(), query.TimeRange.To.Unix())
 	if err != nil {
 		ctxLogger.Error("Failed to create search request", "error", err, "function", logEntrypoint())
-		return nil, backend.DownstreamError(fmt.Errorf("Failed to create search request: %w", err))
+		return nil, backend.DownstreamErrorf("failed to create search request: %w", err)
 	}
 
 	resp, err := dsInfo.HTTPClient.Do(req)
@@ -83,7 +83,7 @@ func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query 
 
 	if resp.StatusCode != http.StatusOK {
 		ctxLogger.Error("Failed to execute search query", "error", err, "function", logEntrypoint())
-		err := backend.DownstreamError(fmt.Errorf("failed to execute search query status: %s", resp.Status))
+		err := backend.DownstreamErrorf("failed to execute search query status: %s", resp.Status)
 		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
 			return nil, backend.DownstreamError(err)
 		}

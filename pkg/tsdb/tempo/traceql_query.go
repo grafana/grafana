@@ -32,7 +32,7 @@ func (s *Service) runTraceQlQuery(ctx context.Context, pCtx backend.PluginContex
 	err := json.Unmarshal(backendQuery.JSON, tempoQuery)
 	if err != nil {
 		ctxLogger.Error("Failed to unmarshall Tempo query model", "error", err, "function", logEntrypoint())
-		return nil, backend.DownstreamError(fmt.Errorf("Failed to unmarshall Tempo query model: %w", err))
+		return nil, backend.DownstreamErrorf("failed to unmarshall Tempo query model: %w", err)
 	}
 
 	if isMetricsQuery(*tempoQuery.Query) {
@@ -60,13 +60,13 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 	dsInfo, err := s.getDSInfo(ctx, pCtx)
 	if err != nil {
 		ctxLogger.Error("Failed to get datasource information", "error", err, "function", logEntrypoint())
-		return nil, backend.DownstreamError(fmt.Errorf("Failed to get datasource information: %w", err))
+		return nil, backend.DownstreamErrorf("failed to get datasource information: %w", err)
 	}
 
 	if tempoQuery.Query == nil || *tempoQuery.Query == "" {
 		err := fmt.Errorf("query is required")
 		ctxLogger.Error("Failed to validate model query", "error", err, "function", logEntrypoint())
-		return result, backend.DownstreamError(fmt.Errorf("Failed to validate model query: %w", err))
+		return result, backend.DownstreamErrorf("failed to validate model query: %w", err)
 	}
 
 	resp, responseBody, err := s.performMetricsQuery(ctx, dsInfo, tempoQuery, backendQuery, span)
@@ -143,7 +143,7 @@ func (s *Service) performMetricsQuery(ctx context.Context, dsInfo *DatasourceInf
 		ctxLogger.Error("Failed to create request", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, backend.DownstreamError(fmt.Errorf("Failed to create request: %w", err))
+		return nil, nil, backend.DownstreamErrorf("failed to create request: %w", err)
 	}
 
 	resp, err := dsInfo.HTTPClient.Do(request)
