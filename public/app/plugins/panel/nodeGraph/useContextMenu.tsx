@@ -83,7 +83,7 @@ function makeContextMenu(
       renderMenuItems={renderer}
       onClose={() => setMenu(undefined)}
       x={event.pageX}
-      y={event.pageY}
+      y={event.pageY - window.scrollY}
     />
   );
 }
