@@ -486,11 +486,6 @@
         "message-no-metrics-found": "Es wurden keine Metriken in der Datenquelle gefunden.",
         "name": "Name",
         "type": "Typ"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Das Abfrage-Parsing ist unklar."
-        }
       }
     }
   }

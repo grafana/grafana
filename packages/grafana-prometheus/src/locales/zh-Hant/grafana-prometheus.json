@@ -486,11 +486,6 @@
         "message-no-metrics-found": "在資料來源中未找到任何指標。",
         "name": "名稱（名字）",
         "type": "類型"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "查詢剖析不明確。"
-        }
       }
     }
   }

@@ -486,11 +486,6 @@
         "message-no-metrics-found": "Inga mätvärden hittades i datakällan.",
         "name": "Namn",
         "type": "Typ"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Tolkningen av frågan är tvetydig."
-        }
       }
     }
   }

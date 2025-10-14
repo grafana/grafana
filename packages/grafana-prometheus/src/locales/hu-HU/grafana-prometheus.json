@@ -486,11 +486,6 @@
         "message-no-metrics-found": "Nem található metrika az adatforrásban.",
         "name": "Név",
         "type": "Típus"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "A lekérdezés elemzése nem egyértelmű."
-        }
       }
     }
   }

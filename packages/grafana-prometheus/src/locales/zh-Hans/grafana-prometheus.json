@@ -486,11 +486,6 @@
         "message-no-metrics-found": "数据源中未找到指标。",
         "name": "名称",
         "type": "类型"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "查询解析不明确。"
-        }
       }
     }
   }

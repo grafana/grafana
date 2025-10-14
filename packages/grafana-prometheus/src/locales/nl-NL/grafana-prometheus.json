@@ -486,11 +486,6 @@
         "message-no-metrics-found": "Er zijn geen statistieken gevonden in de gegevensbron.",
         "name": "Naam",
         "type": "Type"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Query-parsing is dubbelzinnig."
-        }
       }
     }
   }
