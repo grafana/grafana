@@ -90,7 +90,7 @@ func IsValidGroup(group string) []string {
 
 // If the value is not valid, a list of error strings is returned.
 // Otherwise an empty list (or nil) is returned.
-func IsValidateResource(resource string) []string {
+func IsValidResource(resource string) []string {
 	s := len(resource)
 	switch {
 	case s > maxResourceLength:

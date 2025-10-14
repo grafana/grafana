@@ -32,12 +32,12 @@ export function SummaryStatsReact() {
   const firstFrame = data?.series?.at(0);
 
   if (isLoading || !firstFrame) {
-    return null;
+    return <div />;
   }
 
   const dfv = new DataFrameView<Frame>(firstFrame);
   if (dfv.length === 0) {
-    return null;
+    return <div />;
   }
 
   const firingIndex = dfv.fields.alertstate.values.findIndex((state) => state === 'firing');
