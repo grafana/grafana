@@ -31,7 +31,7 @@ Use the right place to ask questions, report problems, and propose changes.
 
 - **[GitHub issues](https://github.com/grafana/grafana/issues) and [pull requests](https://github.com/grafana/grafana/pulls)**: Use for reproducible bugs in core Grafana and maintained plugins, small and actionable feature requests, and code or docs changes via pull requests. Avoid general “how do I” questions. For security issues, follow the [security policy](https://github.com/grafana/grafana/security/policy).
 - **Grafana community forums**: Use for questions, troubleshooting, best practices, plugin development Q&A, and early idea discussion. Forums create a searchable public knowledge base that helps others with the same problems and questions. Start here if you are unsure: [Grafana community forums](https://community.grafana.com/).
-- **Grafana Community Slack**: Use for quick, time-sensitive chats and networking. Do not rely on Slack for long troubleshooting or decisions. Share outcomes back to a forum topic or GitHub issue/PR to keep a public record: [Grafana Community Slack](https://slack.grafana.com).
+- **Grafana Community Slack**: Use for quick, time-sensitive chats and networking. Do not rely on Slack for complex troubleshooting or decisions. Share outcomes back to a forum topic or GitHub issue/PR to keep a public record: [Grafana Community Slack](https://slack.grafana.com).
 - **Not sure where to start?** Start with a forum topic. Maintainers and community members will redirect you if a GitHub issue or pull request is more appropriate.
 
 ## Make technical contributions
@@ -43,7 +43,6 @@ We welcome your technical contributions! You can contribute in several ways:
 **What you will need:**
 
 - Follow our [developer guide](contribute/developer-guide.md) to set up your environment.
-- Set up your environment ([guide](contribute/developer-guide.md)).
 - Adhere to our [frontend](contribute/style-guides/frontend.md) and [backend](contribute/backend/style-guide.md) style guides.
 - Write or update tests ([testing guide](contribute/style-guides/testing.md)).
 
@@ -51,7 +50,7 @@ We welcome your technical contributions! You can contribute in several ways:
 
 1. Browse all [issues](https://github.com/grafana/grafana/issues) to find something to work on. You can also filter by [help wanted](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22).
 1. Prepare a clear, descriptive pull request ([how-to guide](contribute/create-pull-request.md)).
-1. Ensure you include and run the appropriate tests as part of your Pull Request.
+1. Ensure you include and run the appropriate tests as part of your pull request.
 1. Commit and push your changes. If you encounter merge conflicts, you may rebase your branch onto the main branch.
 
 ### Develop a Plugin
@@ -76,7 +75,7 @@ You can help even if you don't write code:
 - Help with [issue triage](https://github.com/grafana/grafana/blob/main/contribute/triage-issues.md) by reviewing, labeling, and clarifying open issues.
 - Report security vulnerabilities following our [security policy](https://github.com/grafana/grafana/security/policy).
 
-**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests translating grafana.json files - they will be rejected. We do accept contributions to mark up phrases for translation. See [Internationalization](contribute/internationalization.md).
+**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests translating `grafana.json` files - they will be rejected. We do accept contributions to mark up phrases for translation. See [Internationalization](contribute/internationalization.md).
 
 #### Reporting issues
 
