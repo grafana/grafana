@@ -12,9 +12,10 @@ import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
 import { LogLabelStats } from '../LogLabelStats';
 import { FieldDef } from '../logParser';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { useLogListContext } from './LogListContext';
-import { LogListModel } from './processing';
+import { LogListModel, getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsFieldsProps {
   disableActions?: boolean;
@@ -25,14 +26,13 @@ interface LogLineDetailsFieldsProps {
 }
 
 export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
-  if (!fields.length) {
-    return null;
-  }
   const styles = useStyles2(getFieldsStyles);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
 
-  if (filteredFields.length === 0) {
+  if (!fields.length) {
+    return null;
+  } else if (filteredFields.length === 0) {
     return t('logs.log-line-details.search.no-results', 'No results to display.');
   }
 
@@ -73,14 +73,13 @@ interface LogLineDetailsLabelFieldsProps {
 }
 
 export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLineDetailsLabelFieldsProps) => {
-  if (!fields.length) {
-    return null;
-  }
   const styles = useStyles2(getFieldsStyles);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
 
-  if (filteredFields.length === 0) {
+  if (!fields.length) {
+    return null;
+  } else if (filteredFields.length === 0) {
     return t('logs.log-line-details.search.no-results', 'No results to display.');
   }
 
@@ -105,7 +104,7 @@ const getFieldsStyles = (theme: GrafanaTheme2) => ({
   fieldsTable: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `${theme.spacing(11.5)} minmax(auto, 40%) 1fr`,
+    gridTemplateColumns: `${theme.spacing(11.5)} fit-content(30%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
@@ -150,7 +149,7 @@ export const LogLineDetailsField = ({
     onClickHideField,
     onPinLine,
     pinLineButtonTooltipTitle,
-    syntaxHighlighting,
+    prettifyJSON,
   } = useLogListContext();
 
   const styles = useStyles2(getFieldStyles);
@@ -260,12 +259,14 @@ export const LogLineDetailsField = ({
   const singleKey = keys.length === 1;
   const singleValue = values.length === 1;
 
+  const fieldSupportsFilters = keys[0] !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME;
+
   return (
     <>
       <div className={styles.row}>
         {!disableActions && (
           <div className={styles.actions}>
-            {onClickFilterLabel && (
+            {onClickFilterLabel && fieldSupportsFilters && (
               <AsyncIconButton
                 name="search-plus"
                 onClick={filterLabel}
@@ -274,7 +275,7 @@ export const LogLineDetailsField = ({
                 tooltipSuffix={refIdTooltip}
               />
             )}
-            {onClickFilterOutLabel && (
+            {onClickFilterOutLabel && fieldSupportsFilters && (
               <IconButton
                 name="search-minus"
                 tooltip={
@@ -315,11 +316,13 @@ export const LogLineDetailsField = ({
             />
           </div>
         )}
-        <div className={styles.label}>{singleKey ? keys[0] : <MultipleValue values={keys} />}</div>
+        <div className={styles.label}>
+          {singleKey ? getNormalizedFieldName(keys[0]) : <MultipleValue values={keys} />}
+        </div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
             {singleValue ? (
-              <SingleValue value={values[0]} syntaxHighlighting={syntaxHighlighting} />
+              <SingleValue value={values[0]} prettifyJSON={prettifyJSON} />
             ) : (
               <MultipleValue showCopy={true} values={values} />
             )}
@@ -361,7 +364,6 @@ export const LogLineDetailsField = ({
       })}
       {showFieldsStats && fieldStats && (
         <div className={styles.row}>
-          <div />
           <div className={disableActions ? undefined : styles.statsColumn}>
             <LogLabelStats
               className={styles.stats}
@@ -386,6 +388,7 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
   }),
   label: css({
+    paddingRight: theme.spacing(1),
     overflowWrap: 'break-word',
     wordBreak: 'break-word',
   }),
@@ -402,10 +405,11 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   link: css({
-    gridColumn: 'span 3',
+    gridColumn: '2 / 4',
   }),
   linkNoActions: css({
     gridColumn: 'span 2',
+    paddingBottom: theme.spacing(0.5),
   }),
   stats: css({
     paddingRight: theme.spacing(1),
@@ -414,13 +418,13 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     maxWidth: '50vh',
   }),
   statsColumn: css({
-    gridColumn: 'span 2',
+    gridColumn: '2 / 4',
   }),
   valueContainer: css({
     display: 'flex',
     lineHeight: theme.typography.body.lineHeight,
     whiteSpace: 'pre-wrap',
-    wordBreak: 'break-all',
+    wordBreak: 'break-word',
     maxHeight: '50vh',
     overflow: 'auto',
   }),
@@ -466,7 +470,7 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: string[] }) => {
+export const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: string[] }) => {
   if (values.every((val) => val === '')) {
     return null;
   }
@@ -486,9 +490,9 @@ const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: 
   );
 };
 
-const SingleValue = ({ value: originalValue, syntaxHighlighting }: { value: string; syntaxHighlighting?: boolean }) => {
+export const SingleValue = ({ value: originalValue, prettifyJSON }: { value: string; prettifyJSON?: boolean }) => {
   const value = useMemo(() => {
-    if (!syntaxHighlighting) {
+    if (!prettifyJSON) {
       return originalValue;
     }
     try {
@@ -498,7 +502,7 @@ const SingleValue = ({ value: originalValue, syntaxHighlighting }: { value: stri
       }
     } catch (error) {}
     return originalValue;
-  }, [originalValue, syntaxHighlighting]);
+  }, [originalValue, prettifyJSON]);
 
   return (
     <>
@@ -525,7 +529,7 @@ const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonPr
   return <IconButton {...rest} variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
 };
 
-function filterFields(fields: FieldDef[], search: string) {
+export function filterFields(fields: FieldDef[], search: string) {
   const keys = fields.map((field) => field.keys.join(' '));
   const keysIdx = fuzzySearch(keys, search);
   const values = fields.map((field) => field.values.join(' '));

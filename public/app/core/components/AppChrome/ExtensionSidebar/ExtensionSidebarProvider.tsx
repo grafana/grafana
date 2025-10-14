@@ -1,8 +1,8 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState, useMemo } from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { PluginExtensionPoints, store, type ExtensionInfo } from '@grafana/data';
-import { config, getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
+import { PluginExtensionPoints, store } from '@grafana/data';
+import { getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent } from 'app/types/events';
 
@@ -14,14 +14,13 @@ const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-investigations-app',
   'grafana-assistant-app',
   'grafana-dash-app',
+  // The docs plugin ID is going to transition from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
+  // Support both until that migration is complete.
   'grafana-grafanadocsplugin-app',
+  'grafana-pathfinder-app',
 ];
 
 export type ExtensionSidebarContextType = {
-  /**
-   * Whether the extension sidebar is enabled.
-   */
-  isEnabled: boolean;
   /**
    * Whether the extension sidebar is open.
    */
@@ -51,7 +50,6 @@ export type ExtensionSidebarContextType = {
 };
 
 export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
-  isEnabled: !!config.featureToggles.extensionSidebar,
   isOpen: false,
   dockedComponentId: undefined,
   setDockedComponentId: () => {},
@@ -99,31 +97,22 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     },
   });
 
-  const isEnabled = !!config.featureToggles.extensionSidebar;
   // get all components for this extension point, but only for the permitted plugins
   // if the extension sidebar is not enabled, we will return an empty map
   const availableComponents = useMemo(
     () =>
-      isEnabled
-        ? new Map(
-            Array.from(getExtensionPointPluginMeta(PluginExtensionPoints.ExtensionSidebar).entries()).filter(
-              ([pluginId, pluginMeta]) =>
-                PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId) &&
-                links.some(
-                  (link) =>
-                    link.pluginId === pluginId &&
-                    pluginMeta.addedComponents.some((component) => component.title === link.title)
-                )
+      new Map(
+        Array.from(getExtensionPointPluginMeta(PluginExtensionPoints.ExtensionSidebar).entries()).filter(
+          ([pluginId, pluginMeta]) =>
+            PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId) &&
+            links.some(
+              (link) =>
+                link.pluginId === pluginId &&
+                pluginMeta.addedComponents.some((component) => component.title === link.title)
             )
-          )
-        : new Map<
-            string,
-            {
-              readonly addedComponents: ExtensionInfo[];
-              readonly addedLinks: ExtensionInfo[];
-            }
-          >(),
-    [isEnabled, links]
+        )
+      ),
+    [links]
   );
 
   // check if the stored docked component is still available
@@ -164,10 +153,6 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   );
 
   useEffect(() => {
-    if (!isEnabled) {
-      return;
-    }
-
     // handler to open the extension sidebar from plugins. this is done with the `helpers.openSidebar` function
     const openSidebarHandler = (event: OpenExtensionSidebarEvent) => {
       if (
@@ -195,7 +180,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       openSubscription.unsubscribe();
       closeSubscription.unsubscribe();
     };
-  }, [isEnabled, setDockedComponentWithProps, availableComponents]);
+  }, [setDockedComponentWithProps, availableComponents]);
 
   // update the stored docked component id when it changes
   useEffect(() => {
@@ -226,8 +211,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   return (
     <ExtensionSidebarContext.Provider
       value={{
-        isEnabled,
-        isOpen: isEnabled && dockedComponentId !== undefined,
+        isOpen: dockedComponentId !== undefined,
         dockedComponentId,
         setDockedComponentId: (componentId) => setDockedComponentWithProps(componentId, undefined),
         availableComponents,
@@ -244,8 +228,8 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   );
 };
 
-export function getComponentIdFromComponentMeta(pluginId: string, component: ExtensionInfo) {
-  return JSON.stringify({ pluginId, componentTitle: component.title });
+export function getComponentIdFromComponentMeta(pluginId: string, componentTitle: string) {
+  return JSON.stringify({ pluginId, componentTitle });
 }
 
 export function getComponentMetaFromComponentId(
@@ -267,4 +251,19 @@ export function getComponentMetaFromComponentId(
   } catch (error) {
     return undefined;
   }
+}
+
+// The docs plugin ID is going to transition from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
+// Support both until that migration is complete.
+// Prioritize the new plugin ID (grafana-pathfinder-app).
+export function getPathfinderPluginId(availableComponents: ExtensionPointPluginMeta): string | undefined {
+  if (availableComponents.has('grafana-pathfinder-app')) {
+    return 'grafana-pathfinder-app';
+  }
+
+  if (availableComponents.has('grafana-grafanadocsplugin-app')) {
+    return 'grafana-grafanadocsplugin-app';
+  }
+
+  return undefined;
 }

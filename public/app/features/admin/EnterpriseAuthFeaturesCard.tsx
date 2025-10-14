@@ -91,7 +91,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1.5),
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       marginTop: theme.spacing(3),
       strong: {
         color: theme.colors.text.primary,

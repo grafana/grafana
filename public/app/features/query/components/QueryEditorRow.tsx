@@ -34,6 +34,7 @@ import {
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
+import { ExpressionDatasourceUID } from '../../expressions/types';
 
 import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
@@ -379,29 +380,24 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const { query, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef } = this.props;
+    const { query, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef, app } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
     const isEditingQueryLibrary = queryLibraryRef !== undefined;
+    const isUnifiedAlerting = app === CoreApp.UnifiedAlerting;
+    const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
 
     return (
       <>
-        {!isEditingQueryLibrary && (
-          <MaybeQueryLibrarySaveButton
+        {!isEditingQueryLibrary && !isUnifiedAlerting && !isExpressionQuery && (
+          <SavedQueryButtons
             query={query}
-            app={this.props.app}
-            onSelectQuery={this.onSelectQueryFromLibrary}
+            app={app}
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
-          />
-        )}
-
-        {!isEditingQueryLibrary && (
-          <ReplaceQueryFromLibrary
-            datasourceFilters={datasource?.name ? [datasource.name] : []}
             onSelectQuery={this.onSelectQueryFromLibrary}
-            app={this.props.app}
+            datasourceFilters={datasource?.name ? [datasource.name] : []}
           />
         )}
 
@@ -506,7 +502,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         onOpen={onQueryOpenChanged}
       >
         <div className={rowClasses} id={this.id}>
-          <ErrorBoundaryAlert>
+          <ErrorBoundaryAlert boundaryName="query-editor-operation-row">
             {showingHelp && DatasourceCheatsheet && (
               <OperationRowHelp>
                 <DatasourceCheatsheet
@@ -587,15 +583,16 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
   };
 }
 
-// Will render anything only if query library is enabled
-function MaybeQueryLibrarySaveButton(props: {
+// Will render anything only if saved query is enabled
+function SavedQueryButtons(props: {
   query: DataQuery;
   app?: CoreApp;
   onUpdateSuccess?: () => void;
   onSelectQuery: (query: DataQuery) => void;
+  datasourceFilters: string[];
 }) {
-  const { renderSaveQueryButton } = useQueryLibraryContext();
-  return renderSaveQueryButton(props.query, props.app, props.onUpdateSuccess, props.onSelectQuery);
+  const { renderSavedQueryButtons } = useQueryLibraryContext();
+  return renderSavedQueryButtons(props.query, props.app, props.onUpdateSuccess, props.onSelectQuery);
 }
 
 // Will render editing header only if query library is enabled
@@ -616,34 +613,6 @@ function MaybeQueryLibraryEditingHeader(props: {
     props.onUpdateSuccess,
     props.onSelectQuery
   );
-}
-
-interface ReplaceQueryFromLibraryProps<TQuery extends DataQuery> {
-  datasourceFilters: string[];
-  onSelectQuery: (query: DataQuery) => void;
-  app?: CoreApp;
-}
-
-function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
-  datasourceFilters,
-  onSelectQuery,
-  app,
-}: ReplaceQueryFromLibraryProps<TQuery>) {
-  const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
-
-  const onReplaceQueryFromLibrary = () => {
-    openDrawer({ datasourceFilters, onSelectQuery, options: { isReplacingQuery: true, context: app } });
-  };
-
-  return queryLibraryEnabled ? (
-    <QueryOperationAction
-      title={t('query-operation.header.replace-query-from-library', 'Replace with saved query')}
-      icon="book"
-      onClick={onReplaceQueryFromLibrary}
-      isGroupEnd
-      isHighlighted
-    />
-  ) : null;
 }
 
 function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {

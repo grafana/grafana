@@ -31,12 +31,21 @@ func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, e
 		NamespaceUID:                ar.NamespaceUID,
 		DashboardUID:                ar.DashboardUID,
 		PanelID:                     ar.PanelID,
-		RuleGroup:                   ar.RuleGroup,
 		RuleGroupIndex:              ar.RuleGroupIndex,
 		For:                         ar.For,
 		KeepFiringFor:               ar.KeepFiringFor,
 		IsPaused:                    ar.IsPaused,
 		MissingSeriesEvalsToResolve: ar.MissingSeriesEvalsToResolve,
+	}
+
+	if ar.RuleGroup == "" {
+		noGroupRuleGroup, err := models.NewNoGroupRuleGroup(ar.UID)
+		if err != nil {
+			return models.AlertRule{}, fmt.Errorf("failed to create no group rule group: %w", err)
+		}
+		result.RuleGroup = noGroupRuleGroup.String()
+	} else {
+		result.RuleGroup = ar.RuleGroup
 	}
 
 	if ar.UpdatedBy != nil {
@@ -121,7 +130,6 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 		NamespaceUID:                ar.NamespaceUID,
 		DashboardUID:                ar.DashboardUID,
 		PanelID:                     ar.PanelID,
-		RuleGroup:                   ar.RuleGroup,
 		RuleGroupIndex:              ar.RuleGroupIndex,
 		NoDataState:                 ar.NoDataState.String(),
 		ExecErrState:                ar.ExecErrState.String(),
@@ -129,6 +137,12 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 		KeepFiringFor:               ar.KeepFiringFor,
 		IsPaused:                    ar.IsPaused,
 		MissingSeriesEvalsToResolve: ar.MissingSeriesEvalsToResolve,
+	}
+
+	if models.IsNoGroupRuleGroup(ar.RuleGroup) {
+		result.RuleGroup = ""
+	} else {
+		result.RuleGroup = ar.RuleGroup
 	}
 
 	if ar.UpdatedBy != nil {

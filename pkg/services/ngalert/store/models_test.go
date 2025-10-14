@@ -72,6 +72,30 @@ func TestAlertRuleVersion_EqualSpec(t *testing.T) {
 			expect: true,
 		},
 		{
+			name: "same MissingSeriesEvalsToResolve value, different pointers",
+			a: func() alertRuleVersion {
+				v := baseVersion
+				v.MissingSeriesEvalsToResolve = util.Pointer(int64(10))
+				return v
+			}(),
+			b: func() alertRuleVersion {
+				v := baseVersion
+				v.MissingSeriesEvalsToResolve = util.Pointer(int64(10))
+				return v
+			}(),
+			expect: true,
+		},
+		{
+			name: "different MissingSeriesEvalsToResolve",
+			a: func() alertRuleVersion {
+				v := baseVersion
+				v.MissingSeriesEvalsToResolve = util.Pointer(int64(123))
+				return v
+			}(),
+			b:      baseVersion,
+			expect: false,
+		},
+		{
 			name:   "different NotificationSettings",
 			a:      baseVersion,
 			b:      func() alertRuleVersion { v := baseVersion; v.NotificationSettings = "notify2"; return v }(),

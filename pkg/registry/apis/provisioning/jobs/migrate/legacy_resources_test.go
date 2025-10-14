@@ -14,11 +14,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -667,7 +667,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			return result.Action == repository.FileActionCreated &&
 				result.Name == "test" &&
 				result.Error == nil &&
-				result.Resource == "tests" &&
+				result.Kind == "" && // empty kind
 				result.Group == "test.grafana.app" &&
 				result.Path == "test/path"
 		})).Return()

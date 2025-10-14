@@ -23,7 +23,7 @@ export interface RouteDescriptor {
 
   /**
    * Allow the route to be access by anonymous users.
-   * Currently only used if the `multiTenantFrontend` feature toggle is enabled.
+   * Currently only used when using the frontend-service.
    */
   allowAnonymous?: boolean;
 }

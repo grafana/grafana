@@ -5,6 +5,7 @@ import {
   AppEvents,
   dateTimeForTimeZone,
   LoadingState,
+  rangeUtil,
   RawTimeRange,
   TimeRange,
 } from '@grafana/data';
@@ -13,7 +14,12 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
-import { getCopiedTimeRange, getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import {
+  getCopiedTimeRange,
+  getShiftedTimeRange,
+  getZoomedTimeRange,
+  toUtcDateTimeIfIsoString,
+} from 'app/core/utils/timePicker';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { sortLogsResult } from 'app/features/logs/utils';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
@@ -179,7 +185,8 @@ export function zoomOut(scale: number): ThunkResult<void> {
 export function copyTimeRangeToClipboard(): ThunkResult<void> {
   return (dispatch, getState) => {
     const range = getState().explore.panes[Object.keys(getState().explore.panes)[0]]!.range.raw;
-    navigator.clipboard.writeText(JSON.stringify(range));
+    const clipboardPayload = rangeUtil.formatRawTimeRange(range);
+    navigator.clipboard.writeText(JSON.stringify(clipboardPayload));
 
     appEvents.emit(AppEvents.alertSuccess, [
       t('time-picker.copy-paste.copy-success-message', 'Time range copied to clipboard'),
@@ -199,15 +206,20 @@ export function pasteTimeRangeFromClipboard(): ThunkResult<void> {
       return;
     }
 
+    const utcRange = {
+      from: toUtcDateTimeIfIsoString(range.from),
+      to: toUtcDateTimeIfIsoString(range.to),
+    };
+
     const panesSynced = getState().explore.syncedTimes;
 
     if (panesSynced) {
-      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: range }));
-      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[1], rawRange: range }));
+      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: utcRange }));
+      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[1], rawRange: utcRange }));
       return;
     }
 
-    dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: range }));
+    dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: utcRange }));
   };
 }
 

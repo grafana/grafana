@@ -107,6 +107,10 @@ var (
 		Reason:     "Unique identifier needed to be able to get a dashboard panel",
 		StatusCode: 400,
 	}
+	ErrDashboardRestoreIdenticalVersion = dashboardaccess.DashboardErr{
+		Reason:     "Current dashboard is identical to the specified version",
+		StatusCode: 400,
+	}
 	ErrProvisionedDashboardNotFound = dashboardaccess.DashboardErr{
 		Reason:     "Dashboard is not provisioned",
 		StatusCode: 404,

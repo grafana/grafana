@@ -17,6 +17,7 @@ export enum ReducerID {
   median = 'median',
   first = 'first',
   count = 'count',
+  countAll = 'countAll',
   range = 'range',
   diff = 'diff',
   diffperc = 'diffperc',
@@ -132,7 +133,10 @@ export enum ReducerID {
 }
 
 export function getFieldTypeForReducer(id: ReducerID, fallback: FieldType): FieldType {
-  return id === ReducerID.count || id === ReducerID.distinctCount || id === ReducerID.changeCount
+  return id === ReducerID.count ||
+    id === ReducerID.distinctCount ||
+    id === ReducerID.changeCount ||
+    id === ReducerID.countAll
     ? FieldType.number
     : id === ReducerID.allIsNull || id === ReducerID.allIsZero
       ? FieldType.boolean
@@ -330,6 +334,15 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     preservesUnits: false,
   },
   {
+    id: ReducerID.countAll,
+    name: 'Count all',
+    description: 'Number of values (including empty)',
+    emptyInputResult: 0,
+    standard: false,
+    reduce: (field: Field): FieldCalcs => ({ countAll: field.values.length }),
+    preservesUnits: false,
+  },
+  {
     id: ReducerID.range,
     name: 'Range',
     description: 'Difference between minimum and maximum values',
@@ -514,7 +527,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
       }
 
       if (isNumberField) {
-        calcs.sum += currentValue;
+        calcs.sum += currentValue || 0;
         calcs.allIsNull = false;
         calcs.nonNullCount++;
 

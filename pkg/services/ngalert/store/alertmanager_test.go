@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -21,9 +22,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAlertmanagerStore(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
@@ -143,9 +143,8 @@ func TestIntegrationAlertmanagerStore(t *testing.T) {
 }
 
 func TestIntegrationAlertmanagerHash(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
@@ -190,9 +189,8 @@ func TestIntegrationAlertmanagerHash(t *testing.T) {
 }
 
 func TestIntegrationAlertmanagerConfigCleanup(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
@@ -283,9 +281,8 @@ func TestIntegrationAlertmanagerConfigCleanup(t *testing.T) {
 }
 
 func TestIntegrationMarkConfigurationAsApplied(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
@@ -338,9 +335,8 @@ func TestIntegrationMarkConfigurationAsApplied(t *testing.T) {
 }
 
 func TestIntegrationGetAppliedConfigurations(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
@@ -429,9 +425,8 @@ func TestIntegrationGetAppliedConfigurations(t *testing.T) {
 }
 
 func TestIntegrationGetHistoricalConfiguration(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,

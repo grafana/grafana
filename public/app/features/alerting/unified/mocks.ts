@@ -12,6 +12,7 @@ import {
 import { DataQuery, defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
+import { NotifiersState, ReceiversState } from 'app/features/alerting/unified/types/alerting';
 import { ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
 import {
   AlertManagerCortexConfig,
@@ -26,7 +27,6 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
-import { NotifiersState, ReceiversState } from 'app/types/alerting';
 import { DashboardDTO } from 'app/types/dashboard';
 import { FolderDTO } from 'app/types/folders';
 import { StoreState } from 'app/types/store';

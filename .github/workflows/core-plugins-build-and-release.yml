@@ -43,7 +43,7 @@ jobs:
       version: ${{ steps.build_frontend.outputs.version }}
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Verify inputs
@@ -62,7 +62,7 @@ jobs:
         with:
           credentials_json: '${{ env.PLUGINS_GOOGLE_CREDENTIALS }}'
       - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@77e7a554d41e2ee56fc945c52dfd3f33d12def9a'
+        uses: 'google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db'
       - name: Setup nodejs environment
         uses: actions/setup-node@v4
         with:

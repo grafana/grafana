@@ -1,18 +1,20 @@
 package metadata
 
 import (
+	"cmp"
 	"context"
+	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
-	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
+
+	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -83,23 +85,30 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 			}
 		}
 
+		decryptResultLabel := metrics.DecryptResultLabel(decryptErr)
+
 		if decryptErr == nil {
+			span.SetStatus(codes.Ok, "Decrypt succeeded")
 			args = append(args, "operation", "decrypt_secret_success")
 		} else {
 			span.SetStatus(codes.Error, "Decrypt failed")
 			span.RecordError(decryptErr)
-			args = append(args, "operation", "decrypt_secret_error", "error", decryptErr.Error())
+			args = append(args, "operation", "decrypt_secret_error", "error", decryptErr.Error(), "result", decryptResultLabel)
 		}
 
 		logging.FromContext(ctx).Info("Secrets Audit Log", args...)
 
-		success := decryptErr == nil
-		s.metrics.DecryptDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.DecryptDuration.WithLabelValues(decryptResultLabel).Observe(time.Since(start).Seconds())
+
+		// Do not leak error details to caller, return only the wrapped domain errors.
+		if decryptErr != nil {
+			decryptErr = cmp.Or(errors.Unwrap(decryptErr), contracts.ErrDecryptFailed)
+		}
 	}()
 
 	// Basic authn check before reading a secure value metadata, it is here on purpose.
 	if _, ok := claims.AuthInfoFrom(ctx); !ok {
-		return "", contracts.ErrDecryptNotAuthorized
+		return "", fmt.Errorf("no auth info in context (%w)", contracts.ErrDecryptNotAuthorized)
 	}
 
 	// The auth token will not necessarily have the permission to read the secure value metadata,
@@ -107,27 +116,27 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	// function call happens after this.
 	sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{})
 	if err != nil {
-		return "", contracts.ErrDecryptNotFound
+		return "", fmt.Errorf("failed to read secure value metadata storage: %v (%w)", err, contracts.ErrDecryptNotFound)
 	}
 
-	decrypterIdentity, authorized := s.decryptAuthorizer.Authorize(ctx, namespace, name, sv.Spec.Decrypters)
+	decrypterIdentity, authorized, reason := s.decryptAuthorizer.Authorize(ctx, namespace, name, sv.Spec.Decrypters, sv.OwnerReferences)
 	if !authorized {
-		return "", contracts.ErrDecryptNotAuthorized
+		return "", fmt.Errorf("failed to authorize decryption with reason %v (%w)", reason, contracts.ErrDecryptNotAuthorized)
 	}
 
 	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Spec.Keeper, contracts.ReadOpts{})
 	if err != nil {
-		return "", contracts.ErrDecryptFailed
+		return "", fmt.Errorf("failed to read keeper config metadata storage: %v (%w)", err, contracts.ErrDecryptFailed)
 	}
 
 	keeper, err := s.keeperService.KeeperForConfig(keeperConfig)
 	if err != nil {
-		return "", contracts.ErrDecryptFailed
+		return "", fmt.Errorf("failed to get keeper for config: %v (%w)", err, contracts.ErrDecryptFailed)
 	}
 
 	exposedValue, err := keeper.Expose(ctx, keeperConfig, namespace.String(), name, sv.Status.Version)
 	if err != nil {
-		return "", contracts.ErrDecryptFailed
+		return "", fmt.Errorf("failed to expose secret: %v (%w)", err, contracts.ErrDecryptFailed)
 	}
 
 	return exposedValue, nil

@@ -45,8 +45,10 @@ export const HeatmapPanel = ({
 }: HeatmapPanelProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { sync, eventsScope, canAddAnnotations, onSelectRange } = usePanelContext();
+  const { sync, eventsScope, canAddAnnotations, onSelectRange, canExecuteActions } = usePanelContext();
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
+
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
@@ -220,6 +222,7 @@ export const HeatmapPanel = ({
                       maxHeight={options.tooltip.maxHeight}
                       maxWidth={options.tooltip.maxWidth}
                       replaceVariables={replaceVariables}
+                      canExecuteActions={userCanExecuteActions}
                     />
                   );
                 }}

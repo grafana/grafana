@@ -11,6 +11,17 @@ labels:
     - enterprise
     - oss
 title: Get started with Explore
+refs:
+  saved-queries:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#saved-queries
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
+  save-query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#save-a-query
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
 weight: 5
 ---
 
@@ -61,8 +72,14 @@ Explore consists of a toolbar, outline, query editor, the ability to add multipl
 
 - **Query editor** - Interface where you construct the query for a specific data source. Query editor elements differ based on data source. In order to run queries across multiple data sources you need to select **Mixed** from the data source picker.
 
-- **+Add query** - Add additional queries.
-- **Query history** - Query history contains the list of queries that you created in Explore. Refer to [Query history](/docs/grafana/<GRAFANA_VERSION>/explore/query-management/#query-history) for detailed information on working with your query history.
+- **+ Add query** - Add additional queries.
+- **+ Add from saved queries** - Add a saved query. If you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead. To [save the query](ref:save-query) for reuse, click the **Save query** icon.
+
+  {{< admonition type="note" >}}
+  [Saved queries](ref:saved-queries) is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
+  {{< /admonition >}}
+
+- **Query history** - Query history contains the list of queries that you created in Explore. You can also add queries from the history to your saved queries. Refer to [Query history](/docs/grafana/<GRAFANA_VERSION>/explore/query-management/#query-history) for detailed information on working with your query history.
 - **Query inspector** - Provides detailed statistics regarding your query. Inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**. Refer to [Query inspector in Explore](/docs/grafana/latest/explore/explore-inspector/) for additional information.
 
 ## Access Explore

@@ -58,6 +58,9 @@ var (
 
 	sqlResourceBlobInsert = mustTemplate("resource_blob_insert.sql")
 	sqlResourceBlobQuery  = mustTemplate("resource_blob_query.sql")
+
+	sqlResourceLastImportTimeInsert = mustTemplate("resource_last_import_time_insert.sql")
+	sqlResourceLastImportTimeQuery  = mustTemplate("resource_last_import_time_query.sql")
 )
 
 // TxOptions.
@@ -432,7 +435,8 @@ type sqlResourceListModifiedSinceRequest struct {
 	Namespace string
 	Group     string
 	Resource  string
-	SinceRv   int64
+	SinceRv   int64 // Exclusive
+	LatestRv  int64 // Inclusive
 }
 
 func (r sqlResourceListModifiedSinceRequest) Validate() error {
@@ -448,5 +452,40 @@ func (r sqlResourceListModifiedSinceRequest) Validate() error {
 	if r.SinceRv < 0 {
 		return fmt.Errorf("since resource version must be greater than or equal to zero")
 	}
+	if r.LatestRv < r.SinceRv {
+		return fmt.Errorf("latest resource version must be greater or equal to since resource version")
+	}
+	return nil
+}
+
+type sqlResourceLastImportTimeInsertRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace      string
+	Group          string
+	Resource       string
+	LastImportTime time.Time
+}
+
+func (r sqlResourceLastImportTimeInsertRequest) Validate() error {
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.LastImportTime.IsZero() {
+		return fmt.Errorf("last import time cannot be zero")
+	}
+	return nil
+}
+
+type sqlResourceLastImportTimeQueryRequest struct {
+	sqltemplate.SQLTemplate
+}
+
+func (r *sqlResourceLastImportTimeQueryRequest) Validate() error {
 	return nil
 }

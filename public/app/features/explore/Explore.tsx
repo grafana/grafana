@@ -42,7 +42,6 @@ import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineCo
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationHelper';
 import { CustomContainer } from './CustomContainer';
-import { DrilldownAlertBox } from './DrilldownAlertBox';
 import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
 import { GraphContainer } from './Graph/GraphContainer';
@@ -78,7 +77,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'exploreMain',
       // Is needed for some transition animations to work.
       position: 'relative',
-      marginTop: '21px',
+      marginTop: theme.spacing(3),
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
@@ -313,7 +312,19 @@ export class Explore extends PureComponent<Props, ExploreState> {
    */
   onSplitOpen = (panelType: string) => {
     return async (options?: SplitOpenOptions) => {
-      this.props.splitOpen(options ? { ...options, compact: true } : options);
+      let compact = true;
+
+      /**
+       * Temporary fix grafana-clickhouse-datasource as it requires the query editor to be fully rendered to update the query
+       * Proposed fixes:
+       * - https://github.com/grafana/clickhouse-datasource/issues/1363 - handle query update in data source
+       * - https://github.com/grafana/grafana/issues/110868 - allow data links to provide meta info if the link can be handled in compact mode (default to false)
+       */
+      if (options?.queries?.some((q) => q.datasource?.type === 'grafana-clickhouse-datasource')) {
+        compact = false;
+      }
+
+      this.props.splitOpen(options ? { ...options, compact } : options);
       if (options && this.props.datasourceInstance) {
         const target = (await getDataSourceSrv().get(options.datasourceUid)).type;
         const source =
@@ -578,7 +589,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
       correlationEditorHelperData,
       showQueryInspector,
       setShowQueryInspector,
-      splitted,
       compact,
       queryLibraryRef,
     } = this.props;
@@ -639,7 +649,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
                       mergeSingleChild={true}
                     >
                       <PanelContainer className={styles.queryContainer}>
-                        {!splitted && <DrilldownAlertBox datasourceType={datasourceInstance?.type || ''} />}
                         {correlationsBox}
                         <QueryRows
                           exploreId={exploreId}
@@ -698,29 +707,59 @@ export class Explore extends PureComponent<Props, ExploreState> {
 
                         return (
                           <main className={cx(styles.exploreMain)} style={{ width }}>
-                            <ErrorBoundaryAlert>
+                            <ErrorBoundaryAlert boundaryName="explore-main">
                               {showPanels && (
                                 <>
                                   {showMetrics && graphResult && (
-                                    <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-graph-panel">
+                                      {this.renderGraphPanel(width)}
+                                    </ErrorBoundaryAlert>
                                   )}
                                   {showRawPrometheus && (
-                                    <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-raw-prometheus">
+                                      {this.renderRawPrometheus(width)}
+                                    </ErrorBoundaryAlert>
                                   )}
-                                  {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
-                                  {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
+                                  {showTable && (
+                                    <ErrorBoundaryAlert boundaryName="explore-table-panel">
+                                      {this.renderTablePanel(width)}
+                                    </ErrorBoundaryAlert>
+                                  )}
+                                  {showLogs && (
+                                    <ErrorBoundaryAlert boundaryName="explore-logs-panel">
+                                      {this.renderLogsPanel(width)}
+                                    </ErrorBoundaryAlert>
+                                  )}
                                   {showNodeGraph && (
-                                    <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-node-graph-panel">
+                                      {this.renderNodeGraphPanel()}
+                                    </ErrorBoundaryAlert>
                                   )}
                                   {showFlameGraph && (
-                                    <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-flame-graph-panel">
+                                      {this.renderFlameGraphPanel()}
+                                    </ErrorBoundaryAlert>
                                   )}
-                                  {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
+                                  {showTrace && (
+                                    <ErrorBoundaryAlert boundaryName="explore-trace-view-panel">
+                                      {this.renderTraceViewPanel()}
+                                    </ErrorBoundaryAlert>
+                                  )}
                                   {showLogsSample && (
-                                    <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert boundaryName="explore-logs-sample-panel">
+                                      {this.renderLogsSamplePanel()}
+                                    </ErrorBoundaryAlert>
                                   )}
-                                  {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
-                                  {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
+                                  {showCustom && (
+                                    <ErrorBoundaryAlert boundaryName="explore-custom-panel">
+                                      {this.renderCustom(width)}
+                                    </ErrorBoundaryAlert>
+                                  )}
+                                  {showNoData && (
+                                    <ErrorBoundaryAlert boundaryName="explore-no-data">
+                                      {this.renderNoData()}
+                                    </ErrorBoundaryAlert>
+                                  )}
                                 </>
                               )}
                             </ErrorBoundaryAlert>

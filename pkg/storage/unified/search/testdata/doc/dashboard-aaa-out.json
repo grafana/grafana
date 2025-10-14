@@ -26,7 +26,6 @@
   "createdBy": "user:be2g71ke8yoe8b",
   "fields": {
     "ds_types": [
-      "datasource",
       "my-custom-plugin"
     ],
     "errors_last_1_days": 1,
@@ -46,12 +45,6 @@
       "group": "my-custom-plugin",
       "kind": "DataSource",
       "name": "DSUID"
-    },
-    {
-      "relation": "depends-on",
-      "group": "datasource",
-      "kind": "DataSource",
-      "name": "grafana"
     },
     {
       "relation": "depends-on",

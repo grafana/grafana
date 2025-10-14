@@ -16,7 +16,7 @@ ARG JS_SRC=js-builder
 # By using FROM instructions we can delegate dependency updates to dependabot
 FROM alpine:3.21.3 AS alpine-base
 FROM ubuntu:22.04 AS ubuntu-base
-FROM golang:1.24.6-alpine AS go-builder-base
+FROM golang:1.25.2-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:22-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
@@ -28,15 +28,17 @@ ENV NODE_OPTIONS=--max_old_space_size=8000
 
 WORKDIR /tmp/grafana
 
+RUN apk add --no-cache make build-base python3
+
 COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY packages packages
+COPY e2e-playwright e2e-playwright
 COPY public public
 COPY LICENSE ./
 COPY conf/defaults.ini ./conf/defaults.ini
 COPY e2e e2e
 
-RUN apk add --no-cache make build-base python3
 #
 # Set the node env according to defaults or argument passed
 #
@@ -62,7 +64,6 @@ ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
 ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
-ARG BINGO="true"
 
 RUN if grep -i -q alpine /etc/issue; then \
   apk add --no-cache \
@@ -76,7 +77,6 @@ RUN if grep -i -q alpine /etc/issue; then \
 WORKDIR /tmp/grafana
 
 COPY go.* ./
-COPY .bingo .bingo
 COPY .citools .citools
 
 # Copy go dependencies first
@@ -95,24 +95,26 @@ COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
 COPY apps/plugins apps/plugins
 COPY apps/shorturl apps/shorturl
+COPY apps/correlations apps/correlations
+COPY apps/preferences apps/preferences
 COPY apps/provisioning apps/provisioning
 COPY apps/secret apps/secret
+COPY apps/scope apps/scope
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
 COPY apps/folder apps/folder
+COPY apps/preferences apps/preferences
 COPY apps/iam apps/iam
 COPY apps apps
 COPY kindsv2 kindsv2
+COPY apps/alerting/alertenrichment apps/alerting/alertenrichment
 COPY apps/alerting/notifications apps/alerting/notifications
+COPY apps/alerting/rules apps/alerting/rules
 COPY pkg/codegen pkg/codegen
 COPY pkg/plugins/codegen pkg/plugins/codegen
 
 RUN go mod download
-RUN if [[ "$BINGO" = "true" ]]; then \
-  go install github.com/bwplotka/bingo@latest && \
-  bingo get -v; \
-  fi
 
 COPY embed.go Makefile build.go package.json ./
 COPY cue.mod cue.mod

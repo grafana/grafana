@@ -14,6 +14,13 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
+var now = time.Now()
+
+var exampleObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", CreationTimestamp: metav1.Time{}, GenerateName: "foo"}, Spec: example.PodSpec{}, Status: example.PodStatus{StartTime: &metav1.Time{Time: now}}}
+var anotherObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "bar", ResourceVersion: "2", GenerateName: "foo"}, Spec: example.PodSpec{}, Status: example.PodStatus{StartTime: &metav1.Time{Time: now}}}
+var exampleList = &example.PodList{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ListMeta: metav1.ListMeta{}, Items: []example.Pod{*exampleObj}}
+var anotherList = &example.PodList{Items: []example.Pod{*anotherObj}}
+
 func TestSetDualWritingMode(t *testing.T) {
 	type testCase struct {
 		name            string
@@ -80,18 +87,13 @@ func TestSetDualWritingMode(t *testing.T) {
 		}
 
 	for _, tt := range tests {
-		l := (Storage)(nil)
-		s := (Storage)(nil)
+		us := NewMockStorage(t)
+		us.On("List", mock.Anything, mock.Anything).Return(anotherList, nil).Maybe()
+		us.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil).Maybe()
+		us.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil).Maybe()
 
-		sm := &mock.Mock{}
-		sm.On("List", mock.Anything, mock.Anything).Return(anotherList, nil)
-		sm.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
-		sm.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
-		us := storageMock{sm, s}
-
-		lm := &mock.Mock{}
-		lm.On("List", mock.Anything, mock.Anything).Return(exampleList, nil)
-		ls := storageMock{lm, l}
+		ls := NewMockStorage(t)
+		ls.On("List", mock.Anything, mock.Anything).Return(exampleList, nil).Maybe()
 
 		serverLockSvc := &fakeServerLock{
 			err: tt.serverLockError,

@@ -110,6 +110,10 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 			ctxLogger.Error("Failed to parse end as int", "error", err, "function", logEntrypoint())
 			return err
 		}
+	} else {
+		// Make sure to pass a valid time range to the client as v2 will not work without it.
+		start = time.Now().Add(-time.Hour).UnixMilli()
+		end = time.Now().Add(time.Hour).UnixMilli()
 	}
 
 	types, err := d.client.ProfileTypes(ctx, start, end)

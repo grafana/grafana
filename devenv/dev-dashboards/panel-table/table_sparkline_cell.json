@@ -36,8 +36,7 @@
             "cellOptions": {
               "type": "sparkline"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -113,8 +112,7 @@
               "drawStyle": "bars",
               "type": "sparkline"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -191,8 +189,7 @@
               "drawStyle": "points",
               "type": "sparkline"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -269,8 +266,7 @@
               "drawStyle": "line",
               "type": "sparkline"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "mappings": [],
           "min": 0,
@@ -349,8 +345,7 @@
               "drawStyle": "line",
               "type": "sparkline"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "mappings": [],
           "max": 100,
@@ -430,8 +425,7 @@
               "lineInterpolation": "linear",
               "type": "sparkline"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "mappings": [],
           "max": 100,
@@ -509,8 +503,7 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {

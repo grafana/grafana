@@ -51,6 +51,7 @@ function setupTestContext(options: Partial<Props>) {
       canAddAnnotations: jest.fn(),
       canEditAnnotations: jest.fn(),
       canDeleteAnnotations: jest.fn(),
+      canExecuteActions: jest.fn(),
       meta: {
         isPublic: false,
       },

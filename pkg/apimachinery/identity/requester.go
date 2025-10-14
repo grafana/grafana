@@ -5,7 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-jose/go-jose/v3/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"k8s.io/apiserver/pkg/authentication/user"
 
 	claims "github.com/grafana/authlib/types"
@@ -136,7 +137,7 @@ func IsIDTokenExpired(requester Requester) bool {
 		return false
 	}
 
-	parsed, err := jwt.ParseSigned(idToken)
+	parsed, err := jwt.ParseSigned(idToken, []jose.SignatureAlgorithm{jose.ES256})
 	if err != nil {
 		return false
 	}

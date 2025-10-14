@@ -6,15 +6,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/apikeygen"
+	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegration_Store_AddServiceAccountToken(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	user := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)
@@ -29,7 +29,7 @@ func TestIntegration_Store_AddServiceAccountToken(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			keyName := t.Name()
-			key, err := apikeygen.New(user.OrgID, keyName)
+			key, err := satokengen.New(keyName)
 			require.NoError(t, err)
 
 			cmd := serviceaccounts.AddServiceAccountTokenCommand{
@@ -77,15 +77,14 @@ func TestIntegration_Store_AddServiceAccountToken(t *testing.T) {
 }
 
 func TestIntegration_Store_AddServiceAccountToken_WrongServiceAccount(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	saToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	sa := tests.SetupUserServiceAccount(t, db, store.cfg, saToCreate)
 
 	keyName := t.Name()
-	key, err := apikeygen.New(sa.OrgID, keyName)
+	key, err := satokengen.New(keyName)
 	require.NoError(t, err)
 
 	cmd := serviceaccounts.AddServiceAccountTokenCommand{
@@ -100,15 +99,14 @@ func TestIntegration_Store_AddServiceAccountToken_WrongServiceAccount(t *testing
 }
 
 func TestIntegration_Store_RevokeServiceAccountToken(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	sa := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)
 
 	keyName := t.Name()
-	key, err := apikeygen.New(sa.OrgID, keyName)
+	key, err := satokengen.New(keyName)
 	require.NoError(t, err)
 
 	cmd := serviceaccounts.AddServiceAccountTokenCommand{
@@ -143,15 +141,14 @@ func TestIntegration_Store_RevokeServiceAccountToken(t *testing.T) {
 }
 
 func TestIntegration_Store_DeleteServiceAccountToken(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	sa := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)
 
 	keyName := t.Name()
-	key, err := apikeygen.New(sa.OrgID, keyName)
+	key, err := satokengen.New(keyName)
 	require.NoError(t, err)
 
 	cmd := serviceaccounts.AddServiceAccountTokenCommand{

@@ -13,10 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 var (
@@ -238,44 +238,63 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	return parsed.Obj.GetName(), parsed.GVK, err
 }
 
-func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, schema.GroupVersionKind, error) {
-	name, gvk, err := r.RemoveResourceFromFile(ctx, previousPath, previousRef)
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, string, schema.GroupVersionKind, error) {
+	name, oldFolderName, gvk, err := r.RemoveResourceFromFile(ctx, previousPath, previousRef)
 	if err != nil {
-		return name, gvk, fmt.Errorf("failed to remove resource: %w", err)
+		return name, oldFolderName, gvk, fmt.Errorf("failed to remove resource: %w", err)
 	}
 
-	return r.WriteResourceFromFile(ctx, newPath, newRef)
+	newName, gvk, err := r.WriteResourceFromFile(ctx, newPath, newRef)
+	if err != nil {
+		return name, oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
+	}
+
+	return newName, oldFolderName, gvk, nil
 }
 
-func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, schema.GroupVersionKind, error) {
+func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, string, schema.GroupVersionKind, error) {
 	info, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	obj, gvk, _ := DecodeYAMLObject(bytes.NewBuffer(info.Data))
 	if obj == nil {
-		return "", schema.GroupVersionKind{}, fmt.Errorf("no object found")
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("no object found")
 	}
 
 	objName := obj.GetName()
 	if objName == "" {
-		return "", schema.GroupVersionKind{}, ErrMissingName
+		return "", "", schema.GroupVersionKind{}, ErrMissingName
 	}
 
-	client, _, err := r.clients.ForKind(*gvk)
+	client, _, err := r.clients.ForKind(ctx, *gvk)
 	if err != nil {
-		return "", schema.GroupVersionKind{}, fmt.Errorf("unable to get client for deleted object: %w", err)
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("unable to get client for deleted object: %w", err)
 	}
+
+	// the folder annotation is not stored in the git file, so we need to get it from grafana
+	grafanaObj, err := client.Get(ctx, objName, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return objName, "", schema.GroupVersionKind{}, nil // Already deleted or simply non-existing, nothing to do
+		}
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("unable to get grafana object: %w", err)
+	}
+	meta, err := utils.MetaAccessor(grafanaObj)
+	if err != nil {
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("unable to get meta accessor: %w", err)
+	}
+	folderName := meta.GetFolder()
 
 	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return objName, schema.GroupVersionKind{}, nil // Already deleted or simply non-existing, nothing to do
+			return objName, folderName, schema.GroupVersionKind{}, nil // Already deleted or simply non-existing, nothing to do
 		}
 
-		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to delete: %w", err)
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to delete: %w", err)
 	}
 
-	return objName, schema.GroupVersionKind{}, nil
+	return objName, folderName, schema.GroupVersionKind{}, nil
 }

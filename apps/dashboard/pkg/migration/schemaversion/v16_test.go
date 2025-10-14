@@ -9,6 +9,63 @@ import (
 func TestV16(t *testing.T) {
 	tests := []migrationTestCase{
 		{
+			name: "should handle repeatIteration null",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"collapse":        false,
+						"showTitle":       true,
+						"title":           "Overview",
+						"type":            "row",
+						"repeat":          nil,
+						"repeatIteration": nil,
+						"repeatRowId":     nil,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":    2,
+								"type":  "stat",
+								"span":  12,
+								"title": "Customer Stats",
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					// The stat panel should be processed and added
+					map[string]interface{}{
+						"id":    2,
+						"type":  "stat",
+						"title": "Customer Stats",
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 1,
+							"w": 24,
+							"h": 7, // default height
+						},
+					},
+					// The row panel should be created because showTitle is true
+					map[string]interface{}{
+						"id":        3, // Next ID after max panel ID (2)
+						"type":      "row",
+						"title":     "Overview",
+						"collapsed": false,
+						"repeat":    "",
+						"panels":    []interface{}{},
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 0,
+							"w": 24,
+							"h": 7, // default height
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "should create proper grid",
 			input: map[string]interface{}{
 				"schemaVersion": 15,
@@ -132,12 +189,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        5, // Next ID after row panel (4)
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     5, // Next ID after row panel (4)
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 1,
@@ -203,12 +259,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        4, // Next ID after max panel ID (3)
-						"type":      "row",
-						"title":     "Row",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     4, // Next ID after max panel ID (3)
+						"type":   "row",
+						"title":  "Row",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 0,
@@ -226,12 +281,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        5, // Next ID after row panel (4)
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     5, // Next ID after row panel (4)
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 9,
@@ -334,12 +388,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        8,
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     8,
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 1,
@@ -376,12 +429,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        9,
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     9,
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 10,
@@ -495,12 +547,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        5, // Next ID after row panel (4)
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     5, // Next ID after row panel (4)
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 1,
@@ -1173,12 +1224,11 @@ func TestV16(t *testing.T) {
 					},
 					// Repeated row panel (comes after its panels)
 					map[string]interface{}{
-						"id":        3,
-						"type":      "row",
-						"title":     "Row",
-						"collapsed": false,
-						"repeat":    "server",
-						"panels":    []interface{}{},
+						"id":     3,
+						"type":   "row",
+						"title":  "Row",
+						"repeat": "server",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 0,
@@ -1198,12 +1248,11 @@ func TestV16(t *testing.T) {
 					},
 					// Second row panel (comes after its panels)
 					map[string]interface{}{
-						"id":        4,
-						"type":      "row",
-						"title":     "",
-						"collapsed": false,
-						"repeat":    "",
-						"panels":    []interface{}{},
+						"id":     4,
+						"type":   "row",
+						"title":  "",
+						"repeat": "",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 9,
@@ -1259,12 +1308,11 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":        3, // Next ID after max panel ID (2)
-						"type":      "row",
-						"title":     "Row1",
-						"collapsed": false,
-						"repeat":    "server",
-						"panels":    []interface{}{},
+						"id":     3, // Next ID after max panel ID (2)
+						"type":   "row",
+						"title":  "Row1",
+						"repeat": "server",
+						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
 							"x": 0,
 							"y": 0,
@@ -1330,6 +1378,272 @@ func TestV16(t *testing.T) {
 							"y": 0,
 							"w": 24,
 							"h": 8,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should preserve existing panels when rows array is empty",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows":          []interface{}{},
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    1,
+						"type":  "graph",
+						"title": "Existing Panel",
+						"datasource": map[string]interface{}{
+							"uid": "test-ds",
+						},
+						"gridPos": map[string]interface{}{
+							"h": 8,
+							"w": 12,
+							"x": 0,
+							"y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id":    2,
+						"type":  "stat",
+						"title": "Another Panel",
+						"gridPos": map[string]interface{}{
+							"h": 8,
+							"w": 12,
+							"x": 12,
+							"y": 0,
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				// panels should be preserved exactly as they were
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    1,
+						"type":  "graph",
+						"title": "Existing Panel",
+						"datasource": map[string]interface{}{
+							"uid": "test-ds",
+						},
+						"gridPos": map[string]interface{}{
+							"h": 8,
+							"w": 12,
+							"x": 0,
+							"y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id":    2,
+						"type":  "stat",
+						"title": "Another Panel",
+						"gridPos": map[string]interface{}{
+							"h": 8,
+							"w": 12,
+							"x": 12,
+							"y": 0,
+						},
+					},
+				},
+				// rows field should be removed
+			},
+		},
+		{
+			name: "should parse string heights with px suffix during rows to panels migration",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"collapse":  false,
+						"height":    "700px", // String height with px suffix
+						"showTitle": true,
+						"title":     "Rollout progress",
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":    1,
+								"type":  "barchart",
+								"span":  4,
+								"title": "Versions running",
+								"targets": []interface{}{
+									map[string]interface{}{
+										"expr": "up",
+									},
+								},
+							},
+							map[string]interface{}{
+								"id":    2,
+								"type":  "barchart",
+								"span":  4,
+								"title": "Deployment progress",
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					// First panel
+					map[string]interface{}{
+						"id":    1,
+						"type":  "barchart",
+						"title": "Versions running",
+						"targets": []interface{}{
+							map[string]interface{}{
+								"expr": "up",
+							},
+						},
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 1,  // After row panel
+							"w": 8,  // 4 span * 2 = 8 width
+							"h": 19, // 700px parsed correctly: ceil(700/38) = 19
+						},
+					},
+					// Second panel
+					map[string]interface{}{
+						"id":    2,
+						"type":  "barchart",
+						"title": "Deployment progress",
+						"gridPos": map[string]interface{}{
+							"x": 8, // Next to first panel
+							"y": 1,
+							"w": 8,
+							"h": 19,
+						},
+					},
+					// Row panel (created because showTitle is true)
+					map[string]interface{}{
+						"id":        3, // Next available ID
+						"type":      "row",
+						"title":     "Rollout progress",
+						"collapsed": false, // Backend always sets this
+						"repeat":    "",    // Backend always sets this
+						"panels":    []interface{}{},
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 0,
+							"w": 24,
+							"h": 19, // Same height as calculated from "700px"
+						},
+					},
+				},
+				// rows field should be removed
+			},
+		},
+		{
+			name: "should handle span zero by defaulting to DEFAULT_PANEL_SPAN",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"collapse":  false,
+						"showTitle": true, // Need this to create row panel
+						"title":     "Test Row",
+						"height":    250,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":   1,
+								"type": "graph",
+								"span": 0, // This should be defaulted to 4 (DEFAULT_PANEL_SPAN)
+							},
+							map[string]interface{}{
+								"id":   2,
+								"type": "stat",
+								"span": 6, // Normal span value
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "graph",
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 1,
+							"w": 8, // span 0 -> DEFAULT_PANEL_SPAN (4) -> 4 * 2 = 8 width
+							"h": 7, // default height
+						},
+					},
+					map[string]interface{}{
+						"id":   2,
+						"type": "stat",
+						"gridPos": map[string]interface{}{
+							"x": 8, // After first panel
+							"y": 1,
+							"w": 12, // span 6 -> 6 * 2 = 12 width
+							"h": 7,  // default height
+						},
+					},
+					// Row panel should be created because showTitle is true
+					map[string]interface{}{
+						"id":        3,
+						"type":      "row",
+						"title":     "Test Row",
+						"collapsed": false, // Set because input has "collapse": false
+						"repeat":    "",
+						"panels":    []interface{}{},
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 0,
+							"w": 24,
+							"h": 7,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should not set collapsed property when input row has no collapse property",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows": []interface{}{
+					map[string]interface{}{
+						// No "collapse" property in input
+						"showTitle": true,
+						"title":     "Test Row",
+						"height":    250,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":   1,
+								"type": "graph",
+								"span": 12,
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "graph",
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 1,
+							"w": 24, // span 12 -> 12 * 2 = 24 width
+							"h": 7,  // default height
+						},
+					},
+					// Row panel should be created because showTitle is true
+					map[string]interface{}{
+						"id":    2,
+						"type":  "row",
+						"title": "Test Row",
+						// No "collapsed" property because input had no "collapse" property
+						"repeat": "",
+						"panels": []interface{}{},
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 0,
+							"w": 24,
+							"h": 7,
 						},
 					},
 				},

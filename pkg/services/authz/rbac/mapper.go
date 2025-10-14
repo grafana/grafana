@@ -2,8 +2,10 @@ package rbac
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 )
 
 // Mapping maps a verb to a RBAC action and a resource name to a RBAC scope.
@@ -11,6 +13,9 @@ type Mapping interface {
 	// action returns the action for the given verb.
 	// If no action is found, it returns false.
 	Action(verb string) (string, bool)
+	// ActionSets returns the action sets for the given verb.
+	// If no action sets are found, it returns an empty slice. This is expected for resources that do not have action sets (anything apart from dashboards and folders).
+	ActionSets(verb string) []string
 	// scope returns the scope for the given resource name.
 	Scope(name string) string
 	// prefix returns the scope prefix for the translation.
@@ -19,18 +24,27 @@ type Mapping interface {
 	AllActions() []string
 	// HasFolderSupport returns true if the translation supports folders.
 	HasFolderSupport() bool
+	// SkipScopeOnCreate returns true if the translation does not require a scope on create.
+	SkipScopeOnCreate() bool
 }
 
 type translation struct {
-	resource      string
-	attribute     string
-	verbMapping   map[string]string
-	folderSupport bool
+	resource          string
+	attribute         string
+	verbMapping       map[string]string
+	actionSetMapping  map[string][]string
+	folderSupport     bool
+	skipScopeOnCreate bool
 }
 
 func (t translation) Action(verb string) (string, bool) {
 	action, ok := t.verbMapping[verb]
 	return action, ok
+}
+
+func (t translation) ActionSets(verb string) []string {
+	actionSets := t.actionSetMapping[verb]
+	return actionSets
 }
 
 func (t translation) Scope(name string) string {
@@ -58,6 +72,10 @@ func (t translation) HasFolderSupport() bool {
 	return t.folderSupport
 }
 
+func (t translation) SkipScopeOnCreate() bool {
+	return t.skipScopeOnCreate
+}
+
 // MapperRegistry is a registry of mappers that maps a group and resource to a translation.
 type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
@@ -69,7 +87,7 @@ type MapperRegistry interface {
 
 type mapper map[string]map[string]translation
 
-func newResourceTranslation(resource string, attribute string, folderSupport bool) translation {
+func newResourceTranslation(resource string, attribute string, folderSupport, skipScopeOnCreate bool) translation {
 	defaultMapping := func(r string) map[string]string {
 		return map[string]string{
 			utils.VerbGet:              fmt.Sprintf("%s:read", r),
@@ -86,25 +104,84 @@ func newResourceTranslation(resource string, attribute string, folderSupport boo
 	}
 
 	return translation{
-		resource:      resource,
-		attribute:     attribute,
-		verbMapping:   defaultMapping(resource),
-		folderSupport: folderSupport,
+		resource:          resource,
+		attribute:         attribute,
+		verbMapping:       defaultMapping(resource),
+		folderSupport:     folderSupport,
+		skipScopeOnCreate: skipScopeOnCreate,
 	}
+}
+
+// newDashboardTranslation creates a translation for dashboards and also maps the actions to action sets
+func newDashboardTranslation() translation {
+	dashTranslation := newResourceTranslation("dashboards", "uid", true, false)
+
+	actionSetMapping := make(map[string][]string)
+	for verb, rbacAction := range dashTranslation.verbMapping {
+		var dashActionSets []string
+		if slices.Contains(ossaccesscontrol.DashboardViewActions, rbacAction) {
+			dashActionSets = append(dashActionSets, "dashboards:view")
+			dashActionSets = append(dashActionSets, "folders:view")
+		}
+		if slices.Contains(ossaccesscontrol.DashboardEditActions, rbacAction) {
+			dashActionSets = append(dashActionSets, "dashboards:edit")
+			dashActionSets = append(dashActionSets, "folders:edit")
+		}
+		if slices.Contains(ossaccesscontrol.DashboardAdminActions, rbacAction) {
+			dashActionSets = append(dashActionSets, "dashboards:admin")
+			dashActionSets = append(dashActionSets, "folders:admin")
+		}
+		actionSetMapping[verb] = dashActionSets
+	}
+
+	dashTranslation.actionSetMapping = actionSetMapping
+	return dashTranslation
+}
+
+// newFolderTranslation creates a translation for folders and also maps the actions to action sets
+func newFolderTranslation() translation {
+	folderTranslation := newResourceTranslation("folders", "uid", true, false)
+
+	actionSetMapping := make(map[string][]string)
+	for verb, rbacAction := range folderTranslation.verbMapping {
+		var actionSets []string
+		// Folder creation has not been added to the FolderEditActions and FolderAdminActions slices (https://github.com/grafana/identity-access-team/issues/794)
+		// so we handle it as a special case for now
+		if rbacAction == "folders:create" {
+			actionSets = append(actionSets, "folders:edit")
+			actionSets = append(actionSets, "folders:admin")
+		}
+		if slices.Contains(ossaccesscontrol.FolderViewActions, rbacAction) {
+			actionSets = append(actionSets, "folders:view")
+		}
+		if slices.Contains(ossaccesscontrol.FolderEditActions, rbacAction) {
+			actionSets = append(actionSets, "folders:edit")
+		}
+		if slices.Contains(ossaccesscontrol.FolderAdminActions, rbacAction) {
+			actionSets = append(actionSets, "folders:admin")
+		}
+		actionSetMapping[verb] = actionSets
+	}
+	folderTranslation.actionSetMapping = actionSetMapping
+	return folderTranslation
 }
 
 func NewMapperRegistry() MapperRegistry {
 	mapper := mapper(map[string]map[string]translation{
 		"dashboard.grafana.app": {
-			"dashboards": newResourceTranslation("dashboards", "uid", true),
+			"dashboards": newDashboardTranslation(),
 		},
 		"folder.grafana.app": {
-			"folders": newResourceTranslation("folders", "uid", true),
+			"folders": newFolderTranslation(),
 		},
 		"iam.grafana.app": {
+			// Users is a special case. We translate user permissions from id to uid based.
+			"users":           newResourceTranslation("users", "uid", false, true),
+			"serviceaccounts": newResourceTranslation("serviceaccounts", "uid", false, true),
 			// Teams is a special case. We translate user permissions from id to uid based.
-			"teams":     newResourceTranslation("teams", "uid", false),
-			"coreroles": newResourceTranslation("roles", "uid", false),
+			"teams": newResourceTranslation("teams", "uid", false, true),
+			// No need to skip scope on create for roles because we translate `permissions:type:delegate` to `roles:*``
+			"coreroles": newResourceTranslation("roles", "uid", false, false),
 			"roles": translation{
 				resource:  "roles",
 				attribute: "uid",
@@ -118,15 +195,13 @@ func NewMapperRegistry() MapperRegistry {
 					utils.VerbList:             "roles:read",
 					utils.VerbWatch:            "roles:read",
 				},
-				folderSupport: false,
+				folderSupport:     false,
+				skipScopeOnCreate: false,
 			},
 		},
 		"secret.grafana.app": {
-			"securevalues": newResourceTranslation("secret.securevalues", "uid", false),
-			"keepers":      newResourceTranslation("secret.keepers", "uid", false),
-		},
-		"settings.grafana.app": {
-			"settings": newResourceTranslation("settings", "uid", false),
+			"securevalues": newResourceTranslation("secret.securevalues", "uid", false, false),
+			"keepers":      newResourceTranslation("secret.keepers", "uid", false, false),
 		},
 		"query.grafana.app": {
 			"query": translation{
@@ -135,7 +210,8 @@ func NewMapperRegistry() MapperRegistry {
 				verbMapping: map[string]string{
 					utils.VerbCreate: "datasources:query",
 				},
-				folderSupport: false,
+				folderSupport:     false,
+				skipScopeOnCreate: false,
 			},
 		},
 	})

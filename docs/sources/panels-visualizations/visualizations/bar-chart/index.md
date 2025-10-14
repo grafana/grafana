@@ -88,6 +88,22 @@ While the first field can be time-based and you can use a bar chart to plot time
 
 We recommend that you only use one dataset in a bar chart because using multiple datasets can result in unexpected behavior.
 
+<!-- vale Grafana.WordList = NO -->
+<!-- vale Grafana.Spelling = NO -->
+
+## Apply ad hoc filters from the bar chart
+
+In bar charts, you can apply ad hoc filters directly from the visualization.
+
+To display the filter button, hover your cursor over the bar that has the value for which you want to filter and click the bar:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-bar-v12.2.png" max-width="300px" alt="The ad hoc filter button in a bar chart tooltip">}}
+
+For more information about applying ad hoc filters this way, refer to [Dashboard drilldown with ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#dashboard-drilldown-with-ad-hoc-filters).
+
+<!-- vale Grafana.Spelling = YES -->
+<!-- vale Grafana.WordList = YES -->
+
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}

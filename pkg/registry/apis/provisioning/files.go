@@ -13,10 +13,10 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 const (
@@ -99,7 +99,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		folderClient, err := clients.Folder()
+		folderClient, err := clients.Folder(ctx)
 		if err != nil {
 			responder.Error(fmt.Errorf("failed to get folder client: %w", err))
 			return
@@ -112,6 +112,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			Message:      query.Get("message"),
 			SkipDryRun:   query.Get("skipDryRun") == "true",
 			OriginalPath: query.Get("originalPath"),
+			Branch:       repo.Config().Branch(),
 		}
 		logger := logger.With("url", r.URL.Path, "ref", opts.Ref, "message", opts.Message)
 		ctx := logging.Context(r.Context(), logger)

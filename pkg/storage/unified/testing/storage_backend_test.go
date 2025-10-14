@@ -18,13 +18,20 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 		t.Cleanup(func() {
 			_ = db.Close()
 		})
-		return resource.NewKvStorageBackend(resource.NewBadgerKV(db))
+		kvOpts := resource.KvBackendOptions{
+			KvStore: resource.NewBadgerKV(db),
+		}
+		backend, err := resource.NewKvStorageBackend(kvOpts)
+		require.NoError(t, err)
+		return backend
 	}, &TestOptions{
 		NSPrefix: "kvstorage-test",
 		SkipTests: map[string]bool{
 			// TODO: fix these tests and remove this skip
 			TestBlobSupport:       true,
 			TestListModifiedSince: true,
+			// Badger does not support bulk import yet.
+			TestGetResourceLastImportTime: true,
 		},
 	})
 }

@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/updatemanager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -114,9 +115,8 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 }
 
 func TestIntegrationHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	type buildInfo struct {
 		Version string `json:"version"`
 		Commit  string `json:"commit"`
@@ -186,9 +186,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testi
 }
 
 func TestIntegrationHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	type settings struct {
 		PluginsCDNBaseURL string `json:"pluginsCDNBaseURL"`
 	}
@@ -239,9 +238,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.
 }
 
 func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	type settings struct {
 		Apps map[string]*plugins.AppDTO `json:"apps"`
 	}
@@ -472,9 +470,8 @@ func newAppSettings(id string, enabled bool) map[string]*pluginsettings.DTO {
 }
 
 func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	type settings struct {
 		Datasources map[string]plugins.DataSourceDTO `json:"datasources"`
 		Panels      map[string]*plugins.PanelDTO     `json:"panels"`

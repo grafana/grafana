@@ -65,7 +65,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
         <div className={style.layerName}>{layerName}</div>
         <div className={cx(style.layerBody, style.fixedColorContainer)}>
           <SanitizedSVG
-            src={`public/${symbol}`}
+            src={`${window.__grafana_public_path__}build/${symbol}`}
             className={style.legendSymbol}
             title={t('geomap.markers-legend.title-symbol', 'Symbol')}
             style={{ fill: color, opacity: opacity }}
@@ -84,7 +84,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
   if (colorMode.isContinuous && colorMode.getColors) {
     const colors = colorMode.getColors(config.theme2);
     const colorRange = getMinMaxAndDelta(colorField);
-    // TODO: explore showing mean on the gradiant scale
+    // TODO: explore showing mean on the gradient scale
     // const stats = reduceField({
     //   field: color.field!,
     //   reducers: [

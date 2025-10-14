@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 
@@ -390,6 +392,73 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []string{"test-plugin.zip"}, loadedPaths)
 	})
+
+	t.Run("Dependencies don't inherit parent plugin's URL during installation", func(t *testing.T) {
+		const (
+			parentPluginID = "parent-plugin"
+			depPluginID    = "dependency-plugin"
+			parentURL      = "https://example.com/parent-plugin.zip"
+		)
+
+		var loadedPaths []string
+		loader := &fakes.FakeLoader{
+			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+				// Check if this is a LocalSource and get its paths
+				if localSrc, ok := src.(*sources.LocalSource); ok {
+					loadedPaths = append(loadedPaths, localSrc.Paths()...)
+				}
+				return []*plugins.Plugin{}, nil
+			},
+		}
+
+		// Track which methods are called to ensure dependencies use catalog, not URL
+		urlMethodCalled := false
+		catalogMethodCalled := false
+
+		pluginRepo := &fakes.FakePluginRepo{
+			GetPluginArchiveByURLFunc: func(_ context.Context, url string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+				urlMethodCalled = true
+				require.Equal(t, parentURL, url, "URL method should only be called for parent plugin")
+				return &repo.PluginArchive{File: &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
+					FileHeader: zip.FileHeader{Name: "parent-plugin.zip"},
+				}}}}}, nil
+			},
+			GetPluginArchiveFunc: func(_ context.Context, id, version string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+				catalogMethodCalled = true
+				require.Equal(t, depPluginID, id, "Catalog method should only be called for dependency plugin")
+				return &repo.PluginArchive{File: &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
+					FileHeader: zip.FileHeader{Name: "dependency-plugin.zip"},
+				}}}}}, nil
+			},
+		}
+
+		fs := &fakes.FakePluginStorage{
+			ExtractFunc: func(_ context.Context, id string, _ storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+				switch id {
+				case parentPluginID:
+					return &storage.ExtractedPluginArchive{
+						ID:           parentPluginID,
+						Dependencies: []*storage.Dependency{{ID: depPluginID}},
+						Path:         "parent-plugin.zip",
+					}, nil
+				case depPluginID:
+					return &storage.ExtractedPluginArchive{
+						ID:   depPluginID,
+						Path: "dependency-plugin.zip",
+					}, nil
+				default:
+					return nil, fmt.Errorf("unknown plugin %s", id)
+				}
+			},
+		}
+
+		inst := New(&config.PluginManagementCfg{}, fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		err := inst.Add(context.Background(), parentPluginID, "", plugins.NewAddOpts("10.0.0", runtime.GOOS, runtime.GOARCH, parentURL))
+		require.NoError(t, err)
+		require.Equal(t, []string{"dependency-plugin.zip", "parent-plugin.zip"}, loadedPaths)
+		require.True(t, urlMethodCalled)
+		require.True(t, catalogMethodCalled)
+	})
 }
 
 func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, backend bool, cbs ...func(*plugins.Plugin)) *plugins.Plugin {
@@ -421,4 +490,101 @@ func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, b
 
 func testCompatOpts() plugins.AddOpts {
 	return plugins.NewAddOpts("10.0.0", runtime.GOOS, runtime.GOARCH, "")
+}
+
+func TestPluginInstaller_Removal(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	t.Run("LocalFS plugin removal succeeds via installer.Remove", func(t *testing.T) {
+		pluginDir := filepath.Join(tmpDir, "localfs-plugin")
+		err := os.MkdirAll(pluginDir, 0750)
+		require.NoError(t, err)
+
+		pluginJSON := `{
+			"id": "localfs-plugin",
+			"name": "LocalFS Plugin",
+			"type": "datasource",
+			"info": {
+				"version": "1.0.0"
+			}
+		}`
+		err = os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte(pluginJSON), 0644)
+		require.NoError(t, err)
+
+		localFS := plugins.NewLocalFS(pluginDir)
+		pluginV1 := createPlugin(t, "localfs-plugin", plugins.ClassExternal, true, true, func(plugin *plugins.Plugin) {
+			plugin.Info.Version = "1.0.0"
+			plugin.FS = localFS
+		})
+
+		registry := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				"localfs-plugin": pluginV1,
+			},
+		}
+
+		loader := &fakes.FakeLoader{
+			UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+				return p, nil
+			},
+		}
+
+		_, err = os.Stat(pluginDir)
+		require.NoError(t, err)
+
+		inst := New(&config.PluginManagementCfg{}, registry, loader, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		err = inst.Remove(context.Background(), "localfs-plugin", "1.0.0")
+		require.NoError(t, err)
+
+		_, err = os.Stat(pluginDir)
+		require.True(t, os.IsNotExist(err))
+	})
+
+	t.Run("StaticFS plugin removal is skipped via installer.Remove", func(t *testing.T) {
+		pluginDir := filepath.Join(tmpDir, "staticfs-plugin")
+		err := os.MkdirAll(pluginDir, 0750)
+		require.NoError(t, err)
+
+		pluginJSON := `{
+			"id": "staticfs-plugin",
+			"name": "StaticFS Plugin",
+			"type": "datasource",
+			"info": {
+				"version": "1.0.0"
+			}
+		}`
+		err = os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte(pluginJSON), 0644)
+		require.NoError(t, err)
+
+		localFS := plugins.NewLocalFS(pluginDir)
+		staticFS, err := plugins.NewStaticFS(localFS)
+		require.NoError(t, err)
+
+		pluginV1 := createPlugin(t, "staticfs-plugin", plugins.ClassExternal, true, true, func(plugin *plugins.Plugin) {
+			plugin.Info.Version = "1.0.0"
+			plugin.FS = staticFS
+		})
+
+		registry := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				"staticfs-plugin": pluginV1,
+			},
+		}
+
+		loader := &fakes.FakeLoader{
+			UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+				return p, nil
+			},
+		}
+
+		_, err = os.Stat(pluginDir)
+		require.NoError(t, err)
+
+		inst := New(&config.PluginManagementCfg{}, registry, loader, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		err = inst.Remove(context.Background(), "staticfs-plugin", "1.0.0")
+		require.NoError(t, err)
+
+		_, err = os.Stat(pluginDir)
+		require.ErrorIs(t, err, os.ErrNotExist)
+	})
 }

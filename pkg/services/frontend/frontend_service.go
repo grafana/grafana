@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -40,7 +41,12 @@ type frontendService struct {
 }
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing) (*frontendService, error) {
-	index, err := NewIndexProvider(cfg, license)
+	assetsManifest, err := fswebassets.GetWebAssets(cfg, license)
+	if err != nil {
+		return nil, err
+	}
+
+	index, err := NewIndexProvider(cfg, assetsManifest)
 	if err != nil {
 		return nil, err
 	}
@@ -131,6 +137,16 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 	// Frontend service doesn't (yet?) serve any assets, so explicitly 404
 	// them so we can get logs for them
 	s.routeGet(m, "/public/*", http.NotFound)
+
+	// Empty health check endpoint to allow k8s and other orchestrators to check if the server is alive
+	// Useful to have a separate route for this for logging and metrics purposes
+	s.routeGet(m, "/-/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+
+		if _, err := w.Write([]byte("OK")); err != nil {
+			s.log.Error("failed to write health check response", "error", err)
+		}
+	})
 
 	// All other requests return index.html
 	s.routeGet(m, "/*", s.index.HandleRequest)

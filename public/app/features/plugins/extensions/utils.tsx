@@ -22,10 +22,12 @@ import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
 
+import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaApis/RestrictedGrafanaApisProvider';
+
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import { ExtensionsLog, log as baseLog } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
-import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
+import { assertIsNotPromise, assertStringProps, isPromise } from './validators';
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   return (...args: unknown[]) => {
@@ -98,9 +100,11 @@ export const wrapWithPluginContext = <T,>({
     return (
       <PluginContextProvider meta={pluginMeta}>
         <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
-          <Component
-            {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: pluginMeta.info?.version })}
-          />
+          <RestrictedGrafanaApisProvider pluginId={pluginId}>
+            <Component
+              {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: pluginMeta.info?.version })}
+            />
+          </RestrictedGrafanaApisProvider>
         </ExtensionErrorBoundary>
       </PluginContextProvider>
     );
@@ -477,7 +481,6 @@ export function getLinkExtensionOverrides(
       `The configure() function for "${config.title}" returned a promise, skipping updates.`
     );
 
-    path && assertLinkPathIsValid(pluginId, path);
     assertStringProps({ title, description }, ['title', 'description']);
 
     if (Object.keys(rest).length > 0) {
@@ -533,6 +536,7 @@ export function getLinkExtensionOnClick(
 
       const helpers: PluginExtensionEventHelpers = {
         context,
+        extensionPointId,
         openModal: createOpenModalFunction(config),
         openSidebar: (componentTitle, context) => {
           appEvents.publish(

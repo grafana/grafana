@@ -23,7 +23,7 @@ import (
 )
 
 func TestDashboardAPIBuilder_Mutate(t *testing.T) {
-	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
+	migration.Initialize(testutil.NewDataSourceProvider(testutil.StandardTestConfig))
 	tests := []struct {
 		name                string
 		inputObj            runtime.Object

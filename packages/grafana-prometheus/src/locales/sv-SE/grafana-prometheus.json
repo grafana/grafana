@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Inaktivera inspelningsregler (beta)",
         "label-http-method": "HTTP-metod",
         "label-incremental-querying-beta": "Inkrementell fråga (beta)",
-        "label-metric-names-suggestion-limit": "Begränsning för mätvärdesnamnförslag",
         "label-prom-type-version": "{{promType}} version",
         "label-prometheus-type": "Prometheus-typ",
         "label-query-overlap-window": "Fönster för frågeöverlappning",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "Denna funktion kommer att inaktivera inspelningsregler. Aktivera detta för att förbättra instrumentpanelens prestanda",
         "tooltip-http-method": "Du kan använda antingen HTTP-metoden POST eller GET för att fråga din Prometheus-datakälla. POST är den rekommenderade metoden eftersom den tillåter större frågor. Ändra detta till GET om du har en Prometheus-version som är äldre än 2.1 eller om POST-förfrågningar är begränsade i ditt nätverk.",
         "tooltip-incremental-querying-beta": "Denna funktion kommer att ändra standardbeteendet för relativa frågor till att alltid begära nya data från prometheus-instansen, istället kommer frågeresultat att cachelagras och endast nya poster begärs. Aktivera detta för att minska databas- och nätverksbelastningen.",
-        "tooltip-metric-names-suggestion-limit": "Maximalt antal metriknamn som kan visas som autofyllningsförslag i frågeredigerarens kodläge.",
         "tooltip-prom-type-version": "Använd detta för att ställa in versionen av din {{promType}}-instans om den inte konfigureras automatiskt.",
         "tooltip-prometheus-type": "Ställ in detta till typen av din prometheus-databas, t.ex. Prometheus, Cortex, Mimir eller Thanos. Om du ändrar det här fältet sparas dina nuvarande inställningar. Vissa typer av Prometheus stöder eller stöder inte olika API:er. Till exempel stöder vissa typer regex-matchning för etikettfrågor för att förbättra prestandan. Vissa typer har ett API för metadata. Om du ställer in detta felaktigt kan du uppleva konstigt beteende när du frågar efter mätvärden och etiketter. Kontrollera din Prometheus-dokumentation för att säkerställa att du anger rätt typ.",
         "tooltip-query-overlap-window": "Ange en varaktighet som {{example1}} eller {{example2}} eller {{example3}}. Standard för {{default}}. Denna varaktighet kommer att läggas till varaktigheten för varje inkrementell begäran.",
@@ -415,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Ställ in nedre gräns för stegparametern",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Välj upplösning",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Värmekarta",
           "label-table": "Tabell",
@@ -431,10 +432,6 @@
         "title-options": "Alternativ",
         "tooltip-min-step": "En ytterligare nedre gräns för stegparametern för Prometheus-frågan och för variablerna <2>{{interval}}</2> och <4>{{rateInterval}}</4>."
       },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Antalet förslag vid autofyllning är begränsat",
-        "tooltip-autocomplete-suggestions-limited": "Antalet metriknamn är fler än vad som kan visas med autofyllning. De {{autocompleteLimit}} mest relevanta mätvärdena visas. Du kan justera tröskelvärdet i datakällans inställningar."
-      },
       "prom-query-editor-selector": {
         "body-syntax-error": "Det finns ett syntaxfel, eller så kan frågestrukturen inte visualiseras när du byter till byggläget. Delar av frågan kan gå förlorade.",
         "confirmText-continue": "Fortsätt",
@@ -444,6 +441,7 @@
         "title-parsing-error-switch-builder": "Tolkningsfel: Vill du byta till byggläget?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Förklaringar",
         "placeholder-select-legend-mode": "Välj förklaringsläge",
         "tooltip-legend": "Åsidosätt serienamn eller mall. Ex. {{templateExample}} kommer att ersättas med etikettvärdet för {{labelName}}."
@@ -488,11 +486,6 @@
         "message-no-metrics-found": "Inga mätvärden hittades i datakällan.",
         "name": "Namn",
         "type": "Typ"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Tolkningen av frågan är tvetydig."
-        }
       }
     }
   }

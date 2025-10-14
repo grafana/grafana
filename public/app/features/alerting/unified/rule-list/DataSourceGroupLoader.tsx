@@ -28,7 +28,6 @@ import { RuleOperationListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import { LoadMoreButton } from './components/LoadMoreButton';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
-import { RuleOperation } from './components/RuleListIcon';
 import { matchRulesGroup } from './ruleMatching';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
@@ -215,7 +214,7 @@ export function RulerBasedGroupRules({
             group={groupName}
             rulesSource={groupIdentifier.rulesSource}
             application={application}
-            operation={RuleOperation.Creating}
+            operation="creating"
             showLocation={false}
           />
         );
@@ -228,7 +227,7 @@ export function RulerBasedGroupRules({
           group={groupName}
           rulesSource={groupIdentifier.rulesSource}
           application={application}
-          operation={RuleOperation.Deleting}
+          operation="deleting"
           showLocation={false}
         />
       ))}

@@ -95,6 +95,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       color: theme.colors.text.primary,
       maxWidth: '400px',
       fontSize: theme.typography.size.sm,
+      maxHeight: '100vh',
+      overflow: 'auto',
     }),
   };
 });

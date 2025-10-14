@@ -1,4 +1,5 @@
 import { Property } from 'csstype';
+import memoize from 'micro-memoize';
 import { CSSProperties } from 'react';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
@@ -27,6 +28,7 @@ import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
 import { inferPills } from './Cells/PillCell';
+import { AutoCellRenderer, getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
 import {
   TableRow,
@@ -79,12 +81,17 @@ export function isCellInspectEnabled(field: Field): boolean {
  * Returns true if text wrapping should be applied to the cell.
  */
 export function shouldTextWrap(field: Field): boolean {
-  const cellOptions = getCellOptions(field);
-  // @ts-ignore - a handful of cellTypes have boolean wrapText, but not all of them.
-  // we should be very careful to only use boolean type for cellOptions.wrapText.
-  // TBH we will probably move this up to a field option which is showIf rendered anyway,
-  // but that'll be a migration to do, so it needs to happen post-GA.
-  return Boolean(cellOptions?.wrapText);
+  return Boolean(field.config.custom?.wrapText);
+}
+
+/**
+ * @internal wrap a cell height measurer to clamp its output to the maxHeight defined in the field, if any.
+ */
+function clampByMaxHeight(measurer: MeasureCellHeight, maxHeight = Infinity): MeasureCellHeight {
+  return (value, width, field, rowIdx, lineHeight) => {
+    const rawHeight = measurer(value, width, field, rowIdx, lineHeight);
+    return Math.min(rawHeight, maxHeight);
+  };
 }
 
 /**
@@ -252,7 +259,8 @@ const spaceRegex = /[\s-]/;
  */
 export function buildCellHeightMeasurers(
   fields: Field[],
-  typographyCtx: TypographyCtx
+  typographyCtx: TypographyCtx,
+  maxHeight?: number
 ): MeasureCellHeightEntry[] | undefined {
   const result: Record<string, MeasureCellHeightEntry> = {};
   let wrappedFields = 0;
@@ -282,8 +290,8 @@ export function buildCellHeightMeasurers(
     if (!result[measurerFactoryKey]) {
       const [measure, estimate] = measurerFactory[measurerFactoryKey]();
       result[measurerFactoryKey] = {
-        measure,
-        estimate,
+        measure: clampByMaxHeight(measure, maxHeight),
+        estimate: estimate != null ? clampByMaxHeight(estimate, maxHeight) : undefined,
         fieldIdxs: [],
       };
     }
@@ -300,8 +308,14 @@ export function buildCellHeightMeasurers(
         setupMeasurerForIdx(TableCellDisplayMode.DataLinks, fieldIdx);
       } else if (cellType === TableCellDisplayMode.Pill) {
         setupMeasurerForIdx(TableCellDisplayMode.Pill, fieldIdx);
-      } else if (field.type === FieldType.string) {
+      } else if (
+        field.type === FieldType.string &&
+        getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer
+      ) {
         setupMeasurerForIdx(TableCellDisplayMode.Auto, fieldIdx);
+      } else {
+        // no measurer was configured for this cell type
+        wrappedFields--;
       }
     }
   }
@@ -499,36 +513,58 @@ const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
  * @internal
  * Returns the text and background colors for a table cell based on its options and display value.
  */
-export function getCellColorInlineStyles(
-  theme: GrafanaTheme2,
-  cellOptions: TableCellOptions,
-  displayValue: DisplayValue
-): CSSProperties {
-  // How much to darken elements depends upon if we're in dark mode
-  const darkeningFactor = theme.isDark ? 1 : -0.7;
-
-  // Setup color variables
-  let textColor: string | undefined = undefined;
-  let bgColor: string | undefined = undefined;
-
-  if (cellOptions.type === TableCellDisplayMode.ColorText) {
-    textColor = displayValue.color;
-  } else if (cellOptions.type === TableCellDisplayMode.ColorBackground) {
-    const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
-
-    if (mode === TableCellBackgroundDisplayMode.Basic) {
-      textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
-      bgColor = tinycolor(displayValue.color).toRgbString();
-    } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
-      const bgColor2 = tinycolor(displayValue.color)
+export function getCellColorInlineStylesFactory(theme: GrafanaTheme2) {
+  const bgCellTextColor = memoize((color: string) => getTextColorForAlphaBackground(color, theme.isDark), {
+    maxSize: 1000,
+  });
+  const darkeningFactor = theme.isDark ? 1 : -0.7; // How much to darken elements depends upon if we're in dark mode
+  const gradientBg = memoize(
+    (color: string) =>
+      tinycolor(color)
         .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
-        .spin(CELL_GRADIENT_HUE_ROTATION_DEGREES);
-      textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
-      bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
-    }
-  }
+        .spin(CELL_GRADIENT_HUE_ROTATION_DEGREES)
+        .toRgbString(),
+    { maxSize: 1000 }
+  );
+  const isTransparent = memoize(
+    (color: string) => {
+      // if hex, do the simple thing.
+      if (color[0] === '#') {
+        return color.length === 9 && color.endsWith('00');
+      }
+      // if not hex, just use tinycolor to avoid extra logic.
+      return tinycolor(color).getAlpha() === 0;
+    },
+    { maxSize: 1000 }
+  );
 
-  return { color: textColor, background: bgColor };
+  return (cellOptions: TableCellOptions, displayValue: DisplayValue, hasApplyToRow: boolean): CSSProperties => {
+    const result: CSSProperties = {};
+    const displayValueColor = displayValue.color;
+
+    if (!displayValueColor) {
+      return result;
+    }
+
+    if (cellOptions.type === TableCellDisplayMode.ColorText) {
+      result.color = displayValueColor;
+    } else if (cellOptions.type === TableCellDisplayMode.ColorBackground) {
+      // return without setting anything if the bg is transparent. this allows
+      // the cell to inherit the row bg color if `applyToRow` is set.
+      if (hasApplyToRow && isTransparent(displayValueColor)) {
+        return result;
+      }
+
+      const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
+      result.color = bgCellTextColor(displayValueColor);
+      result.background =
+        mode === TableCellBackgroundDisplayMode.Gradient
+          ? `linear-gradient(120deg, ${gradientBg(displayValueColor)}, ${displayValueColor})`
+          : displayValueColor;
+    }
+
+    return result;
+  };
 }
 
 /**
@@ -656,7 +692,7 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
 
   // Creates a function that converts a DataFrame into an array of TableRows
   // Uses new Function() for performance as it's faster than creating rows using loops
-  const convert = new Function('frame', fnBody) as unknown as FrameToRowsConverter;
+  const convert = new Function('frame', fnBody) as FrameToRowsConverter;
   return convert(frame);
 };
 
@@ -807,6 +843,21 @@ export const processNestedTableRows = (
 
 /**
  * @internal
+ * Calculate the footer height based on the maximum reducer count
+ */
+export const calculateFooterHeight = (fields: Field[]): number => {
+  let maxReducerCount = 0;
+  for (const field of fields) {
+    maxReducerCount = Math.max(maxReducerCount, field.config.custom?.footer?.reducers?.length ?? 0);
+  }
+
+  // Base height (+ padding) + height per reducer
+  return maxReducerCount > 0 ? maxReducerCount * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2 : 0;
+};
+
+/**
+ * @internal
+ * returns the display name of a field
  * returns the display name of a field.
  * We intentionally do not want to use @grafana/data's getFieldDisplayName here,
  * instead we have a call to cacheFieldDisplayNames up in TablePanel to handle this
@@ -826,7 +877,7 @@ export const predicateByName = (name: string) => (f: Field) => f.name === name |
  * returns only fields that are not nested tables and not explicitly hidden
  */
 export function getVisibleFields(fields: Field[]): Field[] {
-  return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hidden !== true);
+  return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hideFrom?.viz !== true);
 }
 
 /**
@@ -881,7 +932,10 @@ export function computeColWidths(fields: Field[], availWidth: number) {
  * @internal
  * if applyToRow is true in any field, return a function that gets the row background color
  */
-export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowIndex: number) => CSSProperties) | void {
+export function getApplyToRowBgFn(
+  fields: Field[],
+  getCellColorInlineStyles: ReturnType<typeof getCellColorInlineStylesFactory>
+): ((rowIndex: number) => CSSProperties) | void {
   for (const field of fields) {
     const cellOptions = getCellOptions(field);
     const fieldDisplay = field.display;
@@ -890,7 +944,7 @@ export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowI
       cellOptions.type === TableCellDisplayMode.ColorBackground &&
       cellOptions.applyToRow === true
     ) {
-      return (rowIndex: number) => getCellColorInlineStyles(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
+      return (rowIndex: number) => getCellColorInlineStyles(cellOptions, fieldDisplay(field.values[rowIndex]), true);
     }
   }
 }
@@ -939,3 +993,49 @@ export const displayJsonValue: DisplayProcessor = (value: unknown): DisplayValue
 
   return { text: displayValue, numeric: Number.NaN };
 };
+
+export function getSummaryCellTextAlign(textAlign: TextAlign, cellType: TableCellDisplayMode): TextAlign {
+  // gauge is weird. left-aligned gauge has the viz on the left and its numbers on the right, and vice-versa.
+  // if you center-aligned your gauge... ok.
+  if (cellType === TableCellDisplayMode.Gauge) {
+    return (
+      {
+        left: 'right',
+        right: 'left',
+        center: 'center',
+      } as const
+    )[textAlign];
+  }
+
+  return textAlign;
+}
+
+// we keep this set to avoid spamming the heck out of the console, since it's quite likely that if we fail to parse
+// a value once, it'll happen again and again for many rows in a table, and spamming the console is slow.
+let warnedAboutStyleJsonSet = new Set<string>();
+export function parseStyleJson(rawValue: unknown): CSSProperties | void {
+  // confirms existence of value and serves as a type guard
+  if (typeof rawValue === 'string') {
+    try {
+      const parsedJsonValue = JSON.parse(rawValue);
+      if (parsedJsonValue != null && typeof parsedJsonValue === 'object' && !Array.isArray(parsedJsonValue)) {
+        return parsedJsonValue;
+      }
+    } catch (e) {
+      if (!warnedAboutStyleJsonSet.has(rawValue)) {
+        console.error(`encountered invalid cell style JSON: ${rawValue}`, e);
+        warnedAboutStyleJsonSet.add(rawValue);
+      }
+    }
+  }
+}
+
+// Safari 26 introduced rendering bugs which require us to disable several features of the table.
+export const IS_SAFARI_26 = (() => {
+  if (navigator == null) {
+    return false;
+  }
+  const userAgent = navigator.userAgent;
+  const safariVersionMatch = userAgent.match(/Version\/(\d+)\./);
+  return safariVersionMatch && parseInt(safariVersionMatch[1], 10) === 26;
+})();

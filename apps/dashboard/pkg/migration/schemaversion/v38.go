@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V38 migrates table panel configuration from displayMode to the structured cellOptions format.
 //
 // This migration addresses limitations in the original table panel cell display configuration where
@@ -70,7 +72,7 @@ package schemaversion
 //	    }
 //	  }]
 //	}]
-func V38(dashboard map[string]interface{}) error {
+func V38(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(38)
 
 	panels, ok := dashboard["panels"].([]interface{})
@@ -165,6 +167,12 @@ func migrateOverrides(fieldConfig map[string]interface{}) {
 					if valueStr, ok := value.(string); ok {
 						prop["value"] = migrateTableDisplayModeToCellOptions(valueStr)
 					}
+				} else {
+					// If no value exists, add empty cellOptions object to match frontend behavior
+					// Frontend always assigns a value even when original displayMode had no value
+					// See: public/app/features/dashboard/state/DashboardMigrator.ts:880
+					// override.properties[j].value = migrateTableDisplayModeToCellOptions(overrideDisplayMode);
+					prop["value"] = map[string]interface{}{}
 				}
 			}
 		}

@@ -3,7 +3,7 @@ import { ErrorDetails } from 'app/api/clients/provisioning/v0alpha1';
 import { WizardFormData } from '../Wizard/types';
 
 export type RepositoryField = keyof WizardFormData['repository'];
-export type RepositoryFormPath = `repository.${RepositoryField}`;
+export type RepositoryFormPath = `repository.${RepositoryField}` | `repository.sync.intervalSeconds`;
 export type FormErrorTuple = [RepositoryFormPath | null, { message: string } | null];
 
 /**
@@ -17,17 +17,21 @@ export const getFormErrors = (errors: ErrorDetails[]): FormErrorTuple => {
     'local.path',
     'github.branch',
     'github.url',
-    'github.token',
+    'github.path',
+    'secure.token',
     'gitlab.branch',
     'gitlab.url',
-    'gitlab.token',
     'bitbucket.branch',
     'bitbucket.url',
-    'bitbucket.token',
     'git.branch',
     'git.url',
-    'git.token',
+    'sync.intervalSeconds',
   ];
+
+  const nestedFieldMap: Record<string, RepositoryFormPath> = {
+    'sync.intervalSeconds': 'repository.sync.intervalSeconds',
+  };
+
   const fieldMap: Record<string, RepositoryFormPath> = {
     path: 'repository.path',
     branch: 'repository.branch',
@@ -39,6 +43,12 @@ export const getFormErrors = (errors: ErrorDetails[]): FormErrorTuple => {
     if (error.field) {
       const cleanField = error.field.replace('spec.', '');
       if (fieldsToValidate.includes(cleanField)) {
+        // Check for direct nested field mapping first
+        if (cleanField in nestedFieldMap) {
+          return [nestedFieldMap[cleanField], { message: error.detail || `Invalid ${cleanField}` }];
+        }
+
+        // Fall back to simple field mapping for non-nested fields
         const fieldParts = cleanField.split('.');
         const lastPart = fieldParts[fieldParts.length - 1];
 

@@ -24,6 +24,7 @@ export interface Props {
   xySeries: XYSeries[];
   replaceVariables: InterpolateFunction;
   dataLinks: LinkModel[];
+  canExecuteActions?: boolean;
 }
 
 function stripSeriesName(fieldName: string, seriesName: string) {
@@ -51,6 +52,7 @@ export const XYChartTooltip = ({
   isPinned,
   replaceVariables,
   dataLinks,
+  canExecuteActions,
 }: Props) => {
   const rowIndex = dataIdxs.find((idx) => idx !== null)!;
 
@@ -130,7 +132,7 @@ export const XYChartTooltip = ({
 
     if (isPinned || hasOneClickLink) {
       const yFieldFrame = data.find((frame) => frame.fields.includes(yField))!;
-      const actions = getFieldActions(yFieldFrame, yField, replaceVariables, rowIndex);
+      const actions = canExecuteActions ? getFieldActions(yFieldFrame, yField, replaceVariables, rowIndex) : [];
 
       footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} />;
     }

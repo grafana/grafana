@@ -1,5 +1,4 @@
-import { ReactNode, useMemo, useRef } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { ReactNode, useId, useMemo, useRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
@@ -13,6 +12,40 @@ import { EditSchemaV2Button } from '../scene/new-toolbar/actions/EditSchemaV2But
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 import { dashboardEditActions, undoRedoWasClicked } from './shared';
+
+function useEditPaneOptions(
+  this: DashboardEditableElement,
+  dashboard: DashboardScene
+): OptionsPaneCategoryDescriptor[] {
+  // When layout changes we need to update options list
+  const { body } = dashboard.useState();
+  const dashboardTitleInputId = useId();
+  const dashboardDescriptionInputId = useId();
+
+  const dashboardOptions = useMemo(() => {
+    const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.options.title-option', 'Title'),
+          id: dashboardTitleInputId,
+          render: () => <DashboardTitleInput id={dashboardTitleInputId} dashboard={dashboard} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.options.description', 'Description'),
+          id: dashboardDescriptionInputId,
+          render: () => <DashboardDescriptionInput id={dashboardDescriptionInputId} dashboard={dashboard} />,
+        })
+      );
+
+    return editPaneHeaderOptions;
+  }, [dashboard, dashboardDescriptionInputId, dashboardTitleInputId]);
+
+  const layoutCategory = useLayoutCategory(body);
+
+  return [dashboardOptions, ...layoutCategory];
+}
 
 export class DashboardEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
@@ -32,38 +65,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
     return [$variables!, ...body.getOutlineChildren()];
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const dashboard = this.dashboard;
-
-    // When layout changes we need to update options list
-    const { body } = dashboard.useState();
-
-    const dashboardOptions = useMemo(() => {
-      const dashboardTitleInputId = uuidv4();
-      const dashboardDescriptionInputId = uuidv4();
-      const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.options.title-option', 'Title'),
-            id: dashboardTitleInputId,
-            render: () => <DashboardTitleInput id={dashboardTitleInputId} dashboard={dashboard} />,
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.options.description', 'Description'),
-            id: dashboardDescriptionInputId,
-            render: () => <DashboardDescriptionInput id={dashboardDescriptionInputId} dashboard={dashboard} />,
-          })
-        );
-
-      return editPaneHeaderOptions;
-    }, [dashboard]);
-
-    const layoutCategory = useLayoutCategory(body);
-
-    return [dashboardOptions, ...layoutCategory];
-  }
+  public useEditPaneOptions = useEditPaneOptions.bind(this, this.dashboard);
 
   public renderActions(): ReactNode {
     return (

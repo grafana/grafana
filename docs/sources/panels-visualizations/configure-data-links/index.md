@@ -278,6 +278,17 @@ When linking to another dashboard that uses template variables, select variable 
 
 If you want to add all of the current dashboard's variables to the URL, then use `${__all_variables}`.
 
+When you link to another dashboard, ensure that:
+
+- The target dashboard has the same variable name. If it doesn't (for example, `server` in the source dashboard and `host` in the target), you must align them or explicitly map values (for example, `&var-host=${server}`).
+- You use the variable _name_, and not the label. Labels are only used as display text and aren't recognized in URLs.
+
+For example, if you have a variable with the name `var-server` and the label `ChooseYourServer`, you must use `var-server` in the URL, as shown in the following table:
+
+| Correct link                                   | Incorrect link                                           |
+| ---------------------------------------------- | -------------------------------------------------------- |
+| `/d/xxxx/dashboard-b?orgId=1&var-server=web02` | `/d/xxxx/dashboard-b?orgId=1&var-ChooseYourServer=web02` |
+
 ## Add data links or actions {#add-a-data-link}
 
 The following tasks describe how to configure data links and actions.
@@ -296,9 +307,7 @@ To add a data link, follow these steps:
    This is a human-readable label for the link displayed in the UI. This is a required field.
 
 1. Enter the **URL** to which you want to link.
-
-   To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. This is a required field.
-
+1. (Optional) To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
 1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
 1. If you want the data link to open with a single click on the visualization, toggle the **One click** switch.
 

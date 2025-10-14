@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -38,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -49,9 +49,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains connected library elements, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, 1)
@@ -98,9 +97,8 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 }
 
 func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	scenarioWithPanel(t, "When an admin tries to get connections of library panel, it should succeed and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, 1)
@@ -119,7 +117,7 @@ func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 							ElementID:    1,
 							ConnectionID: 1,
 							Created:      res.Result[0].Created,
-							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+							CreatedBy: model.LibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
 								AvatarUrl: userInDbAvatar,

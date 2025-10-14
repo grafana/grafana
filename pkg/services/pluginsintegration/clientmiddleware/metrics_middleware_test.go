@@ -29,7 +29,7 @@ const (
 )
 
 func TestInstrumentationMiddleware(t *testing.T) {
-	pCtx := backend.PluginContext{PluginID: pluginID}
+	pCtx := backend.PluginContext{PluginID: pluginID, PluginVersion: "1.0.0"}
 	t.Run("should instrument requests", func(t *testing.T) {
 		for _, tc := range []struct {
 			expEndpoint                 backend.Endpoint
@@ -89,7 +89,7 @@ func TestInstrumentationMiddleware(t *testing.T) {
 				require.Equal(t, 1, testutil.CollectAndCount(promRegistry, metricRequestDurationMs))
 				require.Equal(t, 1, testutil.CollectAndCount(promRegistry, metricRequestDurationS))
 
-				counter := mw.pluginRequestCounter.WithLabelValues(pluginID, string(tc.expEndpoint), instrumentationutils.RequestStatusOK.String(), string(backendplugin.TargetUnknown), string(backend.DefaultErrorSource))
+				counter := mw.pluginRequestCounter.WithLabelValues(pluginID, string(tc.expEndpoint), instrumentationutils.RequestStatusOK.String(), string(backendplugin.TargetUnknown), pCtx.PluginVersion, string(backend.DefaultErrorSource))
 				require.Equal(t, 1.0, testutil.ToFloat64(counter))
 				for _, m := range []string{metricRequestDurationMs, metricRequestDurationS} {
 					require.NoError(t, checkHistogram(promRegistry, m, map[string]string{
@@ -115,10 +115,11 @@ func TestInstrumentationMiddleware(t *testing.T) {
 func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 	const labelStatusSource = "status_source"
 	queryDataErrorCounterLabels := prometheus.Labels{
-		"plugin_id": pluginID,
-		"endpoint":  string(backend.EndpointQueryData),
-		"status":    instrumentationutils.RequestStatusError.String(),
-		"target":    string(backendplugin.TargetUnknown),
+		"plugin_id":      pluginID,
+		"endpoint":       string(backend.EndpointQueryData),
+		"status":         instrumentationutils.RequestStatusError.String(),
+		"target":         string(backendplugin.TargetUnknown),
+		"plugin_version": "1.0.0",
 	}
 	downstreamErrorResponse := backend.DataResponse{
 		Frames:      nil,
@@ -145,7 +146,7 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 		ErrorSource: "",
 	}
 
-	pCtx := backend.PluginContext{PluginID: pluginID}
+	pCtx := backend.PluginContext{PluginID: pluginID, PluginVersion: "1.0.0"}
 
 	promRegistry := prometheus.NewRegistry()
 	pluginsRegistry := fakes.NewFakePluginRegistry()

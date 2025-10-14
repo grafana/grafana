@@ -89,8 +89,15 @@ export async function initPluginTranslations(id: string, loaders?: ResourceLoade
   return { language };
 }
 
-export function getI18nInstance() {
-  return i18n;
+export function getI18nInstance(): typeof i18n {
+  // in Grafana versions < 12.1.0 the i18n instance is exposed through the default export
+  // used by plugins that support translations from Grafana >= 11.0.0
+  const instance: typeof i18n & { default?: typeof i18n } = i18n;
+  if (instance && instance.default) {
+    return instance.default;
+  }
+
+  return instance;
 }
 
 interface Module {

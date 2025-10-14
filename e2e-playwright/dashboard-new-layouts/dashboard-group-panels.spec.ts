@@ -8,6 +8,7 @@ test.use({
   featureToggles: {
     kubernetesDashboards: true,
     dashboardNewLayouts: true,
+    dashboardUndoRedo: true,
     groupByVariable: true,
   },
 });
@@ -406,9 +407,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click({ force: true });
 
       // Expand layouts section
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.OptionsGroup.toggle('group-layout-category'))
-        .click();
+      await page.getByLabel('Expand Group layout category').click();
 
       // Select tabs layout
       await page.getByLabel('Tabs').click();
@@ -695,9 +694,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click({ force: true });
 
       // Expand layouts section
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.OptionsGroup.toggle('group-layout-category'))
-        .click();
+      await page.getByLabel('Expand Group layout category').click();
 
       // Select rows layout
       await page.getByLabel('Rows').click();

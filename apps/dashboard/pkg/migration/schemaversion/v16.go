@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"context"
 	"math"
 )
 
@@ -16,7 +17,7 @@ const (
 
 // V16 migrates dashboard layout from the old row-based system to the modern grid-based layout.
 // This migration follows the exact logic from DashboardMigrator.ts to ensure consistency between frontend and backend.
-func V16(dashboard map[string]interface{}) error {
+func V16(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 16
 
 	upgradeToGridLayout(dashboard)
@@ -37,7 +38,6 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 
 	// Handle empty rows
 	if len(rows) == 0 {
-		dashboard["panels"] = []interface{}{}
 		delete(dashboard, "rows")
 		return
 	}
@@ -49,10 +49,15 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 	maxPanelID := getMaxPanelID(rows)
 	nextRowID := maxPanelID + 1
 
-	// Get existing panels
-	var finalPanels []interface{}
-	if existingPanels, ok := dashboard["panels"].([]interface{}); ok {
-		finalPanels = existingPanels
+	// Match frontend: dashboard.panels already exists with top-level panels
+	// The frontend's this.dashboard.panels is initialized in the constructor with existing panels
+	// Then upgradeToGridLayout adds more panels to it
+
+	// Initialize panels array - make a copy to avoid modifying the original
+	panels := []interface{}{}
+	if existingPanels, ok := dashboard["panels"].([]interface{}); ok && len(existingPanels) > 0 {
+		// Copy existing panels to preserve order
+		panels = append(panels, existingPanels...)
 	}
 
 	// Add special "row" panels if even one row is collapsed, repeated or has visible title (line 1028 in TS)
@@ -66,13 +71,20 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 		}
 
 		// Skip repeated rows (line 1031-1033 in TS)
-		if _, hasRepeatIteration := row["repeatIteration"]; hasRepeatIteration {
+		if repeatIteration, hasRepeatIteration := row["repeatIteration"]; hasRepeatIteration && repeatIteration != nil {
 			continue
 		}
 
 		height := getRowHeight(row)
 		rowGridHeight := getGridHeight(height)
-		isCollapsed := GetBoolValue(row, "collapse")
+		// Check if collapse property exists and get its value
+		collapseValue, hasCollapseProperty := row["collapse"]
+		isCollapsed := false
+		if hasCollapseProperty {
+			if b, ok := collapseValue.(bool); ok {
+				isCollapsed = b
+			}
+		}
 
 		var rowPanel map[string]interface{}
 
@@ -97,18 +109,23 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 		if showRows {
 			// add special row panel (lines 1041-1058 in TS)
 			rowPanel = map[string]interface{}{
-				"id":        nextRowID,
-				"type":      "row",
-				"title":     GetStringValue(row, "title"),
-				"collapsed": isCollapsed,
-				"repeat":    GetStringValue(row, "repeat"),
-				"panels":    []interface{}{},
+				"id":     nextRowID,
+				"type":   "row",
+				"title":  GetStringValue(row, "title"),
+				"repeat": GetStringValue(row, "repeat"),
+				"panels": []interface{}{},
 				"gridPos": map[string]interface{}{
 					"x": 0,
 					"y": yPos,
 					"w": int(gridColumnCount),
 					"h": rowGridHeight,
 				},
+			}
+
+			// Match frontend behavior: rowPanel.collapsed = row.collapse (line 1065 in TS)
+			// Only set collapsed property if the original row had a collapse property
+			if hasCollapseProperty {
+				rowPanel["collapsed"] = isCollapsed
 			}
 			nextRowID++
 			yPos++
@@ -123,23 +140,13 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 				continue
 			}
 
-			// Set default span (line 1063 in TS)
-			span := GetFloatValue(panel, "span", defaultPanelSpan)
-
-			// Handle minSpan conversion (lines 1064-1066 in TS)
-			if minSpan, hasMinSpan := panel["minSpan"]; hasMinSpan {
-				if minSpanFloat, ok := ConvertToFloat(minSpan); ok && minSpanFloat > 0 {
-					panel["minSpan"] = int(math.Min(float64(gridColumnCount), (float64(gridColumnCount)/12.0)*minSpanFloat))
-				}
+			// Match frontend logic: panel.span = panel.span || DEFAULT_PANEL_SPAN (line 1082 in TS)
+			span := GetFloatValue(panel, "span", 0)
+			if span == 0 {
+				span = defaultPanelSpan
 			}
 
-			panelWidth := int(math.Floor(span * widthFactor))
-			panelHeight := rowGridHeight
-			if panelHeightValue, hasHeight := panel["height"]; hasHeight {
-				if h, ok := ConvertToFloat(panelHeightValue); ok {
-					panelHeight = getGridHeight(h)
-				}
-			}
+			panelWidth, panelHeight := calculatePanelDimensionsFromSpan(span, panel, widthFactor, rowGridHeight)
 
 			panelPos := rowArea.getPanelPosition(panelHeight, panelWidth)
 			yPos = rowArea.yPos
@@ -156,21 +163,21 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 			// Remove span (line 1080 in TS)
 			delete(panel, "span")
 
-			// Exact logic from lines 1082-1086 in TS
+			// Match frontend logic: lines 1101-1105 in TS
 			if rowPanel != nil && isCollapsed {
-				// Add to collapsed row's nested panels
+				// Add to collapsed row's nested panels (line 1102)
 				if rowPanelPanels, ok := rowPanel["panels"].([]interface{}); ok {
 					rowPanel["panels"] = append(rowPanelPanels, panel)
 				}
 			} else {
-				// Add directly to dashboard panels
-				finalPanels = append(finalPanels, panel)
+				// Add directly to panels array like frontend (line 1104)
+				panels = append(panels, panel)
 			}
 		}
 
-		// Add row panel after processing all panels (lines 1089-1091 in TS)
+		// Add row panel after regular panels from this row (lines 1108-1110 in TS)
 		if rowPanel != nil {
-			finalPanels = append(finalPanels, rowPanel)
+			panels = append(panels, rowPanel)
 		}
 
 		// Update yPos (lines 1093-1095 in TS)
@@ -180,7 +187,7 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 	}
 
 	// Update the dashboard
-	dashboard["panels"] = finalPanels
+	dashboard["panels"] = panels
 	delete(dashboard, "rows")
 }
 
@@ -283,7 +290,11 @@ func getMaxPanelID(rows []interface{}) int {
 func shouldShowRows(rows []interface{}) bool {
 	for _, rowInterface := range rows {
 		if row, ok := rowInterface.(map[string]interface{}); ok {
-			if GetBoolValue(row, "collapse") || GetBoolValue(row, "showTitle") || GetStringValue(row, "repeat") != "" {
+			collapse := GetBoolValue(row, "collapse")
+			showTitle := GetBoolValue(row, "showTitle")
+			repeat := GetStringValue(row, "repeat")
+
+			if collapse || showTitle || repeat != "" {
 				return true
 			}
 		}
@@ -305,4 +316,25 @@ func getGridHeight(height float64) int {
 		height = minPanelHeight
 	}
 	return int(math.Ceil(height / panelHeightStep))
+}
+
+func calculatePanelDimensionsFromSpan(span float64, panel map[string]interface{}, widthFactor float64, defaultHeight int) (int, int) {
+	// span should already be normalized by caller (line 1082 in DashboardMigrator.ts)
+
+	if minSpan, hasMinSpan := panel["minSpan"]; hasMinSpan {
+		if minSpanFloat, ok := ConvertToFloat(minSpan); ok && minSpanFloat > 0 {
+			panel["minSpan"] = int(math.Min(float64(gridColumnCount), (float64(gridColumnCount)/12.0)*minSpanFloat))
+		}
+	}
+
+	panelWidth := int(math.Floor(span * widthFactor))
+	panelHeight := defaultHeight
+
+	if panelHeightValue, hasHeight := panel["height"]; hasHeight {
+		if h, ok := ConvertToFloat(panelHeightValue); ok {
+			panelHeight = getGridHeight(h)
+		}
+	}
+
+	return panelWidth, panelHeight
 }

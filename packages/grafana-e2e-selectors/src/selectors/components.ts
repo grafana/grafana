@@ -45,6 +45,9 @@ export const versionedComponents = {
     pasteTab: {
       '12.1.0': 'data-testid CanvasGridAddActions paste-tab',
     },
+    pastePanel: {
+      '12.1.0': 'data-testid CanvasGridAddActions paste-panel',
+    },
   },
   DashboardEditPaneSplitter: {
     primaryBody: {
@@ -501,6 +504,14 @@ export const versionedComponents = {
             '12.2.0': 'data-testid tableng tooltip caret',
           },
         },
+        Footer: {
+          ReducerLabel: {
+            '12.2.0': 'data-testid tableng footer reducer-label',
+          },
+          Value: {
+            '12.2.0': 'data-testid tableng footer value',
+          },
+        },
       },
     },
   },
@@ -657,6 +668,11 @@ export const versionedComponents = {
         },
         fillScreen: {
           '12.1.0': 'data-testid fill screen switch',
+        },
+      },
+      TabsLayout: {
+        titleInput: {
+          '12.2.0': 'data-testid tab title input',
         },
       },
     },

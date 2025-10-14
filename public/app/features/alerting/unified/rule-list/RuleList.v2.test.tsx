@@ -255,9 +255,12 @@ describe('RuleListActions', () => {
   describe('Import Alert Rules', () => {
     testWithFeatureToggles(['alertingMigrationUI']);
 
-    it('should show "Import alert rules" option when user is admin and feature toggle is enabled', async () => {
-      grantUserRole(OrgRole.Admin);
-      grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+    it('should show "Import alert rules" option when user has required permissions and feature toggle is enabled', async () => {
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+      ]);
 
       const { user } = render(<RuleListActions />);
 
@@ -267,8 +270,8 @@ describe('RuleListActions', () => {
       expect(ui.menuOptions.importAlertRules.query(menu)).toBeInTheDocument();
     });
 
-    it('should not show "Import alert rules" option when user is not admin', async () => {
-      // Keep default Viewer role
+    it('should not show "Import alert rules" option when user lacks required permissions', async () => {
+      // Keep default Viewer role and only read permissions
       grantUserPermissions([AccessControlAction.AlertingRuleRead]);
 
       const { user } = render(<RuleListActions />);
@@ -280,8 +283,11 @@ describe('RuleListActions', () => {
     });
 
     it('should have correct URL for "Import alert rules" menu item', async () => {
-      grantUserRole(OrgRole.Admin);
-      grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+      ]);
 
       const { user } = render(<RuleListActions />);
 

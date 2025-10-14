@@ -5,7 +5,6 @@ import { SnapshotCreateResponse } from '../../public/app/features/dashboard/serv
 test.use({
   featureToggles: {
     scenes: true,
-    newDashboardSharingComponent: true,
     kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
   },
 });

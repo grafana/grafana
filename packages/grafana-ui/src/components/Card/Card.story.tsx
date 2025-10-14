@@ -12,7 +12,6 @@ const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 const meta: Meta<typeof Card> = {
   title: 'Layout/Card',
   component: Card,
-  tags: ['autodocs'],
   parameters: {
     controls: {
       exclude: ['onClick', 'href', 'heading', 'description', 'className', 'noMargin'],

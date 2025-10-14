@@ -1,28 +1,12 @@
 import { Chance } from 'chance';
 
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { DashboardViewItem } from 'app/features/search/types';
 
-import { DashboardsTreeItem, UIDashboardViewItem } from '../types';
+import { DashboardsTreeItem } from '../types';
 
-export function wellFormedEmptyFolder(
-  seed = 1,
-  partial?: Partial<DashboardsTreeItem<UIDashboardViewItem>>
-): DashboardsTreeItem<UIDashboardViewItem> {
-  const random = Chance(seed);
-
-  return {
-    item: {
-      kind: 'ui',
-      uiKind: 'empty-folder',
-      uid: random.guid(),
-    },
-    level: 0,
-    isOpen: false,
-    ...partial,
-  };
-}
-
+/**
+ * @deprecated Use wellFormedTree from @grafana/test-utils/unstable instead (or re-evaluate test approach in general)
+ */
 export function wellFormedDashboard(
   seed = 1,
   partial?: Partial<DashboardsTreeItem<DashboardViewItem>>,
@@ -44,6 +28,9 @@ export function wellFormedDashboard(
   };
 }
 
+/**
+ * @deprecated Use wellFormedTree from @grafana/test-utils/unstable instead (or re-evaluate test approach in general)
+ */
 export function wellFormedFolder(
   seed = 1,
   partial?: Partial<DashboardsTreeItem<DashboardViewItem>>,
@@ -66,22 +53,13 @@ export function wellFormedFolder(
   };
 }
 
+/**
+ * @deprecated Use wellFormedTree from @grafana/test-utils/unstable instead (or re-evaluate test approach in general)
+ */
 export function sharedWithMeFolder(seed = 1): DashboardsTreeItem<DashboardViewItem> {
   const folder = wellFormedFolder(seed, undefined, {
     uid: 'sharedwithme',
     url: undefined,
   });
   return folder;
-}
-
-export function treeViewersCanEdit() {
-  const [, { folderA, folderC }] = getFolderFixtures();
-
-  return [
-    [folderA, folderC],
-    {
-      folderA,
-      folderC,
-    },
-  ] as const;
 }

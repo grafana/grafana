@@ -21,9 +21,10 @@ import {
   IntervalVariable,
   QueryVariable,
   SceneVariableSet,
+  SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
-import { DataSourceRef, VariableRefresh } from '@grafana/schema';
+import { DataSourceRef, VariableHide, VariableRefresh } from '@grafana/schema';
 
 import { sceneVariablesSetToSchemaV2Variables, sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
@@ -93,6 +94,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
       value: ['selected-value'],
       text: ['selected-value-text'],
       datasource: { uid: 'fake-uid', type: 'fake-type' },
@@ -130,6 +132,7 @@ describe('sceneVariablesSetToVariables', () => {
       },
       "definition": undefined,
       "description": "test-desc",
+      "hide": 3,
       "includeAll": true,
       "label": "test-label",
       "multi": true,
@@ -155,6 +158,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
       value: ['selected-value'],
       text: ['selected-value-text'],
       datasource: { uid: 'fake-uid', type: 'fake-type' },
@@ -192,6 +196,7 @@ describe('sceneVariablesSetToVariables', () => {
       },
       "definition": "query",
       "description": "test-desc",
+      "hide": 3,
       "includeAll": true,
       "label": "test-label",
       "multi": true,
@@ -217,6 +222,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
       value: ['selected-value'],
       text: ['selected-value-text'],
       datasource: { uid: 'fake-uid', type: 'fake-type' },
@@ -244,6 +250,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
       value: ['test'],
       text: ['test'],
       datasource: { uid: 'fake-uid', type: 'fake-type' },
@@ -273,6 +280,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
       value: ['selected-ds-1', 'selected-ds-2'],
       text: ['selected-ds-1-text', 'selected-ds-2-text'],
       pluginId: 'fake-std',
@@ -303,6 +311,7 @@ describe('sceneVariablesSetToVariables', () => {
         ],
       },
       "description": "test-desc",
+      "hide": 3,
       "includeAll": true,
       "label": "test-label",
       "multi": true,
@@ -321,6 +330,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
       value: ['test', 'test2'],
       text: ['test', 'test2'],
       query: 'test,test1,test2',
@@ -356,6 +366,7 @@ describe('sceneVariablesSetToVariables', () => {
         ],
       },
       "description": "test-desc",
+      "hide": 3,
       "includeAll": true,
       "label": "test-label",
       "multi": true,
@@ -388,6 +399,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
       value: 'constant value',
       skipUrlSync: true,
     });
@@ -420,6 +432,7 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
       value: 'text value',
       skipUrlSync: true,
     });
@@ -437,6 +450,7 @@ describe('sceneVariablesSetToVariables', () => {
         "value": "text value",
       },
       "description": "test-desc",
+      "hide": 3,
       "label": "test-label",
       "name": "test",
       "options": [
@@ -458,6 +472,7 @@ describe('sceneVariablesSetToVariables', () => {
       intervals: ['1m', '2m', '3m', '1h', '1d'],
       value: '1m',
       refresh: VariableRefresh.onDashboardLoad,
+      hide: VariableHide.inControlsMenu,
     });
     const set = new SceneVariableSet({
       variables: [variable],
@@ -475,6 +490,7 @@ describe('sceneVariablesSetToVariables', () => {
         "value": "1m",
       },
       "description": undefined,
+      "hide": 3,
       "label": undefined,
       "name": "",
       "options": [
@@ -517,6 +533,7 @@ describe('sceneVariablesSetToVariables', () => {
       allowCustomValue: true,
       label: 'test-label',
       description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
       datasource: { uid: 'fake-uid', type: 'fake-type' },
       filters: [
         {
@@ -563,6 +580,7 @@ describe('sceneVariablesSetToVariables', () => {
           "value": "test",
         },
       ],
+      "hide": 3,
       "label": "test-label",
       "name": "test",
       "type": "adhoc",
@@ -577,6 +595,7 @@ describe('sceneVariablesSetToVariables', () => {
         allowCustomValue: true,
         label: 'test-label',
         description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
         datasource: { uid: 'fake-std', type: 'fake-std' },
         originFilters: [
           {
@@ -606,6 +625,7 @@ describe('sceneVariablesSetToVariables', () => {
         "defaultKeys": undefined,
         "description": "test-desc",
         "filters": [],
+        "hide": 3,
         "label": "test-label",
         "name": "test",
         "type": "adhoc",
@@ -619,6 +639,7 @@ describe('sceneVariablesSetToVariables', () => {
         allowCustomValue: true,
         label: 'test-label',
         description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
         datasource: { uid: 'fake-std', type: 'fake-std' },
         originFilters: [
           {
@@ -666,6 +687,7 @@ describe('sceneVariablesSetToVariables', () => {
             "value": "test2",
           },
         ],
+        "hide": 3,
         "label": "test-label",
         "name": "test",
         "type": "adhoc",
@@ -680,6 +702,7 @@ describe('sceneVariablesSetToVariables', () => {
       allowCustomValue: true,
       label: 'test-label',
       description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
       datasource: { uid: 'fake-uid', type: 'fake-type' },
       defaultKeys: [
         {
@@ -753,6 +776,7 @@ describe('sceneVariablesSetToVariables', () => {
           "value": "test",
         },
       ],
+      "hide": 3,
       "label": "test-label",
       "name": "test",
       "type": "adhoc",
@@ -775,6 +799,7 @@ describe('sceneVariablesSetToVariables', () => {
         label: 'test-label',
         description: 'test-desc',
         allowCustomValue: true,
+        hide: VariableHide.inControlsMenu,
         datasource: { uid: 'fake-uid', type: 'fake-type' },
         defaultOptions: [
           {
@@ -807,6 +832,7 @@ describe('sceneVariablesSetToVariables', () => {
         },
         "defaultValue": undefined,
         "description": "test-desc",
+        "hide": 3,
         "label": "test-label",
         "name": "test",
         "options": [
@@ -831,6 +857,7 @@ describe('sceneVariablesSetToVariables', () => {
         name: 'test',
         label: 'test-label',
         description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
         datasource: { uid: 'fake-uid', type: 'fake-type' },
         defaultOptions: [
           {
@@ -851,6 +878,168 @@ describe('sceneVariablesSetToVariables', () => {
     });
   });
 
+  it('should handle SwitchVariable with "true" value', () => {
+    const variable = new SwitchVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
+      value: 'true',
+      skipUrlSync: true,
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+{
+  "current": {
+    "text": "true",
+    "value": "true",
+  },
+  "description": "test-desc",
+  "hide": 3,
+  "label": "test-label",
+  "name": "test",
+  "options": [
+    {
+      "text": "true",
+      "value": "true",
+    },
+    {
+      "text": "false",
+      "value": "false",
+    },
+  ],
+  "skipUrlSync": true,
+  "type": "switch",
+}
+`);
+  });
+
+  it('should handle SwitchVariable with "false" value', () => {
+    const variable = new SwitchVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
+      value: 'false',
+      skipUrlSync: false,
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+{
+  "current": {
+    "text": "false",
+    "value": "false",
+  },
+  "description": "test-desc",
+  "hide": 3,
+  "label": "test-label",
+  "name": "test",
+  "options": [
+    {
+      "text": "true",
+      "value": "true",
+    },
+    {
+      "text": "false",
+      "value": "false",
+    },
+  ],
+  "type": "switch",
+}
+`);
+  });
+
+  it('should handle SwitchVariable with custom values', () => {
+    const variable = new SwitchVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
+      value: 'on',
+      enabledValue: 'on',
+      disabledValue: 'off',
+      skipUrlSync: false,
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+{
+  "current": {
+    "text": "on",
+    "value": "on",
+  },
+  "description": "test-desc",
+  "hide": 3,
+  "label": "test-label",
+  "name": "test",
+  "options": [
+    {
+      "text": "on",
+      "value": "on",
+    },
+    {
+      "text": "off",
+      "value": "off",
+    },
+  ],
+  "type": "switch",
+}
+`);
+  });
+
+  it('should handle SwitchVariable with minimal configuration', () => {
+    const variable = new SwitchVariable({
+      name: 'minimal',
+      value: 'true',
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+{
+  "current": {
+    "text": "true",
+    "value": "true",
+  },
+  "description": undefined,
+  "label": undefined,
+  "name": "minimal",
+  "options": [
+    {
+      "text": "true",
+      "value": "true",
+    },
+    {
+      "text": "false",
+      "value": "false",
+    },
+  ],
+  "type": "switch",
+}
+`);
+  });
+
   describe('sceneVariablesSetToSchemaV2Variables', () => {
     it('should handle QueryVariable', () => {
       const variable = new QueryVariable({
@@ -866,6 +1055,7 @@ describe('sceneVariablesSetToVariables', () => {
         isMulti: true,
         staticOptions: [{ label: 'test', value: 'test' }],
         staticOptionsOrder: 'after',
+        hide: VariableHide.inControlsMenu,
       });
 
       const set = new SceneVariableSet({
@@ -891,7 +1081,7 @@ describe('sceneVariablesSetToVariables', () => {
             },
             "definition": undefined,
             "description": "test-desc",
-            "hide": "dontHide",
+            "hide": "inControlsMenu",
             "includeAll": true,
             "label": "test-label",
             "multi": true,
@@ -932,6 +1122,7 @@ describe('sceneVariablesSetToVariables', () => {
         value: ['test', 'test2'],
         text: ['test', 'test2'],
         query: 'test,test1,test2',
+        hide: VariableHide.inControlsMenu,
         options: [
           { label: 'test', value: 'test' },
           { label: 'test1', value: 'test1' },
@@ -965,7 +1156,7 @@ describe('sceneVariablesSetToVariables', () => {
           ],
         },
         "description": "test-desc",
-        "hide": "dontHide",
+        "hide": "inControlsMenu",
         "includeAll": true,
         "label": "test-label",
         "multi": true,
@@ -1005,6 +1196,7 @@ describe('sceneVariablesSetToVariables', () => {
         includeAll: true,
         allValue: 'test-all',
         isMulti: true,
+        hide: VariableHide.inControlsMenu,
       });
       const set = new SceneVariableSet({
         variables: [variable],
@@ -1030,7 +1222,7 @@ describe('sceneVariablesSetToVariables', () => {
           ],
         },
         "description": "test-desc",
-        "hide": "dontHide",
+        "hide": "inControlsMenu",
         "includeAll": true,
         "label": "test-label",
         "multi": true,
@@ -1051,6 +1243,7 @@ describe('sceneVariablesSetToVariables', () => {
         label: 'test-label',
         description: 'test-desc',
         value: 'constant value',
+        hide: VariableHide.inControlsMenu,
         skipUrlSync: true,
       });
       const set = new SceneVariableSet({
@@ -1069,7 +1262,7 @@ describe('sceneVariablesSetToVariables', () => {
           "value": "constant value",
         },
         "description": "test-desc",
-        "hide": "dontHide",
+        "hide": "inControlsMenu",
         "label": "test-label",
         "name": "test",
         "query": "constant value",
@@ -1085,6 +1278,7 @@ describe('sceneVariablesSetToVariables', () => {
         label: 'test-label',
         description: 'test-desc',
         value: 'text value',
+        hide: VariableHide.inControlsMenu,
         skipUrlSync: true,
       });
       const set = new SceneVariableSet({
@@ -1103,7 +1297,7 @@ describe('sceneVariablesSetToVariables', () => {
           "value": "text value",
         },
         "description": "test-desc",
-        "hide": "dontHide",
+        "hide": "inControlsMenu",
         "label": "test-label",
         "name": "test",
         "query": "text value",
@@ -1117,6 +1311,7 @@ describe('sceneVariablesSetToVariables', () => {
       const variable = new IntervalVariable({
         intervals: ['1m', '2m', '3m', '1h', '1d'],
         value: '1m',
+        hide: VariableHide.inControlsMenu,
         refresh: VariableRefresh.onDashboardLoad,
       });
       const set = new SceneVariableSet({
@@ -1137,7 +1332,7 @@ describe('sceneVariablesSetToVariables', () => {
           "value": "1m",
         },
         "description": undefined,
-        "hide": "dontHide",
+        "hide": "inControlsMenu",
         "label": undefined,
         "name": "",
         "options": [
@@ -1180,6 +1375,7 @@ describe('sceneVariablesSetToVariables', () => {
         name: 'test',
         label: 'test-label',
         description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
         datasource: { uid: 'fake-uid', type: 'fake-type' },
         filters: [
           {
@@ -1228,7 +1424,7 @@ describe('sceneVariablesSetToVariables', () => {
             "value": "test",
           },
         ],
-        "hide": "dontHide",
+        "hide": "inControlsMenu",
         "label": "test-label",
         "name": "test",
         "skipUrlSync": false,
@@ -1242,6 +1438,7 @@ describe('sceneVariablesSetToVariables', () => {
         name: 'test',
         label: 'test-label',
         description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
         datasource: { uid: 'fake-uid', type: 'fake-type' },
         defaultKeys: [
           {
@@ -1317,7 +1514,7 @@ describe('sceneVariablesSetToVariables', () => {
             "value": "test",
           },
         ],
-        "hide": "dontHide",
+        "hide": "inControlsMenu",
         "label": "test-label",
         "name": "test",
         "skipUrlSync": false,
@@ -1340,6 +1537,7 @@ describe('sceneVariablesSetToVariables', () => {
           name: 'test',
           label: 'test-label',
           description: 'test-desc',
+          hide: VariableHide.inControlsMenu,
           datasource: { uid: 'fake-uid', type: 'fake-type' },
           defaultOptions: [
             {
@@ -1373,7 +1571,7 @@ describe('sceneVariablesSetToVariables', () => {
           },
           "defaultValue": undefined,
           "description": "test-desc",
-          "hide": "dontHide",
+          "hide": "inControlsMenu",
           "label": "test-label",
           "multi": true,
           "name": "test",
@@ -1400,6 +1598,7 @@ describe('sceneVariablesSetToVariables', () => {
           name: 'test',
           label: 'test-label',
           description: 'test-desc',
+          hide: VariableHide.inControlsMenu,
           datasource: { uid: 'fake-uid', type: 'fake-type' },
           defaultOptions: [
             {
@@ -1418,6 +1617,101 @@ describe('sceneVariablesSetToVariables', () => {
 
         expect(() => sceneVariablesSetToSchemaV2Variables(set)).toThrow('Unsupported variable type');
       });
+    });
+
+    it('should handle SwitchVariable with true value', () => {
+      const variable = new SwitchVariable({
+        name: 'test',
+        label: 'test-label',
+        description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
+        value: 'true',
+        skipUrlSync: true,
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchInlineSnapshot(`
+{
+  "kind": "SwitchVariable",
+  "spec": {
+    "current": "true",
+    "description": "test-desc",
+    "disabledValue": "false",
+    "enabledValue": "true",
+    "hide": "inControlsMenu",
+    "label": "test-label",
+    "name": "test",
+    "skipUrlSync": true,
+  },
+}
+`);
+    });
+
+    it('should handle SwitchVariable with false value', () => {
+      const variable = new SwitchVariable({
+        name: 'test',
+        label: 'test-label',
+        description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
+        value: 'false',
+        skipUrlSync: false,
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchInlineSnapshot(`
+{
+  "kind": "SwitchVariable",
+  "spec": {
+    "current": "false",
+    "description": "test-desc",
+    "disabledValue": "false",
+    "enabledValue": "true",
+    "hide": "inControlsMenu",
+    "label": "test-label",
+    "name": "test",
+    "skipUrlSync": false,
+  },
+}
+`);
+    });
+
+    it('should handle SwitchVariable with minimal configuration', () => {
+      const variable = new SwitchVariable({
+        name: 'minimal',
+        value: 'true',
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchInlineSnapshot(`
+{
+  "kind": "SwitchVariable",
+  "spec": {
+    "current": "true",
+    "description": undefined,
+    "disabledValue": "false",
+    "enabledValue": "true",
+    "hide": "dontHide",
+    "label": undefined,
+    "name": "minimal",
+    "skipUrlSync": false,
+  },
+}
+`);
     });
   });
 });
