@@ -631,8 +631,6 @@ require (
 	sigs.k8s.io/yaml v1.5.0 // indirect
 )
 
-require github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0-00010101000000-000000000000
-
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
 
