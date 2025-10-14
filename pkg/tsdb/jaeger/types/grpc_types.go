@@ -106,9 +106,9 @@ type GrpcKeyValue struct {
 
 type GrpcAnyValue struct {
 	StringValue string         `json:"stringValue"`
-	BoolValue   bool           `json:"boolValue"`
+	BoolValue   string         `json:"boolValue"`
 	IntValue    string         `json:"intValue"`
-	DoubleValue float64        `json:"doubleValue"`
+	DoubleValue string         `json:"doubleValue"`
 	ArrayValue  GrpcArrayValue `json:"array_value"`
 	KvListValue KeyValueList   `json:"kvlistValue"`
 	BytesValue  string         `json:"bytesValue"`
