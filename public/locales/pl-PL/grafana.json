@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Dodaj uprawnienie",
+      "loading": "",
       "no-permissions": "Brak uprawnień",
       "permissions-change-warning": "Spowoduje to zmianę uprawnień dla tego folderu i elementów po nim dziedziczących. Łącznie wpłynie to na następujące elementy:",
       "role": "Rola",
       "serviceaccount": "Konto usługi",
       "team": "Zespół",
-      "title": "Uprawnienia",
       "user": "Użytkownik"
     }
   },
@@ -3528,7 +3528,7 @@
       "delete-button": "Usuń",
       "delete-modal-invalid-text": "Co najmniej jeden folder zawiera panele bibliotek lub reguły alertów. Usuń je, aby kontynuować.",
       "delete-modal-invalid-title": "Nie można usunąć folderu",
-      "delete-modal-restore-dashboards-text": "To działanie spowoduje natychmiastowe usunięcie wybranych folderów, ale wybrane pulpity zostaną oznaczone do usunięcia za 30 dni. Administrator organizacji może przywrócić pulpity w dowolnym momencie przed upływem 30 dni. Nie można przywrócić folderów.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "To działanie spowoduje usunięcie następującej zawartości:",
       "delete-modal-title": "Usuń",
       "delete-provisioned-folder": "Usuń przydzielony folder",
@@ -4536,6 +4536,8 @@
     },
     "canvas-actions": {
       "add-panel": "Dodaj panel",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Grupuj w wierszu",
       "group-into-tab": "Grupuj na karcie",
       "group-panels": "Grupuj panele",
@@ -4544,7 +4546,8 @@
       "paste-panel": "Wklej panel",
       "paste-row": "Wklej wiersz",
       "paste-tab": "Wklej kartę",
-      "un-group-panels": "Rozłącz grupę"
+      "un-group-panels": "Rozłącz grupę",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4612,7 +4615,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "Element jest ukryty z powodu renderowania warunkowego."
+        "tooltip": ""
       },
       "root": {
         "title": "Pokaż/ukryj reguły"
@@ -4786,8 +4789,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Wartości rozdzielone przecinkami",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "",
+          "modal-title": "",
+          "values": "Wartości rozdzielone przecinkami"
         },
         "datasource-options": {
           "name-filter": "Filtr nazwy",
@@ -5209,10 +5213,16 @@
       "title-row-options": "Opcje wiersza"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Usunięcie tego wiersza spowoduje również usunięcie wszystkich paneli. Na pewno chcesz kontynuować?",
       "delete-row-title": "Usunąć wiersz?",
       "delete-row-yes": "Usuń",
       "description": "Zwijane grupy paneli z nagłówkami",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Nagłówek wiersza widoczny tylko w trybie edycji",
       "name": "Wiersze",
       "row": {
@@ -5242,7 +5252,11 @@
       },
       "row-warning": {
         "title-not-unique": "Ten tytuł nie jest unikalny"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Pulpit został zapisany"
@@ -5861,6 +5875,7 @@
         "dynamically-switch-source-multiple-panels": "Dynamiczne przełączanie źródła danych dla wielu paneli",
         "group": "Dodaj klucze do grupowania w czasie rzeczywistym",
         "hidden-constant-variable": "Ukryta zmienna stała, przydatna do prefiksów metrycznych w przypadku pulpitów, które chcesz udostępnić",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Użytkownicy mogą wprowadzać dowolne ciągi w polu tekstowym",
         "values-are-static-and-defined-manually": "Wartości są statyczne i definiowane ręcznie",
         "values-fetched-source-query": "Wartości są pobierane z zapytania dotyczącego źródła danych",
@@ -5874,6 +5889,7 @@
         "group-by": "Grupuj według",
         "interval": "Odstęp czasu",
         "query": "Zapytanie",
+        "switch": "",
         "textbox": "Pole tekstowe"
       }
     },
@@ -6221,6 +6237,17 @@
       "title": {
         "copy-to-clipboard-failed": "Nie udało się skopiować do schowka"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Domyślna wartość"
@@ -10417,7 +10444,7 @@
       "title": "Profile"
     },
     "recently-deleted": {
-      "subtitle": "Wszystkie pozycje wypisane tutaj przez ponad 30 dni zostaną automatycznie usunięte.",
+      "subtitle": "",
       "title": "Ostatnio usunięte"
     },
     "recorded-queries": {
@@ -11651,6 +11678,7 @@
       "active-jobs": "aktywne zadania",
       "column-action": "Działanie",
       "column-duration": "Czas trwania",
+      "column-job-id": "",
       "column-message": "Wiadomość",
       "column-started": "Rozpoczęto",
       "column-status": "Status",
@@ -11669,12 +11697,6 @@
       "settings": "Ustawienia",
       "view": "Wyświetl"
     },
-    "repository-health": {
-      "details": "Szczegóły:",
-      "no-errors-found": "Nie znaleziono błędów",
-      "title-repository-is-healthy": "Repozytorium jest sprawne",
-      "title-repository-is-unhealthy": "Repozytorium jest niesprawne"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Porównaj gałąź",
@@ -11689,7 +11711,7 @@
     },
     "repository-overview": {
       "checked": "Sprawdzone:",
-      "finished": "Zakończone:",
+      "finished": "",
       "health": "Zdrowie",
       "healthy": "Sprawne",
       "job-id": "Identyfikator zadania:",
@@ -11698,7 +11720,6 @@
       "not-available": "Niedostępne",
       "pull-status": "Status pull",
       "resources": "Zasoby",
-      "started": "Rozpoczęte:",
       "status": "Status:",
       "unhealthy": "Niesprawne",
       "view-folder": "Wyświetl folder",
@@ -12363,9 +12384,6 @@
       "title-disable-service-account": "Wyłącz konto usługi",
       "tokens": "Tokeny",
       "tooltip-managed-service-account-cannot-modified": "To jest zarządzane konto usługi i nie można go zmodyfikować"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Uprawnienia"
     },
     "service-account-profile": {
       "information": "Informacje",
@@ -13044,6 +13062,10 @@
     "name-mode": "Tryb",
     "name-show-line-numbers": "Pokaż numerację wierszy",
     "name-show-mini-map": "Pokaż minimapę"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -14208,14 +14230,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Dodaj opcję",
-      "description": "Dodaj opcje niestandardowe oprócz wyników zapytania",
-      "label-placeholder": "wyświetl etykietę",
-      "remove-option-button-label": "Usuń opcję",
-      "value-placeholder": "wartość, domyślnie pusty ciąg"
+      "description": "Dodaj opcje niestandardowe oprócz wyników zapytania"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Jak sortować opcje statyczne na podstawie wyników zapytania"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Domyślna wartość",
