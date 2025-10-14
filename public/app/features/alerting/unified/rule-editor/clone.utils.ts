@@ -3,8 +3,9 @@ import { cloneDeep } from 'lodash';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { GRAFANA_ORIGIN_LABEL } from '../../../../../../packages/grafana-alerting/src/grafana/rules/utils/labels';
 import { generateCopiedName } from '../utils/duplicate';
-import { getRuleName, rulerRuleType } from '../utils/rules';
+import { getRuleName, isPluginProvidedRule, rulerRuleType } from '../utils/rules';
 
 export function changeRuleName(rule: RulerRuleDTO, newName: string) {
   if (rulerRuleType.grafana.rule(rule)) {
@@ -32,6 +33,11 @@ export function cloneRuleDefinition(rule: RuleWithLocation<RulerRuleDTO>) {
     // Provisioned alert rules have provisioned alert group which cannot be used in UI
     if (Boolean(ruleClone.rule.grafana_alert.provenance)) {
       ruleClone.group = { name: '', rules: ruleClone.group.rules };
+    }
+    if (isPluginProvidedRule(ruleClone.rule)) {
+      // Remove the origin label when cloning plugin-provided rules
+      const { [GRAFANA_ORIGIN_LABEL]: _, ...restLabels } = ruleClone.rule.labels ?? {};
+      ruleClone.rule.labels = restLabels;
     }
   }
 

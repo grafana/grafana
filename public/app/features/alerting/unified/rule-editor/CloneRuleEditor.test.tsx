@@ -3,6 +3,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { getWrapper, render, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
+import { config } from '@grafana/runtime';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -29,8 +30,11 @@ import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from '../mo
 import { setFolderResponse } from '../mocks/server/configure';
 import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
 import { setupDataSources } from '../testSetup/datasources';
+import { pluginMeta, pluginMetaToPluginConfig } from '../testSetup/plugins';
+import { SupportedPlugin } from '../types/pluginBridges';
 import { RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
+import { GRAFANA_ORIGIN_LABEL } from '../utils/labels';
 import { hashRulerRule } from '../utils/rule-id';
 
 import { ExistingRuleEditor } from './ExistingRuleEditor';
@@ -317,6 +321,78 @@ describe('CloneRuleEditor', function () {
 
       expect(originalRule.rule.grafana_alert.uid).toEqual('grafana-rule-1');
       expect(grafanaRule.grafana_alert.uid).toEqual('');
+    });
+
+    it('Should remove the origin label when cloning plugin-provided rules', () => {
+      // Mock the plugin as installed
+      config.apps = {
+        [SupportedPlugin.Slo]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]),
+      };
+
+      const rule: RulerGrafanaRuleDTO = mockRulerGrafanaRule(
+        {
+          for: '1m',
+          labels: {
+            severity: 'critical',
+            region: 'nasa',
+            [GRAFANA_ORIGIN_LABEL]: 'plugin/' + SupportedPlugin.Slo,
+          },
+          annotations: { [Annotation.summary]: 'This is a plugin-provided alert rule' },
+        },
+        { uid: 'plugin-rule-1', title: 'Plugin Alert Rule', data: [] }
+      );
+
+      const originalRule: RuleWithLocation<RulerGrafanaRuleDTO> = {
+        ruleSourceName: 'my-prom-ds',
+        namespace: 'namespace-one',
+        group: mockRulerRuleGroup(),
+        rule,
+      };
+
+      const clonedRule: RuleWithLocation<RulerRuleDTO> = cloneRuleDefinition(originalRule);
+
+      const grafanaRule: RulerGrafanaRuleDTO = clonedRule.rule as RulerGrafanaRuleDTO;
+
+      // Original rule should have the origin label
+      expect(originalRule.rule.labels?.[GRAFANA_ORIGIN_LABEL]).toEqual('plugin/' + SupportedPlugin.Slo);
+
+      // Cloned rule should not have the origin label
+      expect(grafanaRule.labels?.[GRAFANA_ORIGIN_LABEL]).toBeUndefined();
+
+      // Other labels should be preserved
+      expect(grafanaRule.labels?.severity).toEqual('critical');
+      expect(grafanaRule.labels?.region).toEqual('nasa');
+    });
+
+    it('Should preserve all labels when cloning non-plugin-provided rules', () => {
+      const rule: RulerGrafanaRuleDTO = mockRulerGrafanaRule(
+        {
+          for: '1m',
+          labels: {
+            severity: 'critical',
+            region: 'nasa',
+            custom_label: 'custom_value',
+          },
+          annotations: { [Annotation.summary]: 'This is a regular alert rule' },
+        },
+        { uid: 'regular-rule-1', title: 'Regular Alert Rule', data: [] }
+      );
+
+      const originalRule: RuleWithLocation<RulerGrafanaRuleDTO> = {
+        ruleSourceName: 'my-prom-ds',
+        namespace: 'namespace-one',
+        group: mockRulerRuleGroup(),
+        rule,
+      };
+
+      const clonedRule: RuleWithLocation<RulerRuleDTO> = cloneRuleDefinition(originalRule);
+
+      const grafanaRule: RulerGrafanaRuleDTO = clonedRule.rule as RulerGrafanaRuleDTO;
+
+      // All labels should be preserved for non-plugin rules
+      expect(grafanaRule.labels?.severity).toEqual('critical');
+      expect(grafanaRule.labels?.region).toEqual('nasa');
+      expect(grafanaRule.labels?.custom_label).toEqual('custom_value');
     });
   });
 });
