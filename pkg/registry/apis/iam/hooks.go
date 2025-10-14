@@ -109,8 +109,6 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 		return
 	}
 
-	rpCopy := rp.DeepCopy()
-
 	go func(rp *iamv0.ResourcePermission) {
 		defer func() {
 			// Release the ticket after write is done
@@ -166,5 +164,5 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 				"tuplesCnt", len(tuples),
 			)
 		}
-	}(rpCopy)
+	}(rp.DeepCopy()) // Pass a copy of the object
 }
