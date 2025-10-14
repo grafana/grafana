@@ -77,7 +77,8 @@ func TestRuntime_Create(t *testing.T) {
 				tt.setupStorageFn(us.Mock, tt.input)
 			}
 
-			m := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), nil, kvstore.NewFakeKVStore(), nil)
+			m, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), kvstore.NewFakeKVStore(), nil)
+			require.NoError(t, err)
 			dw, err := m.NewStorage(kind, ls, us)
 			require.NoError(t, err)
 
@@ -149,7 +150,8 @@ func TestRuntime_Get(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			m := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), nil, kvstore.NewFakeKVStore(), nil)
+			m, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), kvstore.NewFakeKVStore(), nil)
+			require.NoError(t, err)
 			dw, err := m.NewStorage(kind, ls, us)
 			require.NoError(t, err)
 			status, err := m.Status(context.Background(), kind)
@@ -233,7 +235,8 @@ func TestRuntime_CreateWhileMigrating(t *testing.T) {
 		}
 
 	// Shared provider across all tests
-	dual := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), nil, kvstore.NewFakeKVStore(), nil)
+	dual, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), kvstore.NewFakeKVStore(), nil)
+	require.NoError(t, err)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

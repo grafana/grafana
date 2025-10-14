@@ -10,11 +10,10 @@ import (
 	"math"
 	"slices"
 	"sort"
-	"strings"
 
+	"github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
+	"github.com/grafana/alerting/receivers/schema"
 )
 
 // GetReceiverQuery represents a query for a single receiver.
@@ -37,7 +36,19 @@ type GetReceiversQuery struct {
 type ReceiverMetadata struct {
 	InUseByRules  []AlertRuleKey
 	InUseByRoutes int
+	// CanUse is true if the receiver can be used in routes and rules.
+	CanUse bool
 }
+
+// ResourceOrigin represents the origin or source of the resource.
+type ResourceOrigin string
+
+const (
+	// ResourceOriginGrafana indicates that the resource is in the Grafana configuration
+	ResourceOriginGrafana ResourceOrigin = "grafana"
+	// ResourceOriginImported indicates that the resource is from the imported configuration
+	ResourceOriginImported ResourceOrigin = "imported"
+)
 
 // Receiver is the domain model representation of a receiver / contact point.
 type Receiver struct {
@@ -46,6 +57,7 @@ type Receiver struct {
 	Integrations []*Integration
 	Provenance   Provenance
 	Version      string
+	Origin       ResourceOrigin
 }
 
 func (r *Receiver) Clone() Receiver {
@@ -54,6 +66,7 @@ func (r *Receiver) Clone() Receiver {
 		Name:       r.Name,
 		Provenance: r.Provenance,
 		Version:    r.Version,
+		Origin:     r.Origin,
 	}
 
 	if r.Integrations != nil {
@@ -128,7 +141,7 @@ func (r *Receiver) Validate(decryptFn DecryptFn) error {
 func (r *Receiver) GetIntegrationTypes() []string {
 	result := make([]string, 0, len(r.Integrations))
 	for _, i := range r.Integrations {
-		result = append(result, i.Config.Type)
+		result = append(result, string(i.Config.Type()))
 	}
 	return result
 }
@@ -137,7 +150,7 @@ func (r *Receiver) GetIntegrationTypes() []string {
 type Integration struct {
 	UID                   string
 	Name                  string
-	Config                IntegrationConfig
+	Config                schema.IntegrationSchemaVersion
 	DisableResolveMessage bool
 	// Settings can contain both secure and non-secure settings either unencrypted or redacted.
 	Settings map[string]any
@@ -153,186 +166,11 @@ func (integration *Integration) ResourceID() string {
 	return integration.UID
 }
 
-// IntegrationConfig represents the configuration of an integration. It contains the type and information about the fields.
-type IntegrationConfig struct {
-	Type    string
-	Version string
-	Fields  map[string]IntegrationField
-}
-
-// IntegrationField represents a field in an integration configuration.
-type IntegrationField struct {
-	Name   string
-	Fields map[string]IntegrationField
-	Secure bool
-}
-
-type IntegrationFieldPath []string
-
-func NewIntegrationFieldPath(path string) IntegrationFieldPath {
-	return strings.Split(path, ".")
-}
-
-func (f IntegrationFieldPath) Head() string {
-	if len(f) > 0 {
-		return f[0]
-	}
-	return ""
-}
-
-func (f IntegrationFieldPath) Tail() IntegrationFieldPath {
-	return f[1:]
-}
-
-func (f IntegrationFieldPath) IsLeaf() bool {
-	return len(f) == 1
-}
-
-func (f IntegrationFieldPath) String() string {
-	return strings.Join(f, ".")
-}
-
-func (f IntegrationFieldPath) With(segment string) IntegrationFieldPath {
-	// Copy the existing path to avoid modifying the original slice.
-	newPath := make(IntegrationFieldPath, len(f)+1)
-	copy(newPath, f)
-	newPath[len(newPath)-1] = segment
-	return newPath
-}
-
-// IntegrationConfigFromType returns an integration configuration for a given integration type of a given version.
-// If version is nil, the current version of the integration is used.
-// Returns an error if the integration type is not found or if the specified version does not exist.
-//
-// Parameters:
-//
-//	integrationType - The type of integration to get configuration for
-//	version - Optional specific version to get configuration for, uses latest if nil
-//
-// Returns:
-//
-//	IntegrationConfig - The integration configuration
-//	error - Error if integration type not found or invalid version specified
-func IntegrationConfigFromType(integrationType string, version *string) (IntegrationConfig, error) {
-	config, err := channels_config.ConfigForIntegrationType(integrationType)
-	if err != nil {
-		return IntegrationConfig{}, err
-	}
-	var versionConfig channels_config.NotifierPluginVersion
-	if version == nil {
-		versionConfig = config.GetCurrentVersion()
-	} else {
-		var ok bool
-		versionConfig, ok = config.GetVersion(*version)
-		if !ok {
-			return IntegrationConfig{}, fmt.Errorf("version %s not found in config", *version)
-		}
-	}
-	integrationConfig := IntegrationConfig{
-		Type:    config.Type,
-		Version: versionConfig.Version,
-		Fields:  make(map[string]IntegrationField, len(versionConfig.Options)),
-	}
-	for _, option := range versionConfig.Options {
-		integrationConfig.Fields[option.PropertyName] = notifierOptionToIntegrationField(option)
-	}
-	return integrationConfig, nil
-}
-
-func notifierOptionToIntegrationField(option channels_config.NotifierOption) IntegrationField {
-	f := IntegrationField{
-		Name:   option.PropertyName,
-		Secure: option.Secure,
-		Fields: make(map[string]IntegrationField, len(option.SubformOptions)),
-	}
-	for _, subformOption := range option.SubformOptions {
-		f.Fields[subformOption.PropertyName] = notifierOptionToIntegrationField(subformOption)
-	}
-	return f
-}
-
-// IsSecureField returns true if the field is both known and marked as secure in the integration configuration.
-func (config *IntegrationConfig) IsSecureField(path IntegrationFieldPath) bool {
-	f, ok := config.GetField(path)
-	return ok && f.Secure
-}
-
-func (config *IntegrationConfig) GetField(path IntegrationFieldPath) (IntegrationField, bool) {
-	for _, integrationField := range config.Fields {
-		if strings.EqualFold(integrationField.Name, path.Head()) {
-			if path.IsLeaf() {
-				return integrationField, true
-			}
-			return integrationField.GetField(path.Tail())
-		}
-	}
-	return IntegrationField{}, false
-}
-
-func (config *IntegrationConfig) GetSecretFields() []IntegrationFieldPath {
-	return traverseFields(config.Fields, nil, func(i IntegrationField) bool {
-		return i.Secure
-	})
-}
-
-func traverseFields(flds map[string]IntegrationField, parentPath IntegrationFieldPath, predicate func(i IntegrationField) bool) []IntegrationFieldPath {
-	var result []IntegrationFieldPath
-	for key, field := range flds {
-		path := parentPath.With(key)
-		if predicate(field) {
-			result = append(result, path)
-		}
-		if len(field.Fields) > 0 {
-			result = append(result, traverseFields(field.Fields, path, predicate)...)
-		}
-	}
-	return result
-}
-
-func (config *IntegrationConfig) Clone() IntegrationConfig {
-	clone := IntegrationConfig{
-		Type:    config.Type,
-		Version: config.Version,
-	}
-
-	if len(config.Fields) > 0 {
-		clone.Fields = make(map[string]IntegrationField, len(config.Fields))
-		for key, field := range config.Fields {
-			clone.Fields[key] = field.Clone()
-		}
-	}
-	return clone
-}
-
-func (field *IntegrationField) GetField(path IntegrationFieldPath) (IntegrationField, bool) {
-	for _, integrationField := range field.Fields {
-		if strings.EqualFold(integrationField.Name, path.Head()) {
-			if path.IsLeaf() {
-				return integrationField, true
-			}
-			return integrationField.GetField(path.Tail())
-		}
-	}
-	return IntegrationField{}, false
-}
-
-func (field *IntegrationField) Clone() IntegrationField {
-	f := IntegrationField{
-		Name:   field.Name,
-		Secure: field.Secure,
-		Fields: make(map[string]IntegrationField, len(field.Fields)),
-	}
-	for subName, sub := range field.Fields {
-		f.Fields[subName] = sub.Clone()
-	}
-	return f
-}
-
 func (integration *Integration) Clone() Integration {
 	return Integration{
 		UID:                   integration.UID,
 		Name:                  integration.Name,
-		Config:                integration.Config.Clone(),
+		Config:                integration.Config,
 		DisableResolveMessage: integration.DisableResolveMessage,
 		Settings:              cloneIntegrationSettings(integration.Settings),
 		SecureSettings:        maps.Clone(integration.SecureSettings),
@@ -377,7 +215,7 @@ func cloneIntegrationSettingsSlice(src []any) []any {
 // are stored in SecureSettings and the original values are removed from Settings.
 // If a field is already in SecureSettings it is not encrypted again.
 func (integration *Integration) Encrypt(encryptFn EncryptFn) error {
-	secretFieldPaths := integration.Config.GetSecretFields()
+	secretFieldPaths := integration.Config.GetSecretFieldsPaths()
 	if len(secretFieldPaths) == 0 {
 		return nil
 	}
@@ -402,7 +240,7 @@ func (integration *Integration) Encrypt(encryptFn EncryptFn) error {
 	return errors.Join(errs...)
 }
 
-func extractField(settings map[string]any, path IntegrationFieldPath) (string, bool, error) {
+func extractField(settings map[string]any, path schema.IntegrationFieldPath) (string, bool, error) {
 	val, ok := settings[path.Head()]
 	if !ok {
 		return "", false, nil
@@ -422,7 +260,7 @@ func extractField(settings map[string]any, path IntegrationFieldPath) (string, b
 	return extractField(sub, path.Tail())
 }
 
-func getFieldValue(settings map[string]any, path IntegrationFieldPath) (any, bool) {
+func getFieldValue(settings map[string]any, path schema.IntegrationFieldPath) (any, bool) {
 	val, ok := settings[path.Head()]
 	if !ok {
 		return nil, false
@@ -437,7 +275,7 @@ func getFieldValue(settings map[string]any, path IntegrationFieldPath) (any, boo
 	return getFieldValue(sub, path.Tail())
 }
 
-func setField(settings map[string]any, path IntegrationFieldPath, valueFn func(current any) any, skipIfNotExist bool) error {
+func setField(settings map[string]any, path schema.IntegrationFieldPath, valueFn func(current any) any, skipIfNotExist bool) error {
 	if path.IsLeaf() {
 		current, ok := settings[path.Head()]
 		if skipIfNotExist && !ok {
@@ -472,7 +310,7 @@ func (integration *Integration) Decrypt(decryptFn DecryptFn) error {
 		}
 		delete(integration.SecureSettings, key)
 
-		path := NewIntegrationFieldPath(key)
+		path := schema.ParseIntegrationPath(key)
 		err = setField(integration.Settings, path, func(current any) any {
 			return decrypted
 		}, false)
@@ -486,7 +324,7 @@ func (integration *Integration) Decrypt(decryptFn DecryptFn) error {
 // Redact redacts all fields in SecureSettings and moves them to Settings.
 // The original values are removed from SecureSettings.
 func (integration *Integration) Redact(redactFn RedactFn) {
-	for _, path := range integration.Config.GetSecretFields() {
+	for _, path := range integration.Config.GetSecretFieldsPaths() {
 		_ = setField(integration.Settings, path, func(current any) any {
 			if s, ok := current.(string); ok && s != "" {
 				return redactFn(s)
@@ -496,7 +334,7 @@ func (integration *Integration) Redact(redactFn RedactFn) {
 	}
 
 	for key, secureVal := range integration.SecureSettings { // TODO: Should we trust that the receiver is stored correctly or use known secure settings?
-		_ = setField(integration.Settings, NewIntegrationFieldPath(key), func(any) any {
+		_ = setField(integration.Settings, schema.ParseIntegrationPath(key), func(any) any {
 			return redactFn(secureVal)
 		}, false)
 		delete(integration.SecureSettings, key)
@@ -529,7 +367,7 @@ func (integration *Integration) SecureFields() map[string]bool {
 		}
 	}
 	// We mark secure fields in the settings as well. This is to ensure legacy behaviour for redacted secure settings.
-	for _, path := range integration.Config.GetSecretFields() {
+	for _, path := range integration.Config.GetSecretFieldsPaths() {
 		if secureFields[path.String()] {
 			continue
 		}
@@ -556,17 +394,17 @@ func (integration *Integration) Validate(decryptFn DecryptFn) error {
 		return err
 	}
 
-	return ValidateIntegration(context.Background(), alertingNotify.GrafanaIntegrationConfig{
+	return ValidateIntegration(context.Background(), models.IntegrationConfig{
 		UID:                   decrypted.UID,
 		Name:                  decrypted.Name,
-		Type:                  decrypted.Config.Type,
+		Type:                  string(decrypted.Config.Type()),
 		DisableResolveMessage: decrypted.DisableResolveMessage,
 		Settings:              jsonBytes,
 		SecureSettings:        decrypted.SecureSettings,
 	}, alertingNotify.NoopDecrypt)
 }
 
-func ValidateIntegration(ctx context.Context, integration alertingNotify.GrafanaIntegrationConfig, decryptFunc alertingNotify.GetDecryptedValueFn) error {
+func ValidateIntegration(ctx context.Context, integration models.IntegrationConfig, decryptFunc alertingNotify.GetDecryptedValueFn) error {
 	if integration.Type == "" {
 		return fmt.Errorf("type should not be an empty string")
 	}
@@ -575,8 +413,8 @@ func ValidateIntegration(ctx context.Context, integration alertingNotify.Grafana
 	}
 
 	_, err := alertingNotify.BuildReceiverConfiguration(ctx, &alertingNotify.APIReceiver{
-		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
-			Integrations: []*alertingNotify.GrafanaIntegrationConfig{&integration},
+		ReceiverConfig: models.ReceiverConfig{
+			Integrations: []*models.IntegrationConfig{&integration},
 		},
 	}, alertingNotify.DecodeSecretsFromBase64, decryptFunc)
 	if err != nil {
@@ -610,7 +448,7 @@ func (r *Receiver) Fingerprint() string {
 		sum.writeString(in.Name)
 
 		// Do not include fields in fingerprint as these are not part of the receiver definition.
-		sum.writeString(in.Config.Type)
+		sum.writeString(string(in.Config.Type()))
 
 		sum.writeBool(in.DisableResolveMessage)
 

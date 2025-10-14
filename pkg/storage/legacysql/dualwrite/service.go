@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -24,39 +23,39 @@ func ProvideStaticServiceForTests(cfg *setting.Cfg) Service {
 
 func ProvideService(
 	features featuremgmt.FeatureToggles,
-	reg prometheus.Registerer,
 	kv kvstore.KVStore,
 	cfg *setting.Cfg,
-) Service {
+) (Service, error) {
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
 
 	if cfg != nil {
-		// Avoid dynamic behavior when things are explicitly configured to mode5
-		allMode5 := true
-		for _, gr := range []string{
-			"dashboards.dashboard.grafana.app",
-			"folders.folder.grafana.app",
-		} {
-			if cfg.UnifiedStorage[gr].DualWriterMode != rest.Mode5 {
-				allMode5 = false
-				break
+		if !enabled {
+			return &staticService{cfg}, nil
+		}
+
+		if cfg != nil {
+			foldersMode := cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
+			dashboardsMode := cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
+
+			// If both are fully on unified (Mode5), the dynamic service is not needed.
+			if foldersMode == rest.Mode5 && dashboardsMode == rest.Mode5 {
+				return &staticService{cfg}, nil
+			}
+
+			if (foldersMode >= rest.Mode4 || dashboardsMode >= rest.Mode4) && foldersMode != dashboardsMode {
+				return nil, fmt.Errorf("dashboards and folders must use the same mode when reading from unified storage")
 			}
 		}
-		if allMode5 || !enabled {
-			return &staticService{cfg} // fallback to using the dual write flags from cfg
-		}
-	}
-
-	db := &keyvalueDB{
-		db:     kv,
-		logger: logging.DefaultLogger.With("logger", "dualwrite.kv"),
 	}
 
 	return &service{
-		db:      db,
+		db: &keyvalueDB{
+			db:     kv,
+			logger: logging.DefaultLogger.With("logger", "dualwrite.kv"),
+		},
 		enabled: enabled,
-	}
+	}, nil
 }
 
 type service struct {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Combobox, Field, Input, SecretInput, Stack } from '@grafana/ui';
@@ -11,7 +11,7 @@ import { isGitProvider } from '../utils/repositoryTypes';
 import { getGitProviderFields, getLocalProviderFields } from './fields';
 import { WizardFormData } from './types';
 
-export function ConnectStep() {
+export const ConnectStep = memo(function ConnectStep() {
   const {
     register,
     control,
@@ -174,4 +174,4 @@ export function ConnectStep() {
       )}
     </Stack>
   );
-}
+});

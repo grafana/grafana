@@ -9,6 +9,7 @@ import (
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -42,8 +43,8 @@ func convertToK8sResource(
 			Labels:          make(map[string]string),
 		},
 		Spec: model.RecordingRuleSpec{
-			Title: rule.Title,
-			Data:  make(map[string]model.RecordingRuleQuery),
+			Title:       rule.Title,
+			Expressions: make(model.RecordingRuleExpressionMap),
 			Trigger: model.RecordingRuleIntervalTrigger{
 				Interval: model.RecordingRulePromDuration(interval.String()),
 			},
@@ -67,21 +68,7 @@ func convertToK8sResource(
 	}
 
 	for _, query := range rule.Data {
-		k8sQuery := model.RecordingRuleQuery{
-			QueryType:     query.QueryType,
-			Model:         query.Model,
-			DatasourceUID: model.RecordingRuleDatasourceUID(query.DatasourceUID),
-		}
-		if time.Duration(query.RelativeTimeRange.From) > 0 || time.Duration(query.RelativeTimeRange.To) > 0 {
-			k8sQuery.RelativeTimeRange = &model.RecordingRuleRelativeTimeRange{
-				From: model.RecordingRulePromDurationWMillis(query.RelativeTimeRange.From.String()),
-				To:   model.RecordingRulePromDurationWMillis(query.RelativeTimeRange.To.String()),
-			}
-		}
-		if rule.Record != nil && rule.Record.From == query.RefID {
-			k8sQuery.Source = util.Pointer(true)
-		}
-		k8sRule.Spec.Data[query.RefID] = k8sQuery
+		k8sRule.Spec.Expressions[query.RefID] = convertToK8sExpression(query, rule)
 	}
 
 	meta, err := utils.MetaAccessor(k8sRule)
@@ -106,6 +93,29 @@ func convertToK8sResource(
 
 	k8sRule.UID = gapiutil.CalculateClusterWideUID(k8sRule)
 	return k8sRule, nil
+}
+
+func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule) model.RecordingRuleExpression {
+	expression := model.RecordingRuleExpression{
+		Model: query.Model,
+	}
+	if query.QueryType != "" {
+		expression.QueryType = util.Pointer(query.QueryType)
+	}
+	// DatasourceUID is optional and defaults to expr datasource
+	if !expr.IsDataSource(query.DatasourceUID) {
+		expression.DatasourceUID = util.Pointer(model.RecordingRuleDatasourceUID(query.DatasourceUID))
+	}
+	if time.Duration(query.RelativeTimeRange.From) > 0 || time.Duration(query.RelativeTimeRange.To) > 0 {
+		expression.RelativeTimeRange = &model.RecordingRuleRelativeTimeRange{
+			From: model.RecordingRulePromDurationWMillis(query.RelativeTimeRange.From.String()),
+			To:   model.RecordingRulePromDurationWMillis(query.RelativeTimeRange.To.String()),
+		}
+	}
+	if rule.Record != nil && rule.Record.From == query.RefID {
+		expression.Source = util.Pointer(true)
+	}
+	return expression
 }
 
 func convertToK8sResources(
@@ -150,7 +160,7 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmod
 		OrgID:    orgID,
 		UID:      k8sRule.Name,
 		Title:    k8sRule.Spec.Title,
-		Data:     make([]ngmodels.AlertQuery, 0, len(k8sRule.Spec.Data)),
+		Data:     make([]ngmodels.AlertQuery, 0, len(k8sRule.Spec.Expressions)),
 		IsPaused: k8sRule.Spec.Paused != nil && *k8sRule.Spec.Paused,
 		Labels:   make(map[string]string),
 
@@ -187,35 +197,13 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmod
 	for k, v := range k8sRule.Spec.Labels {
 		domainRule.Labels[k] = string(v)
 	}
-	for refID, query := range k8sRule.Spec.Data {
-		modelJson, err := json.Marshal(query.Model)
+	for refID, expression := range k8sRule.Spec.Expressions {
+		domainQuery, err := convertToDomainQuery(expression, refID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to marshal model: %w", err)
+			return nil, err
 		}
-		domainQuery := ngmodels.AlertQuery{
-			RefID:         refID,
-			QueryType:     query.QueryType,
-			DatasourceUID: string(query.DatasourceUID),
-			Model:         modelJson,
-		}
-		if query.RelativeTimeRange != nil {
-			from, err := prom_model.ParseDuration(string(query.RelativeTimeRange.From))
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse duration: %w", err)
-			}
-			to, err := prom_model.ParseDuration(string(query.RelativeTimeRange.To))
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse duration: %w", err)
-			}
-			domainQuery.RelativeTimeRange = ngmodels.RelativeTimeRange{
-				From: ngmodels.Duration(from),
-				To:   ngmodels.Duration(to),
-			}
-		}
-
 		domainRule.Data = append(domainRule.Data, domainQuery)
-
-		if query.Source != nil && *query.Source {
+		if expression.Source != nil && *expression.Source {
 			if domainRule.Record.From != "" {
 				return nil, fmt.Errorf("multiple queries marked as source: %s and %s", domainRule.Record.From, refID)
 			}
@@ -226,4 +214,38 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmod
 		return nil, fmt.Errorf("no query marked as source")
 	}
 	return domainRule, nil
+}
+
+func convertToDomainQuery(expression model.RecordingRuleExpression, refID string) (ngmodels.AlertQuery, error) {
+	modelJson, err := json.Marshal(expression.Model)
+	if err != nil {
+		return ngmodels.AlertQuery{}, fmt.Errorf("failed to marshal model: %w", err)
+	}
+	domainQuery := ngmodels.AlertQuery{
+		RefID: refID,
+		Model: modelJson,
+	}
+	if expression.QueryType != nil {
+		domainQuery.QueryType = *expression.QueryType
+	}
+	if expression.DatasourceUID != nil {
+		domainQuery.DatasourceUID = string(*expression.DatasourceUID)
+	} else {
+		domainQuery.DatasourceUID = expr.DatasourceUID
+	}
+	if expression.RelativeTimeRange != nil {
+		from, err := prom_model.ParseDuration(string(expression.RelativeTimeRange.From))
+		if err != nil {
+			return ngmodels.AlertQuery{}, fmt.Errorf("failed to parse duration: %w", err)
+		}
+		to, err := prom_model.ParseDuration(string(expression.RelativeTimeRange.To))
+		if err != nil {
+			return ngmodels.AlertQuery{}, fmt.Errorf("failed to parse duration: %w", err)
+		}
+		domainQuery.RelativeTimeRange = ngmodels.RelativeTimeRange{
+			From: ngmodels.Duration(from),
+			To:   ngmodels.Duration(to),
+		}
+	}
+	return domainQuery, nil
 }

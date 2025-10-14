@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Ondergrens instellen voor de stapparameter",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Resolutie selecteren",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Heatmap",
           "label-table": "Tabel",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "Parsingfout: overschakelen naar de bouwmodus?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Legenda",
         "placeholder-select-legend-mode": "Legenda-modus selecteren",
         "tooltip-legend": "Reeksnaam overschrijven of sjabloon. Bijv. {{templateExample}} wordt vervangen door labelwaarde voor {{labelName}}."
@@ -482,11 +486,6 @@
         "message-no-metrics-found": "Er zijn geen statistieken gevonden in de gegevensbron.",
         "name": "Naam",
         "type": "Type"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Query-parsing is dubbelzinnig."
-        }
       }
     }
   }

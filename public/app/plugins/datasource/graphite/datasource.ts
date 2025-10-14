@@ -47,7 +47,6 @@ import {
   GraphiteOptions,
   GraphiteQuery,
   GraphiteQueryImportConfiguration,
-  GraphiteQueryRequest,
   GraphiteQueryType,
   GraphiteType,
   MetricTankRequestMeta,
@@ -201,48 +200,35 @@ export class GraphiteDatasource
     };
   }
 
-  query(options: DataQueryRequest<GraphiteQuery>): Observable<DataQueryResponse> {
-    if (options.targets.some((target: GraphiteQuery) => target.fromAnnotations)) {
-      const streams: Array<Observable<DataQueryResponse>> = [];
-
-      for (const target of options.targets) {
-        streams.push(
-          new Observable((subscriber) => {
-            this.annotationEvents(options.range, target)
-              .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
-              .catch((ex) => subscriber.error(new Error(ex)))
-              .finally(() => subscriber.complete());
-          })
-        );
-      }
-
-      return merge(...streams);
+  filterQuery(item: GraphiteQuery): boolean {
+    if (!item.target && !item.fromAnnotations) {
+      return false;
     }
 
-    // Use this object to map the sanitised refID to the original
-    const formattedRefIdsMap: { [key: string]: string } = {};
-    // Use this object to map the original refID to the original target
-    const originalTargetMap: { [key: string]: string } = {};
-    for (const target of options.targets) {
-      // Sanitise the refID otherwise the Graphite query will fail
-      const formattedRefId = target.refId.replaceAll(' ', '_');
-      formattedRefIdsMap[formattedRefId] = target.refId;
-      // Track the original target to ensure if we need to interpolate a series, we interpolate using the original target
-      // rather than the target wrapped in aliasSub e.g.:
-      // Suppose a query has three targets: A: metric1 B: sumSeries(#A) and C: asPercent(#A, #B)
-      // We want the targets to be interpolated to: A: aliasSub(metric1, "(^.*$)", "\\1 A"), B: aliasSub(sumSeries(metric1), "(^.*$)", "\\1 B") and C: asPercent(metric1, sumSeries(metric1))
-      originalTargetMap[target.refId] = target.target || '';
-      // Use aliasSub to include the refID in the response series name. This allows us to set the refID on the frame.
-      const updatedTarget = `aliasSub(${target.target}, "(^.*$)", "\\1 ${formattedRefId}")`;
-      target.target = updatedTarget;
-    }
+    return true;
+  }
 
+  // Note that we do not omit queries with the hide flag set to true to avoid breaking nested series replacement
+  // e.g. sumSeries(#A) where A is hidden
+  applyTemplateVariables(target: GraphiteQuery, scopedVars: ScopedVars) {
+    return {
+      ...target,
+      target: this.templateSrv.replace(target.target ?? '', scopedVars),
+      targetFull: this.templateSrv.replace(target.targetFull ?? '', scopedVars),
+    };
+  }
+
+  frontendQuery(
+    options: DataQueryRequest<GraphiteQuery>,
+    originalTargetMap: { [key: string]: string },
+    formattedRefIdsMap: { [key: string]: string }
+  ): Observable<DataQueryResponse> {
     // handle the queries here
     const graphOptions = {
       from: this.translateTime(options.range.from, false, options.timezone),
       until: this.translateTime(options.range.to, true, options.timezone),
       targets: options.targets,
-      format: (options as GraphiteQueryRequest).format,
+      format: 'json',
       cacheTimeout: options.cacheTimeout || this.cacheTimeout,
       maxDataPoints: options.maxDataPoints,
     };
@@ -276,17 +262,123 @@ export class GraphiteDatasource
     );
   }
 
-  addTracingHeaders(
-    httpOptions: BackendSrvRequest,
-    options: { dashboardId?: number; panelId?: number; panelPluginId?: string }
-  ) {
-    const proxyMode = !this.url.match(/^http/);
+  backendBuildGraphiteQueries(
+    options: DataQueryRequest<GraphiteQuery>,
+    originalTargetMap: { [key: string]: string }
+  ): GraphiteQuery[] {
+    const referenceTargets: Record<string, string> = {};
+    const finalTargets: GraphiteQuery[] = [];
+    let target: GraphiteQuery, targetValue, i;
+
+    for (i = 0; i < options.targets.length; i++) {
+      target = options.targets[i];
+      if (!target.target) {
+        continue;
+      }
+
+      if (!target.refId) {
+        target.refId = this._seriesRefLetters[i];
+      }
+
+      referenceTargets[target.refId] = target.target;
+    }
+
+    const seriesReferenceRegex = /\#([A-Z])/g;
+
+    function nestedSeriesRegexReplacer(match: string, g1: string) {
+      // Handle the case where a query references itself to prevent infinite recursion
+      if (target.refId === g1) {
+        return referenceTargets[g1] || match;
+      }
+
+      // Recursively replace all nested series references
+      return originalTargetMap[g1].replace(seriesReferenceRegex, nestedSeriesRegexReplacer) || match;
+    }
+
+    for (i = 0; i < options.targets.length; i++) {
+      const targetClone = { ...options.targets[i] };
+      target = options.targets[i];
+      if (!targetClone.target) {
+        continue;
+      }
+
+      targetValue = this.templateSrv.replace(
+        referenceTargets[target.refId].replace(seriesReferenceRegex, nestedSeriesRegexReplacer),
+        options.scopedVars
+      );
+
+      targetClone.target = targetValue;
+      if (this.isMetricTank) {
+        targetClone.isMetricTank = true;
+      }
+
+      if (!targetClone.hide) {
+        finalTargets.push(targetClone);
+      }
+    }
+
+    return finalTargets;
+  }
+
+  query(options: DataQueryRequest<GraphiteQuery>): Observable<DataQueryResponse> {
+    if (options.targets.some((target: GraphiteQuery) => target.fromAnnotations)) {
+      const streams: Array<Observable<DataQueryResponse>> = [];
+
+      for (const target of options.targets) {
+        streams.push(
+          new Observable((subscriber) => {
+            this.annotationEvents(options.range, target)
+              .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
+              .catch((ex) => subscriber.error(new Error(ex)))
+              .finally(() => subscriber.complete());
+          })
+        );
+      }
+
+      return merge(...streams);
+    }
+
+    // Use this object to map the sanitised refID to the original
+    const formattedRefIdsMap: { [key: string]: string } = {};
+    // Use this object to map the original refID to the original target
+    const originalTargetMap: { [key: string]: string } = {};
+    for (const target of options.targets) {
+      // Sanitise the refID otherwise the Graphite query will fail
+      const formattedRefId = target.refId.replaceAll(' ', '_');
+      formattedRefIdsMap[formattedRefId] = target.refId;
+      // Track the original target to ensure if we need to interpolate a series, we interpolate using the original target
+      // rather than the target wrapped in aliasSub e.g.:
+      // Suppose a query has three targets: A: metric1 B: sumSeries(#A) and C: asPercent(#A, #B)
+      // We want the targets to be interpolated to: A: aliasSub(metric1, "(^.*$)", "\\1 A"), B: aliasSub(sumSeries(metric1), "(^.*$)", "\\1 B") and C: asPercent(metric1, sumSeries(metric1))
+      originalTargetMap[target.refId] = target.target || '';
+
+      // We only need to alias queries in frontend mode
+      if (!config.featureToggles.graphiteBackendMode) {
+        // Use aliasSub to include the refID in the response series name. This allows us to set the refID on the frame.
+        const updatedTarget = `aliasSub(${target.target}, "(^.*$)", "\\1 ${formattedRefId}")`;
+        target.target = updatedTarget;
+      }
+    }
+
+    if (config.featureToggles.graphiteBackendMode) {
+      const graphiteQueries = this.backendBuildGraphiteQueries(options, originalTargetMap);
+
+      options.targets = graphiteQueries;
+
+      return super.query(options);
+    }
+
+    return this.frontendQuery(options, originalTargetMap, formattedRefIdsMap);
+  }
+
+  addTracingHeaders(httpOptions: BackendSrvRequest, options: Partial<DataQueryRequest<GraphiteQuery>>) {
+    const proxyMode = !this.url?.match(/^http/);
     if (!httpOptions.headers) {
       httpOptions.headers = {};
     }
     if (proxyMode) {
-      if (options.dashboardId) {
-        httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      if (options.dashboardUID) {
+        httpOptions.headers['X-Dashboard-Id'] = options.dashboardUID;
       }
       if (options.panelId) {
         httpOptions.headers['X-Panel-Id'] = options.panelId;
@@ -660,6 +752,9 @@ export class GraphiteDatasource
     let result: MetricFindValue[];
 
     if (queryType === GraphiteQueryType.Value) {
+      if (!data.data || data.data.length === 0) {
+        return Promise.resolve([]);
+      }
       result = data.data[0].fields[1].values
         .filter((f?: number) => !!f)
         .map((v: number) => ({
@@ -704,8 +799,8 @@ export class GraphiteDatasource
 
     if (config.featureToggles.graphiteBackendMode) {
       return await this.postResource<MetricFindValue[]>('metrics/find', {
-        from: typeof params.from === 'string' ? params.from : `${params.from}`,
-        until: typeof params.until === 'string' ? params.until : `${params.until}`,
+        from: params.from ? (typeof params.from === 'string' ? params.from : `${params.from}`) : undefined,
+        until: params.until ? (typeof params.until === 'string' ? params.until : `${params.until}`) : undefined,
         query,
       });
     }
@@ -741,7 +836,7 @@ export class GraphiteDatasource
    * The result will contain all metrics (with full name) matching provided query.
    * It's a more flexible version of /metrics/find endpoint (@see requestMetricFind)
    */
-  private requestMetricExpand(
+  private async requestMetricExpand(
     query: string,
     requestId: string,
     range?: { from: string | number; until: string | number }
@@ -750,6 +845,18 @@ export class GraphiteDatasource
     if (range) {
       params.from = range.from;
       params.until = range.until;
+    }
+
+    if (config.featureToggles.graphiteBackendMode) {
+      const metrics = await this.postResource<MetricFindValue[]>('metrics/expand', {
+        from: params.from ? (typeof params.from === 'string' ? params.from : `${params.from}`) : undefined,
+        until: params.until ? (typeof params.until === 'string' ? params.until : `${params.until}`) : undefined,
+        query,
+      });
+      return metrics.map((metric) => ({
+        text: metric.text,
+        expandable: false,
+      }));
     }
 
     const httpOptions: BackendSrvRequest = {
@@ -777,72 +884,7 @@ export class GraphiteDatasource
     );
   }
 
-  getTags(optionalOptions: any) {
-    const options = optionalOptions || {};
-    const params: BackendSrvRequest['params'] = {};
-
-    if (options.range) {
-      params.from = this.translateTime(options.range.from, false, options.timezone);
-      params.until = this.translateTime(options.range.to, true, options.timezone);
-    }
-
-    const httpOptions: BackendSrvRequest = {
-      method: 'GET',
-      url: '/tags',
-      // for cancellations
-      requestId: options.requestId,
-      params,
-    };
-
-    return lastValueFrom(
-      this.doGraphiteRequest(httpOptions).pipe(
-        map((results: FetchResponse) => {
-          return _map(results.data, (tag) => {
-            return {
-              text: tag.tag,
-              id: tag.id,
-            };
-          });
-        })
-      )
-    );
-  }
-
-  getTagValues(options: any = {}) {
-    const params: BackendSrvRequest['params'] = {};
-
-    if (options.range) {
-      params.from = this.translateTime(options.range.from, false, options.timezone);
-      params.until = this.translateTime(options.range.to, true, options.timezone);
-    }
-
-    const httpOptions: BackendSrvRequest = {
-      method: 'GET',
-      url: '/tags/' + this.templateSrv.replace(options.key),
-      // for cancellations
-      requestId: options.requestId,
-      params,
-    };
-
-    return lastValueFrom(
-      this.doGraphiteRequest(httpOptions).pipe(
-        map((results: FetchResponse) => {
-          if (results.data && results.data.values) {
-            return _map(results.data.values, (value) => {
-              return {
-                text: value.value,
-                id: value.id,
-              };
-            });
-          } else {
-            return [];
-          }
-        })
-      )
-    );
-  }
-
-  getTagsAutoComplete(expressions: string[], tagPrefix?: string, optionalOptions?: any) {
+  async getTagsAutoComplete(expressions: string[], tagPrefix?: string, optionalOptions?: any) {
     const options = optionalOptions || {};
     const params: BackendSrvRequest['params'] = {
       expr: _map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
@@ -859,6 +901,18 @@ export class GraphiteDatasource
       params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
+    if (config.featureToggles.graphiteBackendMode) {
+      const tags = await this.postResource<string[]>('tags/autoComplete/tags', {
+        from: typeof params.from === 'string' ? params.from : `${params.from}`,
+        until: typeof params.until === 'string' ? params.until : `${params.until}`,
+        tagPrefix,
+        limit: options.limit,
+      });
+      return tags.map((tag) => ({
+        text: tag,
+      }));
+    }
+
     const httpOptions: BackendSrvRequest = {
       method: 'GET',
       url: '/tags/autoComplete/tags',
@@ -870,7 +924,7 @@ export class GraphiteDatasource
     return lastValueFrom(this.doGraphiteRequest(httpOptions).pipe(mapToTags()));
   }
 
-  getTagValuesAutoComplete(expressions: string[], tag: string, valuePrefix?: string, optionalOptions?: any) {
+  async getTagValuesAutoComplete(expressions: string[], tag: string, valuePrefix?: string, optionalOptions?: any) {
     const options = optionalOptions || {};
     const params: BackendSrvRequest['params'] = {
       expr: _map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
@@ -887,6 +941,20 @@ export class GraphiteDatasource
       params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
+    if (config.featureToggles.graphiteBackendMode) {
+      const tagValues = await this.postResource<string[]>('tags/autoComplete/values', {
+        from: typeof params.from === 'string' ? params.from : `${params.from}`,
+        until: typeof params.until === 'string' ? params.until : `${params.until}`,
+        expr: params.expr,
+        tag: params.tag,
+        valuePrefix,
+        limit: options.limit,
+      });
+      return tagValues.map((tag) => ({
+        text: tag,
+      }));
+    }
+
     const httpOptions: BackendSrvRequest = {
       method: 'GET',
       url: '/tags/autoComplete/values',
@@ -898,7 +966,7 @@ export class GraphiteDatasource
     return lastValueFrom(this.doGraphiteRequest(httpOptions).pipe(mapToTags()));
   }
 
-  getVersion(optionalOptions: any) {
+  async getVersion(optionalOptions: any) {
     const options = optionalOptions || {};
 
     const httpOptions = {
@@ -906,6 +974,12 @@ export class GraphiteDatasource
       url: '/version',
       requestId: options.requestId,
     };
+
+    if (config.featureToggles.graphiteBackendMode) {
+      const version = await this.getResource<string>('version');
+      const semver = new SemVer(version);
+      return valid(semver) ? version : '';
+    }
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
@@ -935,7 +1009,7 @@ export class GraphiteDatasource
     return this.getFuncDefs();
   }
 
-  getFuncDefs() {
+  async getFuncDefs() {
     if (this.funcDefsPromise !== null) {
       return this.funcDefsPromise;
     }
@@ -953,6 +1027,18 @@ export class GraphiteDatasource
       // backend_srv defaults to json
       responseType: 'text' as const,
     };
+
+    if (config.featureToggles.graphiteBackendMode) {
+      try {
+        const functions = await this.getResource<string>('functions');
+        this.funcDefs = gfunc.parseFuncDefs(functions);
+        return this.funcDefs;
+      } catch (error) {
+        console.error('Fetching graphite functions error', error);
+        this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+        return this.funcDefs;
+      }
+    }
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
@@ -1029,6 +1115,7 @@ export class GraphiteDatasource
       );
   }
 
+  // Can be removed when the frontend query path is removed
   buildGraphiteParams(options: any, originalTargetMap: { [key: string]: string }, scopedVars?: ScopedVars): string[] {
     const graphiteOptions = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     const cleanOptions = [],
@@ -1060,7 +1147,7 @@ export class GraphiteDatasource
 
     const regex = /\#([A-Z])/g;
 
-    function nestedSeriesRegexReplacer(match: string, g1: string | number) {
+    function nestedSeriesRegexReplacer(match: string, g1: string) {
       // Handle the case where a query references itself to prevent infinite recursion
       if (target.refId === g1) {
         return targets[g1] || match;

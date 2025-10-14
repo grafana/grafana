@@ -51,12 +51,19 @@ import { ShareSpanButton } from './ShareSpanButton';
 import { getSpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 
-const useResourceAttributesExtensionLinks = (
-  process: TraceProcess,
-  spanTags: TraceKeyValuePair[],
-  datasourceType: string,
-  datasourceUid: string
-) => {
+const useResourceAttributesExtensionLinks = ({
+  process,
+  spanTags,
+  datasourceType,
+  datasourceUid,
+  timeRange,
+}: {
+  process: TraceProcess;
+  spanTags: TraceKeyValuePair[];
+  datasourceType: string;
+  datasourceUid: string;
+  timeRange: TimeRange;
+}) => {
   // Stable context for useMemo inside usePluginLinks
   const context: PluginExtensionResourceAttributesContext = useMemo(() => {
     const attributes = (process.tags ?? []).reduce<Record<string, string[]>>((acc, tag) => {
@@ -80,12 +87,13 @@ const useResourceAttributesExtensionLinks = (
     return {
       attributes,
       spanAttributes,
+      timeRange: { from: timeRange.from.valueOf(), to: timeRange.to.valueOf() },
       datasource: {
         type: datasourceType,
         uid: datasourceUid,
       },
     };
-  }, [process.tags, spanTags, datasourceType, datasourceUid]);
+  }, [process.tags, spanTags, datasourceType, datasourceUid, timeRange]);
 
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.TraceViewResourceAttributes,
@@ -343,7 +351,13 @@ export default function SpanDetail(props: SpanDetailProps) {
   });
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
-  const resourceLinksGetter = useResourceAttributesExtensionLinks(process, tags, datasourceType, datasourceUid);
+  const resourceLinksGetter = useResourceAttributesExtensionLinks({
+    process,
+    spanTags: tags,
+    datasourceType,
+    datasourceUid,
+    timeRange,
+  });
 
   return (
     <div data-testid="span-detail-component">

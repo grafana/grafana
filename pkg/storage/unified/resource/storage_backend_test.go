@@ -27,11 +27,11 @@ var appsNamespace = NamespacedResource{
 
 func setupTestStorageBackend(t *testing.T) *kvStorageBackend {
 	kv := setupTestKV(t)
-	opts := KvBackendOptions{
+	opts := KVBackendOptions{
 		KvStore:    kv,
 		WithPruner: true,
 	}
-	backend, err := NewKvStorageBackend(opts)
+	backend, err := NewKVStorageBackend(opts)
 	kvBackend := backend.(*kvStorageBackend)
 	require.NoError(t, err)
 	return kvBackend
@@ -43,7 +43,7 @@ func TestNewKvStorageBackend(t *testing.T) {
 	assert.NotNil(t, backend)
 	assert.NotNil(t, backend.kv)
 	assert.NotNil(t, backend.dataStore)
-	assert.NotNil(t, backend.metaStore)
+
 	assert.NotNil(t, backend.eventStore)
 	assert.NotNil(t, backend.notifier)
 	assert.NotNil(t, backend.snowflake)
@@ -125,25 +125,6 @@ func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, dataReader.Close())
 			assert.Equal(t, objectToJSONBytes(t, testObj), dataValue)
-
-			// Verify metadata was written to metaStore
-			metaKey := MetaDataKey{
-				Namespace:       "default",
-				Group:           "apps",
-				Resource:        "resources",
-				Name:            "test-resource",
-				ResourceVersion: rv,
-				Action:          expectedAction,
-				Folder:          "",
-			}
-
-			m, err := backend.metaStore.Get(ctx, metaKey)
-			require.NoError(t, err)
-			require.NotNil(t, m)
-			require.Equal(t, "test-resource", m.Key.Name)
-			require.Equal(t, "default", m.Key.Namespace)
-			require.Equal(t, "apps", m.Key.Group)
-			require.Equal(t, "resources", m.Key.Resource)
 
 			// Verify event was written to eventStore
 			eventKey := EventKey{
@@ -1060,6 +1041,36 @@ func TestKvStorageBackend_ListTrash_Success(t *testing.T) {
 	rv2, err := backend.WriteEvent(ctx, writeEvent)
 	require.NoError(t, err)
 
+	// Do the same for a provisioned object
+	provisionedObj, err := createTestObjectWithName("provisioned-obj", appsNamespace, "test-data")
+	require.NoError(t, err)
+	metaAccessorProvisioned, err := utils.MetaAccessor(provisionedObj)
+	require.NoError(t, err)
+	metaAccessorProvisioned.SetAnnotation(utils.AnnoKeyManagerKind, "repo")
+
+	writeEventProvisioned := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "provisioned-obj",
+		},
+		Value:      objectToJSONBytes(t, provisionedObj),
+		Object:     metaAccessorProvisioned,
+		PreviousRV: 0,
+	}
+
+	rv3, err := backend.WriteEvent(ctx, writeEventProvisioned)
+	require.NoError(t, err)
+
+	writeEventProvisioned.Type = resourcepb.WatchEvent_DELETED
+	writeEventProvisioned.PreviousRV = rv3
+	writeEventProvisioned.Object = metaAccessorProvisioned
+	writeEventProvisioned.ObjectOld = metaAccessorProvisioned
+	_, err = backend.WriteEvent(ctx, writeEventProvisioned)
+	require.NoError(t, err)
+
 	// List the trash (deleted items)
 	listReq := &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{
@@ -1100,7 +1111,7 @@ func TestKvStorageBackend_ListTrash_Success(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Greater(t, rv, int64(0))
-	require.Len(t, trashItems, 1) // Should have the deleted item
+	require.Len(t, trashItems, 1) // Should have the non-provisioned deleted item
 
 	// Verify the trash item
 	require.Equal(t, "test-resource", trashItems[0].name)
@@ -1258,8 +1269,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			Group:     "apps",
 			Resource:  "resources",
 			Name:      "test-resource",
-			Sort:      SortOrderDesc,
-		}) {
+		}, SortOrderDesc) {
 			require.NoError(t, err)
 			require.NotEqual(t, rv1, datakey.ResourceVersion)
 			counter++
@@ -1325,8 +1335,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			Group:     "apps",
 			Resource:  "resources",
 			Name:      "test-resource",
-			Sort:      SortOrderDesc,
-		}) {
+		}, SortOrderDesc) {
 			require.NoError(t, err)
 			counter++
 		}
@@ -1393,8 +1402,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			Group:     "apps",
 			Resource:  "resources",
 			Name:      "test-resource",
-			Sort:      SortOrderDesc,
-		}) {
+		}, SortOrderDesc) {
 			require.NoError(t, err)
 			counter++
 		}

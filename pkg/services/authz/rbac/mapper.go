@@ -2,8 +2,10 @@ package rbac
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 )
 
 // Mapping maps a verb to a RBAC action and a resource name to a RBAC scope.
@@ -11,6 +13,9 @@ type Mapping interface {
 	// action returns the action for the given verb.
 	// If no action is found, it returns false.
 	Action(verb string) (string, bool)
+	// ActionSets returns the action sets for the given verb.
+	// If no action sets are found, it returns an empty slice. This is expected for resources that do not have action sets (anything apart from dashboards and folders).
+	ActionSets(verb string) []string
 	// scope returns the scope for the given resource name.
 	Scope(name string) string
 	// prefix returns the scope prefix for the translation.
@@ -27,6 +32,7 @@ type translation struct {
 	resource          string
 	attribute         string
 	verbMapping       map[string]string
+	actionSetMapping  map[string][]string
 	folderSupport     bool
 	skipScopeOnCreate bool
 }
@@ -34,6 +40,11 @@ type translation struct {
 func (t translation) Action(verb string) (string, bool) {
 	action, ok := t.verbMapping[verb]
 	return action, ok
+}
+
+func (t translation) ActionSets(verb string) []string {
+	actionSets := t.actionSetMapping[verb]
+	return actionSets
 }
 
 func (t translation) Scope(name string) string {
@@ -101,15 +112,72 @@ func newResourceTranslation(resource string, attribute string, folderSupport, sk
 	}
 }
 
+// newDashboardTranslation creates a translation for dashboards and also maps the actions to action sets
+func newDashboardTranslation() translation {
+	dashTranslation := newResourceTranslation("dashboards", "uid", true, false)
+
+	actionSetMapping := make(map[string][]string)
+	for verb, rbacAction := range dashTranslation.verbMapping {
+		var dashActionSets []string
+		if slices.Contains(ossaccesscontrol.DashboardViewActions, rbacAction) {
+			dashActionSets = append(dashActionSets, "dashboards:view")
+			dashActionSets = append(dashActionSets, "folders:view")
+		}
+		if slices.Contains(ossaccesscontrol.DashboardEditActions, rbacAction) {
+			dashActionSets = append(dashActionSets, "dashboards:edit")
+			dashActionSets = append(dashActionSets, "folders:edit")
+		}
+		if slices.Contains(ossaccesscontrol.DashboardAdminActions, rbacAction) {
+			dashActionSets = append(dashActionSets, "dashboards:admin")
+			dashActionSets = append(dashActionSets, "folders:admin")
+		}
+		actionSetMapping[verb] = dashActionSets
+	}
+
+	dashTranslation.actionSetMapping = actionSetMapping
+	return dashTranslation
+}
+
+// newFolderTranslation creates a translation for folders and also maps the actions to action sets
+func newFolderTranslation() translation {
+	folderTranslation := newResourceTranslation("folders", "uid", true, false)
+
+	actionSetMapping := make(map[string][]string)
+	for verb, rbacAction := range folderTranslation.verbMapping {
+		var actionSets []string
+		// Folder creation has not been added to the FolderEditActions and FolderAdminActions slices (https://github.com/grafana/identity-access-team/issues/794)
+		// so we handle it as a special case for now
+		if rbacAction == "folders:create" {
+			actionSets = append(actionSets, "folders:edit")
+			actionSets = append(actionSets, "folders:admin")
+		}
+		if slices.Contains(ossaccesscontrol.FolderViewActions, rbacAction) {
+			actionSets = append(actionSets, "folders:view")
+		}
+		if slices.Contains(ossaccesscontrol.FolderEditActions, rbacAction) {
+			actionSets = append(actionSets, "folders:edit")
+		}
+		if slices.Contains(ossaccesscontrol.FolderAdminActions, rbacAction) {
+			actionSets = append(actionSets, "folders:admin")
+		}
+		actionSetMapping[verb] = actionSets
+	}
+	folderTranslation.actionSetMapping = actionSetMapping
+	return folderTranslation
+}
+
 func NewMapperRegistry() MapperRegistry {
 	mapper := mapper(map[string]map[string]translation{
 		"dashboard.grafana.app": {
-			"dashboards": newResourceTranslation("dashboards", "uid", true, false),
+			"dashboards": newDashboardTranslation(),
 		},
 		"folder.grafana.app": {
-			"folders": newResourceTranslation("folders", "uid", true, false),
+			"folders": newFolderTranslation(),
 		},
 		"iam.grafana.app": {
+			// Users is a special case. We translate user permissions from id to uid based.
+			"users":           newResourceTranslation("users", "uid", false, true),
+			"serviceaccounts": newResourceTranslation("serviceaccounts", "uid", false, true),
 			// Teams is a special case. We translate user permissions from id to uid based.
 			"teams": newResourceTranslation("teams", "uid", false, true),
 			// No need to skip scope on create for roles because we translate `permissions:type:delegate` to `roles:*``

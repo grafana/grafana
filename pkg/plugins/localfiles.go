@@ -30,6 +30,10 @@ func NewLocalFS(basePath string) LocalFS {
 	return LocalFS{basePath: basePath}
 }
 
+func (f LocalFS) Type() string {
+	return "local"
+}
+
 // fileIsAllowed takes an absolute path to a file and an os.FileInfo for that file, and it checks if access to that
 // file is allowed or not. Access to a file is allowed if the file is in the FS's Base() directory, and if it's a
 // symbolic link it should not end up outside the plugin's directory.
@@ -213,6 +217,10 @@ func NewStaticFS(fs FS) (StaticFS, error) {
 		FS:             fs,
 		staticFilesMap: newStaticFilesMap(files...),
 	}, nil
+}
+
+func (f StaticFS) Type() string {
+	return f.FS.Type()
 }
 
 // Open checks that name is an allowed file and, if so, it returns a fs.File to access it, by calling the

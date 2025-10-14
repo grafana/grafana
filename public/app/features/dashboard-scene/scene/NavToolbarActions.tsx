@@ -21,12 +21,13 @@ import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/Na
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/core';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
+import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { useSelector } from 'app/types/store';
 
-import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
@@ -47,7 +48,7 @@ interface Props {
 }
 
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
-  const hasNewToolbar = config.featureToggles.dashboardNewLayouts && config.featureToggles.newDashboardSharingComponent;
+  const hasNewToolbar = config.featureToggles.dashboardNewLayouts;
 
   return hasNewToolbar ? (
     <AppChromeUpdate
@@ -100,21 +101,12 @@ export function ToolbarActions({ dashboard }: Props) {
     group: 'icon-actions',
     condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
     render: () => {
-      let desc = meta.isStarred
-        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
-        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
       return (
-        <ToolbarButton
-          tooltip={desc}
-          icon={
-            <Icon name={meta.isStarred ? 'favorite' : 'star'} size="lg" type={meta.isStarred ? 'mono' : 'default'} />
-          }
+        <StarToolbarButton
           key="star-dashboard-button"
-          data-testid={selectors.components.NavToolbar.markAsFavorite}
-          onClick={() => {
-            DashboardInteractions.toolbarFavoritesClick();
-            dashboard.onStarDashboard();
-          }}
+          group="dashboard.grafana.app"
+          kind="Dashboard"
+          dashboard={dashboard}
         />
       );
     },
@@ -322,26 +314,6 @@ export function ToolbarActions({ dashboard }: Props) {
   });
 
   const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying;
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: !config.featureToggles.newDashboardSharingComponent && showShareButton,
-    render: () => (
-      <Button
-        key="share-dashboard-button"
-        tooltip={t('dashboard.toolbar.share.tooltip', 'Share dashboard')}
-        size="sm"
-        className={styles.buttonWithExtraMargin}
-        fill="outline"
-        onClick={() => {
-          DashboardInteractions.toolbarShareClick();
-          locationService.partial({ shareView: shareDashboardType.link });
-        }}
-        data-testid={selectors.components.NavToolbar.shareDashboard}
-      >
-        <Trans i18nKey="dashboard.toolbar.share.label">Share</Trans>
-      </Button>
-    ),
-  });
 
   toolbarActions.push({
     group: 'main-buttons',
@@ -349,6 +321,7 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={() => {
+          trackDashboardSceneEditButtonClicked(dashboard.state.uid);
           dashboard.onEnterEditMode();
         }}
         tooltip={
@@ -358,7 +331,7 @@ export function ToolbarActions({ dashboard }: Props) {
         }
         key="edit"
         className={styles.buttonWithExtraMargin}
-        variant={config.featureToggles.newDashboardSharingComponent ? 'secondary' : 'primary'}
+        variant={'secondary'}
         size="sm"
         data-testid={selectors.components.NavToolbar.editDashboard.editButton}
         disabled={isReadOnlyRepo}
@@ -374,6 +347,7 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={() => {
+          trackDashboardSceneEditButtonClicked(dashboard.state.uid);
           dashboard.onEnterEditMode();
           dashboard.setState({ editable: true, meta: { ...meta, canEdit: true } });
         }}
@@ -391,13 +365,13 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'new-share-dashboard-buttons',
-    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    condition: showShareButton,
     render: () => <ExportButton key="new-export-dashboard-button" dashboard={dashboard} />,
   });
 
   toolbarActions.push({
     group: 'new-share-dashboard-buttons',
-    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    condition: showShareButton,
     render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
 
@@ -426,7 +400,10 @@ export function ToolbarActions({ dashboard }: Props) {
     condition: isEditing && !isNew && isShowingDashboard,
     render: () => (
       <Button
-        onClick={() => dashboard.exitEditMode({ skipConfirm: false })}
+        onClick={() => {
+          DashboardInteractions.exitEditButtonClicked();
+          dashboard.exitEditMode({ skipConfirm: false });
+        }}
         tooltip={t('dashboard.toolbar.exit-edit-mode.tooltip', 'Exits edit mode and discards unsaved changes')}
         size="sm"
         key="discard"

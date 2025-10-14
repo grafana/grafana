@@ -26,6 +26,7 @@ import {
   VariableOption,
   defaultDataQueryKind,
   AdHocFilterWithLabels,
+  SwitchVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
@@ -60,7 +61,6 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
       skipUrlSync: Boolean(variable.state.skipUrlSync),
       hide: variable.state.hide || OldVariableHide.dontHide,
       type: variable.state.type,
-      showInControlsMenu: variable.state.showInControlsMenu,
     };
 
     if (sceneUtils.isQueryVariable(variable)) {
@@ -211,6 +211,24 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         filters: [...validateFiltersOrigin(variable.state.originFilters), ...variable.state.filters],
         defaultKeys: variable.state.defaultKeys,
       });
+    } else if (sceneUtils.isSwitchVariable(variable)) {
+      variables.push({
+        ...commonProperties,
+        current: {
+          value: variable.state.value,
+          text: variable.state.value,
+        },
+        options: [
+          {
+            value: variable.state.enabledValue,
+            text: variable.state.enabledValue,
+          },
+          {
+            value: variable.state.disabledValue,
+            text: variable.state.disabledValue,
+          },
+        ],
+      });
     } else if (variable.state.type === 'system') {
       // Not persisted
     } else {
@@ -265,6 +283,7 @@ export function sceneVariablesSetToSchemaV2Variables(
   | ConstantVariableKind
   | GroupByVariableKind
   | AdhocVariableKind
+  | SwitchVariableKind
 > {
   let variables: Array<
     | QueryVariableKind
@@ -275,6 +294,7 @@ export function sceneVariablesSetToSchemaV2Variables(
     | ConstantVariableKind
     | GroupByVariableKind
     | AdhocVariableKind
+    | SwitchVariableKind
   > = [];
 
   for (const variable of set.state.variables) {
@@ -284,7 +304,6 @@ export function sceneVariablesSetToSchemaV2Variables(
       description: variable.state.description ?? undefined,
       skipUrlSync: Boolean(variable.state.skipUrlSync),
       hide: transformVariableHideToEnum(variable.state.hide) || defaultVariableHide(),
-      showInControlsMenu: variable.state.showInControlsMenu,
     };
 
     // current: VariableOption;
@@ -296,6 +315,8 @@ export function sceneVariablesSetToSchemaV2Variables(
     };
 
     let options: VariableOption[] = [];
+
+    // Query variable
     if (sceneUtils.isQueryVariable(variable)) {
       // Not sure if we actually have to still support this option given
       // that it's not exposed in the UI
@@ -357,6 +378,8 @@ export function sceneVariablesSetToSchemaV2Variables(
         },
       };
       variables.push(queryVariable);
+
+      // Custom variable
     } else if (sceneUtils.isCustomVariable(variable)) {
       options = variableValueOptionsToVariableOptions(variable.state);
       const customVariable: CustomVariableKind = {
@@ -373,6 +396,8 @@ export function sceneVariablesSetToSchemaV2Variables(
         },
       };
       variables.push(customVariable);
+
+      // Datasource variable
     } else if (sceneUtils.isDataSourceVariable(variable)) {
       const datasourceVariable: DatasourceVariableKind = {
         kind: 'DatasourceVariable',
@@ -394,6 +419,8 @@ export function sceneVariablesSetToSchemaV2Variables(
       }
 
       variables.push(datasourceVariable);
+
+      // Constant variable
     } else if (sceneUtils.isConstantVariable(variable)) {
       const constantVariable: ConstantVariableKind = {
         kind: 'ConstantVariable',
@@ -409,6 +436,8 @@ export function sceneVariablesSetToSchemaV2Variables(
         },
       };
       variables.push(constantVariable);
+
+      // Interval variable
     } else if (sceneUtils.isIntervalVariable(variable)) {
       const intervals = getIntervalsQueryFromNewIntervalModel(variable.state.intervals);
       const intervalVariable: IntervalVariableKind = {
@@ -433,6 +462,8 @@ export function sceneVariablesSetToSchemaV2Variables(
         },
       };
       variables.push(intervalVariable);
+
+      // Textbox variable
     } else if (sceneUtils.isTextBoxVariable(variable)) {
       const current = {
         text: variable.state.value,
@@ -449,6 +480,8 @@ export function sceneVariablesSetToSchemaV2Variables(
       };
 
       variables.push(textBoxVariable);
+
+      // Groupby variable
     } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
       options = variableValueOptionsToVariableOptions(variable.state);
 
@@ -485,6 +518,8 @@ export function sceneVariablesSetToSchemaV2Variables(
         },
       };
       variables.push(groupVariable);
+
+      // Adhoc variable
     } else if (sceneUtils.isAdHocVariable(variable)) {
       const ds = getDataSourceForQuery(
         variable.state.datasource,
@@ -510,6 +545,19 @@ export function sceneVariablesSetToSchemaV2Variables(
         },
       };
       variables.push(adhocVariable);
+
+      // Switch variable
+    } else if (sceneUtils.isSwitchVariable(variable)) {
+      const switchVariable: SwitchVariableKind = {
+        kind: 'SwitchVariable',
+        spec: {
+          ...commonProperties,
+          current: variable.state.value,
+          enabledValue: variable.state.enabledValue,
+          disabledValue: variable.state.disabledValue,
+        },
+      };
+      variables.push(switchVariable);
     } else if (variable.state.type === 'system') {
       // Do nothing
     } else {

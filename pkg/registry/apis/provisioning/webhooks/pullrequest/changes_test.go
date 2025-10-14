@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -753,13 +754,13 @@ func TestCalculateChanges(t *testing.T) {
 
 			tt.setupMocks(parser, reader, progress, renderer, parserFactory)
 
-			evaluator := NewEvaluator(renderer, parserFactory, func(_ string) string {
+			evaluator := NewEvaluator(renderer, parserFactory, func(_ context.Context, _ string) string {
 				if tt.grafanaBaseURL != "" {
 					return tt.grafanaBaseURL
 				}
 
 				return "http://host/"
-			})
+			}, prometheus.NewPedanticRegistry())
 
 			pullRequest := provisioning.PullRequestJobOptions{
 				Ref: "ref",
@@ -890,6 +891,7 @@ func TestRenderScreenshotFromGrafanaURL(t *testing.T) {
 		},
 	}
 
+	metrics := registerScreenshotMetrics(prometheus.NewPedanticRegistry())
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			renderer := NewMockScreenshotRenderer(t)
@@ -900,7 +902,7 @@ func TestRenderScreenshotFromGrafanaURL(t *testing.T) {
 				Name:      "repo",
 			}
 
-			got, err := renderScreenshotFromGrafanaURL(context.Background(), tt.baseURL, renderer, repo, tt.grafanaURL)
+			got, err := renderScreenshotFromGrafanaURL(context.Background(), tt.baseURL, renderer, repo, tt.grafanaURL, metrics)
 			if tt.wantErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.wantErr)

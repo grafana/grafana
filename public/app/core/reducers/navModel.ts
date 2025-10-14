@@ -122,7 +122,6 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
       teams: getItemWithNewSubTitle(state.teams, subTitle),
       plugins: getItemWithNewSubTitle(state.plugins, subTitle),
       'org-settings': getItemWithNewSubTitle(state['org-settings'], subTitle),
-      apikeys: getItemWithNewSubTitle(state.apikeys, subTitle),
     };
   } else if (removeNavIndex.match(action)) {
     delete state[action.payload];

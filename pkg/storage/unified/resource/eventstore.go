@@ -3,10 +3,15 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"iter"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/bwmarrin/snowflake"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 )
 
 const (
@@ -25,50 +30,47 @@ type EventKey struct {
 	Name            string
 	ResourceVersion int64
 	Action          DataAction
+	Folder          string
 }
 
 func (k EventKey) String() string {
-	return fmt.Sprintf("%d~%s~%s~%s~%s~%s", k.ResourceVersion, k.Namespace, k.Group, k.Resource, k.Name, k.Action)
+	return fmt.Sprintf("%d~%s~%s~%s~%s~%s~%s", k.ResourceVersion, k.Namespace, k.Group, k.Resource, k.Name, k.Action, k.Folder)
 }
 
 func (k EventKey) Validate() error {
 	if k.Namespace == "" {
-		return fmt.Errorf("namespace cannot be empty")
-	}
-	if k.Group == "" {
-		return fmt.Errorf("group cannot be empty")
-	}
-	if k.Resource == "" {
-		return fmt.Errorf("resource cannot be empty")
-	}
-	if k.Name == "" {
-		return fmt.Errorf("name cannot be empty")
+		return NewValidationError("namespace", k.Namespace, ErrNamespaceRequired)
 	}
 	if k.ResourceVersion < 0 {
-		return fmt.Errorf("resource version must be non-negative")
+		return errors.New(ErrResourceVersionInvalid)
 	}
 	if k.Action == "" {
-		return fmt.Errorf("action cannot be empty")
+		return NewValidationError("action", string(k.Action), ErrActionRequired)
 	}
 
-	// Validate each field against the naming rules (reusing the regex from datastore.go)
-	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	// Validate each field against the naming rules
+	// Validate naming conventions for all required fields
+	if err := validation.IsValidNamespace(k.Namespace); err != nil {
+		return NewValidationError("namespace", k.Namespace, err[0])
 	}
-	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid", k.Group)
+	if err := validation.IsValidGroup(k.Group); err != nil {
+		return NewValidationError("group", k.Group, err[0])
 	}
-	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid", k.Resource)
+	if err := validation.IsValidResource(k.Resource); err != nil {
+		return NewValidationError("resource", k.Resource, err[0])
 	}
-	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid", k.Name)
+	if err := validation.IsValidGrafanaName(k.Name); err != nil {
+		return NewValidationError("name", k.Name, err[0])
 	}
-
+	if k.Folder != "" {
+		if err := validation.IsValidGrafanaName(k.Folder); err != nil {
+			return NewValidationError("folder", k.Folder, err[0])
+		}
+	}
 	switch k.Action {
 	case DataActionCreated, DataActionUpdated, DataActionDeleted:
 	default:
-		return fmt.Errorf("action '%s' is invalid: must be one of 'created', 'updated', or 'deleted'", k.Action)
+		return NewValidationError("action", string(k.Action), ErrActionInvalid)
 	}
 
 	return nil
@@ -94,7 +96,7 @@ func newEventStore(kv KV) *eventStore {
 // ParseEventKey parses a key string back into an EventKey struct
 func ParseEventKey(key string) (EventKey, error) {
 	parts := strings.Split(key, "~")
-	if len(parts) != 6 {
+	if len(parts) != 7 {
 		return EventKey{}, fmt.Errorf("invalid key format: expected 6 parts, got %d", len(parts))
 	}
 
@@ -110,6 +112,7 @@ func ParseEventKey(key string) (EventKey, error) {
 		Resource:        parts[3],
 		Name:            parts[4],
 		Action:          DataAction(parts[5]),
+		Folder:          parts[6],
 	}, nil
 }
 
@@ -139,6 +142,7 @@ func (n *eventStore) Save(ctx context.Context, event Event) error {
 		Name:            event.Name,
 		ResourceVersion: event.ResourceVersion,
 		Action:          event.Action,
+		//TODO why isnt folder part of the key?
 	}
 
 	if err := eventKey.Validate(); err != nil {
@@ -223,4 +227,31 @@ func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Eve
 			}
 		}
 	}
+}
+
+// CleanupOldEvents deletes events older than the specified retention period.
+func (n *eventStore) CleanupOldEvents(ctx context.Context, cutoff time.Time) (int, error) {
+	deletedCount := 0
+
+	// Keys are stored in the format of "resource_version~namespace~group~resource~name"
+	// With a start key of "1" and an end key of the cutoff time we can get all expired events.
+	endKey := fmt.Sprintf("%d", snowflakeFromTime(cutoff))
+	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{StartKey: "1", EndKey: endKey}) {
+		if err != nil {
+			return deletedCount, fmt.Errorf("failed to list event keys: %w", err)
+		}
+
+		// TODO should use batch deletes here when available
+		if err := n.kv.Delete(ctx, eventsSection, key); err != nil {
+			return deletedCount, fmt.Errorf("failed to delete event key %s: %w", key, err)
+		}
+		deletedCount++
+	}
+
+	return deletedCount, nil
+}
+
+// snowflake id with last two sections set to 0 (machine id and sequence)
+func snowflakeFromTime(t time.Time) int64 {
+	return (t.UnixMilli() - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)
 }

@@ -25,7 +25,7 @@ test.use({
 
 const USE_LIVE_DATA = Boolean(process.env.API_CONFIG_PATH);
 
-export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
+const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 
 test.describe(
   'Scope CUJs',
@@ -169,12 +169,15 @@ test.describe(
         await searchScopes(page, scopeSearchOne, [secondLevelScopes[0]]);
 
         await expect.soft(scopeTreeCheckboxes).toHaveCount(1);
-        expect.soft(await scopeTreeCheckboxes.first().locator('../..').textContent()).toBe(scopeSearchOne);
+
+        // Check grandparent title, to make sure we get what we want
+        expect.soft(await scopeTreeCheckboxes.first().locator('../../..').textContent()).toBe(scopeSearchOne);
 
         await searchScopes(page, scopeSearchTwo, [secondLevelScopes[1]]);
 
         await expect.soft(scopeTreeCheckboxes).toHaveCount(1);
-        expect.soft(await scopeTreeCheckboxes.first().locator('../..').textContent()).toBe(scopeSearchTwo);
+        // Check grandparent title, to make sure we get what we want
+        expect.soft(await scopeTreeCheckboxes.first().locator('../../..').textContent()).toBe(scopeSearchTwo);
       });
     });
   }

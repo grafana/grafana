@@ -302,6 +302,59 @@ lineage: schemas: [{
 		// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu 
 		#DashboardLinkPlacement: "inControlsMenu" @cuetsy(kind="type")
 
+		// Dashboard action type
+		#ActionType: "fetch" | "infinity" @cuetsy(kind="type")
+
+		// Fetch options
+		#FetchOptions: {
+			method: #HttpRequestMethod
+			url: string
+			body?: string
+			// These are 2D arrays of strings, each representing a key-value pair
+			// We are defining this way because we can't generate a go struct that 
+			// that would have exactly two strings in each sub-array
+			queryParams?: [...[...string]]
+			headers?: [...[...string]]
+		} @cuetsy(kind="interface")
+
+		// Infinity options
+		#InfinityOptions: {
+			method: #HttpRequestMethod
+			url: string
+			body?: string
+			// These are 2D arrays of strings, each representing a key-value pair
+			// We are defining them this way because we can't generate a go struct that 
+			// that would have exactly two strings in each sub-array
+			queryParams?: [...[...string]]
+			headers?: [...[...string]]
+			datasourceUid: string
+		} @cuetsy(kind="interface")
+
+		#HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH" @cuetsy(kind="type")
+
+		// Action variable type
+		#ActionVariableType: "string" @cuetsy(kind="type")
+
+		#ActionVariable: {
+			key: string
+			name: string
+			type: #ActionVariableType
+		} @cuetsy(kind="interface")
+
+		// Dashboard action
+		#Action: {
+			type: #ActionType
+			title: string
+			fetch?: #FetchOptions
+			infinity?: #InfinityOptions
+			confirmation?: string
+			oneClick?: bool
+			variables?: [...#ActionVariable]
+			style?: {
+				backgroundColor?: string
+			}
+		} @cuetsy(kind="interface")
+
 		// Dashboard variable type
 		// `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
 		// `adhoc`: Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only).
@@ -311,8 +364,9 @@ lineage: schemas: [{
 		// `textbox`: Display a free text input field with an optional default value.
 		// `custom`: Define the variable options manually using a comma-separated list.
 		// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+		// `switch`: Boolean variables rendered as a switch
 		#VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
-			"system" | "snapshot" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
+			"system" | "snapshot" | "switch" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
 		// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
 		// Continuous color interpolates a color using the percentage of a value relative to min and max.
@@ -730,6 +784,9 @@ lineage: schemas: [{
 
 			// The behavior when clicking on a result
 			links?: [...] @grafanamaturity(NeedsExpertReview)
+
+			// Define interactive HTTP requests that can be triggered from data visualizations.
+			actions?: [...#Action] @grafanamaturity(NeedsExpertReview)
 
 			// Alternative to empty string
 			noValue?: string @grafanamaturity(NeedsExpertReview)

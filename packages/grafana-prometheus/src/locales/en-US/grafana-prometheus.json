@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Set lower limit for the step parameter",
+        "aria-label-exemplars": "Exemplars switch.",
+        "aria-label-format": "Format combobox",
+        "aria-label-lower-limit-parameter": "Min step text box, set lower limit for the step parameter",
         "aria-label-select-resolution": "Select resolution",
+        "aria-label-type": "Type radio button group",
         "format-options": {
           "label-heatmap": "Heatmap",
           "label-table": "Table",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "Parsing error: Switch to the builder mode?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "Legend combobox",
         "label-legend": "Legend",
         "placeholder-select-legend-mode": "Select legend mode",
         "tooltip-legend": "Series name override or template. Ex. {{templateExample}} will be replaced with label value for {{labelName}}."
@@ -482,11 +486,6 @@
         "message-no-metrics-found": "There are no metrics found in the data source.",
         "name": "Name",
         "type": "Type"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Query parsing is ambiguous."
-        }
       }
     }
   }

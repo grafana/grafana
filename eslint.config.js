@@ -26,7 +26,7 @@ const commonTestIgnores = [
   '**/__mocks__/**',
   '**/mocks/**/*.{ts,tsx}',
   '**/public/test/**',
-  '**/mocks.{ts,tsx}',
+  '**/{mocks,test-utils}.{ts,tsx}',
   '**/*.mock.{ts,tsx}',
   '**/{test-helpers,testHelpers}.{ts,tsx}',
   '**/{spec,test-helpers}/**/*.{ts,tsx}',
@@ -100,6 +100,7 @@ module.exports = [
       '**/build/',
       '**/compiled/',
       '**/dist/',
+      'coverage/',
       'data/',
       'deployment_tools_config.json',
       'devenv',
@@ -361,7 +362,10 @@ module.exports = [
       '**/mock*.{ts,tsx}',
     ],
     rules: {
-      '@grafana/i18n/no-untranslated-strings': ['error', { calleesToIgnore: ['^css$', 'use[A-Z].*'] }],
+      '@grafana/i18n/no-untranslated-strings': [
+        'error',
+        { calleesToIgnore: ['^css$', 'use[A-Z].*'], basePaths: ['public/app/features'] },
+      ],
       '@grafana/i18n/no-translation-top-level': 'error',
     },
   },
@@ -550,6 +554,26 @@ module.exports = [
     ],
     rules: {
       'no-barrel-files/no-barrel-files': 'error',
+    },
+  },
+
+  {
+    // @grafana/i18n shouldn't import from our 'library' NPM packages
+    name: 'grafana/packages-that-i18n-cant-import',
+    files: ['packages/grafana-i18n/**/*.{ts,tsx}'],
+    ignores: [],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['@grafana/*'],
+              message: "'@grafana/* packages' should not be imported in @grafana/i18n",
+            },
+          ],
+        }),
+      ],
     },
   },
 ];

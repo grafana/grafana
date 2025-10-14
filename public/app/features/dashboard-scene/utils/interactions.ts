@@ -1,11 +1,94 @@
 import { config, reportInteraction } from '@grafana/runtime';
 
+import { DashboardTrackingInfo, DynamicDashboardsTrackingInformation } from '../serialization/DashboardSceneSerializer';
+
 let isScenesContextSet = false;
 
 export const DashboardInteractions = {
   // Dashboard interactions:
-  dashboardInitialized: (properties?: Record<string, unknown>) => {
-    reportDashboardInteraction('init_dashboard_completed', { ...properties });
+  dashboardInitialized: (
+    properties: { theme: undefined; duration: number | undefined; isScene: boolean } & Partial<DashboardTrackingInfo> &
+      Partial<DynamicDashboardsTrackingInformation> &
+      Partial<{ version_before_migration: number | undefined }>
+  ) => {
+    reportDashboardInteraction('init_dashboard_completed', properties);
+  },
+
+  dashboardCopied: (properties: { name: string; url: string }) => {
+    reportInteraction('grafana_dashboard_copied', properties);
+  },
+
+  dashboardCreatedOrSaved: (
+    isNew: boolean | undefined,
+    properties:
+      | { name: string; url: string }
+      | {
+          name: string;
+          url: string;
+          numPanels: number;
+          uid: string;
+          conditionalRenderRules: number;
+          autoLayoutCount: number;
+          customGridLayoutCount: number;
+          panelsByDatasourceType: Record<string, number>;
+        }
+  ) => {
+    reportDashboardInteraction(isNew ? 'created' : 'saved', properties, 'grafana_dashboard');
+  },
+
+  // grafana_dashboards_edit_button_clicked
+  // when a user clicks the ‘edit’ or ‘make editable’ button in a dashboard view mode
+  editButtonClicked: (properties: { outlineExpanded: boolean; dashboardUid?: string }) => {
+    reportDashboardInteraction('edit_button_clicked', properties);
+  },
+
+  // grafana_dashboards_exit_edit_button_clicked
+  // when a user clicks the ‘Exit edit’ or ‘Exit Edit mode’ button in a dashboard edit mode
+  exitEditButtonClicked: () => {
+    reportDashboardInteraction('exit_edit_button_clicked');
+  },
+
+  // grafana_dashboards_outline_clicked
+  // when a user opens the outline view
+  dashboardOutlineClicked: () => {
+    reportDashboardInteraction('outline_clicked');
+  },
+
+  // grafana_dashboards_outline_item_clicked
+  // when a user clicks on an element of the outline
+  outlineItemClicked: (properties: { index: number; depth: number }) => {
+    reportDashboardInteraction('outline_item_clicked', properties);
+  },
+
+  // dashboards_add_variable_button_clicked
+  // when a user clicks on ‘Add Variable’ or ‘New Variable’
+  addVariableButtonClicked: (properties: { source: 'edit_pane' | 'settings_pane' }) => {
+    reportDashboardInteraction('add_variable_button_clicked', properties);
+  },
+
+  // Dashboard edit item actions
+  // dashboards_edit_action_clicked: when user adds or removes an item in edit mode
+  // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab
+  trackAddPanelClick() {
+    reportDashboardInteraction('edit_action_clicked', { item: 'add_panel' });
+  },
+  trackGroupRowClick() {
+    reportDashboardInteraction('edit_action_clicked', { item: 'group_row' });
+  },
+  trackGroupTabClick() {
+    reportDashboardInteraction('edit_action_clicked', { item: 'group_tab' });
+  },
+  trackUngroupClick() {
+    reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
+  },
+  trackPastePanelClick() {
+    reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel' });
+  },
+  trackRemoveRowClick() {
+    reportDashboardInteraction('edit_action_clicked', { item: 'remove_row' });
+  },
+  trackRemoveTabClick() {
+    reportDashboardInteraction('edit_action_clicked', { item: 'remove_tab' });
   },
 
   panelLinkClicked: (properties?: Record<string, unknown>) => {
@@ -132,16 +215,23 @@ export const DashboardInteractions = {
   downloadDashboardImageClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('dashboard_image_downloaded', properties);
   },
+  copyImageUrlClicked: (properties?: Record<string, unknown>) => {
+    reportDashboardInteraction('dashboard_image_url_copied', properties);
+  },
 };
 
-const reportDashboardInteraction: typeof reportInteraction = (name, properties) => {
+const reportDashboardInteraction = (
+  name: string,
+  properties?: Record<string, unknown>,
+  interactionPrefix = 'dashboards'
+) => {
   const meta = isScenesContextSet ? { scenesView: true } : {};
   const isDynamicDashboard = config.featureToggles?.dashboardNewLayouts ?? false;
 
   if (properties) {
-    reportInteraction(`dashboards_${name}`, { ...properties, ...meta, isDynamicDashboard });
+    reportInteraction(`${interactionPrefix}_${name}`, { ...properties, ...meta, isDynamicDashboard });
   } else {
-    reportInteraction(`dashboards_${name}`, { isDynamicDashboard });
+    reportInteraction(`${interactionPrefix}_${name}`, { isDynamicDashboard });
   }
 };
 

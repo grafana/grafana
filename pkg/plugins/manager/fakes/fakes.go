@@ -444,6 +444,10 @@ func NewFakePluginFS(base string) *FakePluginFS {
 	}
 }
 
+func (f *FakePluginFS) Type() string {
+	return "fake"
+}
+
 func (f *FakePluginFS) Open(name string) (fs.File, error) {
 	if f.OpenFunc != nil {
 		return f.OpenFunc(name)
@@ -693,4 +697,39 @@ func (p *AssetProvider) AssetPath(plugin pluginassets.PluginInfo, assetPath ...s
 		return p.AssetPathFunc(plugin, assetPath...)
 	}
 	return "", nil
+}
+
+type FakeErrorTracker struct {
+	RecordFunc func(ctx context.Context, err *plugins.Error)
+	ClearFunc  func(ctx context.Context, pluginID string)
+	ErrorsFunc func(ctx context.Context) []*plugins.Error
+}
+
+func NewFakeErrorTracker() *FakeErrorTracker {
+	return &FakeErrorTracker{}
+}
+
+func (t *FakeErrorTracker) Record(ctx context.Context, err *plugins.Error) {
+	if t.RecordFunc != nil {
+		t.RecordFunc(ctx, err)
+		return
+	}
+}
+
+func (t *FakeErrorTracker) Clear(ctx context.Context, pluginID string) {
+	if t.ClearFunc != nil {
+		t.ClearFunc(ctx, pluginID)
+		return
+	}
+}
+
+func (t *FakeErrorTracker) Errors(ctx context.Context) []*plugins.Error {
+	if t.ErrorsFunc != nil {
+		return t.ErrorsFunc(ctx)
+	}
+	return nil
+}
+
+func (t *FakeErrorTracker) Error(ctx context.Context, pluginID string) *plugins.Error {
+	return &plugins.Error{}
 }

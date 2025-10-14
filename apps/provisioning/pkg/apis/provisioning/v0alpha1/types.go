@@ -128,6 +128,97 @@ func (r RepositoryType) IsGit() bool {
 	return r == GitRepositoryType || r == GitHubRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
 }
 
+// Branch returns the branch for git-based repositories
+// or an empty string for local repositories
+func (r *Repository) Branch() string {
+	if !r.Spec.Type.IsGit() {
+		return ""
+	}
+
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			return r.Spec.GitHub.Branch
+		}
+	case GitRepositoryType:
+		if r.Spec.Git != nil {
+			return r.Spec.Git.Branch
+		}
+	case BitbucketRepositoryType:
+		if r.Spec.Bitbucket != nil {
+			return r.Spec.Bitbucket.Branch
+		}
+	case GitLabRepositoryType:
+		if r.Spec.GitLab != nil {
+			return r.Spec.GitLab.Branch
+		}
+	default:
+		return ""
+	}
+
+	return ""
+}
+
+// URL returns the URL for git-based repositories
+// or an empty string for local repositories
+func (r *Repository) URL() string {
+	if !r.Spec.Type.IsGit() {
+		return ""
+	}
+
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			return r.Spec.GitHub.URL
+		}
+	case GitRepositoryType:
+		if r.Spec.Git != nil {
+			return r.Spec.Git.URL
+		}
+	case BitbucketRepositoryType:
+		if r.Spec.Bitbucket != nil {
+			return r.Spec.Bitbucket.URL
+		}
+	case GitLabRepositoryType:
+		if r.Spec.GitLab != nil {
+			return r.Spec.GitLab.URL
+		}
+	default:
+		return ""
+	}
+
+	return ""
+}
+
+func (r *Repository) Path() string {
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			return r.Spec.GitHub.Path
+		}
+	case GitRepositoryType:
+		if r.Spec.Git != nil {
+			return r.Spec.Git.Path
+		}
+	case BitbucketRepositoryType:
+		if r.Spec.Bitbucket != nil {
+			return r.Spec.Bitbucket.Path
+		}
+	case GitLabRepositoryType:
+		if r.Spec.GitLab != nil {
+			return r.Spec.GitLab.Path
+		}
+	case LocalRepositoryType:
+		if r.Spec.Local != nil {
+			return r.Spec.Local.Path
+		}
+	default:
+		return ""
+	}
+
+	return ""
+}
+
 type RepositorySpec struct {
 	// The repository display name (shown in the UI)
 	Title string `json:"title"`
@@ -219,6 +310,9 @@ type RepositoryStatus struct {
 
 	// Webhook Information (if applicable)
 	Webhook *WebhookStatus `json:"webhook"`
+
+	// Error information during repository deletion (if any)
+	DeleteError string `json:"deleteError,omitempty"`
 }
 
 // HealthFailureType represents different types of repository failures

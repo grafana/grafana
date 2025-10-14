@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents, locationService } from '@grafana/runtime';
+import { getAppEvents, locationService, reportInteraction } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, Field, Input, Stack, TextArea } from '@grafana/ui';
 import { RepositoryView, Unstructured } from 'app/api/clients/provisioning/v0alpha1';
@@ -33,7 +33,6 @@ import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: ProvisionedDashboardFormData;
-  loadedFromRef?: string;
   workflowOptions: Array<{ label: string; value: string }>;
   readOnly: boolean;
   repository?: RepositoryView;
@@ -45,7 +44,6 @@ export function SaveProvisionedDashboardForm({
   drawer,
   changeInfo,
   isNew,
-  loadedFromRef,
   workflowOptions,
   readOnly,
   repository,
@@ -115,7 +113,7 @@ export function SaveProvisionedDashboardForm({
     panelEditor?.onDiscard();
 
     const model = dashboard.getSaveModel();
-    const resourceData = request?.data?.resource.dryRun;
+    const resourceData = request?.data?.resource.upsert || request?.data?.resource.dryRun;
     const saveResponse = createSaveResponseFromResource(resourceData);
     dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
 
@@ -135,7 +133,15 @@ export function SaveProvisionedDashboardForm({
   });
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
+  const handleFormSubmit = async ({
+    title,
+    description,
+    repo,
+    path,
+    comment,
+    ref,
+    folder,
+  }: ProvisionedDashboardFormData) => {
     // Validate required fields
     if (!repo || !path) {
       console.error('Missing required fields for saving:', { repo, path });
@@ -157,8 +163,15 @@ export function SaveProvisionedDashboardForm({
       copyTags: true,
     });
 
+    reportInteraction('grafana_provisioning_dashboard_save_submitted', {
+      workflow,
+      repositoryName: repo,
+      repositoryType: repository?.type ?? 'unknown',
+    });
+
     createOrUpdateFile({
-      ref,
+      // Skip adding ref to the default branch request
+      ref: ref === repository?.branch ? undefined : ref,
       name: repo,
       path,
       message,

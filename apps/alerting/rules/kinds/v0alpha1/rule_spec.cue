@@ -12,12 +12,12 @@ TemplateString: string
 
 #RuleSpec: {
 	title:   string
-	data:    #QueryMap
 	paused?: bool
 	trigger: #IntervalTrigger
 	labels?: {
 		[string]: TemplateString
 	}
+	expressions: #ExpressionMap
 	...
 }
 
@@ -34,15 +34,20 @@ TemplateString: string
 }
 
 // TODO: validate that only one can specify source=true
-#QueryMap: {
-	[string]: #Query
+#ExpressionMap: {
+	[string]: #Expression
 } // & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
 
-// TODO: come up with a better name for this. We have expression type things and data source queries
-#Query: {
-	queryType:          string // TODO: consider making this optional, with the nil value meaning "__expr__" (i.e. expression query)
+#Expression: {
+	// The type of query if this is a query expression
+	queryType?:         string
 	relativeTimeRange?: #RelativeTimeRange
-	datasourceUID:      #DatasourceUID
-	model:              _
-	source?:            bool
+	// The UID of the datasource to run this expression against. If omitted, the expression will be run against the `__expr__` datasource
+	datasourceUID?: #DatasourceUID
+	model:          _
+	// Used to mark the expression to be used as the final source for the rule evaluation
+	// Only one expression in a rule can be marked as the source
+	// For AlertRules, this is the expression that will be evaluated against the alerting condition
+	// For RecordingRules, this is the expression that will be recorded
+	source?: bool
 }
