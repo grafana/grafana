@@ -35,8 +35,8 @@ type translation struct {
 	actionSetMapping  map[string][]string
 	folderSupport     bool
 	skipScopeOnCreate bool
-	// use this option if you need to limit access to users that can access all resources 
-	useWildcardScope  bool
+	// use this option if you need to limit access to users that can access all resources
+	useWildcardScope bool
 }
 
 func (t translation) Action(verb string) (string, bool) {
@@ -204,7 +204,7 @@ func NewMapperRegistry() MapperRegistry {
 				skipScopeOnCreate: false,
 			},
 			"rolebindings": translation{
-				resource:         "rolebindings",
+				resource: "rolebindings",
 				// rolebidings should only be modifiable by admins with a wildcard access
 				useWildcardScope: true,
 				verbMapping: map[string]string{
