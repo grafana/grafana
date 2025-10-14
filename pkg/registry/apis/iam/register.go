@@ -46,6 +46,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+const MaxConcurrentZanzanaWrites = 20
+
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
@@ -75,21 +77,19 @@ func RegisterAPIService(
 		legacyAccessClient:         legacyAccessClient,
 		accessClient:               accessClient,
 		zClient:                    zClient,
+		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
 		display:                    user.NewLegacyDisplayREST(store),
 		reg:                        reg,
 		logger:                     log.New("iam.apis"),
 		features:                   features,
-		// enableAuthZApis:              features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
-		// enableResourcePermissionApis: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
-		// enableAuthnMutation:          features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
-		enableDualWriter: true,
+		enableDualWriter:           true,
 	}
 	apiregistration.RegisterAPI(builder)
 
 	return builder, nil
 }
 
-// TODO zClient, reg
+// TODO zClient, zTickets, reg
 func NewAPIService(
 	accessClient types.AccessClient,
 	dbProvider legacysql.LegacyDatabaseProvider,

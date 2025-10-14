@@ -100,58 +100,71 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 		return
 	}
 
+	// Grab a ticket to write to Zanzana
+	// This limits the amount of concurrent writes to Zanzana
+	b.zTickets <- true
+
 	rp, ok := obj.(*iamv0.ResourcePermission)
 	if !ok {
 		return
 	}
 
-	resource := rp.Spec.Resource
-	permissions := rp.Spec.Permissions
+	rpCopy := rp.DeepCopy()
 
-	object := zanzana.NewObjectEntry(toZanzanaType(resource.ApiGroup), resource.ApiGroup, resource.Resource, "", resource.Name)
+	go func(rp *iamv0.ResourcePermission) {
+		defer func() {
+			// Release the ticket after write is done
+			<-b.zTickets
+		}()
 
-	tuples := make([]*v1.TupleKey, 0, len(permissions))
-	for _, p := range permissions {
-		tuple, err := NewResourceTuple(object, resource, p)
-		if err != nil {
-			b.logger.Error("failed to create resource permission tuple",
-				"namespace", rp.Namespace,
-				"object", object,
-				"err", err,
-			)
+		resource := rp.Spec.Resource
+		permissions := rp.Spec.Permissions
 
-			continue
+		object := zanzana.NewObjectEntry(toZanzanaType(resource.ApiGroup), resource.ApiGroup, resource.Resource, "", resource.Name)
+
+		tuples := make([]*v1.TupleKey, 0, len(permissions))
+		for _, p := range permissions {
+			tuple, err := NewResourceTuple(object, resource, p)
+			if err != nil {
+				b.logger.Error("failed to create resource permission tuple",
+					"namespace", rp.Namespace,
+					"object", object,
+					"err", err,
+				)
+
+				continue
+			}
+			tuples = append(tuples, tuple)
 		}
-		tuples = append(tuples, tuple)
-	}
 
-	// Avoid writing if there are no valid tuples
-	if len(tuples) == 0 {
-		b.logger.Warn("no valid tuples to write", "namespace", rp.Namespace, "resource", object)
-		return
-	}
+		// Avoid writing if there are no valid tuples
+		if len(tuples) == 0 {
+			b.logger.Warn("no valid tuples to write", "namespace", rp.Namespace, "resource", object)
+			return
+		}
 
-	b.logger.Debug("writing resource permission to zanzana",
-		"namespace", rp.Namespace,
-		"object", object,
-		"tuplesCnt", len(tuples),
-	)
-
-	ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
-	defer cancel()
-
-	err := b.zClient.Write(ctx, &v1.WriteRequest{
-		Namespace: rp.Namespace,
-		Writes: &v1.WriteRequestWrites{
-			TupleKeys: tuples,
-		},
-	})
-	if err != nil {
-		b.logger.Error("failed to write resource permission to zanzana",
-			"err", err,
+		b.logger.Debug("writing resource permission to zanzana",
 			"namespace", rp.Namespace,
 			"object", object,
 			"tuplesCnt", len(tuples),
 		)
-	}
+
+		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+		defer cancel()
+
+		err := b.zClient.Write(ctx, &v1.WriteRequest{
+			Namespace: rp.Namespace,
+			Writes: &v1.WriteRequestWrites{
+				TupleKeys: tuples,
+			},
+		})
+		if err != nil {
+			b.logger.Error("failed to write resource permission to zanzana",
+				"err", err,
+				"namespace", rp.Namespace,
+				"object", object,
+				"tuplesCnt", len(tuples),
+			)
+		}
+	}(rpCopy)
 }
