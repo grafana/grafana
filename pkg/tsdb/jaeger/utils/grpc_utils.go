@@ -91,15 +91,15 @@ func TransformGrpcSearchResponse(response types.GrpcTracesResult, dsUID string, 
 			traceName := fmt.Sprintf("%s: %s", serviceName.StringValue, scopeSpan.Scope.Name)
 			startTimeInt, startErr := strconv.ParseInt(rootSpan.StartTimeUnixNano, 10, 64)
 			endTimeInt, endErr := strconv.ParseInt(rootSpan.EndTimeUnixNano, 10, 64)
-			duration := 0
-			if startErr != nil && endErr != nil {
-				duration = int(endTimeInt) - int(startTimeInt)
+			duration := int64(0)
+			if startErr == nil && endErr == nil {
+				duration = endTimeInt - startTimeInt
 			}
 
 			frame.AppendRow(
 				rootSpan.TraceID,
 				traceName,
-				rootSpan.StartTimeUnixNano,
+				time.Unix(0, startTimeInt),
 				duration,
 			)
 		}

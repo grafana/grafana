@@ -97,10 +97,9 @@ func (j *JaegerClient) GrpcSearch(query *JaegerQuery, start, end time.Time) (*da
 		return nil, fmt.Errorf("failed to decode Jaeger response: %w", err)
 	}
 
-	if result.Error.HttpCode != http.StatusOK {
-		backend.Logger.Warn("heeeer", result.Error.Message)
+	if result.Error.HttpCode != 0 && result.Error.HttpCode != http.StatusOK {
 		err := backend.DownstreamError(fmt.Errorf("request failed %s", result.Error.Message))
-		if backend.ErrorSourceFromHTTPStatus(int(result.Error.HttpCode)) == backend.ErrorSourceDownstream {
+		if backend.ErrorSourceFromHTTPStatus(result.Error.HttpCode) == backend.ErrorSourceDownstream {
 			return nil, backend.DownstreamError(err)
 		}
 		return nil, err

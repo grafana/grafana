@@ -22,7 +22,7 @@ type GrpcTracesResponse struct {
 
 type GrpcRuntimeStreamError struct {
 	GrpcCode   int32         `json:"grpcCode"`
-	HttpCode   int32         `json:"httpCode"`
+	HttpCode   int           `json:"httpCode"`
 	Message    string        `json:"message"`
 	HttpStatus string        `json:"httpStatus"`
 	Details    []ProtobufAny `json:"details"`
