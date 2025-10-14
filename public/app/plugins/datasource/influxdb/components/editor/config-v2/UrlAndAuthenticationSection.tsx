@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { firstValueFrom } from 'rxjs';
 
 import { onUpdateDatasourceJsonDataOptionSelect, onUpdateDatasourceOption } from '@grafana/data';
@@ -14,6 +15,7 @@ import {
   Text,
   ComboboxOption,
   Alert,
+  useStyles2,
 } from '@grafana/ui';
 
 import { InfluxVersion } from '../../../types';
@@ -36,6 +38,7 @@ const getQueryLanguageOptions = (productName: string): Array<{ value: string }> 
 
 export const UrlAndAuthenticationSection = (props: Props) => {
   const { options, onOptionsChange } = props;
+  const styles = useStyles2(getStyles);
 
   const isInfluxVersion = (v: string): v is InfluxVersion =>
     typeof v === 'string' && (v === InfluxVersion.Flux || v === InfluxVersion.InfluxQL || v === InfluxVersion.SQL);
@@ -168,7 +171,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
           Enter the URL of your InfluxDB instance, then select your product and query language. This will determine the
           available settings and authentication methods in the next steps.
         </Text>
-        <Box direction="column" gap={5} marginTop={3}>
+        <Box direction="column" marginTop={3}>
           <Field label="URL" noMargin required>
             <Input
               data-testid="influxdb-v2-config-url-input"
@@ -182,50 +185,58 @@ export const UrlAndAuthenticationSection = (props: Props) => {
             />
           </Field>
           <Box marginTop={2}>
-            <Stack direction="row" gap={2} wrap="wrap" width="100%">
-              <div style={{ width: "50%" }}>
-                <Field
-                  label="Product"
-                  description={
-                    <div style={{ display: 'flex', alignItems: 'center', height: '18px' }}>
-                      <Text color="secondary">
-                        Use{' '}
-                        <TextLink
-                          href="https://docs.influxdata.com/influxdb3/enterprise/visualize-data/grafana/?section=influxdb3%252Fenterprise%252Fvisualize-data&detection_method=url_analysis"
-                          variant="bodySmall"
-                          external
-                        >
-                          InfluxDB detection
-                        </TextLink>{' '}
-                        to identify the product
-                      </Text>
-                    </div>
-                  }
-                  noMargin
-                  required
-                >
-                  <Combobox
-                    data-testid="influxdb-v2-config-product-select"
-                    value={options.jsonData.product}
-                    options={INFLUXDB_VERSION_MAP.map(({ name }) => ({ value: name }))}
-                    onChange={onProductChange}
-                  />
-                </Field>
+            <Stack direction="row" wrap="wrap" justifyContent="space-between">
+              <div className={styles.col}>
+                <Box width="100%" minWidth={37}>
+                  <Field
+                    label="Product"
+                    description={
+                      <div style={{ display: 'flex', alignItems: 'center', height: '18px' }}>
+                        <Text color="secondary">
+                          Use{' '}
+                          <TextLink
+                            href="https://docs.influxdata.com/influxdb3/enterprise/visualize-data/grafana/?section=influxdb3%252Fenterprise%252Fvisualize-data&detection_method=url_analysis"
+                            variant="bodySmall"
+                            external
+                          >
+                            InfluxDB detection
+                          </TextLink>{' '}
+                          to identify the product
+                        </Text>
+                      </div>
+                    }
+                    noMargin
+                    required
+                  >
+                    <Combobox
+                      data-testid="influxdb-v2-config-product-select"
+                      value={options.jsonData.product}
+                      options={INFLUXDB_VERSION_MAP.map(({ name }) => ({ value: name }))}
+                      onChange={onProductChange}
+                    />
+                  </Field>
+                </Box>
               </div>
-              <div style={{ width: "50%" }}>
-                <Field
-                  label="Query language"
-                  description={<div style={{ display: 'flex', alignItems: 'center', height: '18px'}}>The query language depends on product selection</div>}
-                  noMargin
-                  required
-                >
-                  <Combobox
-                    data-testid="influxdb-v2-config-query-language-select"
-                    value={options.jsonData.product !== '' ? options.jsonData.version : ''}
-                    options={getQueryLanguageOptions(options.jsonData.product || '')}
-                    onChange={onQueryLanguageChange}
-                  />
-                </Field>
+              <div className={styles.col}>
+                <Box width="100%" minWidth={37}>
+                  <Field
+                    label="Query language"
+                    description={
+                      <div style={{ display: 'flex', alignItems: 'center', height: '18px' }}>
+                        The query language depends on product selection
+                      </div>
+                    }
+                    noMargin
+                    required
+                  >
+                    <Combobox
+                      data-testid="influxdb-v2-config-query-language-select"
+                      value={options.jsonData.product !== '' ? options.jsonData.version : ''}
+                      options={getQueryLanguageOptions(options.jsonData.product || '')}
+                      onChange={onQueryLanguageChange}
+                    />
+                  </Field>
+                </Box>
               </div>
             </Stack>
           </Box>
@@ -248,4 +259,16 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       </CollapsableSection>
     </Box>
   );
+};
+
+const getStyles = () => {
+  return {
+    col: css({
+      flex: '1 1 48%',
+      minWidth: '320px',
+    }),
+    '@media (max-width: 768px)': {
+      flexBasis: '100%',
+    },
+  };
 };

@@ -22,7 +22,7 @@ import {
   useStyles2,
   Text,
   Stack,
-  InlineLabel,
+  Checkbox,
 } from '@grafana/ui';
 
 import {
@@ -182,14 +182,9 @@ export const AuthSettings = (props: Props) => {
             </Box>
           )}
           <Box display="flex" direction="row" alignItems="center" marginBottom={2}>
-            <InlineLabel
-              style={{ width: '150px' }}
-              tooltip={'Whether credentials such as cookies or auth headers should be sent with cross-site requests.'}
-            >
-              With Credentials
-            </InlineLabel>
-            <InlineSwitch
-              data-testid="influxdb-v2-config-auth-settings-with-credentials"
+            <Checkbox
+              label="With credentials"
+              description="Check to send cookies or auth headers with cross-site requests"
               value={authOptions.withCredentials}
               onChange={(e) => {
                 authProps.onAuthMethodSelect(selectedMethod!);
@@ -290,8 +285,8 @@ export const AuthSettings = (props: Props) => {
           </Box>
 
           <Box display="flex" direction="row" alignItems="center">
-            <InlineLabel style={{ width: '150px' }}>Skip TLS Verify</InlineLabel>
-            <InlineSwitch
+            <Checkbox
+              label="Skip TLS verify"
               data-testid="influxdb-v2-config-auth-settings-skip-tls-verify"
               value={authOptions.skipTLS}
               onChange={() => toggleOption('skipTLS', authProps.TLS!.skipTLSVerification.onToggle)}
