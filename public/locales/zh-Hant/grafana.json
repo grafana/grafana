@@ -4476,6 +4476,8 @@
     },
     "canvas-actions": {
       "add-panel": "新增面板",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "將群組分成列",
       "group-into-tab": "將群組分成分頁",
       "group-panels": "分組面板",
@@ -4484,7 +4486,8 @@
       "paste-panel": "貼上面板",
       "paste-row": "貼上列",
       "paste-tab": "貼上分頁",
-      "un-group-panels": "解散群組"
+      "un-group-panels": "解散群組",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4726,8 +4729,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "以逗號分隔的值",
-          "values-placeholder": "1、10、mykey：myvalue、myvalue、轉義、值"
+          "close": "",
+          "modal-title": "",
+          "values": "以逗號分隔的值"
         },
         "datasource-options": {
           "name-filter": "名稱篩選",
@@ -5146,10 +5150,16 @@
       "title-row-options": "列選項"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "刪除此列也會移除所有面板。確定要繼續嗎？",
       "delete-row-title": "要刪除列嗎？",
       "delete-row-yes": "刪除",
       "description": "帶標題的可收闔面板群組",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "只有在編輯模式下才能看到列標題",
       "name": "列",
       "row": {
@@ -5179,7 +5189,11 @@
       },
       "row-warning": {
         "title-not-unique": "此標題不是唯一"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "儀表板已儲存"
@@ -14081,14 +14095,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "新增選項",
-      "description": "除了查詢結果之外，還可新增自訂選項",
-      "label-placeholder": "顯示標籤",
-      "remove-option-button-label": "移除選項",
-      "value-placeholder": "值，預設空字串"
+      "description": "除了查詢結果之外，還可新增自訂選項"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "如何使用查詢結果對靜態選項進行排序"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "預設值",

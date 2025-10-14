@@ -4476,6 +4476,8 @@
     },
     "canvas-actions": {
       "add-panel": "添加面板",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "分组成行",
       "group-into-tab": "分组成标签页",
       "group-panels": "分组面板",
@@ -4484,7 +4486,8 @@
       "paste-panel": "粘贴面板",
       "paste-row": "粘贴行",
       "paste-tab": "粘贴选项卡",
-      "un-group-panels": "取消分组"
+      "un-group-panels": "取消分组",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4726,8 +4729,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "以逗号分隔的值",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "",
+          "modal-title": "",
+          "values": "以逗号分隔的值"
         },
         "datasource-options": {
           "name-filter": "名称筛选器",
@@ -5146,10 +5150,16 @@
       "title-row-options": "行选项"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "删除此行也将移除所有面板。您确认要继续吗？",
       "delete-row-title": "刪除行？",
       "delete-row-yes": "删除",
       "description": "带标题的可收起面板组",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "行标题仅在编辑模式下可见",
       "name": "行",
       "row": {
@@ -5179,7 +5189,11 @@
       },
       "row-warning": {
         "title-not-unique": "此标题并不唯一"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "数据面板已保存"
@@ -14081,14 +14095,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "添加选项",
-      "description": "在查询结果之外添加自定义选项",
-      "label-placeholder": "显示标签",
-      "remove-option-button-label": "移除选项",
-      "value-placeholder": "值，默认空字符串"
+      "description": "在查询结果之外添加自定义选项"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "如何使用查询结果对静态选项进行排序"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "默认值",

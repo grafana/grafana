@@ -4496,6 +4496,8 @@
     },
     "canvas-actions": {
       "add-panel": "Lägg till panel",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Gruppera i rad",
       "group-into-tab": "Gruppera i flik",
       "group-panels": "Gruppaneler",
@@ -4504,7 +4506,8 @@
       "paste-panel": "Klistra in panel",
       "paste-row": "Klistra in rad",
       "paste-tab": "Klistra in flik",
-      "un-group-panels": "Ta bort gruppering"
+      "un-group-panels": "Ta bort gruppering",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4746,8 +4749,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Värden åtskilda med kommatecken",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "",
+          "modal-title": "",
+          "values": "Värden åtskilda med kommatecken"
         },
         "datasource-options": {
           "name-filter": "Namnfilter",
@@ -5167,10 +5171,16 @@
       "title-row-options": "Radalternativ"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Om du tar bort denna rad tas också alla paneler bort. Är du säker på att du vill fortsätta?",
       "delete-row-title": "Radera rad?",
       "delete-row-yes": "Ta bort",
       "description": "Döljbara panelgrupper med rubriker",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Radrubrik endast synlig i redigeringsläge",
       "name": "Rader",
       "row": {
@@ -5200,7 +5210,11 @@
       },
       "row-warning": {
         "title-not-unique": "Den här titeln är inte unik"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Kontrollpanelen sparades"
@@ -14126,14 +14140,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Lägg till alternativ",
-      "description": "Lägg till anpassade alternativ utöver frågeresultat",
-      "label-placeholder": "displayetikett",
-      "remove-option-button-label": "Ta bort alternativ",
-      "value-placeholder": "värde, tom sträng som standard"
+      "description": "Lägg till anpassade alternativ utöver frågeresultat"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Hur man sorterar statiska alternativ med frågeresultat"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Standardvärde",

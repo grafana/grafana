@@ -4536,6 +4536,8 @@
     },
     "canvas-actions": {
       "add-panel": "Dodaj panel",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Grupuj w wierszu",
       "group-into-tab": "Grupuj na karcie",
       "group-panels": "Grupuj panele",
@@ -4544,7 +4546,8 @@
       "paste-panel": "Wklej panel",
       "paste-row": "Wklej wiersz",
       "paste-tab": "Wklej kartę",
-      "un-group-panels": "Rozłącz grupę"
+      "un-group-panels": "Rozłącz grupę",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4786,8 +4789,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Wartości rozdzielone przecinkami",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "",
+          "modal-title": "",
+          "values": "Wartości rozdzielone przecinkami"
         },
         "datasource-options": {
           "name-filter": "Filtr nazwy",
@@ -5209,10 +5213,16 @@
       "title-row-options": "Opcje wiersza"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Usunięcie tego wiersza spowoduje również usunięcie wszystkich paneli. Na pewno chcesz kontynuować?",
       "delete-row-title": "Usunąć wiersz?",
       "delete-row-yes": "Usuń",
       "description": "Zwijane grupy paneli z nagłówkami",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Nagłówek wiersza widoczny tylko w trybie edycji",
       "name": "Wiersze",
       "row": {
@@ -5242,7 +5252,11 @@
       },
       "row-warning": {
         "title-not-unique": "Ten tytuł nie jest unikalny"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Pulpit został zapisany"
@@ -14216,14 +14230,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Dodaj opcję",
-      "description": "Dodaj opcje niestandardowe oprócz wyników zapytania",
-      "label-placeholder": "wyświetl etykietę",
-      "remove-option-button-label": "Usuń opcję",
-      "value-placeholder": "wartość, domyślnie pusty ciąg"
+      "description": "Dodaj opcje niestandardowe oprócz wyników zapytania"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Jak sortować opcje statyczne na podstawie wyników zapytania"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Domyślna wartość",

@@ -4536,6 +4536,8 @@
     },
     "canvas-actions": {
       "add-panel": "Přidat panel",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Seskupit do řádku",
       "group-into-tab": "Seskupit do záložky",
       "group-panels": "Panely skupin",
@@ -4544,7 +4546,8 @@
       "paste-panel": "Vložit panel",
       "paste-row": "Vložit řádek",
       "paste-tab": "Vložit záložku",
-      "un-group-panels": "Zrušit seskupení"
+      "un-group-panels": "Zrušit seskupení",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4786,8 +4789,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Hodnoty oddělené čárkou",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped, value"
+          "close": "",
+          "modal-title": "",
+          "values": "Hodnoty oddělené čárkou"
         },
         "datasource-options": {
           "name-filter": "Filtr názvu",
@@ -5209,10 +5213,16 @@
       "title-row-options": "Možnosti řádku"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Odstraněním tohoto řádku dojde také k odebrání všech panelů. Opravdu chcete pokračovat?",
       "delete-row-title": "Odstranit řádek?",
       "delete-row-yes": "Odstranit",
       "description": "Sbalitelné skupiny panelů s nadpisy",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Záhlaví řádku viditelné pouze v režimu úprav",
       "name": "Řádky",
       "row": {
@@ -5242,7 +5252,11 @@
       },
       "row-warning": {
         "title-not-unique": "Tento název není jedinečný"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Nástěnka byla uložena"
@@ -14216,14 +14230,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Přidat možnost",
-      "description": "Přidat vlastní možnosti k výsledkům dotazu",
-      "label-placeholder": "zobrazit štítek",
-      "remove-option-button-label": "Odebrat možnost",
-      "value-placeholder": "hodnota, výchozí prázdný řetězec"
+      "description": "Přidat vlastní možnosti k výsledkům dotazu"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Jak třídit statické možnosti s výsledky dotazu"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Výchozí hodnota",

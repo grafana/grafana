@@ -831,15 +831,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "promQLScope",
-			Description:       "In-development feature that will allow injection of labels into prometheus queries.",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaOSSBigTent,
-			Expression:        "true",
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:              "logQLScope",
 			Description:       "In-development feature that will allow injection of labels into loki queries.",
 			Stage:             FeatureStagePrivatePreview,
@@ -1791,6 +1782,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "kubernetesAuthzZanzanaSync",
+			Description:       "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:              "kubernetesAuthnMutation",
 			Description:       "Enables create, delete, and update mutations for resources owned by IAM identity",
 			Stage:             FeatureStageExperimental,
@@ -1895,6 +1894,16 @@ var (
 			Description:       "Set this to true to enable all app chrome extensions registered by plugins.",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaPluginsPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+			Expression:        "false", // extensions will be disabled by default
+		},
+		{
+			Name:              "enableDashboardEmptyExtensions",
+			Description:       "Set this to true to enable all dashboard empty state extensions registered by plugins.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			FrontendOnly:      true,
@@ -2014,6 +2023,12 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaFrontendSearchNavOrganise,
 			Expression:   "false",
+		},
+		{
+			Name:        "grafanaPathfinder",
+			Description: "Enables Pathfinder app",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaPathfinderSquad,
 		},
 		{
 			Name:              "alertingTriage",
