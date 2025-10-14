@@ -1,10 +1,10 @@
 ---
 aliases:
-  - ../../features/panels/singlestat/
-  - ../../features/panels/stat/
-  - ../../panels/visualizations/stat-panel/
-  - ../../reference/singlestat/
-  - ../../visualizations/stat-panel/
+  - ../../../features/panels/singlestat/ # /docs/grafana/next/features/panels/singlestat/
+  - ../../../features/panels/stat/ # /docs/grafana/next/features/panels/stat/
+  - ../../../panels/visualizations/stat-panel/ # /docs/grafana/next/panels/visualizations/stat-panel/
+  - ../../../reference/singlestat/ # /docs/grafana/next/reference/singlestat/
+  - ../../stat-panel/ # /docs/grafana/next/visualizations/stat-panel/
   - ../../../panels-visualizations/visualizations/stat/ # /docs/grafana/next/panels-visualizations/visualizations/stat/
 description: Configure options for Grafana's stat visualization
 keywords:

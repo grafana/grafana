@@ -1,10 +1,10 @@
 ---
 aliases:
-  - ../administration/reports/ # /docs/grafana/latest/administration/reports/
-  - ../enterprise/export-pdf/ # /docs/grafana/latest/enterprise/export-pdf/
-  - ../enterprise/reporting/ # /docs/grafana/latest/enterprise/reporting/
-  - ../panels/create-reports/ # /docs/grafana/latest/panels/create-reports/
-  - reporting/ # /docs/grafana/latest/dashboards/reporting/
+  - ../../administration/reports/ # /docs/grafana/next/administration/reports/
+  - ../../enterprise/export-pdf/ # /docs/grafana/next/enterprise/export-pdf/
+  - ../../enterprise/reporting/ # /docs/grafana/next/enterprise/reporting/
+  - ../../panels/create-reports/ # /docs/grafana/next/panels/create-reports/
+  - ../../dashboards/reporting/ # /docs/grafana/next/dashboards/reporting/
   - ../../dashboards/create-reports/ # /docs/grafana/next/dashboards/create-reports/
 keywords:
   - grafana

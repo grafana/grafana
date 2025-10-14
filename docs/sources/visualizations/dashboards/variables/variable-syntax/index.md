@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../reference/templating/
-  - ../../variables/advanced-variable-format-options/
-  - ../../variables/syntax/
+  - ../../../reference/templating/ # /docs/grafana/next/reference/templating/
+  - ../../../variables/advanced-variable-format-options/ # /docs/grafana/next/variables/advanced-variable-format-options/
+  - ../../../variables/syntax/ # /docs/grafana/next/variables/syntax/
   - ../../../dashboards/variables/variable-syntax/ # /docs/grafana/next/dashboards/variables/variable-syntax/
 keywords:
   - grafana

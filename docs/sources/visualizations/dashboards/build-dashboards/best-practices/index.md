@@ -1,11 +1,11 @@
 ---
 aliases:
-  - ../../best-practices/
-  - ../../best-practices/best-practices-for-creating-dashboards/
-  - ../../best-practices/best-practices-for-managing-dashboards/
-  - ../../best-practices/common-observability-strategies/
-  - ../../best-practices/dashboard-management-maturity-levels/
-  - ../../getting-started/strategies/
+  - ../../../best-practices/ # /docs/grafana/next/best-practices/
+  - ../../../best-practices/best-practices-for-creating-dashboards/ # /docs/grafana/next/best-practices/best-practices-for-creating-dashboards/
+  - ../../../best-practices/best-practices-for-managing-dashboards/ # /docs/grafana/next/best-practices/best-practices-for-managing-dashboards/
+  - ../../../best-practices/common-observability-strategies/ # /docs/grafana/next/best-practices/common-observability-strategies/
+  - ../../../best-practices/dashboard-management-maturity-levels/ # /docs/grafana/next/best-practices/dashboard-management-maturity-levels/
+  - ../../../getting-started/strategies/ # /docs/grafana/next/getting-started/strategies/
   - ../../../dashboards/build-dashboards/best-practices/ # /docs/grafana/next/dashboards/build-dashboards/best-practices/
 description: Learn best practices for building and maintaining Grafana dashboards
 labels:

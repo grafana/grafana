@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../../visualizations/flame-graph/
+  - ../../flame-graph/ # /docs/grafana/next/visualizations/flame-graph/
   - ../../../panels-visualizations/visualizations/flame-graph/ # /docs/grafana/next/panels-visualizations/visualizations/flame-graph/
 keywords:
   - grafana

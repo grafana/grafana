@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../features/panels/heatmap/
-  - ../../visualizations/heatmap/
+  - ../../../features/panels/heatmap/ # /docs/grafana/next/features/panels/heatmap/
+  - ../../heatmap/ # /docs/grafana/next/visualizations/heatmap/
   - ../../../panels-visualizations/visualizations/heatmap/ # /docs/grafana/next/panels-visualizations/visualizations/heatmap/
 description: Configure options for Grafana's heatmap visualization
 keywords:

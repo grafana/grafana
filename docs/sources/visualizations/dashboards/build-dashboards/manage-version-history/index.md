@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../reference/dashboard_history/
-  - ../dashboard-history/
+  - ../../../reference/dashboard_history/ # /docs/grafana/next/reference/dashboard_history/
+  - ../../../dashboards/dashboard-history/ # /docs/grafana/next/dashboards/dashboard-history/
   - ../../../dashboards/build-dashboards/manage-version-history/ # /docs/grafana/next/dashboards/build-dashboards/manage-version-history/
 keywords:
   - grafana

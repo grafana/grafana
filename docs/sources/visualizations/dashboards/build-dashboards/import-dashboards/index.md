@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../reference/export_import/ # /docs/grafana/<GRAFANA_VERSION>/reference/export_import/
-  - ../export-import/ # /docs/grafana/<GRAFANA_VERSION>/dashboards/export-import/
+  - ../../../reference/export_import/ # /docs/grafana/next/reference/export_import/
+  - ../../../dashboards/export-import/ # /docs/grafana/next/dashboards/export-import/
   - ../../../dashboards/build-dashboards/import-dashboards/ # /docs/grafana/next/dashboards/build-dashboards/import-dashboards/
 canonical: https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/import-dashboards/
 keywords:

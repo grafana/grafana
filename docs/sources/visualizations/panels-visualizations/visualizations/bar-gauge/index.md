@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../features/panels/bar_gauge/
-  - ../../panels/visualizations/bar-gauge-panel/
-  - ../../visualizations/bar-gauge-panel/
+  - ../../../features/panels/bar_gauge/ # /docs/grafana/next/features/panels/bar_gauge/
+  - ../../../panels/visualizations/bar-gauge-panel/ # /docs/grafana/next/panels/visualizations/bar-gauge-panel/
+  - ../../bar-gauge-panel/ # /docs/grafana/next/visualizations/bar-gauge-panel/
   - ../../../panels-visualizations/visualizations/bar-gauge/ # /docs/grafana/next/panels-visualizations/visualizations/bar-gauge/
 description: Configure options for Grafana's bar gauge visualization
 keywords:

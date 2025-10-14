@@ -1,9 +1,9 @@
 ---
 aliases:
-  - ../../features/panels/dashlist/
-  - ../../panels/visualizations/dashboard-list-panel/
-  - ../../reference/dashlist/
-  - ../../visualizations/dashboard-list-panel/
+  - ../../../features/panels/dashlist/ # /docs/grafana/next/features/panels/dashlist/
+  - ../../../panels/visualizations/dashboard-list-panel/ # /docs/grafana/next/panels/visualizations/dashboard-list-panel/
+  - ../../../reference/dashlist/ # /docs/grafana/next/reference/dashlist/
+  - ../../dashboard-list-panel/ # /docs/grafana/next/visualizations/dashboard-list-panel/
   - ../../../panels-visualizations/visualizations/dashboard-list/ # /docs/grafana/next/panels-visualizations/visualizations/dashboard-list/
 keywords:
   - grafana

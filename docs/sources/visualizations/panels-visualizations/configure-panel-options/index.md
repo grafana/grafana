@@ -1,10 +1,10 @@
 ---
 aliases:
-  - ../panels/add-panels-dynamically/
-  - ../panels/configure-panel-options/
-  - ../panels/repeat-panels-or-rows/
-  - ../panels/working-with-panels/add-title-and-description/
-  - ../panels/working-with-panels/view-json-model/
+  - ../../panels/add-panels-dynamically/ # /docs/grafana/next/panels/add-panels-dynamically/
+  - ../../panels/configure-panel-options/ # /docs/grafana/next/panels/configure-panel-options/
+  - ../../panels/repeat-panels-or-rows/ # /docs/grafana/next/panels/repeat-panels-or-rows/
+  - ../../panels/working-with-panels/add-title-and-description/ # /docs/grafana/next/panels/working-with-panels/add-title-and-description/
+  - ../../panels/working-with-panels/view-json-model/ # /docs/grafana/next/panels/working-with-panels/view-json-model/
   - ../../panels-visualizations/configure-panel-options/ # /docs/grafana/next/panels-visualizations/configure-panel-options/
 keywords:
   - panel

@@ -1,9 +1,9 @@
 ---
 aliases:
-  - ../../features/panels/logs/
-  - ../../panels/visualizations/logs-panel/
-  - ../../reference/logs/
-  - ../../visualizations/logs-panel/
+  - ../../../features/panels/logs/ # /docs/grafana/next/features/panels/logs/
+  - ../../../panels/visualizations/logs-panel/ # /docs/grafana/next/panels/visualizations/logs-panel/
+  - ../../../reference/logs/ # /docs/grafana/next/reference/logs/
+  - ../../logs-panel/ # /docs/grafana/next/visualizations/logs-panel/
   - ../../../panels-visualizations/visualizations/logs/ # /docs/grafana/next/panels-visualizations/visualizations/logs/
 keywords:
   - grafana

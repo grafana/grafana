@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../panels/working-with-panels/configure-legend/
-  - visualizations/configure-legend/
+  - ../../panels/working-with-panels/configure-legend/ # /docs/grafana/next/panels/working-with-panels/configure-legend/
+  - ../../panels-visualizations/visualizations/configure-legend/ # /docs/grafana/next/panels-visualizations/visualizations/configure-legend/
   - ../../panels-visualizations/configure-legend/ # /docs/grafana/next/panels-visualizations/configure-legend/
 labels:
   products:

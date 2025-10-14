@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../features/panels/datagrid_panel/
-  - ../../reference/datagrid/
-  - ../../visualizations/datagrid/
+  - ../../../features/panels/datagrid_panel/ # /docs/grafana/next/features/panels/datagrid_panel/
+  - ../../../reference/datagrid/ # /docs/grafana/next/reference/datagrid/
+  - ../../datagrid/ # /docs/grafana/next/visualizations/datagrid/
   - ../../../panels-visualizations/visualizations/datagrid/ # /docs/grafana/next/panels-visualizations/visualizations/datagrid/
 description: Configure options for Grafana's datagrid visualization
 keywords:

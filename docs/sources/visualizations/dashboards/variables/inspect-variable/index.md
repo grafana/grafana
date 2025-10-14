@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../reference/templating/
-  - ../../variables/inspect-variable/
+  - ../../../reference/templating/ # /docs/grafana/next/reference/templating/
+  - ../../../variables/inspect-variable/ # /docs/grafana/next/variables/inspect-variable/
   - ../../../dashboards/variables/inspect-variable/ # /docs/grafana/next/dashboards/variables/inspect-variable/
 keywords:
   - grafana

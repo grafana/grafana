@@ -1,26 +1,26 @@
 ---
 aliases:
-  - ../../../features/panels/geomap/
-  - ../../../features/panels/geomap/arcgis/
-  - ../../../features/panels/geomap/carto/
-  - ../../../features/panels/geomap/controls/
-  - ../../../features/panels/geomap/daynight/
-  - ../../../features/panels/geomap/geojson/
-  - ../../../features/panels/geomap/heatmap/
-  - ../../../features/panels/geomap/markers/
-  - ../../../features/panels/geomap/osm/
-  - ../../../features/panels/geomap/zyx/
-  - ../../../panels/visualizations/geomap/
-  - ../../../panels/visualizations/geomap/arcgis/
-  - ../../../panels/visualizations/geomap/carto/
-  - ../../../panels/visualizations/geomap/controls/
-  - ../../../panels/visualizations/geomap/daynight/
-  - ../../../panels/visualizations/geomap/geojson/
-  - ../../../panels/visualizations/geomap/heatmap/
-  - ../../../panels/visualizations/geomap/markers/
-  - ../../../panels/visualizations/geomap/osm/
-  - ../../../panels/visualizations/geomap/zyx/
-  - ../../../visualizations/geomap/
+  - ../../../features/panels/geomap/ # /docs/grafana/next/features/panels/geomap/
+  - ../../../features/panels/geomap/arcgis/ # /docs/grafana/next/features/panels/geomap/arcgis/
+  - ../../../features/panels/geomap/carto/ # /docs/grafana/next/features/panels/geomap/carto/
+  - ../../../features/panels/geomap/controls/ # /docs/grafana/next/features/panels/geomap/controls/
+  - ../../../features/panels/geomap/daynight/ # /docs/grafana/next/features/panels/geomap/daynight/
+  - ../../../features/panels/geomap/geojson/ # /docs/grafana/next/features/panels/geomap/geojson/
+  - ../../../features/panels/geomap/heatmap/ # /docs/grafana/next/features/panels/geomap/heatmap/
+  - ../../../features/panels/geomap/markers/ # /docs/grafana/next/features/panels/geomap/markers/
+  - ../../../features/panels/geomap/osm/ # /docs/grafana/next/features/panels/geomap/osm/
+  - ../../../features/panels/geomap/zyx/ # /docs/grafana/next/features/panels/geomap/zyx/
+  - ../../../panels/visualizations/geomap/ # /docs/grafana/next/panels/visualizations/geomap/
+  - ../../../panels/visualizations/geomap/arcgis/ # /docs/grafana/next/panels/visualizations/geomap/arcgis/
+  - ../../../panels/visualizations/geomap/carto/ # /docs/grafana/next/panels/visualizations/geomap/carto/
+  - ../../../panels/visualizations/geomap/controls/ # /docs/grafana/next/panels/visualizations/geomap/controls/
+  - ../../../panels/visualizations/geomap/daynight/ # /docs/grafana/next/panels/visualizations/geomap/daynight/
+  - ../../../panels/visualizations/geomap/geojson/ # /docs/grafana/next/panels/visualizations/geomap/geojson/
+  - ../../../panels/visualizations/geomap/heatmap/ # /docs/grafana/next/panels/visualizations/geomap/heatmap/
+  - ../../../panels/visualizations/geomap/markers/ # /docs/grafana/next/panels/visualizations/geomap/markers/
+  - ../../../panels/visualizations/geomap/osm/ # /docs/grafana/next/panels/visualizations/geomap/osm/
+  - ../../../panels/visualizations/geomap/zyx/ # /docs/grafana/next/panels/visualizations/geomap/zyx/
+  - ../../../visualizations/geomap/ # /docs/grafana/visualizations/geomap/
   - ../../../panels-visualizations/visualizations/geomap/ # /docs/grafana/next/panels-visualizations/visualizations/geomap/
 description: Configure options for Grafana's geomap visualization
 keywords:

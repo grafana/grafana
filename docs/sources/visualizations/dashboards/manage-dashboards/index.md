@@ -1,9 +1,9 @@
 ---
 aliases:
-  - ../panels/working-with-panels/organize-dashboard/
-  - ../reference/dashboard_folders/
-  - dashboard-folders/
-  - dashboard-manage/
+  - ../../panels/working-with-panels/organize-dashboard/ # /docs/grafana/next/panels/working-with-panels/organize-dashboard/
+  - ../../reference/dashboard_folders/ # /docs/grafana/next/reference/dashboard_folders/
+  - ../../dashboards/dashboard-folders/ # /docs/grafana/next/dashboards/dashboard-folders/
+  - ../../dashboards/dashboard-manage/ # /docs/grafana/next/dashboards/dashboard-manage/
   - ../../dashboards/manage-dashboards/ # /docs/grafana/next/dashboards/manage-dashboards/
 canonical: https://grafana.com/docs/grafana/latest/dashboards/manage-dashboards/
 keywords:

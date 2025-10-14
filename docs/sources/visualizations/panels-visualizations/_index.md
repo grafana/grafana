@@ -1,8 +1,8 @@
 ---
 aliases:
-  - dashboards/configure-panels-visualizations/
-  - features/panels/panels/
-  - panels/
+  - ../dashboards/configure-panels-visualizations/ # /docs/grafana/next/dashboards/configure-panels-visualizations/
+  - ../features/panels/panels/ # /docs/grafana/next/features/panels/panels/
+  - ../panels/ # /docs/grafana/next/panels/
   - ../panels-visualizations/ # /docs/grafana/next/panels-visualizations/
 keywords:
   - grafana

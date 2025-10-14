@@ -1,11 +1,11 @@
 ---
 aliases:
-  - ../linking/data-link-variables/
-  - ../linking/data-links/
-  - ../panels/configure-data-links/
-  - ../reference/datalinks/
-  - ../variables/url-variables/
-  - ../variables/variable-types/url-variables/
+  - ../../linking/data-link-variables/ # /docs/grafana/next/linking/data-link-variables/
+  - ../../linking/data-links/ # /docs/grafana/next/linking/data-links/
+  - ../../panels/configure-data-links/ # /docs/grafana/next/panels/configure-data-links/
+  - ../../reference/datalinks/ # /docs/grafana/next/reference/datalinks/
+  - ../../variables/url-variables/ # /docs/grafana/next/variables/url-variables/
+  - ../../variables/variable-types/url-variables/ # /docs/grafana/next/variables/variable-types/url-variables/
   - ../../panels-visualizations/configure-data-links/ # /docs/grafana/next/panels-visualizations/configure-data-links/
 keywords:
   - grafana

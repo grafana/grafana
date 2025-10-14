@@ -1,6 +1,6 @@
 ---
 aliases:
-  - features/explore/
+  - ../features/explore/ # /docs/grafana/next/features/explore/
   - ../explore/ # /docs/grafana/next/explore/
   - /docs/grafana-cloud/visualizations/explore/
 keywords:

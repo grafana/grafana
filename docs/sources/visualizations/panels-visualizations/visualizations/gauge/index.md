@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../features/panels/gauge/
-  - ../../panels/visualizations/gauge-panel/
-  - ../../visualizations/gauge-panel/
+  - ../../../features/panels/gauge/ # /docs/grafana/next/features/panels/gauge/
+  - ../../../panels/visualizations/gauge-panel/ # /docs/grafana/next/panels/visualizations/gauge-panel/
+  - ../../gauge-panel/ # /docs/grafana/next/visualizations/gauge-panel/
   - ../../../panels-visualizations/visualizations/gauge/ # /docs/grafana/next/panels-visualizations/visualizations/gauge/
 description: Configure options for Grafana's gauge visualization
 keywords:

@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../features/panels/canvas/
-  - ../../visualizations/canvas/
+  - ../../../features/panels/canvas/ # /docs/grafana/next/features/panels/canvas/
+  - ../../canvas/ # /docs/grafana/next/visualizations/canvas/
   - ../../../panels-visualizations/visualizations/canvas/ # /docs/grafana/next/panels-visualizations/visualizations/canvas/
 description: Configure options for Grafana's canvas visualization
 keywords:

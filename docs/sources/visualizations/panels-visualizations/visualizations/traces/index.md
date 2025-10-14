@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../../visualizations/traces/
+  - ../../traces/ # /docs/grafana/next/visualizations/traces/
   - ../../../panels-visualizations/visualizations/traces/ # /docs/grafana/next/panels-visualizations/visualizations/traces/
 keywords:
   - grafana

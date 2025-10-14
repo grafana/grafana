@@ -1,9 +1,9 @@
 ---
 aliases:
-  - ../enterprise/usage-insights/
-  - ../enterprise/usage-insights/dashboard-datasource-insights/
-  - ../enterprise/usage-insights/improved-search/
-  - ../enterprise/usage-insights/presence-indicator/
+  - ../../enterprise/usage-insights/ # /docs/grafana/next/enterprise/usage-insights/
+  - ../../enterprise/usage-insights/dashboard-datasource-insights/ # /docs/grafana/next/enterprise/usage-insights/dashboard-datasource-insights/
+  - ../../enterprise/usage-insights/improved-search/ # /docs/grafana/next/enterprise/usage-insights/improved-search/
+  - ../../enterprise/usage-insights/presence-indicator/ # /docs/grafana/next/enterprise/usage-insights/presence-indicator/
   - ../../dashboards/assess-dashboard-usage/ # /docs/grafana/next/dashboards/assess-dashboard-usage/
 description: Understand how your Grafana instance is used
 keywords:

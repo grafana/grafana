@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../../../annotations/ # /docs/grafana/latest/dashboards/annotations/
+  - ../../../dashboards/annotations/ # /docs/grafana/next/annotations/
   - ../../../dashboards/build-dashboards/annotate-visualizations/ # /docs/grafana/next/dashboards/build-dashboards/annotate-visualizations/
   - ../../../panels/visualizations/annotations/ # /docs/grafana/next/panels/visualizations/annotations/
   - ../../../reference/annotations/ # /docs/grafana/latest/reference/annotations/

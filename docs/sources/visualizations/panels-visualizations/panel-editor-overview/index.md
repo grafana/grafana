@@ -1,15 +1,15 @@
 ---
 aliases:
-  - ../dashboards/add-organize-panels/
-  - ../dashboards/dashboard-create/
-  - ../panels/add-panels-dynamically/about-repeating-panels-rows/
-  - ../panels/add-panels-dynamically/configure-repeating-panels/
-  - ../panels/add-panels-dynamically/configure-repeating-rows/
-  - ../panels/working-with-panels/
-  - ../panels/working-with-panels/add-panel/
-  - ../panels/working-with-panels/navigate-inspector-panel/
-  - ../panels/working-with-panels/navigate-panel-editor/
-  - add-organize-panels/
+  - ../../dashboards/add-organize-panels/ # /docs/grafana/next/dashboards/add-organize-panels/
+  - ../../dashboards/dashboard-create/ # /docs/grafana/next/dashboards/dashboard-create/
+  - ../../panels/add-panels-dynamically/about-repeating-panels-rows/ # /docs/grafana/next/panels/add-panels-dynamically/about-repeating-panels-rows/
+  - ../../panels/add-panels-dynamically/configure-repeating-panels/ # /docs/grafana/next/panels/add-panels-dynamically/configure-repeating-panels/
+  - ../../panels/add-panels-dynamically/configure-repeating-rows/ # /docs/grafana/next/panels/add-panels-dynamically/configure-repeating-rows/
+  - ../../panels/working-with-panels/ # /docs/grafana/next/panels/working-with-panels/
+  - ../../panels/working-with-panels/add-panel/ # /docs/grafana/next/panels/working-with-panels/add-panel/
+  - ../../panels/working-with-panels/navigate-inspector-panel/ # /docs/grafana/next/panels/working-with-panels/navigate-inspector-panel/
+  - ../../panels/working-with-panels/navigate-panel-editor/ # /docs/grafana/next/panels/working-with-panels/navigate-panel-editor/
+  - ../../panels-visualizations/add-organize-panels/ # /docs/grafana/next/panels-visualizations/add-organize-panels/
   - ../../panels-visualizations/panel-editor-overview/ # /docs/grafana/next/panels-visualizations/panel-editor-overview/
 keywords:
   - panel

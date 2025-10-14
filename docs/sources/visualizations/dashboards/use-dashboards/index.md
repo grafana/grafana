@@ -1,12 +1,12 @@
 ---
 aliases:
-  - ../reference/search/
-  - dashboard-ui/
-  - dashboard-ui/dashboard-header/
-  - dashboard-ui/dashboard-row/
-  - search/
-  - shortcuts/
-  - time-range-controls/
+  - ../../reference/search/ # /docs/grafana/next/reference/search/
+  - ../../dashboards/dashboard-ui/ # /docs/grafana/next/dashboards/dashboard-ui/
+  - ../../dashboards/dashboard-ui/dashboard-header/ # /docs/grafana/next/dashboards/dashboard-ui/dashboard-header/
+  - ../../dashboards/dashboard-ui/dashboard-row/ # /docs/grafana/next/dashboards/dashboard-ui/dashboard-row/
+  - ../../dashboards/search/ # /docs/grafana/next/dashboards/search/
+  - ../../dashboards/shortcuts/ # /docs/grafana/next/dashboards/shortcuts/
+  - ../../dashboards/time-range-controls/ # /docs/grafana/next/dashboards/time-range-controls/
   - ../../dashboards/use-dashboards/ # /docs/grafana/next/dashboards/use-dashboards/
 keywords:
   - dashboard

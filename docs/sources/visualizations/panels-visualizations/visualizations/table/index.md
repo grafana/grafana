@@ -1,10 +1,10 @@
 ---
 aliases:
-  - ../../features/panels/table_panel/
-  - ../../panels/visualizations/table/filter-table-columns/
-  - ../../reference/table/
-  - ../../visualizations/table/
-  - ../../visualizations/table/filter-table-columns/
+  - ../../../features/panels/table_panel/ # /docs/grafana/next/features/panels/table_panel/
+  - ../../../panels/visualizations/table/filter-table-columns/ # /docs/grafana/next/panels/visualizations/table/filter-table-columns/
+  - ../../../reference/table/ # /docs/grafana/next/reference/table/
+  - ../../table/ # /docs/grafana/next/visualizations/table/
+  - ../../table/filter-table-columns/ # /docs/grafana/next/visualizations/table/filter-table-columns/
   - ../../../panels/visualizations/table/table-field-options/ # /docs/grafana/next/panels/visualizations/table/table-field-options/
   - ../../../panels-visualizations/visualizations/table/ # /docs/grafana/next/panels-visualizations/visualizations/table/
 description: Configure options for Grafana's table visualization

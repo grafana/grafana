@@ -1,13 +1,13 @@
 ---
 aliases:
-  - ../panels/configure-overrides/
-  - ../panels/field-overrides/
-  - ../panels/override-field-values/
-  - ../panels/override-field-values/about-field-overrides/
-  - ../panels/override-field-values/add-a-field-override/
-  - ../panels/override-field-values/delete-a-field-override/
-  - ../panels/override-field-values/edit-field-override/
-  - ../panels/override-field-values/view-field-override/
+  - ../../panels/configure-overrides/ # /docs/grafana/next/panels/configure-overrides/
+  - ../../panels/field-overrides/ # /docs/grafana/next/panels/field-overrides/
+  - ../../panels/override-field-values/ # /docs/grafana/next/panels/override-field-values/
+  - ../../panels/override-field-values/about-field-overrides/ # /docs/grafana/next/panels/override-field-values/about-field-overrides/
+  - ../../panels/override-field-values/add-a-field-override/ # /docs/grafana/next/panels/override-field-values/add-a-field-override/
+  - ../../panels/override-field-values/delete-a-field-override/ # /docs/grafana/next/panels/override-field-values/delete-a-field-override/
+  - ../../panels/override-field-values/edit-field-override/ # /docs/grafana/next/panels/override-field-values/edit-field-override/
+  - ../../panels/override-field-values/view-field-override/ # /docs/grafana/next/panels/override-field-values/view-field-override/
   - ../../panels-visualizations/configure-overrides/ # /docs/grafana/next/panels-visualizations/configure-overrides/
 labels:
   products:

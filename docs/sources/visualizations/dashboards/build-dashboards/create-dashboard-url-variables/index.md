@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../variables/url-variables/
-  - ../../variables/variable-types/url-variables/
+  - ../../../variables/url-variables/ # /docs/grafana/next/variables/url-variables/
+  - ../../../variables/variable-types/url-variables/ # /docs/grafana/next/variables/variable-types/url-variables/
   - ../../../dashboards/build-dashboards/create-dashboard-url-variables/ # /docs/grafana/next/dashboards/build-dashboards/create-dashboard-url-variables/
 keywords:
   - grafana

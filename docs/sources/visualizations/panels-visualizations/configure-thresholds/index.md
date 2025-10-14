@@ -1,12 +1,12 @@
 ---
 aliases:
-  - ../panels/
-  - ../panels/configure-thresholds/
-  - ../panels/specify-thresholds/about-thresholds/
-  - ../panels/specify-thresholds/add-a-threshold/
-  - ../panels/specify-thresholds/add-threshold-to-graph/
-  - ../panels/specify-thresholds/delete-a-threshold/
-  - ../panels/thresholds/
+  - ../../panels/ # /docs/grafana/next/panels/
+  - ../../panels/configure-thresholds/ # /docs/grafana/next/panels/configure-thresholds/
+  - ../../panels/specify-thresholds/about-thresholds/ # /docs/grafana/next/panels/specify-thresholds/about-thresholds/
+  - ../../panels/specify-thresholds/add-a-threshold/ # /docs/grafana/next/panels/specify-thresholds/add-a-threshold/
+  - ../../panels/specify-thresholds/add-threshold-to-graph/ # /docs/grafana/next/panels/specify-thresholds/add-threshold-to-graph/
+  - ../../panels/specify-thresholds/delete-a-threshold/ # /docs/grafana/next/panels/specify-thresholds/delete-a-threshold/
+  - ../../panels/thresholds/ # /docs/grafana/next/panels/thresholds/
   - ../../panels-visualizations/configure-thresholds/ # /docs/grafana/next/panels-visualizations/configure-thresholds/
 description: Configure thresholds in your visualizations
 labels:

@@ -1,13 +1,13 @@
 ---
 aliases:
-  - ../panels/apply-color-to-series/
-  - ../panels/configure-standard-options/
-  - ../panels/field-options/
-  - ../panels/field-options/standard-field-options/
-  - ../panels/reference-standard-field-definitions/
-  - ../panels/standard-field-definitions/
-  - ../panels/working-with-panels/format-standard-fields/
-  - ../panels/field-configuration-options/ # /docs/grafana/latest/panels/field-configuration-options/
+  - ../../panels/apply-color-to-series/ # /docs/grafana/next/panels/apply-color-to-series/
+  - ../../panels/configure-standard-options/ # /docs/grafana/next/panels/configure-standard-options/
+  - ../../panels/field-options/ # /docs/grafana/next/panels/field-options/
+  - ../../panels/field-options/standard-field-options/ # /docs/grafana/next/panels/field-options/standard-field-options/
+  - ../../panels/reference-standard-field-definitions/ # /docs/grafana/next/panels/reference-standard-field-definitions/
+  - ../../panels/standard-field-definitions/ # /docs/grafana/next/panels/standard-field-definitions/
+  - ../../panels/working-with-panels/format-standard-fields/ # /docs/grafana/next/panels/working-with-panels/format-standard-fields/
+  - ../../panels/field-configuration-options/ # /docs/grafana/next/panels/field-configuration-options/
   - ../../panels-visualizations/configure-standard-options/ # /docs/grafana/next/panels-visualizations/configure-standard-options/
 keywords:
   - panel

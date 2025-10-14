@@ -1,13 +1,13 @@
 ---
 aliases:
-  - ../reference/share_dashboard/ # /docs/grafana/latest/reference/share_dashboard/
-  - ../reference/share_panel/ # /docs/grafana/latest/reference/share_panel/
-  - ../share-dashboards-panels/ # /docs/grafana/latest/share-dashboards-panels/
-  - ../sharing/ # /docs/grafana/latest/sharing/
-  - ../sharing/playlists/ # /docs/grafana/latest/sharing/playlists/
-  - ../sharing/share-dashboard/ # /docs/grafana/latest/sharing/share-dashboard/
-  - ../sharing/share-panel/ # /docs/grafana/latest/sharing/share-panel/
-  - share-dashboard/ # /docs/grafana/latest/dashboards/share-dashboard/
+  - ../../reference/share_dashboard/ # /docs/grafana/next/reference/share_dashboard/
+  - ../../reference/share_panel/ # /docs/grafana/next/reference/share_panel/
+  - ../../share-dashboards-panels/ # /docs/grafana/next/share-dashboards-panels/
+  - ../../sharing/ # /docs/grafana/next/sharing/
+  - ../../sharing/playlists/ # /docs/grafana/next/sharing/playlists/
+  - ../../sharing/share-dashboard/ # /docs/grafana/next/sharing/share-dashboard/
+  - ../../sharing/share-panel/ # /docs/grafana/next/sharing/share-panel/
+  - ../../dashboards/share-dashboard/ # /docs/grafana/next/dashboards/share-dashboard/
   - ../../dashboards/share-dashboards-panels/ # /docs/grafana/next/dashboards/share-dashboards-panels/
 keywords:
   - grafana
