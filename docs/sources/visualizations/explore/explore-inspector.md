@@ -11,6 +11,7 @@ title: Query inspector in Explore
 weight: 15
 aliases:
   - ../../explore/explore-inspector/ # /docs/grafana/next/explore/explore-inspector/
+  - /docs/grafana-cloud/visualizations/explore/explore-inspector/
 ---
 
 # Query inspector in Explore

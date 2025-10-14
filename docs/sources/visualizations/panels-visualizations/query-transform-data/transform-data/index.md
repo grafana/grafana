@@ -19,19 +19,19 @@ comments: |
 
   Refer to ./docs/README.md "Content guidelines" for more information about editing and building these docs.
 aliases:
-  - ../../panels/reference-transformation-functions/
-  - ../../panels/transform-data/
-  - ../../panels/transform-data/about-transformation/
-  - ../../panels/transform-data/add-transformation-to-data/
-  - ../../panels/transform-data/apply-transformation-to-data/
-  - ../../panels/transform-data/debug-transformation/
-  - ../../panels/transform-data/delete-transformation/
-  - ../../panels/transform-data/transformation-functions/
-  - ../../panels/transformations/
-  - ../../panels/transformations/apply-transformations/
-  - ../../panels/transformations/config-from-query/
-  - ../../panels/transformations/rows-to-fields/
-  - ../../panels/transformations/types-options/
+  - ../../../panels/transform-data/
+  - ../../../panels/transform-data/about-transformation/
+  - ../../../panels/transform-data/add-transformation-to-data/
+  - ../../../panels/transform-data/apply-transformation-to-data/
+  - ../../../panels/transform-data/debug-transformation/
+  - ../../../panels/transform-data/delete-transformation/
+  - ../../../panels/transform-data/transformation-functions/
+  - ../../../panels/transformations/
+  - ../../../panels/transformations/apply-transformations/
+  - ../../../panels/transformations/config-from-query/
+  - ../../../panels/transformations/rows-to-fields/
+  - ../../../panels/transformations/types-options/
+  - ../../../panels/reference-transformation-functions/ # /docs/grafana/next/panels/reference-transformation-functions/
   - ../../../panels-visualizations/query-transform-data/transform-data/ # /docs/grafana/next/panels-visualizations/query-transform-data/transform-data/
 labels:
   products:

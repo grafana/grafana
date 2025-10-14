@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../dashboard-public/ # /docs/grafana/latest/dashboards/dashboard-public/
+  - ../../../dashboards/dashboard-public/ # /docs/grafana/next/dashboards/dashboard-public/
   - ../../../dashboards/share-dashboards-panels/shared-dashboards/ # /docs/grafana/next/dashboards/share-dashboards-panels/shared-dashboards/
 labels:
   products:

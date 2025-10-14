@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../panels/visualizations/state-timeline/
-  - ../../visualizations/state-timeline/
+  - ../../state-timeline/ # /docs/grafana/next/visualizations/state-timeline/
   - ../../../panels-visualizations/visualizations/state-timeline/ # /docs/grafana/next/panels-visualizations/visualizations/state-timeline/
 description: Configure options for Grafana's state timeline visualization
 keywords:
