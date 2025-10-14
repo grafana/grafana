@@ -69,8 +69,7 @@ func TestIntegrationIdentity(t *testing.T) {
             "title": "staff",
 			"provisioned": false,
 			"externalUID": ""
-          },
-          "status": {}
+          }
         }
       ]
     }`, found)

@@ -115,6 +115,10 @@ export interface FeatureToggles {
   */
   starsFromAPIServer?: boolean;
   /**
+  * Routes stars requests from /api to the /apis endpoint
+  */
+  kubernetesStars?: boolean;
+  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   */
   influxqlStreamingParser?: boolean;
@@ -204,10 +208,6 @@ export interface FeatureToggles {
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
-  /**
-  * Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
-  */
-  featureToggleAdminPage?: boolean;
   /**
   * Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
   * @default true
@@ -323,6 +323,10 @@ export interface FeatureToggles {
   */
   queryService?: boolean;
   /**
+  * Adds datasource connections to the query service
+  */
+  queryServiceWithConnections?: boolean;
+  /**
   * Rewrite requests targeting /ds/query to the query service
   */
   queryServiceRewrite?: boolean;
@@ -396,6 +400,10 @@ export interface FeatureToggles {
   */
   dashboardUndoRedo?: boolean;
   /**
+  * Enables unlimited dashboard panel grouping
+  */
+  unlimitedLayoutsNesting?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
   panelFilterVariable?: boolean;
@@ -468,7 +476,7 @@ export interface FeatureToggles {
   */
   alertingSaveStatePeriodic?: boolean;
   /**
-  * Enables the compressed protobuf-based alert state storage
+  * Enables the compressed protobuf-based alert state storage. Default is enabled.
   * @default true
   */
   alertingSaveStateCompressed?: boolean;
@@ -483,10 +491,10 @@ export interface FeatureToggles {
   */
   useScopeSingleNodeEndpoint?: boolean;
   /**
-  * In-development feature that will allow injection of labels into prometheus queries.
-  * @default true
+  * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
+  * @default false
   */
-  promQLScope?: boolean;
+  useMultipleScopeNodesEndpoint?: boolean;
   /**
   * In-development feature that will allow injection of labels into loki queries.
   * @default false
@@ -556,6 +564,10 @@ export interface FeatureToggles {
   * Enables Saved queries (query library) feature
   */
   queryLibrary?: boolean;
+  /**
+  * Enable suggested dashboards when creating new dashboards
+  */
+  dashboardLibrary?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
@@ -880,6 +892,11 @@ export interface FeatureToggles {
   */
   alertingJiraIntegration?: boolean;
   /**
+  * 
+  * @default true
+  */
+  alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
+  /**
   * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
   */
   useScopesNavigationEndpoint?: boolean;
@@ -960,10 +977,6 @@ export interface FeatureToggles {
   */
   multiTenantTempCredentials?: boolean;
   /**
-  * Enables localization for plugins
-  */
-  localizationForPlugins?: boolean;
-  /**
   * Enables unified navbars
   * @default false
   */
@@ -1020,6 +1033,10 @@ export interface FeatureToggles {
   * Registers AuthZ resource permission /apis endpoints
   */
   kubernetesAuthzResourcePermissionApis?: boolean;
+  /**
+  * Enable sync of Zanzana authorization store on AuthZ CRD mutations
+  */
+  kubernetesAuthzZanzanaSync?: boolean;
   /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
@@ -1084,6 +1101,11 @@ export interface FeatureToggles {
   */
   enableAppChromeExtensions?: boolean;
   /**
+  * Set this to true to enable all dashboard empty state extensions registered by plugins.
+  * @default false
+  */
+  enableDashboardEmptyExtensions?: boolean;
+  /**
   * Enables use of app platform API for folders
   * @default false
   */
@@ -1102,11 +1124,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistory?: boolean;
-  /**
-  * Allows decoupled core plugins to load from the Grafana CDN
-  * @default false
-  */
-  pluginAssetProvider?: boolean;
   /**
   * Enable dual reader for unified storage search
   */
@@ -1153,6 +1170,10 @@ export interface FeatureToggles {
   */
   teamFolders?: boolean;
   /**
+  * Enables Pathfinder app
+  */
+  grafanaPathfinder?: boolean;
+  /**
   * Enables the alerting triage feature
   * @default false
   */
@@ -1192,4 +1213,9 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsLoadFirst?: boolean;
+  /**
+  * Enable loading plugins via declarative URLs
+  * @default false
+  */
+  cdnPluginsUrls?: boolean;
 }

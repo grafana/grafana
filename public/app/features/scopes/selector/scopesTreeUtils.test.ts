@@ -8,6 +8,7 @@ import {
   getPathOfNode,
   modifyTreeNodeAtPath,
   treeNodeAtPath,
+  insertPathNodesIntoTree,
 } from './scopesTreeUtils';
 import { TreeNode, NodesMap } from './types';
 
@@ -201,6 +202,40 @@ describe('scopesTreeUtils', () => {
 
       const result = treeNodeAtPath(tree, ['', 'nonexistent']);
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe('insertPathNodesIntoTree', () => {
+    it('should insert nodes into tree', () => {
+      const tree: TreeNode = {
+        expanded: false,
+        scopeNodeId: 'root',
+        query: '',
+        children: {},
+      };
+
+      const path: ScopeNode[] = [
+        {
+          metadata: { name: 'child1' },
+          spec: {
+            parentName: 'root',
+            nodeType: 'container',
+            title: 'Root',
+          },
+        },
+        {
+          metadata: { name: 'grandchild1' },
+          spec: {
+            parentName: 'child1',
+            nodeType: 'container',
+            title: 'Child 1',
+          },
+        },
+      ];
+
+      const newTree = insertPathNodesIntoTree(tree, path);
+      expect(newTree.children?.child1.expanded).toBe(false);
+      expect(newTree.children?.child1.children?.grandchild1.expanded).toBe(false);
     });
   });
 });

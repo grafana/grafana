@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
@@ -94,7 +95,7 @@ func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptio
 		log.Debug("deleting folder permissions", "uid", meta.GetName(), "namespace", meta.GetNamespace())
 		client := (*b.resourcePermissionsSvc).Namespace(meta.GetNamespace())
 		err := client.Delete(ctx, fmt.Sprintf("%s-%s-%s", folders.FolderResourceInfo.GroupVersionResource().Group, folders.FolderResourceInfo.GroupVersionResource().Resource, meta.GetName()), metav1.DeleteOptions{})
-		if err != nil {
+		if err != nil && !apierrors.IsNotFound(err) {
 			log.Error("failed to delete folder permissions", "error", err)
 		}
 		return

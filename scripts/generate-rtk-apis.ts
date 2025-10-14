@@ -95,11 +95,6 @@ const config: ConfigFile = {
       schemaFile: '../data/openapi/shorturl.grafana.app-v1alpha1.json',
       tag: true,
     },
-    '../public/app/api/clients/rules/v0alpha1/endpoints.gen.ts': {
-      apiFile: '../public/app/api/clients/rules/v0alpha1/baseAPI.ts',
-      schemaFile: '../data/openapi/rules.alerting.grafana.app-v0alpha1.json',
-      tag: true,
-    },
     '../public/app/api/clients/preferences/v1alpha1/endpoints.gen.ts': {
       apiFile: '../public/app/api/clients/preferences/v1alpha1/baseAPI.ts',
       schemaFile: '../data/openapi/preferences.grafana.app-v1alpha1.json',

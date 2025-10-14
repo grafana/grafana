@@ -60,6 +60,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	updateTeam := func(cmd *UpdateTeamCommand) sqltemplate.SQLTemplate {
+		v := newUpdateTeam(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	listTeams := func(q *ListTeamQuery) sqltemplate.SQLTemplate {
 		v := newListTeams(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -104,6 +110,18 @@ func TestIdentityQueries(t *testing.T) {
 
 	listServiceAccountTokens := func(q *ListServiceAccountTokenQuery) sqltemplate.SQLTemplate {
 		v := newListServiceAccountTokens(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	updateUser := func(cmd *UpdateUserCommand) sqltemplate.SQLTemplate {
+		v := newUpdateUser(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	updateOrgUser := func(cmd *UpdateOrgUserCommand) sqltemplate.SQLTemplate {
+		v := newUpdateOrgUser(nodb, cmd)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -393,6 +411,19 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
+			sqlUpdateTeamTemplate: {
+				{
+					Name: "update_team_basic",
+					Data: updateTeam(&UpdateTeamCommand{
+						UID:           "team-1",
+						Name:          "Team 1",
+						Email:         "team1@example.com",
+						IsProvisioned: true,
+						ExternalUID:   "team-1-uid",
+						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
 			sqlDeleteTeamTemplate: {
 				{
 					Name: "delete_team_basic",
@@ -492,6 +523,33 @@ func TestIdentityQueries(t *testing.T) {
 						Created:    NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
 						Updated:    NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
 						LastSeenAt: time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC),
+					}),
+				},
+			},
+			sqlUpdateUserTemplate: {
+				{
+					Name: "update_user_basic",
+					Data: updateUser(&UpdateUserCommand{
+						UID:           "user-1",
+						Login:         "newuser1",
+						Email:         "newuser1@example.com",
+						Name:          "New User One",
+						IsAdmin:       true,
+						IsDisabled:    true,
+						EmailVerified: false,
+						Role:          "Editor",
+						Updated:       NewDBTime(time.Date(2023, 1, 1, 13, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			sqlUpdateOrgUserTemplate: {
+				{
+					Name: "update_org_user_basic",
+					Data: updateOrgUser(&UpdateOrgUserCommand{
+						OrgID:   1,
+						UserID:  123,
+						Role:    "Admin",
+						Updated: NewDBTime(time.Date(2023, 1, 1, 14, 0, 0, 0, time.UTC)),
 					}),
 				},
 			},

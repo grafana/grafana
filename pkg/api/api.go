@@ -125,11 +125,6 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/admin/migrate-to-cloud", authorize(cloudmigration.MigrationAssistantAccess), hs.Index)
 	}
 
-	// feature toggle admin page
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagFeatureToggleAdminPage) {
-		r.Get("/admin/featuretoggles", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.Index)
-	}
-
 	// secrets management page
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) && hs.Features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatformUI) {
 		r.Get("/admin/secrets", authorize(ac.EvalAny(

@@ -230,6 +230,7 @@ describe('useRegisterScopesActions', () => {
         // The main difference here is that we map it to a parent if we are in the "scopes" section of the cmdK.
         // In the previous test the scope actions were mapped to global level to show correctly.
         parent: 'scopes',
+        subtitle: 'some parent',
       },
     ];
 

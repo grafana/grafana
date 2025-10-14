@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -12,7 +12,7 @@ import { ButtonSelect } from '../../../Dropdown/ButtonSelect';
 import { FilterInput } from '../../../FilterInput/FilterInput';
 import { Label } from '../../../Forms/Label';
 import { Stack } from '../../../Layout/Stack/Stack';
-import { FilterType } from '../types';
+import { FilterType, TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 import { FilterList } from './FilterList';
@@ -36,9 +36,9 @@ const OPERATORS = Object.values(operatorSelectableValues);
 
 interface Props {
   name: string;
-  rows: any[];
-  filterValue: any;
-  setFilter: (value: any) => void;
+  rows: TableRow[];
+  filterValue?: Array<SelectableValue<unknown>>;
+  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   onClose: () => void;
   field?: Field;
   searchFilter: string;
@@ -65,6 +65,7 @@ export const FilterPopup = ({
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const [matchCase, setMatchCase] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const onCancel = useCallback((event?: React.MouseEvent) => onClose(), [onClose]);
 
@@ -114,6 +115,7 @@ export const FilterPopup = ({
         className={styles.filterContainer}
         onClick={stopPropagation}
         data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Container}
+        ref={containerRef}
       >
         <Stack direction="column">
           <Stack alignItems="center">
@@ -124,6 +126,7 @@ export const FilterPopup = ({
               onChange={setOperator}
               value={operator}
               tooltip={operator.description}
+              root={containerRef.current ?? undefined}
             />
           </Stack>
 

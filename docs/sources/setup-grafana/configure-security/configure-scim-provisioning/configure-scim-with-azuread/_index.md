@@ -139,6 +139,10 @@ Configure the following required attributes:
 | `objectId`                                                    | `externalId`                   |
 | `Switch([IsSoftDeleted], , "False", "True", "True", "False")` | `active`                       |
 
+{{< admonition type="note" >}}
+During provisioning, if the identity provider sends user attributes that has no use in Grafana, those attributes will be gracefully ignored.
+{{< /admonition >}}
+
 ### Enable provisioning
 
 Click **Start provisioning** from the top action bar in the **Overview** page from your Azure AD enterprise application.

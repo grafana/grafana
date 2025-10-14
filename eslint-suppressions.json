@@ -833,16 +833,6 @@
       "count": 13
     }
   },
-  "packages/grafana-ui/src/components/Slider/RangeSlider.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Slider/Slider.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Table/Cells/TableCell.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 3
@@ -857,21 +847,6 @@
     }
   },
   "packages/grafana-ui/src/components/Table/TableCellInspector.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Table/TableNG/Filter/Filter.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Table/TableNG/Filter/FilterPopup.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
-    }
-  },
-  "packages/grafana-ui/src/components/Table/TableNG/Filter/utils.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
@@ -1359,11 +1334,6 @@
       "count": 1
     }
   },
-  "public/app/features/admin/AdminFeatureTogglesTable.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "public/app/features/admin/ServerStatsCard.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1658,11 +1628,6 @@
       "count": 8
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/contactPoint/ContactPointSelector.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/ActiveTimingFields.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1691,11 +1656,6 @@
   "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/CloudDataSourceSelector.tsx": {
     "no-restricted-syntax": {
       "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/QueryAndExpressionsStep.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/rule-types/RuleType.tsx": {
@@ -1893,11 +1853,6 @@
   },
   "public/app/features/browse-dashboards/components/NewFolderForm.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/commandPalette/actions/recentScopesActions.ts": {
-    "react-hooks/rules-of-hooks": {
       "count": 1
     }
   },
@@ -2231,19 +2186,6 @@
   },
   "public/app/features/dashboard-scene/settings/variables/components/VariableTextField.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/editors/QueryVariableEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
@@ -2586,10 +2528,10 @@
   },
   "public/app/features/dashboard/state/DashboardMigrator.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
+      "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 24
+      "count": 18
     }
   },
   "public/app/features/dashboard/state/DashboardModel.repeat.test.ts": {
@@ -3419,11 +3361,6 @@
     }
   },
   "public/app/features/transformers/editors/ConvertFieldTypeTransformerEditor.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/editors/GroupByTransformerEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
@@ -4484,6 +4421,11 @@
       "count": 1
     }
   },
+  "public/app/plugins/panel/geomap/components/DebugOverlay.tsx": {
+    "@grafana/no-aria-label-selectors": {
+      "count": 1
+    }
+  },
   "public/app/plugins/panel/geomap/components/MarkersLegend.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -4584,11 +4526,6 @@
   },
   "public/app/plugins/panel/live/LivePanel.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/logs/types.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },

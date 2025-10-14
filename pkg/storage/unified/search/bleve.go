@@ -52,7 +52,7 @@ const (
 // Keys used to store internal data in index.
 const (
 	internalRVKey        = "rv"         // Encoded as big-endian int64
-	internalBuildInfoKey = "build_info" // Encoded as JSON of IndexBuildInfo struct
+	internalBuildInfoKey = "build_info" // Encoded as JSON of buildInfo struct
 )
 
 var _ resource.SearchBackend = &bleveBackend{}
@@ -65,22 +65,18 @@ type BleveOptions struct {
 	// The resource count where values switch from memory to file based
 	FileThreshold int64
 
-	// How big should a batch get before flushing
-	// ?? not totally sure the units
-	BatchSize int
-
 	// Index cache TTL for bleve indices. 0 disables expiration for in-memory indexes.
 	// Also used for file-based indexes, if they are not owned by this instance, and they are not fetched from the cache recently.
 	IndexCacheTTL time.Duration
 
 	BuildVersion string
 
-	MaxFileIndexAge time.Duration   // Maximum age of file-based index that can be reused. Ignored if zero.
-	MinBuildVersion *semver.Version // Minimum build version for reusing file-based indexes. Ignored if nil.
-
 	Logger *slog.Logger
 
 	UseFullNgram bool
+
+	// Minimum time between index updates.
+	IndexMinUpdateInterval time.Duration
 
 	// This function is called to check whether the index is owned by the current instance.
 	// Indexes that are not owned by current instance are eligible for cleanup.
@@ -170,13 +166,24 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 }
 
 // GetIndex will return nil if the key does not exist
-func (b *bleveBackend) GetIndex(_ context.Context, key resource.NamespacedResource) (resource.ResourceIndex, error) {
+func (b *bleveBackend) GetIndex(key resource.NamespacedResource) resource.ResourceIndex {
 	idx := b.getCachedIndex(key, time.Now())
 	// Avoid returning typed nils.
 	if idx == nil {
-		return nil, nil
+		return nil
 	}
-	return idx, nil
+	return idx
+}
+
+func (b *bleveBackend) GetOpenIndexes() []resource.NamespacedResource {
+	b.cacheMx.RLock()
+	defer b.cacheMx.RUnlock()
+
+	result := make([]resource.NamespacedResource, 0, len(b.cache))
+	for key := range b.cache {
+		result = append(result, key)
+	}
+	return result
 }
 
 func (b *bleveBackend) getCachedIndex(key resource.NamespacedResource, now time.Time) *bleveIndex {
@@ -318,7 +325,7 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 		return nil, err
 	}
 
-	bi := IndexBuildInfo{
+	bi := buildInfo{
 		BuildTime:    buildTime.Unix(),
 		BuildVersion: buildVersion,
 	}
@@ -336,27 +343,9 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 	return ix, nil
 }
 
-type IndexBuildInfo struct {
+type buildInfo struct {
 	BuildTime    int64  `json:"build_time"`    // Unix seconds timestamp of time when the index was built
 	BuildVersion string `json:"build_version"` // Grafana version used when building the index
-}
-
-func (bi IndexBuildInfo) GetBuildTime() time.Time {
-	if bi.BuildTime == 0 {
-		return time.Time{}
-	}
-	return time.Unix(bi.BuildTime, 0)
-}
-
-func (bi IndexBuildInfo) GetBuildVersion() *semver.Version {
-	if bi.BuildVersion == "" {
-		return nil
-	}
-	v, err := semver.NewVersion(bi.BuildVersion)
-	if err != nil {
-		return nil
-	}
-	return v
 }
 
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
@@ -435,11 +424,7 @@ func (b *bleveBackend) BuildIndex(
 		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 		// If we do have an unexpired cached index already, we always build a new index from scratch.
 		if cachedIndex == nil && !rebuild {
-			minBuildTime := time.Time{}
-			if b.opts.MaxFileIndexAge > 0 {
-				minBuildTime = time.Now().Add(-b.opts.MaxFileIndexAge)
-			}
-			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir, minBuildTime, b.opts.MinBuildVersion)
+			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir)
 		}
 
 		if index != nil {
@@ -621,18 +606,6 @@ func isPathWithinRoot(path, absoluteRoot string) bool {
 	return true
 }
 
-// cacheKeys returns list of keys for indexes in the cache (including possibly expired ones).
-func (b *bleveBackend) cacheKeys() []resource.NamespacedResource {
-	b.cacheMx.RLock()
-	defer b.cacheMx.RUnlock()
-
-	keys := make([]resource.NamespacedResource, 0, len(b.cache))
-	for k := range b.cache {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
 // TotalDocs returns the total number of documents across all indices
 func (b *bleveBackend) TotalDocs() int64 {
 	var totalDocs int64
@@ -640,7 +613,7 @@ func (b *bleveBackend) TotalDocs() int64 {
 	// We do this to avoid keeping a lock for the entire TotalDocs function, since DocCount may be slow (due to disk access).
 
 	now := time.Now()
-	for _, key := range b.cacheKeys() {
+	for _, key := range b.GetOpenIndexes() {
 		idx := b.getCachedIndex(key, now)
 		if idx == nil {
 			continue
@@ -658,7 +631,7 @@ func formatIndexName(now time.Time) string {
 	return now.Format("20060102-150405")
 }
 
-func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, minBuildTime time.Time, minBuildVersion *semver.Version) (bleve.Index, string, int64) {
+func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Index, string, int64) {
 	entries, err := os.ReadDir(resourceDir)
 	if err != nil {
 		return nil, "", 0
@@ -682,31 +655,6 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, minBuildTi
 			b.log.Error("error getting rv from index", "indexDir", indexDir, "err", err)
 			_ = idx.Close()
 			continue
-		}
-
-		buildInfo, err := getBuildInfo(idx)
-		if err != nil {
-			b.log.Error("error getting build info from index", "indexDir", indexDir, "err", err)
-			_ = idx.Close()
-			continue
-		}
-
-		if !minBuildTime.IsZero() {
-			bt := buildInfo.GetBuildTime()
-			if bt.IsZero() || bt.Before(minBuildTime) {
-				b.log.Debug("index build time is before minBuildTime, not reusing the index", "indexDir", indexDir, "indexBuildTime", bt, "minBuildTime", minBuildTime)
-				_ = idx.Close()
-				continue
-			}
-		}
-
-		if minBuildVersion != nil {
-			bv := buildInfo.GetBuildVersion()
-			if bv == nil || bv.Compare(minBuildVersion) < 0 {
-				b.log.Debug("index build version is before minBuildVersion, not reusing the index", "indexDir", indexDir, "indexBuildVersion", bv, "minBuildVersion", minBuildVersion)
-				_ = idx.Close()
-				continue
-			}
 		}
 
 		return idx, indexName, indexRV
@@ -740,8 +688,8 @@ func (b *bleveBackend) closeAllIndexes() {
 }
 
 type updateRequest struct {
-	reason   string
-	callback chan updateResult
+	requestTime time.Time
+	callback    chan updateResult
 }
 
 type updateResult struct {
@@ -755,6 +703,10 @@ type bleveIndex struct {
 
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
 	resourceVersion int64
+
+	// Timestamp when the last update to the index was done (started).
+	// Subsequent update requests only trigger new update if minUpdateInterval has elapsed.
+	nextUpdateTime time.Time
 
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
@@ -770,7 +722,8 @@ type bleveIndex struct {
 	tracing   trace.Tracer
 	logger    *slog.Logger
 
-	updaterFn resource.UpdateFn
+	updaterFn         resource.UpdateFn
+	minUpdateInterval time.Duration
 
 	updaterMu       sync.Mutex
 	updaterCond     *sync.Cond         // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
@@ -797,15 +750,16 @@ func (b *bleveBackend) newBleveIndex(
 	logger *slog.Logger,
 ) *bleveIndex {
 	bi := &bleveIndex{
-		key:          key,
-		index:        index,
-		indexStorage: newIndexType,
-		fields:       fields,
-		allFields:    allFields,
-		standard:     standardSearchFields,
-		tracing:      b.tracer,
-		logger:       logger,
-		updaterFn:    updaterFn,
+		key:               key,
+		index:             index,
+		indexStorage:      newIndexType,
+		fields:            fields,
+		allFields:         allFields,
+		standard:          standardSearchFields,
+		tracing:           b.tracer,
+		logger:            logger,
+		updaterFn:         updaterFn,
+		minUpdateInterval: b.opts.IndexMinUpdateInterval,
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
 	if b.indexMetrics != nil {
@@ -878,19 +832,44 @@ func getRV(index bleve.Index) (int64, error) {
 	return int64(binary.BigEndian.Uint64(raw)), nil
 }
 
-func getBuildInfo(index bleve.Index) (IndexBuildInfo, error) {
+func getBuildInfo(index bleve.Index) (buildInfo, error) {
 	raw, err := index.GetInternal([]byte(internalBuildInfoKey))
 	if err != nil {
-		return IndexBuildInfo{}, err
+		return buildInfo{}, err
 	}
 
 	if len(raw) == 0 {
-		return IndexBuildInfo{}, nil
+		return buildInfo{}, nil
 	}
 
-	res := IndexBuildInfo{}
+	res := buildInfo{}
 	err = json.Unmarshal(raw, &res)
 	return res, err
+}
+
+func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
+	bi, err := getBuildInfo(b.index)
+	if err != nil {
+		return resource.IndexBuildInfo{}, err
+	}
+
+	bt := time.Time{}
+	if bi.BuildTime > 0 {
+		bt = time.Unix(bi.BuildTime, 0)
+	}
+
+	var bv *semver.Version
+	if bi.BuildVersion != "" {
+		v, err := semver.NewVersion(bi.BuildVersion)
+		if err == nil {
+			bv = v
+		}
+	}
+
+	return resource.IndexBuildInfo{
+		BuildTime:    bt,
+		BuildVersion: bv,
+	}, nil
 }
 
 func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -1244,16 +1223,19 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		// Query 1: Match the exact query string
 		queryExact := bleve.NewMatchQuery(req.Query)
 		queryExact.SetBoost(10.0)
+		queryExact.SetField(resource.SEARCH_FIELD_TITLE)
 		queryExact.Analyzer = keyword.Name                // don't analyze the query input - treat it as a single token
 		queryExact.Operator = query.MatchQueryOperatorAnd // This doesn't make a difference for keyword analyzer, we add it just to be explicit.
 
 		// Query 2: Phrase query with standard analyzer
 		queryPhrase := bleve.NewMatchPhraseQuery(req.Query)
 		queryPhrase.SetBoost(5.0)
+		queryPhrase.SetField(resource.SEARCH_FIELD_TITLE)
 		queryPhrase.Analyzer = standard.Name
 
 		// Query 3: Match query with standard analyzer
 		queryAnalyzed := bleve.NewMatchQuery(removeSmallTerms(req.Query))
+		queryAnalyzed.SetField(resource.SEARCH_FIELD_TITLE)
 		queryAnalyzed.Analyzer = standard.Name
 		queryAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
 
@@ -1372,14 +1354,14 @@ func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
 	return b.index.Close()
 }
 
-func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) (int64, error) {
+func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 	// We don't have to do anything if the index cannot be updated (typically in tests).
 	if b.updaterFn == nil {
 		return 0, nil
 	}
 
 	// Use chan with buffer size 1 to ensure that we can always send the result back, even if there's no reader anymore.
-	req := updateRequest{reason: reason, callback: make(chan updateResult, 1)}
+	req := updateRequest{requestTime: time.Now(), callback: make(chan updateResult, 1)}
 
 	// Make sure that the updater goroutine is running.
 	b.updaterMu.Lock()
@@ -1436,7 +1418,7 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 
 		b.updaterMu.Lock()
 		for !b.updaterShutdown && ctx.Err() == nil && len(b.updaterQueue) == 0 && time.Since(start) < maxWait {
-			// Cond is signalled when updaterShutdown changes, updaterQueue gets new element or when timeout occurs.
+			// Cond is signaled when updaterShutdown changes, updaterQueue gets new element or when timeout occurs.
 			b.updaterCond.Wait()
 		}
 
@@ -1458,6 +1440,26 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 			}
 			return
 		}
+
+		// Check if requests arrived before minUpdateInterval since the last update has elapsed, and remove such requests.
+		for ix := 0; ix < len(batch); {
+			req := batch[ix]
+			if req.requestTime.Before(b.nextUpdateTime) {
+				req.callback <- updateResult{rv: b.resourceVersion}
+				batch = append(batch[:ix], batch[ix+1:]...)
+			} else {
+				// Keep in the batch
+				ix++
+			}
+		}
+
+		// If all requests are now handled, don't perform update.
+		if len(batch) == 0 {
+			continue
+		}
+
+		// Bump next update time
+		b.nextUpdateTime = time.Now().Add(b.minUpdateInterval)
 
 		var rv int64
 		var err = ctx.Err()

@@ -27,7 +27,6 @@ func ProvideManagerService(cfg *setting.Cfg) (*FeatureManager, error) {
 		enabled:  make(map[string]bool),
 		startup:  make(map[string]bool),
 		warnings: make(map[string]string),
-		Settings: cfg.FeatureManagement,
 		log:      log.New("featuremgmt"),
 	}
 

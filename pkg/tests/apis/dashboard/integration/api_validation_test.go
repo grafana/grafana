@@ -83,6 +83,11 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 
 			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
 
+			// trash is supported through unified storage only
+			if dualWriterMode == rest.Mode5 {
+				runDashboardTrashTests(t, org1Ctx)
+			}
+
 			t.Run("Dashboard validation tests", func(t *testing.T) {
 				runDashboardValidationTests(t, org1Ctx)
 			})
@@ -2550,4 +2555,75 @@ func postHelper(t *testing.T, ctx *TestContext, path string, body interface{}, u
 	}
 
 	return result, nil
+}
+
+func runDashboardTrashTests(t *testing.T, ctx TestContext) {
+	t.Helper()
+	adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
+	editorClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, getDashboardGVR())
+	viewerClient := getResourceClient(t, ctx.Helper, ctx.ViewerUser, getDashboardGVR())
+
+	t.Run("regular dashboards appear in trash but provisioned ones do not", func(t *testing.T) {
+		// create two dashboards, one that is provisioned and one that is not
+		regularDash, err := createDashboard(t, adminClient, "Regular Dashboard for Trash Comparison", nil, nil)
+		require.NoError(t, err)
+		regularDashUID := regularDash.GetName()
+		provisionedDash, err := createDashboard(t, adminClient, "Provisioned Dashboard for Trash Comparison", nil, nil)
+		require.NoError(t, err)
+		provisionedDashUID := provisionedDash.GetName()
+		meta, err := utils.MetaAccessor(provisionedDash)
+		require.NoError(t, err)
+		meta.SetAnnotation(utils.AnnoKeyManagerKind, "repo")
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind: utils.ManagerKindTerraform,
+		})
+		updatedProvisionedDash, err := adminClient.Resource.Update(context.Background(), provisionedDash, v1.UpdateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, updatedProvisionedDash)
+
+		// delete both dashboards
+		err = adminClient.Resource.Delete(context.Background(), regularDashUID, v1.DeleteOptions{})
+		require.NoError(t, err)
+		err = adminClient.Resource.Delete(context.Background(), provisionedDashUID, v1.DeleteOptions{})
+		require.NoError(t, err)
+
+		// trash should only contain the regular dashboard
+		trashList, err := adminClient.Resource.List(context.Background(), v1.ListOptions{
+			LabelSelector: utils.LabelKeyGetTrash + "=true",
+		})
+		require.NoError(t, err)
+		require.Len(t, trashList.Items, 1, "Trash should only contain the regular dashboard")
+		require.Equal(t, regularDashUID, trashList.Items[0].GetName(), "Trash should only contain the regular dashboard")
+	})
+
+	t.Run("permission checks - admin can see everything, users can see their own deleted items", func(t *testing.T) {
+		dash, err := createDashboard(t, editorClient, "Dashboard for Trash Test", nil, nil)
+		require.NoError(t, err)
+		dashUID := dash.GetName()
+		err = editorClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+		require.NoError(t, err)
+
+		// although editor deleted it, admin can still see it
+		trashList, err := adminClient.Resource.List(context.Background(), v1.ListOptions{
+			LabelSelector: utils.LabelKeyGetTrash + "=true",
+		})
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, len(trashList.Items), 1, "Admin should see deleted dashboards in trash")
+		require.Equal(t, dashUID, trashList.Items[0].GetName(), "Admin should find the deleted dashboard in trash")
+
+		// editor can see
+		editorTrashList, err := editorClient.Resource.List(context.Background(), v1.ListOptions{
+			LabelSelector: utils.LabelKeyGetTrash + "=true",
+		})
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, len(editorTrashList.Items), 1, "Admin should see deleted dashboards in trash")
+		require.Equal(t, dashUID, editorTrashList.Items[0].GetName(), "Admin should find the deleted dashboard in trash")
+
+		// viewer should not see the editor's deleted dashboard
+		viewerTrashList, err := viewerClient.Resource.List(context.Background(), v1.ListOptions{
+			LabelSelector: utils.LabelKeyGetTrash + "=true",
+		})
+		require.NoError(t, err)
+		require.Len(t, viewerTrashList.Items, 0, "Viewer should not see any trash items")
+	})
 }
