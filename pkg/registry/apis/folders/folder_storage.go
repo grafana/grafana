@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -39,6 +40,7 @@ type folderStorage struct {
 	tableConverter rest.TableConvertor
 
 	permissionsOnCreate  bool // cfg.RBAC.PermissionsOnCreation("folder")
+	features             featuremgmt.FeatureToggles
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
 	acService            accesscontrol.Service
 }
@@ -152,23 +154,30 @@ func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation r
 func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid, parentUID string) error {
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
+	isNested := parentUID != ""
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
+		// No permissions on nested folders when kubernetesDashboards is enabled
+		return nil
+	}
+
+	// Creator permissions always set with the legacy behaviour and set on root level folders for new behaviour
 	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
 			return err
 		}
-
 		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 		})
 	}
-	isNested := parentUID != ""
+
 	if !isNested {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 		}...)
 	}
+
 	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, uid, permissions...)
 	if err != nil {
 		return err
