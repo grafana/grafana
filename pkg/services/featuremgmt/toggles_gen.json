@@ -1818,6 +1818,21 @@
     },
     {
       "metadata": {
+        "name": "grafanaPathfinder",
+        "resourceVersion": "1760434668782",
+        "creationTimestamp": "2025-08-20T12:30:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-14 09:37:48.782577 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Pathfinder app",
+        "stage": "preview",
+        "codeowner": "@grafana/pathfinder"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaconThemes",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-02-06T11:08:04Z"
@@ -2276,6 +2291,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesStars",
+        "resourceVersion": "1759149842036",
+        "creationTimestamp": "2025-09-29T12:44:02Z"
+      },
+      "spec": {
+        "description": "Routes stars requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesZanzanaPopulate",
         "resourceVersion": "1758879077577",
         "creationTimestamp": "2025-09-26T09:31:17Z",
@@ -2287,19 +2315,6 @@
         "codeowner": "@grafana/identity-access-team",
         "hideFromAdminPage": true,
         "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "kubernetesStars",
-        "resourceVersion": "1759149842036",
-        "creationTimestamp": "2025-09-29T12:44:02Z"
-      },
-      "spec": {
-        "description": "Routes stars requests from /api to the /apis endpoint",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true
       }
     },
     {
@@ -3204,7 +3219,8 @@
       "metadata": {
         "name": "queryServiceWithConnections",
         "resourceVersion": "1756367172351",
-        "creationTimestamp": "2025-08-28T07:46:12Z"
+        "creationTimestamp": "2025-08-28T19:28:26Z",
+        "deletionTimestamp": "2025-08-29T12:49:57Z"
       },
       "spec": {
         "description": "Adds datasource connections to the query service",

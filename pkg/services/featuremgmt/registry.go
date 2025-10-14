@@ -2025,6 +2025,12 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:        "grafanaPathfinder",
+			Description: "Enables Pathfinder app",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaPathfinderSquad,
+		},
+		{
 			Name:              "alertingTriage",
 			Description:       "Enables the alerting triage feature",
 			Stage:             FeatureStageExperimental,

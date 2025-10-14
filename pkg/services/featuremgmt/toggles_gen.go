@@ -1050,6 +1050,10 @@ const (
 	// Enables team folders functionality
 	FlagTeamFolders = "teamFolders"
 
+	// FlagGrafanaPathfinder
+	// Enables Pathfinder app
+	FlagGrafanaPathfinder = "grafanaPathfinder"
+
 	// FlagAlertingTriage
 	// Enables the alerting triage feature
 	FlagAlertingTriage = "alertingTriage"
