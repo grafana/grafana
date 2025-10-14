@@ -236,3 +236,10 @@ type ScopeNavigationLinkType string
 const (
 	ScopeNavigationLinkTypeURL ScopeNavigationLinkType = "url"
 )
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type FindRedirectToScopedDashboardResults struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Message string `json:"message,omitempty"`
+}
