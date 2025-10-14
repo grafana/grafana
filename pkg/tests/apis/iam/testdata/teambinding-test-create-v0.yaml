@@ -1,0 +1,10 @@
+apiVersion: iam.grafana.app/v0alpha1
+kind: TeamBinding
+metadata:
+  name: test-team-binding-1
+spec:
+  subject:
+    name: ""
+  teamRef:
+    name: ""
+  permission: "admin"

@@ -55,3 +55,24 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team) error {
 
 	return nil
 }
+
+func ValidateOnBindingCreate(ctx context.Context, obj *iamv0alpha1.TeamBinding) error {
+	_, err := identity.GetRequester(ctx)
+	if err != nil {
+		return apierrors.NewUnauthorized("no identity found")
+	}
+
+	if obj.Spec.Permission != iamv0alpha1.TeamBindingTeamPermissionAdmin && obj.Spec.Permission != iamv0alpha1.TeamBindingTeamPermissionMember {
+		return apierrors.NewBadRequest("invalid permission")
+	}
+
+	if obj.Spec.Subject.Name == "" {
+		return apierrors.NewBadRequest("subject is required")
+	}
+
+	if obj.Spec.TeamRef.Name == "" {
+		return apierrors.NewBadRequest("teamRef is required")
+	}
+
+	return nil
+}
