@@ -56,9 +56,9 @@ export interface RadialGaugeProps {
   /** Factors that should influence the positioning of the text  */
   alignmentFactors?: DisplayValueAlignmentFactors;
   /** Explicit font size control */
-  valueFontSize?: number;
+  valueManualFontSize?: number;
   /** Explicit font size control */
-  nameFontSize?: number;
+  nameManualFontSize?: number;
   /** Specify which text should be visible  */
   textMode?: RadialTextMode;
 }
@@ -201,6 +201,8 @@ export function RadialGauge(props: RadialGaugeProps) {
           displayValue={displayValue.display}
           dimensions={dimensions}
           theme={theme}
+          valueManualFontSize={props.valueManualFontSize}
+          nameManualFontSize={props.nameManualFontSize}
           shape={shape}
         />
       );

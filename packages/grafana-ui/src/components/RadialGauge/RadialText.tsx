@@ -24,6 +24,8 @@ interface RadialTextProps {
   vizCount: number;
   shape: RadialShape;
   alignmentFactors?: DisplayValueAlignmentFactors;
+  valueManualFontSize?: number;
+  nameManualFontSize?: number;
 }
 
 export function RadialText({
@@ -34,6 +36,8 @@ export function RadialText({
   vizCount,
   shape,
   alignmentFactors,
+  valueManualFontSize,
+  nameManualFontSize,
 }: RadialTextProps) {
   const styles = useStyles2(getStyles);
   const { centerX, centerY, radius, barWidth } = dimensions;
@@ -68,23 +72,27 @@ export function RadialText({
     maxNameHeight = nameToHeightFactor * Math.pow(radius, largeRadiusScalingDecay);
   }
 
-  const valueFontSize = calculateFontSize(
-    valueToAlignTo,
-    maxTextWidth,
-    maxValueHeight,
-    lineHeight,
-    undefined,
-    theme.typography.body.fontWeight
-  );
+  const valueFontSize =
+    valueManualFontSize ??
+    calculateFontSize(
+      valueToAlignTo,
+      maxTextWidth,
+      maxValueHeight,
+      lineHeight,
+      undefined,
+      theme.typography.body.fontWeight
+    );
 
-  const nameFontSize = calculateFontSize(
-    nameToAlignTo,
-    maxTextWidth,
-    maxNameHeight,
-    lineHeight,
-    undefined,
-    theme.typography.body.fontWeight
-  );
+  const nameFontSize =
+    nameManualFontSize ??
+    calculateFontSize(
+      nameToAlignTo,
+      maxTextWidth,
+      maxNameHeight,
+      lineHeight,
+      undefined,
+      theme.typography.body.fontWeight
+    );
 
   const unitFontSize = Math.max(valueFontSize * 0.7, 5);
   const valueHeight = valueFontSize * lineHeight;

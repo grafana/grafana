@@ -44,6 +44,8 @@ export function RadialBarPanel({
         segmentSpacing={options.segmentSpacing}
         thresholdsBar={options.showThresholdMarkers}
         alignmentFactors={valueProps.alignmentFactors}
+        valueManualFontSize={options.text?.valueSize}
+        nameManualFontSize={options.text?.titleSize}
       />
     );
   }
