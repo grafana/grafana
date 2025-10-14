@@ -1818,6 +1818,21 @@
     },
     {
       "metadata": {
+        "name": "grafanaPathfinder",
+        "resourceVersion": "1760434668782",
+        "creationTimestamp": "2025-08-20T12:30:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-14 09:37:48.782577 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Pathfinder app",
+        "stage": "preview",
+        "codeowner": "@grafana/pathfinder"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaconThemes",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-02-06T11:08:04Z"
@@ -2173,6 +2188,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzZanzanaSync",
+        "resourceVersion": "1758887751768",
+        "creationTimestamp": "2025-09-26T09:35:02Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-26 11:55:51.768754 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesCorrelations",
         "resourceVersion": "1757513374180",
         "creationTimestamp": "2025-09-10T14:09:34Z"
@@ -2268,6 +2300,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesZanzanaPopulate",
+        "resourceVersion": "1758879077577",
+        "creationTimestamp": "2025-09-26T09:31:17Z",
+        "deletionTimestamp": "2025-09-26T09:35:02Z"
+      },
+      "spec": {
+        "description": "Populate Zanzana on AuthZ CRDs creation or update",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -3172,7 +3219,8 @@
       "metadata": {
         "name": "queryServiceWithConnections",
         "resourceVersion": "1756367172351",
-        "creationTimestamp": "2025-08-28T07:46:12Z"
+        "creationTimestamp": "2025-08-28T19:28:26Z",
+        "deletionTimestamp": "2025-08-29T12:49:57Z"
       },
       "spec": {
         "description": "Adds datasource connections to the query service",
