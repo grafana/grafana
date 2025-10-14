@@ -49,7 +49,7 @@ func (j *JaegerClient) GrpcSearch(query *JaegerQuery, start, end time.Time) (*da
 	queryParams := map[string]string{
 		"query.service_name":   query.Service,
 		"query.operation_name": query.Operation,
-		"tags":                 queryTags,
+		"query.attributes":     queryTags,
 		"query.duration_min":   query.MinDuration,
 		"query.duration_max":   query.MaxDuration,
 	}
@@ -57,15 +57,6 @@ func (j *JaegerClient) GrpcSearch(query *JaegerQuery, start, end time.Time) (*da
 	urlQuery := jaegerURL.Query()
 	if query.Limit > 0 {
 		urlQuery.Set("limit", fmt.Sprintf("%d", query.Limit))
-	}
-
-	startUnix := start.UnixMicro()
-	endUnix := end.UnixMicro()
-	if startUnix > 0 {
-		urlQuery.Set("start", fmt.Sprintf("%d", startUnix))
-	}
-	if endUnix > 0 {
-		urlQuery.Set("end", fmt.Sprintf("%d", endUnix))
 	}
 
 	for key, value := range queryParams {
