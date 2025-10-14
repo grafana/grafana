@@ -8,7 +8,7 @@ PORT=${PORT:-$DEFAULT_PORT}
 
 printf "Waiting for grafana-server to finish starting, host=%s, port=%s" "$HOST" "$PORT"
 
-timeout=60
+timeout=180
 elapsed=0
 
 while ! curl -s -f http://$HOST:$PORT/health > /dev/null 2>&1; do
