@@ -35,6 +35,7 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
           onClick={() => setAdvancedHttpSettingsIsOpen(!advancedHttpSettingsIsOpen)}
           className={styles.httpSettingsButton}
           onBlur={trackInfluxDBConfigV2AdvancedHTTPSettingsToggleClicked}
+          data-testid="influxdb-v2-config-advanced-http-settings-toggle"
         >
           Advanced HTTP settings
         </Button>
