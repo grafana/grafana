@@ -5,13 +5,18 @@ import (
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/k8s"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.User) error {
+// func ValidateOnCreate(ctx context.Context, clientGenerator func(ctx context.Context) (*k8s.ClientRegistry, error), obj *iamv0alpha1.User) error {
+
+func ValidateOnCreate(ctx context.Context, userSearchClient resourcepb.ResourceIndexClient, obj *iamv0alpha1.User) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -28,27 +33,29 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.User) error {
 		return apierrors.NewBadRequest("user must have either login or email")
 	}
 
-	err = validateRole(obj)
-	if err != nil {
+	if err := validateRole(obj); err != nil {
+		return err
+	}
+
+	// generator, err := clientGenerator(ctx)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// userClient, err := iamv0alpha1.NewUserClientFromGenerator(generator)
+
+	// if err := validateEmailLogin(ctx, userClient, requester.GetNamespace(), obj.Spec.Login, obj.Spec.Email); err != nil {
+	// 	return err
+	// }
+
+	if err := validateEmailLogin(ctx, userSearchClient, requester.GetNamespace(), obj.Spec.Login, obj.Spec.Email); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func validateRole(obj *iamv0alpha1.User) error {
-	if obj.Spec.Role == "" {
-		return apierrors.NewBadRequest("role is required")
-	}
-
-	if !identity.RoleType(obj.Spec.Role).IsValid() {
-		return apierrors.NewBadRequest(fmt.Sprintf("invalid role '%s'", obj.Spec.Role))
-	}
-
-	return nil
-}
-
-func ValidateOnUpdate(ctx context.Context, oldObj, newObj *iamv0alpha1.User) error {
+func ValidateOnUpdate(ctx context.Context, clientGenerator func(ctx context.Context) (*k8s.ClientRegistry, error), oldObj, newObj *iamv0alpha1.User) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -93,9 +100,80 @@ func ValidateOnUpdate(ctx context.Context, oldObj, newObj *iamv0alpha1.User) err
 		return apierrors.NewBadRequest("user must have either login or email")
 	}
 
-	err = validateRole(newObj)
+	if err := validateRole(newObj); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateRole(obj *iamv0alpha1.User) error {
+	if obj.Spec.Role == "" {
+		return apierrors.NewBadRequest("role is required")
+	}
+
+	if !identity.RoleType(obj.Spec.Role).IsValid() {
+		return apierrors.NewBadRequest(fmt.Sprintf("invalid role '%s'", obj.Spec.Role))
+	}
+
+	return nil
+}
+
+// func validateEmailLogin(ctx context.Context, userClient *iamv0alpha1.UserClient, namespace, login, email string) error {
+// 	users, err := userClient.ListAll(ctx, namespace, unistore.ListOptions{})
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	for _, user := range users.Items {
+// 		if user.Spec.Login == login {
+// 			return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
+// 				login,
+// 				fmt.Errorf("login '%s' is already taken", login))
+// 		}
+// 		if user.Spec.Email == email {
+// 			return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
+// 				email,
+// 				fmt.Errorf("email '%s' is already taken", email))
+// 		}
+// 	}
+
+// 	return nil
+// }
+
+func validateEmailLogin(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, login, email string) error {
+	userGvr := iamv0alpha1.UserResourceInfo.GroupResource()
+	req := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     userGvr.Group,
+				Resource:  userGvr.Resource,
+				Namespace: namespace,
+			},
+			Fields: []*resourcepb.Requirement{
+				{
+					Key:      "email",
+					Operator: string(selection.Equals),
+					Values:   []string{email},
+				},
+				{
+					Key:      "login",
+					Operator: string(selection.Equals),
+					Values:   []string{login},
+				}},
+		},
+		Fields: []string{"login", "email"},
+		Limit:  10,
+	}
+	resp, err := searchClient.Search(ctx, req)
 	if err != nil {
 		return err
+	}
+
+	if resp.TotalHits > 0 {
+		return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
+			fmt.Sprintf("%s/%s", namespace, login),
+			fmt.Errorf("login '%s' and/or email '%s' is already taken", login, email))
 	}
 
 	return nil

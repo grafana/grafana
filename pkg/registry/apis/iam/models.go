@@ -1,7 +1,10 @@
 package iam
 
 import (
+	"context"
+
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -9,7 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
@@ -46,6 +51,13 @@ type IdentityAccessManagementAPIBuilder struct {
 	accessClient types.AccessClient
 
 	reg prometheus.Registerer
+
+	// Client registry to query UniStore
+	clientGenerator func(ctx context.Context) (*k8s.ClientRegistry, error)
+
+	dual             dualwrite.Service
+	unified          resource.ResourceClient
+	userSearchClient resourcepb.ResourceIndexClient
 
 	// non-k8s api route
 	display *user.LegacyDisplayREST

@@ -20,6 +20,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/k8s"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -35,11 +36,13 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -55,6 +58,9 @@ func RegisterAPIService(
 	coreRolesStorage CoreRoleStorageBackend,
 	rolesStorage RoleStorageBackend,
 	roleBindingsStorage RoleBindingStorageBackend,
+	restConfigProvider apiserver.RestConfigProvider,
+	dual dualwrite.Service,
+	unified resource.ResourceClient,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
@@ -77,6 +83,16 @@ func RegisterAPIService(
 		enableResourcePermissionApis: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
 		enableAuthnMutation:          features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
 		enableDualWriter:             true,
+		dual:                         dual,
+		unified:                      unified,
+		userSearchClient:             resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), unified, nil, features),
+		clientGenerator: func(ctx context.Context) (*k8s.ClientRegistry, error) {
+			kubeConfig, err := restConfigProvider.GetRestConfig(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return k8s.NewClientRegistry(*kubeConfig, k8s.ClientConfig{}), nil
+		},
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -341,7 +357,8 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 	case admission.Create:
 		switch typedObj := a.GetObject().(type) {
 		case *iamv0.User:
-			return user.ValidateOnCreate(ctx, typedObj)
+			// return user.ValidateOnCreate(ctx, b.clientGenerator, typedObj)
+			return user.ValidateOnCreate(ctx, b.userSearchClient, typedObj)
 		case *iamv0.ServiceAccount:
 			return serviceaccount.ValidateOnCreate(ctx, typedObj)
 		case *iamv0.Team:
@@ -357,7 +374,7 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			if !ok {
 				return fmt.Errorf("expected old object to be a User, got %T", oldUserObj)
 			}
-			return user.ValidateOnUpdate(ctx, oldUserObj, typedObj)
+			return user.ValidateOnUpdate(ctx, b.clientGenerator, oldUserObj, typedObj)
 		case *iamv0.ResourcePermission:
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
 		case *iamv0.Team:
@@ -402,6 +419,27 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 
 	return nil
 }
+
+// func (b *IdentityAccessManagementAPIBuilder) getClientFor(ctx context.Context, obj runtime.Object) (resource.Client, error) {
+// 	kubeConfig, err := b.restConfigProvider.GetRestConfig(ctx)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	clientGenerator := k8s.NewClientRegistry(*kubeConfig, k8s.ClientConfig{})
+// 	switch obj.(type) {
+// 	case *iamv0.User:
+// 		return iamv0.NewUserClientFromGenerator(clientGenerator)
+// 	case *iamv0.Team:
+// 		return iamv0.NewTeamClientFromGenerator(clientGenerator)
+// 	case *iamv0.ServiceAccount:
+// 		return iamv0.NewServiceAccountClientFromGenerator(clientGenerator)
+// 	}
+// 	return nil, fmt.Errorf("unsupported type %T", obj)
+// }
+
+// func (b *IdentityAccessManagementAPIBuilder) getClientGenerator(ctx context.Context) (*k8s.ClientRegistry, error) {
+
+// }
 
 func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter,
 	reg prometheus.Registerer, ac types.AccessClient, storageBackend resource.StorageBackend) (grafanarest.Storage, error) {
