@@ -18,6 +18,7 @@ function sortLabels(labels: Record<string, FieldNameMeta>) {
     if (la != null && lb != null) {
       return (
         Number(lb.type === 'TIME_FIELD') - Number(la.type === 'TIME_FIELD') ||
+        Number(lb.type === 'LEVEL_FIELD') - Number(la.type === 'LEVEL_FIELD') ||
         Number(lb.type === 'BODY_FIELD') - Number(la.type === 'BODY_FIELD') ||
         collator.compare(a, b)
       );

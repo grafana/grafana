@@ -17,7 +17,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { InlineField, Select, Themeable2 } from '@grafana/ui';
 
-import { DEFAULT_URL_COLUMNS, parseLogsFrame } from '../../logs/logsFrame';
+import { DEFAULT_URL_COLUMNS, DETECTED_LEVEL, LEVEL, LogsFrame, parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsColumnSearch } from './LogsColumnSearch';
 import { LogsTable } from './LogsTable';
@@ -50,7 +50,7 @@ type InactiveFieldMeta = {
 
 type GenericMeta = {
   percentOfLinesWithLabel: number;
-  type?: 'BODY_FIELD' | 'TIME_FIELD';
+  type?: 'BODY_FIELD' | 'TIME_FIELD' | 'LEVEL_FIELD';
 };
 
 export type FieldNameMeta = (InactiveFieldMeta | ActiveFieldMeta) & GenericMeta;
@@ -113,7 +113,17 @@ export function LogsTableWrap(props: Props) {
 
   useEffect(() => {
     if (logsFrame?.timeField.name && logsFrame?.bodyField.name && !propsColumns) {
-      const defaultColumns = { 0: logsFrame?.timeField.name ?? '', 1: logsFrame?.bodyField.name ?? '' };
+      const levelName = getLevelFieldNameFromLabels(logsFrame);
+      const defaultColumns: Record<number, string> = levelName
+        ? {
+            0: logsFrame.timeField.name,
+            1: levelName,
+            2: logsFrame.bodyField.name,
+          }
+        : {
+            0: logsFrame.timeField.name,
+            1: logsFrame.bodyField.name,
+          };
       updatePanelState({
         columns: Object.values(defaultColumns),
         visualisationType: 'table',
@@ -177,12 +187,11 @@ export function LogsTableWrap(props: Props) {
     if (logsFrame) {
       otherFields.push(...logsFrame.extraFields.filter((field) => !field?.config?.custom?.hidden));
     }
-    if (logsFrame?.severityField) {
-      otherFields.push(logsFrame?.severityField);
-    }
+
     if (logsFrame?.bodyField) {
       otherFields.push(logsFrame?.bodyField);
     }
+
     if (logsFrame?.timeField) {
       otherFields.push(logsFrame?.timeField);
     }
@@ -271,19 +280,33 @@ export function LogsTableWrap(props: Props) {
     // Keep track of the column index to set the displayed fields in the correct order
     let columnIndex = 0;
     if (active.length === 0) {
-      if (logsFrame?.bodyField?.name) {
-        pendingLabelState[logsFrame.bodyField.name].active = true;
-        columnIndex++;
-      }
       if (logsFrame?.timeField?.name) {
         pendingLabelState[logsFrame.timeField.name].active = true;
-        columnIndex++;
+        pendingLabelState[logsFrame.timeField.name].index = columnIndex++;
+      }
+
+      // Check for level field by name in the pendingLabelState (populated from labels)
+      const levelName = getLevelFieldName(pendingLabelState);
+      if (levelName) {
+        pendingLabelState[levelName].active = true;
+        pendingLabelState[levelName].index = columnIndex++;
+      }
+
+      if (logsFrame?.bodyField?.name) {
+        pendingLabelState[logsFrame.bodyField.name].active = true;
+        pendingLabelState[logsFrame.bodyField.name].index = columnIndex++;
       }
     }
 
     if (logsFrame?.bodyField?.name && logsFrame?.timeField?.name) {
       pendingLabelState[logsFrame.bodyField.name].type = 'BODY_FIELD';
       pendingLabelState[logsFrame.timeField.name].type = 'TIME_FIELD';
+
+      // Mark level field type - check in pendingLabelState
+      const levelName = getLevelFieldName(pendingLabelState);
+      if (levelName && pendingLabelState[levelName]) {
+        pendingLabelState[levelName].type = 'LEVEL_FIELD';
+      }
     }
 
     // Sync displayed fields from URL
@@ -396,9 +419,22 @@ export function LogsTableWrap(props: Props) {
       newColumnsArray
     );
 
-    const defaultColumns = { 0: logsFrame?.timeField.name ?? '', 1: logsFrame?.bodyField.name ?? '' };
+    const levelName = getLevelFieldNameFromLabels(logsFrame);
+    const defaultColumns: Record<number, string> = levelName
+      ? {
+          0: logsFrame?.timeField.name ?? '',
+          1: levelName,
+          2: logsFrame?.bodyField.name ?? '',
+        }
+      : {
+          0: logsFrame?.timeField.name ?? '',
+          1: logsFrame?.bodyField.name ?? '',
+        };
     // Sync displayed fields with the table selected fields, remove the default columns
-    const newDisplayedFields = Object.values(newColumns).filter((column) => !DEFAULT_URL_COLUMNS.includes(column));
+    // Also exclude the level field if it exists (it should be treated as a default column)
+    const newDisplayedFields = Object.values(newColumns).filter(
+      (column) => !DEFAULT_URL_COLUMNS.includes(column) && column !== levelName
+    );
 
     const newPanelState: ExploreLogsPanelState = {
       ...props.panelState,
@@ -607,6 +643,33 @@ export function LogsTableWrap(props: Props) {
 
 const normalize = (value: number, total: number): number => {
   return Math.ceil((100 * value) / total);
+};
+
+const getLevelFieldName = (columnsWithMeta: FieldNameMetaStore): string | undefined => {
+  // Prioritize detected_level over level
+  if (DETECTED_LEVEL in columnsWithMeta) {
+    return DETECTED_LEVEL;
+  }
+  if (LEVEL in columnsWithMeta) {
+    return LEVEL;
+  }
+  return undefined;
+};
+
+const getLevelFieldNameFromLabels = (logsFrame: LogsFrame | null): string | undefined => {
+  // Check for level field in labels
+  const labels = logsFrame?.getLogFrameLabelsAsLabels();
+  if (labels && labels.length > 0) {
+    // Check if any label object has detected_level or level
+    for (const labelObj of labels) {
+      if (DETECTED_LEVEL in labelObj) {
+        return DETECTED_LEVEL;
+      } else if (LEVEL in labelObj) {
+        return LEVEL;
+      }
+    }
+  }
+  return undefined;
 };
 
 function getStyles(theme: GrafanaTheme2, height: number, width: number) {

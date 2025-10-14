@@ -32,6 +32,8 @@ function getField(cache: FieldCache, name: string, fieldType: FieldType): FieldW
 export const DATAPLANE_TIMESTAMP_NAME = 'timestamp';
 export const DATAPLANE_BODY_NAME = 'body';
 export const DEFAULT_URL_COLUMNS = ['timestamp', 'body', 'Time', 'Line'];
+export const DETECTED_LEVEL = 'detected_level';
+export const LEVEL = 'level';
 const DATAPLANE_SEVERITY_NAME = 'severity';
 const DATAPLANE_ID_NAME = 'id';
 const DATAPLANE_LABELS_NAME = 'labels';

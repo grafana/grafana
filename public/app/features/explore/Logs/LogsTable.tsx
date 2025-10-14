@@ -20,7 +20,7 @@ import {
 import { config } from '@grafana/runtime';
 import { AdHocFilterItem, Table } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
-import { LogsFrame } from 'app/features/logs/logsFrame';
+import { DETECTED_LEVEL, LEVEL, LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
@@ -267,8 +267,9 @@ function getLabelFiltersTransform(labelFilters: Record<string, number>) {
 }
 
 function getInitialFieldWidth(field: Field): number | undefined {
-  if (field.type === FieldType.time) {
+  if (field.type === FieldType.time || field.name === DETECTED_LEVEL || field.name === LEVEL) {
     return 200;
   }
+
   return undefined;
 }
