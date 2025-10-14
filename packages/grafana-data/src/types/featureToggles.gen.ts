@@ -1030,6 +1030,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzResourcePermissionApis?: boolean;
   /**
+  * Enable sync of Zanzana authorization store on AuthZ CRD mutations
+  */
+  kubernetesAuthzZanzanaSync?: boolean;
+  /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;
@@ -1161,6 +1165,10 @@ export interface FeatureToggles {
   * @default false
   */
   teamFolders?: boolean;
+  /**
+  * Enables Pathfinder app
+  */
+  grafanaPathfinder?: boolean;
   /**
   * Enables the alerting triage feature
   * @default false

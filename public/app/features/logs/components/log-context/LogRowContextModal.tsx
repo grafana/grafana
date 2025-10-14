@@ -40,9 +40,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       [theme.breakpoints.down('md')]: {
         width: '100%',
       },
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
     }),
     sticky: css({
       position: 'sticky',

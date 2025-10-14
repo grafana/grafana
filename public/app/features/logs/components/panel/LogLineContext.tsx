@@ -431,14 +431,11 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     modal: css({
       width: '85vw',
-      height: '80%',
+      height: '80vh',
       [theme.breakpoints.down('md')]: {
         width: '100%',
-        minHeight: '100%',
+        height: '100vh',
       },
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
     }),
     loadingIndicator: css({
       height: theme.spacing(3),

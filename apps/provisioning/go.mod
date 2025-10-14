@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/provisioning
 
-go 1.25.2
+go 1.25.3
 
 require (
 	github.com/fsnotify/fsnotify v1.9.0

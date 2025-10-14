@@ -50,7 +50,7 @@ type kvStorageBackend struct {
 
 var _ StorageBackend = &kvStorageBackend{}
 
-type KvBackendOptions struct {
+type KVBackendOptions struct {
 	KvStore              KV
 	WithPruner           bool
 	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
@@ -59,7 +59,7 @@ type KvBackendOptions struct {
 	Reg                  prometheus.Registerer // TODO add metrics
 }
 
-func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
+func NewKVStorageBackend(opts KVBackendOptions) (StorageBackend, error) {
 	ctx := context.Background()
 	kv := opts.KvStore
 

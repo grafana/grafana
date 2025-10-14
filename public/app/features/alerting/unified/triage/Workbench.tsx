@@ -192,6 +192,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     virtualizedContainer: css({
       display: 'flex',
       flex: 1,
+      wordBreak: 'break-all', // make very long rule names render higher rows
       overflow: 'hidden', // Let AutoSizer handle the overflow
     }),
     summaryContainer: css({

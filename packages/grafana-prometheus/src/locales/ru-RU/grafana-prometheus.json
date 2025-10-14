@@ -486,11 +486,6 @@
         "message-no-metrics-found": "В источнике данных нет метрик.",
         "name": "Имя",
         "type": "Тип"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Неоднозначные результаты анализа запроса."
-        }
       }
     }
   }

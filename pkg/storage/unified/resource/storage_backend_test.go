@@ -27,11 +27,11 @@ var appsNamespace = NamespacedResource{
 
 func setupTestStorageBackend(t *testing.T) *kvStorageBackend {
 	kv := setupTestKV(t)
-	opts := KvBackendOptions{
+	opts := KVBackendOptions{
 		KvStore:    kv,
 		WithPruner: true,
 	}
-	backend, err := NewKvStorageBackend(opts)
+	backend, err := NewKVStorageBackend(opts)
 	kvBackend := backend.(*kvStorageBackend)
 	require.NoError(t, err)
 	return kvBackend

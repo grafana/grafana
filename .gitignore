@@ -253,5 +253,7 @@ public/mockServiceWorker.js
 
 # Ignore unified storage kv store files
 /grafana-kv-data
-
 /codeowners-manifest/
+
+# Ignore grafana/hippocampus local cache folder
+.hippo

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
@@ -68,6 +69,12 @@ func TestIdentityQueries(t *testing.T) {
 
 	listTeams := func(q *ListTeamQuery) sqltemplate.SQLTemplate {
 		v := newListTeams(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	createTeamMember := func(cmd *CreateTeamMemberCommand) sqltemplate.SQLTemplate {
+		v := newCreateTeamMember(nodb, cmd)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -202,12 +209,37 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
+			sqlCreateTeamMemberQuery: {
+				{
+					Name: "create_team_member",
+					Data: createTeamMember(&CreateTeamMemberCommand{
+						TeamID:     1,
+						UserID:     1,
+						Created:    NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:    NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						External:   false,
+						Permission: team.PermissionTypeMember,
+					}),
+				},
+				{
+					Name: "create_team_member_admin",
+					Data: createTeamMember(&CreateTeamMemberCommand{
+						TeamID:     1,
+						UserID:     1,
+						Created:    NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:    NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						External:   false,
+						Permission: team.PermissionTypeAdmin,
+					}),
+				},
+			},
 			sqlQueryTeamBindingsTemplate: {
 				{
-					Name: "team_1_bindings",
+					Name: "team_bindings_id",
 					Data: listTeamBindings(&ListTeamBindingsQuery{
 						OrgID:      1,
-						UID:        "team-1",
+						TeamID:     1,
+						UserID:     1,
 						Pagination: common.Pagination{Limit: 1},
 					}),
 				},
