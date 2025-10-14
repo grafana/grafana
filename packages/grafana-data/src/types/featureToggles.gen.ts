@@ -1214,4 +1214,8 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsUrls?: boolean;
+  /**
+  * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
+  */
+  jaegerEnableGrpcEndpoint?: boolean;
 }

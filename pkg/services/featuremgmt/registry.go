@@ -2104,6 +2104,12 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},
+		{
+			Name:        "jaegerEnableGrpcEndpoint",
+			Description: "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
+		},
 	}
 )
 
