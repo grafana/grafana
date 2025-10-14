@@ -4,7 +4,7 @@ import { useCallback, useId, useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
+import { sceneGraph, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
 import { Box, Card, Stack, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -70,18 +70,11 @@ function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
   const onAddVariable = useCallback(
     (type: EditableVariableType) => {
       const dashboard = variableAdd.state.dashboardRef.resolve();
-      const { editPane, $variables } = dashboard.state;
-      const { variables } = $variables?.state ?? { variables: [] };
-      const nextName = getNextAvailableId(type, variables);
-      const newVar = getVariableScene(type, { name: nextName });
-
-      dashboardEditActions.addVariable({
-        source: variableAdd,
-        addedObject: newVar,
+      const newVar = getVariableScene(type, {
+        name: getNextAvailableId(type, dashboard.state.$variables?.state?.variables ?? []),
       });
-
-      editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
-
+      dashboardEditActions.addVariable({ source: sceneGraph.getVariables(dashboard), addedObject: newVar });
+      dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
       DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
     },
     [variableAdd]

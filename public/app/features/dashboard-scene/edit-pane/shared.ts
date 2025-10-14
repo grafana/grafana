@@ -5,7 +5,6 @@ import { BusEventWithPayload } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   LocalValueVariable,
-  sceneGraph,
   SceneGridRow,
   SceneObject,
   SceneVariable,
@@ -123,7 +122,7 @@ export interface RemoveElementActionHelperProps {
 
 export interface AddVariableActionHelperProps {
   addedObject: SceneVariable;
-  source: VariableAdd;
+  source: SceneVariableSet;
 }
 
 export interface RemoveVariableActionHelperProps {
@@ -208,19 +207,16 @@ export const dashboardEditActions = {
   }),
 
   addVariable({ source, addedObject }: AddVariableActionHelperProps) {
-    const dashboard = source.state.dashboardRef.resolve();
-    const variables = sceneGraph.getVariables(dashboard);
-
-    const varsBeforeAddition = [...(variables.state.variables ?? [])];
+    const varsBeforeAddition = [...(source.state.variables ?? [])];
 
     dashboardEditActions.addElement({
       source,
       addedObject,
       perform() {
-        variables.setState({ variables: [...varsBeforeAddition, addedObject] });
+        source.setState({ variables: [...varsBeforeAddition, addedObject] });
       },
       undo() {
-        variables.setState({ variables: [...varsBeforeAddition] });
+        source.setState({ variables: [...varsBeforeAddition] });
       },
     });
   },
