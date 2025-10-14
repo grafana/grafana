@@ -32,6 +32,8 @@ cards:
       href: ./profiles/
       description: View and analyze high-level service performance, identify problem processes for optimization, and diagnose issues to determine root causes.
       height: 24
+aliases:
+  - /docs/grafana/next/explore/simplified-exploration/
 ---
 
 # Simplified exploration

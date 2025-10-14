@@ -3,6 +3,7 @@ aliases:
   - ../variables/ # /docs/grafana/<GRAFANA VERSION>/variables/
   - ../variables/templates-and-variables/ # /docs/grafana/<GRAFANA VERSION>/variables/templates-and-variables/
   - ../variables/variable-examples/ # /docs/grafana/<GRAFANA VERSION>/variables/variable-examples/
+  - /docs/grafana/next/dashboards/variables/
 labels:
   products:
     - cloud

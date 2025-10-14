@@ -37,7 +37,7 @@ Use these steps to migrate resources between environments:
 
 {{< admonition type="note" >}}
 Resources are pulled and pushed from the `./resources` directory by default.
-This can be configured with the `-p, --path` flags to specify custom paths on disk.
+This directory can be configured with the `--directory`/`-d` flags.
 {{< /admonition >}}
 
 1. Make changes to dashboards and other resources using the Grafana UI in your **development instance**.
@@ -45,21 +45,21 @@ This can be configured with the `-p, --path` flags to specify custom paths on di
 
    ```bash
    grafanactl config use-context YOUR_CONTEXT  # for example "dev"
-   grafanactl resources pull --path ./resources/ -o yaml # or json
+   grafanactl resources pull -d ./resources/ -o yaml  # or json
    ```
 
 1. (Optional) Preview the resources locally before pushing:
 
    ```bash
    grafanactl config use-context YOUR_CONTEXT  # for example "prod"
-   grafanactl resources serve ./resources/
+   grafanactl resources serve -d ./resources/
    ```
 
 1. Switch to the **production instance** and push the resources:
 
    ```bash
    grafanactl config use-context YOUR_CONTEXT  # for example "prod"
-   grafanactl resources push -p ./resources/
+   grafanactl resources push -d ./resources/
    ```
 
 ## Back up Grafana resources
@@ -70,7 +70,7 @@ This workflow helps you back up all Grafana resources from one instance and late
 
    ```bash
    grafanactl config use-context YOUR_CONTEXT  # for example "prod"
-   grafanactl resources pull --path ./resources/ -o yaml # or json
+   grafanactl resources pull -d ./resources/ -o yaml  # or json
    ```
 
 1. Save the exported resources to version control or cloud storage.
@@ -81,21 +81,21 @@ This workflow helps you back up all Grafana resources from one instance and late
 
    ```bash
    grafanactl config use-context YOUR_CONTEXT  # for example "prod"
-   grafanactl resources serve ./resources/
+   grafanactl resources serve -d ./resources/
    ```
 
 1. To restore the resources later or restore them on another instance, push the saved resources:
 
    ```bash
    grafanactl config use-context YOUR_CONTEXT  # for example "prod"
-   grafanactl resources push -p ./resources/
+   grafanactl resources push -d ./resources/
    ```
 
 ## Manage dashboards as code
 
 With this workflow, you can define and manage dashboards as code, saving them to a version control system like Git. This is useful for teams that want to maintain a history of changes, collaborate on dashboard design, and ensure consistency across environments.
 
-1. Use a dashboard generation script (for example, with the [Foundation SDK](https://github.com/grafana/grafana-foundation-sdk)). You can find an example implementation in the Grafana as code [hands-on lab repository](https://github.com/grafana/dashboards-as-code-workshop/tree/main/part-one-golang-starter).
+1. Use a dashboard generation script (for example, with the [Foundation SDK](https://github.com/grafana/grafana-foundation-sdk)). You can find an example implementation in the Grafana as code [hands-on lab repository](https://github.com/grafana/dashboards-as-code-workshop/tree/main/part-one-golang).
 
 1. Serve and preview the output of the dashboard generator locally:
 
@@ -114,7 +114,7 @@ With this workflow, you can define and manage dashboards as code, saving them to
 
    ```bash
    grafanactl config use-context YOUR_CONTEXT  # for example "dev"
-   grafanactl resources push -p ./resources/
+   grafanactl resources push -d ./resources/
    ```
 
 ## Explore and modify resources from the terminal
@@ -197,7 +197,7 @@ Use this workflow to locate dashboards using a deprecated API version and mark t
    playlist.grafana.app                v1        playlist
    ```
 
-1. Find dashboards that are still using a deprecated API version:
+1. Find dashboards that are still using an old API version:
 
    ```bash
    grafanactl resources get dashboards.v1.dashboard.grafana.app

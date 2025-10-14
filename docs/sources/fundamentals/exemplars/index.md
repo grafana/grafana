@@ -34,7 +34,7 @@ After you localize the latency problem to a few exemplar traces, you can combine
 
 Support for exemplars is available for the Prometheus data source only.
 After you enable the functionality, exemplar data is available by default.
-For more information on exemplar configuration and how to enable exemplars, refer to the Exemplars section in [Prometheus configuration options](https://grafana.com/docs/grafana/latest/datasources/prometheus/configure/#configuration-options).
+For more information on exemplar configuration and how to enable exemplars, refer to [configuring exemplars in the Prometheus data source](../../datasources/prometheus/configure-prometheus-data-source/#exemplars).
 
 Grafana shows exemplars alongside a metric in the Explore view and in dashboards.
 Each exemplar displays as a highlighted star.

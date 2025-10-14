@@ -4,6 +4,7 @@ aliases:
   - ../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/
   - ../../panels/query-a-data-source/use-expressions-to-manipulate-data/write-an-expression/
   - ./
+  - /docs/grafana/next/panels-visualizations/query-transform-data/expression-queries/
 labels:
   products:
     - cloud

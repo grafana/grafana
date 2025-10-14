@@ -6,6 +6,7 @@ aliases:
   - ../../visualizations/table/
   - ../../visualizations/table/filter-table-columns/
   - /docs/grafana/next/panels/visualizations/table/table-field-options/
+  - /docs/grafana/next/panels-visualizations/visualizations/table/
 description: Configure options for Grafana's table visualization
 keywords:
   - grafana
@@ -173,22 +174,6 @@ Columns with filters applied have a blue filter displayed next to the title.
 {{< figure src="/static/img/docs/tables/filtered-column.png" max-width="100px" alt="Filtered column" class="docs-image--no-shadow" >}}
 
 To remove the filter, click the blue filter icon and then click **Clear filter**.
-
-<!-- vale Grafana.WordList = NO -->
-<!-- vale Grafana.Spelling = NO -->
-
-### Apply ad hoc filters from the table
-
-In tables, you can apply ad hoc filters directly from the visualization with one click.
-
-To display the filter icons, hover your cursor over the cell that has the value for which you want to filter:
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with ad hoc filter icon displayed on a cell" >}}
-
-For more information about applying ad hoc filters this way, refer to [Dashboard drilldown with ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#dashboard-drilldown-with-ad-hoc-filters).
-
-<!-- vale Grafana.Spelling = YES -->
-<!-- vale Grafana.WordList = YES -->
 
 ## Sort columns
 
@@ -424,7 +409,7 @@ However, you can switch back and forth between tabs.
 
 The **Pill** cell type displays each item in a comma-separated string in a colored block.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-pill-cells-v12.2.png" max-width="750px" alt="Table using the pill cell type" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-pills-v12.1.png" max-width="750px" alt="Table using the pill cell type" >}}
 
 The colors applied to each piece of text are maintained throughout the table.
 For example, if the word "test" is first displayed in a red pill, it will always be displayed in a red pill.
@@ -454,8 +439,6 @@ in these cells if the [`disable_sanitize_html`](https://grafana.com/docs/grafana
 
 Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
 For more information, refer to [Tooltip from field](#tooltip-from-field).
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-markdown-v12.2.png" max-width="600px" alt="Table using the pill cell type" >}}
 
 #### Image
 

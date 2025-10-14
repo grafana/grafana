@@ -72,6 +72,8 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/
+aliases:
+  - /docs/grafana/next/dashboards/build-dashboards/create-dynamic-dashboard/
 ---
 
 # Create and edit dynamic dashboards

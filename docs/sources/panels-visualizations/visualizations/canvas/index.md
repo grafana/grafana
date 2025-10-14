@@ -2,6 +2,7 @@
 aliases:
   - ../../features/panels/canvas/
   - ../../visualizations/canvas/
+  - /docs/grafana/next/panels-visualizations/visualizations/canvas/
 description: Configure options for Grafana's canvas visualization
 keywords:
   - grafana

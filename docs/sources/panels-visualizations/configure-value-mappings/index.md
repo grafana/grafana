@@ -9,6 +9,7 @@ aliases:
   - ../panels/format-data/map-a-special-value/
   - ../panels/format-data/map-a-value/
   - ../panels/value-mappings/
+  - /docs/grafana/next/panels-visualizations/configure-value-mappings/
 labels:
   products:
     - cloud

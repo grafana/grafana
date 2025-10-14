@@ -21,6 +21,8 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
+aliases:
+  - /docs/grafana/next/panels-visualizations/visualizations/trend/
 ---
 
 # Trend

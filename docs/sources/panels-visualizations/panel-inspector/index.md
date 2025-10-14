@@ -4,6 +4,7 @@ aliases:
   - ../panels/query-a-data-source/inspect-query-performance/
   - ../panels/query-a-data-source/inspect-request-and-response-data/
   - ../panels/working-with-panels/navigate-inspector-panel/
+  - /docs/grafana/next/panels-visualizations/panel-inspector/
 labels:
   products:
     - cloud

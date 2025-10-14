@@ -18,45 +18,57 @@ weight: 300
 # Provision resources and sync dashboards
 
 {{< admonition type="caution" >}}
+Provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. This feature is not publicly available in Grafana Cloud yet. Only the cloud-hosted version of GitHub (GitHub.com) is supported at this time. GitHub Enterprise is not yet compatible.
 
-Git Sync is available in [private preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud. Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided. You can sign up to the private preview using the [Git Sync early access form](https://forms.gle/WKkR3EVMcbqsNnkD9).
-
-Git Sync and local file provisioning are [experimental features](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
-
+Sign up for Grafana Cloud Git Sync early access using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
 {{< /admonition >}}
 
-Provisioning allows you to configure how to store your dashboard JSON and other files in GitHub repositories using either Git Sync or a local path.
+Using Provisioning, you can configure how to store your dashboard JSON files in either GitHub repositories using Git Sync or a local path.
 
-Of the two options, **Git Sync** is the favorited method for provisioning your dashboards. You can synchronize any new dashboards and changes to existing dashboards from the UI to your configured GitHub repository. If you push a change in the repository, those changes are mirrored in your Grafana instance. Refer to [Git Sync workflow](#git-sync-workflow) for more information.
+Of the two experimental options, Git Sync is the recommended method for provisioning your dashboards. You can synchronize any new dashboards and changes to existing dashboards to your configured GitHub repository.
+If you push a change in the repository, those changes are mirrored in your Grafana instance.
+For more information on configuring Git Sync, refer to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup).
 
-Alternatively, **local file provisioning** allows you to include in your Grafana instance resources (such as folders and dashboard JSON files) that are stored in a local file system. Refer to [Local file workflow](#local-file-workflow) for more information.
+Refer to [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/) to learn more about the version of local file provisioning in Grafana 12.
 
 ## Provisioned folders and connections
 
-The dashboards saved in your GitHub repository or local folder appear in Grafana in the 'provisioned' folder. The dashboards and folders saved to the local path are referred to as 'provisioned' resources and are labeled as such in the Grafana UI. You can update any provisioned dashboard that is either stored within a GitHub repository (Git Sync workflow) or in a local file (local file workflow).
+Dashboards and folders saved to the local path are referred to as "provisioned" resources and are labeled as such in the Grafana UI.
+
+Dashboards saved in your GitHub repository or local folder configured appear in a provisioned folder in Grafana.
 
 You can set a single folder, or multiple folders to a different repository, with up to 10 connections. Alternatively, your entire Grafana instance can be the provisioned folder.
 
-## Git Sync workflow
+## How it works
 
-In the Git Sync workflow:
+A user decides to update a provisioned dashboard that is either stored within a GitHub repository (Git Sync workflow) or in a local file (local file workflow).
 
-- When you provision resources with Git Sync you can modify them from within the Grafana UI or within the GitHub repository. Changes made in either the repository or the Grafana UI are bidirectional.
-- Any changes made in the provisioned files stored in the GitHub repository are reflected in the Grafana database. By default, Grafana polls GitHub every 60 seconds. The Grafana UI reads from the database and updates the UI to reflect these changes.
+### Git Sync workflow
 
-For example, if you update a dashboard within the Grafana UI and click **Save** to preserve the changes, you'll be notified that the dashboard is provisioned in a GitHub repository. Next you'll be prompted to choose how to preserve the changes: either directly to a branch, or pushed to a new branch using a pull request in GitHub.
+Resources provisioned with Git Sync can be modified from within the Grafana UI or within the GitHub repository.
+Changes made in either the repository or the Grafana UI are bidirectional.
 
-For more information, see [Introduction to Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync) and [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup).
+For example, when a user updates dashboards within the Grafana UI, they choose **Save** to preserve the changes.
+Grafana notifies them that the dashboard is provisioned in a GitHub repository.
+They choose how to preserve their changes: either saved directly to a branch or pushed to a new branch using a pull request in GitHub.
+If they chose a new branch, then they open the pull request and follow their normal workflow.
 
-## Local file workflow
+Grafana polls GitHub at a regular interval.
+The connection is established using a personal access token for authorization.
+With the webhooks feature enabled, repository notifications appear almost immediately.
+Without webhooks, Grafana polls for changes at the specified interval.
+The default polling interval is 60 seconds.
 
-In the local file workflow:
+Any changes made in the provisioned files stored in the GitHub repository are reflected in the Grafana database.
+The Grafana UI reads the database and updates the UI to reflect these changes.
 
-- All provisioned resources are changed in the local files.
-- Any changes made in the provisioned files are reflected in the Grafana database. The Grafana UI reads the database and updates the UI to reflect these changes.
-- You can't use the Grafana UI to edit or delete provisioned resources.
+### Local file workflow
 
-Learn more in [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/).
+In the local file workflow, all provisioned resources are changed in the local files.
+The user can't use the Grafana UI to edit or delete provisioned resources.
+
+Any changes made in the provisioned files are reflected in the Grafana database.
+The Grafana UI reads the database and updates the UI to reflect these changes.
 
 ## Explore provisioning
 

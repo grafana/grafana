@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/developers/http_api/authentication/
-description: 'You can authenticate HTTP API requests using basic authentication or a service account token.'
+description: 'You can authenticate HTTP API requests using basic authentication, a service account token, or a session cookie.'
 keywords:
   - grafana
   - http

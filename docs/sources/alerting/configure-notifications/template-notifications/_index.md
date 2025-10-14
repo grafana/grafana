@@ -101,24 +101,6 @@ The notification template is assigned to the contact point to determine the noti
 
 By default, Grafana provides default templates, such as `{{define "default.title"}}` and `{{define "default.message"}}`, to format notification messages.
 
-## Grafana Cloud AI-generated templates
-
-Grafana Cloud users can use built-in AI tool to generate templates in the appropriate [alerting template language](/docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/) for you.
-
-To use AI to create your template, follow these steps:
-
-1. Go to **Alerting -> Contact points**.
-
-1. Click the Notification Templates tab then, click the **+ Add notification template group** button.
-
-1. Name your template.
-
-1. In the Template group section, click the **Generate with AI** button.
-
-1. Supply the AI tool with a prompt or select from one of the example prompts and edit that if necessary.
-
-1. Click **Save**.
-
 ## More information
 
 For further details on how to write notification templates, refer to:

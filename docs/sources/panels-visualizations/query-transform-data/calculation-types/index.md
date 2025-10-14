@@ -4,6 +4,7 @@ aliases:
   - ../../panels/calculations-list/ # /docs/grafana/<GRAFANA_VERSION>/panels/calculations-list/
   - ../../panels/reference-calculation-types/ # /docs/grafana/<GRAFANA_VERSION>/panels/reference-calculation-types/
   - ../calculation-types/ # /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/calculation-types/
+  - /docs/grafana/next/panels-visualizations/query-transform-data/calculation-types/
 labels:
   products:
     - cloud

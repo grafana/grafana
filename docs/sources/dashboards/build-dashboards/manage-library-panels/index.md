@@ -8,6 +8,7 @@ aliases:
   - ../../panels/library-panels/unlink-library-panel/
   - ../../panels/panel-library/
   - ../manage-library-panels/
+  - /docs/grafana/next/dashboards/build-dashboards/manage-library-panels/
 labels:
   products:
     - cloud

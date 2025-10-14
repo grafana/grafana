@@ -5,7 +5,6 @@ description: Learn about how to configure access to app plugins using RBAC
 labels:
   products:
     - cloud
-    - enterprise
 menuTitle: RBAC for app plugins
 title: RBAC for app plugins
 weight: 90
@@ -26,8 +25,6 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/#grafana-adaptive-metrics-action-definitions
   cloud-access-policies-action-definitions:
-    - pattern: /docs/grafana/
-      destination: docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#cloud-access-policies-action-definitions
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#cloud-access-policies-action-definitions
   rbac-role-definitions:
@@ -40,7 +37,7 @@ refs:
 # RBAC for app plugins
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Cloud](/docs/grafana-cloud).
 {{< /admonition >}}
 
 RBAC can be used to manage access to [app plugins](https://grafana.com/docs/grafana/latest/administration/plugin-management/#app-plugins).

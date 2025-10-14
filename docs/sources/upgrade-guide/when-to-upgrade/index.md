@@ -46,19 +46,23 @@ We provide release documentation in multiple places to address different needs:
 
 ## When to expect releases
 
-Grafana currently follows a monthly release schedule. Below are the planned releases for the end of 2025 and the first part of 2026. However, these dates may be subject to change:
+Grafana currently follows a monthly release schedule. Below are the planned releases for 2025, though these dates may be subject to change:
 
 | **Release date** | **Grafana versions**      | **Release type** |
 | ---------------- | ------------------------- | ---------------- |
+| Jan. 28, 2025    | 11.5 & Supported versions | Minor & patching |
+| Feb. 18, 2025    | Supported versions        | Patching         |
+| March 25, 2025   | 11.6 & Supported versions | Minor & patching |
+| April 23, 2025   | Supported versions        | Patching         |
+| May 5, 2025      | Grafana 12.0              | Major only       |
+| May 20, 2025     | Supported versions        | Patching         |
+| June 17, 2025    | Supported versions        | Patching         |
+| July 22, 2025    | 12.1 & Supported versions | Minor & patching |
 | Aug. 12, 2025    | Supported versions        | Patching         |
 | Sept. 23, 2025   | 12.2 & Supported versions | Minor & patching |
 | Oct. 21, 2025    | Supported versions        | Patching         |
 | Nov. 18, 2025    | 12.3 & Supported versions | Minor & patching |
 | Dec. 16, 2025    | Supported versions        | Patching         |
-| Jan. 13, 2026    | Supported versions        | Patching         |
-| Feb. 24, 2026    | 12.4 & Supported versions | Minor & patching |
-| Mar. 24, 2026    | Supported versions        | Patching         |
-| TBD              | Grafana 13                | Major            |
 
 ### A few important notes
 
@@ -100,16 +104,20 @@ Here is an overview of version support through 2026:
 
 | **Version**               | **Release date**   | **Support end date** | **Support level**  |
 | ------------------------- | ------------------ | -------------------- | ------------------ |
+| 10.2.x                    | October 24, 2023   | July 24, 2024        | Not Supported      |
+| 10.3.x                    | January 23, 2024   | October 23, 2024     | Not Supported      |
+| 10.4.x (Last minor of 10) | March 5, 2024      | June 5, 2025         | Not Supported      |
+| 11.0.x                    | May 14, 2024       | February 14, 2025    | Not Supported      |
+| 11.1.x                    | June 25, 2024      | April 23, 2025       | Not Supported      |
+| 11.2.x                    | August 27, 2024    | May 27, 2025         | Not Supported      |
 | 11.3.x                    | October 22, 2024   | July 22, 2025        | Not Supported      |
-| 11.4.x                    | December 5, 2024   | September 5, 2025    | Not Supported      |
-| 11.5.x                    | January 28, 2025   | October 28, 2025     | Not Supported      |
+| 11.4.x                    | December 5, 2024   | September 5, 2025    | Patch Support      |
+| 11.5.x                    | January 28, 2025   | October 28, 2025     | Patch Support      |
 | 11.6.x (Last minor of 11) | March 25, 2025     | June 25, 2026        | Patch Support      |
 | 12.0.x                    | May 5, 2025        | February 5, 2026     | Patch Support      |
 | 12.1.x                    | July 22, 2025      | April 22, 2026       | Patch Support      |
-| 12.2.x                    | September 23, 2025 | June 23, 2026        | Patch Support      |
+| 12.2.x                    | September 23, 2025 | June 23, 2026        | Yet to be released |
 | 12.3.x                    | November 18, 2025  | August 18, 2026      | Yet to be released |
-| 12.4.x (Last minor of 12) | February 24, 2026  | November 24, 2026    | Yet to be released |
-| 13.0.0                    | TBD                | TBD                  | Yet to be released |
 
 ## How are these versions supported?
 

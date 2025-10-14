@@ -28,6 +28,8 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
+aliases:
+  - /docs/grafana/next/dashboards/search-dashboards/
 ---
 
 # Search dashboards and folders

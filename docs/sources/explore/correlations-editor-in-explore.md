@@ -6,6 +6,8 @@ labels:
     - cloud
 title: Correlations Editor in Explore
 weight: 20
+aliases:
+  - /docs/grafana/next/explore/correlations-editor-in-explore/
 ---
 
 # Correlations Editor in Explore

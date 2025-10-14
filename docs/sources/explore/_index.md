@@ -1,6 +1,7 @@
 ---
 aliases:
   - features/explore/
+  - /docs/grafana/next/explore/
 keywords:
   - explore
   - loki

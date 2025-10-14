@@ -37,7 +37,7 @@ For an integrated, UI-driven Git workflow focused on dashboards, explore Git Syn
 - Connect folders or entire Grafana instances directly to a GitHub repository to synchronize dashboard definitions, enabling version control, branching, and pull requests directly from Grafana.
 - Git Sync offers a simple, out-of-the-box approach for managing dashboards as code.
   {{< admonition type="note" >}}
-  Git Sync is available in **private preview** for Grafana Cloud, and it's an **experimental feature** in Grafana 12, available in Grafana OSS and Enterprise [nightly releases](https://grafana.com/grafana/download/nightly).
+  Git Sync is an **experimental feature** in Grafana 12, available in Grafana OSS and Enterprise [nightly releases](https://grafana.com/grafana/download/nightly). It is not yet available in Grafana Cloud.
   {{< /admonition >}}
 
 Refer to the [Git Sync documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync/) to learn more.

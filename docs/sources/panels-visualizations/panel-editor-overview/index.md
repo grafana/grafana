@@ -10,6 +10,7 @@ aliases:
   - ../panels/working-with-panels/navigate-inspector-panel/
   - ../panels/working-with-panels/navigate-panel-editor/
   - add-organize-panels/
+  - /docs/grafana/next/panels-visualizations/panel-editor-overview/
 keywords:
   - panel
   - dashboard

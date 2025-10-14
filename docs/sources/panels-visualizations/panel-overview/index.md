@@ -102,6 +102,8 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-thresholds/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-thresholds/
+aliases:
+  - /docs/grafana/next/panels-visualizations/panel-overview/
 ---
 
 # Panel overview

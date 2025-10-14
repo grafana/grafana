@@ -9,6 +9,8 @@ labels:
     - oss
 title: Traces in Explore
 weight: 40
+aliases:
+  - /docs/grafana/next/explore/trace-integration/
 ---
 
 # Traces in Explore

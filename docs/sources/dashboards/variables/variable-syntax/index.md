@@ -3,6 +3,7 @@ aliases:
   - ../../reference/templating/
   - ../../variables/advanced-variable-format-options/
   - ../../variables/syntax/
+  - /docs/grafana/next/dashboards/variables/variable-syntax/
 keywords:
   - grafana
   - templating

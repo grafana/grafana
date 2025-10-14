@@ -6,6 +6,7 @@ aliases:
   - ../../linking/linking-overview/
   - ../../panels/working-with-panels/add-link-to-panel/
   - ../manage-dashboard-links/
+  - /docs/grafana/next/dashboards/build-dashboards/manage-dashboard-links/
 description: Add links to your Grafana dashboards to connect to other dashboards, panels, and websites
 keywords:
   - link

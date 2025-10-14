@@ -33,7 +33,7 @@ Grafana provides OAuth2 integrations for the following auth providers:
 
 If your OAuth2 provider is not listed, you can use Generic OAuth authentication.
 
-This topic describes how to configure Generic OAuth authentication using different methods and includes [examples of setting up Generic OAuth](#examples-of-setting-up-generic-oauth) with specific OAuth2 providers.
+This topic describes how to configure Generic OAuth authentication using different methods and includes [examples of setting up Generic OAuth](#examples-of-setting-up-generic-oauth2) with specific OAuth2 providers.
 
 ## Before you begin
 
@@ -130,10 +130,6 @@ Grafana can resolve a user's login from the OAuth2 ID token, user information re
 Grafana looks at these sources in the order listed until it finds a login.
 If no login is found, then the user's login is set to user's email address.
 
-{{< admonition type="important" >}}
-Email is required for successful sign-up and login with Generic OAuth. Even if you map `login` from another claim (for example `sub`), Grafana still requires the user to have an email. Ensure your provider returns an email claim or configure `email_attribute_path` so Grafana can resolve it. Including the `email` scope is strongly recommended (for OIDC providers use `openid profile email`).
-{{< /admonition >}}
-
 Refer to the following table for information on what to configure based on how your Oauth2 provider returns a user's login:
 
 | Source of login                                                                 | Required configuration                           |
@@ -144,21 +140,6 @@ Refer to the following table for information on what to configure based on how y
 | Another field of the user information from the UserInfo endpoint.               | Set `login_attribute_path` configuration option. |
 | `login` or `username` field of the OAuth2 access token.                         | N/A                                              |
 | Another field of the OAuth2 access token.                                       | Set `login_attribute_path` configuration option. |
-
-#### Use the `sub` claim for login
-
-Most of the OAuth2 providers expose a stable subject identifier in the `sub` claim. You can use it to populate the Grafana login by setting `login_attribute_path` to `sub`. Because email is still required, also make sure Grafana can resolve the user's email (for example by including the `email` scope or mapping a custom field via `email_attribute_path`).
-
-Example configuration:
-
-```ini
-[auth.generic_oauth]
-enabled = true
-scopes = openid profile email
-login_attribute_path = sub
-# If your provider does not return `email` at the top level, map it explicitly
-# email_attribute_path = user.email
-```
 
 ### Configure display name
 

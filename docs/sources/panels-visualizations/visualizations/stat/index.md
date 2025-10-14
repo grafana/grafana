@@ -5,6 +5,7 @@ aliases:
   - ../../panels/visualizations/stat-panel/
   - ../../reference/singlestat/
   - ../../visualizations/stat-panel/
+  - /docs/grafana/next/panels-visualizations/visualizations/stat/
 description: Configure options for Grafana's stat visualization
 keywords:
   - grafana
