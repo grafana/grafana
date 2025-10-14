@@ -369,6 +369,10 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
+  * Run the annotations apiserver
+  */
+  annotationsAPIServer?: boolean;
+  /**
   * read annotations from the APIServer
   */
   annotationsFromAPIServer?: boolean;

@@ -335,6 +335,10 @@ const (
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
+	// FlagAnnotationsAPIServer
+	// Run the annotations apiserver
+	FlagAnnotationsAPIServer = "annotationsAPIServer"
+
 	// FlagAnnotationsFromAPIServer
 	// read annotations from the APIServer
 	FlagAnnotationsFromAPIServer = "annotationsFromAPIServer"

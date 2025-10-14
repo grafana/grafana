@@ -81,6 +81,7 @@ alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,fal
 alertingProvenanceLockWrites,experimental,@grafana/alerting-squad,false,false,false
 alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
+annotationsAPIServer,experimental,@grafana/grafana-backend-services-squad,true,false,false
 annotationsFromAPIServer,experimental,@grafana/dashboards-squad,false,false,true
 extractFieldsNameDeduplication,experimental,@grafana/dataviz-squad,false,false,true
 dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true

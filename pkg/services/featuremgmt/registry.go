@@ -613,6 +613,13 @@ var (
 			Owner:           identityAccessTeam,
 		},
 		{
+			Name:            "annotationsAPIServer",
+			Description:     "Run the annotations apiserver",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			Owner:           grafanaBackendServicesSquad,
+		},
+		{
 			Name:            "annotationsFromAPIServer",
 			Description:     "read annotations from the APIServer",
 			Stage:           FeatureStageExperimental,

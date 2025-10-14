@@ -706,6 +706,19 @@
     },
     {
       "metadata": {
+        "name": "annotationsAPIServer",
+        "resourceVersion": "1760446518121",
+        "creationTimestamp": "2025-10-14T12:55:18Z"
+      },
+      "spec": {
+        "description": "Run the annotations apiserver",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "requiresDevMode": true
+      }
+    },
+    {
+      "metadata": {
         "name": "annotationsFromAPIServer",
         "resourceVersion": "1758549960442",
         "creationTimestamp": "2025-09-22T14:06:00Z"

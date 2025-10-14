@@ -25,8 +25,9 @@ var (
 )
 
 var appManifestData = app.ManifestData{
-	AppName: "annotations",
-	Group:   "annotation.grafana.app",
+	AppName:          "annotations",
+	Group:            "annotation.grafana.app",
+	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v0alpha1",

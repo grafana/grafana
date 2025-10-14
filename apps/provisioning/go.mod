@@ -7,7 +7,7 @@ require (
 	github.com/google/go-github/v70 v70.0.0
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f
-	github.com/grafana/grafana-app-sdk/logging v0.45.0
+	github.com/grafana/grafana-app-sdk/logging v0.46.0
 	github.com/grafana/grafana/apps/secret v0.0.0-20250902093454-b56b7add012f
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2
 	github.com/grafana/nanogit v0.0.0-20250723104447-68f58f5ecec0
