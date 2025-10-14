@@ -27,7 +27,11 @@ export function AppNotificationList() {
   const location = useLocation();
 
   useEffect(() => {
-    
+    // Suppress error notifications in kiosk mode on dashboards.
+    // Kiosk mode is typically used for TV displays which are non-interactive.
+    // Backend errors like "Failed to fetch" cannot be dismissed and would remain visible,
+    // degrading the viewing experience. Other notification types (success, warning, info)
+    // are still shown as they indicate successful operations or important information.
     const handleErrorAlert = (payload: AlertErrorPayload) => {
       const isKioskDashboard = chrome.state.getValue().kioskMode && location.pathname.startsWith('/d/');
       
