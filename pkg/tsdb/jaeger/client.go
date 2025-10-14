@@ -11,6 +11,7 @@ import (
 	"github.com/go-logfmt/logfmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana/pkg/tsdb/jaeger/types"
 )
 
 type JaegerClient struct {
@@ -18,34 +19,6 @@ type JaegerClient struct {
 	url        string
 	httpClient *http.Client
 	settings   backend.DataSourceInstanceSettings
-}
-
-type ServicesResponse struct {
-	Data   []string    `json:"data"`
-	Errors interface{} `json:"errors"`
-	Limit  int         `json:"limit"`
-	Offset int         `json:"offset"`
-	Total  int         `json:"total"`
-}
-
-type SettingsJSONData struct {
-	TraceIdTimeParams struct {
-		Enabled bool `json:"enabled"`
-	} `json:"traceIdTimeParams"`
-}
-
-type DependenciesResponse struct {
-	Data   []ServiceDependency `json:"data"`
-	Errors []struct {
-		Code int    `json:"code"`
-		Msg  string `json:"msg"`
-	} `json:"errors"`
-}
-
-type ServiceDependency struct {
-	Parent    string `json:"parent"`
-	Child     string `json:"child"`
-	CallCount int    `json:"callCount"`
 }
 
 func New(hc *http.Client, logger log.Logger, settings backend.DataSourceInstanceSettings) (JaegerClient, error) {
@@ -59,7 +32,7 @@ func New(hc *http.Client, logger log.Logger, settings backend.DataSourceInstance
 }
 
 func (j *JaegerClient) Services() ([]string, error) {
-	var response ServicesResponse
+	var response types.ServicesResponse
 	services := []string{}
 
 	u, err := url.JoinPath(j.url, "/api/services")
@@ -87,7 +60,7 @@ func (j *JaegerClient) Services() ([]string, error) {
 }
 
 func (j *JaegerClient) Operations(s string) ([]string, error) {
-	var response ServicesResponse
+	var response types.ServicesResponse
 	operations := []string{}
 
 	u, err := url.JoinPath(j.url, "/api/services/", s, "/operations")
@@ -194,7 +167,7 @@ func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResp
 		return []TraceResponse{}, err
 	}
 
-	var result TracesResponse
+	var result types.TracesResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return []TraceResponse{}, fmt.Errorf("failed to decode Jaeger response: %w", err)
 	}
@@ -204,8 +177,8 @@ func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResp
 
 func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int64) (TraceResponse, error) {
 	logger := j.logger.FromContext(ctx)
-	var response TracesResponse
-	trace := TraceResponse{}
+	var response types.TracesResponse
+	trace := types.TraceResponse{}
 
 	if traceID == "" {
 		return trace, backend.DownstreamError(fmt.Errorf("traceID is empty"))
@@ -216,7 +189,7 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 		return trace, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
 	}
 
-	var jsonData SettingsJSONData
+	var jsonData types.SettingsJSONData
 	if err := json.Unmarshal(j.settings.JSONData, &jsonData); err != nil {
 		return trace, backend.DownstreamError(fmt.Errorf("failed to parse settings JSON data: %w", err))
 	}
@@ -274,9 +247,9 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 	return trace, err
 }
 
-func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (DependenciesResponse, error) {
+func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (types.DependenciesResponse, error) {
 	logger := j.logger.FromContext(ctx)
-	var dependencies DependenciesResponse
+	var dependencies types.DependenciesResponse
 
 	u, err := url.JoinPath(j.url, "/api/dependencies")
 	if err != nil {
