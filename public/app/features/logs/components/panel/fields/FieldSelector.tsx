@@ -1,15 +1,27 @@
-import { Resizable, ResizeCallback } from "re-resizable";
-import { useCallback, useState } from "react";
+import { css } from '@emotion/css';
+import { Resizable, ResizeCallback } from 're-resizable';
+import { startTransition, useCallback, useState } from 'react';
 
-import { fuzzySearch } from "@grafana/data";
-import { getDragStyles, useStyles2 } from "@grafana/ui";
+import { GrafanaTheme2 } from '@grafana/data';
+import { getDragStyles, useStyles2 } from '@grafana/ui';
 
-import { LogsColumnSearch } from "./LogsColumnSearch";
-import { LogsTableMultiSelect } from "./LogsTableMultiSelect";
+import { useLogListContext } from '../LogListContext';
+import { LogListModel } from '../processing';
 
-export const FieldSelector = () => {
+import { FieldSearch } from './FieldSearch';
+import { LogsTableMultiSelect } from './LogsTableMultiSelect';
+
+interface LogListFieldSelectorProps {
+  containerElement: HTMLDivElement;
+  logs: LogListModel[];
+}
+
+/**
+ * FieldSelector wrapper for the LogList visualization.
+ */
+export const LogListFieldSelector = ({ containerElement, logs }: LogListFieldSelectorProps) => {
   const [sidebarWidth, setSidebarWidth] = useState(220);
-  const [searchValue, setSearchValue] = useState<string>('');
+  const { onClickShowField, onClickHideField, setDisplayedFields } = useLogListContext();
 
   const dragStyles = useStyles2(getDragStyles);
 
@@ -20,20 +32,10 @@ export const FieldSelector = () => {
     }
   }, []);
 
-  const search = (needle: string) => {
-    fuzzySearch(Object.keys(columnsWithMeta), needle, dispatcher);
-  };
-
-  const onSearchInputChange = (e: React.FormEvent<HTMLInputElement>) => {
-    const value = e.currentTarget?.value;
-    setSearchValue(value);
-    if (value) {
-      search(value);
-    } else {
-      // If the search input is empty, reset the local search state.
-      setFilteredColumnsWithMeta(undefined);
-    }
-  };
+  if (!onClickShowField || !onClickHideField || !setDisplayedFields) {
+    console.warn('Missing required props: onClickShowField, onClickHideField, setDisplayedFields');
+    return null;
+  }
 
   return (
     <Resizable
@@ -41,18 +43,47 @@ export const FieldSelector = () => {
         right: true,
       }}
       handleClasses={{ right: dragStyles.dragHandleVertical }}
+      defaultSize={{ width: sidebarWidth, height: containerElement.clientHeight }}
       onResize={getOnResize}
-    >
-      <section className={styles.sidebar}>
-        <LogsColumnSearch value={searchValue} onChange={onSearchInputChange} />
-        <LogsTableMultiSelect
-          reorderColumn={reorderColumn}
-          toggleColumn={toggleColumn}
-          filteredColumnsWithMeta={filteredColumnsWithMeta}
-          columnsWithMeta={columnsWithMeta}
-          clear={clearSelection}
-        />
-      </section>
-    </Resizable>
+    ></Resizable>
   );
+};
+
+export interface FieldSelectorProps {
+  showField: (key: string) => void;
+  hideField: (key: string) => void;
+  setFields: (displayedFields: string[]) => void;
+}
+
+export const FieldSelector = ({ showField, hideField, setFields }: FieldSelectorProps) => {
+  const [searchValue, setSearchValue] = useState<string>('');
+  const styles = useStyles2(getStyles);
+
+  const onSearchInputChange = (e: React.FormEvent<HTMLInputElement>) => {
+    startTransition(() => {
+      setSearchValue(e.currentTarget.value);
+    });
+  };
+
+  return (
+    <section className={styles.sidebar}>
+      <FieldSearch value={searchValue} onChange={onSearchInputChange} />
+      <LogsTableMultiSelect
+        reorderColumn={() => {}}
+        toggleColumn={() => {}}
+        filteredColumnsWithMeta={{}}
+        columnsWithMeta={{}}
+        clear={() => {}}
+      />
+    </section>
+  );
+};
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    sidebar: css({
+      fontSize: theme.typography.pxToRem(11),
+      paddingRight: theme.spacing(3),
+    }),
+  };
 }

@@ -13,7 +13,7 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export function LogsColumnSearch(props: { onChange: (e: React.FormEvent<HTMLInputElement>) => void; value: string }) {
+export function FieldSearch(props: { onChange: (e: React.FormEvent<HTMLInputElement>) => void; value: string }) {
   const theme = useTheme2();
 
   const styles = getStyles(theme);
