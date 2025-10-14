@@ -478,9 +478,9 @@ func (srv *CleanUpService) cleanupStaleLBACRules(ctx context.Context) {
 	}
 }
 
-func (srv *CleanUpService) getLBACRulesForTeamsStillExisting(ctx context.Context, teamHeaders *datasources.TeamHTTPHeaders, orgID int64) (*datasources.TeamHTTPHeaders, int) {
+func (srv *CleanUpService) getLBACRulesForTeamsStillExisting(ctx context.Context, teamHeaders *datasources.DataSourceAccessRules, orgID int64) (*datasources.DataSourceAccessRules, int) {
 	logger := srv.log.FromContext(ctx)
-	cleanedHeaders := &datasources.TeamHTTPHeaders{Headers: make(map[string][]datasources.TeamHTTPHeader)}
+	cleanedHeaders := &datasources.DataSourceAccessRules{Headers: make(map[string][]datasources.AccessRule)}
 	removedCount := 0
 
 	allTeams, err := srv.teamService.SearchTeams(ctx, &team.SearchTeamsQuery{
@@ -532,7 +532,7 @@ func (srv *CleanUpService) getLBACRulesForTeamsStillExisting(ctx context.Context
 	return cleanedHeaders, removedCount
 }
 
-func (srv *CleanUpService) updateDataSourceLBACRules(ctx context.Context, ds *datasources.DataSource, cleanedHeaders *datasources.TeamHTTPHeaders) error {
+func (srv *CleanUpService) updateDataSourceLBACRules(ctx context.Context, ds *datasources.DataSource, cleanedHeaders *datasources.DataSourceAccessRules) error {
 	// Update JsonData with cleaned rules
 	jsonData := ds.JsonData
 	jsonData.Set("teamHttpHeaders", cleanedHeaders)
