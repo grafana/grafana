@@ -6,6 +6,7 @@ import { Alert, Box, Stack, TextLink, Text, useStyles2 } from '@grafana/ui';
 
 import { DatabaseConnectionSection } from './DatabaseConnectionSection';
 import { LeftSideBar } from './LeftSideBar';
+import { TLSSSLSettingsSection } from './TLSSSLSettingsSection';
 import { UrlAndAuthenticationSection } from './UrlAndAuthenticationSection';
 import { CONTAINER_MIN_WIDTH } from './constants';
 import { trackInfluxDBConfigV2FeedbackButtonClicked } from './tracking';
@@ -43,6 +44,7 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
           </Text>
           <UrlAndAuthenticationSection options={options} onOptionsChange={onOptionsChange} />
           <DatabaseConnectionSection options={options} onOptionsChange={onOptionsChange} />
+          <TLSSSLSettingsSection options={options} onOptionsChange={onOptionsChange} />
         </Stack>
       </Box>
       <Box width="20%" flex="0 0 20%">

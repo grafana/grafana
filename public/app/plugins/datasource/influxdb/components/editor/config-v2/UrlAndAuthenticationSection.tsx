@@ -159,7 +159,6 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       borderStyle="solid"
       borderColor="weak"
       padding={2}
-      marginBottom={4}
       id={`${CONFIG_SECTION_HEADERS[0].id}`}
       minWidth={CONTAINER_MIN_WIDTH}
     >
@@ -240,9 +239,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
               </div>
             </Stack>
           </Box>
-
           <Space v={2} />
-
           {requiresDbrpMapping && (
             <Alert severity="warning" title="InfluxQL requires DBRP mapping">
               {`${options.jsonData.product} requires a Database + Retention Policy (DBRP) mapping via the CLI or
@@ -252,7 +249,6 @@ export const UrlAndAuthenticationSection = (props: Props) => {
               </TextLink>
             </Alert>
           )}
-
           <AdvancedHttpSettings options={options} onOptionsChange={onOptionsChange} />
           <AuthSettings options={options} onOptionsChange={onOptionsChange} />
         </Box>
