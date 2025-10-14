@@ -179,7 +179,12 @@ func (s *frontendService) handleBootError(w http.ResponseWriter, r *http.Request
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
+
+	defer func() {
+		if err := r.Body.Close(); err != nil {
+			s.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	// Increment the Prometheus counter
 	bootErrorMetric.Inc()
