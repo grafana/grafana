@@ -3205,8 +3205,7 @@
       "metadata": {
         "name": "queryServiceWithConnections",
         "resourceVersion": "1756367172351",
-        "creationTimestamp": "2025-08-28T19:28:26Z",
-        "deletionTimestamp": "2025-08-29T12:49:57Z"
+        "creationTimestamp": "2025-08-28T07:46:12Z"
       },
       "spec": {
         "description": "Adds datasource connections to the query service",
