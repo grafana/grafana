@@ -1782,6 +1782,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "kubernetesAuthzZanzanaSync",
+			Description:       "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:              "kubernetesAuthnMutation",
 			Description:       "Enables create, delete, and update mutations for resources owned by IAM identity",
 			Stage:             FeatureStageExperimental,
