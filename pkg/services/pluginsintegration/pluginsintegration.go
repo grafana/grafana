@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	pluginLoader "github.com/grafana/grafana/pkg/plugins/manager/loader"
 	pAngularInspector "github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
@@ -55,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/renderer"
@@ -78,7 +78,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(process.Manager), new(*process.Service)),
 	coreplugin.ProvideCoreRegistry,
 	pluginscdn.ProvideService,
-	assetpath.ProvideService,
 
 	pipeline.ProvideDiscoveryStage,
 	wire.Bind(new(discovery.Discoverer), new(*discovery.Discovery)),
@@ -136,6 +135,8 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(advisor.AdvisorStats), new(*advisor.Service)),
 	pluginchecker.ProvideService,
 	wire.Bind(new(pluginchecker.PluginUpdateChecker), new(*pluginchecker.Service)),
+	pluginsso.ProvideDefaultSettingsProvider,
+	wire.Bind(new(pluginsso.SettingsProvider), new(*pluginsso.DefaultSettingsProvider)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -155,7 +156,7 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(sources.Registry), new(*sources.Service)),
 	checkregistry.ProvideService,
 	wire.Bind(new(checkregistry.CheckService), new(*checkregistry.Service)),
-	pluginassets2.ProvideService,
+	pluginassets2.NewLocalProvider,
 	wire.Bind(new(pluginassets2.Provider), new(*pluginassets2.LocalProvider)),
 )
 

@@ -27,7 +27,8 @@ import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';
-import { CustomVariableEditor, getCustomVariableOptions } from './editors/CustomVariableEditor';
+import { CustomVariableEditor } from './editors/CustomVariableEditor/CustomVariableEditor';
+import { getCustomVariableOptions } from './editors/CustomVariableEditor/getCustomVariableOptions';
 import { DataSourceVariableEditor, getDataSourceVariableOptions } from './editors/DataSourceVariableEditor';
 import { getGroupByVariableOptions, GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { getIntervalVariableOptions, IntervalVariableEditor } from './editors/IntervalVariableEditor';
@@ -38,7 +39,7 @@ import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/Text
 interface EditableVariableConfig {
   name: string;
   description: string;
-  editor: React.ComponentType<any>;
+  editor: React.ComponentType<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   getOptions?: (variable: SceneVariable) => OptionsPaneItemDescriptor[];
 }
 
@@ -132,6 +133,7 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
 
 export function getEditableVariableDefinition(type: string): EditableVariableConfig {
   const editableVariables = getEditableVariables();
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const editableVariable = editableVariables[type as EditableVariableType];
   if (!editableVariable) {
     throw new Error(`Variable type ${type} not found`);
