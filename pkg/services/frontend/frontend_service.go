@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"context"
+	"io"
 	"net"
 	"net/http"
 	"time"
@@ -38,6 +39,9 @@ type frontendService struct {
 	license      licensing.Licensing
 
 	index *IndexProvider
+
+	// Metrics
+	bootErrorMetric prometheus.Counter
 }
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing) (*frontendService, error) {
@@ -51,15 +55,28 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 		return nil, err
 	}
 
+	// Initialize metrics
+	bootErrorMetric := prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "grafana",
+		Subsystem: "frontend",
+		Name:      "boot_errors_total",
+		Help:      "Total number of frontend boot errors",
+	})
+
+	if err := promRegister.Register(bootErrorMetric); err != nil {
+		return nil, err
+	}
+
 	s := &frontendService{
-		cfg:          cfg,
-		features:     features,
-		log:          log.New("frontend-server"),
-		promGatherer: promGatherer,
-		promRegister: promRegister,
-		tracer:       tracer,
-		license:      license,
-		index:        index,
+		cfg:             cfg,
+		features:        features,
+		log:             log.New("frontend-server"),
+		promGatherer:    promGatherer,
+		promRegister:    promRegister,
+		tracer:          tracer,
+		license:         license,
+		index:           index,
+		bootErrorMetric: bootErrorMetric,
 	}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
@@ -117,6 +134,11 @@ func (s *frontendService) routeGet(m *web.Mux, pattern string, h ...web.Handler)
 	m.Get(pattern, handlers...)
 }
 
+func (s *frontendService) routePost(m *web.Mux, pattern string, h ...web.Handler) {
+	handlers := append([]web.Handler{middleware.ProvideRouteOperationName(pattern)}, h...)
+	m.Post(pattern, handlers...)
+}
+
 // Apply the same middleware patterns as the main HTTP server
 func (s *frontendService) addMiddlewares(m *web.Mux) {
 	loggermiddleware := loggermw.Provide(s.cfg, s.features)
@@ -148,6 +170,33 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 		}
 	})
 
+	// Frontend boot error reporting endpoint
+	s.routePost(m, "/-/fe-boot-error", s.handleBootError)
+
 	// All other requests return index.html
 	s.routeGet(m, "/*", s.index.HandleRequest)
+}
+
+// handleBootError handles frontend boot error reports
+func (s *frontendService) handleBootError(w http.ResponseWriter, r *http.Request) {
+	// Read the request body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		s.log.Error("failed to read boot error request body", "error", err)
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	// Increment the Prometheus counter
+	s.bootErrorMetric.Inc()
+
+	// Log the error details
+	s.log.Error("frontend boot error reported", "error", body)
+
+	// Return success response
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte("OK")); err != nil {
+		s.log.Error("failed to write boot error response", "error", err)
+	}
 }
