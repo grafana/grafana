@@ -66,7 +66,6 @@ func applyFrontendDefaults(dashboard map[string]interface{}) {
 	sortPanelsByGridPos(dashboard)
 
 	// Built-in components
-	addBuiltInAnnotationQuery(dashboard)
 	initMeta(dashboard)
 
 	// Variable cleanup
@@ -1053,7 +1052,8 @@ func cleanupDashboardDefaults(dashboard map[string]interface{}) {
 	// These properties are lost during frontend's property copying loop in getSaveModelCloneOld()
 	delete(dashboard, "preload")   // Transient dashboard loading state
 	delete(dashboard, "iteration") // Template variable iteration timestamp
-	delete(dashboard, "nav")
+	delete(dashboard, "nav")       // Removed after V7 migration
+	delete(dashboard, "pulldowns") // Removed after V6 migration - frontend doesn't have this property
 }
 
 // cleanupFieldConfigDefaults removes properties that frontend considers as defaults and omits

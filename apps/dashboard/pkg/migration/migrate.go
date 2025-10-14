@@ -126,7 +126,11 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 		}
 	}
 
-	// 6. Clean up the dashboard to match frontend getSaveModel behavior
+	// 6. Add built-in annotation query after all migrations are complete
+	// This matches the frontend DashboardModel constructor behavior
+	addBuiltInAnnotationQuery(dash)
+
+	// 7. Clean up the dashboard to match frontend getSaveModel behavior
 	// This removes properties that shouldn't be persisted and filters out default values
 	cleanupDashboardForSave(dash)
 
