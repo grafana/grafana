@@ -69,7 +69,9 @@ function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
 
   const onAddVariable = useCallback(
     (type: EditableVariableType) => {
-      const { variables } = variableAdd.state.dashboardRef.resolve().state.$variables?.state ?? { variables: [] };
+      const dashboard = variableAdd.state.dashboardRef.resolve();
+      const { editPane, $variables } = dashboard.state;
+      const { variables } = $variables?.state ?? { variables: [] };
       const nextName = getNextAvailableId(type, variables);
       const newVar = getVariableScene(type, { name: nextName });
 
@@ -77,6 +79,8 @@ function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
         source: variableAdd,
         addedObject: newVar,
       });
+
+      editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
 
       DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
     },
