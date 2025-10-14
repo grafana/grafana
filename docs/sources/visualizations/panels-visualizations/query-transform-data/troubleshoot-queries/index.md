@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../troubleshooting/troubleshoot-queries/
-  - /docs/grafana/next/panels-visualizations/query-transform-data/troubleshoot-queries/
+  - ../../../panels-visualizations/query-transform-data/troubleshoot-queries/ # /docs/grafana/next/panels-visualizations/query-transform-data/troubleshoot-queries/
 description: Troubleshoot Grafana queries
 keywords:
   - grafana

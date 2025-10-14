@@ -5,8 +5,8 @@ aliases:
   - ../../reference/table/
   - ../../visualizations/table/
   - ../../visualizations/table/filter-table-columns/
-  - /docs/grafana/next/panels/visualizations/table/table-field-options/
-  - /docs/grafana/next/panels-visualizations/visualizations/table/
+  - ../../../panels/visualizations/table/table-field-options/ # /docs/grafana/next/panels/visualizations/table/table-field-options/
+  - ../../../panels-visualizations/visualizations/table/ # /docs/grafana/next/panels-visualizations/visualizations/table/
 description: Configure options for Grafana's table visualization
 keywords:
   - grafana

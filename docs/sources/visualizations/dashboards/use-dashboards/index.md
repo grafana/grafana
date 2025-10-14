@@ -7,7 +7,7 @@ aliases:
   - search/
   - shortcuts/
   - time-range-controls/
-  - /docs/grafana/next/dashboards/use-dashboards/
+  - ../../dashboards/use-dashboards/ # /docs/grafana/next/dashboards/use-dashboards/
 keywords:
   - dashboard
   - search

@@ -2,7 +2,7 @@
 aliases:
   - ../panels/working-with-panels/configure-legend/
   - visualizations/configure-legend/
-  - /docs/grafana/next/panels-visualizations/configure-legend/
+  - ../../panels-visualizations/configure-legend/ # /docs/grafana/next/panels-visualizations/configure-legend/
 labels:
   products:
     - cloud

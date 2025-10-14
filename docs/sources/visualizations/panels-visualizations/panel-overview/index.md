@@ -103,7 +103,7 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-thresholds/
 aliases:
-  - /docs/grafana/next/panels-visualizations/panel-overview/
+  - ../../panels-visualizations/panel-overview/ # /docs/grafana/next/panels-visualizations/panel-overview/
 ---
 
 # Panel overview

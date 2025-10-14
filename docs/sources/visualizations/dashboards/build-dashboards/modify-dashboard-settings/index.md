@@ -36,7 +36,7 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/manage-dashboard-links/#dashboard-links
 aliases:
-  - /docs/grafana/next/dashboards/build-dashboards/modify-dashboard-settings/
+  - ../../../dashboards/build-dashboards/modify-dashboard-settings/ # /docs/grafana/next/dashboards/build-dashboards/modify-dashboard-settings/
 ---
 
 # Modify dashboard settings

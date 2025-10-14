@@ -2,7 +2,7 @@
 aliases:
   - ../../reference/annotations/
   - ../annotations/
-  - /docs/grafana/next/dashboards/build-dashboards/annotate-visualizations/
+  - ../../../dashboards/build-dashboards/annotate-visualizations/ # /docs/grafana/next/dashboards/build-dashboards/annotate-visualizations/
 keywords:
   - grafana
   - annotations

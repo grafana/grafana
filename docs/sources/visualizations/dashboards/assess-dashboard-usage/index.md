@@ -4,7 +4,7 @@ aliases:
   - ../enterprise/usage-insights/dashboard-datasource-insights/
   - ../enterprise/usage-insights/improved-search/
   - ../enterprise/usage-insights/presence-indicator/
-  - /docs/grafana/next/dashboards/assess-dashboard-usage/
+  - ../../dashboards/assess-dashboard-usage/ # /docs/grafana/next/dashboards/assess-dashboard-usage/
 description: Understand how your Grafana instance is used
 keywords:
   - grafana

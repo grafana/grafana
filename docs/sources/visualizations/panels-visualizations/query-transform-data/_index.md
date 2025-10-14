@@ -13,7 +13,7 @@ aliases:
   - ../panels/share-query-results/
   - manage-queries/
   - query-options/
-  - /docs/grafana/next/panels-visualizations/query-transform-data/
+  - ../../panels-visualizations/query-transform-data/ # /docs/grafana/next/panels-visualizations/query-transform-data/
 labels:
   products:
     - cloud

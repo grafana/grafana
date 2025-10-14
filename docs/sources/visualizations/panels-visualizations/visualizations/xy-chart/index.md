@@ -32,7 +32,7 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/
 aliases:
-  - /docs/grafana/next/panels-visualizations/visualizations/xy-chart/
+  - ../../../panels-visualizations/visualizations/xy-chart/ # /docs/grafana/next/panels-visualizations/visualizations/xy-chart/
 ---
 
 # XY chart

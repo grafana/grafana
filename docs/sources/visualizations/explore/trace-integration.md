@@ -10,7 +10,7 @@ labels:
 title: Traces in Explore
 weight: 40
 aliases:
-  - /docs/grafana/next/explore/trace-integration/
+  - ../../explore/trace-integration/ # /docs/grafana/next/explore/trace-integration/
 ---
 
 # Traces in Explore

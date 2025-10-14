@@ -2,7 +2,7 @@
 aliases:
   - ../../reference/dashboard/
   - ../json-model/
-  - /docs/grafana/next/dashboards/build-dashboards/view-dashboard-json-model/
+  - ../../../dashboards/build-dashboards/view-dashboard-json-model/ # /docs/grafana/next/dashboards/build-dashboards/view-dashboard-json-model/
 keywords:
   - grafana
   - dashboard

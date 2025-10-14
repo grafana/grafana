@@ -8,7 +8,7 @@ aliases:
   - ../panels/standard-field-definitions/
   - ../panels/working-with-panels/format-standard-fields/
   - ../panels/field-configuration-options/ # /docs/grafana/latest/panels/field-configuration-options/
-  - /docs/grafana/next/panels-visualizations/configure-standard-options/
+  - ../../panels-visualizations/configure-standard-options/ # /docs/grafana/next/panels-visualizations/configure-standard-options/
 keywords:
   - panel
   - dashboard

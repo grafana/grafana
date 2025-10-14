@@ -8,7 +8,7 @@ aliases:
   - ../sharing/share-dashboard/ # /docs/grafana/latest/sharing/share-dashboard/
   - ../sharing/share-panel/ # /docs/grafana/latest/sharing/share-panel/
   - share-dashboard/ # /docs/grafana/latest/dashboards/share-dashboard/
-  - /docs/grafana/next/dashboards/share-dashboards-panels/
+  - ../../dashboards/share-dashboards-panels/ # /docs/grafana/next/dashboards/share-dashboards-panels/
 keywords:
   - grafana
   - dashboard

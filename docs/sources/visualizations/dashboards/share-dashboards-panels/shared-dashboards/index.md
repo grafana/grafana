@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../dashboard-public/ # /docs/grafana/latest/dashboards/dashboard-public/
-  - /docs/grafana/next/dashboards/share-dashboards-panels/shared-dashboards/
+  - ../../../dashboards/share-dashboards-panels/shared-dashboards/ # /docs/grafana/next/dashboards/share-dashboards-panels/shared-dashboards/
 labels:
   products:
     - cloud

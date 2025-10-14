@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../panels/query-a-data-source/share-query/
-  - /docs/grafana/next/panels-visualizations/query-transform-data/share-query/
+  - ../../../panels-visualizations/query-transform-data/share-query/ # /docs/grafana/next/panels-visualizations/query-transform-data/share-query/
 labels:
   products:
     - cloud

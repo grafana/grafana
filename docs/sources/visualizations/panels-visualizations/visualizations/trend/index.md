@@ -22,7 +22,7 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
 aliases:
-  - /docs/grafana/next/panels-visualizations/visualizations/trend/
+  - ../../../panels-visualizations/visualizations/trend/ # /docs/grafana/next/panels-visualizations/visualizations/trend/
 ---
 
 # Trend

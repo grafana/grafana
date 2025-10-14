@@ -22,7 +22,7 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
 aliases:
-  - /docs/grafana/next/dashboards/build-dashboards/
+  - ../../dashboards/build-dashboards/ # /docs/grafana/next/dashboards/build-dashboards/
 ---
 
 # Build dashboards

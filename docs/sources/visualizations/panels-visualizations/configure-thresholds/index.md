@@ -7,7 +7,7 @@ aliases:
   - ../panels/specify-thresholds/add-threshold-to-graph/
   - ../panels/specify-thresholds/delete-a-threshold/
   - ../panels/thresholds/
-  - /docs/grafana/next/panels-visualizations/configure-thresholds/
+  - ../../panels-visualizations/configure-thresholds/ # /docs/grafana/next/panels-visualizations/configure-thresholds/
 description: Configure thresholds in your visualizations
 labels:
   products:

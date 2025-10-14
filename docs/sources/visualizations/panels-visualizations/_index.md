@@ -3,7 +3,7 @@ aliases:
   - dashboards/configure-panels-visualizations/
   - features/panels/panels/
   - panels/
-  - /docs/grafana/next/panels-visualizations/
+  - ../panels-visualizations/ # /docs/grafana/next/panels-visualizations/
 keywords:
   - grafana
   - configure

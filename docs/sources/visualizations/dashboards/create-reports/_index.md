@@ -5,7 +5,7 @@ aliases:
   - ../enterprise/reporting/ # /docs/grafana/latest/enterprise/reporting/
   - ../panels/create-reports/ # /docs/grafana/latest/panels/create-reports/
   - reporting/ # /docs/grafana/latest/dashboards/reporting/
-  - /docs/grafana/next/dashboards/create-reports/
+  - ../../dashboards/create-reports/ # /docs/grafana/next/dashboards/create-reports/
 keywords:
   - grafana
   - reporting

@@ -10,7 +10,7 @@ keywords:
 title: Query inspector in Explore
 weight: 15
 aliases:
-  - /docs/grafana/next/explore/explore-inspector/
+  - ../../explore/explore-inspector/ # /docs/grafana/next/explore/explore-inspector/
 ---
 
 # Query inspector in Explore

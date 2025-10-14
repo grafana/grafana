@@ -4,7 +4,7 @@ aliases:
   - ../reference/dashboard_folders/
   - dashboard-folders/
   - dashboard-manage/
-  - /docs/grafana/next/dashboards/manage-dashboards/
+  - ../../dashboards/manage-dashboards/ # /docs/grafana/next/dashboards/manage-dashboards/
 canonical: https://grafana.com/docs/grafana/latest/dashboards/manage-dashboards/
 keywords:
   - grafana

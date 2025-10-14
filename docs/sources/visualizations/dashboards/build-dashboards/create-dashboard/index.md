@@ -1,7 +1,7 @@
 ---
 aliases:
   - add-organize-panels/
-  - /docs/grafana/next/dashboards/build-dashboards/create-dashboard/
+  - ../../../dashboards/build-dashboards/create-dashboard/ # /docs/grafana/next/dashboards/build-dashboards/create-dashboard/
 keywords:
   - panel
   - dashboard

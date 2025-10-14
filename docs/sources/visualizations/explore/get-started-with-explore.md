@@ -1,7 +1,6 @@
 ---
 aliases:
-  -
-  - /docs/grafana/next/explore/get-started-with-explore/
+  - ../../explore/get-started-with-explore/ # /docs/grafana/next/explore/get-started-with-explore/
 keywords:
   - explore
   - loki

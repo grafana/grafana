@@ -17,7 +17,7 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
 aliases:
-  - /docs/grafana/next/explore/query-management/
+  - ../../explore/query-management/ # /docs/grafana/next/explore/query-management/
 ---
 
 # Query management in Explore

@@ -11,7 +11,7 @@ labels:
 title: Logs in Explore
 weight: 25
 aliases:
-  - /docs/grafana/next/explore/logs-integration/
+  - ../../explore/logs-integration/ # /docs/grafana/next/explore/logs-integration/
 ---
 
 # Logs in Explore

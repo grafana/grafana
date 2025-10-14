@@ -21,7 +21,7 @@ aliases:
   - ../../panels/visualizations/geomap/osm/
   - ../../panels/visualizations/geomap/zyx/
   - ../../visualizations/geomap/
-  - /docs/grafana/next/panels-visualizations/visualizations/geomap/
+  - ../../../panels-visualizations/visualizations/geomap/ # /docs/grafana/next/panels-visualizations/visualizations/geomap/
 description: Configure options for Grafana's geomap visualization
 keywords:
   - grafana

@@ -18,7 +18,7 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/organization-preferences/#change-grafana-ui-theme
 aliases:
-  - /docs/grafana/next/dashboards/create-reports/report-settings/
+  - ../../../dashboards/create-reports/report-settings/ # /docs/grafana/next/dashboards/create-reports/report-settings/
 ---
 
 # Reporting settings

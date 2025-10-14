@@ -2,7 +2,7 @@
 aliases:
   - ../reference/playlist/
   - playlist/
-  - /docs/grafana/next/dashboards/create-manage-playlists/
+  - ../../dashboards/create-manage-playlists/ # /docs/grafana/next/dashboards/create-manage-playlists/
 keywords:
   - grafana
   - dashboard

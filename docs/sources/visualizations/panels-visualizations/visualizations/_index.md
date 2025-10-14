@@ -6,7 +6,7 @@ aliases:
   - ../reference/graph/
   - ../visualizations/
   - ../visualizations/graph-panel/
-  - /docs/grafana/next/panels-visualizations/visualizations/
+  - ../../panels-visualizations/visualizations/ # /docs/grafana/next/panels-visualizations/visualizations/
 labels:
   products:
     - cloud

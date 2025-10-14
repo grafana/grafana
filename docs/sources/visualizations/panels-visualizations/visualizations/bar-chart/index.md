@@ -2,7 +2,7 @@
 aliases:
   - ../../panels/visualizations/bar-chart/
   - ../../visualizations/bar-chart/
-  - /docs/grafana/next/panels-visualizations/visualizations/bar-chart/
+  - ../../../panels-visualizations/visualizations/bar-chart/ # /docs/grafana/next/panels-visualizations/visualizations/bar-chart/
 description: Configure options for Grafana's bar chart visualization
 keywords:
   - grafana

@@ -2,7 +2,7 @@
 aliases:
   - ../troubleshooting/troubleshoot-dashboards/
   - ../reference/timerange/
-  - /docs/grafana/next/dashboards/troubleshoot-dashboards/
+  - ../../dashboards/troubleshoot-dashboards/ # /docs/grafana/next/dashboards/troubleshoot-dashboards/
 canonical: https://grafana.com/docs/grafana/latest/dashboards/troubleshoot-dashboards/
 keywords:
   - grafana
