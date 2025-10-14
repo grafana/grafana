@@ -424,15 +424,15 @@ describe('ExtensionSidebarProvider', () => {
     expect(screen.getByTestId('is-open')).toHaveTextContent('true');
     expect(screen.getByTestId('docked-component-id')).toHaveTextContent(componentId);
 
-    act(() => {
-      // Find the ToggleExtensionSidebarEvent subscriber
-      const toggleEventSubscriberCall = subscribeSpy.mock.calls
-        .slice()
-        .reverse()
-        .find((call) => call[0] === ToggleExtensionSidebarEvent);
-      expect(toggleEventSubscriberCall).toBeDefined();
-      const [, subscriberFn] = toggleEventSubscriberCall!;
+    // Find the ToggleExtensionSidebarEvent subscriber outside of act()
+    const toggleCalls = subscribeSpy.mock.calls.filter((call) => call[0] === ToggleExtensionSidebarEvent);
+    expect(toggleCalls.length).toBeGreaterThan(0); // We expect at least one subscriber
+    const toggleEventSubscriberCall = toggleCalls[toggleCalls.length - 1]; // Get the last one
+    expect(toggleEventSubscriberCall).toBeDefined();
+    const [, subscriberFn] = toggleEventSubscriberCall;
 
+    // Toggle the sidebar closed
+    act(() => {
       // Call the toggle event handler with the same component
       subscriberFn(
         new ToggleExtensionSidebarEvent({
