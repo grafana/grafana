@@ -93,11 +93,18 @@ type TeamHTTPHeaders struct {
 	RestrictAccess bool        `json:"restrictAccess"`
 }
 
-type TeamHeaders map[string][]TeamHTTPHeader
+type TeamHeaders map[string][]AccessRule
 
-type TeamHTTPHeader struct {
+// a header is composed of a key:value. the key is the headername X-Prom-Label-Policy
+// a header value is composed of a tenantID:rule. the tenantID is the tenantID of the tenant that the rule is for.
+// the value is taken from https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/#acl
+// and each rule is
+type AccessRule struct {
 	Header string `json:"header"`
-	Value  string `json:"value"`
+	// the LBACRule is the rule that is used to restrict access to the data source
+	// currently <tenantid>:<promqlrule>
+	// LBAC rule (e.g., "tenant:{ label=value }")
+	LBACRule string `json:"value"`
 }
 
 func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
@@ -126,7 +133,7 @@ func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
 			if header.Header == "" {
 				return nil, errors.New("header name is missing or empty")
 			}
-			if header.Value == "" {
+			if header.LBACRule == "" {
 				return nil, errors.New("header value is missing or empty")
 			}
 		}
