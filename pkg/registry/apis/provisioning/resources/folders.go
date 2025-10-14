@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +24,6 @@ type FolderManager struct {
 	repo   repository.ReaderWriter
 	tree   FolderTree
 	client dynamic.ResourceInterface
-	mu     sync.RWMutex // protects tree access
 }
 
 func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree) *FolderManager {
@@ -63,13 +61,13 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 	}
 
 	f := ParseFolder(dir, cfg.Name)
-	if fm.findInTree(f.ID) {
+	if fm.tree.In(f.ID) {
 		return f.ID, nil
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
 		f := ParseFolder(traverse, cfg.GetName())
-		if fm.findInTree(f.ID) {
+		if fm.tree.In(f.ID) {
 			parent = f.ID
 			return nil
 		}
@@ -78,7 +76,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 			return fmt.Errorf("ensure folder exists: %w", err)
 		}
 
-		fm.addInTree(f, parent)
+		fm.tree.Add(f, parent)
 		parent = f.ID
 		return nil
 	})
@@ -211,16 +209,4 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path s
 
 		return fn(folder, true, nil)
 	})
-}
-
-func (fm *FolderManager) findInTree(id string) bool {
-	fm.mu.RLock()
-	defer fm.mu.RUnlock()
-	return fm.tree.In(id)
-}
-
-func (fm *FolderManager) addInTree(folder Folder, parent string) {
-	fm.mu.Lock()
-	defer fm.mu.Unlock()
-	fm.tree.Add(folder, parent)
 }
