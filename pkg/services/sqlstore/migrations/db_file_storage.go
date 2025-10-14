@@ -97,6 +97,7 @@ func convertFilePathHashIndexToPrimaryKey(mg *migrator.Migrator) {
 		mysql = `
 			ALTER TABLE file
 			DROP PRIMARY KEY,
+			DROP COLUMN my_row_id,
 			DROP INDEX UQE_file_path_hash,
 			ADD PRIMARY KEY (path_hash);
 		`
@@ -159,6 +160,7 @@ func convertFileMetaPathHashKeyIndexToPrimaryKey(mg *migrator.Migrator) {
 		mysql = `
 			ALTER TABLE file_meta
 			DROP PRIMARY KEY,
+			DROP COLUMN my_row_id,
 			DROP INDEX UQE_file_meta_path_hash_key,
 			ADD PRIMARY KEY (path_hash, ` + "`key`" + `);
 		`
