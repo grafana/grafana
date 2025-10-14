@@ -383,13 +383,13 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 					resourceInfo:  dashboardV0.DashboardResourceInfo,
 					expectSpecErr: false,
 					testObject: &unstructured.Unstructured{
-						Object: map[string]interface{}{
+						Object: map[string]any{
 							"apiVersion": dashboardV0.DashboardResourceInfo.TypeMeta().APIVersion,
 							"kind":       "Dashboard",
-							"metadata": map[string]interface{}{
+							"metadata": map[string]any{
 								"generateName": "test-",
 							},
-							"spec": map[string]interface{}{
+							"spec": map[string]any{
 								"title":         "Dashboard Title",
 								"schemaVersion": 42,
 								"editable":      "elephant",
@@ -404,13 +404,13 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 					resourceInfo:  dashboardV1.DashboardResourceInfo,
 					expectSpecErr: true,
 					testObject: &unstructured.Unstructured{
-						Object: map[string]interface{}{
+						Object: map[string]any{
 							"apiVersion": dashboardV1.DashboardResourceInfo.TypeMeta().APIVersion,
 							"kind":       "Dashboard",
-							"metadata": map[string]interface{}{
+							"metadata": map[string]any{
 								"generateName": "test-",
 							},
-							"spec": map[string]interface{}{
+							"spec": map[string]any{
 								"title":         "Dashboard Title",
 								"schemaVersion": 42,
 								"editable":      "elephant",
@@ -425,13 +425,13 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 					resourceInfo:  dashboardV2alpha1.DashboardResourceInfo,
 					expectSpecErr: false,
 					testObject: &unstructured.Unstructured{
-						Object: map[string]interface{}{
+						Object: map[string]any{
 							"apiVersion": dashboardV2alpha1.DashboardResourceInfo.TypeMeta().APIVersion,
 							"kind":       "Dashboard",
-							"metadata": map[string]interface{}{
+							"metadata": map[string]any{
 								"generateName": "test-",
 							},
-							"spec": map[string]interface{}{
+							"spec": map[string]any{
 								"title":       "Dashboard Title",
 								"description": "valid description",
 							},
@@ -443,13 +443,13 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 					resourceInfo:  dashboardV2beta1.DashboardResourceInfo,
 					expectSpecErr: false,
 					testObject: &unstructured.Unstructured{
-						Object: map[string]interface{}{
+						Object: map[string]any{
 							"apiVersion": dashboardV2beta1.DashboardResourceInfo.TypeMeta().APIVersion,
 							"kind":       "Dashboard",
-							"metadata": map[string]interface{}{
+							"metadata": map[string]any{
 								"generateName": "test-",
 							},
-							"spec": map[string]interface{}{
+							"spec": map[string]any{
 								"title":       "Dashboard Title",
 								"description": "valid description",
 							},
@@ -703,7 +703,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 				// Add refresh configuration using MetaAccessor
 				meta, _ := utils.MetaAccessor(dashObj)
 				spec, _ := meta.GetSpec()
-				specMap := spec.(map[string]interface{})
+				specMap := spec.(map[string]any)
 
 				specMap["refresh"] = tc.refreshValue
 
@@ -736,26 +736,26 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 
 			meta, _ := utils.MetaAccessor(dash)
 			spec, _ := meta.GetSpec()
-			specMap := spec.(map[string]interface{})
+			specMap := spec.(map[string]any)
 
 			// Create a large number of panels
-			var largePanelArray []map[string]interface{}
+			var largePanelArray []map[string]any
 
 			// Create 500000 simple panels with unique IDs (to exceed max allowed request size)
 			for i := 0; i < 500000; i++ {
 				// Create a simple panel with minimal properties
-				panel := map[string]interface{}{
+				panel := map[string]any{
 					"id":          i,
 					"type":        "graph",
 					"title":       fmt.Sprintf("Panel %d", i),
 					"description": fmt.Sprintf("Panel description %d", i),
-					"gridPos": map[string]interface{}{
+					"gridPos": map[string]any{
 						"h": 8,
 						"w": 12,
 						"x": i % 24,
 						"y": (i / 24) * 8,
 					},
-					"targets": []map[string]interface{}{
+					"targets": []map[string]any{
 						{
 							"refId": "A",
 							"expr":  fmt.Sprintf("metric%d", i),
@@ -943,14 +943,14 @@ func createFolderObject(t *testing.T, title string, namespace string, parentFold
 	t.Helper()
 
 	folderObj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 			"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"generateName": "test-folder-",
 				"namespace":    namespace,
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title": title,
 			},
 		},
@@ -999,16 +999,16 @@ func createDashboardObject(t *testing.T, title string, folderUID string, generat
 	t.Helper()
 
 	dashObj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": dashboardV1.DashboardResourceInfo.GroupVersion().String(),
 			"kind":       dashboardV1.DashboardResourceInfo.GroupVersionKind().Kind,
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"generateName": "test-",
-				"annotations": map[string]interface{}{
+				"annotations": map[string]any{
 					"grafana.app/grant-permissions": "default",
 				},
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title":         title,
 				"schemaVersion": 42,
 			},
@@ -1022,7 +1022,7 @@ func createDashboardObject(t *testing.T, title string, folderUID string, generat
 	// Get the dashboard's spec
 	spec, err := meta.GetSpec()
 	require.NoError(t, err, "Failed to get spec")
-	specMap := spec.(map[string]interface{})
+	specMap := spec.(map[string]any)
 
 	if folderUID != "" {
 		meta.SetFolder(folderUID)
@@ -1074,7 +1074,7 @@ func createDashboard(t *testing.T, client *apis.K8sResourceClient, title string,
 		meta, _ := utils.MetaAccessor(dashObj)
 		meta.SetName(*uid)
 		// Remove generateName if we're explicitly setting a name
-		delete(dashObj.Object["metadata"].(map[string]interface{}), "generateName")
+		delete(dashObj.Object["metadata"].(map[string]any), "generateName")
 	}
 
 	// Create the dashboard
@@ -1109,7 +1109,7 @@ func updateDashboard(t *testing.T, client *apis.K8sResourceClient, dashboard *un
 
 	// Get the spec using MetaAccessor
 	dashSpec, _ := meta.GetSpec()
-	specMap := dashSpec.(map[string]interface{})
+	specMap := dashSpec.(map[string]any)
 
 	// Update the title
 	specMap["title"] = newTitle
@@ -2086,7 +2086,7 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 						"User %s should be able to GET dashboard: %s", userTC.name, getResp.Response.Status)
 
 					// Extract the dashboard object from the GET response
-					var dashObj map[string]interface{}
+					var dashObj map[string]any
 					err = json.Unmarshal(getResp.Body, &dashObj)
 					require.NoError(t, err, "Failed to unmarshal dashboard JSON from GET")
 
@@ -2143,7 +2143,7 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 }
 
 // Helper function to retrieve a dashboard via HTTP
-func getDashboardViaHTTP(t *testing.T, ctx *TestContext, dashboardPath string, user apis.User) (map[string]interface{}, error) {
+func getDashboardViaHTTP(t *testing.T, ctx *TestContext, dashboardPath string, user apis.User) (map[string]any, error) {
 	t.Helper()
 
 	getResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
@@ -2156,7 +2156,7 @@ func getDashboardViaHTTP(t *testing.T, ctx *TestContext, dashboardPath string, u
 		return nil, fmt.Errorf("failed to get dashboard: %s", getResp.Response.Status)
 	}
 
-	var dashObj map[string]interface{}
+	var dashObj map[string]any
 	err := json.Unmarshal(getResp.Body, &dashObj)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal dashboard JSON: %v", err)
@@ -2180,7 +2180,7 @@ func testDashboardHttpUpdateMethods(t *testing.T, ctx TestContext, dashboardPath
 			require.NoError(t, err, "Failed to get dashboard after update")
 
 			// Extract title from the updated dashboard
-			updatedTitle := updatedDashObj["spec"].(map[string]interface{})["title"].(string)
+			updatedTitle := updatedDashObj["spec"].(map[string]any)["title"].(string)
 			require.Equal(t, updateTitle, updatedTitle,
 				"Dashboard title not updated via %s", updateMethod)
 		} else {
@@ -2200,7 +2200,7 @@ func testDashboardHttpUpdateMethods(t *testing.T, ctx TestContext, dashboardPath
 		require.NoError(t, err, "Failed to get fresh dashboard for update")
 
 		// Modify title for PUT using fresh dashboard object
-		specMap := freshDashObj["spec"].(map[string]interface{})
+		specMap := freshDashObj["spec"].(map[string]any)
 		specMap["title"] = updateTitle
 		freshDashObj["spec"] = specMap
 
@@ -2533,7 +2533,7 @@ func runDashboardListTests(t *testing.T, ctx TestContext) {
 	}
 }
 
-func postHelper(t *testing.T, ctx *TestContext, path string, body interface{}, user apis.User) (map[string]interface{}, error) {
+func postHelper(t *testing.T, ctx *TestContext, path string, body any, user apis.User) (map[string]any, error) {
 	bodyJSON, err := json.Marshal(body)
 	require.NoError(t, err)
 
@@ -2549,7 +2549,7 @@ func postHelper(t *testing.T, ctx *TestContext, path string, body interface{}, u
 		return nil, fmt.Errorf("failed to post: %s", resp.Response.Status)
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	err = json.Unmarshal(resp.Body, &result)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response JSON: %v", err)
