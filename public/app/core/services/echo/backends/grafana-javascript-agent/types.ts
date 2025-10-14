@@ -1,5 +1,5 @@
 import { BuildInfo, CurrentUserDTO } from '@grafana/data';
-import { BrowserConfig } from '@grafana/faro-web-sdk';
+import { InternalLoggerLevel } from '@grafana/faro-web-sdk';
 import { EchoEvent, EchoEventType } from '@grafana/runtime';
 
 export interface BaseTransport {
@@ -13,15 +13,19 @@ export interface User extends Pick<CurrentUserDTO, 'email'> {
   orgId?: number;
 }
 
-export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
-  buildInfo: BuildInfo;
-  customEndpoint: string;
-  user: User;
-  allInstrumentationsEnabled: boolean;
-  errorInstrumentalizationEnabled: boolean;
+export interface GrafanaJavascriptAgentBackendOptions {
+  apiKey?: string;
+  customEndpoint?: string;
+  internalLoggerLevel?: InternalLoggerLevel;
+
+  webVitalsAttribution: boolean;
   consoleInstrumentalizationEnabled: boolean;
-  webVitalsInstrumentalizationEnabled: boolean;
+  performanceInstrumentalizationEnabled: boolean;
+  cspInstrumentalizationEnabled: boolean;
   tracingInstrumentalizationEnabled: boolean;
+
+  buildInfo: BuildInfo;
+  userIdentifier: string;
   ignoreUrls: RegExp[];
   botFilterEnabled: boolean;
 }

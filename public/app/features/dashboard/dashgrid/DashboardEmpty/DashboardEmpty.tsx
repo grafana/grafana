@@ -1,9 +1,11 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -25,9 +27,16 @@ interface InternalProps {
 const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImportDashboard }: InternalProps) => {
   const styles = useStyles2(getStyles);
 
+  const [searchParams] = useSearchParams();
+  const dashboardLibraryDatasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
+
   return (
     <Stack alignItems="center" justifyContent="center">
-      <div className={styles.wrapper}>
+      <div
+        className={cx(styles.wrapper, {
+          [styles.wrapperMaxWidth]: !config.featureToggles.dashboardLibrary || !dashboardLibraryDatasourceUid,
+        })}
+      >
         <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
           <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={4}>
             <Stack direction="column" alignItems="center" gap={2}>
@@ -152,13 +161,15 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       label: 'dashboard-empty-wrapper',
       flexDirection: 'column',
-      maxWidth: '890px',
       gap: theme.spacing.gridSize * 4,
       paddingTop: theme.spacing(2),
 
       [theme.breakpoints.up('sm')]: {
         paddingTop: theme.spacing(12),
       },
+    }),
+    wrapperMaxWidth: css({
+      maxWidth: '890px',
     }),
   };
 }
