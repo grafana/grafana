@@ -17,6 +17,7 @@ import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRo
 import { redoButtonId, undoButtonID } from '../scene/new-toolbar/RightActions';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
+import { VariableAdd, VariableAddEditableElement } from '../settings/variables/VariableAddEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import { isSceneVariable } from '../settings/variables/utils';
@@ -59,6 +60,10 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
 
   if (isSceneVariable(sceneObj)) {
     return new VariableEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof VariableAdd) {
+    return new VariableAddEditableElement(sceneObj);
   }
 
   return undefined;
@@ -117,7 +122,7 @@ export interface RemoveElementActionHelperProps {
 
 export interface AddVariableActionHelperProps {
   addedObject: SceneVariable;
-  source: SceneVariableSet;
+  source: VariableAdd;
 }
 
 export interface RemoveVariableActionHelperProps {
@@ -202,16 +207,16 @@ export const dashboardEditActions = {
   }),
 
   addVariable({ source, addedObject }: AddVariableActionHelperProps) {
-    const varsBeforeAddition = [...source.state.variables];
+    const varsBeforeAddition = [...(source.state.$variables?.state.variables ?? [])];
 
     dashboardEditActions.addElement({
       source,
       addedObject,
       perform() {
-        source.setState({ variables: [...varsBeforeAddition, addedObject] });
+        source.state.$variables?.setState({ variables: [...varsBeforeAddition, addedObject] });
       },
       undo() {
-        source.setState({ variables: [...varsBeforeAddition] });
+        source.state.$variables?.setState({ variables: [...varsBeforeAddition] });
       },
     });
   },
