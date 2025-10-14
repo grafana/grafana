@@ -966,7 +966,7 @@ var (
 			Description:  "Enable suggested dashboards when creating new dashboards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
-			FrontendOnly: false,
+			FrontendOnly: true,
 		},
 		{
 			Name:         "logsExploreTableDefaultVisualization",

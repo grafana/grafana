@@ -1082,16 +1082,17 @@
     {
       "metadata": {
         "name": "dashboardLibrary",
-        "resourceVersion": "1760051989635",
+        "resourceVersion": "1760432872344",
         "creationTimestamp": "2025-09-26T16:02:12Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-10-09 23:19:49.635811 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-10-14 09:07:52.344834744 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enable suggested dashboards when creating new dashboards",
         "stage": "experimental",
-        "codeowner": "@grafana/sharing-squad"
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true
       }
     },
     {
@@ -2278,6 +2279,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesStars",
+        "resourceVersion": "1759149842036",
+        "creationTimestamp": "2025-09-29T12:44:02Z"
+      },
+      "spec": {
+        "description": "Routes stars requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesZanzanaPopulate",
         "resourceVersion": "1758879077577",
         "creationTimestamp": "2025-09-26T09:31:17Z",
@@ -2289,19 +2303,6 @@
         "codeowner": "@grafana/identity-access-team",
         "hideFromAdminPage": true,
         "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "kubernetesStars",
-        "resourceVersion": "1759149842036",
-        "creationTimestamp": "2025-09-29T12:44:02Z"
-      },
-      "spec": {
-        "description": "Routes stars requests from /api to the /apis endpoint",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true
       }
     },
     {
