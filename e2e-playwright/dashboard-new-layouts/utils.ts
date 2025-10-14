@@ -185,7 +185,7 @@ export async function goToEmbeddedPanel(page: Page) {
   const baseUrl = currentUrl.match(baseUrlRegex)?.[0];
   soloPanelUrl = soloPanelUrl!.replace(baseUrlRegex, baseUrl!);
 
-  page.goto(soloPanelUrl!);
+  await page.goto(soloPanelUrl!);
 }
 
 export async function moveTab(
