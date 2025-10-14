@@ -157,7 +157,7 @@ On this screen, you can see:
 
 - The earliest time a user has been active in a dashboard
 - When they last accessed a shared dashboard
-- The dashboards to they have access
+- The dashboards they have access to
 - Their role
 
 You can also revoke a user's access to all shared dashboards on from this tab.
