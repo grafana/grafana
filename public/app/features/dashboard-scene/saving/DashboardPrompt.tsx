@@ -3,7 +3,7 @@ import * as H from 'history';
 import { memo, useContext, useEffect, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { ModalsContext, Modal, Button, useStyles2 } from '@grafana/ui';
@@ -191,7 +191,7 @@ export function ignoreChanges(scene: DashboardScene | null) {
 
   const dashboard = scene.getSaveModel();
   // Ignore changes if the dashboard is empty (new dashboard)
-  if (isEmptyDashboard(dashboard, scene?.serializer.metadata)) {
+  if (config.featureToggles.dashboardLibrary && isEmptyDashboard(dashboard, scene?.serializer.metadata)) {
     return true;
   }
 
