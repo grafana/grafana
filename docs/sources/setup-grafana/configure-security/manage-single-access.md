@@ -119,7 +119,7 @@ To design a [folder](ref:create-folder) setup that helps users quickly understan
 
 Next, focus on how teams interact with data to decide further access needs.
 
-#### General resources
+#### Shared baseline data access
 
 For resources accessible by all teams, grant the `datasources:explorer` fixed role to all teams so they can use the [Drilldown apps](ref:drilldown) for easily exploring data sources.
 
