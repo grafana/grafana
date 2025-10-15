@@ -279,8 +279,12 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	if queryParams.Has("offset") {
 		offset, _ = strconv.Atoi(queryParams.Get("offset"))
+		if offset > 0 {
+			page = (offset / limit) + 1
+		}
 	} else if queryParams.Has("page") {
 		page, _ = strconv.Atoi(queryParams.Get("page"))
+		offset = (page - 1) * limit
 	}
 
 	searchRequest := &resourcepb.ResourceSearchRequest{
