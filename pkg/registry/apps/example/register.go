@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -23,6 +24,10 @@ var (
 type ExampleAppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg *setting.Cfg
+}
+
+func (e ExampleAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return exampleapp.GetAuthorizer()
 }
 
 func RegisterAppInstaller(
