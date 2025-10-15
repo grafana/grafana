@@ -748,7 +748,7 @@ func TestIntegrationStore_setResourcePermission(t *testing.T) {
 		resource            string
 		resourceID          string
 		resourceAttribute   string
-		seeds               []SetResourcePermissionCommand
+		existingPermissions []accesscontrol.Permission
 		expectedPermissions []orgPermission
 	}
 
@@ -756,40 +756,128 @@ func TestIntegrationStore_setResourcePermission(t *testing.T) {
 		{
 			desc:              "should set only action set permissions for folder when user doesn't have any resource permissions yet",
 			userID:            1,
-			actions:           []string{"folder:"},
-			resource:          "datasources",
-			resourceID:        "1",
-			resourceAttribute: "uid",
-		},
-		{
-			desc:              "should remove resource permission for user",
 			orgID:             1,
-			userID:            1,
-			actions:           []string{},
-			resource:          "datasources",
+			actions:           []string{"folders:edit"},
+			resource:          "folders",
 			resourceID:        "1",
 			resourceAttribute: "uid",
-			seeds: []SetResourcePermissionCommand{
+			expectedPermissions: []orgPermission{
 				{
-					Actions:    []string{"datasources:query"},
-					Resource:   "datasources",
-					ResourceID: "1",
+					OrgID:  1,
+					Action: "folders:edit",
+					Scope:  "folders:uid:1",
 				},
 			},
 		},
 		{
-			desc:              "should add new resource permission for user",
+			desc:              "should remove the existing action set and underlying resource permissions when action set is empty",
 			orgID:             1,
 			userID:            1,
-			actions:           []string{"datasources:query", "datasources:write"},
-			resource:          "datasources",
+			actions:           []string{},
+			resource:          "folders",
 			resourceID:        "1",
 			resourceAttribute: "uid",
-			seeds: []SetResourcePermissionCommand{
+			existingPermissions: []accesscontrol.Permission{
 				{
-					Actions:    []string{"datasources:write"},
-					Resource:   "datasources",
-					ResourceID: "1",
+					Action: "folders:read",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "folders:view",
+					Scope:  "folders:uid:1",
+				},
+			},
+			expectedPermissions: []orgPermission{},
+		},
+		{
+			desc:              "when increasing access level, should replace the existing permissions with the higher action set",
+			orgID:             1,
+			userID:            1,
+			actions:           []string{"folders:edit"},
+			resource:          "folders",
+			resourceID:        "1",
+			resourceAttribute: "uid",
+			existingPermissions: []accesscontrol.Permission{
+				{
+					Action: "folders:read",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "folders:view",
+					Scope:  "folders:uid:1",
+				},
+			},
+			expectedPermissions: []orgPermission{
+				{
+					OrgID:  1,
+					Action: "folders:edit",
+					Scope:  "folders:uid:1",
+				},
+			},
+		},
+		{
+			desc:              "when decreasing access level, should replace the existing permissions with the lower action set",
+			orgID:             1,
+			userID:            1,
+			actions:           []string{"folders:view"},
+			resource:          "folders",
+			resourceID:        "1",
+			resourceAttribute: "uid",
+			existingPermissions: []accesscontrol.Permission{
+				{
+					Action: "folders:admin",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "folders:delete",
+					Scope:  "folders:uid:1",
+				},
+			},
+			expectedPermissions: []orgPermission{
+				{
+					OrgID:  1,
+					Action: "folders:view",
+					Scope:  "folders:uid:1",
+				},
+			},
+		},
+		{
+			desc:              "when updating access level, should not touch resource permissions on other resources",
+			orgID:             1,
+			userID:            1,
+			actions:           []string{"folders:view"},
+			resource:          "folders",
+			resourceID:        "1",
+			resourceAttribute: "uid",
+			existingPermissions: []accesscontrol.Permission{
+				{
+					Action: "folders:admin",
+					Scope:  "folders:uid:2",
+				},
+				{
+					Action: "folders:delete",
+					Scope:  "folders:uid:2",
+				},
+				{
+					Action: "folders:edit",
+					Scope:  "folders:uid:1",
+				},
+			},
+			expectedPermissions: []orgPermission{
+				{
+					OrgID:  1,
+					Action: "folders:admin",
+					Scope:  "folders:uid:2",
+				},
+				{
+					OrgID:  1,
+					Action: "folders:delete",
+					Scope:  "folders:uid:2",
+				},
+				{
+					OrgID:  1,
+					Action: "folders:view",
+					Scope:  "folders:uid:1",
 				},
 			},
 		},
@@ -799,22 +887,22 @@ func TestIntegrationStore_setResourcePermission(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			store, _, _ := setupTestEnv(t)
 
-			for _, s := range test.seeds {
-				_, err := store.SetUserResourcePermission(context.Background(), test.orgID, accesscontrol.User{ID: test.userID}, s, nil)
-				require.NoError(t, err)
-			}
+			// Populate store with existing permissions
+			setPermissionsHelper(store, test.existingPermissions, t)
 
-			err := store.sql.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
-				_, _ = store.setResourcePermission(sess, test.orgID, accesscontrol.ManagedUserRoleName(test.userID), store.userAdder(sess, test.orgID, test.userID), SetResourcePermissionCommand{
-					Actions:           test.actions,
-					Resource:          test.resource,
-					ResourceID:        test.resourceID,
-					ResourceAttribute: test.resourceAttribute,
-					Permission:        "some-permission",
-				})
-				return nil
-			},
-			)
+			// Set new permission
+			_, err := store.SetResourcePermissions(context.Background(), test.orgID, []SetResourcePermissionsCommand{
+				{
+					User: accesscontrol.User{ID: test.userID},
+					SetResourcePermissionCommand: SetResourcePermissionCommand{
+						Actions:           test.actions,
+						Resource:          test.resource,
+						ResourceID:        test.resourceID,
+						ResourceAttribute: test.resourceAttribute,
+						Permission:        test.permission,
+					},
+				},
+			}, ResourceHooks{})
 			require.NoError(t, err)
 
 			// Get permissions directly from DB to verify
@@ -822,21 +910,6 @@ func TestIntegrationStore_setResourcePermission(t *testing.T) {
 			fmt.Println(permissions)
 
 			require.Equal(t, test.expectedPermissions, permissions)
-
-			//added, err := store.SetUserResourcePermission(context.Background(), test.userID, accesscontrol.User{ID: test.userID}, SetResourcePermissionCommand{
-			//	Actions:           test.actions,
-			//	Resource:          test.resource,
-			//	ResourceID:        test.resourceID,
-			//	ResourceAttribute: test.resourceAttribute,
-			//}, nil)
-			//
-			//require.NoError(t, err)
-			//if len(test.actions) == 0 {
-			//	assert.Equal(t, accesscontrol.ResourcePermission{}, *added)
-			//} else {
-			//	assert.Len(t, added.Actions, len(test.actions))
-			//	assert.Equal(t, accesscontrol.Scope(test.resource, test.resourceAttribute, test.resourceID), added.Scope)
-			//}
 		})
 	}
 }
@@ -855,6 +928,22 @@ func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 
 	require.NoError(t, err)
 	return permissions
+}
+
+func setPermissionsHelper(store *store, permissions []accesscontrol.Permission, t *testing.T) {
+	err := store.sql.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
+		sql := "INSERT INTO permission(role_id, action, scope, created, updated, kind, attribute, identifier) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
+		for _, p := range permissions {
+			kind, attribute, identifier := p.SplitScope()
+			// Hardcode role_id to 1 since the test only tests one managed role, would need to extend the logic if we test with several managed roles
+			_, err := sess.Exec(sql, 1, p.Action, p.Scope, time.Now(), time.Now(), kind, attribute, identifier)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	require.NoError(t, err)
 }
 
 func TestStore_StoreActionSet(t *testing.T) {
