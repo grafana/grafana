@@ -2,6 +2,8 @@ package migration
 
 import (
 	"sort"
+
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
 // applyFrontendDefaults applies all DashboardModel constructor defaults
@@ -64,7 +66,6 @@ func applyFrontendDefaults(dashboard map[string]interface{}) {
 	sortPanelsByGridPos(dashboard)
 
 	// Built-in components
-	addBuiltInAnnotationQuery(dashboard)
 	initMeta(dashboard)
 
 	// Variable cleanup
@@ -198,7 +199,7 @@ func sortPanelsByGridPos(dashboard map[string]interface{}) {
 		return
 	}
 
-	sort.Slice(panels, func(i, j int) bool {
+	sort.SliceStable(panels, func(i, j int) bool {
 		panelA := panels[i]
 		panelB := panels[j]
 
@@ -549,6 +550,7 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 
 	// Clean up internal markers
 	delete(panel, "_originallyHadTransformations")
+	delete(panel, "_originallyHadFieldConfigCustom")
 }
 
 // filterDefaultValues removes properties that match the default values (matches frontend's isEqual logic)
@@ -600,8 +602,21 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 	for prop, defaultValue := range defaults {
 		if panelValue, exists := panel[prop]; exists {
 			if isEqual(panelValue, defaultValue) {
-				// Special case: fieldConfig is always removed if it matches defaults (frontend getSaveModel behavior)
+				// Special case: fieldConfig - handle preservation of original custom object first
 				if prop == "fieldConfig" {
+					// Check if we need to preserve the custom object before removing fieldConfig
+					if panel["_originallyHadFieldConfigCustom"] == true {
+						// Ensure fieldConfig structure exists with custom object
+						if fieldConfig, ok := panelValue.(map[string]interface{}); ok {
+							if defaults, ok := fieldConfig["defaults"].(map[string]interface{}); ok {
+								if _, hasCustom := defaults["custom"]; !hasCustom {
+									defaults["custom"] = map[string]interface{}{}
+								}
+								// Don't remove fieldConfig if we added custom back
+								continue
+							}
+						}
+					}
 					delete(panel, prop)
 				} else {
 					// Only remove if it wasn't originally present in the input
@@ -616,12 +631,32 @@ func filterDefaultValues(panel map[string]interface{}, originalProperties map[st
 	// Remove empty targets arrays (frontend removes them in cleanup)
 	removeIfDefaultValue(panel, "targets", []interface{}{})
 
+	// Handle case where fieldConfig was removed but originally had custom object
+	if panel["_originallyHadFieldConfigCustom"] == true {
+		if _, hasFieldConfig := panel["fieldConfig"]; !hasFieldConfig {
+			// Recreate fieldConfig with custom object
+			panel["fieldConfig"] = map[string]interface{}{
+				"defaults": map[string]interface{}{
+					"custom": map[string]interface{}{},
+				},
+				"overrides": []interface{}{},
+			}
+		}
+	}
+
 	// Clean up fieldConfig to match frontend behavior
 	if fieldConfig, exists := panel["fieldConfig"].(map[string]interface{}); exists {
 		// Clean up fieldConfig defaults to match frontend behavior
 		if defaults, hasDefaults := fieldConfig["defaults"].(map[string]interface{}); hasDefaults {
 			// Remove properties that frontend considers as defaults and omits
 			cleanupFieldConfigDefaults(defaults, panel)
+
+			// Preserve custom object if it was originally present, even if empty
+			if panel["_originallyHadFieldConfigCustom"] == true {
+				if _, hasCustom := defaults["custom"]; !hasCustom {
+					defaults["custom"] = map[string]interface{}{}
+				}
+			}
 		}
 	}
 }
@@ -759,10 +794,12 @@ func cleanupVariable(variable map[string]interface{}) {
 	if variableType, ok := variable["type"].(string); ok {
 		switch variableType {
 		case "query":
-			// Query variables: keep options: [] if refresh !== never
-			// Since refresh is not specified in the input, it defaults to not "never"
-			if _, hasOptions := variable["options"]; !hasOptions {
-				variable["options"] = []interface{}{}
+			// Query variables: keep options: [] if refresh !== never (matches frontend getSaveModel logic)
+			refresh := schemaversion.GetIntValue(variable, "refresh", 1) // Default to 1 (onDashboardLoad) if not specified
+			if refresh != 0 {                                            // 0 = VariableRefreshNever
+				if _, hasOptions := variable["options"]; !hasOptions {
+					variable["options"] = []interface{}{}
+				}
 			}
 		case "constant":
 			// Constant variables: remove options completely
@@ -831,7 +868,7 @@ func cleanupPanelList(panels []interface{}) {
 
 // sortPanelsByGridPosition sorts panels by grid position (matches frontend sortPanelsByGridPos behavior)
 func sortPanelsByGridPosition(panels []interface{}) {
-	sort.Slice(panels, func(i, j int) bool {
+	sort.SliceStable(panels, func(i, j int) bool {
 		panelA, okA := panels[i].(map[string]interface{})
 		panelB, okB := panels[j].(map[string]interface{})
 		if !okA || !okB {
@@ -1015,6 +1052,8 @@ func cleanupDashboardDefaults(dashboard map[string]interface{}) {
 	// These properties are lost during frontend's property copying loop in getSaveModelCloneOld()
 	delete(dashboard, "preload")   // Transient dashboard loading state
 	delete(dashboard, "iteration") // Template variable iteration timestamp
+	delete(dashboard, "nav")       // Removed after V7 migration
+	delete(dashboard, "pulldowns") // Removed after V6 migration - frontend doesn't have this property
 }
 
 // cleanupFieldConfigDefaults removes properties that frontend considers as defaults and omits
@@ -1081,6 +1120,39 @@ func trackPanelOriginalTransformations(panel map[string]interface{}) {
 		for _, nestedPanelInterface := range nestedPanels {
 			if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
 				trackPanelOriginalTransformations(nestedPanel)
+			}
+		}
+	}
+}
+
+// trackOriginalFieldConfigCustom marks panels that had fieldConfig.defaults.custom in the original input
+// This is needed to match frontend hasOwnProperty behavior and preserve empty custom objects
+func trackOriginalFieldConfigCustom(dashboard map[string]interface{}) {
+	if panels, ok := dashboard["panels"].([]interface{}); ok {
+		for _, panelInterface := range panels {
+			if panel, ok := panelInterface.(map[string]interface{}); ok {
+				trackPanelOriginalFieldConfigCustom(panel)
+			}
+		}
+	}
+}
+
+// trackPanelOriginalFieldConfigCustom recursively tracks fieldConfig.defaults.custom in panels and nested panels
+func trackPanelOriginalFieldConfigCustom(panel map[string]interface{}) {
+	// Mark if this panel had fieldConfig.defaults.custom in original input
+	if fieldConfig, ok := panel["fieldConfig"].(map[string]interface{}); ok {
+		if defaults, ok := fieldConfig["defaults"].(map[string]interface{}); ok {
+			if _, hasCustom := defaults["custom"]; hasCustom {
+				panel["_originallyHadFieldConfigCustom"] = true
+			}
+		}
+	}
+
+	// Handle nested panels in row panels
+	if nestedPanels, ok := panel["panels"].([]interface{}); ok {
+		for _, nestedPanelInterface := range nestedPanels {
+			if nestedPanel, ok := nestedPanelInterface.(map[string]interface{}); ok {
+				trackPanelOriginalFieldConfigCustom(nestedPanel)
 			}
 		}
 	}

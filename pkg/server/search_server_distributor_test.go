@@ -314,6 +314,11 @@ func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr stri
 	cfg.IndexPath = t.TempDir() + cfg.InstanceID
 	cfg.IndexFileThreshold = testIndexFileThreshold
 	cfg.Target = []string{modules.StorageServer}
+	// make sure the resource server has enough time to join the ring
+	// before the tests start sending traffic
+	// otherwise the tests will be flaky,
+	// also, tests are going to timeout after 300 seconds anyway
+	cfg.ResourceServerJoinRingTimeout = 300 * time.Second
 
 	return initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
 }
@@ -326,7 +331,7 @@ func initModuleServerForTest(
 ) testModuleServer {
 	tracer := tracing.InitializeTracerForTest()
 
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, nil)
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, nil, ProvideNoopModuleRegisterer(), nil)
 	require.NoError(t, err)
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,

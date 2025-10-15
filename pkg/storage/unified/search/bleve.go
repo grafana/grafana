@@ -65,10 +65,6 @@ type BleveOptions struct {
 	// The resource count where values switch from memory to file based
 	FileThreshold int64
 
-	// How big should a batch get before flushing
-	// ?? not totally sure the units
-	BatchSize int
-
 	// Index cache TTL for bleve indices. 0 disables expiration for in-memory indexes.
 	// Also used for file-based indexes, if they are not owned by this instance, and they are not fetched from the cache recently.
 	IndexCacheTTL time.Duration
@@ -78,6 +74,9 @@ type BleveOptions struct {
 	Logger *slog.Logger
 
 	UseFullNgram bool
+
+	// Minimum time between index updates.
+	IndexMinUpdateInterval time.Duration
 
 	// This function is called to check whether the index is owned by the current instance.
 	// Indexes that are not owned by current instance are eligible for cleanup.
@@ -167,13 +166,13 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, indexMetrics *resou
 }
 
 // GetIndex will return nil if the key does not exist
-func (b *bleveBackend) GetIndex(_ context.Context, key resource.NamespacedResource) (resource.ResourceIndex, error) {
+func (b *bleveBackend) GetIndex(key resource.NamespacedResource) resource.ResourceIndex {
 	idx := b.getCachedIndex(key, time.Now())
 	// Avoid returning typed nils.
 	if idx == nil {
-		return nil, nil
+		return nil
 	}
-	return idx, nil
+	return idx
 }
 
 func (b *bleveBackend) GetOpenIndexes() []resource.NamespacedResource {
@@ -689,8 +688,8 @@ func (b *bleveBackend) closeAllIndexes() {
 }
 
 type updateRequest struct {
-	reason   string
-	callback chan updateResult
+	requestTime time.Time
+	callback    chan updateResult
 }
 
 type updateResult struct {
@@ -704,6 +703,10 @@ type bleveIndex struct {
 
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
 	resourceVersion int64
+
+	// Timestamp when the last update to the index was done (started).
+	// Subsequent update requests only trigger new update if minUpdateInterval has elapsed.
+	nextUpdateTime time.Time
 
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
@@ -719,7 +722,8 @@ type bleveIndex struct {
 	tracing   trace.Tracer
 	logger    *slog.Logger
 
-	updaterFn resource.UpdateFn
+	updaterFn         resource.UpdateFn
+	minUpdateInterval time.Duration
 
 	updaterMu       sync.Mutex
 	updaterCond     *sync.Cond         // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
@@ -746,15 +750,16 @@ func (b *bleveBackend) newBleveIndex(
 	logger *slog.Logger,
 ) *bleveIndex {
 	bi := &bleveIndex{
-		key:          key,
-		index:        index,
-		indexStorage: newIndexType,
-		fields:       fields,
-		allFields:    allFields,
-		standard:     standardSearchFields,
-		tracing:      b.tracer,
-		logger:       logger,
-		updaterFn:    updaterFn,
+		key:               key,
+		index:             index,
+		indexStorage:      newIndexType,
+		fields:            fields,
+		allFields:         allFields,
+		standard:          standardSearchFields,
+		tracing:           b.tracer,
+		logger:            logger,
+		updaterFn:         updaterFn,
+		minUpdateInterval: b.opts.IndexMinUpdateInterval,
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
 	if b.indexMetrics != nil {
@@ -1349,14 +1354,14 @@ func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
 	return b.index.Close()
 }
 
-func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) (int64, error) {
+func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 	// We don't have to do anything if the index cannot be updated (typically in tests).
 	if b.updaterFn == nil {
 		return 0, nil
 	}
 
 	// Use chan with buffer size 1 to ensure that we can always send the result back, even if there's no reader anymore.
-	req := updateRequest{reason: reason, callback: make(chan updateResult, 1)}
+	req := updateRequest{requestTime: time.Now(), callback: make(chan updateResult, 1)}
 
 	// Make sure that the updater goroutine is running.
 	b.updaterMu.Lock()
@@ -1413,7 +1418,7 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 
 		b.updaterMu.Lock()
 		for !b.updaterShutdown && ctx.Err() == nil && len(b.updaterQueue) == 0 && time.Since(start) < maxWait {
-			// Cond is signalled when updaterShutdown changes, updaterQueue gets new element or when timeout occurs.
+			// Cond is signaled when updaterShutdown changes, updaterQueue gets new element or when timeout occurs.
 			b.updaterCond.Wait()
 		}
 
@@ -1435,6 +1440,26 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 			}
 			return
 		}
+
+		// Check if requests arrived before minUpdateInterval since the last update has elapsed, and remove such requests.
+		for ix := 0; ix < len(batch); {
+			req := batch[ix]
+			if req.requestTime.Before(b.nextUpdateTime) {
+				req.callback <- updateResult{rv: b.resourceVersion}
+				batch = append(batch[:ix], batch[ix+1:]...)
+			} else {
+				// Keep in the batch
+				ix++
+			}
+		}
+
+		// If all requests are now handled, don't perform update.
+		if len(batch) == 0 {
+			continue
+		}
+
+		// Bump next update time
+		b.nextUpdateTime = time.Now().Add(b.minUpdateInterval)
 
 		var rv int64
 		var err = ctx.Err()

@@ -1,9 +1,9 @@
 module github.com/grafana/grafana/apps/alerting/rules
 
-go 1.24.4
+go 1.25.3
 
 require (
-	github.com/grafana/grafana-app-sdk v0.45.0
+	github.com/grafana/grafana-app-sdk v0.46.0
 	github.com/grafana/grafana-app-sdk/logging v0.45.0
 	k8s.io/apimachinery v0.34.1
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b
@@ -15,7 +15,7 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
+	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/getkin/kin-openapi v0.133.0 // indirect
@@ -66,7 +66,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.7.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/net v0.44.0 // indirect
+	golang.org/x/net v0.45.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect

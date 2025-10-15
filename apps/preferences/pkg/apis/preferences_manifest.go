@@ -28,8 +28,9 @@ var (
 )
 
 var appManifestData = app.ManifestData{
-	AppName: "preferences",
-	Group:   "preferences.grafana.app",
+	AppName:          "preferences",
+	Group:            "preferences.grafana.app",
+	PreferredVersion: "v1alpha1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v1alpha1",
