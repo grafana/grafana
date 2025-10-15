@@ -1,10 +1,7 @@
-import { css } from '@emotion/css';
-
 import { FieldDisplay, GrafanaTheme2, Threshold } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { measureText } from '../../utils/measureText';
 
-import { RadialShape } from './RadialGauge';
 import { GaugeDimensions, toCartesian } from './utils';
 
 interface RadialScaleLabelsProps {
@@ -23,38 +20,31 @@ export function RadialScaleLabels({
   theme,
   dimensions,
   startAngle,
-  endAngle,
   angleRange,
 }: RadialScaleLabelsProps) {
-  const styles = useStyles2(getStyles);
   const { centerX, centerY, scaleLabelsFontSize, scaleLabelsRadius } = dimensions;
 
   const fieldConfig = fieldDisplay.field;
   const min = fieldConfig.min ?? 0;
   const max = fieldConfig.max ?? 100;
+
   const fontSize = scaleLabelsFontSize;
   const textLineHeight = scaleLabelsFontSize * 1.2;
+  const radius = scaleLabelsRadius - textLineHeight;
 
   function getTextPosition(text: string, value: number) {
     const valueDeg = ((value - min) / (max - min)) * angleRange;
-    const finalAngle = startAngle + valueDeg;
+    const measure = measureText(text, fontSize, theme.typography.fontWeightMedium);
+    const textWidthAngle = (measure.width / (2 * Math.PI * radius)) * angleRange;
+    const finalAngle = startAngle + valueDeg - textWidthAngle;
 
-    const position = toCartesian(centerX, centerY, scaleLabelsRadius - textLineHeight, finalAngle);
+    const position = toCartesian(centerX, centerY, radius, finalAngle);
 
     return { ...position, transform: `rotate(${finalAngle}, ${position.x}, ${position.y})` };
   }
 
-  const minPos = getTextPosition('min', min);
-  const maxPos = getTextPosition('max', max);
-
   return (
     <g>
-      <text x={minPos.x} y={minPos.y} fontSize={fontSize} fill={theme.colors.text.primary} transform={minPos.transform}>
-        {fieldDisplay.field.min ?? 0}
-      </text>
-      <text x={maxPos.x} y={maxPos.y} fontSize={fontSize} fill={theme.colors.text.primary} transform={maxPos.transform}>
-        {fieldDisplay.field.max ?? 100}
-      </text>
       {thresholds.map((threshold, index) => {
         const labelPos = getTextPosition(String(threshold.value), threshold.value);
 
@@ -74,9 +64,3 @@ export function RadialScaleLabels({
     </g>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  text: css({
-    verticalAlign: 'bottom',
-  }),
-});
