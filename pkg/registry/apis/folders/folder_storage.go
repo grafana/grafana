@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -154,7 +155,11 @@ func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation r
 func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid, parentUID string) error {
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	isNested := parentUID != ""
+	if parentUID == "" {
+		return fmt.Errorf("expecting folder with name")
+	}
+
+	isNested := parentUID != folder.GeneralFolderUID
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
 		// No permissions on nested folders when kubernetesDashboards is enabled
 		return nil
