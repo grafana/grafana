@@ -111,7 +111,7 @@ The new folder name is automatically saved.
 The feature is only available in Grafana Cloud.  
 {{% /admonition %}}
 
-When you delete dashboards, they’re stored in the deletion history for **up to 12 months**, allowing you to restore them if needed.  
+When you delete dashboards, they’re stored in the deletion history for up to 12 months, allowing you to restore them if needed.
 The deletion history can contain a maximum of **1000 dashboards** — once this limit is reached, the oldest deleted dashboards may be permanently removed before the 12-month period expires.
 
 You can access the list of deleted dashboards from the **Dashboards** page by clicking the **Recently deleted** button, or by navigating to **Dashboards > Recently deleted**.
