@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"math"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
@@ -290,16 +289,7 @@ func (s *legacySQLStore) ListTeamMembers(ctx context.Context, ns claims.Namespac
 		lastID = m.ID
 		res.Members = append(res.Members, m)
 
-		// Enforce query.Pagination.Limit in [1, math.MaxInt]
-		limit := query.Pagination.Limit
-		if limit < 1 {
-			limit = 1
-		} else if limit > int64(math.MaxInt) {
-			limit = int64(math.MaxInt)
-		}
-
-		// codeql: suppress[go/incorrect-integer-conversion] reason="Pagination limit is bounded and safe"
-		if len(res.Members) > int(limit)-1 {
+		if int64(len(res.Members)) > query.Pagination.Limit-1 {
 			res.Continue = lastID
 			res.Members = res.Members[0 : len(res.Members)-1]
 			break
