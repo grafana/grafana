@@ -167,34 +167,14 @@ export class DashboardMigrator {
 
     // schema version 3 changes
     if (oldVersion < 3 && finalTargetVersion >= 3) {
-      // ensure panel IDs
-      let maxId = this.dashboard.getNextPanelId();
-      panelUpgrades.push((panel: PanelModel) => {
-        if (!panel.id) {
-          panel.id = maxId;
-          maxId += 1;
-        }
-
-        return panel;
-      });
+      // Panel ID assignment is now handled by ensurePanelsHaveUniqueIds() in DashboardModel
+      // and the grid layout migration properly handles panels without IDs in rows
     }
 
     // schema version 4 changes
     if (oldVersion < 4 && finalTargetVersion >= 4) {
-      // move aliasYAxis changes
-      panelUpgrades.push((panel: any) => {
-        if (panel.type !== 'graph') {
-          return panel;
-        }
-
-        each(panel.aliasYAxis, (value, key) => {
-          panel.seriesOverrides = [{ alias: key, yaxis: value }];
-        });
-
-        delete panel.aliasYAxis;
-
-        return panel;
-      });
+      // graph migration is handled through the auto migration
+      // see autoMigrateAngular map in public/app/features/dashboard/state/PanelModel.ts
     }
 
     if (oldVersion < 6 && finalTargetVersion >= 6) {
@@ -877,13 +857,14 @@ export class DashboardMigrator {
     let yPos = 0;
     const widthFactor = GRID_COLUMN_COUNT / 12;
 
-    const maxPanelId = max(
-      flattenDeep(
-        map(old.rows, (row) => {
-          return map(row.panels, 'id');
-        })
-      )
-    );
+    const maxPanelId =
+      max(
+        flattenDeep(
+          map(old.rows, (row) => {
+            return map(row.panels, 'id');
+          })
+        ).filter((id) => id != null)
+      ) || 0;
     let nextRowId = maxPanelId + 1;
 
     if (!old.rows) {
