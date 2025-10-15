@@ -372,13 +372,13 @@ describe('ExtensionSidebarProvider', () => {
     // Sidebar is closed
     expect(screen.getByTestId('is-open')).toHaveTextContent('false');
 
+    // Toggle the sidebar to open it
     act(() => {
-      // Find the ToggleExtensionSidebarEvent subscriber
+      // Call the toggle event handler
       const toggleEventSubscriberCall = subscribeSpy.mock.calls.find((call) => call[0] === ToggleExtensionSidebarEvent);
       expect(toggleEventSubscriberCall).toBeDefined();
       const [, subscriberFn] = toggleEventSubscriberCall!;
 
-      // Call the toggle event handler
       subscriberFn(
         new ToggleExtensionSidebarEvent({
           pluginId: 'grafana-investigations-app',
@@ -399,7 +399,7 @@ describe('ExtensionSidebarProvider', () => {
 
     // Toggle the sidebar to close it
     act(() => {
-      // Find the last ToggleExtensionSidebarEvent subscriber
+      // Call the toggle event handler
       const toggleEventSubscriberCall = subscribeSpy.mock.calls
         .slice()
         .reverse()
