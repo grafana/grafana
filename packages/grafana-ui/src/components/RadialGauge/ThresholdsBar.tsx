@@ -29,11 +29,10 @@ export function ThresholdsBar({
   const min = fieldConfig.min ?? 0;
   const max = fieldConfig.max ?? 100;
 
-  const outerRadius = dimensions.radius + dimensions.barWidth / 2;
   const thresholdDimensions = {
     ...dimensions,
     barWidth: dimensions.thresholdsBarWidth,
-    radius: outerRadius + dimensions.thresholdsBarWidth / 2 + dimensions.thresholdsBarSpacing,
+    radius: dimensions.thresholdsBarRadius,
   };
 
   let currentStart = startAngle;

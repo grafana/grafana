@@ -27,47 +27,45 @@ export function RadialScaleLabels({
   angleRange,
 }: RadialScaleLabelsProps) {
   const styles = useStyles2(getStyles);
-  const { centerX, centerY, radius, barWidth } = dimensions;
+  const { centerX, centerY, scaleLabelsFontSize, scaleLabelsRadius } = dimensions;
 
   const fieldConfig = fieldDisplay.field;
   const min = fieldConfig.min ?? 0;
   const max = fieldConfig.max ?? 100;
+  const fontSize = scaleLabelsFontSize;
+  const textLineHeight = scaleLabelsFontSize * 1.2;
 
-  const minPos = toCartesian(centerX, centerY, radius - barWidth / 2 + 40, startAngle);
-  const maxPos = toCartesian(centerX, centerY, radius - barWidth / 2 + 40, endAngle);
+  function getTextPosition(text: string, value: number) {
+    const valueDeg = ((value - min) / (max - min)) * angleRange;
+    const finalAngle = startAngle + valueDeg;
+
+    const position = toCartesian(centerX, centerY, scaleLabelsRadius - textLineHeight, finalAngle);
+
+    return { ...position, transform: `rotate(${finalAngle}, ${position.x}, ${position.y})` };
+  }
+
+  const minPos = getTextPosition('min', min);
+  const maxPos = getTextPosition('max', max);
 
   return (
     <g>
-      <text
-        x={minPos.x}
-        y={minPos.y}
-        fontSize={'14'}
-        fill={theme.colors.text.primary}
-        transform={`rotate(${startAngle}, ${minPos.x}, ${minPos.y})`}
-      >
+      <text x={minPos.x} y={minPos.y} fontSize={fontSize} fill={theme.colors.text.primary} transform={minPos.transform}>
         {fieldDisplay.field.min ?? 0}
       </text>
-      <text
-        x={maxPos.x}
-        y={maxPos.y}
-        fontSize={'14'}
-        fill={theme.colors.text.primary}
-        transform={`rotate(${endAngle}, ${maxPos.x}, ${maxPos.y})`}
-      >
+      <text x={maxPos.x} y={maxPos.y} fontSize={fontSize} fill={theme.colors.text.primary} transform={maxPos.transform}>
         {fieldDisplay.field.max ?? 100}
       </text>
       {thresholds.map((threshold, index) => {
-        const valueDeg = ((threshold.value - min) / (max - min)) * angleRange;
-        const thresholdLabelPos = toCartesian(centerX, centerY, radius - barWidth / 2 + 40, startAngle + valueDeg);
+        const labelPos = getTextPosition(String(threshold.value), threshold.value);
 
         return (
           <text
             key={index}
-            x={thresholdLabelPos.x}
-            y={thresholdLabelPos.y}
-            fontSize={'14'}
+            x={labelPos.x}
+            y={labelPos.y}
+            fontSize={fontSize}
             fill={theme.colors.text.primary}
-            transform={`rotate(${startAngle + valueDeg}, ${thresholdLabelPos.x}, ${thresholdLabelPos.y})`}
+            transform={labelPos.transform}
           >
             {threshold.value}
           </text>

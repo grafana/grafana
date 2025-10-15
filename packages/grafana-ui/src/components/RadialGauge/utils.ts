@@ -32,9 +32,13 @@ export interface GaugeDimensions {
   barWidth: number;
   endAngle?: number;
   barIndex: number;
+  thresholdsBarRadius: number;
   thresholdsBarWidth: number;
   thresholdsBarSpacing: number;
   showScaleLabels?: boolean;
+  scaleLabelsFontSize: number;
+  scaleLabelsSpacing: number;
+  scaleLabelsRadius: number;
 }
 
 export function calculateDimensions(
@@ -51,6 +55,10 @@ export function calculateDimensions(
   const yMaxAngle = endAngle > 180 ? 180 : endAngle;
   let margin = 0;
 
+  if (glow) {
+    margin = 0.02 * Math.min(width, height);
+  }
+
   // Max radius based on width
   let maxRadiusH = width / 2 - margin;
 
@@ -59,32 +67,42 @@ export function calculateDimensions(
   let maxRadiusV = (height - margin * 2) / (1 + heightRatioV);
 
   let maxRadius = Math.min(maxRadiusH, maxRadiusV);
+  let outerRadius = maxRadius;
 
   const barWidth = Math.max(barWidthFactor * (maxRadius / 3), 2);
-  const thresholdsToBarWidth = 0.2 * Math.pow(barWidth, 0.92);
-  const thresholdsBarWidth = thresholdBar ? Math.min(Math.max(thresholdsToBarWidth, 4), 12) : 0;
-  const thresholdsBarSpacing = Math.min(Math.max(thresholdsBarWidth / 2, 2), 12);
-
-  let outerRadius = maxRadius;
 
   // If rounded bars is enabled they need a bit more vertical space
   if (yMaxAngle < 180 && roundedBars) {
     outerRadius -= barWidth;
   }
 
+  // Scale labels
+  let scaleLabelsFontSize = 0;
+  let scaleLabelsSpacing = 0;
+  let scaleLabelsRadius = 0;
+
+  if (showScaleLabels) {
+    scaleLabelsRadius = outerRadius;
+    const radiusToFontSizeFactor = 0.12;
+    scaleLabelsFontSize = Math.max(radiusToFontSizeFactor * Math.pow(outerRadius, 0.92), 10);
+    scaleLabelsSpacing = scaleLabelsFontSize / 3;
+    const labelsSize = scaleLabelsFontSize * 1.2 + scaleLabelsSpacing;
+    outerRadius -= labelsSize;
+    maxRadiusH -= labelsSize;
+    maxRadiusV -= labelsSize;
+  }
+
+  // Thresholds bar
+  const thresholdsToBarWidth = 0.2 * Math.pow(barWidth, 0.92);
+  const thresholdsBarWidth = thresholdBar ? Math.min(Math.max(thresholdsToBarWidth, 4), 12) : 0;
+  const thresholdsBarSpacing = Math.min(Math.max(thresholdsBarWidth / 2, 2), 12);
+  let thresholdsBarRadius = 0;
+
   if (thresholdsBarWidth > 0) {
+    thresholdsBarRadius = outerRadius - thresholdsBarWidth / 2;
     maxRadiusH -= thresholdsBarWidth + thresholdsBarSpacing;
     maxRadiusV -= thresholdsBarWidth + thresholdsBarSpacing;
     outerRadius = Math.min(maxRadiusH, maxRadiusV);
-  }
-
-  if (showScaleLabels) {
-    outerRadius -= 30;
-  }
-
-  if (glow) {
-    margin = 0.04 * outerRadius;
-    outerRadius -= (margin * 2) / (1 + heightRatioV);
   }
 
   let innerRadius = outerRadius - barWidth / 2;
@@ -107,6 +125,10 @@ export function calculateDimensions(
     barIndex,
     thresholdsBarWidth,
     thresholdsBarSpacing,
+    thresholdsBarRadius,
+    scaleLabelsFontSize,
+    scaleLabelsSpacing,
+    scaleLabelsRadius,
   };
 }
 
