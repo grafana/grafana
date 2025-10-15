@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
@@ -72,7 +73,7 @@ var WireSet = wire.NewSet(
 	pluginconfig.NewRequestConfigProvider,
 	wire.Bind(new(pluginconfig.PluginRequestConfigProvider), new(*pluginconfig.RequestConfigProvider)),
 	pluginstore.ProvideService,
-	pluginstore.ProvideAPIRegistrar,
+	installsync.ProvideSyncer,
 	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
 	process.ProvideService,

@@ -14,12 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	installsyncfakes "github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/fakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	pluginstoreFakes "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore/fakes"
 	secretstest "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,7 +42,7 @@ func TestGet(t *testing.T) {
 	cfg := setting.NewCfg()
 	ds := &fakeDatasources.FakeDataSourceService{}
 	db := &dbtest.FakeDB{ExpectedError: pluginsettings.ErrPluginSettingNotFound}
-	store, err := pluginstore.NewPluginStoreForTest(preg, &pluginFakes.FakeLoader{}, &pluginFakes.FakeSourceRegistry{}, pluginstoreFakes.NewFakeInstallsAPIRegistrar())
+	store, err := pluginstore.NewPluginStoreForTest(preg, &pluginFakes.FakeLoader{}, &pluginFakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
 	require.NoError(t, err)
 	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(),
 		store, &fakeDatasources.FakeCacheService{},

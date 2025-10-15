@@ -2,8 +2,8 @@ package install
 
 import (
 	"context"
+	"sync"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +15,9 @@ const (
 	PluginInstallSourceAnnotation = "plugins.grafana.app/install-source"
 )
 
+// Class represents the plugin class type in an unversioned internal format.
+// This intentionally duplicates the versioned API type (PluginInstallSpecClass) to decouple
+// internal code from API version changes, making it easier to support multiple API versions.
 type Class = string
 
 const (
@@ -38,19 +41,84 @@ type PluginInstall struct {
 	Source  Source
 }
 
+func (p *PluginInstall) ToPluginInstallV0Alpha1(namespace string) *pluginsv0alpha1.PluginInstall {
+	var url *string = nil
+	if p.URL != "" {
+		url = &p.URL
+	}
+	return &pluginsv0alpha1.PluginInstall{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      p.ID,
+			Annotations: map[string]string{
+				PluginInstallSourceAnnotation: p.Source,
+			},
+		},
+		Spec: pluginsv0alpha1.PluginInstallSpec{
+			Id:      p.ID,
+			Version: p.Version,
+			Url:     url,
+			Class:   pluginsv0alpha1.PluginInstallSpecClass(p.Class),
+		},
+	}
+}
+
+func (p *PluginInstall) ShouldUpdate(existing *pluginsv0alpha1.PluginInstall) bool {
+	update := p.ToPluginInstallV0Alpha1(existing.ObjectMeta.Namespace)
+	if source, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && source != p.Source {
+		return true
+	}
+	if existing.Spec.Version != update.Spec.Version {
+		return true
+	}
+	if existing.Spec.Class != update.Spec.Class {
+		return true // this should never really happen
+	}
+	if !equalStringPointers(existing.Spec.Url, update.Spec.Url) {
+		return true
+	}
+	return false
+}
+
+func equalStringPointers(a, b *string) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	return *a == *b
+}
+
 type InstallRegistrar struct {
 	clientGenerator resource.ClientGenerator
+	client          *pluginsv0alpha1.PluginInstallClient
+	clientOnce      sync.Once
 }
 
 func NewInstallRegistrar(clientGenerator resource.ClientGenerator) *InstallRegistrar {
 	return &InstallRegistrar{
 		clientGenerator: clientGenerator,
+		clientOnce:      sync.Once{},
 	}
 }
 
+func (r *InstallRegistrar) getClient() (*pluginsv0alpha1.PluginInstallClient, error) {
+	r.clientOnce.Do(func() {
+		client, err := pluginsv0alpha1.NewPluginInstallClientFromGenerator(r.clientGenerator)
+		if err != nil {
+			r.client = nil
+			return
+		}
+		r.client = client
+	})
+
+	return pluginsv0alpha1.NewPluginInstallClientFromGenerator(r.clientGenerator)
+}
+
+// Register creates or updates a plugin install in the registry.
 func (r *InstallRegistrar) Register(ctx context.Context, namespace string, install *PluginInstall) error {
-	log := logging.FromContext(ctx)
-	client, err := pluginsv0alpha1.NewPluginInstallClientFromGenerator(r.clientGenerator)
+	client, err := r.getClient()
 	if err != nil {
 		return nil
 	}
@@ -64,44 +132,32 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 		return err
 	}
 
-	if existing != nil {
-		if source, ok := existing.Annotations[PluginInstallSourceAnnotation]; !ok || source != install.Source {
-			log.Debug("Skipping plugin installation as it already exists with a different install source", "pluginId", install.ID, "existingSource", source)
-			return nil
-		}
-
-		if existing.Spec.Version == install.Version {
-			log.Debug("Plugin install resource already exists with the same version", "pluginId", install.ID, "version", install.Version)
-			return nil
-		}
-	}
-	pluginInstall := &pluginsv0alpha1.PluginInstall{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Name:      install.ID,
-			Annotations: map[string]string{
-				PluginInstallSourceAnnotation: install.Source,
-			},
-		},
-		Spec: pluginsv0alpha1.PluginInstallSpec{
-			Id:      install.ID,
-			Version: install.Version,
-			Url:     install.URL,
-			Class:   pluginsv0alpha1.PluginInstallSpecClass(install.Class),
-		},
+	if existing != nil && install.ShouldUpdate(existing) {
+		_, err = client.Update(ctx, install.ToPluginInstallV0Alpha1(namespace), resource.UpdateOptions{ResourceVersion: existing.ObjectMeta.ResourceVersion})
+		return err
 	}
 
-	if existing != nil {
-		_, err = client.Update(ctx, pluginInstall, resource.UpdateOptions{})
-		if err != nil {
-			return err
-		}
-	} else {
-		_, err = client.Create(ctx, pluginInstall, resource.CreateOptions{})
-		if err != nil {
-			return err
-		}
-	}
+	_, err = client.Create(ctx, install.ToPluginInstallV0Alpha1(namespace), resource.CreateOptions{})
+	return err
+}
 
-	return nil
+// Unregister removes a plugin install from the registry.
+func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, name string, source Source) error {
+	client, err := r.getClient()
+	if err != nil {
+		return err
+	}
+	identifier := resource.Identifier{
+		Namespace: namespace,
+		Name:      name,
+	}
+	existing, err := client.Get(ctx, identifier)
+	if err != nil && !errorsK8s.IsNotFound(err) {
+		return err
+	}
+	// if the source is different, do not unregister
+	if existingSource, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && existingSource != source {
+		return nil
+	}
+	return client.Delete(ctx, identifier, resource.DeleteOptions{})
 }

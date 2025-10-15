@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	pluginstoreFakes "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore/fakes"
+	installsyncfakes "github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/fakes"
 )
 
 func TestStore_ProvideService(t *testing.T) {
@@ -45,7 +45,7 @@ func TestStore_ProvideService(t *testing.T) {
 			}
 		}}
 
-		service := ProvideService(fakes.NewFakePluginRegistry(), srcs, l, pluginstoreFakes.NewFakeInstallsAPIRegistrar())
+		service := ProvideService(fakes.NewFakePluginRegistry(), srcs, l, installsyncfakes.NewFakeSyncer())
 		ctx := context.Background()
 		err := service.StartAsync(ctx)
 		require.NoError(t, err)
@@ -55,9 +55,9 @@ func TestStore_ProvideService(t *testing.T) {
 	})
 
 	t.Run("Plugin installs are registered", func(t *testing.T) {
-		registrar := pluginstoreFakes.NewFakeInstallsAPIRegistrar()
+		registrar := installsyncfakes.NewFakeSyncer()
 		registered := []*plugins.Plugin{}
-		registrar.RegisterFunc = func(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error {
+		registrar.SyncFunc = func(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error {
 			registered = append(registered, installedPlugins...)
 			return nil
 		}
@@ -106,7 +106,7 @@ func TestStore_Plugin(t *testing.T) {
 				p1.ID: p1,
 				p2.ID: p2,
 			},
-		}, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}, pluginstoreFakes.NewFakeInstallsAPIRegistrar())
+		}, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
 		require.NoError(t, err)
 
 		p, exists := ps.Plugin(context.Background(), p1.ID)
@@ -136,7 +136,7 @@ func TestStore_Plugins(t *testing.T) {
 				p4.ID: p4,
 				p5.ID: p5,
 			},
-		}, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}, pluginstoreFakes.NewFakeInstallsAPIRegistrar())
+		}, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
 		require.NoError(t, err)
 
 		ToGrafanaDTO(p1)
@@ -180,7 +180,7 @@ func TestStore_Routes(t *testing.T) {
 				p5.ID: p5,
 				p6.ID: p6,
 			},
-		}, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}, pluginstoreFakes.NewFakeInstallsAPIRegistrar())
+		}, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
 		require.NoError(t, err)
 
 		sr := func(p *plugins.Plugin) *plugins.StaticRoute {
@@ -210,7 +210,7 @@ func TestProcessManager_shutdown(t *testing.T) {
 				unloaded = true
 				return nil, nil
 			},
-		}, &fakes.FakeSourceRegistry{}, pluginstoreFakes.NewFakeInstallsAPIRegistrar())
+		}, &fakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
 
 		ctx, cancel := context.WithCancel(context.Background())
 
@@ -243,7 +243,7 @@ func TestProcessManager_shutdown(t *testing.T) {
 			UnloadFunc: func(_ context.Context, plugin *plugins.Plugin) (*plugins.Plugin, error) {
 				return nil, expectedErr
 			},
-		}, &fakes.FakeSourceRegistry{}, pluginstoreFakes.NewFakeInstallsAPIRegistrar())
+		}, &fakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
 		require.NoError(t, err)
 
 		err = ps.stopping(nil)
@@ -263,7 +263,7 @@ func TestStore_availablePlugins(t *testing.T) {
 				p1.ID: p1,
 				p2.ID: p2,
 			},
-		}, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}, pluginstoreFakes.NewFakeInstallsAPIRegistrar())
+		}, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
 		require.NoError(t, err)
 
 		aps := ps.availablePlugins(context.Background())

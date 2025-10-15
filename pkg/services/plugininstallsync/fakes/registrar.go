@@ -7,17 +7,18 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-type FakeInstallsAPIRegistrar struct {
+type FakeRegistrar struct {
 	RegisterFunc func(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error
 }
 
-func NewFakeInstallsAPIRegistrar() *FakeInstallsAPIRegistrar {
-	return &FakeInstallsAPIRegistrar{}
+func NewFakeRegistrar() *FakeRegistrar {
+	return &FakeRegistrar{}
 }
 
-func (f *FakeInstallsAPIRegistrar) Register(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error {
+func (f *FakeRegistrar) Register(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error {
 	if f.RegisterFunc != nil {
 		return f.RegisterFunc(ctx, source, installedPlugins)
 	}
 	return nil
 }
+

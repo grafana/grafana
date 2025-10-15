@@ -5,11 +5,11 @@ pluginInstallV0Alpha1: {
 	plural: "plugininstalls"
 	scope: "Namespaced"
 	schema: {
-		spec: {
-			id:       string
-			version:  string
-			url: string
-			class: "core" | "external" | "cdn"
-		}
+	spec: {
+		id:       string
+		version:  string
+		url?: string
+		class: "core" | "external" | "cdn"
+	}
 	}
 }

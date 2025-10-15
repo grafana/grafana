@@ -16,7 +16,6 @@ import (
 var WireSet = wire.NewSet(
 	ProvideAppInstallers,
 	ProvideBuilderRunners,
-	ProvideClientGenerator,
 	playlist.RegisterAppInstaller,
 	investigations.RegisterApp,
 	advisor.RegisterApp,

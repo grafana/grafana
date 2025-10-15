@@ -6,7 +6,7 @@ package v0alpha1
 type PluginInstallSpec struct {
 	Id      string                 `json:"id"`
 	Version string                 `json:"version"`
-	Url     string                 `json:"url"`
+	Url     *string                `json:"url,omitempty"`
 	Class   PluginInstallSpecClass `json:"class"`
 }
 

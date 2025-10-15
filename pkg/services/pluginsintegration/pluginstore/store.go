@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 )
 
 var _ Store = (*Service)(nil)
@@ -35,11 +36,11 @@ type Service struct {
 	pluginRegistry    registry.Service
 	pluginLoader      loader.Service
 	pluginSources     sources.Registry
-	installsRegistrar InstallsAPIRegistrar
+	installsRegistrar installsync.Syncer
 }
 
 func ProvideService(pluginRegistry registry.Service, pluginSources sources.Registry,
-	pluginLoader loader.Service, installsRegistrar InstallsAPIRegistrar) *Service {
+	pluginLoader loader.Service, installsRegistrar installsync.Syncer) *Service {
 	return New(pluginRegistry, pluginLoader, pluginSources, installsRegistrar)
 }
 
@@ -51,7 +52,7 @@ func (s *Service) Run(ctx context.Context) error {
 	return s.AwaitTerminated(stopCtx)
 }
 
-func NewPluginStoreForTest(pluginRegistry registry.Service, pluginLoader loader.Service, pluginSources sources.Registry, installsRegistrar InstallsAPIRegistrar) (*Service, error) {
+func NewPluginStoreForTest(pluginRegistry registry.Service, pluginLoader loader.Service, pluginSources sources.Registry, installsRegistrar installsync.Syncer) (*Service, error) {
 	s := New(pluginRegistry, pluginLoader, pluginSources, installsRegistrar)
 	if err := s.StartAsync(context.Background()); err != nil {
 		return nil, err
@@ -62,7 +63,7 @@ func NewPluginStoreForTest(pluginRegistry registry.Service, pluginLoader loader.
 	return s, nil
 }
 
-func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginSources sources.Registry, installsRegistrar InstallsAPIRegistrar) *Service {
+func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginSources sources.Registry, installsRegistrar installsync.Syncer) *Service {
 	s := &Service{
 		pluginRegistry:    pluginRegistry,
 		pluginLoader:      pluginLoader,
@@ -85,8 +86,8 @@ func (s *Service) starting(ctx context.Context) error {
 			logger.Error("Loading plugin source failed", "source", ps.PluginClass(ctx), "error", err)
 			return err
 		}
-		if err := s.installsRegistrar.Register(ctx, install.SourcePluginStore, loadedPlugins); err != nil {
-			logger.Error("Registering plugin installations failed", "error", err)
+		if err := s.installsRegistrar.Sync(ctx, install.SourcePluginStore, loadedPlugins); err != nil {
+			logger.Error("Syncing plugin installations failed", "error", err)
 		}
 		totalPlugins += len(loadedPlugins)
 	}
