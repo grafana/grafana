@@ -6,12 +6,14 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/services"
+	"golang.org/x/sync/errgroup"
+
+	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"golang.org/x/sync/errgroup"
 )
 
 var _ Store = (*Service)(nil)
@@ -30,14 +32,15 @@ type Store interface {
 type Service struct {
 	services.NamedService
 
-	pluginRegistry registry.Service
-	pluginLoader   loader.Service
-	pluginSources  sources.Registry
+	pluginRegistry    registry.Service
+	pluginLoader      loader.Service
+	pluginSources     sources.Registry
+	installsRegistrar InstallsAPIRegistrar
 }
 
 func ProvideService(pluginRegistry registry.Service, pluginSources sources.Registry,
-	pluginLoader loader.Service) *Service {
-	return New(pluginRegistry, pluginLoader, pluginSources)
+	pluginLoader loader.Service, installsRegistrar InstallsAPIRegistrar) *Service {
+	return New(pluginRegistry, pluginLoader, pluginSources, installsRegistrar)
 }
 
 func (s *Service) Run(ctx context.Context) error {
@@ -48,8 +51,8 @@ func (s *Service) Run(ctx context.Context) error {
 	return s.AwaitTerminated(stopCtx)
 }
 
-func NewPluginStoreForTest(pluginRegistry registry.Service, pluginLoader loader.Service, pluginSources sources.Registry) (*Service, error) {
-	s := New(pluginRegistry, pluginLoader, pluginSources)
+func NewPluginStoreForTest(pluginRegistry registry.Service, pluginLoader loader.Service, pluginSources sources.Registry, installsRegistrar InstallsAPIRegistrar) (*Service, error) {
+	s := New(pluginRegistry, pluginLoader, pluginSources, installsRegistrar)
 	if err := s.StartAsync(context.Background()); err != nil {
 		return nil, err
 	}
@@ -59,11 +62,12 @@ func NewPluginStoreForTest(pluginRegistry registry.Service, pluginLoader loader.
 	return s, nil
 }
 
-func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginSources sources.Registry) *Service {
+func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginSources sources.Registry, installsRegistrar InstallsAPIRegistrar) *Service {
 	s := &Service{
-		pluginRegistry: pluginRegistry,
-		pluginLoader:   pluginLoader,
-		pluginSources:  pluginSources,
+		pluginRegistry:    pluginRegistry,
+		pluginLoader:      pluginLoader,
+		pluginSources:     pluginSources,
+		installsRegistrar: installsRegistrar,
 	}
 	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(ServiceName)
 	return s
@@ -80,6 +84,9 @@ func (s *Service) starting(ctx context.Context) error {
 		if err != nil {
 			logger.Error("Loading plugin source failed", "source", ps.PluginClass(ctx), "error", err)
 			return err
+		}
+		if err := s.installsRegistrar.Register(ctx, install.SourcePluginStore, loadedPlugins); err != nil {
+			logger.Error("Registering plugin installations failed", "error", err)
 		}
 		totalPlugins += len(loadedPlugins)
 	}

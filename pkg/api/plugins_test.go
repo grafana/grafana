@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	pluginstoreFakes "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore/fakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/updatemanager"
@@ -527,7 +528,7 @@ func callGetPluginAsset(sc *scenarioContext) {
 func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string,
 	cfg *setting.Cfg, pluginRegistry registry.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
+		store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}, pluginstoreFakes.NewFakeInstallsAPIRegistrar())
 		require.NoError(t, err)
 
 		hs := HTTPServer{
@@ -642,7 +643,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
+				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}, pluginstoreFakes.NewFakeInstallsAPIRegistrar())
 				require.NoError(t, err)
 
 				hs.Cfg = setting.NewCfg()
@@ -832,7 +833,7 @@ func Test_PluginsSettings(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
+				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}, pluginstoreFakes.NewFakeInstallsAPIRegistrar())
 				require.NoError(t, err)
 
 				hs.Cfg = setting.NewCfg()
@@ -902,7 +903,7 @@ func Test_UpdatePluginSetting(t *testing.T) {
 
 	t.Run("should return an error when trying to disable an auto-enabled plugin", func(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{})
+			store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &fakes.FakeLoader{}, &fakes.FakeSourceRegistry{}, pluginstoreFakes.NewFakeInstallsAPIRegistrar())
 			require.NoError(t, err)
 
 			hs.Cfg = setting.NewCfg()
