@@ -385,8 +385,6 @@ type ydbDialect struct {
 	nativeDriver *ydb.Driver
 }
 
-type ydbSQLDriver struct{}
-
 // ydbConnectorWrapper wraps the base YDB connector to handle RowsAffected() without errors
 type ydbConnectorWrapper struct {
 	base driver.Connector
@@ -398,7 +396,9 @@ func (w *ydbConnectorWrapper) Connect(ctx context.Context) (driver.Conn, error) 
 	if err != nil {
 		return nil, err
 	}
-	return &ydbConnWrapper{base: conn}, nil
+
+	cc := conn.(connTx)
+	return &ydbConnWrapper{base: cc}, nil
 }
 
 func (w *ydbConnectorWrapper) Driver() driver.Driver {
@@ -412,17 +412,24 @@ func (w *ydbConnectorWrapper) Close() error {
 	return nil
 }
 
+type connTx interface {
+	driver.Conn
+	driver.ConnBeginTx
+	driver.ConnPrepareContext
+	driver.ConnPrepareContext
+}
+
 // ydbConnWrapper wraps the base connection to handle RowsAffected() without errors
 type ydbConnWrapper struct {
-	base driver.Conn
+	base connTx
 }
 
 func (w *ydbConnWrapper) Prepare(query string) (driver.Stmt, error) {
-	stmt, err := w.base.Prepare(query)
-	if err != nil {
-		return nil, err
-	}
-	return &ydbStmtWrapper{base: stmt}, nil
+	panic("prepare")
+}
+
+func (w *ydbConnWrapper) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
+	return w.base.PrepareContext(ctx, query)
 }
 
 func (w *ydbConnWrapper) Close() error {
@@ -433,9 +440,19 @@ func (w *ydbConnWrapper) Begin() (driver.Tx, error) {
 	return w.base.Begin()
 }
 
+func (w *ydbConnWrapper) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
+	return w.base.BeginTx(ctx, opts)
+}
+
+type stmtCtx interface {
+	driver.StmtExecContext
+	driver.StmtQueryContext
+	driver.Stmt
+}
+
 // ydbStmtWrapper wraps the base statement to handle RowsAffected() without errors
 type ydbStmtWrapper struct {
-	base driver.Stmt
+	base stmtCtx
 }
 
 func (w *ydbStmtWrapper) Close() error {
@@ -447,15 +464,23 @@ func (w *ydbStmtWrapper) NumInput() int {
 }
 
 func (w *ydbStmtWrapper) Exec(args []driver.Value) (driver.Result, error) {
-	result, err := w.base.Exec(args)
+	panic("Exec")
+}
+
+func (w *ydbStmtWrapper) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
+	result, err := w.base.ExecContext(ctx, args)
 	if err != nil {
 		return nil, err
 	}
 	return &ydbResultWrapper{base: result}, nil
 }
 
+func (w *ydbStmtWrapper) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
+	return w.base.QueryContext(ctx, args)
+}
+
 func (w *ydbStmtWrapper) Query(args []driver.Value) (driver.Rows, error) {
-	return w.base.Query(args)
+	panic("query")
 }
 
 // ydbResultWrapper wraps the base result to handle RowsAffected() without errors
@@ -464,7 +489,7 @@ type ydbResultWrapper struct {
 }
 
 func (w *ydbResultWrapper) LastInsertId() (int64, error) {
-	return w.base.LastInsertId()
+	return 0, nil
 }
 
 func (w *ydbResultWrapper) RowsAffected() (int64, error) {
@@ -472,48 +497,32 @@ func (w *ydbResultWrapper) RowsAffected() (int64, error) {
 	return 0, nil
 }
 
-func (d *ydbSQLDriver) Open(string) (driver.Conn, error) {
-	return nil, fmt.Errorf("unsupported operation: use OpenConnector instead")
-}
-
-func (d *ydbSQLDriver) OpenConnector(dataSourceName string) (driver.Connector, error) {
-	db, err := ydb.Open(context.Background(), dataSourceName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect by data source name '%s': %w", dataSourceName, err)
-	}
-
-	baseConnector, err := ydb.Connector(db)
-	if err != nil {
-		_ = db.Close(context.Background())
-		return nil, err
-	}
-
-	return &ydbConnectorWrapper{
-		base: baseConnector,
-		db:   db,
-	}, nil
-}
-
 func (db *ydbDialect) Init(d *core.DB, uri *core.Uri, drivername, dataSourceName string) error {
-	// ctx := context.TODO()
-	// oldConn, err := d.Conn(ctx)
-	// if err != nil {
-	// 	return err
-	// }
+	ydbDriver, err := ydb.Open(context.Background(), dataSourceName)
+	if err != nil {
+		return fmt.Errorf("failed to connect by data source name '%s': %w", dataSourceName, err)
+	}
 
-	// nativeDriver, err := ydb.Unwrap(oldConn)
-	// if err != nil {
-	// 	return err
-	// }
+	baseConnector, err := ydb.Connector(ydbDriver,
+		ydb.WithQueryService(true),
+		ydb.WithFakeTx(ydb.QueryExecuteQueryMode),
+		ydb.WithNumericArgs(),
+		ydb.WithAutoDeclare(),
+	)
+	if err != nil {
+		_ = ydbDriver.Close(context.Background())
+		return err
+	}
 
-	// conn, err := ydb.Connector(nativeDriver, ydb.WithDefaultQueryMode(ydb.DataQueryMode))
-	// if err != nil {
-	// 	return err
-	// }
+	connector := &ydbConnectorWrapper{
+		base: baseConnector,
+		db:   ydbDriver,
+	}
 
-	// sqldb := sql.OpenDB(conn)
+	sqldb := sql.OpenDB(connector)
+	d.DB = sqldb
 
-	return db.Base.Init(d, db, uri, drivername, dataSourceName)
+	return db.Base.Init(core.FromDB(sqldb), db, uri, drivername, dataSourceName)
 }
 
 func (db *ydbDialect) IndexCheckSql(tableName, idxName string) (string, []interface{}) {

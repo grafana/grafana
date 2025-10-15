@@ -37,7 +37,7 @@ func regDrvsNDialects() bool {
 		"postgres": {"postgres", func() core.Driver { return &pqDriver{} }, func() core.Dialect { return &postgres{} }},
 		"pgx":      {"postgres", func() core.Driver { return &pqDriverPgx{} }, func() core.Dialect { return &postgres{} }},
 		"sqlite3":  {"sqlite3", func() core.Driver { return &sqlite3Driver{} }, func() core.Dialect { return &sqlite3{} }},
-		"ydb":      {"ydb-grafana", func() core.Driver { return &ydbDriver{} }, func() core.Dialect { return &ydbDialect{} }},
+		"ydb":      {"ydb", func() core.Driver { return &ydbDriver{} }, func() core.Dialect { return &ydbDialect{} }},
 	}
 
 	for driverName, v := range providedDrvsNDialects {
@@ -54,7 +54,6 @@ func close(engine *Engine) {
 }
 
 func init() {
-	sql.Register("ydb-grafana", &ydbSQLDriver{})
 	regDrvsNDialects()
 }
 
