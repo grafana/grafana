@@ -67,7 +67,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
 			ctxLogger.Error("Failed to get HTTP client options", "error", err, "function", logEntrypoint())
-			return nil, err
+			return nil, backend.DownstreamErrorf("error reading settings: %w", err)
 		}
 
 		opts.ForwardHTTPHeaders = true

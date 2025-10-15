@@ -83,7 +83,7 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 
 	if resp.StatusCode != http.StatusOK {
 		ctxLogger.Error("Failed to execute TraceQL query", "error", err, "function", logEntrypoint())
-		err := fmt.Errorf("Failed to execute TraceQL query: %s Status: %s Body: %s", *tempoQuery.Query, resp.Status, string(responseBody))
+		err := fmt.Errorf("failed to execute TraceQL query: %s Status: %s Body: %s", *tempoQuery.Query, resp.Status, string(responseBody))
 
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -154,7 +154,7 @@ func (s *Service) performMetricsQuery(ctx context.Context, dsInfo *DatasourceInf
 		if backend.IsDownstreamHTTPError(err) {
 			return nil, nil, backend.DownstreamError(err)
 		}
-		return nil, nil, fmt.Errorf("Failed to send request to Tempo: %w", err)
+		return nil, nil, fmt.Errorf("failed to send request to Tempo: %w", err)
 	}
 
 	body, err := io.ReadAll(resp.Body)
