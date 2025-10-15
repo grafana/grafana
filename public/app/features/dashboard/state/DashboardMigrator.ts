@@ -167,34 +167,14 @@ export class DashboardMigrator {
 
     // schema version 3 changes
     if (oldVersion < 3 && finalTargetVersion >= 3) {
-      // ensure panel IDs
-      let maxId = this.dashboard.getNextPanelId();
-      panelUpgrades.push((panel: PanelModel) => {
-        if (!panel.id) {
-          panel.id = maxId;
-          maxId += 1;
-        }
-
-        return panel;
-      });
+      // Panel ID assignment is now handled by ensurePanelsHaveUniqueIds() in DashboardModel
+      // and the grid layout migration properly handles panels without IDs in rows
     }
 
     // schema version 4 changes
     if (oldVersion < 4 && finalTargetVersion >= 4) {
-      // move aliasYAxis changes
-      panelUpgrades.push((panel: any) => {
-        if (panel.type !== 'graph') {
-          return panel;
-        }
-
-        each(panel.aliasYAxis, (value, key) => {
-          panel.seriesOverrides = [{ alias: key, yaxis: value }];
-        });
-
-        delete panel.aliasYAxis;
-
-        return panel;
-      });
+      // graph migration is handled through the auto migration
+      // see autoMigrateAngular map in public/app/features/dashboard/state/PanelModel.ts
     }
 
     if (oldVersion < 6 && finalTargetVersion >= 6) {
@@ -229,17 +209,6 @@ export class DashboardMigrator {
       if (old.nav && old.nav.length) {
         this.dashboard.timepicker = old.nav[0];
       }
-
-      // ensure query refIds
-      panelUpgrades.push((panel: any) => {
-        each(panel.targets, (target) => {
-          if (!target.refId) {
-            target.refId = panel.getNextQueryLetter && panel.getNextQueryLetter();
-          }
-        });
-
-        return panel;
-      });
     }
 
     if (oldVersion < 8 && finalTargetVersion >= 8) {
@@ -289,23 +258,8 @@ export class DashboardMigrator {
 
     // schema version 9 changes
     if (oldVersion < 9 && finalTargetVersion >= 9) {
-      // move aliasYAxis changes
-      panelUpgrades.push((panel: PanelModel) => {
-        if (panel.type !== 'singlestat' && panel.thresholds !== '') {
-          return panel;
-        }
-
-        if (panel.thresholds) {
-          const k = panel.thresholds.split(',');
-
-          if (k.length >= 3) {
-            k.shift();
-            panel.thresholds = k.join(',');
-          }
-        }
-
-        return panel;
-      });
+      // singlestat panel is automigrated to stat panel
+      // see autoMigrateAngular map in public/app/features/dashboard/state/PanelModel.ts
     }
 
     // schema version 10 changes
@@ -344,57 +298,6 @@ export class DashboardMigrator {
         } else if ('hideLabel' in templateVariable && templateVariable.hideLabel) {
           templateVariable.hide = 1;
         }
-      });
-    }
-
-    if (oldVersion < 12 && finalTargetVersion >= 12) {
-      // update graph yaxes changes
-      panelUpgrades.push((panel: any) => {
-        if (panel.type !== 'graph') {
-          return panel;
-        }
-        if (!panel.grid) {
-          return panel;
-        }
-
-        if (!panel.yaxes) {
-          panel.yaxes = [
-            {
-              show: panel['y-axis'],
-              min: panel.grid.leftMin,
-              max: panel.grid.leftMax,
-              logBase: panel.grid.leftLogBase,
-              format: panel.y_formats[0],
-              label: panel.leftYAxisLabel,
-            },
-            {
-              show: panel['y-axis'],
-              min: panel.grid.rightMin,
-              max: panel.grid.rightMax,
-              logBase: panel.grid.rightLogBase,
-              format: panel.y_formats[1],
-              label: panel.rightYAxisLabel,
-            },
-          ];
-
-          panel.xaxis = {
-            show: panel['x-axis'],
-          };
-
-          delete panel.grid.leftMin;
-          delete panel.grid.leftMax;
-          delete panel.grid.leftLogBase;
-          delete panel.grid.rightMin;
-          delete panel.grid.rightMax;
-          delete panel.grid.rightLogBase;
-          delete panel.y_formats;
-          delete panel.leftYAxisLabel;
-          delete panel.rightYAxisLabel;
-          delete panel['y-axis'];
-          delete panel['x-axis'];
-        }
-
-        return panel;
       });
     }
 
@@ -954,13 +857,14 @@ export class DashboardMigrator {
     let yPos = 0;
     const widthFactor = GRID_COLUMN_COUNT / 12;
 
-    const maxPanelId = max(
-      flattenDeep(
-        map(old.rows, (row) => {
-          return map(row.panels, 'id');
-        })
-      )
-    );
+    const maxPanelId =
+      max(
+        flattenDeep(
+          map(old.rows, (row) => {
+            return map(row.panels, 'id');
+          })
+        ).filter((id) => id != null)
+      ) || 0;
     let nextRowId = maxPanelId + 1;
 
     if (!old.rows) {

@@ -2,6 +2,8 @@ package migration
 
 import (
 	"sort"
+
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
 // applyFrontendDefaults applies all DashboardModel constructor defaults
@@ -64,7 +66,6 @@ func applyFrontendDefaults(dashboard map[string]interface{}) {
 	sortPanelsByGridPos(dashboard)
 
 	// Built-in components
-	addBuiltInAnnotationQuery(dashboard)
 	initMeta(dashboard)
 
 	// Variable cleanup
@@ -793,10 +794,12 @@ func cleanupVariable(variable map[string]interface{}) {
 	if variableType, ok := variable["type"].(string); ok {
 		switch variableType {
 		case "query":
-			// Query variables: keep options: [] if refresh !== never
-			// Since refresh is not specified in the input, it defaults to not "never"
-			if _, hasOptions := variable["options"]; !hasOptions {
-				variable["options"] = []interface{}{}
+			// Query variables: keep options: [] if refresh !== never (matches frontend getSaveModel logic)
+			refresh := schemaversion.GetIntValue(variable, "refresh", 1) // Default to 1 (onDashboardLoad) if not specified
+			if refresh != 0 {                                            // 0 = VariableRefreshNever
+				if _, hasOptions := variable["options"]; !hasOptions {
+					variable["options"] = []interface{}{}
+				}
 			}
 		case "constant":
 			// Constant variables: remove options completely
@@ -1049,6 +1052,8 @@ func cleanupDashboardDefaults(dashboard map[string]interface{}) {
 	// These properties are lost during frontend's property copying loop in getSaveModelCloneOld()
 	delete(dashboard, "preload")   // Transient dashboard loading state
 	delete(dashboard, "iteration") // Template variable iteration timestamp
+	delete(dashboard, "nav")       // Removed after V7 migration
+	delete(dashboard, "pulldowns") // Removed after V6 migration - frontend doesn't have this property
 }
 
 // cleanupFieldConfigDefaults removes properties that frontend considers as defaults and omits

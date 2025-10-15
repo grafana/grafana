@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Añadir un permiso",
+      "loading": "",
       "no-permissions": "No hay ningún permiso",
       "permissions-change-warning": "Esto cambiará los permisos para esta carpeta y todos sus descendientes. En total, esto afectará:",
       "role": "Rol",
       "serviceaccount": "Cuenta de servicio",
       "team": "Equipo",
-      "title": "Permisos",
       "user": "Usuario"
     }
   },
@@ -1655,6 +1655,15 @@
     "inspector-yaml-tab": {
       "apply": "Aplicar"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2314,6 +2323,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Fuente de datos"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Expresión"
     },
@@ -2559,6 +2571,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Se ha añadido o actualizado la regla de alerta. Los cambios pueden tardar hasta un minuto en aparecer en la vista de lista de reglas de alerta.",
         "alert-title": "Actualización en curso"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Se ha producido un error al evaluar esta regla de alerta"
     },
@@ -2930,10 +2946,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "Añadir expresión"
@@ -3504,7 +3532,7 @@
       "delete-button": "Eliminar",
       "delete-modal-invalid-text": "Una o más carpetas contienen paneles de biblioteca o reglas de alerta. Para continuar, primero elimínelas.",
       "delete-modal-invalid-title": "No se puede eliminar la carpeta",
-      "delete-modal-restore-dashboards-text": "Esta acción eliminará las carpetas seleccionadas de inmediato, pero los paneles de control seleccionados se marcarán para su eliminación en 30 días. El administrador de tu organización puede restaurar los paneles de control en cualquier momento antes de que transcurran los 30 días. Las carpetas no se pueden restaurar.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Esta acción eliminará el siguiente contenido:",
       "delete-modal-title": "Eliminar",
       "delete-provisioned-folder": "Eliminar carpeta aprovisionada",
@@ -4496,6 +4524,8 @@
     },
     "canvas-actions": {
       "add-panel": "Añadir panel",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Agrupar en fila",
       "group-into-tab": "Agrupar en pestaña",
       "group-panels": "Agrupar paneles",
@@ -4504,7 +4534,8 @@
       "paste-panel": "Pegar panel",
       "paste-row": "Pegar fila",
       "paste-tab": "Pegar pestaña",
-      "un-group-panels": "Desagrupar"
+      "un-group-panels": "Desagrupar",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4572,7 +4603,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "El elemento está oculto debido al renderizado condicional."
+        "tooltip": ""
       },
       "root": {
         "title": "Mostrar/ocultar reglas"
@@ -4604,7 +4635,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "Dashboard {{dashboardName}}"
+      "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Cancelar la carga del dashboard"
@@ -4746,8 +4778,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Valores separados por coma",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "",
+          "modal-title": "",
+          "values": "Valores separados por coma"
         },
         "datasource-options": {
           "name-filter": "Nombrar filtro",
@@ -5167,10 +5200,16 @@
       "title-row-options": "Opciones de la fila"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Al eliminar esta fila también se eliminarán todos los paneles. ¿Seguro que quieres continuar?",
       "delete-row-title": "¿Eliminar fila?",
       "delete-row-yes": "Eliminar",
       "description": "Grupos de paneles contraíbles con encabezados",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "El encabezado de la fila solo es visible en el modo de edición",
       "name": "Filas",
       "row": {
@@ -5200,7 +5239,11 @@
       },
       "row-warning": {
         "title-not-unique": "Este título no es único"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard guardado"
@@ -5819,6 +5862,7 @@
         "dynamically-switch-source-multiple-panels": "Cambiar dinámicamente la fuente de datos para varios paneles",
         "group": "Añadir claves para agrupar sobre la marcha",
         "hidden-constant-variable": "Una variable constante oculta, útil para prefijos métricos en dashboards que quieras compartir",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Los usuarios pueden introducir cualquier cadena arbitraria en un cuadro de texto",
         "values-are-static-and-defined-manually": "Los valores son estáticos y se definen manualmente",
         "values-fetched-source-query": "Los valores se obtienen de una consulta de fuente de datos",
@@ -5832,6 +5876,7 @@
         "group-by": "Agrupar por",
         "interval": "Intervalo",
         "query": "Consulta",
+        "switch": "",
         "textbox": "Cuadro de texto"
       }
     },
@@ -6175,6 +6220,17 @@
       "title": {
         "copy-to-clipboard-failed": "Error al copiar al portapapeles"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Valor predeterminado"
@@ -10355,7 +10411,7 @@
       "title": "Perfiles"
     },
     "recently-deleted": {
-      "subtitle": "Cualquier elemento que aparezca aquí durante más de 30 días se eliminará automáticamente.",
+      "subtitle": "",
       "title": "Eliminados recientemente"
     },
     "recorded-queries": {
@@ -11571,6 +11627,7 @@
       "active-jobs": "trabajos activos",
       "column-action": "Acción",
       "column-duration": "Duración",
+      "column-job-id": "",
       "column-message": "Mensaje",
       "column-started": "Iniciados",
       "column-status": "Estado",
@@ -11589,12 +11646,6 @@
       "settings": "Configuración",
       "view": "Vista"
     },
-    "repository-health": {
-      "details": "Detalles:",
-      "no-errors-found": "No se han encontrado errores",
-      "title-repository-is-healthy": "El repositorio está en buen estado",
-      "title-repository-is-unhealthy": "El repositorio no está en buen estado"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Comparar rama",
@@ -11609,7 +11660,7 @@
     },
     "repository-overview": {
       "checked": "Revisado:",
-      "finished": "Finalizado:",
+      "finished": "",
       "health": "Salud",
       "healthy": "Lineas",
       "job-id": "ID del trabajo:",
@@ -11618,7 +11669,6 @@
       "not-available": "N/D",
       "pull-status": "Estado de extracción",
       "resources": "Recursos",
-      "started": "Inicio:",
       "status": "Estado:",
       "unhealthy": "En mal estado",
       "view-folder": "Ver carpeta",
@@ -12277,9 +12327,6 @@
       "title-disable-service-account": "Deshabilitar cuenta de servicio",
       "tokens": "Tokens",
       "tooltip-managed-service-account-cannot-modified": "Esta es una cuenta de servicio gestionada y no se puede modificar"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Permisos"
     },
     "service-account-profile": {
       "information": "Información",
@@ -12954,6 +13001,10 @@
     "name-mode": "Modo",
     "name-show-line-numbers": "Mostrar números de línea",
     "name-show-mini-map": "Mostrar minimapa"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -14118,14 +14169,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Añadir opción",
-      "description": "Añadir opciones personalizadas además de los resultados de la consulta",
-      "label-placeholder": "etiqueta de visualización",
-      "remove-option-button-label": "Eliminar opción",
-      "value-placeholder": "valor, cadena vacía por defecto"
+      "description": "Añadir opciones personalizadas además de los resultados de la consulta"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Cómo ordenar las opciones estáticas con los resultados de la consulta"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Valor predeterminado",

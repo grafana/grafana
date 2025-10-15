@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Engedély hozzáadása",
+      "loading": "",
       "no-permissions": "Nincsenek engedélyek",
       "permissions-change-warning": "Ez módosítja ennek a mappának és minden almappájának az engedélyeit. Összességében ez a következőket érinti:",
       "role": "Szerepkör",
       "serviceaccount": "Szolgáltatási fiók",
       "team": "Csapat",
-      "title": "Engedélyek",
       "user": "Felhasználó"
     }
   },
@@ -1655,6 +1655,15 @@
     "inspector-yaml-tab": {
       "apply": "Alkalmaz"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2314,6 +2323,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Adatforrás"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Kifejezés"
     },
@@ -2559,6 +2571,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Riasztási szabály lett hozzáadva vagy frissítve. Akár egy percig is eltarthat, amíg a módosítások megjelennek a Riasztási szabályok listanézetben.",
         "alert-title": "Frissítés folyamatban"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Valami hiba történt ennek a riasztási szabálynak az értékelése során"
     },
@@ -2930,10 +2946,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "Kifejezés hozzáadása"
@@ -3504,7 +3532,7 @@
       "delete-button": "Törlés",
       "delete-modal-invalid-text": "Egy vagy több mappa könyvtárpaneleket vagy riasztási szabályokat tartalmaz. A folytatáshoz először törölje ezeket.",
       "delete-modal-invalid-title": "Nem lehet törölni a mappát",
-      "delete-modal-restore-dashboards-text": "Ez a művelet azonnal törli a kijelölt mappákat, de a kijelölt irányítópultok 30 napon belüli törlésre lesznek megjelölve. A szervezeti rendszergazda a 30 nap lejárta előtt bármikor visszaállíthatja az irányítópultokat. A mappák nem állíthatók vissza.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Ez a művelet törli a következő tartalmat:",
       "delete-modal-title": "Törlés",
       "delete-provisioned-folder": "Kiépített mappa törlése",
@@ -4496,6 +4524,8 @@
     },
     "canvas-actions": {
       "add-panel": "Panel hozzáadása",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Csoportosítás sorba",
       "group-into-tab": "Csoportosítás lapra",
       "group-panels": "Panelek csoportosítása",
@@ -4504,7 +4534,8 @@
       "paste-panel": "Panel beillesztése",
       "paste-row": "Sor beillesztése",
       "paste-tab": "Lap beillesztése",
-      "un-group-panels": "Csoport szétbontása"
+      "un-group-panels": "Csoport szétbontása",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4572,7 +4603,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "Az elem rejtve van a feltételes renderelés miatt."
+        "tooltip": ""
       },
       "root": {
         "title": "Szabályok megjelenítése/elrejtése"
@@ -4604,7 +4635,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "{{dashboardName}} irányítópult"
+      "aria-label-dashboard-name": "{{dashboardName}} irányítópult",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Irányítópult betöltésének megszakítása"
@@ -4746,8 +4778,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Értékek vesszővel elválasztva",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "",
+          "modal-title": "",
+          "values": "Értékek vesszővel elválasztva"
         },
         "datasource-options": {
           "name-filter": "Névszűrő",
@@ -5167,10 +5200,16 @@
       "title-row-options": "Sorbeállítások"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "A sor törlésével az összes panelt is eltávolítja. Biztosan folytatja?",
       "delete-row-title": "Törli a sort?",
       "delete-row-yes": "Törlés",
       "description": "Összecsukható panelcsoportok fejlécekkel",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Sorfejléc csak szerkesztési módban látható",
       "name": "Sorok",
       "row": {
@@ -5200,7 +5239,11 @@
       },
       "row-warning": {
         "title-not-unique": "Ez a cím nem egyedi"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Irányítópult elmentve"
@@ -5819,6 +5862,7 @@
         "dynamically-switch-source-multiple-panels": "Adatforrás dinamikus váltása több panelhez",
         "group": "Csoportosítási kulcsok hozzáadása menet közben",
         "hidden-constant-variable": "Rejtett konstans változó, mely hasznos metrikai előtagokhoz a megosztani kívánt irányítópultokon",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "A felhasználók tetszőleges szöveget írhatnak be egy szövegmezőbe",
         "values-are-static-and-defined-manually": "Az értékek statikusak, és manuálisan vannak megadva",
         "values-fetched-source-query": "Az értékek egy adatforrás-lekérdezéséből származnak",
@@ -5832,6 +5876,7 @@
         "group-by": "Csoportosítási szempont",
         "interval": "Intervallum",
         "query": "Lekérdezés",
+        "switch": "",
         "textbox": "Szövegdoboz"
       }
     },
@@ -6175,6 +6220,17 @@
       "title": {
         "copy-to-clipboard-failed": "Nem sikerült a vágólapra másolás"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Alapértelmezett érték"
@@ -10355,7 +10411,7 @@
       "title": "Profilok"
     },
     "recently-deleted": {
-      "subtitle": "Az itt 30 napnál hosszabb ideig felsorolt elemek automatikusan törlődnek.",
+      "subtitle": "",
       "title": "Nemrég törölt"
     },
     "recorded-queries": {
@@ -11571,6 +11627,7 @@
       "active-jobs": "aktív feladatok",
       "column-action": "Művelet",
       "column-duration": "Időtartam",
+      "column-job-id": "",
       "column-message": "Üzenet",
       "column-started": "Elindítva",
       "column-status": "Állapot",
@@ -11589,12 +11646,6 @@
       "settings": "Beállítások",
       "view": "Nézet"
     },
-    "repository-health": {
-      "details": "Részletek:",
-      "no-errors-found": "Nem található hiba",
-      "title-repository-is-healthy": "Az adattár állapota megfelelő",
-      "title-repository-is-unhealthy": "Az adattár állapota nem megfelelő"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Ág összehasonlítása",
@@ -11609,7 +11660,7 @@
     },
     "repository-overview": {
       "checked": "Ellenőrzés:",
-      "finished": "Befejezés:",
+      "finished": "",
       "health": "Állapot",
       "healthy": "Megfelelő állapotú",
       "job-id": "Feladatazonosító:",
@@ -11618,7 +11669,6 @@
       "not-available": "n.a.",
       "pull-status": "Lekérés állapota",
       "resources": "Erőforrások",
-      "started": "Kezdet:",
       "status": "Állapot:",
       "unhealthy": "Nem megfelelő állapotú",
       "view-folder": "Mappa megtekintése",
@@ -12277,9 +12327,6 @@
       "title-disable-service-account": "Szolgáltatási fiók letiltása",
       "tokens": "Tokenek",
       "tooltip-managed-service-account-cannot-modified": "Ez egy felügyelt szolgáltatási fiók, és nem módosítható"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Engedélyek"
     },
     "service-account-profile": {
       "information": "Információ",
@@ -12954,6 +13001,10 @@
     "name-mode": "Mód",
     "name-show-line-numbers": "Sorszámozás megjelenítése",
     "name-show-mini-map": "Minitérkép megjelenítése"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -14118,14 +14169,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Lehetőség hozzáadása",
-      "description": "Egyéni beállítások hozzáadása a lekérdezési eredmények mellett",
-      "label-placeholder": "címke megjelenítése",
-      "remove-option-button-label": "Opció eltávolítása",
-      "value-placeholder": "érték, alapértelmezett üres karakterlánc"
+      "description": "Egyéni beállítások hozzáadása a lekérdezési eredmények mellett"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "A statikus opciók rendezésének módja a lekérdezési eredményekkel"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Alapértelmezett érték",
