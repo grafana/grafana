@@ -99,6 +99,21 @@ When you save a dashboard, you can optionally select a folder to save the dashbo
 
 The new folder name is automatically saved.
 
+### Folder permissions
+
+You can assign permissions to a folder. Dashboards in the folder inherit any permissions that you've assigned to the folder. You can assign permissions to organization roles, teams, and users.
+
+**To modify permissions for a folder:**
+
+1. Click **Dashboards** in the primary menu.
+1. Navigate to the folder by selecting it in the list, or searching for it.
+1. On the folder's page, click **Folder actions** and select **Manage permissions** in the drop-down.
+1. Update the permissions as desired.
+
+Changes are saved automatically.
+
+For more information about dashboard permissions, refer to [Dashboard permissions](ref:dashboard-permissions).
+
 ## Dashboard and folder deletion
 
 **Folders** - When you delete folders, the action is immediate and can't be reversed.
@@ -113,7 +128,7 @@ The feature is only available in Grafana Cloud.
 
 When you delete dashboards, they’re stored in the deletion history for up to 12 months, allowing you to restore them if needed.
 The deletion history can contain a maximum of 1000 dashboards.
-Once this limit is reached, the oldest deleted dashboards are permanently removed even if the 12-month expiration period isn't over yet.
+After this limit is reached, the oldest deleted dashboards are permanently removed even if the 12-month expiration period isn't over yet.
 
 You can access the list of deleted dashboards from the **Dashboards** page by clicking the **Recently deleted** button, or by navigating to **Dashboards > Recently deleted**.
 
@@ -131,21 +146,6 @@ To restore one or more dashboards, follow these steps:
 {{% admonition type="note" %}}
 Only users with admin rights can access the **Restore dashboards** page.
 {{% /admonition %}}
-
-### Folder permissions
-
-You can assign permissions to a folder. Dashboards in the folder inherit any permissions that you've assigned to the folder. You can assign permissions to organization roles, teams, and users.
-
-**To modify permissions for a folder:**
-
-1. Click **Dashboards** in the primary menu.
-1. Navigate to the folder by selecting it in the list, or searching for it.
-1. On the folder's page, click **Folder actions** and select **Manage permissions** in the drop-down.
-1. Update the permissions as desired.
-
-Changes are saved automatically.
-
-For more information about dashboard permissions, refer to [Dashboard permissions](ref:dashboard-permissions).
 
 ## Set up generative AI features for dashboards
 
