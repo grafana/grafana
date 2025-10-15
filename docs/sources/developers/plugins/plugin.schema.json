@@ -106,6 +106,11 @@
                 "type": "string",
                 "format": "uri",
                 "description": "URL value to use for this specific link."
+              },
+              "target": {
+                "type": "string",
+                "description": "A string that indicates where to display the linked resource",
+                "enum": ["_blank", "_self", "_parent", "_top"]
               }
             }
           }
@@ -499,8 +504,8 @@
     },
     "state": {
       "type": "string",
-      "description": "Marks a plugin as a pre-release.",
-      "enum": ["alpha", "beta"]
+      "description": "Describes plugins life cycle status",
+      "enum": ["alpha", "beta", "stable", "deprecated"]
     },
     "streaming": {
       "type": "boolean",
@@ -588,7 +593,7 @@
       "properties": {
         "addedComponents": {
           "type": "array",
-          "description": "This list must contain all component extensions that your plugin registers to other extension points using [`.addComponent()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions#addcomponent). **Components that are not listed here won't work.**",
+          "description": "This list must contain all component extensions that your plugin registers to other extension points using [`.addComponent()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions-reference/ui-extensions#addcomponent). **Components that are not listed here won't work.**",
           "items": {
             "type": "object",
             "properties": {
@@ -614,7 +619,33 @@
         },
         "addedLinks": {
           "type": "array",
-          "description": "This list must contain all link extensions that your plugin registers to other extension points using [`.addLink()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions#addlink). **Links that are not listed here won't work.**",
+          "description": "This list must contain all link extensions that your plugin registers to other extension points using [`.addLink()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions-reference/ui-extensions#addlink). **Links that are not listed here won't work.**",
+          "items": {
+            "type": "object",
+            "properties": {
+              "targets": {
+                "type": "array",
+                "description": "The extension point ids your plugin registers the extension to, e.g. `[\"grafana/dashboard/panel/menu\"]`",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "title": {
+                "type": "string",
+                "description": "The title of your link extension.",
+                "minLength": 10
+              },
+              "description": {
+                "type": "string",
+                "description": "Additional information about your link extension."
+              }
+            },
+            "required": ["targets", "title"]
+          }
+        },
+        "addedFunctions": {
+          "type": "array",
+          "description": "This list must contain all function extensions that your plugin registers to other extension points using [`.addedFunctions()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions-reference/ui-extensions#addfunction). **Functions that are not listed here won't work.**",
           "items": {
             "type": "object",
             "properties": {
@@ -640,7 +671,7 @@
         },
         "exposedComponents": {
           "type": "array",
-          "description": "This list must contain all components that your plugin exposes using [`.exposeComponent()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions#exposecomponent). **Components that are not listed here won't work.**",
+          "description": "This list must contain all components that your plugin exposes using [`.exposeComponent()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions-reference/ui-extensions#exposecomponent). **Components that are not listed here won't work.**",
           "items": {
             "type": "object",
             "properties": {
@@ -663,7 +694,7 @@
         },
         "extensionPoints": {
           "type": "array",
-          "description": "This list must contain all extension points that your plugin defines using [`usePluginLinks()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions#usepluginlinks) or [`usePluginComponents()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions#useplugincomponents). **Extension points that are not listed in here won't work.**",
+          "description": "This list must contain all extension points that your plugin defines using [`usePluginLinks()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions-reference/ui-extensions#usepluginlinks) or [`usePluginComponents()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions-reference/ui-extensions#useplugincomponents). **Extension points that are not listed in here won't work.**",
           "items": {
             "type": "object",
             "properties": {
