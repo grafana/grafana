@@ -96,7 +96,7 @@ jobs:
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
           repositories: '["grafana-enterprise"]'
           permissions: '{"actions": "write"}'
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         env:
           REF: ${{ github.ref_name }}
           VERSION: ${{ needs.setup.outputs.version }}
