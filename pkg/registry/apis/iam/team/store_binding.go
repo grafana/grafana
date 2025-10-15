@@ -136,7 +136,7 @@ func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, cre
 		UserID:     userObj.ID,
 		UserUID:    teamMemberObj.Spec.Subject.Name,
 		Permission: permission,
-		External:   false,
+		External:   teamMemberObj.Spec.External,
 	}
 
 	result, err := l.store.CreateTeamMember(ctx, ns, createCmd)
@@ -229,6 +229,7 @@ func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alph
 				Name: tm.UserUID,
 			},
 			Permission: common.MapTeamPermission(tm.Permission),
+			External:   tm.External,
 		},
 	}
 }

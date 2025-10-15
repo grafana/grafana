@@ -16321,6 +16321,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-react-prefer-function-component@npm:4.0.1":
+  version: 4.0.1
+  resolution: "eslint-plugin-react-prefer-function-component@npm:4.0.1"
+  checksum: 10/dfb1ceb098342320cc82429e227db91a72e7e4875795913fb481beb64669080354279a4ad9a3c53060b390825c7d08c352f938f121ef1acb40da6d969199c1b0
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-react@npm:7.37.5":
   version: 7.37.5
   resolution: "eslint-plugin-react@npm:7.37.5"
@@ -18445,6 +18452,7 @@ __metadata:
     eslint-plugin-no-barrel-files: "npm:^1.1.1"
     eslint-plugin-react: "npm:7.37.5"
     eslint-plugin-react-hooks: "npm:5.2.0"
+    eslint-plugin-react-prefer-function-component: "npm:4.0.1"
     eslint-plugin-testing-library: "npm:^7.0.0"
     eslint-plugin-unicorn: "npm:^56.0.0"
     eslint-scope: "npm:^8.1.0"
