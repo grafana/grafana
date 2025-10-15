@@ -84,6 +84,10 @@ func (d *Zip) Filename(ctx context.Context) (string, error) {
 	return packages.FileName(d.Name, d.Version, d.BuildID, d.Distribution, "zip")
 }
 
+func (d *Zip) String() string {
+	return "zip"
+}
+
 func NewZipFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
 	tarball, err := NewTarballFromString(ctx, log, artifact, state)
 	if err != nil {
