@@ -486,11 +486,6 @@
         "message-no-metrics-found": "データソース内にメトリックが見つかりません。",
         "name": "名前",
         "type": "種類"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "クエリ解析が曖昧です。"
-        }
       }
     }
   }

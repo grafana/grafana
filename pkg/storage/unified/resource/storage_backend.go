@@ -15,12 +15,13 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util/debouncer"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/debouncer"
 )
 
 const (
@@ -49,7 +50,7 @@ type kvStorageBackend struct {
 
 var _ StorageBackend = &kvStorageBackend{}
 
-type KvBackendOptions struct {
+type KVBackendOptions struct {
 	KvStore              KV
 	WithPruner           bool
 	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
@@ -58,7 +59,7 @@ type KvBackendOptions struct {
 	Reg                  prometheus.Registerer // TODO add metrics
 }
 
-func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
+func NewKVStorageBackend(opts KVBackendOptions) (StorageBackend, error) {
 	ctx := context.Background()
 	kv := opts.KvStore
 
@@ -1074,6 +1075,12 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 // GetResourceStats returns resource stats within the storage backend.
 func (k *kvStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
 	return k.dataStore.GetResourceStats(ctx, namespace, minCount)
+}
+
+func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
+	return func(yield func(ResourceLastImportTime, error) bool) {
+		yield(ResourceLastImportTime{}, fmt.Errorf("not implemented"))
+	}
 }
 
 // readAndClose reads all data from a ReadCloser and ensures it's closed,

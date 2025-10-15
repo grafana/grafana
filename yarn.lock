@@ -2961,6 +2961,7 @@ __metadata:
     "@faker-js/faker": "npm:^9.8.0"
     "@grafana/i18n": "npm:12.3.0-pre"
     "@grafana/test-utils": "workspace:*"
+    "@reduxjs/toolkit": "npm:^2.9.0"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
     "@testing-library/jest-dom": "npm:^6.6.3"
     "@testing-library/react": "npm:^16.3.0"
@@ -2968,6 +2969,7 @@ __metadata:
     "@types/lodash": "npm:^4"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
+    "@types/tinycolor2": "npm:^1"
     fishery: "npm:^2.3.1"
     i18next: "npm:^25.5.2"
     lodash: "npm:^4.17.21"
@@ -2978,13 +2980,13 @@ __metadata:
     rollup: "npm:^4.22.4"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
+    tinycolor2: "npm:^1.6.0"
     type-fest: "npm:^4.40.0"
     typescript: "npm:5.9.2"
   peerDependencies:
     "@grafana/data": ">=11.6 <= 12.x"
     "@grafana/runtime": ">=11.6 <= 12.x"
     "@grafana/ui": ">=11.6 <= 12.x"
-    "@reduxjs/toolkit": ^2.8.0
     msw: ^2.0.0
     react: ^18.0.0
     react-dom: ^18.0.0
@@ -3524,11 +3526,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.38.0":
-  version: 6.38.0
-  resolution: "@grafana/scenes-react@npm:6.38.0"
+"@grafana/scenes-react@npm:6.39.5":
+  version: 6.39.5
+  resolution: "@grafana/scenes-react@npm:6.39.5"
   dependencies:
-    "@grafana/scenes": "npm:6.38.0"
+    "@grafana/scenes": "npm:6.39.5"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3540,13 +3542,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/7b38553f1950f6592eb24878061cc7c45fc2aa1776c4b1cd521c6995d11f8beb0b2b275afda0ebf0ec19b7f7c79b77126caad4843bc9a75bd09881645e882c91
+  checksum: 10/9bd908578a62dfbafba96d7046f25785391555a77445c76de0195d9a132a9c3c3dde565ef76ad834968c65266fa6d2ba2ee746303e46ebe7fd69a2b87ef3f5b4
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.38.0":
-  version: 6.38.0
-  resolution: "@grafana/scenes@npm:6.38.0"
+"@grafana/scenes@npm:6.39.5":
+  version: 6.39.5
+  resolution: "@grafana/scenes@npm:6.39.5"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3566,7 +3568,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/9372896e76271becb80e4a8691d8c51bc3b54b54d98c82f2953134f407a7370dc66a3e8afaa508003147e2f1b5b08d0ddbb6b1616a3a3ab3f7ad69fb941dd998
+  checksum: 10/8608c7e98e0928bc32ccc58cdaf47a4339c60d4c81b1c23db962569f1f9650d22552e88bb3fa3524173ac475c7f9c4578383da49968c7bdd3cb40db043ef233b
   languageName: node
   linkType: hard
 
@@ -6767,7 +6769,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@reduxjs/toolkit@npm:2.9.0":
+"@reduxjs/toolkit@npm:2.9.0, @reduxjs/toolkit@npm:^2.9.0":
   version: 2.9.0
   resolution: "@reduxjs/toolkit@npm:2.9.0"
   dependencies:
@@ -9800,6 +9802,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:^18.11.9":
+  version: 18.19.129
+  resolution: "@types/node@npm:18.19.129"
+  dependencies:
+    undici-types: "npm:~5.26.4"
+  checksum: 10/0db4cb246d6012b1b523661a59c2e8e0b24527f1c02cfa3deb8e0b884492a07f2547c5353f56272b70037408e3dbe690ae923b8073fd7b0814e389148245e59f
+  languageName: node
+  linkType: hard
+
 "@types/nodemailer@npm:*":
   version: 6.4.15
   resolution: "@types/nodemailer@npm:6.4.15"
@@ -10178,7 +10189,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/tinycolor2@npm:1.4.6":
+"@types/tinycolor2@npm:1.4.6, @types/tinycolor2@npm:^1":
   version: 1.4.6
   resolution: "@types/tinycolor2@npm:1.4.6"
   checksum: 10/a662fd177135d27779b7ccba39881a85167f969787c71c7bf51903d288a519ad5b9526e0a4af7bde6444df6b7abe88bae893d569c6d804108c03dfec9509bdf6
@@ -16310,6 +16321,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-react-prefer-function-component@npm:4.0.1":
+  version: 4.0.1
+  resolution: "eslint-plugin-react-prefer-function-component@npm:4.0.1"
+  checksum: 10/dfb1ceb098342320cc82429e227db91a72e7e4875795913fb481beb64669080354279a4ad9a3c53060b390825c7d08c352f938f121ef1acb40da6d969199c1b0
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-react@npm:7.37.5":
   version: 7.37.5
   resolution: "eslint-plugin-react@npm:7.37.5"
@@ -18038,7 +18056,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:^7.0.3, glob@npm:^7.1.2, glob@npm:^7.1.3, glob@npm:^7.1.4, glob@npm:^7.1.6":
+"glob@npm:^7.0.3, glob@npm:^7.1.2, glob@npm:^7.1.3, glob@npm:^7.1.4, glob@npm:^7.1.6, glob@npm:^7.1.7":
   version: 7.2.3
   resolution: "glob@npm:7.2.3"
   dependencies:
@@ -18280,8 +18298,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.38.0"
-    "@grafana/scenes-react": "npm:6.38.0"
+    "@grafana/scenes": "npm:6.39.5"
+    "@grafana/scenes-react": "npm:6.39.5"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -18299,6 +18317,7 @@ __metadata:
     "@msagl/core": "npm:^1.1.19"
     "@msagl/parser": "npm:^1.1.19"
     "@npmcli/package-json": "npm:^6.0.0"
+    "@openfeature/ofrep-web-provider": "npm:^0.3.3"
     "@openfeature/web-sdk": "npm:^1.6.1"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
@@ -18433,6 +18452,7 @@ __metadata:
     eslint-plugin-no-barrel-files: "npm:^1.1.1"
     eslint-plugin-react: "npm:7.37.5"
     eslint-plugin-react-hooks: "npm:5.2.0"
+    eslint-plugin-react-prefer-function-component: "npm:4.0.1"
     eslint-plugin-testing-library: "npm:^7.0.0"
     eslint-plugin-unicorn: "npm:^56.0.0"
     eslint-scope: "npm:^8.1.0"
@@ -18578,6 +18598,7 @@ __metadata:
     tween-functions: "npm:^1.2.0"
     type-fest: "npm:^4.18.2"
     typescript: "npm:5.9.2"
+    typescript-json-schema: "npm:^0.65.1"
     uplot: "npm:1.6.32"
     uuid: "npm:11.1.0"
     vis-data: "npm:^8.0.0"
@@ -25336,6 +25357,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"path-equal@npm:^1.2.5":
+  version: 1.2.5
+  resolution: "path-equal@npm:1.2.5"
+  checksum: 10/fa4ef398dea6bd7bf36c5fe62b5f5c2c14fe1f1340cf355eb8a40c86577318dfa0401df86464bb0cc33ed227f115b2afec10d1adaa64260dedbbc23d33f3abbb
+  languageName: node
+  linkType: hard
+
 "path-exists@npm:^3.0.0":
   version: 3.0.0
   resolution: "path-exists@npm:3.0.0"
@@ -28828,6 +28856,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"safe-stable-stringify@npm:^2.2.0":
+  version: 2.5.0
+  resolution: "safe-stable-stringify@npm:2.5.0"
+  checksum: 10/2697fa186c17c38c3ca5309637b4ac6de2f1c3d282da27cd5e1e3c88eca0fb1f9aea568a6aabdf284111592c8782b94ee07176f17126031be72ab1313ed46c5c
+  languageName: node
+  linkType: hard
+
 "safer-buffer@npm:>= 2.1.2 < 3, safer-buffer@npm:>= 2.1.2 < 3.0.0, safer-buffer@npm:^2.0.2, safer-buffer@npm:^2.1.0, safer-buffer@npm:~2.1.0":
   version: 2.1.2
   resolution: "safer-buffer@npm:2.1.2"
@@ -31346,7 +31381,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-node@npm:10.9.2":
+"ts-node@npm:10.9.2, ts-node@npm:^10.9.1":
   version: 10.9.2
   resolution: "ts-node@npm:10.9.2"
   dependencies:
@@ -31688,6 +31723,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript-json-schema@npm:^0.65.1":
+  version: 0.65.1
+  resolution: "typescript-json-schema@npm:0.65.1"
+  dependencies:
+    "@types/json-schema": "npm:^7.0.9"
+    "@types/node": "npm:^18.11.9"
+    glob: "npm:^7.1.7"
+    path-equal: "npm:^1.2.5"
+    safe-stable-stringify: "npm:^2.2.0"
+    ts-node: "npm:^10.9.1"
+    typescript: "npm:~5.5.0"
+    yargs: "npm:^17.1.1"
+  bin:
+    typescript-json-schema: bin/typescript-json-schema
+  checksum: 10/50a1935378639d5d47e452702766a3fdab22e1d06192f26f81b79e0da504e71af987ff21cb13909479a202aad8d1216a654f16ebda2ee2056b5f859584b4c7d2
+  languageName: node
+  linkType: hard
+
 "typescript-string-operations@npm:^1.4.1":
   version: 1.5.1
   resolution: "typescript-string-operations@npm:1.5.1"
@@ -31695,7 +31748,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:5.5.4":
+"typescript@npm:5.5.4, typescript@npm:~5.5.0":
   version: 5.5.4
   resolution: "typescript@npm:5.5.4"
   bin:
@@ -31725,7 +31778,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A~5.5.0#optional!builtin<compat/typescript>":
   version: 5.5.4
   resolution: "typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>::version=5.5.4&hash=379a07"
   bin:
@@ -31811,6 +31864,13 @@ __metadata:
   version: 1.13.7
   resolution: "underscore@npm:1.13.7"
   checksum: 10/1ce3368dbe73d1e99678fa5d341a9682bd27316032ad2de7883901918f0f5d50e80320ccc543f53c1862ab057a818abc560462b5f83578afe2dd8dd7f779766c
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~5.26.4":
+  version: 5.26.5
+  resolution: "undici-types@npm:5.26.5"
+  checksum: 10/0097779d94bc0fd26f0418b3a05472410408877279141ded2bd449167be1aed7ea5b76f756562cb3586a07f251b90799bab22d9019ceba49c037c76445f7cddd
   languageName: node
   linkType: hard
 
@@ -33334,7 +33394,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yargs@npm:17.7.2, yargs@npm:^17.0.1, yargs@npm:^17.3.1, yargs@npm:^17.6.2, yargs@npm:^17.7.2":
+"yargs@npm:17.7.2, yargs@npm:^17.0.1, yargs@npm:^17.1.1, yargs@npm:^17.3.1, yargs@npm:^17.6.2, yargs@npm:^17.7.2":
   version: 17.7.2
   resolution: "yargs@npm:17.7.2"
   dependencies:
