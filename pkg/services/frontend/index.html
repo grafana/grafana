@@ -212,7 +212,16 @@
          * Will return a rejected promise on unrecoverable errors.
          **/
         async function fetchBootData() {
-          const resp = await fetch("/bootdata");
+          const queryParams = new URLSearchParams(window.location.search);
+
+          // pass the search params through to the bootdata request
+          // this allows for overriding the theme/language etc
+          const bootDataUrl = new URL('/bootdata', window.location.origin);
+          for (const [key, value] of queryParams.entries()) {
+            bootDataUrl.searchParams.append(key, value);
+          }
+
+          const resp = await fetch(bootDataUrl);
           const textResponse = await resp.text();
 
           let rawBootData;
