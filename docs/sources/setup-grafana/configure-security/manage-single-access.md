@@ -125,7 +125,7 @@ For resources accessible by all teams, grant the `datasources:explorer` fixed ro
 
 However, you may need to protect data in shared resources. For example, all teams can be forwarding metrics to a shared [data source](ref:add-data-source), but not everyone needs to see all of the data. In this case, grant each team query access to the data relevant for them, based on [label based access controls (LBAC) per team](ref:lbac). This way, you’ll maintain a central observability pipeline but still preserve data separation.
 
-#### Team-specific resources
+#### Autonomous team data management
 
 If any of your teams, Team A for example, need to build and manage their own data sources for product-specific use cases, grant the `datasources:creator` fixed role so they can create and manage their own data sources independently.
 
