@@ -1,3 +1,4 @@
+import { isFinite } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
@@ -44,7 +45,6 @@ import { BarsOptions, getConfig } from './bars';
 import { PreparedMarker, Marker } from './markerTypes';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
 // import { isLegendOrdered } from './utils';
-import { isFinite } from 'lodash';
 
 interface BarSeries {
   series: DataFrame[];
@@ -723,6 +723,8 @@ export function hideMarkerSeries(data: PanelData, markers: Marker[]): { barData:
     let fi = null;
     fi = barData.series[0].fields.splice(i, 1)[0];
 
+    fi.config.color = { ...(fi.config.color ?? {}), mode: FieldColorModeId.Fixed, fixedColor: m.opts.color };
+
     markerData.push(fi);
   }
   return { barData, markerData };
@@ -755,4 +757,20 @@ export function deepCopy<T>(obj: T, seen = new Map<any, any>()): T {
     }
   }
   return result;
+}
+
+export function mergeLegendData(info: any, markerData: Field[]) {
+  const legendData: any = { ...info };
+  legendData.series = info.series.map((s: any) => ({ ...s }));
+
+  const markerFields = (markerData ?? []).flatMap((m: any) => (Array.isArray(m?.fields) ? m.fields : [m]));
+
+  legendData.series[0].fields = [...(info.series[0]?.fields ?? []), ...markerFields];
+
+  if (legendData.color) {
+    const baseColors = Array.isArray(info.color?.values) ? [...info.color.values] : [];
+    markerFields.forEach((f: any) => baseColors.push(f?.config?.color ?? null));
+    legendData.color = { ...(info.color ?? {}), values: baseColors };
+  }
+  return legendData;
 }

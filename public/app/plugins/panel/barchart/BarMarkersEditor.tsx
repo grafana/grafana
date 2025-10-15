@@ -22,7 +22,7 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
   };
 
   const handleAddMarker = () => {
-    let newId = Math.max(...markers.map(m => m.id), 0) + 1;
+    let newId = Math.max(...markers.map((m) => m.id), 0) + 1;
 
     const newMarker: Marker = {
       id: newId,
@@ -32,8 +32,7 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
         label: `Marker ${markers.length + 1}`,
         color: 'rgb(184, 119, 217)',
         shape: 'line',
-        width: 1,
-        isRotated: false,
+        size: 1,
         opacity: 0.7,
       },
     };
@@ -188,8 +187,8 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
                 min={0.01}
                 max={2}
                 step={0.01}
-                value={marker.opts.width ?? 1}
-                onChange={(v) => handleOptsSettingChange(marker.id, 'width', typeof v === 'number' ? v : v[0])}
+                value={marker.opts.size ?? 1}
+                onChange={(v) => handleOptsSettingChange(marker.id, 'size', typeof v === 'number' ? v : v[0])}
                 marks={{ 0.01: '0.01', 2: '2' }}
               />
             </Field>
@@ -203,7 +202,7 @@ export const BarMarkersEditor = (props: StandardEditorProps<Marker[]>) => {
                 step={0.01}
                 value={marker.opts.opacity ?? 1}
                 onChange={(v) => handleOptsSettingChange(marker.id, 'opacity', typeof v === 'number' ? v : v[0])}
-                marks={{ 0: '0.01', 1: '1' }}
+                marks={{ 0: '0', 1: '1' }}
               />
             </Field>
           </div>

@@ -726,7 +726,8 @@ export function populateMarkerList(
           const m: ResolvedMarker = {
             x: markerX!,
             y: resolvedY,
-            opts: { ...marker.opts, isRotated: false, width: marker.opts.width * wid },
+            opts: { ...marker.opts, size: marker.opts.size * wid },
+            isRotated: false,
           };
           resolvedMarkerList.push(m);
         } else {
@@ -742,7 +743,8 @@ export function populateMarkerList(
           const m: ResolvedMarker = {
             x: resolvedX!,
             y: markerY!,
-            opts: { ...marker.opts, isRotated: true, width: marker.opts.width * hgt },
+            opts: { ...marker.opts, size: marker.opts.size * hgt },
+            isRotated: true,
           };
           resolvedMarkerList.push(m);
         }

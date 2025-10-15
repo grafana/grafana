@@ -11,7 +11,7 @@ export type BarMarker = {
 };
 
 export function drawBarMarkers(_builder: UPlotConfigBuilder, markers: ResolvedMarker[]) {
-  return function drawMarkers(u: uPlot) {
+  return (u: uPlot) => {
     const ctx = u.ctx;
 
     if (!ctx) {
@@ -25,9 +25,10 @@ export function drawBarMarkers(_builder: UPlotConfigBuilder, markers: ResolvedMa
       if (!m.opts) {
         continue;
       }
-      const { width, shape, isRotated, color = '#ff0000ff' } = m.opts;
+      const { size: width, shape, color } = m.opts;
       const x = m.x;
       const y = m.y;
+      const isRotated = m.isRotated;
 
       if (typeof x !== 'number' || typeof y !== 'number') {
         continue;

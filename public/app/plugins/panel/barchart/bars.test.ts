@@ -24,8 +24,7 @@ describe('populateMarkerList', () => {
       label: 'test-marker',
       shape: 'circle',
       color: 'red',
-      width: 0.1,
-      isRotated: false,
+      size: 0.1,
       opacity: 1,
     },
   };
@@ -60,10 +59,10 @@ describe('populateMarkerList', () => {
       expect(resolvedMarker.x).toBe(70);
       // resolvedY = u.valToPos(...) = 50
       expect(resolvedMarker.y).toBe(50);
+      expect(resolvedMarker.isRotated).toBe(false);
       expect(resolvedMarker.opts).toEqual({
         ...baseMarker.opts,
-        isRotated: false,
-        width: baseMarker.opts.width * 100, // opts.width * wid
+        size: baseMarker.opts.size * 100, // opts.size * wid
       });
     });
 
@@ -96,10 +95,10 @@ describe('populateMarkerList', () => {
       expect(resolvedMarker.x).toBe(50);
       // markerY = barY + hgt/2 = 25 + 50/2 = 50
       expect(resolvedMarker.y).toBe(50);
+      expect(resolvedMarker.isRotated).toBe(true);
       expect(resolvedMarker.opts).toEqual({
         ...baseMarker.opts,
-        isRotated: true,
-        width: baseMarker.opts.width * 50, // opts.width * hgt
+        size: baseMarker.opts.size * 50, // opts.size * hgt
       });
     });
 

@@ -20,7 +20,6 @@ import {
 
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
 import { prepSeries, prepConfig, PrepConfigOpts, prepMarkers, hideMarkerSeries } from './utils';
-import { scale } from 'ol/transform';
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -280,19 +279,19 @@ describe('BarChart utils', () => {
           id: 1,
           dataField: 'marker1_data',
           targetField: 'series1',
-          opts: { label: 'john', shape: 'circle', color: 'red', width: 1, isRotated: false, opacity: 1 },
+          opts: { label: 'john', shape: 'circle', color: 'red', size: 1, opacity: 1 },
         },
         {
           id: 2,
           dataField: 'marker2_data',
           targetField: 'series2',
-          opts: { label: 'jane', shape: 'circle', color: 'blue', width: 1, isRotated: false, opacity: 1 },
+          opts: { label: 'jane', shape: 'circle', color: 'blue', size: 1, opacity: 1 },
         },
         {
           id: 3,
           dataField: 'fake_name',
           targetField: 'series2',
-          opts: { label: 'jane', shape: 'circle', color: 'blue', width: 1, isRotated: false, opacity: 1 },
+          opts: { label: 'jane', shape: 'circle', color: 'blue', size: 1, opacity: 1 },
         },
       ];
 
@@ -362,7 +361,7 @@ describe('BarChart utils', () => {
               id: 1,
               dataField: 'marker',
               targetField: 'series1',
-              opts: { label: 'john', shape: 'circle', color: 'red', width: 1, isRotated: false, opacity: 1 },
+              opts: { label: 'john', shape: 'circle', color: 'red', size: 1, opacity: 1 },
             },
           ];
 
@@ -399,13 +398,13 @@ describe('BarChart utils', () => {
               id: 1,
               dataField: 'markerA',
               targetField: 'metric',
-              opts: { label: 'john', shape: 'circle', color: 'red', width: 1, isRotated: false, opacity: 1 },
+              opts: { label: 'john', shape: 'circle', color: 'red', size: 1, opacity: 1 },
             },
             {
               id: 3,
               dataField: 'markerA',
               targetField: 'none_existent',
-              opts: { label: 'jane', shape: 'circle', color: 'blue', width: 1, isRotated: false, opacity: 1 },
+              opts: { label: 'jane', shape: 'circle', color: 'blue', size: 1, opacity: 1 },
             },
           ];
 
