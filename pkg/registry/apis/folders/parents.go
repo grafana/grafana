@@ -44,7 +44,7 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 				item.Description = *folder.Spec.Description
 			}
 			info.Items = append(info.Items, item)
-			if item.Parent == "" {
+			if item.Parent == "" || item.Parent == "general" {
 				break
 			}
 

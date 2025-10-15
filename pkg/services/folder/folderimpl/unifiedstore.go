@@ -180,7 +180,7 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 	hits := []*folder.Folder{}
 
 	parentUID := q.UID
-	for parentUID != "" {
+	for parentUID != folder.GeneralFolderUID {
 		folder, err := ss.Get(ctx, folder.GetFolderQuery{UID: &parentUID, OrgID: q.OrgID})
 		if err != nil {
 			if apierrors.IsForbidden(err) {
