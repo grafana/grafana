@@ -29,7 +29,7 @@ func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient auth
 
 	// Access specific resources
 	authorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
-	resourceAuthorizer[iamv0.CoreRoleInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.CoreRoleInfo.GetName()] = gfauthorizer.NewCoreRoleAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.RoleInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = authorizer
