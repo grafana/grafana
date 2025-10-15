@@ -36,7 +36,7 @@ export function cloneRuleDefinition(rule: RuleWithLocation<RulerRuleDTO>) {
     }
   }
 
-  if (rulerRuleType.any.rule(ruleClone.rule)) {
+  if (rulerRuleType.any.rule(ruleClone.rule) && isPluginProvidedRule(ruleClone.rule)) {
     // Remove the origin label when cloning plugin-provided rules
     delete ruleClone.rule.labels?.[GRAFANA_ORIGIN_LABEL];
   }
