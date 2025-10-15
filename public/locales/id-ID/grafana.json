@@ -1650,6 +1650,15 @@
     "inspector-yaml-tab": {
       "apply": "Terapkan"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2306,6 +2315,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Sumber data"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Ekspresi"
     },
@@ -2547,6 +2559,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Aturan peringatan telah ditambahkan atau diperbarui. Perubahan mungkin memerlukan waktu hingga satu menit untuk muncul di tampilan daftar aturan Peringatan.",
         "alert-title": "Pembaruan sedang berlangsung"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Terjadi kesalahan saat mengevaluasi aturan peringatan ini"
     },
@@ -2918,10 +2934,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "Tambah pola"
@@ -4476,6 +4504,8 @@
     },
     "canvas-actions": {
       "add-panel": "Tambah panel",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Kelompokkan ke dalam baris",
       "group-into-tab": "Kelompokkan ke dalam tab",
       "group-panels": "Panel grup",
@@ -4484,7 +4514,8 @@
       "paste-panel": "Tempel panel",
       "paste-row": "Tempel baris",
       "paste-tab": "Tempel tab",
-      "un-group-panels": "Pisah grup"
+      "un-group-panels": "Pisah grup",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4584,7 +4615,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "dasbor {{dashboardName}}"
+      "aria-label-dashboard-name": "dasbor {{dashboardName}}",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Batalkan memuat dasbor"
@@ -4726,8 +4758,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Nilai dipisahkan dengan koma",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "",
+          "modal-title": "",
+          "values": "Nilai dipisahkan dengan koma"
         },
         "datasource-options": {
           "name-filter": "Filter nama",
@@ -5146,10 +5179,16 @@
       "title-row-options": "Opsi baris"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Menghapus baris ini juga akan menghapus semua panel. Anda yakin ingin melanjutkan?",
       "delete-row-title": "Hapus baris?",
       "delete-row-yes": "Hapus",
       "description": "Grup panel yang dapat diciutkan dengan judul",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Header baris hanya terlihat dalam mode edit",
       "name": "Baris",
       "row": {
@@ -5179,7 +5218,11 @@
       },
       "row-warning": {
         "title-not-unique": "Judul ini tidak unik"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dasbor disimpan"
@@ -14081,14 +14124,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Tambahkan opsi",
-      "description": "Tambahkan opsi kustom selain hasil kueri",
-      "label-placeholder": "tampilkan label",
-      "remove-option-button-label": "Hapus opsi",
-      "value-placeholder": "nilai, string kosong default"
+      "description": "Tambahkan opsi kustom selain hasil kueri"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Cara mengurutkan opsi statis dengan hasil kueri"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Nilai default",

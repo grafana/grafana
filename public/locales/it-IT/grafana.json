@@ -1655,6 +1655,15 @@
     "inspector-yaml-tab": {
       "apply": "Applica"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2314,6 +2323,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Sorgente dati"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Espressione"
     },
@@ -2559,6 +2571,10 @@
       "prometheus-consistency-check": {
         "alert-message": "La regola di avviso è stata aggiunta o aggiornata. Potrebbe essere necessario attendere fino a un minuto per visualizzare le modifiche nella vista elenco delle regole di avviso.",
         "alert-title": "Aggiornamento in corso"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Si è verificato un errore durante la valutazione di questa regola di avviso"
     },
@@ -2930,10 +2946,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "Aggiungi espressione"
@@ -4496,6 +4524,8 @@
     },
     "canvas-actions": {
       "add-panel": "Aggiungi pannello",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Raggruppa in riga",
       "group-into-tab": "Raggruppa in scheda",
       "group-panels": "Raggruppa pannelli",
@@ -4504,7 +4534,8 @@
       "paste-panel": "Incolla pannello",
       "paste-row": "Incolla riga",
       "paste-tab": "Incolla scheda",
-      "un-group-panels": "Annulla raggruppamento"
+      "un-group-panels": "Annulla raggruppamento",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4604,7 +4635,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "Dashboard {{dashboardName}}"
+      "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Annulla caricamento della dashboard"
@@ -4746,8 +4778,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Valori separati da virgola",
-          "values-placeholder": "1, 10, mykey: myvalue, myvalue, escaped, value"
+          "close": "",
+          "modal-title": "",
+          "values": "Valori separati da virgola"
         },
         "datasource-options": {
           "name-filter": "Filtro nome",
@@ -5167,10 +5200,16 @@
       "title-row-options": "Opzioni riga"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "L'eliminazione di questa riga rimuoverà anche tutti i pannelli. Desideri continuare?",
       "delete-row-title": "Elimina riga?",
       "delete-row-yes": "Elimina",
       "description": "Gruppi di pannelli comprimibili con intestazioni",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Intestazione di riga visibile solo in modalità di modifica",
       "name": "Righe",
       "row": {
@@ -5200,7 +5239,11 @@
       },
       "row-warning": {
         "title-not-unique": "Questo titolo non è univoco"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard salvata"
@@ -14126,14 +14169,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Aggiungi opzione",
-      "description": "Aggiungi opzioni personalizzate oltre ai risultati della query",
-      "label-placeholder": "visualizza etichetta",
-      "remove-option-button-label": "Rimuovi opzione",
-      "value-placeholder": "valore, stringa vuota predefinita"
+      "description": "Aggiungi opzioni personalizzate oltre ai risultati della query"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Come ordinare le opzioni statiche con i risultati della query"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Valore predefinito",

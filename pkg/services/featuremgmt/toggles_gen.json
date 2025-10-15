@@ -1082,14 +1082,16 @@
     {
       "metadata": {
         "name": "dashboardLibrary",
-        "resourceVersion": "1758902532246",
-        "creationTimestamp": "2025-09-26T16:02:12Z"
+        "resourceVersion": "1760051989635",
+        "creationTimestamp": "2025-09-26T16:02:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-09 23:19:49.635811 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable suggested dashboards when creating new dashboards",
         "stage": "experimental",
-        "codeowner": "@grafana/sharing-squad",
-        "frontend": true
+        "codeowner": "@grafana/sharing-squad"
       }
     },
     {
@@ -1377,6 +1379,22 @@
         "description": "Set this to true to enable all app chrome extensions registered by plugins.",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "enableDashboardEmptyExtensions",
+        "resourceVersion": "1759194774156",
+        "creationTimestamp": "2025-09-30T01:12:54Z"
+      },
+      "spec": {
+        "description": "Set this to true to enable all dashboard empty state extensions registered by plugins.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromAdminPage": true,
         "hideFromDocs": true,
@@ -1802,6 +1820,21 @@
     },
     {
       "metadata": {
+        "name": "grafanaPathfinder",
+        "resourceVersion": "1760434668782",
+        "creationTimestamp": "2025-08-20T12:30:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-14 09:37:48.782577 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Pathfinder app",
+        "stage": "preview",
+        "codeowner": "@grafana/pathfinder"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaconThemes",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-02-06T11:08:04Z"
@@ -2157,6 +2190,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzZanzanaSync",
+        "resourceVersion": "1758887751768",
+        "creationTimestamp": "2025-09-26T09:35:02Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-26 11:55:51.768754 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesCorrelations",
         "resourceVersion": "1757513374180",
         "creationTimestamp": "2025-09-10T14:09:34Z"
@@ -2252,6 +2302,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesZanzanaPopulate",
+        "resourceVersion": "1758879077577",
+        "creationTimestamp": "2025-09-26T09:31:17Z",
+        "deletionTimestamp": "2025-09-26T09:35:02Z"
+      },
+      "spec": {
+        "description": "Populate Zanzana on AuthZ CRDs creation or update",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -2960,7 +3025,8 @@
       "metadata": {
         "name": "promQLScope",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-01-29T20:22:17Z"
+        "creationTimestamp": "2024-01-29T20:22:17Z",
+        "deletionTimestamp": "2025-10-05T00:24:17Z"
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into prometheus queries.",
@@ -3155,7 +3221,8 @@
       "metadata": {
         "name": "queryServiceWithConnections",
         "resourceVersion": "1756367172351",
-        "creationTimestamp": "2025-08-28T07:46:12Z"
+        "creationTimestamp": "2025-08-28T19:28:26Z",
+        "deletionTimestamp": "2025-08-29T12:49:57Z"
       },
       "spec": {
         "description": "Adds datasource connections to the query service",

@@ -214,7 +214,7 @@ func (r createTeamQuery) Validate() error {
 }
 
 func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd CreateTeamCommand) (*CreateTeamResult, error) {
-	now := time.Now().UTC().Truncate(time.Second)
+	now := time.Now().UTC()
 
 	cmd.Created = NewDBTime(now)
 	cmd.Updated = NewDBTime(now)
@@ -300,7 +300,7 @@ func (r updateTeamQuery) Validate() error {
 }
 
 func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateTeamCommand) (*UpdateTeamResult, error) {
-	now := time.Now().UTC().Truncate(time.Second)
+	now := time.Now().UTC()
 
 	cmd.Updated = NewDBTime(now)
 
@@ -414,8 +414,8 @@ func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo
 }
 
 type ListTeamBindingsQuery struct {
-	// UID is team uid to list bindings for. If not set store should list bindings for all teams
-	UID        string
+	TeamID     int64
+	UserID     int64
 	OrgID      int64
 	Pagination common.Pagination
 }
@@ -432,6 +432,7 @@ type TeamMember struct {
 	TeamUID    string
 	UserID     int64
 	UserUID    string
+	OrgID      int64
 	Name       string
 	Email      string
 	Username   string
@@ -486,7 +487,7 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 	req := newListTeamBindings(sql, &query)
 	q, err := sqltemplate.Execute(sqlQueryTeamBindingsTemplate, req)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamsTemplate.Name(), err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamBindingsTemplate.Name(), err)
 	}
 
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
@@ -508,7 +509,7 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 
 	for rows.Next() {
 		m := TeamMember{}
-		err = rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.Created, &m.Updated, &m.Permission)
+		err = rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Created, &m.Updated, &m.Permission, &m.External)
 		if err != nil {
 			return res, err
 		}
@@ -522,11 +523,95 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 		}
 	}
 
-	if query.UID == "" {
-		res.RV, err = sql.GetResourceVersion(ctx, "team_member", "updated")
+	return res, err
+}
+
+type CreateTeamMemberCommand struct {
+	TeamID     int64
+	TeamUID    string
+	UserID     int64
+	UserUID    string
+	OrgID      int64
+	Created    DBTime
+	Updated    DBTime
+	External   bool
+	Permission team.PermissionType
+}
+
+type CreateTeamMemberResult struct {
+	TeamMember TeamMember
+}
+
+var sqlCreateTeamMemberQuery = mustTemplate("create_team_member_query.sql")
+
+func newCreateTeamMember(sql *legacysql.LegacyDatabaseHelper, cmd *CreateTeamMemberCommand) createTeamMemberQuery {
+	return createTeamMemberQuery{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		TeamMemberTable: sql.Table("team_member"),
+		Command:         cmd,
+	}
+}
+
+type createTeamMemberQuery struct {
+	sqltemplate.SQLTemplate
+	TeamMemberTable string
+	Command         *CreateTeamMemberCommand
+}
+
+func (r createTeamMemberQuery) Validate() error {
+	return nil
+}
+
+func (s *legacySQLStore) CreateTeamMember(ctx context.Context, ns claims.NamespaceInfo, cmd CreateTeamMemberCommand) (*CreateTeamMemberResult, error) {
+	now := time.Now().UTC()
+	cmd.Created = NewDBTime(now)
+	cmd.Updated = NewDBTime(now)
+	cmd.OrgID = ns.OrgID
+
+	if cmd.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	return res, err
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newCreateTeamMember(sql, &cmd)
+
+	var createdTeamMember TeamMember
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		teamMemberQuery, err := sqltemplate.Execute(sqlCreateTeamMemberQuery, req)
+		if err != nil {
+			return fmt.Errorf("failed to execute team member template %q: %w", sqlCreateTeamMemberQuery.Name(), err)
+		}
+
+		teamMemberID, err := st.ExecWithReturningId(ctx, teamMemberQuery, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to create team member: %w", err)
+		}
+
+		createdTeamMember = TeamMember{
+			ID:         teamMemberID,
+			TeamID:     cmd.TeamID,
+			TeamUID:    cmd.TeamUID,
+			UserID:     cmd.UserID,
+			UserUID:    cmd.UserUID,
+			OrgID:      cmd.OrgID,
+			Created:    cmd.Created.Time,
+			Updated:    cmd.Updated.Time,
+			External:   cmd.External,
+			Permission: cmd.Permission,
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &CreateTeamMemberResult{TeamMember: createdTeamMember}, nil
 }
 
 type ListTeamMembersQuery struct {

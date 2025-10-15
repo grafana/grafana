@@ -66,7 +66,6 @@ func applyFrontendDefaults(dashboard map[string]interface{}) {
 	sortPanelsByGridPos(dashboard)
 
 	// Built-in components
-	addBuiltInAnnotationQuery(dashboard)
 	initMeta(dashboard)
 
 	// Variable cleanup
@@ -947,32 +946,13 @@ func applyPanelAutoMigration(panel map[string]interface{}) {
 	var newType string
 
 	// Graph needs special logic as it can be migrated to multiple panels
-	if panelType == "graph" {
+	// Including graphite which was previously migrated to graph in the schema version 2 migration in DashboardMigrator.ts
+	// but this was a bug because in there graphite was set to graph, but since those migrations run
+	// after PanelModel.restoreModel where autoMigrateFrom is set, this caused the graph migration to be skipped.
+	// And this resulted in a dashboard with invalid panels.
+	if panelType == "graph" || panelType == "graphite" {
 		// Check xaxis mode for special cases
-		if xaxis, ok := panel["xaxis"].(map[string]interface{}); ok {
-			if mode, ok := xaxis["mode"].(string); ok {
-				switch mode {
-				case "series":
-					// Check legend values for bargauge
-					if legend, ok := panel["legend"].(map[string]interface{}); ok {
-						if values, ok := legend["values"].(bool); ok && values {
-							newType = "bargauge"
-						} else {
-							newType = "barchart"
-						}
-					} else {
-						newType = "barchart"
-					}
-				case "histogram":
-					newType = "histogram"
-				}
-			}
-		}
-
-		// Default graph migration to timeseries
-		if newType == "" {
-			newType = "timeseries"
-		}
+		newType = getGraphAutoMigration(panel)
 	} else {
 		// Check autoMigrateAngular mapping
 		autoMigrateAngular := map[string]string{
@@ -994,6 +974,36 @@ func applyPanelAutoMigration(panel map[string]interface{}) {
 		panel["autoMigrateFrom"] = panelType
 		panel["type"] = newType
 	}
+}
+
+func getGraphAutoMigration(panel map[string]interface{}) string {
+	newType := ""
+	if xaxis, ok := panel["xaxis"].(map[string]interface{}); ok {
+		if mode, ok := xaxis["mode"].(string); ok {
+			switch mode {
+			case "series":
+				// Check legend values for bargauge
+				if legend, ok := panel["legend"].(map[string]interface{}); ok {
+					if values, ok := legend["values"].(bool); ok && values {
+						newType = "bargauge"
+					} else {
+						newType = "barchart"
+					}
+				} else {
+					newType = "barchart"
+				}
+			case "histogram":
+				newType = "histogram"
+			}
+		}
+	}
+
+	// Default graph migration to timeseries
+	if newType == "" {
+		newType = "timeseries"
+	}
+
+	return newType
 }
 
 // removeNullValuesRecursively removes null values from nested objects and arrays
@@ -1053,6 +1063,8 @@ func cleanupDashboardDefaults(dashboard map[string]interface{}) {
 	// These properties are lost during frontend's property copying loop in getSaveModelCloneOld()
 	delete(dashboard, "preload")   // Transient dashboard loading state
 	delete(dashboard, "iteration") // Template variable iteration timestamp
+	delete(dashboard, "nav")       // Removed after V7 migration
+	delete(dashboard, "pulldowns") // Removed after V6 migration - frontend doesn't have this property
 }
 
 // cleanupFieldConfigDefaults removes properties that frontend considers as defaults and omits

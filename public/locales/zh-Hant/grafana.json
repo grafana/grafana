@@ -1650,6 +1650,15 @@
     "inspector-yaml-tab": {
       "apply": "套用"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2306,6 +2315,9 @@
     "rule-details-data-sources": {
       "label-data-source": "資料來源"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "表達式"
     },
@@ -2547,6 +2559,10 @@
       "prometheus-consistency-check": {
         "alert-message": "警報規則已新增或更新。變更可能需要一分鐘才會顯示在「警報規則」清單檢視中。",
         "alert-title": "更新進行中"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "評估此警報規則時發生錯誤"
     },
@@ -2918,10 +2934,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "新增表達式"
@@ -4476,6 +4504,8 @@
     },
     "canvas-actions": {
       "add-panel": "新增面板",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "將群組分成列",
       "group-into-tab": "將群組分成分頁",
       "group-panels": "分組面板",
@@ -4484,7 +4514,8 @@
       "paste-panel": "貼上面板",
       "paste-row": "貼上列",
       "paste-tab": "貼上分頁",
-      "un-group-panels": "解散群組"
+      "un-group-panels": "解散群組",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4584,7 +4615,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "「{{dashboardName}}」儀表板"
+      "aria-label-dashboard-name": "「{{dashboardName}}」儀表板",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "取消載入儀表板"
@@ -4726,8 +4758,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "以逗號分隔的值",
-          "values-placeholder": "1、10、mykey：myvalue、myvalue、轉義、值"
+          "close": "",
+          "modal-title": "",
+          "values": "以逗號分隔的值"
         },
         "datasource-options": {
           "name-filter": "名稱篩選",
@@ -5146,10 +5179,16 @@
       "title-row-options": "列選項"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "刪除此列也會移除所有面板。確定要繼續嗎？",
       "delete-row-title": "要刪除列嗎？",
       "delete-row-yes": "刪除",
       "description": "帶標題的可收闔面板群組",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "只有在編輯模式下才能看到列標題",
       "name": "列",
       "row": {
@@ -5179,7 +5218,11 @@
       },
       "row-warning": {
         "title-not-unique": "此標題不是唯一"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "儀表板已儲存"
@@ -14081,14 +14124,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "新增選項",
-      "description": "除了查詢結果之外，還可新增自訂選項",
-      "label-placeholder": "顯示標籤",
-      "remove-option-button-label": "移除選項",
-      "value-placeholder": "值，預設空字串"
+      "description": "除了查詢結果之外，還可新增自訂選項"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "如何使用查詢結果對靜態選項進行排序"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "預設值",

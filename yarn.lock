@@ -3532,11 +3532,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.39.4":
-  version: 6.39.4
-  resolution: "@grafana/scenes-react@npm:6.39.4"
+"@grafana/scenes-react@npm:6.39.5":
+  version: 6.39.5
+  resolution: "@grafana/scenes-react@npm:6.39.5"
   dependencies:
-    "@grafana/scenes": "npm:6.39.4"
+    "@grafana/scenes": "npm:6.39.5"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3548,7 +3548,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/9acbf6b80af12cb6807f9ba364d6684c967ebe65eb4ab51e8c3f6e461476d71cb89e64b53ba9a9e29a62972fb7876877be630a685aa32c815d4b36cb9ff4d9f5
+  checksum: 10/9bd908578a62dfbafba96d7046f25785391555a77445c76de0195d9a132a9c3c3dde565ef76ad834968c65266fa6d2ba2ee746303e46ebe7fd69a2b87ef3f5b4
   languageName: node
   linkType: hard
 
@@ -3578,9 +3578,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.39.4":
-  version: 6.39.4
-  resolution: "@grafana/scenes@npm:6.39.4"
+"@grafana/scenes@npm:6.39.5":
+  version: 6.39.5
+  resolution: "@grafana/scenes@npm:6.39.5"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3600,7 +3600,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/07126c816f69fa69a06e6f4c77028bed515d4bd4d9cc0e081bbd2e4e4bfa8c9b1b0c41e5b686a646542a205e22a88826bcdd795896240e95857823c82a8a5fe5
+  checksum: 10/8608c7e98e0928bc32ccc58cdaf47a4339c60d4c81b1c23db962569f1f9650d22552e88bb3fa3524173ac475c7f9c4578383da49968c7bdd3cb40db043ef233b
   languageName: node
   linkType: hard
 
@@ -16360,6 +16360,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-react-prefer-function-component@npm:4.0.1":
+  version: 4.0.1
+  resolution: "eslint-plugin-react-prefer-function-component@npm:4.0.1"
+  checksum: 10/dfb1ceb098342320cc82429e227db91a72e7e4875795913fb481beb64669080354279a4ad9a3c53060b390825c7d08c352f938f121ef1acb40da6d969199c1b0
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-react@npm:7.37.5":
   version: 7.37.5
   resolution: "eslint-plugin-react@npm:7.37.5"
@@ -18330,8 +18337,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.39.4"
-    "@grafana/scenes-react": "npm:6.39.4"
+    "@grafana/scenes": "npm:6.39.5"
+    "@grafana/scenes-react": "npm:6.39.5"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -18483,6 +18490,7 @@ __metadata:
     eslint-plugin-no-barrel-files: "npm:^1.1.1"
     eslint-plugin-react: "npm:7.37.5"
     eslint-plugin-react-hooks: "npm:5.2.0"
+    eslint-plugin-react-prefer-function-component: "npm:4.0.1"
     eslint-plugin-testing-library: "npm:^7.0.0"
     eslint-plugin-unicorn: "npm:^56.0.0"
     eslint-scope: "npm:^8.1.0"
@@ -20523,14 +20531,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"istanbul-lib-coverage@npm:^3.0.0, istanbul-lib-coverage@npm:^3.2.0":
-  version: 3.2.0
-  resolution: "istanbul-lib-coverage@npm:3.2.0"
-  checksum: 10/31621b84ad29339242b63d454243f558a7958ee0b5177749bacf1f74be7d95d3fd93853738ef7eebcddfaf3eab014716e51392a8dbd5aa1bdc1b15c2ebc53c24
-  languageName: node
-  linkType: hard
-
-"istanbul-lib-coverage@npm:^3.2.2":
+"istanbul-lib-coverage@npm:^3.0.0, istanbul-lib-coverage@npm:^3.2.0, istanbul-lib-coverage@npm:^3.2.2":
   version: 3.2.2
   resolution: "istanbul-lib-coverage@npm:3.2.2"
   checksum: 10/40bbdd1e937dfd8c830fa286d0f665e81b7a78bdabcd4565f6d5667c99828bda3db7fb7ac6b96a3e2e8a2461ddbc5452d9f8bc7d00cb00075fa6a3e99f5b6a81
@@ -20598,18 +20599,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"istanbul-lib-report@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "istanbul-lib-report@npm:3.0.0"
-  dependencies:
-    istanbul-lib-coverage: "npm:^3.0.0"
-    make-dir: "npm:^3.0.0"
-    supports-color: "npm:^7.1.0"
-  checksum: 10/06b37952e9cb0fe419a37c7f3d74612a098167a9eb0e5264228036e78b42ca5226501e8130738b5306d94bae2ea068ca674080d4af959992523d84aacff67728
-  languageName: node
-  linkType: hard
-
-"istanbul-lib-report@npm:^3.0.1":
+"istanbul-lib-report@npm:^3.0.0, istanbul-lib-report@npm:^3.0.1":
   version: 3.0.1
   resolution: "istanbul-lib-report@npm:3.0.1"
   dependencies:
@@ -20631,17 +20621,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"istanbul-reports@npm:^3.0.2, istanbul-reports@npm:^3.1.3":
-  version: 3.1.7
-  resolution: "istanbul-reports@npm:3.1.7"
-  dependencies:
-    html-escaper: "npm:^2.0.0"
-    istanbul-lib-report: "npm:^3.0.0"
-  checksum: 10/f1faaa4684efaf57d64087776018d7426312a59aa6eeb4e0e3a777347d23cd286ad18f427e98f0e3dee666103d7404c9d7abc5f240406a912fa16bd6695437fa
-  languageName: node
-  linkType: hard
-
-"istanbul-reports@npm:^3.1.7":
+"istanbul-reports@npm:^3.0.2, istanbul-reports@npm:^3.1.3, istanbul-reports@npm:^3.1.7":
   version: 3.2.0
   resolution: "istanbul-reports@npm:3.2.0"
   dependencies:

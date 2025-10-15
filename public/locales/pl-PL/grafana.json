@@ -1665,6 +1665,15 @@
     "inspector-yaml-tab": {
       "apply": "Zastosuj"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2330,6 +2339,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Źródło danych"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Wyrażenie"
     },
@@ -2583,6 +2595,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Dodano lub zaktualizowano regułę alertu. Pojawienie się zmian w widoku Lista reguł alertów może potrwać do minuty.",
         "alert-title": "Aktualizacja w toku"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Podczas oceniania tej reguły alertu wystąpił problem"
     },
@@ -2954,10 +2970,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "Dodaj wyrażenie"
@@ -4536,6 +4564,8 @@
     },
     "canvas-actions": {
       "add-panel": "Dodaj panel",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Grupuj w wierszu",
       "group-into-tab": "Grupuj na karcie",
       "group-panels": "Grupuj panele",
@@ -4544,7 +4574,8 @@
       "paste-panel": "Wklej panel",
       "paste-row": "Wklej wiersz",
       "paste-tab": "Wklej kartę",
-      "un-group-panels": "Rozłącz grupę"
+      "un-group-panels": "Rozłącz grupę",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4644,7 +4675,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "Pulpit {{dashboardName}}"
+      "aria-label-dashboard-name": "Pulpit {{dashboardName}}",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Anuluj wczytywanie pulpitu"
@@ -4786,8 +4818,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Wartości rozdzielone przecinkami",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "",
+          "modal-title": "",
+          "values": "Wartości rozdzielone przecinkami"
         },
         "datasource-options": {
           "name-filter": "Filtr nazwy",
@@ -5209,10 +5242,16 @@
       "title-row-options": "Opcje wiersza"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Usunięcie tego wiersza spowoduje również usunięcie wszystkich paneli. Na pewno chcesz kontynuować?",
       "delete-row-title": "Usunąć wiersz?",
       "delete-row-yes": "Usuń",
       "description": "Zwijane grupy paneli z nagłówkami",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Nagłówek wiersza widoczny tylko w trybie edycji",
       "name": "Wiersze",
       "row": {
@@ -5242,7 +5281,11 @@
       },
       "row-warning": {
         "title-not-unique": "Ten tytuł nie jest unikalny"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Pulpit został zapisany"
@@ -14216,14 +14259,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Dodaj opcję",
-      "description": "Dodaj opcje niestandardowe oprócz wyników zapytania",
-      "label-placeholder": "wyświetl etykietę",
-      "remove-option-button-label": "Usuń opcję",
-      "value-placeholder": "wartość, domyślnie pusty ciąg"
+      "description": "Dodaj opcje niestandardowe oprócz wyników zapytania"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Jak sortować opcje statyczne na podstawie wyników zapytania"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Domyślna wartość",
