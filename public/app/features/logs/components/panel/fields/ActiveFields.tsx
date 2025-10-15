@@ -43,10 +43,20 @@ export const ActiveFields = ({ activeFields, fields, toggle, reorder }: Props): 
     if (!result.destination) {
       return;
     }
-    reorder(activeFields);
+    const newActiveFields = [...activeFields];
+    const element = activeFields[result.source.index];
+
+    newActiveFields.splice(result.source.index, 1);
+    newActiveFields.splice(result.destination.index, 0, element);
+
+    reorder(newActiveFields);
   };
 
-  const active = useMemo(() => fields.filter((field) => activeFields.includes(field.name)), [activeFields, fields]);
+  const active = useMemo(
+    () =>
+      activeFields.map((name) => fields.find((field) => field.name === name)).filter((field) => field !== undefined),
+    [activeFields, fields]
+  );
 
   if (fields.length) {
     return (
@@ -68,7 +78,7 @@ export const ActiveFields = ({ activeFields, fields, toggle, reorder }: Props): 
                         { fieldName: field.name, percentage: field.stats.percentOfLinesWithLabel }
                       )}
                     >
-                      <Field active field={field} onChange={toggle} draggable={true} />
+                      <Field active field={field} toggle={toggle} draggable={true} />
                     </div>
                   )}
                 </Draggable>
