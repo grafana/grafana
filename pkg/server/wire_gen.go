@@ -555,8 +555,9 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
+	prefService := prefimpl.ProvideService(sqlStore, cfg)
 	k8sHandlerWithFallback := client.ProvideK8sClientWithFallback(cfg, eventualRestConfigProvider, dashboardsStore, userService, resourceClient, featureToggles, dualwriteService, sortService, registerer)
-	dashboardServiceImpl, err := service7.ProvideDashboardServiceImpl(cfg, dashboardsStore, featureToggles, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, quotaService, orgService, publicDashboardServiceWrapperImpl, dualwriteService, serverLockService, kvStore, k8sHandlerWithFallback)
+	dashboardServiceImpl, err := service7.ProvideDashboardServiceImpl(cfg, dashboardsStore, featureToggles, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, quotaService, orgService, publicDashboardServiceWrapperImpl, dualwriteService, prefService, serverLockService, kvStore, k8sHandlerWithFallback)
 	if err != nil {
 		return nil, err
 	}
@@ -680,7 +681,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
 	pluginassetsService := pluginassets2.ProvideService(pluginManagementCfg, pluginscdnService, signatureSignature, pluginstoreService)
 	avatarCacheServer := avatar.ProvideAvatarCacheServer(cfg)
-	prefService := prefimpl.ProvideService(sqlStore, cfg)
 	dashboardPermissionsService, err := ossaccesscontrol.ProvideDashboardPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, dashboardService, folderimplService, acimplService, teamService, userService, actionSetService, dashboardServiceImpl)
 	if err != nil {
 		return nil, err
@@ -1157,8 +1157,9 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	prefService := prefimpl.ProvideService(sqlStore, cfg)
 	k8sHandlerWithFallback := client.ProvideK8sClientWithFallback(cfg, eventualRestConfigProvider, dashboardsStore, userService, resourceClient, featureToggles, dualwriteService, sortService, registerer)
-	dashboardServiceImpl, err := service7.ProvideDashboardServiceImpl(cfg, dashboardsStore, featureToggles, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, quotaService, orgService, publicDashboardServiceWrapperImpl, dualwriteService, serverLockService, kvStore, k8sHandlerWithFallback)
+	dashboardServiceImpl, err := service7.ProvideDashboardServiceImpl(cfg, dashboardsStore, featureToggles, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, quotaService, orgService, publicDashboardServiceWrapperImpl, dualwriteService, prefService, serverLockService, kvStore, k8sHandlerWithFallback)
 	if err != nil {
 		return nil, err
 	}
@@ -1284,7 +1285,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
 	pluginassetsService := pluginassets2.ProvideService(pluginManagementCfg, pluginscdnService, signatureSignature, pluginstoreService)
 	avatarCacheServer := avatar.ProvideAvatarCacheServer(cfg)
-	prefService := prefimpl.ProvideService(sqlStore, cfg)
 	dashboardPermissionsService, err := ossaccesscontrol.ProvideDashboardPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, dashboardService, folderimplService, acimplService, teamService, userService, actionSetService, dashboardServiceImpl)
 	if err != nil {
 		return nil, err

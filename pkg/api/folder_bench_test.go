@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -457,6 +458,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		nil,
 		nil,
 		dualwrite.ProvideTestService(),
+		preftest.NewPreferenceServiceFake(),
 		serverlock.ProvideService(sc.db, tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore(),
 		dashclient.NewK8sClientWithFallback(

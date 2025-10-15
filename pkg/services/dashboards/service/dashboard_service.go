@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -96,6 +97,7 @@ type DashboardServiceImpl struct {
 	serverLockService      *serverlock.ServerLockService
 	kvstore                kvstore.KVStore
 	dual                   dualwrite.Service
+	preferenceService      pref.Service
 
 	dashboardPermissionsReady chan struct{}
 }
@@ -123,6 +125,7 @@ func (dr *DashboardServiceImpl) startK8sDeletedDashboardsCleanupJob(ctx context.
 }
 
 func (dr *DashboardServiceImpl) executeCleanupWithLock(ctx context.Context) error {
+	dr.log.Info("executing cleanup")
 	// We're taking a leader-like locking approach here. By locking and executing, but never releasing the lock,
 	// we ensure that other instances of this service can't run in parallel and hence the cleanup will only happen once
 	// per cleanup interval by setting the maxInterval and having the time between executions be the cleanup interval as well.
@@ -382,6 +385,7 @@ func ProvideDashboardServiceImpl(
 	orgService org.Service,
 	publicDashboardService publicdashboards.ServiceWrapper,
 	dual dualwrite.Service,
+	pref pref.Service,
 	serverLockService *serverlock.ServerLockService,
 	kvstore kvstore.KVStore,
 	k8sClient dashboardclient.K8sHandlerWithFallback,
@@ -403,6 +407,7 @@ func ProvideDashboardServiceImpl(
 		serverLockService:         serverLockService,
 		kvstore:                   kvstore,
 		dual:                      dual,
+		preferenceService:         pref,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -1670,6 +1675,23 @@ func (dr *DashboardServiceImpl) CleanUpDashboard(ctx context.Context, dashboardU
 	var err = dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgId, []string{dashboardUID})
 	if err != nil {
 		return err
+	}
+
+	existingPrefs, err := dr.preferenceService.Find(ctx, &pref.FindPreferenceQuery{HomeDashboardUID: dashboardUID})
+	if err != nil {
+		return fmt.Errorf("fetching existing home dashboard preferences: %w", err)
+	}
+	for _, pr := range existingPrefs {
+		err := dr.preferenceService.Patch(ctx, &pref.PatchPreferenceCommand{
+			UserID:           pr.UserID,
+			TeamID:           pr.TeamID,
+			OrgID:            pr.OrgID,
+			HomeDashboardUID: new(string),
+			HomeDashboardID:  new(int64),
+		})
+		if err != nil {
+			return fmt.Errorf("updating home dashboard in preferences: %w", err)
+		}
 	}
 
 	return dr.dashboardStore.CleanupAfterDelete(ctx, &dashboards.DeleteDashboardCommand{OrgID: orgId, UID: dashboardUID, ID: dashboardID})
