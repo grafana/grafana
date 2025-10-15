@@ -4,7 +4,7 @@ import { useLocalStorage } from 'react-use';
 import { PluginExtensionPoints, store } from '@grafana/data';
 import { getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
-import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent } from 'app/types/events';
+import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
 
@@ -174,13 +174,28 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       setDockedComponentId(undefined);
     };
 
+    const toggleSidebarHandler = (event: ToggleExtensionSidebarEvent) => {
+      const currentComponentMeta = getComponentMetaFromComponentId(dockedComponentId ?? '');
+      const isCurrentlyOpen =
+        currentComponentMeta?.pluginId === event.payload.pluginId &&
+        currentComponentMeta?.componentTitle === event.payload.componentTitle;
+
+      if (isCurrentlyOpen) {
+        closeSidebarHandler();
+      } else {
+        openSidebarHandler(event);
+      }
+    };
+
     const openSubscription = getAppEvents().subscribe(OpenExtensionSidebarEvent, openSidebarHandler);
     const closeSubscription = getAppEvents().subscribe(CloseExtensionSidebarEvent, closeSidebarHandler);
+    const toggleSubscription = getAppEvents().subscribe(ToggleExtensionSidebarEvent, toggleSidebarHandler);
     return () => {
       openSubscription.unsubscribe();
       closeSubscription.unsubscribe();
+      toggleSubscription.unsubscribe();
     };
-  }, [setDockedComponentWithProps, availableComponents]);
+  }, [setDockedComponentWithProps, availableComponents, dockedComponentId]);
 
   // update the stored docked component id when it changes
   useEffect(() => {

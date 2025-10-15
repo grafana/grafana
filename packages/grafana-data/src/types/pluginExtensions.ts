@@ -181,6 +181,15 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
    * Closes the extension sidebar.
    */
   closeSidebar: () => void;
+  /**
+   * @internal
+   * Toggles the extension sidebar with the registered component.
+   * If the sidebar is open with the same component, it will be closed.
+   * If the sidebar is closed or open with a different component, it will be opened with the specified component.
+   * @param componentTitle The title of the component to be toggled in the sidebar.
+   * @param props The props to be passed to the component.
+   */
+  toggleSidebar: (componentTitle: string, props?: Record<string, unknown>) => void;
 };
 
 // Extension Points & Contexts
