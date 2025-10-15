@@ -167,11 +167,15 @@ func TransformGrpcTraceResponse(trace types.GrpcResourceSpans, refID string) *da
 			})
 		}
 
-		processedSpanAttributes = append(processedSpanAttributes, types.KeyValueType{
-			Key:   "span.kind",
-			Value: processSpanKind(span.Kind),
-			Type:  "string",
-		})
+		spanKindAtt := getAttribute(span.Attributes, "span.kind")
+		if isEmptyAttribute(spanKindAtt) {
+			// it may be the case that the span already contains a span.kind att, in that case, honor that attribute
+			processedSpanAttributes = append(processedSpanAttributes, types.KeyValueType{
+				Key:   "span.kind",
+				Value: processSpanKind(span.Kind),
+				Type:  "string",
+			})
+		}
 		tagsMarshaled, err = json.Marshal(processedSpanAttributes)
 		if err == nil {
 			tags = json.RawMessage(tagsMarshaled)
@@ -235,20 +239,20 @@ func processAttributesIntoTags(attributes []types.GrpcKeyValue) []types.KeyValue
 			}
 			tags = append(tags, types.KeyValueType{
 				Key:   att.Key,
-				Value: intVal,
+				Value: int64(intVal),
 				Type:  "int64",
 			})
 			continue
 		}
 
 		if att.Value.DoubleValue != "" {
-			intVal, err := strconv.Atoi(att.Value.DoubleValue)
+			floatVal, err := strconv.ParseFloat(att.Value.DoubleValue, 64)
 			if err != nil {
 				continue
 			}
 			tags = append(tags, types.KeyValueType{
 				Key:   att.Key,
-				Value: float64(intVal),
+				Value: floatVal,
 				Type:  "float64",
 			})
 			continue
@@ -311,4 +315,35 @@ func processSpanKind(kind int64) string {
 	default:
 		return "unspecified"
 	}
+}
+
+func isEmptyAttribute(attribute types.GrpcAnyValue) bool {
+	if attribute.StringValue != "" {
+		return false
+	}
+
+	if attribute.BoolValue != "" {
+		return false
+	}
+
+	if attribute.IntValue != "" {
+		return false
+	}
+
+	if attribute.DoubleValue != "" {
+		return false
+	}
+
+	if len(attribute.ArrayValue.Values) > 0 {
+		return false
+	}
+
+	if len(attribute.KvListValue.Values) > 0 {
+		return false
+	}
+
+	if attribute.BytesValue != "" {
+		return false
+	}
+	return true
 }
