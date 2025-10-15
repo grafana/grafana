@@ -101,9 +101,9 @@ The new folder name is automatically saved.
 
 ## Dashboard and folder deletion
 
-When you delete folders, the action is immediate and can't be reversed.
+**Folders** - When you delete folders, the action is immediate and can't be reversed.
 
-Deleted dashboards, however, are stored in the deletion history and can be [restored](#restore-dashboards) if needed.
+**Dashboards** - Deleted dashboards are stored in the deletion history and can be [restored](#restore-dashboards) if needed (Cloud only).
 
 ## Restore dashboards
 
