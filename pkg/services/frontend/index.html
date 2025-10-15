@@ -169,10 +169,23 @@
       // Wrap in an IIFE to avoid polluting the global scope. Intentionally global-scope properties
       // are explicitly assigned to the `window` object.
       (() => {
-        window.__grafana_load_failed = function(...args) {
-          console.error('Failed to load Grafana', ...args);
+        window.__grafana_load_failed = function(err) {
+          console.error('Failed to load Grafana', err);
           document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
           document.querySelector('.fs-variant-error').classList.remove('fs-hidden');
+
+          // Report the error to the backend
+          const errorMessage = err ? err.message : 'Unknown error';
+
+          fetch('/-/fe-boot-error', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: errorMessage,
+          }).catch(err => {
+            console.error('Failed to report boot error to backend: ', err);
+          });
         };
 
         window.onload = function() {
