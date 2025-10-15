@@ -72,7 +72,7 @@ v1alpha1: {
                 }
             }
         }
-        // namespaced contains cluster-scoped resource routes for the version, 
+        // cluster contains cluster-scoped resource routes for the version, 
         // which are exposed as HTTP handlers on '<version>/<route>'.
         cluster: {
             "/other": {
