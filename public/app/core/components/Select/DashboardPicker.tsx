@@ -7,6 +7,7 @@ import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types'
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { DashboardQueryResult } from 'app/features/search/service/types';
 import { DashboardDTO } from 'app/types/dashboard';
 
 interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | ''> {
@@ -14,7 +15,7 @@ interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'on
   onChange?: (value?: DashboardPickerDTO) => void;
 }
 
-export type DashboardPickerDTO = Pick<DashboardDTO['dashboard'], 'uid' | 'title'> &
+export type DashboardPickerDTO = Pick<DashboardQueryResult, 'uid' | 'name'> &
   Pick<DashboardDTO['meta'], 'folderUid' | 'folderTitle'>;
 
 const formatLabel = (folderTitle = 'Dashboards', dashboardTitle: string) => `${folderTitle}/${dashboardTitle}`;
@@ -28,7 +29,7 @@ async function findDashboards(query = '') {
     return {
       value: {
         uid: item.uid,
-        title: item.name,
+        name: item.name,
         folderTitle,
         folderUid: item.location,
       },
@@ -60,7 +61,7 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
           setCurrent({
             value: {
               uid: dto.metadata.name,
-              title: dto.spec.title,
+              name: dto.spec.title,
               folderTitle: dto.metadata.annotations?.[AnnoKeyFolderTitle],
               folderUid: dto.metadata.annotations?.[AnnoKeyFolder],
             },
@@ -71,7 +72,7 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
             setCurrent({
               value: {
                 uid: dto.dashboard.uid,
-                title: dto.dashboard.title,
+                name: dto.dashboard.title,
                 folderTitle: dto.meta.folderTitle,
                 folderUid: dto.meta.folderUid,
               },

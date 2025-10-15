@@ -53,7 +53,7 @@ describe('DashboardPicker', () => {
         expect.objectContaining({
           folderTitle: expectedFolder.title,
           folderUid: expectedFolder.uid,
-          title: expectedDash.title,
+          name: expectedDash.title,
           uid: expectedDash.uid,
         })
       );
