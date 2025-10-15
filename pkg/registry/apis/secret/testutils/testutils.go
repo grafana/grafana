@@ -41,8 +41,9 @@ import (
 
 type SetupConfig struct {
 	KeeperService            contracts.KeeperService
-	GRPCClientEnable         bool
 	DataKeyMigrationExecutor contracts.EncryptedValueMigrationExecutor
+	RunSecretsDBMigrations   bool
+	RunDataKeyMigration      bool
 }
 
 func defaultSetupCfg() SetupConfig {
@@ -94,9 +95,10 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		CurrentEncryptionProvider:     "secret_key.v1",
 		ConfiguredKMSProviders:        map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
 		GCWorkerEnabled:               false,
+		RunSecretsDBMigrations:        setupCfg.RunSecretsDBMigrations,
+		RunDataKeyMigration:           setupCfg.RunDataKeyMigration,
 		GCWorkerMaxBatchSize:          2,
 		GCWorkerMaxConcurrentCleanups: 2,
-		GrpcClientEnable:              setupCfg.GRPCClientEnable, // overridable
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
