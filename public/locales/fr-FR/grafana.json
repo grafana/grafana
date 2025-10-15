@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Ajouter une autorisation",
+      "loading": "",
       "no-permissions": "Il n'y a aucune autorisation",
       "permissions-change-warning": "Cette action modifiera les autorisations pour ce dossier et tous ses descendants. Au total, elle affectera :",
       "role": "Rôle",
       "serviceaccount": "Compte de service",
       "team": "Équipe",
-      "title": "Autorisations",
       "user": "Utilisateur"
     }
   },
@@ -1655,6 +1655,15 @@
     "inspector-yaml-tab": {
       "apply": "Appliquer"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2314,6 +2323,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Source de données"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Expression"
     },
@@ -2559,6 +2571,10 @@
       "prometheus-consistency-check": {
         "alert-message": "La règle d’alerte a été ajoutée ou mise à jour. Les modifications peuvent prendre jusqu’à une minute pour apparaître dans la vue de la liste des règles d’alerte.",
         "alert-title": "Mise à jour en cours"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Une erreur s’est produite lors de l’évaluation de cette règle d’alerte"
     },
@@ -2930,10 +2946,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "Ajouter une expression"
@@ -3504,7 +3532,7 @@
       "delete-button": "Supprimer",
       "delete-modal-invalid-text": "Un ou plusieurs dossiers contiennent des panneaux Bibliothèque ou des règles d'alerte. Vous devez d'abord les supprimer.",
       "delete-modal-invalid-title": "Impossible de supprimer le dossier",
-      "delete-modal-restore-dashboards-text": "Cette action supprimera immédiatement les dossiers sélectionnés, mais les tableaux de bord sélectionnés seront marqués pour suppression dans 30 jours. L'administrateur de votre organisation peut restaurer les tableaux de bord à tout moment avant l'expiration des 30 jours. Les dossiers ne peuvent pas être restaurés.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Cette action supprimera le contenu suivant :",
       "delete-modal-title": "Supprimer",
       "delete-provisioned-folder": "Supprimer le dossier provisionné",
@@ -4496,6 +4524,8 @@
     },
     "canvas-actions": {
       "add-panel": "Ajouter un panneau",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Grouper en ligne",
       "group-into-tab": "Grouper dans un onglet",
       "group-panels": "Grouper les panneaux",
@@ -4504,7 +4534,8 @@
       "paste-panel": "Coller le panneau",
       "paste-row": "Coller la ligne",
       "paste-tab": "Coller l’onglet",
-      "un-group-panels": "Dissocier"
+      "un-group-panels": "Dissocier",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4572,7 +4603,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "L’élément est masqué en raison du rendu conditionnel."
+        "tooltip": ""
       },
       "root": {
         "title": "Afficher / masquer les règles"
@@ -4604,7 +4635,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "Tableau de bord {{dashboardName}}"
+      "aria-label-dashboard-name": "Tableau de bord {{dashboardName}}",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Annuler le chargement du tableau de bord"
@@ -4746,8 +4778,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Valeurs séparées par une virgule",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "",
+          "modal-title": "",
+          "values": "Valeurs séparées par une virgule"
         },
         "datasource-options": {
           "name-filter": "Nom du filtre",
@@ -5167,10 +5200,16 @@
       "title-row-options": "Options de ligne"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "La suppression de cette ligne supprimera également tous les panneaux. Voulez-vous vraiment continuer ?",
       "delete-row-title": "Supprimer la ligne ?",
       "delete-row-yes": "Supprimer",
       "description": "Groupes de panneaux à développer avec en-têtes",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "En-tête de ligne visible uniquement en mode édition",
       "name": "Lignes",
       "row": {
@@ -5200,7 +5239,11 @@
       },
       "row-warning": {
         "title-not-unique": "Ce titre n’est pas unique"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Tableau de bord enregistré"
@@ -5819,6 +5862,7 @@
         "dynamically-switch-source-multiple-panels": "Changer dynamiquement la source de données pour plusieurs panneaux",
         "group": "Ajouter des clés de regroupement à la volée",
         "hidden-constant-variable": "Une variable constante masquée, utile pour les préfixes de métriques dans des tableaux de bord à partager",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Les utilisateurs peuvent saisir des chaînes de caractères libres dans un champ de texte",
         "values-are-static-and-defined-manually": "Les valeurs sont statiques et définies manuellement",
         "values-fetched-source-query": "Les valeurs sont récupérées à partir d’une requête de source de données",
@@ -5832,6 +5876,7 @@
         "group-by": "Regrouper par",
         "interval": "Intervalle",
         "query": "Requête",
+        "switch": "",
         "textbox": "Zone de texte"
       }
     },
@@ -6175,6 +6220,17 @@
       "title": {
         "copy-to-clipboard-failed": "Échec de la copie dans le presse-papiers"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Valeur par défaut"
@@ -6624,6 +6680,7 @@
         "service-now-integration-and-data-source": "Intégration et source de données ServiceNow",
         "signal-fx-integration-and-datasource": "Intégration et source de données SignalFx",
         "snowflake-integration-and-data-source": "Intégration et source de données Snowflake",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "Intégration et source de données SumoLogic",
         "visualize-and-explore-dynatrace-data": "Visualiser et explorer les données Dynatrace",
         "visualize-and-explore-oracle-sql": "Visualiser et explorer Oracle SQL",
@@ -10354,7 +10411,7 @@
       "title": "Profils"
     },
     "recently-deleted": {
-      "subtitle": "Tous les éléments répertoriés ici depuis plus de 30 jours seront automatiquement supprimés.",
+      "subtitle": "",
       "title": "Récemment supprimé"
     },
     "recorded-queries": {
@@ -11570,6 +11627,7 @@
       "active-jobs": "missions actives",
       "column-action": "Action",
       "column-duration": "Durée",
+      "column-job-id": "",
       "column-message": "Message",
       "column-started": "Démarré",
       "column-status": "Statut",
@@ -11588,12 +11646,6 @@
       "settings": "Paramètres",
       "view": "Afficher"
     },
-    "repository-health": {
-      "details": "Détails :",
-      "no-errors-found": "Aucune erreur trouvée",
-      "title-repository-is-healthy": "Le référentiel est en bon état",
-      "title-repository-is-unhealthy": "Le référentiel est en mauvais état"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Comparer une branche",
@@ -11608,7 +11660,7 @@
     },
     "repository-overview": {
       "checked": "Vérifié :",
-      "finished": "Fini :",
+      "finished": "",
       "health": "Santé",
       "healthy": "Sain",
       "job-id": "ID de mission :",
@@ -11617,7 +11669,6 @@
       "not-available": "S/O",
       "pull-status": "Statut de fusion",
       "resources": "Ressources",
-      "started": "Démarré :",
       "status": "Statut :",
       "unhealthy": "Non sain",
       "view-folder": "Afficher le dossier",
@@ -12276,9 +12327,6 @@
       "title-disable-service-account": "Désactiver le compte de service",
       "tokens": "Jetons",
       "tooltip-managed-service-account-cannot-modified": "Il s’agit d’un compte de service géré qui ne peut pas être modifié"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Autorisations"
     },
     "service-account-profile": {
       "information": "Information",
@@ -12953,6 +13001,10 @@
     "name-mode": "Mode",
     "name-show-line-numbers": "Afficher les numéros de ligne",
     "name-show-mini-map": "Afficher la mini-carte"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -14117,14 +14169,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Ajouter une option",
-      "description": "Ajouter des options personnalisées en complément des résultats de la requête",
-      "label-placeholder": "afficher l’étiquette",
-      "remove-option-button-label": "Supprimer une option",
-      "value-placeholder": "valeur, chaîne de caractères vide par défaut"
+      "description": "Ajouter des options personnalisées en complément des résultats de la requête"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Comment trier les options statiques avec les résultats de la requête"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Valeur par défaut",

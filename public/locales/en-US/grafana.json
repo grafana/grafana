@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Add a permission",
+      "loading": "Loading permissions...",
       "no-permissions": "There are no permissions",
       "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
       "role": "Role",
       "serviceaccount": "Service Account",
       "team": "Team",
-      "title": "Permissions",
       "user": "User"
     }
   },
@@ -1655,6 +1655,15 @@
     "inspector-yaml-tab": {
       "apply": "Apply"
     },
+    "instance-details": {
+      "history-error": "Failed to load state history",
+      "history-error-desc": "Unable to fetch state transition history for this instance.",
+      "no-history": "No recent state changes",
+      "state-history": "Recent State Changes"
+    },
+    "instance-details-drawer": {
+      "title-instance-details": "Instance Details"
+    },
     "instance-match": {
       "non-matching-labels": "Non-matching labels",
       "notification-policy": "View route"
@@ -2314,6 +2323,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Data source"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": "View alert rule"
+    },
     "rule-details-expression": {
       "label-expression": "Expression"
     },
@@ -2559,6 +2571,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Alert rule has been added or updated. Changes may take up to a minute to appear on the Alert rules list view.",
         "alert-title": "Update in progress"
+      },
+      "tab": {
+        "details": "Details",
+        "query-conditions": "Query and conditions"
       },
       "title-something-wrong-evaluating-alert": "Something went wrong when evaluating this alert rule"
     },
@@ -2930,10 +2946,22 @@
     },
     "triage": {
       "alert-instances": "Alert instances",
+      "error-loading-rule": "Error loading rule",
       "firing-instances-count": "{{firingCount}} firing instances",
+      "instance-details": "Instance Details",
       "no-instances-found": "No alert instances found for rule: {ruleUID}",
       "no-labels": "No labels",
-      "pending-instances-count": "{{pendingCount}} pending instances"
+      "open-in-sidebar": "Open in sidebar",
+      "open-rule-details": "Open rule details",
+      "pending-instances-count": "{{pendingCount}} pending instances",
+      "rule-details": {
+        "subtitle": "Rule details and conditions",
+        "title": "Rule Details"
+      },
+      "rule-not-found": {
+        "description": "The requested rule could not be found.",
+        "title": "Rule not found"
+      }
     },
     "type-selector-button": {
       "add-expression": "Add expression"
@@ -3504,7 +3532,7 @@
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
       "delete-modal-invalid-title": "Cannot delete folder",
-      "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately but the selected dashboards will be marked for deletion in 30 days. Your organization administrator can restore the dashboards anytime before the 30 days expire. Folders cannot be restored.",
+      "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately. Deleted dashboards will be kept in the history for up to 12 months and can be restored by your organization administrator during that time. The history is limited to 1000 dashboards — older ones may be removed sooner if the limit is reached. Folders cannot be restored.",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
       "delete-provisioned-folder": "Delete provisioned folder",
@@ -4496,6 +4524,8 @@
     },
     "canvas-actions": {
       "add-panel": "Add panel",
+      "disabled-nested-grouping": "Grouping is limited to 2 levels",
+      "disabled-nested-tabs": "Tabs cannot be nested inside other tabs",
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
       "group-panels": "Group panels",
@@ -4504,7 +4534,8 @@
       "paste-panel": "Paste panel",
       "paste-row": "Paste row",
       "paste-tab": "Paste tab",
-      "un-group-panels": "Ungroup"
+      "un-group-panels": "Ungroup",
+      "ungroup-rows": "Ungroup rows"
     },
     "conditional-rendering": {
       "conditions": {
@@ -4572,7 +4603,7 @@
         "unsupported-object-type": "Conditional rendering not supported for this item type"
       },
       "overlay": {
-        "tooltip": "Element is hidden due to conditional rendering."
+        "tooltip": "Element is hidden by show/hide rules."
       },
       "root": {
         "title": "Show / hide rules"
@@ -4604,7 +4635,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "{{dashboardName}} dashboard"
+      "aria-label-dashboard-name": "{{dashboardName}} dashboard",
+      "label-no-dashboards-found": "No dashboards found"
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Cancel loading dashboard"
@@ -4746,8 +4778,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Values separated by comma",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "Close",
+          "modal-title": "Custom Variable",
+          "values": "Values separated by comma"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -5167,10 +5200,16 @@
       "title-row-options": "Row options"
     },
     "rows-layout": {
+      "cancel": "Cancel",
+      "continue": "Continue",
+      "convert-to": "Convert to {{name}}",
       "delete-row-text": "Deleting this row will also remove all panels. Are you sure you want to continue?",
       "delete-row-title": "Delete row?",
       "delete-row-yes": "Delete",
       "description": "Collapsable panel groups with headings",
+      "edit": {
+        "ungroup-rows": "Ungroup rows"
+      },
       "header-hidden-tooltip": "Row header only visible in edit mode",
       "name": "Rows",
       "row": {
@@ -5200,7 +5239,11 @@
       },
       "row-warning": {
         "title-not-unique": "This title is not unique"
-      }
+      },
+      "ungroup-convert-text": "All grids must be converted to the same type and positions will be lost.",
+      "ungroup-convert-title": "Convert mixed grids?",
+      "ungroup-nested-text": "This will ungroup all nested groups.",
+      "ungroup-nested-title": "Ungroup nested groups?"
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
@@ -5819,6 +5862,7 @@
         "dynamically-switch-source-multiple-panels": "Dynamically switch the data source for multiple panels",
         "group": "Add keys to group by on the fly",
         "hidden-constant-variable": "A hidden constant variable, useful for metric prefixes in dashboards you want to share",
+        "users-enter-arbitrary-strings-switch": "A variable that can be toggled on and off",
         "users-enter-arbitrary-strings-textbox": "Users can enter any arbitrary strings in a textbox",
         "values-are-static-and-defined-manually": "Values are static and defined manually",
         "values-fetched-source-query": "Values are fetched from a data source query",
@@ -5832,6 +5876,7 @@
         "group-by": "Group by",
         "interval": "Interval",
         "query": "Query",
+        "switch": "Switch",
         "textbox": "Textbox"
       }
     },
@@ -6175,6 +6220,17 @@
       "title": {
         "copy-to-clipboard-failed": "Copy to clipboard failed"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "Disabled value",
+      "disabled-value-description": "Value when switch is disabled",
+      "disabled-value-placeholder": "e.g. Off, Disabled, Inactive",
+      "enabled-value": "Enabled value",
+      "enabled-value-description": "Value when switch is enabled",
+      "enabled-value-placeholder": "e.g. On, Enabled, Active",
+      "switch-options": "Switch options",
+      "value-pair-type": "Value pair type",
+      "value-pair-type-description": "Choose the type of values for the switch states"
     },
     "text-box-variable": {
       "name-default-value": "Default value"
@@ -10355,7 +10411,7 @@
       "title": "Profiles"
     },
     "recently-deleted": {
-      "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
+      "subtitle": "Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.",
       "title": "Recently deleted"
     },
     "recorded-queries": {
@@ -11571,6 +11627,7 @@
       "active-jobs": "active jobs",
       "column-action": "Action",
       "column-duration": "Duration",
+      "column-job-id": "Job ID",
       "column-message": "Message",
       "column-started": "Started",
       "column-status": "Status",
@@ -11589,12 +11646,6 @@
       "settings": "Settings",
       "view": "View"
     },
-    "repository-health": {
-      "details": "Details:",
-      "no-errors-found": "No errors found",
-      "title-repository-is-healthy": "Repository is healthy",
-      "title-repository-is-unhealthy": "Repository is unhealthy"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Compare branch",
@@ -11609,7 +11660,7 @@
     },
     "repository-overview": {
       "checked": "Checked:",
-      "finished": "Finished:",
+      "finished": "Last successful pull:",
       "health": "Health",
       "healthy": "Healthy",
       "job-id": "Job ID:",
@@ -11618,7 +11669,6 @@
       "not-available": "N/A",
       "pull-status": "Pull status",
       "resources": "Resources",
-      "started": "Started:",
       "status": "Status:",
       "unhealthy": "Unhealthy",
       "view-folder": "View Folder",
@@ -12277,9 +12327,6 @@
       "title-disable-service-account": "Disable service account",
       "tokens": "Tokens",
       "tooltip-managed-service-account-cannot-modified": "This is a managed service account and cannot be modified"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Permissions"
     },
     "service-account-profile": {
       "information": "Information",
@@ -12954,6 +13001,10 @@
     "name-mode": "Mode",
     "name-show-line-numbers": "Show line numbers",
     "name-show-mini-map": "Show mini map"
+  },
+  "theme-playground": {
+    "label-base-theme": "Base theme",
+    "title": "Theme playground"
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -14118,14 +14169,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Add option",
-      "description": "Add custom options in addition to query results",
-      "label-placeholder": "display label",
-      "remove-option-button-label": "Remove option",
-      "value-placeholder": "value, default empty string"
+      "description": "Add custom options in addition to query results"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "How to sort static options with query results"
+    },
+    "static-options": {
+      "add-option-button-label": "Add new option",
+      "drag-and-drop": "Drag and drop to reorder",
+      "label-header": "Display text",
+      "label-placeholder": "Defaults to value",
+      "remove-option-button-label": "Remove option",
+      "value-header": "Value",
+      "value-placeholder": "Value"
     },
     "text-box-variable-editor": {
       "name-default-value": "Default value",

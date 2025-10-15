@@ -480,7 +480,7 @@ func (srv *CleanUpService) cleanupStaleLBACRules(ctx context.Context) {
 
 func (srv *CleanUpService) getLBACRulesForTeamsStillExisting(ctx context.Context, teamHeaders *datasources.TeamHTTPHeaders, orgID int64) (*datasources.TeamHTTPHeaders, int) {
 	logger := srv.log.FromContext(ctx)
-	cleanedHeaders := &datasources.TeamHTTPHeaders{Headers: make(map[string][]datasources.TeamHTTPHeader)}
+	cleanedHeaders := &datasources.TeamHTTPHeaders{Headers: make(map[string][]datasources.AccessRule)}
 	removedCount := 0
 
 	allTeams, err := srv.teamService.SearchTeams(ctx, &team.SearchTeamsQuery{

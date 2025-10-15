@@ -551,7 +551,6 @@ func cleanupPanelForSaveWithContext(panel map[string]interface{}, isNested bool)
 	// Clean up internal markers
 	delete(panel, "_originallyHadTransformations")
 	delete(panel, "_originallyHadFieldConfigCustom")
-	delete(panel, "_originallyWasGraphite")
 }
 
 // filterDefaultValues removes properties that match the default values (matches frontend's isEqual logic)
