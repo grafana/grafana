@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Resizable, ResizeCallback } from 're-resizable';
-import { startTransition, useCallback, useMemo, useState } from 'react';
+import { startTransition, useCallback, useLayoutEffect, useMemo, useState } from 'react';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { getDragStyles, useStyles2 } from '@grafana/ui';
@@ -20,25 +20,49 @@ interface LogListFieldSelectorProps {
  * FieldSelector wrapper for the LogList visualization.
  */
 export const LogListFieldSelector = ({ containerElement, dataFrames }: LogListFieldSelectorProps) => {
+  const [sidebarHeight, setSidebarHeight] = useState(220);
   const [sidebarWidth, setSidebarWidth] = useState(220);
   const { displayedFields, onClickShowField, onClickHideField, setDisplayedFields } = useLogListContext();
-
   const dragStyles = useStyles2(getDragStyles);
 
-  const getOnResize: ResizeCallback = useCallback((event, direction, ref) => {
-    const newSidebarWidth = Number(ref.style.width.slice(0, -2));
-    if (!isNaN(newSidebarWidth)) {
-      setSidebarWidth(newSidebarWidth);
-    }
+  useLayoutEffect(() => {
+    const observer = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+      if (entries.length) {
+        setSidebarHeight(entries[0].contentRect.height);
+      }
+    });
+    observer.observe(containerElement);
+    return () => observer.disconnect();
+  }, [containerElement]);
+
+  const clearFields = useCallback(() => {
+    setDisplayedFields?.([]);
+  }, [setDisplayedFields]);
+
+  const handleResize: ResizeCallback = useCallback((event, direction, ref) => {
+    setSidebarWidth(ref.clientWidth);
   }, []);
 
-  const toggleField = useCallback(() => {}, []);
+  const toggleField = useCallback(
+    (name: string) => {
+      if (displayedFields.includes(name)) {
+        onClickHideField?.(name);
+      } else {
+        onClickShowField?.(name);
+      }
+    },
+    [displayedFields, onClickHideField, onClickShowField]
+  );
 
   const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
 
   if (!onClickShowField || !onClickHideField || !setDisplayedFields) {
     console.warn('Missing required props: onClickShowField, onClickHideField, setDisplayedFields');
     return null;
+  }
+  if (sidebarHeight === 0) {
+    console.log('no height');
+    return;
   }
 
   return (
@@ -47,10 +71,17 @@ export const LogListFieldSelector = ({ containerElement, dataFrames }: LogListFi
         right: true,
       }}
       handleClasses={{ right: dragStyles.dragHandleVertical }}
-      defaultSize={{ width: sidebarWidth }}
-      onResize={getOnResize}
+      size={{ width: sidebarWidth, height: sidebarHeight }}
+      defaultSize={{ width: sidebarWidth, height: sidebarHeight }}
+      onResize={handleResize}
     >
-      <FieldSelector activeFields={displayedFields} fields={fields} toggle={toggleField} reorder={setDisplayedFields} />
+      <FieldSelector
+        activeFields={displayedFields}
+        clear={clearFields}
+        fields={fields}
+        toggle={toggleField}
+        reorder={setDisplayedFields}
+      />
     </Resizable>
   );
 };
@@ -65,13 +96,14 @@ export interface FieldWithStats {
 }
 
 export interface FieldSelectorProps {
-  fields: FieldWithStats[];
   activeFields: string[];
+  clear(): void;
+  fields: FieldWithStats[];
   toggle: (key: string) => void;
   reorder: (fields: string[]) => void;
 }
 
-export const FieldSelector = ({ activeFields, fields, reorder, toggle }: FieldSelectorProps) => {
+export const FieldSelector = ({ activeFields, clear, fields, reorder, toggle }: FieldSelectorProps) => {
   const [searchValue, setSearchValue] = useState<string>('');
   const styles = useStyles2(getStyles);
 
@@ -84,7 +116,7 @@ export const FieldSelector = ({ activeFields, fields, reorder, toggle }: FieldSe
   return (
     <section className={styles.sidebar}>
       <FieldSearch value={searchValue} onChange={onSearchInputChange} />
-      <FieldList activeFields={activeFields} clear={() => {}} fields={fields} reorder={reorder} toggle={toggle} />
+      <FieldList activeFields={activeFields} clear={clear} fields={fields} reorder={reorder} toggle={toggle} />
     </section>
   );
 };
@@ -94,6 +126,9 @@ function getStyles(theme: GrafanaTheme2) {
     sidebar: css({
       fontSize: theme.typography.pxToRem(11),
       paddingRight: theme.spacing(3),
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
     }),
   };
 }

@@ -45,7 +45,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     sidebarWrap: css({
       overflowY: 'scroll',
-      height: 'calc(100% - 50px)',
+      flex: 1,
       /* Hide scrollbar for Chrome, Safari, and Opera */
       '&::-webkit-scrollbar': {
         display: 'none',

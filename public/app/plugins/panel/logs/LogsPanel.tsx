@@ -581,6 +581,7 @@ export const LogsPanel = ({
             <LogList
               app={isCoreApp(app) ? app : CoreApp.Dashboard}
               containerElement={scrollElement}
+              dataFrames={panelData.series}
               dedupStrategy={dedupStrategy}
               detailsMode={detailsMode}
               displayedFields={displayedFields}
