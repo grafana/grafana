@@ -452,6 +452,9 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "valid-name",
+					Annotations: map[string]string{
+						"grafana.app/folder": "general", // the root folder
+					},
 				},
 			},
 		},
