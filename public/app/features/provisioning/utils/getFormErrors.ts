@@ -6,78 +6,78 @@ import { WizardFormData } from '../Wizard/types';
 import { RepositoryFormData } from '../types';
 
 export type RepositoryField = keyof WizardFormData['repository'];
-export type RepositoryFormPath = `repository.${RepositoryField}` | `repository.sync.intervalSeconds`;
-export type FormErrorTuple = [RepositoryFormPath | null, { message: string } | null];
+export type RepositoryFormPath = `repository.${RepositoryField}` | 'repository.sync.intervalSeconds';
+
+type GenericFormPath = string;
+type GenericFormErrorTuple<T extends GenericFormPath> = [T | null, { message: string } | null];
 
 /**
- * Maps API error details to form error fields for React Hook Form
- *
- * @param errors Array of error details from the API response
- * @returns Tuple with form field path and error message
+ * Normalize API field name by removing "spec." prefix.
  */
-export const getFormErrors = (errors: ErrorDetails[]): FormErrorTuple => {
-  const fieldsToValidate = [
-    'local.path',
-    'github.branch',
-    'github.url',
-    'github.path',
-    'secure.token',
-    'gitlab.branch',
-    'gitlab.url',
-    'bitbucket.branch',
-    'bitbucket.url',
-    'git.branch',
-    'git.url',
-    'sync.intervalSeconds',
-  ];
-
-  const nestedFieldMap: Record<string, RepositoryFormPath> = {
-    'sync.intervalSeconds': 'repository.sync.intervalSeconds',
-  };
-
-  const fieldMap: Record<string, RepositoryFormPath> = {
-    path: 'repository.path',
-    branch: 'repository.branch',
-    url: 'repository.url',
-    token: 'repository.token',
-  };
-
-  for (const error of errors) {
-    if (error.field) {
-      const cleanField = error.field.replace('spec.', '');
-      if (fieldsToValidate.includes(cleanField)) {
-        // Check for direct nested field mapping first
-        if (cleanField in nestedFieldMap) {
-          return [nestedFieldMap[cleanField], { message: error.detail || `Invalid ${cleanField}` }];
-        }
-
-        // Fall back to simple field mapping for non-nested fields
-        const fieldParts = cleanField.split('.');
-        const lastPart = fieldParts[fieldParts.length - 1];
-
-        if (lastPart in fieldMap) {
-          return [fieldMap[lastPart], { message: error.detail || `Invalid ${lastPart}` }];
-        }
-      }
-    }
-  }
-
-  return [null, null];
-};
+const normalizeField = (field: string): string => field.replace(/^spec\./, '');
 
 /**
- * Maps API error details to form error fields for ConfigForm
- *
- * @param errors Array of error details from the API response
- * @returns Tuple with form field path and error message
+ * Given a list of error details and a field mapping,
+ * returns the first matched form error tuple.
  */
-export type ConfigFormPath = Path<RepositoryFormData>;
-export type ConfigFormErrorTuple = [ConfigFormPath | null, { message: string } | null];
-export const getConfigFormErrors = (errors?: ErrorDetails[]): ConfigFormErrorTuple => {
+function mapErrorsToField<T extends GenericFormPath>(
+  errors: ErrorDetails[] | undefined,
+  fieldMap: Record<string, T>,
+  opts?: { allowPartial?: boolean }
+): GenericFormErrorTuple<T> {
   if (!errors || errors.length === 0) {
     return [null, null];
   }
 
+  for (const error of errors) {
+    if (!error.field) {
+      continue;
+    }
+
+    const normalized = normalizeField(error.field);
+    const segments = normalized.split('.');
+    const lastPart = segments[segments.length - 1];
+
+    // Direct full match (e.g. "sync.intervalSeconds")
+    if (normalized in fieldMap) {
+      return [fieldMap[normalized], { message: error.detail || `Invalid ${normalized}` }];
+    }
+
+    // Partial match by last key (e.g. "url" -> "repository.url")
+    if (opts?.allowPartial && lastPart in fieldMap) {
+      return [fieldMap[lastPart], { message: error.detail || `Invalid ${lastPart}` }];
+    }
+  }
+
+  return [null, null];
+}
+
+// Wizard form errors
+export type FormErrorTuple = GenericFormErrorTuple<RepositoryFormPath>;
+export const getFormErrors = (errors: ErrorDetails[]): FormErrorTuple => {
+  const fieldMap: Record<string, RepositoryFormPath> = {
+    'local.path': 'repository.path',
+    'github.branch': 'repository.branch',
+    'github.url': 'repository.url',
+    'github.path': 'repository.path',
+    'secure.token': 'repository.token',
+    'gitlab.branch': 'repository.branch',
+    'gitlab.url': 'repository.url',
+    'bitbucket.branch': 'repository.branch',
+    'bitbucket.url': 'repository.url',
+    'git.branch': 'repository.branch',
+    'git.url': 'repository.url',
+    'sync.intervalSeconds': 'repository.sync.intervalSeconds',
+  };
+
+  return mapErrorsToField(errors, fieldMap, { allowPartial: true });
+};
+
+// Config form errors
+export type ConfigFormPath = Path<RepositoryFormData>;
+export type ConfigFormErrorTuple = GenericFormErrorTuple<ConfigFormPath>;
+
+export const getConfigFormErrors = (errors?: ErrorDetails[]): ConfigFormErrorTuple => {
   const fieldMap: Record<string, ConfigFormPath> = {
     path: 'path',
     branch: 'branch',
@@ -87,22 +87,5 @@ export const getConfigFormErrors = (errors?: ErrorDetails[]): ConfigFormErrorTup
     'sync.intervalSeconds': 'sync.intervalSeconds',
   };
 
-  for (const error of errors) {
-    if (error.field) {
-      const cleanField = error.field.replace('spec.', '').split('.').pop(); // Get last part
-      const fullField = error.field.replace('spec.', '');
-
-      // Check if it's a nested field like sync.intervalSeconds
-      if (fullField in fieldMap) {
-        return [fieldMap[fullField], { message: error.detail || `Invalid ${fullField}` }];
-      }
-
-      // Otherwise just use the last part
-      if (cleanField && cleanField in fieldMap) {
-        return [fieldMap[cleanField], { message: error.detail || `Invalid ${cleanField}` }];
-      }
-    }
-  }
-
-  return [null, null];
+  return mapErrorsToField(errors, fieldMap, { allowPartial: true });
 };

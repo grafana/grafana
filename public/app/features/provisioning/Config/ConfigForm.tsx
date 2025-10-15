@@ -142,15 +142,16 @@ export function ConfigForm({ data }: ConfigFormProps) {
       await submitData(spec, form.token);
     } catch (err) {
       if (isFetchError(err)) {
-        const [field, errorMessage] = getConfigFormErrors(err.data.errors);
+        const [field, errorMessage] = getConfigFormErrors(err.data?.errors);
+
         if (field && errorMessage) {
           setError(field, errorMessage);
+          return;
         }
       }
-      getAppEvents().publish({
-        type: AppEvents.alertError.name,
-        payload: [t('provisioning.wizard-content.error-save-repository-setting', 'Failed to save repository setting')],
-      });
+
+      // fallback for non-fetch errors or unmapped fields
+      defaultAlert();
     } finally {
       setIsLoading(false);
     }
@@ -394,3 +395,10 @@ export function ConfigForm({ data }: ConfigFormProps) {
     </form>
   );
 }
+
+const defaultAlert = () => {
+  getAppEvents().publish({
+    type: AppEvents.alertError.name,
+    payload: [t('provisioning.wizard-content.error-save-repository-setting', 'Failed to save repository setting')],
+  });
+};
