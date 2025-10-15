@@ -41,9 +41,11 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 		if kind.GroupResource() == resources.DashboardResource.GroupResource() {
 			var v2clientAlphaV1, v2clientAlphaV2 dynamic.ResourceInterface
 			shim = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error) {
-				failed, _, _ := unstructured.NestedBool(item.Object, "status", "conversion", "failed")
-				if failed {
-					storedVersion, _, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
+				// Check if there's a stored version in the conversion status.
+				// This indicates the original API version the dashboard was created with,
+				// which should be preserved during export regardless of whether conversion succeeded or failed.
+				storedVersion, _, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
+				if storedVersion != "" {
 					// For v2 we need to request the original version
 					if strings.HasPrefix(storedVersion, "v2alpha1") {
 						if v2clientAlphaV1 == nil {
