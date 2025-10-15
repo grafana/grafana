@@ -192,7 +192,22 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
-	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
+	teamBindingLegacyStore := team.NewLegacyBindingStore(b.store, enableAuthnMutation)
+	storage[teamBindingResource.StoragePath()] = teamBindingLegacyStore
+
+	if b.enableDualWriter {
+		teamBindingStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamBindingResource, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		teamBindingDW, err := opts.DualWriteBuilder(teamBindingResource.GroupResource(), teamBindingLegacyStore, teamBindingStore)
+		if err != nil {
+			return err
+		}
+
+		storage[teamBindingResource.StoragePath()] = teamBindingDW
+	}
 
 	// User store registration
 	userResource := iamv0.UserResourceInfo
@@ -361,6 +376,8 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			return serviceaccount.ValidateOnCreate(ctx, typedObj)
 		case *iamv0.Team:
 			return team.ValidateOnCreate(ctx, typedObj)
+		case *iamv0.TeamBinding:
+			return team.ValidateOnBindingCreate(ctx, typedObj)
 		case *iamv0.ResourcePermission:
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
 		}
