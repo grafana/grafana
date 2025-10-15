@@ -1,7 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Can create a new grafana managed alert using simplified routing allows selecting a contact point 1`] = `[]`;
-
 exports[`Can create a new grafana managed alert using simplified routing can create new grafana managed alert when using simplified routing and selecting a contact point 1`] = `
 [
   {
