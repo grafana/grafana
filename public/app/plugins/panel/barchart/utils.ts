@@ -759,18 +759,30 @@ export function deepCopy<T>(obj: T, seen = new Map<any, any>()): T {
   return result;
 }
 
-export function mergeLegendData(info: any, markerData: Field[]) {
-  const legendData: any = { ...info };
+export function mergeLegendData(info: BarSeries, markerData: Field[], markers: Marker[]) {
+  const legendData: BarSeries = { ...info };
   legendData.series = info.series.map((s: any) => ({ ...s }));
 
-  const markerFields = (markerData ?? []).flatMap((m: any) => (Array.isArray(m?.fields) ? m.fields : [m]));
+  const markerFields: Field[] = [];
+  for (const m of markers) {
+    const fi = markerData.find((f) => f.name === m.dataField);
+    if (fi) {
+      const f = { ...fi };
+      f.config = {
+        ...(f.config ?? {}),
+        color: { ...(f.config?.color ?? {}), mode: FieldColorModeId.Fixed, fixedColor: m.opts.color },
+      };
+      markerFields.push(f);
+    }
+  }
 
   legendData.series[0].fields = [...(info.series[0]?.fields ?? []), ...markerFields];
 
-  if (legendData.color) {
-    const baseColors = Array.isArray(info.color?.values) ? [...info.color.values] : [];
+  // Only modify legendData.color when an original color field exists so required Field properties remain
+  if (info.color) {
+    const baseColors = Array.isArray(info.color.values) ? [...info.color.values] : [];
     markerFields.forEach((f: any) => baseColors.push(f?.config?.color ?? null));
-    legendData.color = { ...(info.color ?? {}), values: baseColors };
+    legendData.color = { ...(info.color as Field), values: baseColors };
   }
   return legendData;
 }

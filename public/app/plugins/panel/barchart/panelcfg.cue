@@ -52,6 +52,8 @@ composableKinds: PanelCfg: {
 					showValue: common.VisibilityMode & (*"auto" | _)
 					// Controls the width of bars. 1 = Max width, 0 = Min width.
 					barWidth: float64 & >=0 & <=1 | *0.97
+					// Controls whether markers are shown in legend
+					showMarkersInLegend: bool
 					//Sets visual markers on each bar of a targeted field, based on y values provided by the data field
 					markers: [...{
 						// Ids the marker group, generated automatically

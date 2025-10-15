@@ -157,7 +157,10 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     );
   }
 
-  const legendData: any = mergeLegendData(info, markerData);
+  const legendData = useMemo(
+    () => (props.options.showMarkersInLegend ? mergeLegendData(info, markerData, markers) : info),
+    [props.options.showMarkersInLegend, info, markerData, markers]
+  );
 
   const legendComp =
     legend.showLegend && hasVisibleLegendSeries(builder, info.series!) ? (

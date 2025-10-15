@@ -78,6 +78,10 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    */
   orientation: common.VizOrientation;
   /**
+   * Controls whether markers are shown in legend
+   */
+  showMarkersInLegend: boolean;
+  /**
    * This controls whether values are shown on top or to the left of bars.
    */
   showValue: common.VisibilityMode;
