@@ -185,12 +185,7 @@ func NewMapperRegistry() MapperRegistry {
 				resource:  "roles",
 				attribute: "uid",
 				verbMapping: map[string]string{
-					utils.VerbCreate:           "roles:write",
 					utils.VerbGet:              "roles:read",
-					utils.VerbUpdate:           "roles:write",
-					utils.VerbPatch:            "roles:write",
-					utils.VerbDelete:           "roles:delete",
-					utils.VerbDeleteCollection: "roles:delete",
 					utils.VerbList:             "roles:read",
 					utils.VerbWatch:            "roles:read",
 				},
