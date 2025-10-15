@@ -124,6 +124,13 @@ func newDashboardTranslation() translation {
 	actionSetMapping := make(map[string][]string)
 	for verb, rbacAction := range dashTranslation.verbMapping {
 		var dashActionSets []string
+
+		// Dashboard creation is only part of folder action sets, so we handle it separately
+		if rbacAction == "dashboards:create" {
+			dashActionSets = append(dashActionSets, "folders:edit")
+			dashActionSets = append(dashActionSets, "folders:admin")
+		}
+
 		if slices.Contains(ossaccesscontrol.DashboardViewActions, rbacAction) {
 			dashActionSets = append(dashActionSets, "dashboards:view")
 			dashActionSets = append(dashActionSets, "folders:view")
