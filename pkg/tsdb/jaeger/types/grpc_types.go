@@ -33,9 +33,9 @@ type ProtobufAny struct {
 	Value   string `json:"value"`
 }
 type GrpcTracesResult struct {
-	ResourceSpans []GrpcRresourceSpans `json:"resourceSpans"`
+	ResourceSpans []GrpcResourceSpans `json:"resourceSpans"`
 }
-type GrpcRresourceSpans struct {
+type GrpcResourceSpans struct {
 	Resource   GrpcResource     `json:"resource"`
 	ScopeSpans []GrpcScopeSpans `json:"scopeSpans"`
 	SchemaURL  string           `json:"schemaUrl"`
@@ -120,4 +120,10 @@ type GrpcArrayValue struct {
 
 type KeyValueList struct {
 	Values []GrpcKeyValue `json:"values"`
+}
+
+type KeyValueType struct {
+	Key   string      `json:"key"`
+	Type  string      `json:"type"`
+	Value interface{} `json:"value"`
 }

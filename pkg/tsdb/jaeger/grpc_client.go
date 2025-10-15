@@ -1,6 +1,7 @@
 package jaeger
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -80,18 +81,90 @@ func (j *JaegerClient) GrpcSearch(query *JaegerQuery, start, end time.Time) (*da
 		}
 	}()
 
-	var result types.GrpcTracesResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	var response types.GrpcTracesResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("failed to decode Jaeger response: %w", err)
 	}
 
-	if result.Error.HttpCode != 0 && result.Error.HttpCode != http.StatusOK {
-		err := backend.DownstreamError(fmt.Errorf("request failed %s", result.Error.Message))
-		if backend.ErrorSourceFromHTTPStatus(result.Error.HttpCode) == backend.ErrorSourceDownstream {
+	if response.Error.HttpCode != 0 && response.Error.HttpCode != http.StatusOK {
+		err := backend.DownstreamError(fmt.Errorf("request failed %s", response.Error.Message))
+		if backend.ErrorSourceFromHTTPStatus(response.Error.HttpCode) == backend.ErrorSourceDownstream {
 			return nil, backend.DownstreamError(err)
 		}
 		return nil, err
 	}
-	frames := utils.TransformGrpcSearchResponse(result.Result, j.settings.UID, j.settings.Name, query.Limit)
+	frames := utils.TransformGrpcSearchResponse(response.Result, j.settings.UID, j.settings.Name, query.Limit)
 	return frames, nil
+}
+
+func (j *JaegerClient) GrpcTrace(ctx context.Context, traceID string, start, end time.Time, refID string) (*data.Frame, error) {
+	logger := j.logger.FromContext(ctx)
+	var response types.GrpcTracesResponse
+
+	if traceID == "" {
+		return nil, backend.DownstreamError(fmt.Errorf("traceID is empty"))
+	}
+
+	traceUrl, err := url.JoinPath(j.url, "/api/v3/traces", url.QueryEscape(traceID))
+	if err != nil {
+		return nil, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+	}
+
+	var jsonData types.SettingsJSONData
+	if err := json.Unmarshal(j.settings.JSONData, &jsonData); err != nil {
+		return nil, backend.DownstreamError(fmt.Errorf("failed to parse settings JSON data: %w", err))
+	}
+
+	// Add time parameters if trace ID time is enabled and time range is provided
+	if jsonData.TraceIdTimeParams.Enabled {
+		if start.UnixMicro() > 0 || end.UnixMicro() > 0 {
+			parsedURL, err := url.Parse(traceUrl)
+			if err != nil {
+				return nil, backend.DownstreamError(fmt.Errorf("failed to parse url: %w", err))
+			}
+
+			// jaeger will not be able to process the request if the time is encoded, all other parameters are encoded except for the start and end time
+			parsedURL.RawQuery += fmt.Sprintf("start_time=%s&end_time=%s", start.Format(time.RFC3339Nano), end.Format(time.RFC3339Nano))
+			traceUrl = parsedURL.String()
+		}
+	}
+
+	res, err := j.httpClient.Get(traceUrl)
+	if err != nil {
+		if backend.IsDownstreamHTTPError(err) {
+			return nil, backend.DownstreamError(err)
+		}
+		return nil, err
+	}
+
+	defer func() {
+		if err = res.Body.Close(); err != nil {
+			logger.Error("Failed to close response body", "error", err)
+		}
+	}()
+
+	if res != nil && res.StatusCode/100 != 2 {
+		err := backend.DownstreamError(fmt.Errorf("request failed: %s", res.Status))
+		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
+			return nil, backend.DownstreamError(err)
+		}
+		return nil, err
+	}
+
+	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+
+	if response.Error.HttpCode != 0 && response.Error.HttpCode != http.StatusOK {
+		err := backend.DownstreamError(fmt.Errorf("request failed %s", response.Error.Message))
+		if backend.ErrorSourceFromHTTPStatus(response.Error.HttpCode) == backend.ErrorSourceDownstream {
+			return nil, backend.DownstreamError(err)
+		}
+		return nil, err
+	}
+
+	// We only support one trace at a time
+	// this is how it was implemented in the frontend before
+	frame := utils.TransformGrpcTraceResponse(response.Result.ResourceSpans[0], refID)
+	return frame, err
 }

@@ -69,7 +69,13 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 
 		// No query type means traceID query
 		if query.QueryType == "" {
-			frame, err := dsInfo.JaegerClient.Trace(ctx, query.Query, q.TimeRange.From.UnixMilli(), q.TimeRange.To.UnixMilli(), q.RefID)
+			var frame *data.Frame
+			var err error
+			if useGrpc {
+				frame, err = dsInfo.JaegerClient.GrpcTrace(ctx, query.Query, q.TimeRange.From, q.TimeRange.To, q.RefID)
+			} else {
+				frame, err = dsInfo.JaegerClient.Trace(ctx, query.Query, q.TimeRange.From.UnixMilli(), q.TimeRange.To.UnixMilli(), q.RefID)
+			}
 			if err != nil {
 				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
 				continue

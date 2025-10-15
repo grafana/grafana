@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
@@ -111,6 +112,177 @@ func TransformGrpcSearchResponse(response types.GrpcTracesResult, dsUID string, 
 	return frame
 }
 
+func TransformGrpcTraceResponse(trace types.GrpcResourceSpans, refID string) *data.Frame {
+	frame := data.NewFrame(refID,
+		data.NewField("traceID", nil, []string{}),
+		data.NewField("spanID", nil, []string{}),
+		data.NewField("parentSpanID", nil, []*string{}),
+		data.NewField("operationName", nil, []string{}),
+		data.NewField("serviceName", nil, []string{}),
+		data.NewField("serviceTags", nil, []json.RawMessage{}),
+		data.NewField("startTime", nil, []float64{}),
+		data.NewField("duration", nil, []float64{}),
+		data.NewField("tags", nil, []json.RawMessage{}),
+	)
+
+	// Set metadata for trace visualization
+	frame.Meta = &data.FrameMeta{
+		PreferredVisualization: "trace",
+		Custom: map[string]interface{}{
+			"traceFormat": "jaeger",
+		},
+	}
+
+	// Process each span in the trace
+	scope := trace.ScopeSpans[0]
+	for _, span := range scope.Spans {
+		parentSpanID := span.ParentSpanID
+
+		// Get service name and tags
+		serviceName := getAttribute(trace.Resource.Attributes, "service.name").StringValue
+		serviceTags := json.RawMessage{}
+		processedResAttributes := processAttributesIntoTags(trace.Resource.Attributes)
+		tagsMarshaled, err := json.Marshal(processedResAttributes)
+		if err == nil {
+			serviceTags = json.RawMessage(tagsMarshaled)
+		}
+
+		// Convert tags
+		tags := json.RawMessage{}
+		processedSpanAttributes := processAttributesIntoTags(span.Attributes)
+		// add otel attributes scope name, scope version and span kind
+		if scope.Scope.Name != "" {
+			processedSpanAttributes = append(processedSpanAttributes, types.KeyValueType{
+				Key:   "otel.scope.name",
+				Value: scope.Scope.Name,
+				Type:  "string",
+			})
+		}
+
+		if scope.Scope.Version != "" {
+			processedSpanAttributes = append(processedSpanAttributes, types.KeyValueType{
+				Key:   "otel.scope.version",
+				Value: scope.Scope.Version,
+				Type:  "string",
+			})
+		}
+
+		processedSpanAttributes = append(processedSpanAttributes, types.KeyValueType{
+			Key:   "span.kind",
+			Value: processSpanKind(span.Kind),
+			Type:  "string",
+		})
+		tagsMarshaled, err = json.Marshal(processedSpanAttributes)
+		if err == nil {
+			tags = json.RawMessage(tagsMarshaled)
+		}
+
+		// convert start time and calculate duration
+		startTimeFloat, startErr := strconv.ParseFloat(span.StartTimeUnixNano, 64)
+		endTimeFloat, endErr := strconv.ParseFloat(span.EndTimeUnixNano, 64)
+		duration := float64(0)
+		if startErr == nil && endErr == nil {
+			duration = (endTimeFloat - startTimeFloat) / 1000000 // convert to milliseconds
+		}
+
+		// Add span to frame
+		frame.AppendRow(
+			span.TraceID,
+			span.SpanID,
+			&parentSpanID,
+			span.Name,
+			serviceName,
+			serviceTags,
+			startTimeFloat/1000000, // Convert nanoseconds to milliseconds
+			duration,
+			tags,
+		)
+	}
+
+	return frame
+}
+
+func processAttributesIntoTags(attributes []types.GrpcKeyValue) []types.KeyValueType {
+	tags := []types.KeyValueType{}
+
+	for _, att := range attributes {
+		if att.Value.StringValue != "" {
+			tags = append(tags, types.KeyValueType{
+				Key:   att.Key,
+				Value: att.Value.StringValue,
+				Type:  "string",
+			})
+			continue
+		}
+
+		if att.Value.BoolValue != "" {
+			boolVal, err := strconv.ParseBool(att.Value.BoolValue)
+			if err != nil {
+				continue
+			}
+			tags = append(tags, types.KeyValueType{
+				Key:   att.Key,
+				Value: boolVal,
+				Type:  "boolean",
+			})
+			continue
+		}
+
+		if att.Value.IntValue != "" {
+			intVal, err := strconv.Atoi(att.Value.IntValue)
+			if err != nil {
+				continue
+			}
+			tags = append(tags, types.KeyValueType{
+				Key:   att.Key,
+				Value: intVal,
+				Type:  "int64",
+			})
+			continue
+		}
+
+		if att.Value.DoubleValue != "" {
+			intVal, err := strconv.Atoi(att.Value.DoubleValue)
+			if err != nil {
+				continue
+			}
+			tags = append(tags, types.KeyValueType{
+				Key:   att.Key,
+				Value: float64(intVal),
+				Type:  "float64",
+			})
+			continue
+		}
+
+		if len(att.Value.ArrayValue.Values) > 0 {
+			tags = append(tags, types.KeyValueType{
+				Key:   att.Key,
+				Value: att.Value.ArrayValue.Values,
+			})
+			continue
+		}
+
+		if len(att.Value.KvListValue.Values) > 0 {
+			tags = append(tags, types.KeyValueType{
+				Key:   att.Key,
+				Value: att.Value.KvListValue.Values,
+			})
+			continue
+		}
+
+		if att.Value.BytesValue != "" {
+			tags = append(tags, types.KeyValueType{
+				Key:   att.Key,
+				Value: att.Value.BytesValue,
+				Type:  "bytes",
+			})
+			continue
+		}
+
+	}
+	return tags
+}
+
 func getAttribute(attributes []types.GrpcKeyValue, attName string) types.GrpcAnyValue {
 	var attValue types.GrpcAnyValue
 	for _, att := range attributes {
@@ -120,4 +292,23 @@ func getAttribute(attributes []types.GrpcKeyValue, attName string) types.GrpcAny
 	}
 
 	return attValue
+}
+
+func processSpanKind(kind int64) string {
+	switch kind {
+	case 0:
+		return "unspecified"
+	case 1:
+		return "internal"
+	case 2:
+		return "server"
+	case 3:
+		return "client"
+	case 4:
+		return "producer"
+	case 5:
+		return "consumer"
+	default:
+		return "unspecified"
+	}
 }

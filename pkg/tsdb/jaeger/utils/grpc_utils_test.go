@@ -16,7 +16,7 @@ func TestTransformGrpcSearchResponse(t *testing.T) {
 
 	t.Run("single_trace", func(t *testing.T) {
 		response := types.GrpcTracesResult{
-			ResourceSpans: []types.GrpcRresourceSpans{
+			ResourceSpans: []types.GrpcResourceSpans{
 				{
 					Resource: types.GrpcResource{
 						Attributes: []types.GrpcKeyValue{
@@ -51,7 +51,7 @@ func TestTransformGrpcSearchResponse(t *testing.T) {
 
 	t.Run("multiple_traces", func(t *testing.T) {
 		response := types.GrpcTracesResult{
-			ResourceSpans: []types.GrpcRresourceSpans{
+			ResourceSpans: []types.GrpcResourceSpans{
 				{
 					Resource: types.GrpcResource{
 						Attributes: []types.GrpcKeyValue{
