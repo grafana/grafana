@@ -261,7 +261,11 @@
           // tenant-specific config
           // TODO split this into separate API calls
           const { navTree, settings, user } = await loadBootData();
-          window.grafanaBootData.settings = settings;
+
+          window.grafanaBootData.settings = {
+            ...settings,
+            ...window.grafanaBootData.settings, // preserve frontend-service settings
+          }
           window.grafanaBootData.navTree = navTree;
           window.grafanaBootData.user = user;
 

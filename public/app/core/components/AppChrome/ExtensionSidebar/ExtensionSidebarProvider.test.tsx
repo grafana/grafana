@@ -128,7 +128,7 @@ describe('ExtensionSidebarProvider', () => {
   });
 
   it('should load docked component from storage if available', () => {
-    const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
+    const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent.title);
     (store.get as jest.Mock).mockReturnValue(componentId);
 
     render(
@@ -142,7 +142,7 @@ describe('ExtensionSidebarProvider', () => {
   });
 
   it('should update storage when docked component changes', () => {
-    const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
+    const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent.title);
 
     const TestComponentWithActions = () => {
       const context = useExtensionSidebarContext();
@@ -298,7 +298,7 @@ describe('ExtensionSidebarProvider', () => {
   });
 
   it('should close sidebar when receiving a CloseExtensionSidebarEvent', () => {
-    const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
+    const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent.title);
 
     const TestComponentWithProps = () => {
       const context = useExtensionSidebarContext();
@@ -566,7 +566,7 @@ describe('ExtensionSidebarProvider', () => {
 describe('Utility Functions', () => {
   describe('getComponentIdFromComponentMeta', () => {
     it('should create a valid component ID', () => {
-      const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
+      const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent.title);
 
       expect(componentId).toBe(
         JSON.stringify({ pluginId: mockPluginMeta.pluginId, componentTitle: mockComponent.title })
@@ -576,7 +576,7 @@ describe('Utility Functions', () => {
 
   describe('getComponentMetaFromComponentId', () => {
     it('should parse a valid component ID', () => {
-      const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
+      const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent.title);
 
       const meta = getComponentMetaFromComponentId(componentId);
       expect(meta).toEqual({

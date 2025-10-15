@@ -90,7 +90,7 @@ func ProvideAuthZClient(
 			// When running in-proc we get a injection cycle between
 			// authz client, resource client and apiserver so we need to use
 			// package level function to get rest config
-			store.NewAPIFolderStore(tracer, restConfig.GetRestConfig),
+			store.NewAPIFolderStore(tracer, reg, restConfig.GetRestConfig),
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
@@ -224,7 +224,7 @@ func RegisterRBACAuthZService(
 	if cfg.Folder.Host == "" {
 		folderStore = store.NewSQLFolderStore(db, tracer)
 	} else {
-		folderStore = store.NewAPIFolderStore(tracer, func(ctx context.Context) (*rest.Config, error) {
+		folderStore = store.NewAPIFolderStore(tracer, reg, func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{
 				Host: cfg.Folder.Host,
 				WrapTransport: func(rt http.RoundTripper) http.RoundTripper {

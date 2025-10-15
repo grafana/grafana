@@ -1323,9 +1323,7 @@ func (n IntegrationMutators) WithValidConfig(integrationType schema.IntegrationT
 			panic(fmt.Sprintf("unknown integration type: %s", integrationType))
 		}
 		config := ncfg.GetRawNotifierConfig(c.Name)
-		typeSchema, _ := alertingNotify.GetSchemaForIntegration(integrationType)
-		integrationConfig, _ := IntegrationConfigFromSchema(typeSchema, schema.V1)
-		c.Config = integrationConfig
+		c.Config, _ = alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
 
 		var settings map[string]any
 		_ = json.Unmarshal(config.Settings, &settings)
@@ -1342,11 +1340,11 @@ func (n IntegrationMutators) WithValidConfig(integrationType schema.IntegrationT
 
 func (n IntegrationMutators) WithInvalidConfig(integrationType schema.IntegrationType) Mutator[Integration] {
 	return func(c *Integration) {
-		typeSchema, ok := alertingNotify.GetSchemaForIntegration(integrationType)
+		var ok bool
+		c.Config, ok = alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
 		if !ok {
 			panic(fmt.Sprintf("unknown integration type: %s", integrationType))
 		}
-		c.Config, _ = IntegrationConfigFromSchema(typeSchema, schema.V1)
 		c.Settings = map[string]interface{}{}
 		c.SecureSettings = map[string]string{}
 		if integrationType == webex.Type {

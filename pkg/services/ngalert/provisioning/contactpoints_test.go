@@ -461,9 +461,9 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 			require.NoError(t, err)
 
 		FIELDS_ASSERT:
-			for _, field := range expectedFields {
+			for _, path := range expectedFields {
+				field := path.String()
 				assert.Contains(t, secureFields, field)
-				path := strings.Split(field, ".")
 				var expectedValue any = integration.Settings
 				for _, segment := range path {
 					v, ok := expectedValue.(map[string]any)
