@@ -21,7 +21,7 @@ interface LogListFieldSelectorProps {
  */
 export const LogListFieldSelector = ({ containerElement, dataFrames }: LogListFieldSelectorProps) => {
   const [sidebarWidth, setSidebarWidth] = useState(220);
-  const { onClickShowField, onClickHideField, setDisplayedFields } = useLogListContext();
+  const { displayedFields, onClickShowField, onClickHideField, setDisplayedFields } = useLogListContext();
 
   const dragStyles = useStyles2(getDragStyles);
 
@@ -31,6 +31,8 @@ export const LogListFieldSelector = ({ containerElement, dataFrames }: LogListFi
       setSidebarWidth(newSidebarWidth);
     }
   }, []);
+
+  const toggleField = useCallback(() => {}, []);
 
   const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
 
@@ -48,12 +50,7 @@ export const LogListFieldSelector = ({ containerElement, dataFrames }: LogListFi
       defaultSize={{ width: sidebarWidth }}
       onResize={getOnResize}
     >
-      <FieldSelector
-        fields={fields}
-        hideField={onClickHideField}
-        showField={onClickShowField}
-        setFields={setDisplayedFields}
-      />
+      <FieldSelector activeFields={displayedFields} fields={fields} toggle={toggleField} reorder={setDisplayedFields} />
     </Resizable>
   );
 };
@@ -69,12 +66,12 @@ export interface FieldWithStats {
 
 export interface FieldSelectorProps {
   fields: FieldWithStats[];
-  hideField: (key: string) => void;
-  setFields: (displayedFields: string[]) => void;
-  showField: (key: string) => void;
+  activeFields: string[];
+  toggle: (key: string) => void;
+  reorder: (fields: string[]) => void;
 }
 
-export const FieldSelector = ({ showField, hideField, setFields }: FieldSelectorProps) => {
+export const FieldSelector = ({ activeFields, fields, reorder, toggle }: FieldSelectorProps) => {
   const [searchValue, setSearchValue] = useState<string>('');
   const styles = useStyles2(getStyles);
 
@@ -87,13 +84,7 @@ export const FieldSelector = ({ showField, hideField, setFields }: FieldSelector
   return (
     <section className={styles.sidebar}>
       <FieldSearch value={searchValue} onChange={onSearchInputChange} />
-      <FieldList
-        reorderColumn={() => {}}
-        toggleColumn={() => {}}
-        filteredColumnsWithMeta={{}}
-        columnsWithMeta={{}}
-        clear={() => {}}
-      />
+      <FieldList activeFields={activeFields} clear={() => {}} fields={fields} reorder={reorder} toggle={toggle} />
     </section>
   );
 };

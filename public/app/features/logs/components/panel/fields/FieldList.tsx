@@ -3,18 +3,20 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
-import { FieldNameMeta } from 'app/features/explore/Logs/LogsTableWrap';
 
-import { LogsTableActiveFields } from './LogsTableActiveFields';
-import { LogsTableAvailableFields } from './LogsTableAvailableFields';
+import { ActiveFields } from './ActiveFields';
+import { FieldWithStats } from './FieldSelector';
+//import { LogsTableAvailableFields } from './LogsTableAvailableFields';
 
-export const FieldList = (props: {
-  toggleColumn: (columnName: string) => void;
-  filteredColumnsWithMeta: Record<string, FieldNameMeta> | undefined;
-  columnsWithMeta: Record<string, FieldNameMeta>;
+interface Props {
+  activeFields: string[];
   clear: () => void;
-  reorderColumn: (oldIndex: number, newIndex: number) => void;
-}) => {
+  fields: FieldWithStats[];
+  reorder: (columns: string[]) => void;
+  toggle: (columnName: string) => void;
+}
+
+export const FieldList = ({ activeFields, clear, fields, reorder, toggle }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
@@ -24,26 +26,20 @@ export const FieldList = (props: {
       <>
         <div className={styles.columnHeader}>
           <Trans i18nKey="explore.logs-table-multi-select.selected-fields">Selected fields</Trans>
-          <button onClick={props.clear} className={styles.columnHeaderButton}>
+          <button onClick={clear} className={styles.columnHeaderButton}>
             <Trans i18nKey="explore.logs-table-multi-select.reset">Reset</Trans>
           </button>
         </div>
-        <LogsTableActiveFields
-          reorderColumn={props.reorderColumn}
-          toggleColumn={props.toggleColumn}
-          labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
-          valueFilter={(value) => props.columnsWithMeta[value]?.active ?? false}
-          id={'selected-fields'}
-        />
+        <ActiveFields activeFields={activeFields} fields={fields} reorder={reorder} toggle={toggle} />
 
         <div className={styles.columnHeader}>
           <Trans i18nKey="explore.logs-table-multi-select.fields">Fields</Trans>
         </div>
-        <LogsTableAvailableFields
-          toggleColumn={props.toggleColumn}
-          labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
+        {/*<LogsTableAvailableFields
+          toggleColumn={toggleColumn}
+          labels={filteredColumnsWithMeta ?? columnsWithMeta}
           valueFilter={(value) => !props.columnsWithMeta[value]?.active}
-        />
+        />*/}
       </>
     </div>
   );

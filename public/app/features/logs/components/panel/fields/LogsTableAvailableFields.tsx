@@ -5,7 +5,7 @@ import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from 'app/features/logs/component
 
 import { getLogsFieldsStyles } from './LogsTableActiveFields';
 import { LogsTableEmptyFields } from './LogsTableEmptyFields';
-import { LogsTableNavField } from './LogsTableNavField';
+import { LogsTableNavField } from './Field';
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
