@@ -420,7 +420,7 @@ describe('ExtensionSidebarProvider', () => {
   });
 
   it('should toggle to different component when receiving ToggleExtensionSidebarEvent for different component', () => {
-    const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
+    const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent.title);
     (store.get as jest.Mock).mockReturnValue(componentId);
 
     const TestComponentWithProps = () => {
