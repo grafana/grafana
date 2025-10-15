@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mysql/sqleng"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var updateGoldenFiles = false
@@ -34,7 +33,9 @@ var updateGoldenFiles = false
 // preconfigured MySQL server suitable for running these tests.
 func TestIntegrationMySQLSnapshots(t *testing.T) {
 	// the logic in this function is copied from mysql_tests.go
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 
 	shouldRunTest := func() bool {
 		testDbName, present := os.LookupEnv("GRAFANA_TEST_DB")
