@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
+import { render } from 'test/test-utils';
 
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
@@ -18,6 +19,9 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   locationService: {
     partial: jest.fn(),
+    getHistory: jest.fn(() => ({
+      listen: jest.fn(),
+    })),
   },
   reportInteraction: jest.fn(),
 }));
@@ -34,6 +38,10 @@ jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => 
     isInstanceManaged: false,
     isLoading: false,
   })),
+}));
+
+jest.mock('../DashboardLibrary/DashboardLibrarySection', () => ({
+  DashboardLibrarySection: () => <div data-testid="dashboard-library-section">Dashboard Library Section</div>,
 }));
 
 const mockUseGetResourceRepositoryView = jest.mocked(
@@ -152,6 +160,44 @@ it('renders with buttons disabled when repository is read-only', () => {
   expect(screen.getByRole('button', { name: 'Add visualization' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Import dashboard' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Add library panel' })).toBeDisabled();
+});
+
+describe('DashboardLibrarySection feature toggle', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseGetResourceRepositoryView.mockReturnValue({
+      isReadOnlyRepo: false,
+      isInstanceManaged: false,
+      isLoading: false,
+    });
+  });
+
+  it('renders DashboardLibrarySection when feature toggle is enabled and dashboardLibraryDatasourceUid param exists', () => {
+    config.featureToggles.dashboardLibrary = true;
+    mockSearchParams.set('dashboardLibraryDatasourceUid', 'test-uid');
+
+    setup();
+
+    expect(screen.getByTestId('dashboard-library-section')).toBeInTheDocument();
+  });
+
+  it('does not render DashboardLibrarySection when feature toggle is disabled', () => {
+    config.featureToggles.dashboardLibrary = false;
+    mockSearchParams.delete('dashboardLibraryDatasourceUid');
+
+    setup();
+
+    expect(screen.queryByTestId('dashboard-library-section')).not.toBeInTheDocument();
+  });
+
+  it('does not render DashboardLibrarySection when feature toggle is enabled but no dashboardLibraryDatasourceUid param', () => {
+    config.featureToggles.dashboardLibrary = true;
+    mockSearchParams.delete('dashboardLibraryDatasourceUid');
+
+    setup();
+
+    expect(screen.queryByTestId('dashboard-library-section')).not.toBeInTheDocument();
+  });
 });
 
 describe('wrapperMaxWidth CSS class', () => {

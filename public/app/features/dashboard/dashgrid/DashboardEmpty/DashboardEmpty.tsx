@@ -10,6 +10,8 @@ import { Button, useStyles2, Text, Box, Stack, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
+import { DashboardLibrarySection } from '../DashboardLibrary/DashboardLibrarySection';
+
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
   useIsReadOnlyRepo,
@@ -64,6 +66,7 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
               </Button>
             </Stack>
           </Box>
+          {config.featureToggles.dashboardLibrary && dashboardLibraryDatasourceUid && <DashboardLibrarySection />}
           <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
             <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
               <Stack direction="column" alignItems="center" gap={1}>
