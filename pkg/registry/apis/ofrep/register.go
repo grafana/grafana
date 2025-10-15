@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -252,6 +253,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !b.validateNamespace(r) {
 		_ = tracing.Errorf(span, namespaceMismatchMsg)
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
 		b.logger.Error(namespaceMismatchMsg)
 		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
@@ -260,6 +262,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	flagKey := mux.Vars(r)["flagKey"]
 	if flagKey == "" {
 		_ = tracing.Errorf(span, "flagKey parameter is required")
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
 		http.Error(w, "flagKey parameter is required", http.StatusBadRequest)
 		return
 	}
@@ -272,6 +275,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	// Unless the request is authenticated, we only allow public flags evaluations
 	if !isAuthedReq && !isPublicFlag(flagKey) {
 		_ = tracing.Errorf(span, "unauthorized to evaluate flag: %s", flagKey)
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
 		b.logger.Error("Unauthorized to evaluate flag", "flagKey", flagKey)
 		http.Error(w, "unauthorized to evaluate flag", http.StatusUnauthorized)
 		return
@@ -293,6 +297,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !b.validateNamespace(r) {
 		_ = tracing.Errorf(span, namespaceMismatchMsg)
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
 		b.logger.Error(namespaceMismatchMsg)
 		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
