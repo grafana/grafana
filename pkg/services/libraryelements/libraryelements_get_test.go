@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
@@ -61,12 +60,12 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 							ConnectedDashboards: 0,
 							Created:             res.Result.Meta.Created,
 							Updated:             res.Result.Meta.Updated,
-							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+							CreatedBy: model.LibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
 								AvatarUrl: userInDbAvatar,
 							},
-							UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+							UpdatedBy: model.LibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
 								AvatarUrl: userInDbAvatar,
@@ -161,12 +160,12 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 							ConnectedDashboards: 1,
 							Created:             res.Result.Meta.Created,
 							Updated:             res.Result.Meta.Updated,
-							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+							CreatedBy: model.LibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
 								AvatarUrl: userInDbAvatar,
 							},
-							UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+							UpdatedBy: model.LibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
 								AvatarUrl: userInDbAvatar,

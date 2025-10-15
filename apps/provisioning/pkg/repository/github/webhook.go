@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"slices"
-	"strings"
 
 	"github.com/google/go-github/v70/github"
 	"github.com/google/uuid"
@@ -16,7 +15,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -125,26 +123,12 @@ func (r *githubWebhookRepository) parsePushEvent(event *github.PushEvent) (*prov
 	// however, if we get an event where just a .keep file is being deleted, and no other files in the folder
 	// are being deleted, the folder could be gone from git, but not from grafana and we do not have a way
 	// to get the grafana uid to delete the folder. so, instead, we will queue a full sync to clean things up.
-	dirsWithKeepDeletes := make(map[string]struct{})
-	dirsWithOtherDeletes := make(map[string]struct{})
+	var deletedPaths []string
 	for _, change := range event.GetCommits() {
-		for _, removedFile := range change.Removed {
-			dir := safepath.Dir(removedFile)
-			if strings.HasSuffix(removedFile, ".keep") {
-				dirsWithKeepDeletes[dir] = struct{}{}
-			} else {
-				dirsWithOtherDeletes[dir] = struct{}{}
-			}
-		}
+		deletedPaths = append(deletedPaths, change.Removed...)
 	}
-	// if there are any keep files deleted that do not have other files deleted in the same folder, we need to queue a full sync
-	incremental := true
-	for dir := range dirsWithKeepDeletes {
-		if _, exists := dirsWithOtherDeletes[dir]; !exists {
-			incremental = false
-			break
-		}
-	}
+
+	incremental := repository.CanUseIncrementalSync(deletedPaths)
 
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,

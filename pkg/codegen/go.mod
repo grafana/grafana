@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/codegen
 
-go 1.24.6
+go 1.25.3
 
 require (
 	cuelang.org/go v0.11.1
@@ -48,7 +48,7 @@ require (
 	github.com/xlab/treeprint v1.2.0 // indirect
 	github.com/yalue/merged_fs v1.3.0 // indirect
 	golang.org/x/mod v0.28.0 // indirect
-	golang.org/x/net v0.44.0 // indirect
+	golang.org/x/net v0.45.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

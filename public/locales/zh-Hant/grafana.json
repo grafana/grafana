@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "新增權限",
+      "loading": "",
       "no-permissions": "沒有權限",
       "permissions-change-warning": "這將變更此資料夾及其所有子系的權限。這會影響以下項目：",
       "role": "角色",
       "serviceaccount": "服務帳戶",
       "team": "團隊",
-      "title": "權限",
       "user": "使用者"
     }
   },
@@ -1530,6 +1530,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "正在刪除群組"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "移除表達式「{{refId}}」"
     },
@@ -1647,6 +1650,15 @@
     "inspector-yaml-tab": {
       "apply": "套用"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1704,6 +1716,9 @@
       },
       "placeholder-key": "key",
       "placeholder-value": "值"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "檢視或建立聯絡點",
@@ -2019,6 +2034,12 @@
       "body-selected-alertmanager-not-found": "所選的 Alertmanager 不再存在，或者您可能沒有存取權限。您可以從下拉式選單中選擇其他的 Alertmanager。",
       "title-selected-alertmanager-not-found": "找不到所選的 Alertmanager。"
     },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
+    },
     "panel-alert-tab-content": {
       "alert": {
         "title-errors-loading-rules": "載入規則時發生錯誤"
@@ -2294,6 +2315,9 @@
     "rule-details-data-sources": {
       "label-data-source": "資料來源"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "表達式"
     },
@@ -2535,6 +2559,10 @@
       "prometheus-consistency-check": {
         "alert-message": "警報規則已新增或更新。變更可能需要一分鐘才會顯示在「警報規則」清單檢視中。",
         "alert-title": "更新進行中"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "評估此警報規則時發生錯誤"
     },
@@ -2902,6 +2930,25 @@
         "body": "目標資料夾不為空，某些規則可能會被覆寫或移除。確定要將這些警報規則匯入至 Grafana 管理的規則嗎？",
         "summary": "將匯入以下警報規則：",
         "title-warning": "警告"
+      }
+    },
+    "triage": {
+      "alert-instances": "",
+      "error-loading-rule": "",
+      "firing-instances-count": "",
+      "instance-details": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
       }
     },
     "type-selector-button": {
@@ -3473,7 +3520,7 @@
       "delete-button": "刪除",
       "delete-modal-invalid-text": "一個或多個資料夾包含資料庫面板或警報規則。請先刪除這些資料，然後再繼續。",
       "delete-modal-invalid-title": "無法刪除資料夾",
-      "delete-modal-restore-dashboards-text": "此動作會立即刪除選取的資料夾，但選取的儀表板會標記在 30 天後刪除。您的組織管理員可以在 30 天到期之前隨時還原儀表板。資料夾無法還原。",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "此動作將刪除以下內容：",
       "delete-modal-title": "刪除",
       "delete-provisioned-folder": "刪除已佈建的資料夾",
@@ -4457,6 +4504,8 @@
     },
     "canvas-actions": {
       "add-panel": "新增面板",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "將群組分成列",
       "group-into-tab": "將群組分成分頁",
       "group-panels": "分組面板",
@@ -4465,7 +4514,8 @@
       "paste-panel": "貼上面板",
       "paste-row": "貼上列",
       "paste-tab": "貼上分頁",
-      "un-group-panels": "解散群組"
+      "un-group-panels": "解散群組",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4533,7 +4583,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "由於條件轉譯，元素已被隱藏。"
+        "tooltip": ""
       },
       "root": {
         "title": "顯示/隱藏規則"
@@ -4565,7 +4615,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "「{{dashboardName}}」儀表板"
+      "aria-label-dashboard-name": "「{{dashboardName}}」儀表板",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "取消載入儀表板"
@@ -4707,8 +4758,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "以逗號分隔的值",
-          "values-placeholder": "1、10、mykey：myvalue、myvalue、轉義、值"
+          "close": "",
+          "modal-title": "",
+          "values": "以逗號分隔的值"
         },
         "datasource-options": {
           "name-filter": "名稱篩選",
@@ -5127,10 +5179,16 @@
       "title-row-options": "列選項"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "刪除此列也會移除所有面板。確定要繼續嗎？",
       "delete-row-title": "要刪除列嗎？",
       "delete-row-yes": "刪除",
       "description": "帶標題的可收闔面板群組",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "只有在編輯模式下才能看到列標題",
       "name": "列",
       "row": {
@@ -5160,7 +5218,11 @@
       },
       "row-warning": {
         "title-not-unique": "此標題不是唯一"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "儀表板已儲存"
@@ -5779,6 +5841,7 @@
         "dynamically-switch-source-multiple-panels": "動態切換多個面板的資料來源",
         "group": "即時新增鍵以便進行分組",
         "hidden-constant-variable": "隱藏的常數變數，對於您要共用的儀表板中的指標前置詞很有用",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "使用者可以在文字方塊中輸入任何任意字串",
         "values-are-static-and-defined-manually": "值是靜態的，並且是手動定義的",
         "values-fetched-source-query": "從資料來源查詢中擷取值",
@@ -5792,6 +5855,7 @@
         "group-by": "分組依據",
         "interval": "間隔",
         "query": "查詢",
+        "switch": "",
         "textbox": "文字方塊"
       }
     },
@@ -6133,6 +6197,17 @@
       "title": {
         "copy-to-clipboard-failed": "複製到剪貼簿失敗"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "預設值"
@@ -6582,6 +6657,7 @@
         "service-now-integration-and-data-source": "ServiceNow 整合與資料來源",
         "signal-fx-integration-and-datasource": "SignalFx 整合與資料來源",
         "snowflake-integration-and-data-source": "Snowflake 整合與資料來源",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic 整合與資料來源",
         "visualize-and-explore-dynatrace-data": "視覺化並探索 Dynatrace 資料",
         "visualize-and-explore-oracle-sql": "視覺化並探索 Oracle SQL",
@@ -9418,6 +9494,7 @@
     "description-enable-infinite-scrolling": "實驗性。捲動至紀錄清單底部，以請求更多結果。",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "顯示控制項以跳至最後或第一個紀錄行，並按紀錄層級篩選",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9465,9 +9542,6 @@
       "collapse": "收闔標籤",
       "expand": "展開標籤"
     },
-    "log-labels-list": {
-      "log-line": "紀錄行"
-    },
     "log-line": {
       "has-error": "有錯誤",
       "is-sampled": "已採樣",
@@ -9507,6 +9581,7 @@
       "inline-mode": "顯示內嵌",
       "link-value-tooltip": "",
       "links-section": "連結",
+      "log-attributes-field": "",
       "log-line-field": "紀錄行",
       "log-line-section": "紀錄行",
       "move-displayed-field-down": "下移",
@@ -9713,6 +9788,7 @@
       "line-contains": "新增為包含篩選條件的行",
       "line-contains-not": "新增為不包含篩選條件的行"
     },
+    "show-log-attributes": "",
     "timestamp-format": "時間戳記解決方案",
     "un-themed-log-details": {
       "aria-label-data-links": "資料連結",
@@ -10304,7 +10380,7 @@
       "title": "個人資料"
     },
     "recently-deleted": {
-      "subtitle": "此處列出超過 30 天的任何項目將被自動刪除。",
+      "subtitle": "",
       "title": "最近刪除"
     },
     "recorded-queries": {
@@ -11511,6 +11587,7 @@
       "active-jobs": "進行中的作業",
       "column-action": "動作",
       "column-duration": "持續時間",
+      "column-job-id": "",
       "column-message": "訊息",
       "column-started": "已開始",
       "column-status": "狀態",
@@ -11529,12 +11606,6 @@
       "settings": "設定",
       "view": "檢視"
     },
-    "repository-health": {
-      "details": "詳細資料：",
-      "no-errors-found": "沒有發現錯誤",
-      "title-repository-is-healthy": "儲存庫狀態良好",
-      "title-repository-is-unhealthy": "儲存庫狀態不佳"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "比較分支",
@@ -11549,7 +11620,7 @@
     },
     "repository-overview": {
       "checked": "已選取：",
-      "finished": "結束：",
+      "finished": "",
       "health": "使用情況",
       "healthy": "健全",
       "job-id": "作業 ID：",
@@ -11558,7 +11629,6 @@
       "not-available": "不適用",
       "pull-status": "拉取狀態",
       "resources": "資源",
-      "started": "開始：",
       "status": "狀態：",
       "unhealthy": "狀況不佳",
       "view-folder": "檢視資料夾",
@@ -12214,9 +12284,6 @@
       "title-disable-service-account": "停用服務帳戶",
       "tokens": "權杖",
       "tooltip-managed-service-account-cannot-modified": "這是受管理的服務帳戶，無法修改"
-    },
-    "service-account-permissions": {
-      "title-permissions": "權限"
     },
     "service-account-profile": {
       "information": "資訊",
@@ -12889,6 +12956,10 @@
     "name-mode": "模式",
     "name-show-line-numbers": "顯示行號",
     "name-show-mini-map": "顯示迷你地圖"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -14053,14 +14124,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "新增選項",
-      "description": "除了查詢結果之外，還可新增自訂選項",
-      "label-placeholder": "顯示標籤",
-      "remove-option-button-label": "移除選項",
-      "value-placeholder": "值，預設空字串"
+      "description": "除了查詢結果之外，還可新增自訂選項"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "如何使用查詢結果對靜態選項進行排序"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "預設值",

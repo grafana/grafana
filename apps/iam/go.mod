@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/iam
 
-go 1.24.6
+go 1.25.3
 
 replace github.com/grafana/grafana => ../../
 
@@ -11,6 +11,28 @@ replace github.com/grafana/grafana/apps/dashboard => ../dashboard
 replace github.com/grafana/grafana/apps/secret => ../secret
 
 replace github.com/grafana/grafana/apps/provisioning => ../provisioning
+
+replace github.com/grafana/grafana/apps/advisor => ../advisor
+
+replace github.com/grafana/grafana/apps/alerting/alertenrichment => ../alerting/alertenrichment
+
+replace github.com/grafana/grafana/apps/alerting/notifications => ../alerting/notifications
+
+replace github.com/grafana/grafana/apps/alerting/rules => ../alerting/rules
+
+replace github.com/grafana/grafana/apps/correlations => ../correlations
+
+replace github.com/grafana/grafana/apps/investigations => ../investigations
+
+replace github.com/grafana/grafana/apps/playlist => ../playlist
+
+replace github.com/grafana/grafana/apps/plugins => ../plugins
+
+replace github.com/grafana/grafana/apps/preferences => ../preferences
+
+replace github.com/grafana/grafana/apps/scope => ../scope
+
+replace github.com/grafana/grafana/apps/shorturl => ../shorturl
 
 replace github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
 
@@ -45,14 +67,14 @@ require (
 	cuelang.org/go v0.11.1 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.1 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.1 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.19.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.12.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.2 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.1 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/to v0.4.1 // indirect
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.4.2 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.5.0 // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.29.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.51.0 // indirect
@@ -173,7 +195,6 @@ require (
 	github.com/go-openapi/strfmt v0.23.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-openapi/validate v0.24.0 // indirect
-	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/go-sql-driver/mysql v1.9.3 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
@@ -201,13 +222,13 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.2 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20251006163224-3da3b9a5202d // indirect
+	github.com/grafana/alerting v0.0.0-20251009192429-9427c24835ae // indirect
 	github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f // indirect
 	github.com/grafana/authlib/types v0.0.0-20250926065801-df98203cff37 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 // indirect
 	github.com/grafana/grafana-aws-sdk v1.2.0 // indirect
-	github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 // indirect
+	github.com/grafana/grafana-azure-sdk-go/v2 v2.3.1 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.279.0 // indirect
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // indirect
 	github.com/grafana/grafana/apps/provisioning v0.0.0 // indirect
@@ -327,6 +348,7 @@ require (
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/prometheus/prometheus v0.303.1 // indirect
 	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
+	github.com/redis/go-redis/v9 v9.14.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rs/cors v1.11.1 // indirect
@@ -405,7 +427,7 @@ require (
 	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // indirect
 	golang.org/x/mod v0.28.0 // indirect
-	golang.org/x/net v0.44.0 // indirect
+	golang.org/x/net v0.45.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
