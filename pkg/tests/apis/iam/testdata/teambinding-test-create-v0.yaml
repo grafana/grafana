@@ -8,3 +8,4 @@ spec:
   teamRef:
     name: ""
   permission: "admin"
+  external: false
