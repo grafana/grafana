@@ -1,0 +1,1481 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 22754,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "points"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Miles_per_Gallon USA"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#f2495c80",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Miles_per_Gallon Europe"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#5795f280",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Miles_per_Gallon Japan"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#ff983080",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mapping": "auto",
+        "series": [
+          {
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "Acceleration"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "Miles_per_Gallon"
+              }
+            }
+          }
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "csvFileName": "automobiles.csv",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "MPG vs Acceleration (by Country)",
+      "transformations": [
+        {
+          "id": "partitionByValues",
+          "options": {
+            "fields": [
+              "Origin"
+            ]
+          }
+        }
+      ],
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "points"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Weight Male"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#5795f2",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Weight Female"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#ff9830",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 24,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mapping": "auto",
+        "series": [
+          {}
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "csvFileName": "weight_height.csv",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "Height vs Weight Samples",
+      "transformations": [
+        {
+          "id": "partitionByValues",
+          "options": {
+            "fields": [
+              "Gender"
+            ]
+          }
+        }
+      ],
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "points"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mapping": "auto",
+        "series": [
+          {
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "humidity"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "temperature"
+              }
+            }
+          }
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"meta\": {\n        \"executedQueryString\": \"import \\\"influxdata/influxdb/sample\\\"\\nimport \\\"influxdata/influxdb/schema\\\"\\n\\nsample.data(set: \\\"airSensor\\\")\\n    |> limit(n: 10)\\n    |> group(columns: [\\\"sensor_id\\\"])\\n    |> schema.fieldsAsCols()\\n\",\n        \"typeVersion\": [\n          0,\n          0\n        ]\n      },\n      \"fields\": [\n        {\n          \"config\": {},\n          \"name\": \"_time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0100\"\n          },\n          \"name\": \"co\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0100\"\n          },\n          \"name\": \"humidity\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0100\"\n          },\n          \"name\": \"temperature\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1686898151000,\n          1686898161000,\n          1686898171000,\n          1686898181000,\n          1686898191000,\n          1686898201000,\n          1686898211000,\n          1686898221000,\n          1686898231000,\n          1686898241000\n        ],\n        [\n          0.4860747509084685,\n          0.4790778553981873,\n          0.4597786615711249,\n          0.4478751241705323,\n          0.44020548182152397,\n          0.4569020188814074,\n          0.4655250429581913,\n          0.4819032762634117,\n          0.491365303224968,\n          0.5092239049148886\n        ],\n        [\n          35.084960222673146,\n          35.089101898649055,\n          35.130020139289115,\n          35.10251705413486,\n          35.08184755996438,\n          35.04582600108574,\n          35.09077388700681,\n          35.04096375315356,\n          35.05647864027338,\n          35.091800720894916\n        ],\n        [\n          71.2187151336704,\n          71.24617135003214,\n          71.21726829714834,\n          71.26528218716341,\n          71.26084702358875,\n          71.24054378677393,\n          71.27884802991244,\n          71.29783163616926,\n          71.33230999794793,\n          71.34975514559837\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"config\": {},\n          \"name\": \"_time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0101\"\n          },\n          \"name\": \"co\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0101\"\n          },\n          \"name\": \"humidity\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0101\"\n          },\n          \"name\": \"temperature\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1686898151000,\n          1686898161000,\n          1686898171000,\n          1686898181000,\n          1686898191000,\n          1686898201000,\n          1686898211000,\n          1686898221000,\n          1686898231000,\n          1686898241000\n        ],\n        [\n          0.4964171323208575,\n          0.48257922637952133,\n          0.46567087322576145,\n          0.4467650568596856,\n          0.4417772514767169,\n          0.4341379534638706,\n          0.439345038257859,\n          0.43452737707188627,\n          0.42417500678639164,\n          0.40704613738954887\n        ],\n        [\n          34.92662088456207,\n          34.91464944732493,\n          34.95985887959429,\n          34.929238294894844,\n          34.954103486412336,\n          34.98895514808448,\n          35.03476240219413,\n          35.028863365125844,\n          35.03717014192905,\n          35.00775919996651\n        ],\n        [\n          71.83521495327129,\n          71.83370684393908,\n          71.83712160725877,\n          71.88299650060345,\n          71.90526594972503,\n          71.8631768515712,\n          71.85577028152356,\n          71.89245169322045,\n          71.93606971457449,\n          71.96164771829956\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"config\": {},\n          \"name\": \"_time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0102\"\n          },\n          \"name\": \"co\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0102\"\n          },\n          \"name\": \"humidity\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0102\"\n          },\n          \"name\": \"temperature\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1686898151000,\n          1686898161000,\n          1686898171000,\n          1686898181000,\n          1686898191000,\n          1686898201000,\n          1686898211000,\n          1686898221000,\n          1686898231000,\n          1686898241000\n        ],\n        [\n          0.4870365157212326,\n          0.5032215395360725,\n          0.5035259485542879,\n          0.4841798164121083,\n          0.483812619615984,\n          0.4882993499867786,\n          0.4719009580435705,\n          0.4700689455810135,\n          0.48112413053169706,\n          0.4691106107162724\n        ],\n        [\n          34.86359615237462,\n          34.84629630959152,\n          34.81771460191974,\n          34.854640808896036,\n          34.86699022367547,\n          34.864319179513096,\n          34.86915527122888,\n          34.89889649251399,\n          34.86576388906259,\n          34.88622805723735\n        ],\n        [\n          72.03972207916735,\n          72.05566134520713,\n          72.08473708469143,\n          72.07306942754916,\n          72.0427409958616,\n          72.04536459775873,\n          72.09400368933838,\n          72.14293243585941,\n          72.18840859469728,\n          72.15524663568557\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"config\": {},\n          \"name\": \"_time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0103\"\n          },\n          \"name\": \"co\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0103\"\n          },\n          \"name\": \"humidity\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0103\"\n          },\n          \"name\": \"temperature\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1686898151000,\n          1686898161000,\n          1686898171000,\n          1686898181000,\n          1686898191000,\n          1686898201000,\n          1686898211000,\n          1686898221000,\n          1686898231000,\n          1686898241000\n        ],\n        [\n          0.3979338437168368,\n          0.4117117830425588,\n          0.4000376537804249,\n          0.40114553332960723,\n          0.3909759394807085,\n          0.38213452854680874,\n          0.37339826793170855,\n          0.3624713623472977,\n          0.35640734768856297,\n          0.35690557816119645\n        ],\n        [\n          35.16192242281515,\n          35.19891757080395,\n          35.23754373785834,\n          35.25270355198698,\n          35.29525947947623,\n          35.272026086051184,\n          35.275233467451635,\n          35.23834593104291,\n          35.25233833634368,\n          35.22053598631417\n        ],\n        [\n          71.29169927438586,\n          71.32114142326272,\n          71.33632903748085,\n          71.3064635464553,\n          71.26436580075855,\n          71.30431517798449,\n          71.28861822950174,\n          71.26778760430453,\n          71.23481860950403,\n          71.23084180913762\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"config\": {},\n          \"name\": \"_time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0200\"\n          },\n          \"name\": \"co\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0200\"\n          },\n          \"name\": \"humidity\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0200\"\n          },\n          \"name\": \"temperature\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1686898151000,\n          1686898161000,\n          1686898171000,\n          1686898181000,\n          1686898191000,\n          1686898201000,\n          1686898211000,\n          1686898221000,\n          1686898231000,\n          1686898241000\n        ],\n        [\n          0.5129015632374951,\n          0.552968955740271,\n          0.5690444135565038,\n          0.6050221760178951,\n          0.5943904374498042,\n          0.6153588301241533,\n          0.6164375823908576,\n          0.6059635952981327,\n          0.6470283318343141,\n          0.6861075098169984\n        ],\n        [\n          35.75385592664215,\n          35.753218714107504,\n          35.72547059379115,\n          35.74553237372676,\n          35.73378268235891,\n          35.747560005048086,\n          35.769867599816735,\n          35.73929899563808,\n          35.705317880681875,\n          35.65611547721327\n        ],\n        [\n          73.64806558624832,\n          73.65728412124716,\n          73.68805520135102,\n          73.65185281162863,\n          73.63499402146681,\n          73.68359308763364,\n          73.64682180062367,\n          73.63298265031713,\n          73.59096788790947,\n          73.6381949597034\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"config\": {},\n          \"name\": \"_time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0201\"\n          },\n          \"name\": \"co\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0201\"\n          },\n          \"name\": \"humidity\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0201\"\n          },\n          \"name\": \"temperature\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1686898151000,\n          1686898161000,\n          1686898171000,\n          1686898181000,\n          1686898191000,\n          1686898201000,\n          1686898211000,\n          1686898221000,\n          1686898231000,\n          1686898241000\n        ],\n        [\n          0.5082489903097206,\n          0.525490999229553,\n          0.5300688563597754,\n          0.5351282770519872,\n          0.533437724470923,\n          0.5164188260958164,\n          0.5134188770545406,\n          0.4949993424337248,\n          0.4960387472164697,\n          0.5046934441184395\n        ],\n        [\n          35.24972613768055,\n          35.238916979727335,\n          35.28758958750148,\n          35.26413172906637,\n          35.2875488141577,\n          35.32420268624064,\n          35.2932945023372,\n          35.277959228995584,\n          35.27901195680498,\n          35.27056468599647\n        ],\n        [\n          73.99618150289902,\n          74.01973867729899,\n          73.97488048626532,\n          73.97027021897547,\n          73.96055098802299,\n          73.94544160099603,\n          73.91010608315078,\n          73.9594600253564,\n          73.93323000030807,\n          73.94265737589377\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"config\": {},\n          \"name\": \"_time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0202\"\n          },\n          \"name\": \"co\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0202\"\n          },\n          \"name\": \"humidity\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0202\"\n          },\n          \"name\": \"temperature\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1686898151000,\n          1686898161000,\n          1686898171000,\n          1686898181000,\n          1686898191000,\n          1686898201000,\n          1686898211000,\n          1686898221000,\n          1686898231000,\n          1686898241000\n        ],\n        [\n          0.4843506884938821,\n          0.48132272563110234,\n          0.4738268718199932,\n          0.4929629619836042,\n          0.4730642763470896,\n          0.4654986284178103,\n          0.47939137148137106,\n          0.4729232244284411,\n          0.48941836624955776,\n          0.49438537058971027\n        ],\n        [\n          35.6843507637763,\n          35.67052290561625,\n          35.651191124511904,\n          35.682694567957775,\n          35.71754463951193,\n          35.73271359197846,\n          35.76201128140823,\n          35.72031962293351,\n          35.76508898680512,\n          35.77376488207177\n        ],\n        [\n          75.28536533620796,\n          75.3203884403274,\n          75.32915092826639,\n          75.3260291876276,\n          75.29613126188146,\n          75.31098782530198,\n          75.27434784939884,\n          75.30929861509146,\n          75.32818662869892,\n          75.33650169518009\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"config\": {},\n          \"name\": \"_time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0203\"\n          },\n          \"name\": \"co\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0203\"\n          },\n          \"name\": \"humidity\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        },\n        {\n          \"config\": {},\n          \"labels\": {\n            \"sensor_id\": \"TLM0203\"\n          },\n          \"name\": \"temperature\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1686898151000,\n          1686898161000,\n          1686898171000,\n          1686898181000,\n          1686898191000,\n          1686898201000,\n          1686898211000,\n          1686898221000,\n          1686898231000,\n          1686898241000\n        ],\n        [\n          0.39373421338928505,\n          0.40929905142175416,\n          0.39727569840202215,\n          0.415834035946844,\n          0.413865826090914,\n          0.4271278288285897,\n          0.435277474574255,\n          0.4480042029285831,\n          0.462641109361364,\n          0.4566678920783633\n        ],\n        [\n          35.86322585633077,\n          35.88732568460068,\n          35.87553827435961,\n          35.84063967239316,\n          35.813642046057005,\n          35.8569165461967,\n          35.80924651587166,\n          35.80599199551315,\n          35.75906423980926,\n          35.79948361256034\n        ],\n        [\n          74.78112365229704,\n          74.73821283157658,\n          74.73019922701285,\n          74.73280967321202,\n          74.74885460260536,\n          74.70880911705714,\n          74.73346687605624,\n          74.77682413662681,\n          74.80562351134131,\n          74.82881664528719\n        ]\n      ]\n    }\n  }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "Multi-series Temperature vs Humidity",
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 10
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "points"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mapping": "manual",
+        "series": [
+          {
+            "color": {
+              "matcher": {
+                "id": "byName",
+                "options": "Price"
+              }
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "Lat"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "Lng"
+              }
+            }
+          }
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "csvFileName": "flight_info_by_state.csv",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "Color by field (threshold)",
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "points"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Miles_per_Gallon USA"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#f2495c80",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Miles_per_Gallon Europe"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#5795f280",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Miles_per_Gallon Japan"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#ff983080",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 6,
+        "x": 0,
+        "y": 12
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mapping": "auto",
+        "series": [
+          {
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "Horsepower"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "Miles_per_Gallon"
+              }
+            }
+          }
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "csvFileName": "automobiles.csv",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "MPG vs HP (by Country)",
+      "transformations": [
+        {
+          "id": "partitionByValues",
+          "options": {
+            "fields": [
+              "Origin"
+            ]
+          }
+        }
+      ],
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "continuous-BlYlRd"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 10
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "points"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 6,
+        "x": 12,
+        "y": 12
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mapping": "manual",
+        "series": [
+          {
+            "color": {
+              "matcher": {
+                "id": "byName",
+                "options": "Price"
+              }
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "Lat"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "Lng"
+              }
+            }
+          }
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "csvFileName": "flight_info_by_state.csv",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "Color by field (gradient)",
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 10
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "points"
+          },
+          "mappings": [
+            {
+              "options": {
+                "700": {
+                  "color": "purple",
+                  "index": 0
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 6,
+        "x": 18,
+        "y": 12
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mapping": "manual",
+        "series": [
+          {
+            "color": {
+              "matcher": {
+                "id": "byName",
+                "options": "Price"
+              }
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "Lat"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "Lng"
+              }
+            }
+          }
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "csvFileName": "flight_info_by_state.csv",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "Color by field (value mappings)",
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "yellow",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5,
+              "max": 50,
+              "min": 1
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "points"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 9,
+        "x": 0,
+        "y": 24
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mapping": "auto",
+        "series": [
+          {
+            "size": {
+              "matcher": {
+                "id": "byName",
+                "options": "Price"
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "Lat"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "Lng"
+              }
+            }
+          }
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "csvFileName": "flight_info_by_state.csv",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "Bubble Charts",
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "points+lines"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 5,
+        "x": 9,
+        "y": 24
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mapping": "auto",
+        "series": [
+          {
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byType",
+                "options": "number"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byType",
+                "options": "number"
+              }
+            }
+          }
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "csvContent": "X,Y\n725.1,435.6\n734.1,497.2\n714.3,527.7\n683.5,548.7\n601.8,594.0\n598.5,621.7\n573.9,644.7\n525.7,695.7\n477.2,732.8\n411.8,755.3\n353.6,758.3\n422.6,736.5\n455.3,724.1\n479.2,699.2\n474.0,673.8\n434.5,662.1\n362.2,679.8\n311.2,698.8\n260.1,728.9\n213.4,771.1\n176.2,818.0\n211.2,742.6\n253.9,707.9\n309.9,668.8\n374.7,643.2\n322.8,629.9\n277.1,607.1\n237.0,616.8\n188.9,613.9\n143.0,594.1\n101.8,566.4\n178.1,590.2\n222.2,575.9\n187.9,549.1\n161.5,517.5\n128.6,506.8\n97.3,488.3\n62.4,436.0\n99.6,473.8\n138.3,477.0\n125.0,396.7\n95.6,359.2\n83.6,322.1\n81.0,289.7\n104.0,343.8\n129.3,358.4\n151.2,291.1\n124.0,242.6\n126.3,170.2\n133.7,212.8\n148.4,243.3\n167.9,262.7\n209.1,205.7\n230.1,150.3\n231.4,120.1\n316.0,120.1\n400.6,120.1\n485.2,120.1\n569.8,120.1\n569.3,166.4\n553.0,205.5\n489.2,265.7\n422.2,309.1\n353.7,343.1\n328.2,386.3\n321.6,432.6\n334.1,473.1\n357.6,500.3\n389.9,508.5\n418.8,479.9\n447.9,413.3\n480.0,379.0\n521.6,354.2\n583.9,351.6\n549.7,357.7\n571.6,376.0\n517.1,380.8\n550.3,393.2\n504.3,402.3\n489.5,425.8\n527.5,425.8\n472.7,457.2\n447.1,523.8\n538.6,435.7\n598.4,403.7\n697.8,349.1\n645.3,390.4\n712.3,373.8\n586.0,424.1\n526.9,463.3\n469.5,538.0\n540.6,477.5\n531.2,528.4\n598.6,460.1\n594.5,509.0\n651.2,460.1\n649.9,502.6\n699.4,446.1\n707.6,477.1\n722.0,442.9",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "CNC/Routing \"Etch-A-Sketch\"",
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "lines"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "x^2"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    15
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cos(x)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "x^2"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "sqrt(x)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "-sqrt(x)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 10,
+        "x": 14,
+        "y": 24
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mapping": "auto",
+        "series": [
+          {}
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvContent": "x,cos(x)\n-7.5,3.4663531783502584\n-7.45,3.9308257356494076\n-7.4,4.385473275743903\n-7.35,4.829159416559378\n-7.3,5.260775173811053\n-7.25,5.679241732886949\n-7.2,6.083513145322545\n-7.15,6.472578943127236\n-7.1,6.845466664428066\n-7.05,7.201244284117942\n-7,7.539022543433046\n-6.95,7.857957172636611\n-6.9,8.157251001253568\n-6.85,8.436155950581597\n-6.8,8.693974903498253\n-6.75,8.930063446890767\n-6.7,9.143831482353194\n-6.65,9.334744701125118\n-6.6,9.502325919585296\n-6.55,9.64615627196218\n-6.5,9.765876257280235\n-6.45,9.861186637925126\n-6.4,9.931849187581927\n-6.35,9.97768728667684\n-6.3,9.998586363834152\n-6.25,9.994494182244994\n-6.2,9.965420970232175\n-6.15,9.91143939568469\n-6.1,9.832684384425844\n-6.05,9.729352782968974\n-6,9.601702866503661\n-5.95,9.450053693342275\n-5.9,9.27478430744036\n-5.85,9.076332790984132\n-5.8,8.85519516941319\n-5.75,8.611924171615208\n-5.7,8.347127848391597\n-5.65,8.061468052647157\n-5.6,7.755658785102496\n-5.55,7.430464409664099\n-5.5,7.0866977429126\n-5.45,6.725218022484659\n-5.4,6.346928759426347\n-5.35,5.952775479886061\n-5.3,5.543743361791607\n-5.25,5.120854772418407\n-5.2,4.685166713003771\n-5.15,4.237768176794282\n-5.1,3.7797774271298024\n-5.05,3.3123392023675367\n-5,2.8366218546322624\n-4.95,2.353814429544512\n-4.9,1.8651236942257576\n-4.85,1.371771121009073\n-4.8,0.874989834394464\n-4.75,0.37602152887976553\n-4.7,-0.1238866346289056\n-4.65,-0.6234851460699166\n-4.6,-1.1215252693505486\n-4.55,-1.616762163536865\n-4.5,-2.107957994307797\n-4.45,-2.593885027896261\n-4.4,-3.0733286997841933\n-4.35,-3.5450906504813195\n-4.3,-4.007991720799755\n-4.25,-4.460874899137928\n-4.2,-4.902608213406994\n-4.15,-5.332087560371543\n-4.1,-5.748239465332691\n-4.05,-6.150023765255744\n-4,-6.536436208636119\n-3.95,-6.906510965605075\n-3.9,-7.259323042001402\n-3.85,-7.593990591375079\n-3.8,-7.909677119144169\n-3.75,-8.205593573395607\n-3.7,-8.48100031710408\n-3.65,-8.73520897683938\n-3.6,-8.96758416334147\n-3.55,-9.177545059662759\n-3.5,-9.364566872907963\n-3.45,-9.528182145943047\n-3.4,-9.66798192579461\n-3.35,-9.78361678581934\n-3.3,-9.87479769908865\n-3.25,-9.941296760805463\n-3.2,-9.982947757947532\n-3.15,-9.99964658471342\n-3.1,-9.991351502732794\n-3.05,-9.958083245390611\n-3,-9.899924966004454\n-2.95,-9.81702202998454\n-2.9,-9.709581651495906\n-2.85,-9.577872375530903\n-2.8,-9.42222340668658\n-2.75,-9.243023786324635\n-2.7,-9.040721420170613\n-2.65,-8.815821958782859\n-2.6,-8.568887533689473\n-2.55,-8.30053535235222\n-2.5,-8.011436155469337\n-2.45,-7.702312540473074\n-2.4,-7.373937155412454\n-2.35,-7.027130767735539\n-2.3,-6.66276021279824\n-2.25,-6.281736227227391\n-2.2,-5.885011172553458\n-2.15,-5.473576654802709\n-2.1,-5.048461045998575\n-2.05,-4.610726913767127\n-2,-4.161468365471424\n-1.95,-3.7018083135128688\n-1.9,-3.2328956686350336\n-1.85,-2.7559024682451296\n-1.8,-2.272020946930871\n-1.75,-1.7824605564949207\n-1.7,-1.2884449429552465\n-1.65,-0.7912088880673386\n-1.6,-0.29199522301288816\n-1.55,0.20794827803092428\n-1.5,0.7073720166770291\n-1.45,1.2050276936736661\n-1.4,1.6996714290024104\n-1.35,2.1900668709304147\n-1.3,2.6749882862458736\n-1.25,3.1532236239526865\n-1.2,3.623577544766736\n-1.15,4.084874408841574\n-1.1,4.5359612142557735\n-1.05,4.97571047891727\n-1,5.403023058681398\n-0.95,5.8168308946388345\n-0.9,6.216099682706644\n-0.85,6.599831458849822\n-0.8,6.967067093471654\n-0.75,7.316888688738209\n-0.7,7.648421872844885\n-0.65,7.960837985490558\n-0.6,8.253356149096783\n-0.55,8.525245220595057\n-0.5,8.775825618903728\n-0.45,9.004471023526769\n-0.4,9.210609940028851\n-0.35,9.393727128473788\n-0.3,9.55336489125606\n-0.25,9.689124217106448\n-0.2,9.800665778412416\n-0.15,9.887710779360422\n-0.1,9.950041652780257\n-0.05,9.987502603949663\n0,10\n0.05,9.987502603949663\n0.1,9.950041652780257\n0.15,9.887710779360422\n0.2,9.800665778412416\n0.25,9.689124217106448\n0.3,9.55336489125606\n0.35,9.393727128473788\n0.4,9.210609940028851\n0.45,9.004471023526769\n0.5,8.775825618903728\n0.55,8.525245220595057\n0.6,8.253356149096783\n0.65,7.960837985490558\n0.7,7.648421872844885\n0.75,7.316888688738209\n0.8,6.967067093471654\n0.85,6.599831458849822\n0.9,6.216099682706644\n0.95,5.8168308946388345\n1,5.403023058681398\n1.05,4.97571047891727\n1.1,4.5359612142557735\n1.15,4.084874408841574\n1.2,3.623577544766736\n1.25,3.1532236239526865\n1.3,2.6749882862458736\n1.35,2.1900668709304147\n1.4,1.6996714290024104\n1.45,1.2050276936736661\n1.5,0.7073720166770291\n1.55,0.20794827803092428\n1.6,-0.29199522301288816\n1.65,-0.7912088880673386\n1.7,-1.2884449429552465\n1.75,-1.7824605564949207\n1.8,-2.272020946930871\n1.85,-2.7559024682451296\n1.9,-3.2328956686350336\n1.95,-3.7018083135128688\n2,-4.161468365471424\n2.05,-4.610726913767127\n2.1,-5.048461045998575\n2.15,-5.473576654802709\n2.2,-5.885011172553458\n2.25,-6.281736227227391\n2.3,-6.66276021279824\n2.35,-7.027130767735539\n2.4,-7.373937155412454\n2.45,-7.702312540473074\n2.5,-8.011436155469337\n2.55,-8.30053535235222\n2.6,-8.568887533689473\n2.65,-8.815821958782859\n2.7,-9.040721420170613\n2.75,-9.243023786324635\n2.8,-9.42222340668658\n2.85,-9.577872375530903\n2.9,-9.709581651495906\n2.95,-9.81702202998454\n3,-9.899924966004454\n3.05,-9.958083245390611\n3.1,-9.991351502732794\n3.15,-9.99964658471342\n3.2,-9.982947757947532\n3.25,-9.941296760805463\n3.3,-9.87479769908865\n3.35,-9.78361678581934\n3.4,-9.66798192579461\n3.45,-9.528182145943047\n3.5,-9.364566872907963\n3.55,-9.177545059662759\n3.6,-8.96758416334147\n3.65,-8.73520897683938\n3.7,-8.48100031710408\n3.75,-8.205593573395607\n3.8,-7.909677119144169\n3.85,-7.593990591375079\n3.9,-7.259323042001402\n3.95,-6.906510965605075\n4,-6.536436208636119\n4.05,-6.150023765255744\n4.1,-5.748239465332691\n4.15,-5.332087560371543\n4.2,-4.902608213406994\n4.25,-4.460874899137928\n4.3,-4.007991720799755\n4.35,-3.5450906504813195\n4.4,-3.0733286997841933\n4.45,-2.593885027896261\n4.5,-2.107957994307797\n4.55,-1.616762163536865\n4.6,-1.1215252693505486\n4.65,-0.6234851460699166\n4.7,-0.1238866346289056\n4.75,0.37602152887976553\n4.8,0.874989834394464\n4.85,1.371771121009073\n4.9,1.8651236942257576\n4.95,2.353814429544512\n5,2.8366218546322624\n5.05,3.3123392023675367\n5.1,3.7797774271298024\n5.15,4.237768176794282\n5.2,4.685166713003771\n5.25,5.120854772418407\n5.3,5.543743361791607\n5.35,5.952775479886061\n5.4,6.346928759426347\n5.45,6.725218022484659\n5.5,7.0866977429126\n5.55,7.430464409664099\n5.6,7.755658785102496\n5.65,8.061468052647157\n5.7,8.347127848391597\n5.75,8.611924171615208\n5.8,8.85519516941319\n5.85,9.076332790984132\n5.9,9.27478430744036\n5.95,9.450053693342275\n6,9.601702866503661\n6.05,9.729352782968974\n6.1,9.832684384425844\n6.15,9.91143939568469\n6.2,9.965420970232175\n6.25,9.994494182244994\n6.3,9.998586363834152\n6.35,9.97768728667684\n6.4,9.931849187581927\n6.45,9.861186637925126\n6.5,9.765876257280235\n6.55,9.64615627196218\n6.6,9.502325919585296\n6.65,9.334744701125118\n6.7,9.143831482353194\n6.75,8.930063446890767\n6.8,8.693974903498253\n6.85,8.436155950581597\n6.9,8.157251001253568\n6.95,7.857957172636611\n7,7.539022543433046\n7.05,7.201244284117942\n7.1,6.845466664428066\n7.15,6.472578943127236\n7.2,6.083513145322545\n7.25,5.679241732886949\n7.3,5.260775173811053\n7.35,4.829159416559378\n7.4,4.385473275743903\n7.45,3.9308257356494076",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "x2,x^2\n-7.5,56.25\n-7.45,55.502500000000005\n-7.4,54.760000000000005\n-7.35,54.022499999999994\n-7.3,53.29\n-7.25,52.5625\n-7.2,51.84\n-7.15,51.1225\n-7.1,50.41\n-7.05,49.7025\n-7,49\n-6.95,48.3025\n-6.9,47.61000000000001\n-6.85,46.92249999999999\n-6.8,46.239999999999995\n-6.75,45.5625\n-6.7,44.89\n-6.65,44.222500000000004\n-6.6,43.559999999999995\n-6.55,42.902499999999996\n-6.5,42.25\n-6.45,41.6025\n-6.4,40.96000000000001\n-6.35,40.3225\n-6.3,39.69\n-6.25,39.0625\n-6.2,38.440000000000005\n-6.15,37.822500000000005\n-6.1,37.209999999999994\n-6.05,36.6025\n-6,36\n-5.95,35.4025\n-5.9,34.81\n-5.85,34.2225\n-5.8,33.64\n-5.75,33.0625\n-5.7,32.49\n-5.65,31.922500000000003\n-5.6,31.359999999999996\n-5.55,30.8025\n-5.5,30.25\n-5.45,29.7025\n-5.4,29.160000000000004\n-5.35,28.622499999999995\n-5.3,28.09\n-5.25,27.5625\n-5.2,27.040000000000003\n-5.15,26.522500000000004\n-5.1,26.009999999999998\n-5.05,25.502499999999998\n-5,25\n-4.95,24.5025\n-4.9,24.010000000000005\n-4.85,23.522499999999997\n-4.8,23.04\n-4.75,22.5625\n-4.7,22.090000000000003\n-4.65,21.622500000000002\n-4.6,21.159999999999997\n-4.55,20.702499999999997\n-4.5,20.25\n-4.45,19.802500000000002\n-4.4,19.360000000000003\n-4.35,18.922499999999996\n-4.3,18.49\n-4.25,18.0625\n-4.2,17.64\n-4.15,17.222500000000004\n-4.1,16.81\n-4.05,16.4025\n-4,16\n-3.95,15.602500000000001\n-3.9,15.209999999999999\n-3.85,14.822500000000002\n-3.8,14.44\n-3.75,14.0625\n-3.7,13.690000000000001\n-3.65,13.3225\n-3.6,12.96\n-3.55,12.6025\n-3.5,12.25\n-3.45,11.902500000000002\n-3.4,11.559999999999999\n-3.35,11.2225\n-3.3,10.889999999999999\n-3.25,10.5625\n-3.2,10.240000000000002\n-3.15,9.9225\n-3.1,9.610000000000001\n-3.05,9.302499999999998\n-3,9\n-2.95,8.7025\n-2.9,8.41\n-2.85,8.1225\n-2.8,7.839999999999999\n-2.75,7.5625\n-2.7,7.290000000000001\n-2.65,7.0225\n-2.6,6.760000000000001\n-2.55,6.5024999999999995\n-2.5,6.25\n-2.45,6.002500000000001\n-2.4,5.76\n-2.35,5.522500000000001\n-2.3,5.289999999999999\n-2.25,5.0625\n-2.2,4.840000000000001\n-2.15,4.6225\n-2.1,4.41\n-2.05,4.2025\n-2,4\n-1.95,3.8024999999999998\n-1.9,3.61\n-1.85,3.4225000000000003\n-1.8,3.24\n-1.75,3.0625\n-1.7,2.8899999999999997\n-1.65,2.7224999999999997\n-1.6,2.5600000000000005\n-1.55,2.4025000000000003\n-1.5,2.25\n-1.45,2.1025\n-1.4,1.9599999999999997\n-1.35,1.8225000000000002\n-1.3,1.6900000000000002\n-1.25,1.5625\n-1.2,1.44\n-1.15,1.3224999999999998\n-1.1,1.2100000000000002\n-1.05,1.1025\n-1,1\n-0.95,0.9025\n-0.9,0.81\n-0.85,0.7224999999999999\n-0.8,0.6400000000000001\n-0.75,0.5625\n-0.7,0.48999999999999994\n-0.65,0.42250000000000004\n-0.6,0.36\n-0.55,0.30250000000000005\n-0.5,0.25\n-0.45,0.2025\n-0.4,0.16000000000000003\n-0.35,0.12249999999999998\n-0.3,0.09\n-0.25,0.0625\n-0.2,0.04000000000000001\n-0.15,0.0225\n-0.1,0.010000000000000002\n-0.05,0.0025000000000000005\n0,0\n0.05,0.0025000000000000005\n0.1,0.010000000000000002\n0.15,0.0225\n0.2,0.04000000000000001\n0.25,0.0625\n0.3,0.09\n0.35,0.12249999999999998\n0.4,0.16000000000000003\n0.45,0.2025\n0.5,0.25\n0.55,0.30250000000000005\n0.6,0.36\n0.65,0.42250000000000004\n0.7,0.48999999999999994\n0.75,0.5625\n0.8,0.6400000000000001\n0.85,0.7224999999999999\n0.9,0.81\n0.95,0.9025\n1,1\n1.05,1.1025\n1.1,1.2100000000000002\n1.15,1.3224999999999998\n1.2,1.44\n1.25,1.5625\n1.3,1.6900000000000002\n1.35,1.8225000000000002\n1.4,1.9599999999999997\n1.45,2.1025\n1.5,2.25\n1.55,2.4025000000000003\n1.6,2.5600000000000005\n1.65,2.7224999999999997\n1.7,2.8899999999999997\n1.75,3.0625\n1.8,3.24\n1.85,3.4225000000000003\n1.9,3.61\n1.95,3.8024999999999998\n2,4\n2.05,4.2025\n2.1,4.41\n2.15,4.6225\n2.2,4.840000000000001\n2.25,5.0625\n2.3,5.289999999999999\n2.35,5.522500000000001\n2.4,5.76\n2.45,6.002500000000001\n2.5,6.25\n2.55,6.5024999999999995\n2.6,6.760000000000001\n2.65,7.0225\n2.7,7.290000000000001\n2.75,7.5625\n2.8,7.839999999999999\n2.85,8.1225\n2.9,8.41\n2.95,8.7025\n3,9\n3.05,9.302499999999998\n3.1,9.610000000000001\n3.15,9.9225\n3.2,10.240000000000002\n3.25,10.5625\n3.3,10.889999999999999\n3.35,11.2225\n3.4,11.559999999999999\n3.45,11.902500000000002\n3.5,12.25\n3.55,12.6025\n3.6,12.96\n3.65,13.3225\n3.7,13.690000000000001\n3.75,14.0625\n3.8,14.44\n3.85,14.822500000000002\n3.9,15.209999999999999\n3.95,15.602500000000001\n4,16\n4.05,16.4025\n4.1,16.81\n4.15,17.222500000000004\n4.2,17.64\n4.25,18.0625\n4.3,18.49\n4.35,18.922499999999996\n4.4,19.360000000000003\n4.45,19.802500000000002\n4.5,20.25\n4.55,20.702499999999997\n4.6,21.159999999999997\n4.65,21.622500000000002\n4.7,22.090000000000003\n4.75,22.5625\n4.8,23.04\n4.85,23.522499999999997\n4.9,24.010000000000005\n4.95,24.5025\n5,25\n5.05,25.502499999999998\n5.1,26.009999999999998\n5.15,26.522500000000004\n5.2,27.040000000000003\n5.25,27.5625\n5.3,28.09\n5.35,28.622499999999995\n5.4,29.160000000000004\n5.45,29.7025\n5.5,30.25\n5.55,30.8025\n5.6,31.359999999999996\n5.65,31.922500000000003\n5.7,32.49\n5.75,33.0625\n5.8,33.64\n5.85,34.2225\n5.9,34.81\n5.95,35.4025\n6,36\n6.05,36.6025\n6.1,37.209999999999994\n6.15,37.822500000000005\n6.2,38.440000000000005\n6.25,39.0625\n6.3,39.69\n6.35,40.3225\n6.4,40.96000000000001\n6.45,41.6025\n6.5,42.25\n6.55,42.902499999999996\n6.6,43.559999999999995\n6.65,44.222500000000004\n6.7,44.89\n6.75,45.5625\n6.8,46.239999999999995\n6.85,46.92249999999999\n6.9,47.61000000000001\n6.95,48.3025\n7,49\n7.05,49.7025\n7.1,50.41\n7.15,51.1225\n7.2,51.84\n7.25,52.5625\n7.3,53.29\n7.35,54.022499999999994\n7.4,54.760000000000005\n7.45,55.502500000000005",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "x3,sqrt(x)\n0,0\n0.05,2.23606797749979\n0.1,3.1622776601683795\n0.15,3.872983346207417\n0.2,4.47213595499958\n0.25,5\n0.3,5.47722557505166\n0.35,5.916079783099616\n0.4,6.324555320336759\n0.45,6.708203932499369\n0.5,7.0710678118654755\n0.55,7.416198487095663\n0.6,7.745966692414834\n0.65,8.062257748298551\n0.7,8.366600265340756\n0.75,8.660254037844386\n0.8,8.94427190999916\n0.85,9.219544457292887\n0.9,9.486832980505138\n0.95,9.746794344808963\n1,10\n1.05,10.2469507659596\n1.1,10.488088481701517\n1.15,10.723805294763608\n1.2,10.95445115010332\n1.25,11.180339887498949\n1.3,11.401754250991381\n1.35,11.618950038622252\n1.4,11.832159566199232\n1.45,12.041594578792296\n1.5,12.24744871391589\n1.55,12.449899597988733\n1.6,12.649110640673518\n1.65,12.84523257866513\n1.7,13.038404810405297\n1.75,13.228756555322953\n1.8,13.416407864998739\n1.85,13.601470508735442\n1.9,13.784048752090222\n1.95,13.96424004376894\n2,14.142135623730951\n2.05,14.317821063276352\n2.1,14.49137674618944\n2.15,14.66287829861518\n2.2,14.832396974191326\n2.25,15\n2.3,15.1657508881031\n2.35,15.329709716755893\n2.4,15.491933384829668\n2.45,15.652475842498529\n2.5,15.811388300841898\n2.55,15.968719422671311\n2.6,16.124515496597102\n2.65,16.278820596099706\n2.7,16.431676725154986\n2.75,16.583123951776997\n2.8,16.73320053068151\n2.85,16.881943016134134\n2.9,17.0293863659264\n2.95,17.175564037317667\n3,17.32050807568877\n3.05,17.46424919657298\n3.1,17.60681686165901\n3.15,17.74823934929885\n3.2,17.88854381999832\n3.25,18.027756377319946\n3.3,18.16590212458495\n3.35,18.303005217723125\n3.4,18.439088914585774\n3.45,18.57417562100671\n3.5,18.708286933869708\n3.55,18.84144368141677\n3.6,18.973665961010276\n3.65,19.1049731745428\n3.7,19.235384061671347\n3.75,19.364916731037084\n3.8,19.493588689617926\n3.85,19.621416870348586\n3.9,19.748417658131498\n3.95,19.87460691435179\n4,20\n4.05,20.124611797498105\n4.1,20.248456731316583\n4.15,20.37154878746336\n4.2,20.4939015319192\n4.25,20.615528128088304\n4.3,20.73644135332772\n4.35,20.85665361461421\n4.4,20.976176963403034\n4.45,21.095023109728984\n4.5,21.213203435596423\n4.55,21.330729007701542\n4.6,21.447610589527216\n4.65,21.563858652847827\n4.7,21.6794833886788\n4.75,21.79449471770337\n4.8,21.90890230020664\n4.85,22.022715545545243\n4.9,22.135943621178654\n4.95,22.24859546128699\n5,22.360679774997898\n5.05,22.47220505424423\n5.1,22.58317958127243\n5.15,22.693611435820436\n5.2,22.803508501982762\n5.25,22.9128784747792\n5.3,23.021728866442675\n5.35,23.130067012440755\n5.4,23.237900077244504\n5.45,23.345235059857504\n5.5,23.45207879911715\n5.55,23.55843797877949\n5.6,23.664319132398465\n5.65,23.769728648009426\n5.7,23.874672772626646\n5.75,23.979157616563597\n5.8,24.08318915758459\n5.85,24.186773244895647\n5.9,24.289915602982237\n5.95,24.392621835300936\n6,24.49489742783178\n6.05,24.596747752497684\n6.1,24.698178070456937\n6.15,24.79919353527449\n6.2,24.899799195977465\n6.25,25\n6.3,25.099800796022265\n6.35,25.199206336708304\n6.4,25.298221281347036\n6.45,25.39685019840059\n6.5,25.495097567963924\n6.55,25.592967784139454\n6.6,25.69046515733026\n6.65,25.787593916455258\n6.7,25.88435821108957\n6.75,25.98076211353316\n6.8,26.076809620810593\n6.85,26.1725046566048\n6.9,26.267851073127396\n6.95,26.362852652928133\n7,26.457513110645905\n7.05,26.551836094703507\n7.1,26.645825188948457\n7.15,26.739483914241873\n7.2,26.832815729997478\n7.25,26.92582403567252\n7.3,27.018512172212592\n7.35,27.11088342345192\n7.4,27.202941017470884\n7.45,27.294688127912362",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "C",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "x4,-sqrt(x)\n0,0\n0.05,-2.23606797749979\n0.1,-3.1622776601683795\n0.15,-3.872983346207417\n0.2,-4.47213595499958\n0.25,-5\n0.3,-5.47722557505166\n0.35,-5.916079783099616\n0.4,-6.324555320336759\n0.45,-6.708203932499369\n0.5,-7.0710678118654755\n0.55,-7.416198487095663\n0.6,-7.745966692414834\n0.65,-8.062257748298551\n0.7,-8.366600265340756\n0.75,-8.660254037844386\n0.8,-8.94427190999916\n0.85,-9.219544457292887\n0.9,-9.486832980505138\n0.95,-9.746794344808963\n1,-10\n1.05,-10.2469507659596\n1.1,-10.488088481701517\n1.15,-10.723805294763608\n1.2,-10.95445115010332\n1.25,-11.180339887498949\n1.3,-11.401754250991381\n1.35,-11.618950038622252\n1.4,-11.832159566199232\n1.45,-12.041594578792296\n1.5,-12.24744871391589\n1.55,-12.449899597988733\n1.6,-12.649110640673518\n1.65,-12.84523257866513\n1.7,-13.038404810405297\n1.75,-13.228756555322953\n1.8,-13.416407864998739\n1.85,-13.601470508735442\n1.9,-13.784048752090222\n1.95,-13.96424004376894\n2,-14.142135623730951\n2.05,-14.317821063276352\n2.1,-14.49137674618944\n2.15,-14.66287829861518\n2.2,-14.832396974191326\n2.25,-15\n2.3,-15.1657508881031\n2.35,-15.329709716755893\n2.4,-15.491933384829668\n2.45,-15.652475842498529\n2.5,-15.811388300841898\n2.55,-15.968719422671311\n2.6,-16.124515496597102\n2.65,-16.278820596099706\n2.7,-16.431676725154986\n2.75,-16.583123951776997\n2.8,-16.73320053068151\n2.85,-16.881943016134134\n2.9,-17.0293863659264\n2.95,-17.175564037317667\n3,-17.32050807568877\n3.05,-17.46424919657298\n3.1,-17.60681686165901\n3.15,-17.74823934929885\n3.2,-17.88854381999832\n3.25,-18.027756377319946\n3.3,-18.16590212458495\n3.35,-18.303005217723125\n3.4,-18.439088914585774\n3.45,-18.57417562100671\n3.5,-18.708286933869708\n3.55,-18.84144368141677\n3.6,-18.973665961010276\n3.65,-19.1049731745428\n3.7,-19.235384061671347\n3.75,-19.364916731037084\n3.8,-19.493588689617926\n3.85,-19.621416870348586\n3.9,-19.748417658131498\n3.95,-19.87460691435179\n4,-20\n4.05,-20.124611797498105\n4.1,-20.248456731316583\n4.15,-20.37154878746336\n4.2,-20.4939015319192\n4.25,-20.615528128088304\n4.3,-20.73644135332772\n4.35,-20.85665361461421\n4.4,-20.976176963403034\n4.45,-21.095023109728984\n4.5,-21.213203435596423\n4.55,-21.330729007701542\n4.6,-21.447610589527216\n4.65,-21.563858652847827\n4.7,-21.6794833886788\n4.75,-21.79449471770337\n4.8,-21.90890230020664\n4.85,-22.022715545545243\n4.9,-22.135943621178654\n4.95,-22.24859546128699\n5,-22.360679774997898\n5.05,-22.47220505424423\n5.1,-22.58317958127243\n5.15,-22.693611435820436\n5.2,-22.803508501982762\n5.25,-22.9128784747792\n5.3,-23.021728866442675\n5.35,-23.130067012440755\n5.4,-23.237900077244504\n5.45,-23.345235059857504\n5.5,-23.45207879911715\n5.55,-23.55843797877949\n5.6,-23.664319132398465\n5.65,-23.769728648009426\n5.7,-23.874672772626646\n5.75,-23.979157616563597\n5.8,-24.08318915758459\n5.85,-24.186773244895647\n5.9,-24.289915602982237\n5.95,-24.392621835300936\n6,-24.49489742783178\n6.05,-24.596747752497684\n6.1,-24.698178070456937\n6.15,-24.79919353527449\n6.2,-24.899799195977465\n6.25,-25\n6.3,-25.099800796022265\n6.35,-25.199206336708304\n6.4,-25.298221281347036\n6.45,-25.39685019840059\n6.5,-25.495097567963924\n6.55,-25.592967784139454\n6.6,-25.69046515733026\n6.65,-25.787593916455258\n6.7,-25.88435821108957\n6.75,-25.98076211353316\n6.8,-26.076809620810593\n6.85,-26.1725046566048\n6.9,-26.267851073127396\n6.95,-26.362852652928133\n7,-26.457513110645905\n7.05,-26.551836094703507\n7.1,-26.645825188948457\n7.15,-26.739483914241873\n7.2,-26.832815729997478\n7.25,-26.92582403567252\n7.3,-27.018512172212592\n7.35,-27.11088342345192\n7.4,-27.202941017470884\n7.45,-27.294688127912362",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "D",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Function Plots",
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "points"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 39
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mapping": "auto",
+        "series": [
+          {
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "created_at"
+              }
+            }
+          }
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "csvContent": "rating_score,created_at,name\n3.5,2022-01-15 16:52:15,apple juice\n3.5,2022-05-04 15:32:03,beet juice\n4.5,2023-04-08 11:27:23,pineapple juice\n2.5,2024-03-23 15:02:17,cranberry juice\n2.75,2024-12-08 12:49:26,orange juice\n2,2024-12-24 15:31:05,grape juice\n4,2025-01-10 21:30:19,apple juice\n4.75,2025-04-05 14:05:03,tomato juice\n3.5,2025-05-02 16:59:34,pomegranate juice\n4.5,2025-06-01 18:10:25,orange juice",
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "XY with time",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "dateFormat": "YYYY-MM-DD hh:mm:ss",
+                "destinationType": "time",
+                "targetField": "created_at"
+              }
+            ],
+            "fields": {}
+          }
+        }
+      ],
+      "type": "xychart"
+    }
+  ],
+  "preload": false,
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng",
+    "demo"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "2022-10-07T05:04:04.516Z",
+    "to": "2022-10-07T17:04:04.516Z"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Panel Tests - XY Chart Demo",
+  "uid": "fdn48fmz8f94wc",
+  "version": 1
+}

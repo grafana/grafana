@@ -1,0 +1,107 @@
+{
+  "__inputs": [],
+  "__elements": [],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "8.4.0-pre"
+    },
+    {
+      "type": "panel",
+      "id": "text",
+      "name": "Text",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "mode": "markdown",
+        "content": "VariableUnderTest: $VariableUnderTest"
+      },
+      "pluginVersion": "8.4.0-pre",
+      "title": "Panel Title",
+      "type": "text"
+    },
+    {
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 2,
+      "options": {
+        "mode": "markdown",
+        "content": "VariableUnderTestText: ${VariableUnderTest:text}"
+      },
+      "pluginVersion": "8.4.0-pre",
+      "title": "Panel Title",
+      "type": "text"
+    },
+    {
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 2,
+      "options": {
+        "mode": "markdown",
+        "content": "VariableUnderTestRaw: ${VariableUnderTest:raw}"
+      },
+      "pluginVersion": "8.4.0-pre",
+      "title": "Panel Title",
+      "type": "text"
+    }
+  ],
+  "schemaVersion": 35,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Test variable output",
+  "uid": "kVi2Gex7z",
+  "version": 2,
+  "weekStart": ""
+}

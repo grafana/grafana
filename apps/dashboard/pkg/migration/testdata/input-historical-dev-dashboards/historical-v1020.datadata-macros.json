@@ -1,0 +1,870 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 1267,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "gridPos": {
+          "h": 3,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 8,
+        "options": {
+          "code": {
+            "language": "plaintext",
+            "showLineNumbers": false,
+            "showMiniMap": false
+          },
+          "content": "* `__all_variables`=${__all_variables}\n* `__url_time_range`=${__url_time_range}",
+          "mode": "markdown"
+        },
+        "pluginVersion": "9.5.0-pre",
+        "title": "Panel Title",
+        "type": "text"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "links": [
+              {
+                "targetBlank": true,
+                "title": "value=${__value.raw}&time=${__value.time}&__value:percentencode=${__value:percentencode}&text=${__value.text}",
+                "url": "value=${__value.raw}&time=${__value.time}justvalue=${__value:percentencode}&text=${__value.text}"
+              }
+            ],
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "percent"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 3
+        },
+        "id": 2,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true,
+          "showRowNums": false
+        },
+        "pluginVersion": "9.5.0-pre",
+        "title": "DataLink: with __value.raw=&__value.time=&__value:percentencode=",
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "links": [
+              {
+                "targetBlank": true,
+                "title": "Value link",
+                "url": "value=${__value.raw}"
+              }
+            ],
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 12,
+          "y": 3
+        },
+        "id": 3,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "textMode": "auto"
+        },
+        "pluginVersion": "9.5.0-pre",
+        "targets": [
+          {
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "refId": "A",
+            "scenarioId": "random_walk",
+            "seriesCount": 5
+          }
+        ],
+        "title": "Stat panel with __value.raw ",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "continuous-GrYlRd"
+            },
+            "links": [
+              {
+                "title": "${__value.raw}",
+                "url": "${__value.raw}"
+              }
+            ],
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 10
+        },
+        "id": 6,
+        "options": {
+          "displayMode": "basic",
+          "minVizHeight": 10,
+          "minVizWidth": 0,
+          "orientation": "horizontal",
+          "reduceOptions": {
+            "calcs": [],
+            "fields": "",
+            "values": true
+          },
+          "showUnfilled": true,
+          "valueMode": "color"
+        },
+        "pluginVersion": "9.5.0-pre",
+        "targets": [
+          {
+            "csvFileName": "browser_marketshare.csv",
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "refId": "A",
+            "scenarioId": "csv_file"
+          }
+        ],
+        "title": "data link __value.raw",
+        "transformations": [
+          {
+            "id": "limit",
+            "options": {
+              "limitField": 5
+            }
+          }
+        ],
+        "type": "bargauge"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "description": "Since this is using getFrameDisplayName it works kind badly (especially with testdata) and only returns the  `Series (refId)`. \n\nSo this should show:\n* Series (Query1)\n* Series (Query2)",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "displayName": "${__series.name}",
+            "links": [
+              {
+                "targetBlank": true,
+                "title": "Value link",
+                "url": "value=${__calc}"
+              }
+            ],
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 12,
+          "y": 10
+        },
+        "id": 12,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "textMode": "auto"
+        },
+        "pluginVersion": "9.5.0-pre",
+        "targets": [
+          {
+            "alias": "",
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "refId": "Query1",
+            "scenarioId": "random_walk",
+            "seriesCount": 1
+          },
+          {
+            "alias": "",
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "hide": false,
+            "refId": "Query2",
+            "scenarioId": "random_walk",
+            "seriesCount": 1
+          }
+        ],
+        "title": "${series.name} in display name",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "links": [
+              {
+                "title": "__data.refId=${__data.refId}&__data.fields[0]=${__data.fields[0]}&cluster=${__field.labels.cluster}",
+                "url": "refId=${__data.refId}&__data.fields[0]=${__data.fields[0]}&cluster=${__field.labels.cluster}"
+              }
+            ],
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "percent"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 17
+        },
+        "id": 11,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true,
+          "showRowNums": false
+        },
+        "pluginVersion": "9.5.0-pre",
+        "targets": [
+          {
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "labels": "cluster=US",
+            "refId": "A",
+            "scenarioId": "random_walk"
+          }
+        ],
+        "title": "DataLink: refId=${__data.refId}&__data.fields[0]=${__data.fields[0]}&cluster=${__field.labels.cluster}",
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "links": [
+              {
+                "title": "${__value.raw}",
+                "url": "${__value.raw}"
+              }
+            ],
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 12,
+          "y": 17
+        },
+        "id": 10,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "alias": "10,20,30,40",
+            "csvContent": "Time, value, test\n\"2023-03-24T17:12:12.347Z\", 10,hello\n\"2023-03-24T17:22:12.347Z\", 20,asd\n\"2023-03-24T17:32:12.347Z\", 30,asd2\n\"2023-03-24T17:42:12.347Z\", 40,as34\n",
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "refId": "A",
+            "scenarioId": "csv_content"
+          },
+          {
+            "alias": "5,6,7",
+            "csvContent": "Time, value, test\n\"2023-03-24T17:12:12.347Z\", 5,hello\n\"2023-03-24T17:22:12.347Z\", 6,asd\n\"2023-03-24T17:42:12.347Z\", 7,as34\n",
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "refId": "B",
+            "scenarioId": "csv_content"
+          }
+        ],
+        "title": "Data links with ${__value.raw}",
+        "transformations": [
+          {
+            "id": "joinByField",
+            "options": {}
+          }
+        ],
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "links": [
+              {
+                "title": "__field.name=${__field.name}&__field.labels.cluster=${__field.labels.cluster}",
+                "url": "__field.name=${__field.name}&__field.labels.cluster=${__field.labels.cluster}"
+              }
+            ],
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "percent"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        },
+        "id": 13,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true,
+          "showRowNums": false
+        },
+        "pluginVersion": "9.5.0-pre",
+        "targets": [
+          {
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "labels": "cluster=US",
+            "refId": "A",
+            "scenarioId": "random_walk"
+          }
+        ],
+        "title": "DataLink: __field.name=&__field.labels.cluster",
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "description": "The stat display names should be \n*  Stockholm = Bad\n* New York = Good \n",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "displayName": "$__cell_0 = $__cell_2",
+            "links": [],
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 12,
+          "y": 24
+        },
+        "id": 14,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": true
+          },
+          "textMode": "auto"
+        },
+        "pluginVersion": "9.5.0-pre",
+        "targets": [
+          {
+            "alias": "",
+            "csvContent": "name, value, name2\nStockholm, 10, Good\nNew York, 15, Bad",
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "refId": "A",
+            "scenarioId": "csv_content"
+          }
+        ],
+        "title": "DisplayName with __cell_0 = __cell_2",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "description": "The stat display names should be \n*  Stockholm = Bad\n* New York = Good \n",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "displayName": "${__field.name}",
+            "links": [
+              {
+                "targetBlank": true,
+                "title": "Value link",
+                "url": "value=${__calc}"
+              }
+            ],
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 31
+        },
+        "id": 15,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true,
+          "showRowNums": false
+        },
+        "pluginVersion": "9.5.0-pre",
+        "targets": [
+          {
+            "alias": "",
+            "csvContent": "name, value, name2\nStockholm, 10, Good\nNew York, 15, Bad",
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "refId": "A",
+            "scenarioId": "csv_content"
+          }
+        ],
+        "title": "DisplayName: __field.name",
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "description": "The stat display names should be \n*  Stockholm = Bad\n* New York = Good \n",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "displayName": "${__data.fields[0]} = ${__data.fields[2]}",
+            "links": [
+              {
+                "targetBlank": true,
+                "title": "__data.fields[0] = ${__data.fields[0]} = __value.raw = ${__value.raw}",
+                "url": "__data.fields[0] = ${__data.fields[0]} = __value.raw = ${__value.raw}"
+              }
+            ],
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 12,
+          "y": 31
+        },
+        "id": 16,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": true
+          },
+          "textMode": "auto"
+        },
+        "pluginVersion": "9.5.0-pre",
+        "targets": [
+          {
+            "alias": "",
+            "csvContent": "name, value, name2\nStockholm, 10, Good\nNew York, 15, Bad",
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "refId": "A",
+            "scenarioId": "csv_content"
+          }
+        ],
+        "title": "$__data.fields[0] = $__data.fields[2] with datalinks",
+        "type": "stat"
+      }
+    ],
+    "refresh": "",
+    "schemaVersion": 38,
+      "tags": ["gdev", "templating"],
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "selected": false,
+            "text": "A",
+            "value": "A"
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": false,
+          "name": "customVar",
+          "options": [
+            {
+              "selected": true,
+              "text": "A",
+              "value": "A"
+            },
+            {
+              "selected": false,
+              "text": "B",
+              "value": "B"
+            },
+            {
+              "selected": false,
+              "text": "C",
+              "value": "C"
+            }
+          ],
+          "query": "A,B,C",
+          "queryValue": "",
+          "skipUrlSync": false,
+          "type": "custom"
+        }
+      ]
+    },
+    "time": {
+      "from": "2023-03-24T17:12:12.347Z",
+      "to": "2023-03-24T17:42:12.347Z"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "Templating - Macros",
+    "uid": "e7c29343-6d1e-4167-9c13-803fe5be8c46",
+    "version": 48,
+    "weekStart": ""
+  }
