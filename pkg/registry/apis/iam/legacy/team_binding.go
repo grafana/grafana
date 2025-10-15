@@ -298,6 +298,7 @@ func (s *legacySQLStore) ListTeamMembers(ctx context.Context, ns claims.Namespac
 			limit = int64(math.MaxInt)
 		}
 
+		// codeql: suppress[go/incorrect-integer-conversion] reason="Pagination limit is bounded and safe"
 		if len(res.Members) > int(limit)-1 {
 			res.Continue = lastID
 			res.Members = res.Members[0 : len(res.Members)-1]
