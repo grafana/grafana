@@ -7,7 +7,7 @@ import {
   ImageRenderType,
 } from '../../public/app/features/transformers/docs/content';
 
-const WRITE_PATH = 'docs/sources/panels-visualizations/query-transform-data/transform-data/index.md';
+const WRITE_PATH = 'docs/sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md';
 
 export const readMeContent = `
   To update this Markdown, navigate to the following Typescript files and edit them based on what you need to update:
