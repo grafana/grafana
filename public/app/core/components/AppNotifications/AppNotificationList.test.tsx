@@ -1,194 +1,123 @@
-import { act, render, waitFor } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { act, getWrapper, render, screen } from 'test/test-utils';
 
-import { AppEvents, PageLayoutType } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 import appEvents from 'app/core/app_events';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
-import { configureStore } from 'app/store/configureStore';
 import { KioskMode } from 'app/types/dashboard';
 
-import { AppChromeState } from '../AppChrome/AppChromeService';
+import { AppChromeService } from '../AppChrome/AppChromeService';
 
 import { AppNotificationList } from './AppNotificationList';
 
+const renderWithContext = (kioskMode?: KioskMode, pathname = '/') => {
+  const chromeService = new AppChromeService();
+  if (kioskMode) {
+    chromeService.update({ kioskMode });
+  }
+
+  const wrapper = getWrapper({
+    renderWithRouter: true,
+    historyOptions: { initialEntries: [pathname] },
+    grafanaContext: {
+      chrome: chromeService,
+    },
+  });
+  const view = render(<AppNotificationList />, { wrapper });
+
+  return view;
+};
+
+const expectedErrorMessage = 'Test error';
+const expectedSuccessMessage = 'Test success';
+const expectedWarningMessage = 'Test warning';
+const expectedInfoMessage = 'Test info';
+
+const sendTestNotification = async (type: (typeof AppEvents)[keyof typeof AppEvents], message: string) => {
+  return act(async () => {
+    appEvents.publish({ type: type.name, payload: [message] });
+  });
+};
+
 describe('AppNotificationList', () => {
-  const renderWithContext = (kioskMode?: KioskMode, pathname = '/') => {
-    const mockStore = configureStore(); // Fresh store for each test
-    const contextMock = getGrafanaContextMock();
-
-    // Replace chrome.state.getValue with a function that returns the kioskMode
-    const mockState: AppChromeState = {
-      chromeless: false,
-      sectionNav: { node: { text: '' }, main: { text: '' } },
-      megaMenuOpen: false,
-      megaMenuDocked: false,
-      kioskMode: kioskMode ?? null,
-      layout: PageLayoutType.Standard,
-    };
-    contextMock.chrome.state.getValue = () => mockState;
-
-    return {
-      ...render(
-        <Provider store={mockStore}>
-          <GrafanaContext.Provider value={contextMock}>
-            <MemoryRouter initialEntries={[pathname]}>
-              <AppNotificationList />
-            </MemoryRouter>
-          </GrafanaContext.Provider>
-        </Provider>
-      ),
-      contextMock,
-      mockStore,
-    };
-  };
-
   describe('Error notifications', () => {
     it('should show error notifications when not in kiosk mode', async () => {
-      const { container } = renderWithContext(undefined, '/d/test-dashboard');
+      renderWithContext(undefined, '/d/test-dashboard');
+      await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      await act(async () => {
-        appEvents.emit(AppEvents.alertError, ['Test error']);
-      });
-
-      await waitFor(() => {
-        expect(container.textContent).toContain('Test error');
-      });
+      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
     });
 
     it('should hide error notifications in kiosk mode on dashboard page', async () => {
-      const { container } = renderWithContext(KioskMode.Full, '/d/test-dashboard');
+      renderWithContext(KioskMode.Full, '/d/test-dashboard');
+      await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      await act(async () => {
-        appEvents.emit(AppEvents.alertError, ['Test error']);
-      });
-
-      // Wait a bit to ensure event handlers have run
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      });
-
-      expect(container.textContent).not.toContain('Test error');
+      expect(screen.queryByText(expectedErrorMessage)).not.toBeInTheDocument();
     });
 
     it('should show error notifications in kiosk mode on non-dashboard pages', async () => {
-      const { container } = renderWithContext(KioskMode.Full, '/alerting');
+      renderWithContext(KioskMode.Full, '/alerting');
+      await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      await act(async () => {
-        appEvents.emit(AppEvents.alertError, ['Test error']);
-      });
-
-      await waitFor(() => {
-        expect(container.textContent).toContain('Test error');
-      });
+      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
     });
 
     it('should hide error notifications in kiosk mode on home dashboard', async () => {
-      const { container } = renderWithContext(KioskMode.Full, '/d/');
+      renderWithContext(KioskMode.Full, '/d/');
+      await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      await act(async () => {
-        appEvents.emit(AppEvents.alertError, ['Test error']);
-      });
-
-      // Wait a bit to ensure event handlers have run
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      });
-
-      expect(container.textContent).not.toContain('Test error');
+      expect(screen.queryByText(expectedErrorMessage)).not.toBeInTheDocument();
     });
 
     it('should show error notifications in kiosk mode on root page (not dashboard route)', async () => {
-      const { container } = renderWithContext(KioskMode.Full, '/');
+      renderWithContext(KioskMode.Full, '/');
+      await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      await act(async () => {
-        appEvents.emit(AppEvents.alertError, ['Test error']);
-      });
-
-      await waitFor(() => {
-        expect(container.textContent).toContain('Test error');
-      });
+      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
     });
   });
 
   describe('Other notification types', () => {
     it('should always show success notifications in kiosk mode on dashboard', async () => {
-      const { container } = renderWithContext(KioskMode.Full, '/d/test-dashboard');
+      renderWithContext(KioskMode.Full, '/d/test-dashboard');
+      await sendTestNotification(AppEvents.alertSuccess, expectedSuccessMessage);
 
-      await act(async () => {
-        appEvents.emit(AppEvents.alertSuccess, ['Test success']);
-      });
-
-      await waitFor(() => {
-        expect(container.textContent).toContain('Test success');
-      });
+      expect(await screen.findByText(expectedSuccessMessage)).toBeInTheDocument();
     });
 
     it('should always show warning notifications in kiosk mode on dashboard', async () => {
-      const { container } = renderWithContext(KioskMode.Full, '/d/test-dashboard');
+      renderWithContext(KioskMode.Full, '/d/test-dashboard');
+      await sendTestNotification(AppEvents.alertWarning, expectedWarningMessage);
 
-      await act(async () => {
-        appEvents.emit(AppEvents.alertWarning, ['Test warning']);
-      });
-
-      await waitFor(() => {
-        expect(container.textContent).toContain('Test warning');
-      });
+      expect(await screen.findByText(expectedWarningMessage)).toBeInTheDocument();
     });
 
     it('should always show info notifications in kiosk mode on dashboard', async () => {
-      const { container } = renderWithContext(KioskMode.Full, '/d/test-dashboard');
+      renderWithContext(KioskMode.Full, '/d/test-dashboard');
+      await sendTestNotification(AppEvents.alertInfo, expectedInfoMessage);
 
-      await act(async () => {
-        appEvents.emit(AppEvents.alertInfo, ['Test info']);
-      });
-
-      await waitFor(() => {
-        expect(container.textContent).toContain('Test info');
-      });
+      expect(await screen.findByText(expectedInfoMessage)).toBeInTheDocument();
     });
   });
 
   describe('Edge cases', () => {
     it('should show error on dashboard page with uid and slug', async () => {
-      const { container } = renderWithContext(undefined, '/d/test-uid/test-slug');
+      renderWithContext(undefined, '/d/test-uid/test-slug');
+      await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      await act(async () => {
-        appEvents.emit(AppEvents.alertError, ['Test error']);
-      });
-
-      await waitFor(() => {
-        expect(container.textContent).toContain('Test error');
-      });
+      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
     });
 
     it('should hide error in kiosk mode on dashboard page with uid and slug', async () => {
-      const { container } = renderWithContext(KioskMode.Full, '/d/test-uid/test-slug');
+      renderWithContext(KioskMode.Full, '/d/test-uid/test-slug');
+      await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      await act(async () => {
-        appEvents.emit(AppEvents.alertError, ['Test error']);
-      });
-
-      // Wait a bit to ensure event handlers have run
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      });
-
-      expect(container.textContent).not.toContain('Test error');
+      expect(screen.queryByText(expectedErrorMessage)).not.toBeInTheDocument();
     });
 
     it('should show error on legacy dashboard route', async () => {
-      const { container } = renderWithContext(KioskMode.Full, '/dashboard/db/test-dashboard');
+      renderWithContext(KioskMode.Full, '/dashboard/db/test-dashboard');
+      await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      await act(async () => {
-        appEvents.emit(AppEvents.alertError, ['Test error']);
-      });
-
-      await waitFor(() => {
-        expect(container.textContent).toContain('Test error');
-      });
+      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
     });
   });
 });
-
