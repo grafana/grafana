@@ -115,17 +115,17 @@ Set the tenant ID for Loki communication, which is disabled by default. The tena
 ### batch_wait_duration
 
 How long to wait before sending a request to Loki with the batch of events. Uses duration format: e.g. 5s, 1m. Defaults to 5s.
-  
+
 Whatever happens first between `batch_wait_duration` and `batch_size_bytes` will trigger the batch to be sent to Loki.
-  
+
 If the wait duration is very long and the `batch_size_bytes` is very high, events may take a long time to be sent.
 
 ### batch_size_bytes
 
 How many events (in bytes) to accumulate in a single batch before sending it to Loki. Defaults to 100 KiB.
-  
+
 Whatever happens first between `batch_wait_duration` and `batch_size_bytes` will trigger the batch to be sent to Loki.
-  
+
 If you wish to always wait for the `batch_wait_duration`, set this to a very high number.
 
 ## [analytics.summaries]
