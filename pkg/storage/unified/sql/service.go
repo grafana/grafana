@@ -310,7 +310,7 @@ func (s *service) starting(ctx context.Context) error {
 
 	if s.cfg.EnableSharding {
 		s.log.Info("waiting until resource server is JOINING in the ring")
-		lfcCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		lfcCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ResourceServerJoinRingTimeout)
 		defer cancel()
 		if err := ring.WaitInstanceState(lfcCtx, s.searchRing, s.ringLifecycler.GetInstanceID(), ring.JOINING); err != nil {
 			return fmt.Errorf("error switching to JOINING in the ring: %s", err)

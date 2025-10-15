@@ -601,6 +601,7 @@ type Cfg struct {
 	SprinklesApiServerPageLimit                int
 	CACertPath                                 string
 	HttpsSkipVerify                            bool
+	ResourceServerJoinRingTimeout              time.Duration
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
