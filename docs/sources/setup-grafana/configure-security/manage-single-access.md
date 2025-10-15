@@ -121,7 +121,7 @@ Next, focus on how teams interact with data to decide further access needs.
 
 #### Shared baseline data access
 
-For resources accessible by all teams, grant the `datasources:explorer` fixed role to all teams so they can use the [Drilldown apps](ref:drilldown) for easily exploring data sources.
+Grant the `datasources:explorer` fixed role to all teams so they can use the [Drilldown apps](ref:drilldown) for easily exploring data sources.
 
 However, you may need to protect data in shared resources. For example, all teams can be forwarding metrics to a shared [data source](ref:add-data-source), but not everyone needs to see all of the data. In this case, grant each team query access to the data relevant for them, based on [label based access controls (LBAC) per team](ref:lbac). This way, you’ll maintain a central observability pipeline but still preserve data separation.
 
