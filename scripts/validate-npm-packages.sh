@@ -11,19 +11,23 @@ failed_checks=()
 for file in "$ARTIFACTS_DIR"/*.tgz; do
   echo "🔍 Checking NPM package: $file"
 
-  # Ignore named-exports for now as builds aren't compatible yet.
-  if ! yarn attw "$file" --ignore-rules "named-exports"; then
+  # TODO: Fix the error with @grafana/i18n/eslint-resolution
+  if [[ "$file" == *"@grafana-i18n"* ]]; then
+    ATTW_FLAGS="--profile node16"
+  fi
+
+  # shellcheck disable=SC2086
+  if ! yarn attw "$file" --ignore-rules "false-cjs" $ATTW_FLAGS; then
     echo "attw check failed for $file"
     echo ""
     failed_checks+=("$file - yarn attw")
   fi
 
-  # if ! yarn publint "$file"; then
-  #   echo "publint check failed for $file"
-  #   echo ""
-  #   failed_checks+=("$file - yarn publint")
-  # fi
-
+  if ! yarn publint "$file"; then
+    echo "publint check failed for $file"
+    echo ""
+    failed_checks+=("$file - yarn publint")
+  fi
 done
 
 if (( ${#failed_checks[@]} > 0 )); then
