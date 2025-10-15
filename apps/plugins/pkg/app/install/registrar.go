@@ -64,7 +64,7 @@ func (p *PluginInstall) ToPluginInstallV0Alpha1(namespace string) *pluginsv0alph
 }
 
 func (p *PluginInstall) ShouldUpdate(existing *pluginsv0alpha1.PluginInstall) bool {
-	update := p.ToPluginInstallV0Alpha1(existing.ObjectMeta.Namespace)
+	update := p.ToPluginInstallV0Alpha1(existing.Namespace)
 	if source, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && source != p.Source {
 		return true
 	}
@@ -133,7 +133,7 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 	}
 
 	if existing != nil && install.ShouldUpdate(existing) {
-		_, err = client.Update(ctx, install.ToPluginInstallV0Alpha1(namespace), resource.UpdateOptions{ResourceVersion: existing.ObjectMeta.ResourceVersion})
+		_, err = client.Update(ctx, install.ToPluginInstallV0Alpha1(namespace), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
 		return err
 	}
 

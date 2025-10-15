@@ -37,6 +37,26 @@ type syncer struct {
 	serverLock       ServerLock
 }
 
+// newSyncer creates a new syncer with the provided dependencies.
+func newSyncer(
+	featureToggles featuremgmt.FeatureToggles,
+	clientGenerator resource.ClientGenerator,
+	installRegistrar *install.InstallRegistrar,
+	orgService org.Service,
+	namespaceMapper request.NamespaceMapper,
+	serverLock ServerLock,
+) *syncer {
+	return &syncer{
+		clientGenerator:  clientGenerator,
+		clientOnce:       sync.Once{},
+		featureToggles:   featureToggles,
+		installRegistrar: installRegistrar,
+		orgService:       orgService,
+		namespaceMapper:  namespaceMapper,
+		serverLock:       serverLock,
+	}
+}
+
 // ProvideSyncer creates a new Syncer for syncing plugin installations to the API.
 func ProvideSyncer(
 	featureToggles featuremgmt.FeatureToggles,
@@ -49,15 +69,17 @@ func ProvideSyncer(
 	if err != nil {
 		return nil, err
 	}
-	return &syncer{
-		clientGenerator:  clientGenerator,
-		clientOnce:       sync.Once{},
-		featureToggles:   featureToggles,
-		installRegistrar: install.NewInstallRegistrar(clientGenerator),
-		orgService:       orgService,
-		namespaceMapper:  request.GetNamespaceMapper(cfg),
-		serverLock:       serverLock,
-	}, nil
+	installRegistrar := install.NewInstallRegistrar(clientGenerator)
+	namespaceMapper := request.GetNamespaceMapper(cfg)
+
+	return newSyncer(
+		featureToggles,
+		clientGenerator,
+		installRegistrar,
+		orgService,
+		namespaceMapper,
+		serverLock,
+	), nil
 }
 
 func (s *syncer) getClient() (*pluginsv0alpha1.PluginInstallClient, error) {
@@ -78,19 +100,31 @@ func (s *syncer) Sync(ctx context.Context, source install.Source, installedPlugi
 		return nil
 	}
 
-	return s.serverLock.LockExecuteAndRelease(ctx, "plugin-install-api-sync", 10*time.Minute, func(ctx context.Context) {
-		orgs, err := s.orgService.Search(ctx, &org.SearchOrgsQuery{})
-		if err != nil {
-			return
-		}
-
-		for _, org := range orgs {
-			err := s.syncNamespace(ctx, s.namespaceMapper(org.ID), source, installedPlugins)
-			if err != nil {
-				return
-			}
-		}
+	var syncErr error
+	lockErr := s.serverLock.LockExecuteAndRelease(ctx, "plugin-install-api-sync", 10*time.Minute, func(ctx context.Context) {
+		syncErr = s.syncAllNamespaces(ctx, source, installedPlugins)
 	})
+
+	if lockErr != nil {
+		return lockErr
+	}
+	return syncErr
+}
+
+func (s *syncer) syncAllNamespaces(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error {
+	orgs, err := s.orgService.Search(ctx, &org.SearchOrgsQuery{})
+	if err != nil {
+		return err
+	}
+
+	for _, org := range orgs {
+		err := s.syncNamespace(ctx, s.namespaceMapper(org.ID), source, installedPlugins)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *syncer) syncNamespace(ctx context.Context, namespace string, source install.Source, installedPlugins []*plugins.Plugin) error {

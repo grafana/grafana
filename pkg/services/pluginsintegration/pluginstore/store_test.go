@@ -54,7 +54,7 @@ func TestStore_ProvideService(t *testing.T) {
 		require.Equal(t, []plugins.Class{"1", "2", "3"}, loadedSrcs)
 	})
 
-	t.Run("Plugin installs are registered", func(t *testing.T) {
+	t.Run("Plugin installs are synced", func(t *testing.T) {
 		registrar := installsyncfakes.NewFakeSyncer()
 		registered := []*plugins.Plugin{}
 		registrar.SyncFunc = func(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error {
