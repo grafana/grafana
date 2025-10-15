@@ -108,7 +108,7 @@ After you’ve deployed your Grafana instance:
 
 To design a [folder](ref:create-folder) setup that helps users quickly understand where to go, what they can access, and what they can manage:
 
-- Create an “Everyone” folder for shared items that all teams can manage.
+- Create an “Everyone” folder for shared items that all teams can manage (ie. grant them admin access to that folder).
 - For each team, create a folder that they can manage and grant them the `fixed:teams:read` [fixed role](ref:rbac-assign). This means they can share items in their team folder with other teams, to encourage collaboration and learning from each other.
 - For Team C, create an “Admins” folder for sensitive content only Admins can access.
 - Optionally, create a personal folder for each team member so that they can work on draft content before moving it into their team folder when ready.
