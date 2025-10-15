@@ -120,7 +120,7 @@ For more information about dashboard permissions, refer to [Dashboard permission
 
 **Dashboards** - Deleted dashboards are stored in the deletion history and can be [restored](#restore-dashboards) if needed (Cloud only).
 
-## Restore dashboards
+## Restore deleted dashboards
 
 {{% admonition type="caution" %}}
 The feature is only available in Grafana Cloud.  
