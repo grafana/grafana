@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"regexp"
 
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
 	"github.com/grafana/grafana/apps/example/pkg/apis/example/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 var namespacedSomethingRouteMatcher = regexp.MustCompile(fmt.Sprintf(`^/apis/%s/%s/namespaces/([^\/]+)/something$`, v1alpha1.APIGroup, v1alpha1.APIVersion))
