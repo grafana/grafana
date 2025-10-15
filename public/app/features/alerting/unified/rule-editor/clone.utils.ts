@@ -3,8 +3,8 @@ import { cloneDeep } from 'lodash';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { GRAFANA_ORIGIN_LABEL } from '../../../../../../packages/grafana-alerting/src/grafana/rules/utils/labels';
 import { generateCopiedName } from '../utils/duplicate';
+import { GRAFANA_ORIGIN_LABEL } from '../utils/labels';
 import { getRuleName, isPluginProvidedRule, rulerRuleType } from '../utils/rules';
 
 export function changeRuleName(rule: RulerRuleDTO, newName: string) {
