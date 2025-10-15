@@ -95,6 +95,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		require.Equal(t, user.GetName(), createdSpec["subject"].(map[string]interface{})["name"])
 		require.Equal(t, team.GetName(), createdSpec["teamRef"].(map[string]interface{})["name"])
 		require.Equal(t, "admin", createdSpec["permission"])
+		require.Equal(t, false, createdSpec["external"])
 
 		createdUID := created.GetName()
 		require.NotEmpty(t, createdUID)
@@ -108,6 +109,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		require.Equal(t, user.GetName(), fetchedSpec["subject"].(map[string]interface{})["name"])
 		require.Equal(t, team.GetName(), fetchedSpec["teamRef"].(map[string]interface{})["name"])
 		require.Equal(t, "admin", fetchedSpec["permission"])
+		require.Equal(t, false, fetchedSpec["external"])
 
 		require.Equal(t, createdUID, fetched.GetName())
 		require.Equal(t, "default", fetched.GetNamespace())

@@ -4343,9 +4343,14 @@
         "required": [
           "subject",
           "teamRef",
-          "permission"
+          "permission",
+          "external"
         ],
         "properties": {
+          "external": {
+            "type": "boolean",
+            "default": false
+          },
           "permission": {
             "description": "permission of the identity in the team",
             "type": "string",
@@ -6197,9 +6202,14 @@
         "required": [
           "subject",
           "teamRef",
-          "permission"
+          "permission",
+          "external"
         ],
         "properties": {
+          "external": {
+            "type": "boolean",
+            "default": false
+          },
           "permission": {
             "description": "permission of the identity in the team",
             "type": "string",

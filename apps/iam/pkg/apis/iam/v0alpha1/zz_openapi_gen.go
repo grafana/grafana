@@ -2123,8 +2123,15 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
 				},
-				Required: []string{"subject", "teamRef", "permission"},
+				Required: []string{"subject", "teamRef", "permission", "external"},
 			},
 		},
 		Dependencies: []string{
