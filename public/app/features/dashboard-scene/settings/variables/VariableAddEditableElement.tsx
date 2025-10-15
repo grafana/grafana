@@ -4,7 +4,7 @@ import { useCallback, useId, useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { sceneGraph, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
+import { sceneGraph, SceneObjectBase, SceneObjectRef, SceneObjectState, SceneVariableSet } from '@grafana/scenes';
 import { Box, Card, Stack, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -12,7 +12,6 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
-import { DashboardInteractions } from '../../utils/interactions';
 
 import { EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
 
@@ -70,12 +69,15 @@ function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
   const onAddVariable = useCallback(
     (type: EditableVariableType) => {
       const dashboard = variableAdd.state.dashboardRef.resolve();
-      const newVar = getVariableScene(type, {
-        name: getNextAvailableId(type, dashboard.state.$variables?.state?.variables ?? []),
-      });
-      dashboardEditActions.addVariable({ source: sceneGraph.getVariables(dashboard), addedObject: newVar });
+      const variablesSet = sceneGraph.getVariables(dashboard);
+
+      if (!(variablesSet instanceof SceneVariableSet)) {
+        return;
+      }
+
+      const newVar = getVariableScene(type, { name: getNextAvailableId(type, variablesSet.state.variables ?? []) });
+      dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
       dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
-      DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
     },
     [variableAdd]
   );
