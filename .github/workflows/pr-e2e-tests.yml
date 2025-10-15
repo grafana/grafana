@@ -65,7 +65,7 @@ jobs:
       # If no cache hit, build Grafana
       - name: Build Grafana
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
@@ -230,7 +230,7 @@ jobs:
       - name: chmod +x
         run: chmod +x ./e2e-runner
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
@@ -302,7 +302,7 @@ jobs:
         with:
           name: grafana-tar-gz
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
@@ -365,7 +365,7 @@ jobs:
           name: grafana-tar-gz
 
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
@@ -484,14 +484,14 @@ jobs:
           name: grafana-tar-gz
       - name: Run PR a11y test
         if: github.event_name == 'pull_request'
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
           args: go run ./pkg/build/a11y --package=grafana.tar.gz
       - name: Run non-PR a11y test
         if: github.event_name != 'pull_request'
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
