@@ -15,6 +15,8 @@ export type AddedComponentRegistryItem<Props = {}> = {
   title: string;
   description?: string;
   component: React.ComponentType<Props>;
+  minWidth?: number | string;
+  initialWidth?: number | string;
 };
 
 export class AddedComponentsRegistry extends Registry<
@@ -70,6 +72,8 @@ export class AddedComponentsRegistry extends Registry<
           }),
           description: config.description,
           title: config.title,
+          minWidth: config.minWidth,
+          initialWidth: config.initialWidth,
         };
 
         pointIdLog.debug('Added component extension successfully registered');
