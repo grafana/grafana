@@ -59,6 +59,27 @@ Git Sync is under development and the following limitations apply:
 - If you're using Git Sync in Grafana Cloud you can only sync specific folders for the moment. Git Sync will be available for your full instance soon.
 - Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
 
+## Git Sync resource requirements
+
+Git Sync doesn't support all available resources. 
+
+To migrate and fully operate a resource using Git Sync, the following is required:
+
+- The resource type has been onboarded into App Platform and is exposed using standardized APIs.
+- Existing resources have been migrated to Unified Storage.
+- Sync has been extended to push and pull resources of that type from and to the Git repository.
+- Corresponding sections in Grafana Frontend have been extended to manage resources through Git Sync, rather than calling the APIs for that particular resource type directly.
+- For Cloud stacks, the resource must be exposed by a multi-tenant API server.
+
+### Resource states
+
+With regards to Git Sync, a resource can have one of these states:
+
+- **Unsupported**: The resource doesn't meet [the criteria](#git-sync-resource-requirements) and cannot be managed with Git Sync.
+- **Unmanaged**: While you still control the resource, you could migrate it to Git Sync. 
+- **Partially Managed**: Some of the resources are controlled by Git Sync. 
+- **Fully Managed**: All supported resource types are managed by Git Sync. Note that unsupported resources are not managed.
+
 ## Common use cases
 
 You can use Git Sync in the following scenarios.
