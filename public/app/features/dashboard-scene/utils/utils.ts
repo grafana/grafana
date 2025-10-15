@@ -257,7 +257,7 @@ export function getDefaultVizPanel(): VizPanel {
       $behaviors: [panelMenuBehavior],
     }),
     headerActions: config.featureToggles.timeComparison
-      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
+      ? [new CustomTimeRangeCompare({ key: 'compareWith', compareWith: undefined, compareOptions: [] })]
       : undefined,
     $data: new SceneDataTransformer({
       $data: new SceneQueryRunner({

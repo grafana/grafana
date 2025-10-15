@@ -12,6 +12,7 @@ export class CustomTimeRangeCompare extends SceneTimeRangeCompare {
   constructor(state: Partial<SceneTimeRangeCompare['state']> = {}) {
     super({
       ...state,
+      key: state.key || 'compareWith',
       compareWith: undefined,
       compareOptions: [],
       hideCheckbox: true,
