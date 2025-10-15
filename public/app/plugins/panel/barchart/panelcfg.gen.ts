@@ -33,18 +33,41 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    */
   groupWidth: number;
   /**
-   * Custom markers persisted with the panel. Each marker targets an x-group or index.
+   * Sets visual markers on each bar of a targeted field, based on y values provided by the data field
    */
   markers: Array<{
+    /**
+     * Ids the marker group, generated automatically
+     */
     id: number;
+    /**
+     * Sets the field on which the markers will appear
+     */
     targetField: string;
+    /**
+     * Sets the field which provides the values for each marker. This field will no longer be shown in the chart
+     */
     dataField: string;
+    /**
+     * Options for visual representation
+     */
     opts: {
       label: string;
+      /**
+       * Sets the color of the marker group
+       */
       color: string;
-      width: number;
+      /**
+       * Controls the size of the marker group
+       */
+      size: number;
+      /**
+       * Sets the shape of the marker group
+       */
       shape: string;
-      isRotated: boolean;
+      /**
+       * Sets the opacity of the marker group
+       */
       opacity: number;
     };
   }>;
