@@ -77,16 +77,13 @@ export function useSaveDashboard(isCopy = false) {
 
         updateDashboardUidLastUsedDatasource(resultData.uid);
 
-        // For analytics tracking, get all expression types used in dashboard
-        const expressionTypes = scene.getExpressionTypes(saveModel);
-
         if (isCopy) {
           DashboardInteractions.dashboardCopied({ name: saveModel.title || '', url: resultData.url });
         } else {
           trackDashboardSceneCreatedOrSaved(!!options.isNew, scene, {
             name: saveModel.title || '',
             url: resultData.url || '',
-            expression_types: expressionTypes,
+            expression_types: scene.getExpressionTypes(saveModel),
           });
         }
 

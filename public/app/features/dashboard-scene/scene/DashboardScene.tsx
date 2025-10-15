@@ -15,7 +15,7 @@ import {
   SceneVariableDependencyConfigLike,
   VizPanel,
 } from '@grafana/scenes';
-import { Dashboard, DashboardLink, LibraryPanel, Panel } from '@grafana/schema';
+import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import appEvents from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
@@ -736,28 +736,52 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return dashboardSceneGraph.getVizPanels(this);
   }
 
-  public getExpressionTypes(saveModel?: Dashboard | DashboardV2Spec): string[] {
+  public getExpressionTypes(saveModel?: Dashboard | DashboardV2Spec): string | undefined {
     const model = saveModel ?? this.getSaveModel();
-
-    // Early return for non-V1 dashboards since v2 is still in alpha
-    if (!('panels' in model) || !model.panels?.length) {
-      return [];
-    }
 
     const expressionTypes = new Set<string>();
 
-    const allTargets = model.panels
-      .filter((panel): panel is Panel => 'targets' in panel && Boolean(panel.targets?.length))
-      .flatMap(({ targets }) => targets || []);
+    // Handle V1 dashboards
+    if ('panels' in model && model.panels) {
+      for (const panel of model.panels) {
+        // Skip panels without targets (e.g., row panels)
+        if (!('targets' in panel) || !panel.targets?.length) {
+          continue;
+        }
 
-    for (const target of allTargets) {
-      const targetType = target?.type;
-      if (typeof targetType === 'string' && targetType) {
-        expressionTypes.add(targetType);
+        for (const target of panel.targets) {
+          const targetType = target?.type;
+          if (typeof targetType === 'string' && targetType) {
+            expressionTypes.add(targetType);
+          }
+        }
       }
     }
 
-    return Array.from(expressionTypes);
+    // Handle V2 dashboards
+    if ('elements' in model && model.elements) {
+      for (const element of Object.values(model.elements)) {
+        // Check if element is a Panel (not LibraryPanel)
+        if (element.kind !== 'Panel') {
+          continue;
+        }
+
+        const queries = element.spec.data?.spec?.queries;
+        if (!Array.isArray(queries)) {
+          continue;
+        }
+
+        for (const query of queries) {
+          const queryType = query?.spec?.query?.spec?.type;
+          if (typeof queryType === 'string' && queryType) {
+            expressionTypes.add(queryType);
+          }
+        }
+      }
+    }
+
+    // Return comma-separated string or undefined if no expressions
+    return expressionTypes.size > 0 ? Array.from(expressionTypes).join(',') : undefined;
   }
 
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {

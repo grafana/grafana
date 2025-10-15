@@ -85,10 +85,13 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
 
   const styles = useStyles2(getStyles);
 
+  const initialExpressionRef = useRef(query.expression);
   const hasTrackedAddExpression = useRef(false);
 
   useEffect(() => {
-    if (query.type && !hasTrackedAddExpression.current) {
+    // Only track if 1) we haven't tracked yet for this component instance, 2) query has a type, or
+    // 3) initial expression was empty (indicating a new expression, not editing existing)
+    if (query.type && !hasTrackedAddExpression.current && !initialExpressionRef.current) {
       reportInteraction('dashboards_expression_interaction', {
         action: 'add_expression',
         expression_type: query.type,
