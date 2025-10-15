@@ -65,6 +65,7 @@ func RegisterAPIService(
 	store := legacy.NewLegacySQLStores(dbProvider)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
+	registerMetrics(reg)
 
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                      store,

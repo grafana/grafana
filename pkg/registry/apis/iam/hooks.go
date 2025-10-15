@@ -102,7 +102,9 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 
 	// Grab a ticket to write to Zanzana
 	// This limits the amount of concurrent writes to Zanzana
+	wait := time.Now()
 	b.zTickets <- true
+	hooksWaitHistogram.Observe(time.Since(wait).Seconds()) // Record wait time
 
 	rp, ok := obj.(*iamv0.ResourcePermission)
 	if !ok {
