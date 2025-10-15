@@ -75,6 +75,13 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 
 					return nil, fmt.Errorf("unsupported dashboard version: %s", storedVersion)
 				}
+
+				// If conversion failed but there's no storedVersion, this is an error condition
+				failed, _, _ := unstructured.NestedBool(item.Object, "status", "conversion", "failed")
+				if failed {
+					return nil, fmt.Errorf("conversion failed but no storedVersion available")
+				}
+
 				return item, nil
 			}
 		}
