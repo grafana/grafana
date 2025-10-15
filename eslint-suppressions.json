@@ -790,11 +790,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/Layout/Stack/Stack.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/List/AbstractList.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
