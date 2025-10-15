@@ -37,7 +37,7 @@ aliases:
   - ../explore/simplified-exploration/ # /docs/grafana/next/explore/simplified-exploration/
 ---
 
-# Simplified exploration
+# Drilldown
 
 The Grafana Drilldown apps are designed for effortless data exploration through intuitive, queryless interactions.
 

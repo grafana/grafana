@@ -4,13 +4,13 @@ aliases:
   - /docs/grafana-cloud/visualizations/
 description: Learn how to build dashboards and visualizations.
 menuTitle: Visualize data
-title: Visualize your data in Grafana Cloud
+title: Visualize your data in Grafana
 hero:
   title: Visualize data
   level: 1
   width: 100
   height: 100
-  description: Easily collect, correlate, and visualize data with beautiful dashboards using Grafana Cloud&mdash;the solution that drives informed decisions, enhances system performance, and streamlines troubleshooting.
+  description: Easily collect, correlate, and visualize data with beautiful dashboards using Grafana&mdash;the solution that drives informed decisions, enhances system performance, and streamlines troubleshooting.
 cards:
   items:
     - description: Allow you to query, transform, visualize, and understand your data no matter where it’s stored.
