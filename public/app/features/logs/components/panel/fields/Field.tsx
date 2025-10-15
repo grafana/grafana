@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
+import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -10,7 +11,7 @@ import { FieldWithStats } from './FieldSelector';
 interface Props {
   active?: boolean;
   field: FieldWithStats;
-  onChange(key: string): void;
+  toggle(key: string): void;
   draggable?: boolean;
   showCount?: boolean;
 }
@@ -19,17 +20,21 @@ export function Field({
   active = false,
   draggable = false,
   field,
-  onChange,
+  toggle,
   showCount = false,
 }: Props): React.JSX.Element | undefined {
   const styles = useStyles2(getStyles);
 
+  const handleChange = useCallback(() => {
+    toggle(field.name);
+  }, [field.name, toggle]);
+
   return (
     <>
       <div className={styles.contentWrap}>
-        <Checkbox className={styles.checkboxLabel} label={field.name} onChange={onChange} checked={active} />
+        <Checkbox className={styles.checkboxLabel} label={field.name} onChange={handleChange} checked={active} />
         {showCount && (
-          <button className={styles.labelCount} onClick={onChange}>
+          <button className={styles.labelCount} onClick={handleChange}>
             {field.stats.percentOfLinesWithLabel}%
           </button>
         )}

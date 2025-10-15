@@ -33,7 +33,7 @@ export const AvailableFields = ({ activeFields, fields, toggle, reorder }: Props
               { fieldName: field.name, percentage: field.stats.percentOfLinesWithLabel }
             )}
           >
-            <Field field={field} onChange={toggle} showCount />
+            <Field field={field} toggle={toggle} showCount />
           </div>
         ))}
       </div>
