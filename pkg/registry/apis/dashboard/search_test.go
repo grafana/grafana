@@ -275,11 +275,10 @@ func TestSearchHandlerPagination(t *testing.T) {
 				t.Fatalf("expected Search to be called, but it was not")
 			}
 
-			require.Equal(t, int(mockClient.LastSearchRequest.Offset), int(tt.expectedOffset), fmt.Sprintf("mismatch offset in test %d", i))
-			require.Equal(t, int(mockClient.LastSearchRequest.Page), int(tt.expectedPage), fmt.Sprintf("mismatch page in test %d", i))
+			require.Equal(t, int(mockClient.LastSearchRequest.Offset), tt.expectedOffset, fmt.Sprintf("mismatch offset in test %d", i))
+			require.Equal(t, int(mockClient.LastSearchRequest.Page), tt.expectedPage, fmt.Sprintf("mismatch page in test %d", i))
 		}
 	})
-
 }
 
 func TestSearchHandler(t *testing.T) {
