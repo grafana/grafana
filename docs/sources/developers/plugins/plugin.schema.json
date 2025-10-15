@@ -658,12 +658,12 @@
               },
               "title": {
                 "type": "string",
-                "description": "The title of your link extension.",
+                "description": "The title of your function extension.",
                 "minLength": 10
               },
               "description": {
                 "type": "string",
-                "description": "Additional information about your link extension."
+                "description": "Additional information about your function extension."
               }
             },
             "required": ["targets", "title"]
