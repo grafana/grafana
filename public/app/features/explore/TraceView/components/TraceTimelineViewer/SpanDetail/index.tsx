@@ -367,7 +367,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     app,
   });
 
-  const focusSpanLink = createFocusSpanLink(traceID, spanID);
+  const { interpolatedParams, ...focusSpanLink } = createFocusSpanLink(traceID, spanID);
   const resourceLinksGetter = useResourceAttributesExtensionLinks({
     process,
     spanTags: tags,
