@@ -329,39 +329,36 @@ describe('CloneRuleEditor', function () {
         [SupportedPlugin.Slo]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]),
       };
 
-      const rule: RulerGrafanaRuleDTO = mockRulerGrafanaRule(
-        {
-          for: '1m',
-          labels: {
-            severity: 'critical',
-            region: 'nasa',
-            [GRAFANA_ORIGIN_LABEL]: 'plugin/' + SupportedPlugin.Slo,
-          },
-          annotations: { [Annotation.summary]: 'This is a plugin-provided alert rule' },
+      const rule: RulerAlertingRuleDTO = mockRulerAlertingRule({
+        alert: 'slo-provider-alert',
+        expr: 'vector(1) > 0',
+        for: '1m',
+        labels: {
+          severity: 'critical',
+          region: 'nasa',
+          [GRAFANA_ORIGIN_LABEL]: 'plugin/' + SupportedPlugin.Slo,
         },
-        { uid: 'plugin-rule-1', title: 'Plugin Alert Rule', data: [] }
-      );
+        annotations: { [Annotation.summary]: 'This is a plugin-provided alert rule' },
+      });
 
-      const originalRule: RuleWithLocation<RulerGrafanaRuleDTO> = {
+      const originalRule: RuleWithLocation<RulerAlertingRuleDTO> = {
         ruleSourceName: 'my-prom-ds',
         namespace: 'namespace-one',
         group: mockRulerRuleGroup(),
         rule,
       };
 
-      const clonedRule: RuleWithLocation<RulerRuleDTO> = cloneRuleDefinition(originalRule);
-
-      const grafanaRule: RulerGrafanaRuleDTO = clonedRule.rule as RulerGrafanaRuleDTO;
+      const { rule: clonedRule } = cloneRuleDefinition(originalRule);
 
       // Original rule should have the origin label
       expect(originalRule.rule.labels?.[GRAFANA_ORIGIN_LABEL]).toEqual('plugin/' + SupportedPlugin.Slo);
 
       // Cloned rule should not have the origin label
-      expect(grafanaRule.labels?.[GRAFANA_ORIGIN_LABEL]).toBeUndefined();
+      expect(clonedRule.labels?.[GRAFANA_ORIGIN_LABEL]).toBeUndefined();
 
       // Other labels should be preserved
-      expect(grafanaRule.labels?.severity).toEqual('critical');
-      expect(grafanaRule.labels?.region).toEqual('nasa');
+      expect(clonedRule.labels?.severity).toEqual('critical');
+      expect(clonedRule.labels?.region).toEqual('nasa');
     });
 
     it('Should preserve all labels when cloning non-plugin-provided rules', () => {

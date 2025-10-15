@@ -34,11 +34,11 @@ export function cloneRuleDefinition(rule: RuleWithLocation<RulerRuleDTO>) {
     if (Boolean(ruleClone.rule.grafana_alert.provenance)) {
       ruleClone.group = { name: '', rules: ruleClone.group.rules };
     }
-    if (isPluginProvidedRule(ruleClone.rule)) {
-      // Remove the origin label when cloning plugin-provided rules
-      const { [GRAFANA_ORIGIN_LABEL]: _, ...restLabels } = ruleClone.rule.labels ?? {};
-      ruleClone.rule.labels = restLabels;
-    }
+  }
+
+  if (rulerRuleType.any.rule(ruleClone.rule)) {
+    // Remove the origin label when cloning plugin-provided rules
+    delete ruleClone.rule.labels?.[GRAFANA_ORIGIN_LABEL];
   }
 
   return ruleClone;
