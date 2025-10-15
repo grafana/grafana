@@ -197,9 +197,9 @@ func NewMapperRegistry() MapperRegistry {
 				resource:  "roles",
 				attribute: "uid",
 				verbMapping: map[string]string{
-					utils.VerbGet:              "roles:read",
-					utils.VerbList:             "roles:read",
-					utils.VerbWatch:            "roles:read",
+					utils.VerbGet:   "roles:read",
+					utils.VerbList:  "roles:read",
+					utils.VerbWatch: "roles:read",
 				},
 				folderSupport:     false,
 				skipScopeOnCreate: false,
