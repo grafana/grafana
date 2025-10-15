@@ -10,24 +10,33 @@ This documentation describes the dashboard render performance metrics exposed fr
 - [Tracked Interactions](#tracked-interactions)
   - [Core Performance-Tracked Interactions](#core-performance-tracked-interactions)
   - [Interaction Origin Mapping](#interaction-origin-mapping)
+- [Panel-Level Performance Attribution](#panel-level-performance-attribution)
+  - [Overview](#panel-level-overview)
+  - [Panel Operations Tracked](#panel-operations-tracked)
+  - [Performance Observer Architecture](#performance-observer-architecture)
 - [Profiling Implementation](#profiling-implementation)
   - [Profile Data Structure](#profile-data-structure)
   - [Collected Metrics](#collected-metrics)
-- [Debugging and Development](#debugging-and-development)
-  - [Enable Profiler Debug Logging](#enable-profiler-debug-logging)
-  - [Enable Echo Service Debug Logging](#enable-echo-service-debug-logging)
-  - [Browser Performance Profiler](#browser-performance-profiler)
-- [Analytics Integration](#analytics-integration)
-  - [Interaction Reporting](#interaction-reporting)
-  - [Data Collection](#data-collection)
-- [Implementation Details](#implementation-details)
   - [Long Frame Detection](#long-frame-detection)
+- [Analytics Integration](#analytics-integration)
+  - [Analytics Components](#analytics-components)
+  - [Chrome DevTools Integration](#chrome-devtools-integration)
+  - [Data Collection](#data-collection)
+- [Debugging and Development](#debugging-and-development)
+  - [Enable Performance Debug Logging](#enable-performance-debug-logging)
+  - [Console Output Examples](#console-output-examples)
+  - [Browser Performance Profiler](#browser-performance-profiler)
+- [Implementation Details](#implementation-details)
+  - [Architecture Overview](#architecture-overview)
   - [Tab Inactivity Handling](#tab-inactivity-handling)
+  - [Profile Isolation](#profile-isolation)
 - [Related Documentation](#related-documentation)
 
 ## Overview
 
 The exposed dashboard performance metrics feature provides comprehensive tracking and profiling of dashboard interactions, allowing administrators and developers to analyze dashboard render performance, user interactions, and identify performance bottlenecks.
+
+The system includes **panel-level performance attribution** through an observer pattern architecture, providing visibility into individual panel operations within dashboard interactions. This enables identification of performance bottlenecks at both dashboard and panel levels, with comprehensive analytics reporting and Chrome DevTools integration.
 
 ## Configuration
 
@@ -110,6 +119,60 @@ logMeasurement(`dashboard_render`, payload, { interactionType: e.origin, dashboa
 
 The profiling system uses profiler event's `origin` directly as the `interactionType`, providing direct mapping between user actions and performance measurements.
 
+## Panel-Level Performance Attribution
+
+### Panel-Level Overview
+
+The panel-level performance attribution system uses an observer pattern architecture built around `ScenePerformanceTracker` to provide visibility into individual panel operations. When dashboard profiling is enabled, `VizPanelRenderProfiler` instances are automatically attached to all panels via `PanelProfilingManager`.
+
+**Key Features:**
+
+- Tracking of individual panel operations with operation ID correlation
+- Observer pattern for distributing performance events to analytics systems
+- Chrome DevTools integration via performance marks and measurements
+- Real-time performance data aggregation for analytics reporting
+- Conditional debug logging controlled by localStorage flags
+
+### Panel Operations Tracked
+
+The system tracks the following panel operations:
+
+| Operation     | Description           | When Tracked                                    |
+| ------------- | --------------------- | ----------------------------------------------- |
+| `plugin-load` | Plugin initialization | When panel plugin is loaded                     |
+| `query`       | Data source queries   | When panel executes queries                     |
+| `transform`   | Data transformations  | When data is transformed (SceneDataTransformer) |
+| `fieldConfig` | Field configuration   | When field configurations are applied           |
+| `render`      | Panel rendering       | When panel is rendered                          |
+
+Each operation is tracked with:
+
+- **Operation ID**: Unique identifier for correlating start/complete events
+- **Timing**: Start and end timestamps with duration calculation
+- **Metadata**: Operation-specific data (query types, transformation IDs, etc.)
+
+### Performance Observer Architecture
+
+The system uses `ScenePerformanceTracker` as a centralized coordinator that manages performance observers:
+
+```typescript
+// Observer interface implemented by analytics components
+interface ScenePerformanceObserver {
+  onDashboardInteractionStart?(data: DashboardInteractionStartData): void;
+  onDashboardInteractionMilestone?(data: DashboardInteractionMilestoneData): void;
+  onDashboardInteractionComplete?(data: DashboardInteractionCompleteData): void;
+  onPanelOperationStart?(data: PanelPerformanceData): void;
+  onPanelOperationComplete?(data: PanelPerformanceData): void;
+  onQueryStart?(data: QueryPerformanceData): void;
+  onQueryComplete?(data: QueryPerformanceData): void;
+}
+```
+
+**Registered Observers:**
+
+- **`DashboardAnalyticsAggregator`**: Aggregates panel metrics for analytics reporting
+- **`ScenePerformanceLogger`**: Creates Chrome DevTools performance marks and console logs
+
 ## Profiling Implementation
 
 ### Profile Data Structure
@@ -153,40 +216,194 @@ The performance metrics provide detailed insights into where time is spent durin
 - **Total Duration (`duration`)**: Complete time from interaction start to completion
 - **Network Time (`networkDuration`)**: Time spent waiting for server responses (data source queries, API calls)
 - **Processing Time (`processingTime`)**: Time spent on client-side operations (rendering, computations, DOM updates)
-- **Long Frames (`longFramesCount` & `longFramesTotalTime`)**: Frames exceeding 50ms threshold indicate potential UI jank or performance issues. These metrics help identify interactions causing poor user experience:
-  - `longFramesCount`: The number of frames that exceeded the 50ms threshold
-  - `longFramesTotalTime`: The total accumulated time of all long frames, indicating the severity of performance issues
-  - **Detection Method**: Automatically uses Long Animation Frame API when available (Chrome 123+), falls back to manual tracking for broader browser support
+- **Long Frames (`longFramesCount` & `longFramesTotalTime`)**: Frames exceeding 50ms threshold indicate potential UI jank or performance issues
+
+### Long Frame Detection
+
+The profiler includes sophisticated long frame detection using the Long Animation Frame (LoAF) API when available, with automatic fallback to manual frame tracking:
+
+#### Detection Methods
+
+1. **Long Animation Frame API (Primary)**
+   - **Browser Support**: Chrome 123+ (automatically detected)
+   - **Threshold**: 50ms (standard LoAF threshold)
+   - **Benefits**: Browser-level accuracy, script attribution, automatic buffering control
+
+2. **Manual Frame Tracking (Fallback)**
+   - **Browser Support**: All browsers
+   - **Threshold**: 50ms (same as LoAF)
+   - **Implementation**: Uses requestAnimationFrame for frame monitoring
+
+#### Metrics Collected
+
+- **`longFramesCount`**: Number of frames exceeding the 50ms threshold
+- **`longFramesTotalTime`**: Cumulative duration of all long frames during interaction
+
+This helps identify:
+
+- Rendering performance issues impacting user experience
+- Interactions causing UI jank or frame drops
+- Performance optimization opportunities
+
+## Analytics Integration
+
+### Analytics Components
+
+The performance tracking system integrates with Grafana's analytics through two main components:
+
+#### DashboardAnalyticsAggregator
+
+Aggregates panel-level performance metrics for analytics reporting:
+
+- Collects and aggregates metrics for all panel operations
+- Tracks operation counts and total time spent per panel
+- Sends comprehensive analytics reports via `reportInteraction` and `logMeasurement`
+- Provides detailed panel breakdowns including slow panel detection
+
+#### ScenePerformanceLogger
+
+Creates Chrome DevTools performance marks and measurements for debugging:
+
+- Generates performance marks for all dashboard and panel operations
+- Creates performance measurements for timing visualization
+- Provides console logging for real-time debugging
+- Integrates with Chrome DevTools Performance timeline
+
+### Chrome DevTools Integration
+
+Performance operations are recorded as marks and measurements in the Chrome DevTools Performance timeline:
+
+**Dashboard-level marks:**
+
+```
+Dashboard Interaction Start: <operationId>
+Dashboard Interaction End: <operationId>
+Dashboard Milestone: <operationId>:<milestone>
+```
+
+**Panel-level marks:**
+
+```
+Panel Query Start: <panelKey>:<operationId>
+Panel Query End: <panelKey>:<operationId>
+Panel Render Start: <panelKey>:<operationId>
+Panel Render End: <panelKey>:<operationId>
+```
+
+### Data Collection
+
+The system collects and reports data at two levels:
+
+#### Dashboard Interaction Data
+
+Reported for each interaction via `reportInteraction` and `logMeasurement`:
+
+```typescript
+{
+  interactionType: string,      // Type of interaction
+  uid: string,                  // Dashboard UID
+  duration: number,             // Total duration
+  networkDuration: number,      // Network time
+  processingTime: number,       // Client-side processing time
+  startTs: number,              // Profile start timestamp
+  endTs: number,                // Profile end timestamp
+  longFramesCount: number,      // Number of long frames
+  longFramesTotalTime: number,  // Total time of long frames
+  totalJSHeapSize: number,      // Memory metrics
+  usedJSHeapSize: number,
+  jsHeapSizeLimit: number,
+  timeSinceBoot: number         // Time since frontend boot
+}
+```
+
+#### Panel-Level Metrics
+
+Aggregated by `DashboardAnalyticsAggregator` for each panel:
+
+```typescript
+{
+  panelId: string,              // Panel identifier
+  pluginId: string,             // Plugin type (e.g., 'timeseries', 'stat')
+  pluginVersion?: string,       // Plugin version
+  totalQueryTime: number,       // Total time spent in queries
+  totalTransformationTime: number,  // Total time in transformations
+  totalRenderTime: number,      // Total render time
+  totalFieldConfigTime: number, // Total field config time
+  pluginLoadTime: number,       // Plugin initialization time
+  queryOperations: Array<{      // Individual query operations
+    duration: number,
+    timestamp: number,
+    queryType?: string
+  }>,
+  renderOperations: Array<{     // Individual render operations
+    duration: number,
+    timestamp: number
+  }>
+  // ... similar arrays for other operations
+}
+```
 
 ## Debugging and Development
 
-### Enable Profiler Debug Logging
+### Enable Performance Debug Logging
 
-To observe profiling events in the browser console:
+To observe performance profiling events in the browser console:
 
 ```javascript
-localStorage.setItem('grafana.debug.scenes', 'true');
+// Enable performance debug logging
+localStorage.setItem('grafana.debug.sceneProfiling', 'true');
 ```
 
-#### Console Output
+### Console Output Examples
 
-When debug logging is enabled, you'll see console logs for each profiling event:
+With debug logging enabled, you'll see detailed performance logs:
+
+#### Dashboard Interaction Logs
 
 ```
-SceneRenderProfiler: Profile started[clean]
-  ├─ Origin: dashboard_view
-  └─ Timestamp: 1072.5ms
-LongFrameDetector: Started tracking with LoAF API method, threshold: 50ms
-... // intermediate steps adding profile crumbs
-LongFrameDetector: Long frame detected (LoAF): 67.4ms at 1071.5ms
-LongFrameDetector: Long frame detected (LoAF): 76.3ms at 1139.8ms
-... // more long frame detections
-SceneRenderProfiler: Profile completed
-  ├─ Timestamp: 3530.6ms
-  ├─ Total time: 156.8ms
-  ├─ Slow frames: 16.3ms (1 frames)
-  └─ Long frames: 143.7ms (2 frames)
-SceneRenderProfiler: Stopped long frame detection - profile complete at 3530.6ms
+SRP: [PROFILER] dashboard_view started (clean)
+LFD: Started tracking with LoAF API method, threshold: 50ms
+SPL: [DASHBOARD] dashboard_view started: My Dashboard
+SRP: [PROFILER] dashboard_view completed
+  ├─ Duration: 156.8ms
+  ├─ Long frames: 143.7ms (2 frames)
+  └─ Network time: 45.2ms
+```
+
+#### Panel Operation Logs
+
+```
+SPL: [PANEL] timeseries-panel-1 query [q-abc123]: 45.2ms
+SPL: [PANEL] timeseries-panel-1 transform: 12.3ms
+SPL: [PANEL] timeseries-panel-1 render: 23.8ms
+VizPanelRenderProfiler: Panel render completed
+  ├─ Panel ID: panel-1
+  ├─ Duration: 23.8ms
+  └─ Operation ID: render-xyz789
+```
+
+#### Analytics Aggregator Summary
+
+```
+DAA: [ANALYTICS] dashboard_view | 4 panels analyzed | 1 slow panels ⚠️
+DAA: 📊 Dashboard (ms): {
+  duration: 156.8,
+  network: 45.2,
+  interactionType: "dashboard_view",
+  slowPanels: 1
+}
+DAA: 🎨 Panel timeseries-panel-1: 125.3ms total ⚠️ SLOW
+  ├─ ⚡ Performance (ms): {
+  │     totalTime: 125.3,
+  │     breakdown: {
+  │       query: 45.2,
+  │       transform: 12.3,
+  │       render: 23.8,
+  │       fieldConfig: 5.0,
+  │       pluginLoad: 39.0
+  │     }
+  │   }
+  └─ 📊 Queries: { count: 2, details: [...] }
 ```
 
 ### Enable Echo Service Debug Logging
@@ -207,93 +424,64 @@ When Echo debug logging is enabled, you'll see console logs for each profiling e
 
 ### Browser Performance Profiler
 
-Dashboard interactions can be recorded in the browser's performance profiler, where they appear as:
+Dashboard and panel operations are recorded in the Chrome DevTools Performance timeline with detailed marks and measurements:
+
+**Dashboard Marks:**
 
 ```
-Dashboard Interaction <NAME_OF_INTERACTION>
+Dashboard Interaction Start: op-dashboard-123456
+Dashboard Interaction End: op-dashboard-123456
+Dashboard Milestone: op-dashboard-123456:queries_complete
 ```
 
-## Analytics Integration
+**Panel Marks:**
 
-### Interaction Reporting
-
-Performance data is integrated with Grafana's analytics system through:
-
-- **`reportInteraction`**: Reports interaction events to Echo service with performance data
-- **`logMeasurement`**: Records Faro's performance measurements with metadata
-
-### Data Collection
-
-The system reports the following data for each interaction:
-
-```typescript
-{
-  interactionType: string,      // Type of interaction
-  uid: string,                  // Dashboard UID
-  duration: number,             // Total duration
-  networkDuration: number,      // Network time
-  processingTime: number,       // Client-side processing time (duration - networkDuration)
-  startTs: number,              // Profile start timestamp
-  endTs: number,                // Profile end timestamp
-  totalJSHeapSize: number,      // Memory metrics
-  usedJSHeapSize: number,
-  jsHeapSizeLimit: number,
-  longFramesCount: number,      // Number of long frames (>50ms threshold)
-  longFramesTotalTime: number,  // Total time of all long frames
-  timeSinceBoot: number         // Time since frontend boot
-}
 ```
+Panel Query Start: panel-1:q-abc123
+Panel Query End: panel-1:q-abc123
+Panel Transform Start: panel-1:merge+organize:tr-def456
+Panel Transform End: panel-1:merge+organize:tr-def456
+Panel Render Start: panel-1:render-ghi789
+Panel Render End: panel-1:render-ghi789
+```
+
+These marks enable visual timeline analysis of:
+
+- Overall dashboard interaction timing
+- Individual panel operation performance
+- Parallel vs sequential operations
+- Performance bottlenecks
 
 ## Implementation Details
 
-The profiler is integrated into dashboard creation paths and uses a singleton pattern to share profiler instances across dashboard reloads. The performance tracking is implemented using the `SceneRenderProfiler` from the `@grafana/scenes` library.
+### Architecture Overview
 
-### Long Frame Detection
+The performance tracking system consists of multiple integrated components:
 
-The profiler uses the Long Animation Frame (LoAF) API when available to monitor frame rendering performance during dashboard interactions:
+1. **SceneRenderProfiler** (Scenes library)
+   - Singleton profiler instance shared across dashboard reloads
+   - Tracks dashboard interactions and manages long frame detection
+   - Integrates with PanelProfilingManager for panel-level tracking
 
-#### Primary Method: Long Animation Frame API
+2. **ScenePerformanceTracker** (Scenes library)
+   - Central coordinator implementing observer pattern
+   - Distributes performance events to registered observers
+   - Provides type-safe interfaces for different event types
 
-- **Browser Support**: Chrome 123+ (automatically detected)
-- **Threshold**: 50ms (standard LoAF threshold)
-- **Benefits**:
-  - Browser-level accuracy and performance
-  - Standards-based implementation
-  - More efficient than manual tracking
-  - Automatic buffering control for real-time detection
+3. **VizPanelRenderProfiler** (Scenes library)
+   - Attached to individual panels when profiling is enabled
+   - Tracks panel operations: plugin-load, query, transform, fieldConfig, render
+   - Reports to ScenePerformanceTracker
 
-#### Fallback Method: Manual Frame Tracking
+4. **DashboardAnalyticsAggregator** (Grafana)
+   - Aggregates panel metrics for analytics reporting
+   - Detects slow panels (>100ms total time)
+   - Sends reports via reportInteraction and logMeasurement
 
-- **Browser Support**: All browsers
-- **Threshold**: 50ms (same as LoAF threshold)
-- **Used when**: LoAF API is not available
-- **Implementation**: Uses requestAnimationFrame for frame monitoring
-
-Both methods track:
-
-- **Count**: Number of frames exceeding the threshold
-- **Total Time**: Cumulative duration of all long frames
-
-#### Debug Output
-
-With LoAF API:
-
-```
-LongFrameDetector: Long frame detected (LoAF): 67.4ms at 1234.5ms
-```
-
-With manual fallback:
-
-```
-LongFrameDetector: Long frame detected (manual): 38.2ms (threshold: 50ms)
-```
-
-This metric is particularly valuable for:
-
-- Detecting rendering performance issues that impact user experience
-- Identifying when interactions cause UI jank or frame drops
-- Measuring the impact of performance optimizations on frame rendering
-- Comparing performance across different browsers and environments
+5. **ScenePerformanceLogger** (Grafana)
+   - Creates Chrome DevTools performance marks and measurements
+   - Provides structured console logging for debugging
+   - Maps operations to standardized performance mark names
 
 ### Tab Inactivity Handling
 
@@ -327,83 +515,27 @@ if (frameLength > TAB_INACTIVE_THRESHOLD) {
 
 This fallback catches cases where visibility events might be missed and prevents recording of artificially long frame times (hours instead of milliseconds) that occur when `requestAnimationFrame` callbacks resume after tab reactivation.
 
-### Profile Isolation and Overlapping Interactions
+### Profile Isolation
 
-To ensure accurate performance measurements, the `SceneRenderProfiler` implements profile isolation to handle rapid user interactions:
+To ensure accurate performance measurements, the profiler implements automatic profile cancellation when handling rapid user interactions:
 
-#### Understanding Trailing Frame Recording
+**Trailing Frame Recording**: After an interaction completes, the profiler continues recording for 2 seconds (POST_STORM_WINDOW) to capture delayed rendering effects.
 
-After the main interaction completes, the profiler continues to record "trailing frames" for 2 seconds (POST_STORM_WINDOW) to capture any delayed rendering effects. This ensures complete performance measurement including:
-
-- Delayed DOM updates
-- Asynchronous rendering operations
-- Secondary effects from the initial interaction
-
-#### Problem: Mixed Performance Data
-
-When users perform rapid interactions during this 2-second trailing frame window (e.g., quickly changing time ranges or triggering a refresh), the performance data from multiple actions could be mixed into a single profile. This led to:
-
-- Inaccurate performance measurements
-- Profile events that never completed
-- Crumbs from different interactions being combined
-- Trailing frames from one interaction being attributed to another
-
-#### Solution: Automatic Profile Cancellation
-
-Starting with `@grafana/scenes` v6.30.4, the profiler automatically cancels the current profile when a new interaction begins while trailing frames are still being recorded:
+**Automatic Cancellation**: When a new interaction begins during trailing frame recording, the current profile is cancelled to prevent mixing performance data:
 
 ```javascript
-// When new profile is requested while still recording trailing frames
 if (this.#trailAnimationFrameId) {
   this.cancelProfile();
-  this._startNewProfile(name, true); // true = forced profile
-} else {
-  this.addCrumb(name);
+  this._startNewProfile(name, true); // forced profile
 }
 ```
 
-This ensures:
+**Profile Types**:
 
-- Each interaction gets its own isolated measurement
-- No mixing of performance data between different user actions
-- Clean separation of interaction metrics
+- **Clean Start**: No active profile when starting
+- **Forced Start**: Previous profile cancelled for new interaction
 
-#### Profile Start Types
-
-The profiler now distinguishes between two types of profile starts:
-
-1. **Clean Start**: Profile started when no other profile is active
-2. **Forced Start (Interrupted)**: Profile started by cancelling a previous active profile
-
-This information is logged in debug mode:
-
-```
-SceneRenderProfiler: Profile started[forced]: {origin: "refresh", crumbs: []} <timestamp>
-SceneRenderProfiler: Profile started[clean]: {origin: "dashboard_view", crumbs: []} <timestamp>
-```
-
-Additionally, when a profile is cancelled due to overlapping interactions:
-
-```
-SceneRenderProfiler: Cancelled recording frames, new profile started
-```
-
-#### Example Scenario
-
-1. User changes time range (profile starts)
-2. Dashboard finishes loading after 500ms (main profile complete)
-3. Profiler continues recording trailing frames to capture delayed effects
-4. At 1 second, user clicks refresh button
-5. Without this fix: Refresh would be added as a crumb to the time range profile
-6. With this fix: Time range profile is cancelled, new refresh profile starts cleanly
-
-This fix is particularly important for dashboards with:
-
-- Auto-refresh enabled
-- Slow API responses
-- Rapid user interactions
-
-Without profile isolation, these scenarios could result in profiles that never complete and mix data from multiple unrelated interactions.
+This ensures each interaction gets isolated measurements, preventing data contamination from overlapping operations.
 
 ## Related Documentation
 
@@ -419,3 +551,5 @@ Without profile isolation, these scenarios could result in profiles that never c
 - [PR #1212 - SceneQueryController: Fix profiler query controller registration on scene re-activation](https://github.com/grafana/scenes/pull/1212)
 - [PR #1225 - SceneRenderProfiler: Handle overlapping profiles by cancelling previous profile](https://github.com/grafana/scenes/pull/1225)
 - [PR #1235 - Implement long frame detection with LoAF API and manual fallback](https://github.com/grafana/scenes/pull/1235)
+- [PR #1265 - Panel-level performance attribution system](https://github.com/grafana/scenes/pull/1265)
+- [PR #112137 - Dashboard performance analytics system with Scenes integration](https://github.com/grafana/grafana/pull/112137)
