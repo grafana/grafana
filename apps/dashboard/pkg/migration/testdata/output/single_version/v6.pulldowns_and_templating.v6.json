@@ -1,0 +1,123 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      },
+      {
+        "datasource": "prometheus",
+        "enable": true,
+        "iconColor": "red",
+        "name": "deployment",
+        "query": "ALERTS{alertname=\"DeploymentStarted\"}"
+      },
+      {
+        "datasource": "loki",
+        "enable": false,
+        "iconColor": "yellow",
+        "name": "alerts",
+        "query": "{job=\"alertmanager\"}"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "autoMigrateFrom": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "targets": [
+        {
+          "expr": "cpu_usage{environment=\"$environment\", service=\"$service\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Usage",
+      "type": "timeseries"
+    },
+    {
+      "autoMigrateFrom": "singlestat",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "targets": [
+        {
+          "expr": "memory_usage{region=\"$region\"}",
+          "refId": "B"
+        }
+      ],
+      "title": "Memory Usage",
+      "type": "stat"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 6,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "options": [],
+        "type": "query"
+      },
+      {
+        "allFormat": "glob",
+        "datasource": "prometheus",
+        "name": "service",
+        "options": [],
+        "type": "query"
+      },
+      {
+        "name": "region",
+        "options": [
+          {
+            "text": "us-east-1",
+            "value": "us-east-1"
+          },
+          {
+            "text": "us-west-2",
+            "value": "us-west-2"
+          }
+        ],
+        "type": "custom"
+      },
+      {
+        "datasource": "prometheus",
+        "name": "instance",
+        "options": [],
+        "query": "label_values(up, instance)",
+        "refresh": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V6 Pulldowns and Template Variables Migration Test",
+  "weekStart": ""
+}
