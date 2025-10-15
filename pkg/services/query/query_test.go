@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
-	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -717,73 +716,9 @@ func TestIntegrationQueryDataWithQSDSClient(t *testing.T) {
 			Debug: false,
 		}, testClient.queryDataLastCalledWith)
 	})
-
-	t.Run("can run a simple datasource query with a mt ds client with query caching enabled", func(t *testing.T) {
-		stubbedResponse := &backend.QueryDataResponse{Responses: make(backend.Responses)}
-		testClient := &testClient{
-			queryDataStubbedResponse: stubbedResponse,
-		}
-		// Use the fake caching service for testing.
-		fakeCachingService := caching.NewFakeOSSCachingService()
-		fakeCachingService.ReturnHit = false
-		cachingServiceClient := caching.ProvideCachingServiceClient(fakeCachingService, nil)
-		tc := setup(t, true, testClient, WithCachingServiceClient(cachingServiceClient))
-		mr := metricRequestWithQueries(t, `{
-			"refId": "A",
-			"datasource": {
-				"uid": "gIEkMvIVz",
-				"type": "postgres"
-			}
-		}`, `{
-			"refId": "B",
-			"datasource": {
-				"uid": "gIEkMvIVz",
-				"type": "postgres"
-			}
-		}`)
-		mr.From = "1754309340000"
-		mr.To = "1754309370000"
-		ctx := context.Background()
-		response, err := tc.queryService.QueryData(ctx, tc.signedInUser, true, mr)
-		require.NoError(t, err)
-		require.Equal(t, stubbedResponse, response)
-
-		// The client should have been called once because the request has not been cached yet
-		require.Equal(t, 1, testClient.queryDataCalls)
-
-		// Force the fake caching service to return a cached response
-		fakeCachingService.ReturnHit = true
-		fakeCachingService.ReturnQueryResponse = caching.CachedQueryDataResponse{Response: stubbedResponse}
-
-		// Send the same request again
-		response, err = tc.queryService.QueryData(ctx, tc.signedInUser, true, mr)
-		require.NoError(t, err)
-		require.Equal(t, stubbedResponse, response)
-
-		// The client should not have been called again since the data was returned direcly from the cache
-		require.Equal(t, 1, testClient.queryDataCalls)
-	})
 }
 
-// The configuration and services that can be changed per test setup.
-type setupConfig struct {
-	cachingServiceClient *caching.CachingServiceClient
-}
-
-func WithCachingServiceClient(client *caching.CachingServiceClient) func(*setupConfig) {
-	return func(cfg *setupConfig) {
-		cfg.cachingServiceClient = client
-	}
-}
-
-func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClient, opts ...func(*setupConfig)) *testContext {
-	// Initialize the setup config with default values
-	setupCfg := setupConfig{
-		cachingServiceClient: caching.ProvideCachingServiceClient(&caching.OSSCachingService{}, nil),
-	}
-	for _, opt := range opts {
-		opt(&setupCfg)
-	}
+func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClient) *testContext {
 	dss := []*datasources.DataSource{
 		{UID: "gIEkMvIVz", Type: "postgres"},
 		{UID: "sEx6ZvSVk", Type: "testdata"},
@@ -846,7 +781,6 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		pc,
 		pCtxProvider,
 		qsdsClientBuilder,
-		setupCfg.cachingServiceClient,
 	)
 
 	return &testContext{

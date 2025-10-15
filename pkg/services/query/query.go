@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
@@ -51,7 +50,6 @@ func ProvideService(
 	pluginClient plugins.Client,
 	pCtxProvider *plugincontext.Provider,
 	qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder,
-	cachingServiceClient *caching.CachingServiceClient,
 ) *ServiceImpl {
 	g := &ServiceImpl{
 		cfg:                        cfg,
@@ -63,7 +61,6 @@ func ProvideService(
 		log:                        log.New("query_data"),
 		concurrentQueryLimit:       cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 		qsDatasourceClientBuilder:  qsDatasourceClientBuilder,
-		cachingServiceClient:       cachingServiceClient,
 	}
 	g.log.Info("Query Service initialization")
 	return g
@@ -91,7 +88,6 @@ type ServiceImpl struct {
 	log                        log.Logger
 	concurrentQueryLimit       int
 	qsDatasourceClientBuilder  dsquerierclient.QSDatasourceClientBuilder
-	cachingServiceClient       *caching.CachingServiceClient
 	headers                    map[string]string
 }
 
@@ -325,14 +321,12 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		req.PluginContext = pCtx
 		return s.pluginClient.QueryData(ctx, req)
 	} else { // query-service flow (single or multi tenant)
-		return s.cachingServiceClient.WithQueryDataCaching(ctx, user.GetNamespace(), req, func() (*backend.QueryDataResponse, error) {
-			// transform request from backend.QueryDataRequest to k8s request
-			k8sReq, err := expr.ConvertBackendRequestToDataRequest(req)
-			if err != nil {
-				return nil, err
-			}
-			return qsDsClient.QueryData(ctx, *k8sReq)
-		})
+		// transform request from backend.QueryDataRequest to k8s request
+		k8sReq, err := expr.ConvertBackendRequestToDataRequest(req)
+		if err != nil {
+			return nil, err
+		}
+		return qsDsClient.QueryData(ctx, *k8sReq)
 	}
 }
 

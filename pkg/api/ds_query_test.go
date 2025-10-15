@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
@@ -83,7 +82,6 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 			pluginconfig.NewFakePluginRequestConfigProvider(),
 		),
 		dsquerierclient.NewNullQSDatasourceClientBuilder(),
-		caching.ProvideCachingServiceClient(caching.NewFakeOSSCachingService(), nil),
 	)
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
@@ -267,7 +265,6 @@ func TestDataSourceQueryError(t *testing.T) {
 						pluginSettings.ProvideService(dbtest.NewFakeDB(),
 							secretstest.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider()),
 					dsquerierclient.NewNullQSDatasourceClientBuilder(),
-					caching.ProvideCachingServiceClient(caching.NewFakeOSSCachingService(), nil),
 				)
 				hs.QuotaService = quotatest.New(false, nil)
 			})
