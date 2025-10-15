@@ -1,7 +1,37 @@
+import { PromRuleDTO, RulerCloudRuleDTO } from 'app/types/unified-alerting-dto';
+
 import { mockPromRecordingRule } from '../mocks';
 import { alertingFactory } from '../mocks/server/db';
 
+import { PromRuleWithOrigin } from './hooks/useFilteredRulesIterator';
 import { getMatchingPromRule, getMatchingRulerRule, matchRulesGroup } from './ruleMatching';
+
+// Helper to create PromRuleWithOrigin mock
+function createPromRuleWithOrigin(rule: PromRuleDTO, ruleIndex: number, totalRules: number): PromRuleWithOrigin {
+  return {
+    rule,
+    groupIdentifier: {
+      rulesSource: { uid: 'test-ds', name: 'test-datasource', ruleSourceType: 'datasource' },
+      namespace: { name: 'test-namespace' },
+      groupName: 'test-group',
+      groupOrigin: 'datasource',
+    },
+    origin: 'datasource',
+    rulePositionHash: `${ruleIndex}:${totalRules}`,
+  };
+}
+
+// Helper to create RulerRuleWithRulePosition mock
+function createRulerRuleWithPosition(
+  rule: RulerCloudRuleDTO,
+  ruleIndex: number,
+  totalRules: number
+): RulerCloudRuleDTO & { rulePositionHash: string } {
+  return {
+    ...rule,
+    rulePositionHash: `${ruleIndex}:${totalRules}`,
+  };
+}
 
 describe('getMatchingRulerRule', () => {
   it('should match rule by unique name', () => {
@@ -11,8 +41,9 @@ describe('getMatchingRulerRule', () => {
 
     // Create a matching prom rule with same name
     const promRule = alertingFactory.prometheus.rule.build({ name: 'test-rule' });
+    const promRuleWithOrigin = createPromRuleWithOrigin(promRule, 0, 1);
 
-    const match = getMatchingRulerRule(rulerGroup, promRule);
+    const match = getMatchingRulerRule(rulerGroup, promRuleWithOrigin);
     expect(match).toBe(rulerRule);
   });
 
@@ -30,8 +61,9 @@ describe('getMatchingRulerRule', () => {
       labels: { severity: 'warning' },
       annotations: { summary: 'test' },
     });
+    const promRuleWithOrigin = createPromRuleWithOrigin(promRule, 0, 1);
 
-    const match = getMatchingRulerRule(rulerGroup, promRule);
+    const match = getMatchingRulerRule(rulerGroup, promRuleWithOrigin);
     expect(match).toBeUndefined();
   });
 
@@ -55,8 +87,9 @@ describe('getMatchingRulerRule', () => {
       labels: { severity: 'warning' },
       annotations: { summary: 'test' },
     });
+    const promRuleWithOrigin = createPromRuleWithOrigin(promRule, 0, 2);
 
-    const match = getMatchingRulerRule(rulerGroup, promRule);
+    const match = getMatchingRulerRule(rulerGroup, promRuleWithOrigin);
     expect(match).toBe(rulerRule1);
   });
 
@@ -83,8 +116,9 @@ describe('getMatchingRulerRule', () => {
       annotations: { summary: 'test' },
       query: 'up == 1',
     });
+    const promRuleWithOrigin = createPromRuleWithOrigin(promRule, 0, 2);
 
-    const match = getMatchingRulerRule(rulerGroup, promRule);
+    const match = getMatchingRulerRule(rulerGroup, promRuleWithOrigin);
     expect(match).toBe(rulerRule1);
   });
 
@@ -111,8 +145,9 @@ describe('getMatchingRulerRule', () => {
       annotations: { summary: 'other' },
       query: 'up == 2',
     });
+    const promRuleWithOrigin = createPromRuleWithOrigin(promRule, 0, 2);
 
-    const match = getMatchingRulerRule(rulerGroup, promRule);
+    const match = getMatchingRulerRule(rulerGroup, promRuleWithOrigin);
     expect(match).toBeUndefined();
   });
 
@@ -141,9 +176,119 @@ max by (service) (up{env="staging"}) * 0.8`,
       labels: {},
       query: `max by (service) (up{env="production"}) or max by (service) (up{env="staging"}) * 0.8`,
     });
+    const promRuleWithOrigin = createPromRuleWithOrigin(promRule, 0, 2);
 
-    const match = getMatchingRulerRule(rulerGroup, promRule);
+    const match = getMatchingRulerRule(rulerGroup, promRuleWithOrigin);
     expect(match).toBe(rulerRuleWithComments);
+  });
+
+  it('should match prometheus rule against one of two identical ruler rules', () => {
+    // Create two identical ruler alerting rules
+    const rulerRule1 = alertingFactory.ruler.alertingRule.build({
+      alert: 'KubeJobFailed',
+      expr: `kube_job_failed{job!=\"\"}  > 0\n`,
+      labels: { severity: 'warning' },
+      annotations: { summary: 'Job failed to complete.' },
+    });
+    const rulerRule2 = alertingFactory.ruler.alertingRule.build({
+      alert: 'KubeJobFailed',
+      expr: `kube_job_failed{job!=\"\"}  > 0\n`,
+      labels: { severity: 'warning' },
+      annotations: { summary: 'Job failed to complete.' },
+    });
+    const rulerGroup = alertingFactory.ruler.group.build({ rules: [rulerRule1, rulerRule2] });
+
+    // Create corresponding prometheus rule at position 0 (should match rulerRule1)
+    const promRule = alertingFactory.prometheus.rule.build({
+      name: 'KubeJobFailed',
+      query: `kube_job_failed{job!=\"\"} > 0`,
+      labels: { severity: 'warning' },
+      annotations: { summary: 'Job failed to complete.' },
+    });
+    const promRuleWithOrigin = createPromRuleWithOrigin(promRule, 0, 2);
+
+    const match = getMatchingRulerRule(rulerGroup, promRuleWithOrigin);
+    // Should match the first ruler rule because position hash matches (0:2)
+    expect(match).toBeDefined();
+    expect(match).toEqual(rulerRule1);
+  });
+
+  it('should match second identical rule when position hash indicates index 1', () => {
+    // Create three identical ruler alerting rules to test matching at different positions
+    const rulerRule1 = alertingFactory.ruler.alertingRule.build({
+      alert: 'HighMemoryUsage',
+      expr: `memory_usage > 90`,
+      labels: { severity: 'critical' },
+      annotations: { summary: 'High memory' },
+    });
+    const rulerRule2 = alertingFactory.ruler.alertingRule.build({
+      alert: 'HighMemoryUsage',
+      expr: `memory_usage > 90`,
+      labels: { severity: 'critical' },
+      annotations: { summary: 'High memory' },
+    });
+    const rulerRule3 = alertingFactory.ruler.alertingRule.build({
+      alert: 'HighMemoryUsage',
+      expr: `memory_usage > 90`,
+      labels: { severity: 'critical' },
+      annotations: { summary: 'High memory' },
+    });
+    const rulerGroup = alertingFactory.ruler.group.build({ rules: [rulerRule1, rulerRule2, rulerRule3] });
+
+    // Create prometheus rule at position 1 (should match rulerRule2, the middle one)
+    const promRule = alertingFactory.prometheus.rule.build({
+      name: 'HighMemoryUsage',
+      query: `memory_usage > 90`,
+      labels: { severity: 'critical' },
+      annotations: { summary: 'High memory' },
+    });
+    const promRuleWithOrigin = createPromRuleWithOrigin(promRule, 1, 3);
+
+    const match = getMatchingRulerRule(rulerGroup, promRuleWithOrigin);
+    // Should match the second ruler rule because position hash is "1:3"
+    expect(match).toBeDefined();
+    expect(match).toBe(rulerRule2);
+    // Verify it's NOT matching the first or third rule
+    expect(match).not.toBe(rulerRule1);
+    expect(match).not.toBe(rulerRule3);
+  });
+
+  it('should NOT match when group sizes differ even with identical rules', () => {
+    // Create a ruler group with 3 identical rules
+    const rulerRule1 = alertingFactory.ruler.alertingRule.build({
+      alert: 'DiskSpaceLow',
+      expr: `disk_free < 10`,
+      labels: { severity: 'warning' },
+      annotations: { summary: 'Low disk space' },
+    });
+    const rulerRule2 = alertingFactory.ruler.alertingRule.build({
+      alert: 'DiskSpaceLow',
+      expr: `disk_free < 10`,
+      labels: { severity: 'warning' },
+      annotations: { summary: 'Low disk space' },
+    });
+    const rulerRule3 = alertingFactory.ruler.alertingRule.build({
+      alert: 'DiskSpaceLow',
+      expr: `disk_free < 10`,
+      labels: { severity: 'warning' },
+      annotations: { summary: 'Low disk space' },
+    });
+    const rulerGroup = alertingFactory.ruler.group.build({ rules: [rulerRule1, rulerRule2, rulerRule3] });
+
+    // Create prometheus rule with position hash indicating 2 rules total (but ruler has 3)
+    const promRule = alertingFactory.prometheus.rule.build({
+      name: 'DiskSpaceLow',
+      query: `disk_free < 10`,
+      labels: { severity: 'warning' },
+      annotations: { summary: 'Low disk space' },
+    });
+    // Position hash "0:2" indicates prom group has 2 rules, but ruler group has 3
+    const promRuleWithOrigin = createPromRuleWithOrigin(promRule, 0, 2);
+
+    const match = getMatchingRulerRule(rulerGroup, promRuleWithOrigin);
+    // Should NOT match because position hash "0:2" doesn't match any ruler rule
+    // (ruler rules would have hashes "0:3", "1:3", "2:3")
+    expect(match).toBeUndefined();
   });
 });
 
@@ -155,8 +300,9 @@ describe('getMatchingPromRule', () => {
 
     // Create a matching ruler rule with same name
     const rulerRule = alertingFactory.ruler.alertingRule.build({ alert: 'test-rule' });
+    const rulerRuleWithPosition = createRulerRuleWithPosition(rulerRule, 0, 1);
 
-    const match = getMatchingPromRule(promGroup, rulerRule);
+    const match = getMatchingPromRule(promGroup, rulerRuleWithPosition);
     expect(match).toBe(promRule);
   });
 
@@ -174,8 +320,9 @@ describe('getMatchingPromRule', () => {
       labels: { severity: 'warning' },
       annotations: { summary: 'test' },
     });
+    const rulerRuleWithPosition = createRulerRuleWithPosition(rulerRule, 0, 1);
 
-    const match = getMatchingPromRule(promGroup, rulerRule);
+    const match = getMatchingPromRule(promGroup, rulerRuleWithPosition);
     expect(match).toBeUndefined();
   });
 
@@ -199,8 +346,9 @@ describe('getMatchingPromRule', () => {
       labels: { severity: 'warning' },
       annotations: { summary: 'test' },
     });
+    const rulerRuleWithPosition = createRulerRuleWithPosition(rulerRule, 0, 2);
 
-    const match = getMatchingPromRule(promGroup, rulerRule);
+    const match = getMatchingPromRule(promGroup, rulerRuleWithPosition);
     expect(match).toBe(promRule1);
   });
 
@@ -227,8 +375,9 @@ describe('getMatchingPromRule', () => {
       annotations: { summary: 'test' },
       expr: 'up == 1',
     });
+    const rulerRuleWithPosition = createRulerRuleWithPosition(rulerRule, 0, 2);
 
-    const match = getMatchingPromRule(promGroup, rulerRule);
+    const match = getMatchingPromRule(promGroup, rulerRuleWithPosition);
     expect(match).toBe(promRule1);
   });
 
@@ -255,8 +404,9 @@ describe('getMatchingPromRule', () => {
       annotations: { summary: 'other' },
       expr: 'up == 2',
     });
+    const rulerRuleWithPosition = createRulerRuleWithPosition(rulerRule, 0, 2);
 
-    const match = getMatchingPromRule(promGroup, rulerRule);
+    const match = getMatchingPromRule(promGroup, rulerRuleWithPosition);
     expect(match).toBeUndefined();
   });
 
@@ -285,9 +435,41 @@ or
 # Fall back to staging for missing production metrics
 max by (service) (up{env="staging"}) * 0.8`,
     });
+    const rulerRuleWithPosition = createRulerRuleWithPosition(rulerRule, 0, 2);
 
-    const match = getMatchingPromRule(promGroup, rulerRule);
+    const match = getMatchingPromRule(promGroup, rulerRuleWithPosition);
     expect(match).toBe(promRuleWithoutComments);
+  });
+
+  it('should match ruler rule against one of two identical prometheus rules', () => {
+    // Create two identical prometheus alerting rules
+    const promRule1 = alertingFactory.prometheus.rule.build({
+      name: 'KubeJobFailed',
+      query: `kube_job_failed{job!=\"\"} > 0`,
+      labels: { severity: 'warning' },
+      annotations: { summary: 'Job failed to complete.' },
+    });
+    const promRule2 = alertingFactory.prometheus.rule.build({
+      name: 'KubeJobFailed',
+      query: `kube_job_failed{job!=\"\"} > 0`,
+      labels: { severity: 'warning' },
+      annotations: { summary: 'Job failed to complete.' },
+    });
+    const promGroup = alertingFactory.prometheus.group.build({ rules: [promRule1, promRule2] });
+
+    // Create corresponding ruler rule at position 0 (should match promRule1)
+    const rulerRule = alertingFactory.ruler.alertingRule.build({
+      alert: 'KubeJobFailed',
+      expr: `kube_job_failed{job!=\"\"}  > 0\n`,
+      labels: { severity: 'warning' },
+      annotations: { summary: 'Job failed to complete.' },
+    });
+    const rulerRuleWithPosition = createRulerRuleWithPosition(rulerRule, 0, 2);
+
+    const match = getMatchingPromRule(promGroup, rulerRuleWithPosition);
+    // Should match the first prometheus rule because position hash matches (0:2)
+    expect(match).toBeDefined();
+    expect(match).toEqual(promRule1);
   });
 });
 

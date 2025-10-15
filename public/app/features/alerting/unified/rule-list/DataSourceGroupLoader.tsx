@@ -194,21 +194,28 @@ export function RulerBasedGroupRules({
       {pageItems.map((rulerRule) => {
         const promRule = matches.get(rulerRule);
 
-        return promRule ? (
-          <DataSourceRuleListItem
-            key={hashRule(promRule)}
-            rule={promRule}
-            rulerRule={rulerRule}
-            groupIdentifier={groupIdentifier}
-            application={application}
-            actions={
-              <RuleActionsButtons rule={rulerRule} promRule={promRule} groupIdentifier={groupIdentifier} compact />
-            }
-            showLocation={false}
-          />
-        ) : (
+        if (promRule) {
+          // If rules are indistinguishable by name, labels, annotations, and query, we need to use the index to disambiguate
+          const promRuleIndex = promGroup.rules.indexOf(promRule);
+          return (
+            <DataSourceRuleListItem
+              key={`${hashRule(promRule)}-${promRuleIndex}`}
+              rule={promRule}
+              rulerRule={rulerRule}
+              groupIdentifier={groupIdentifier}
+              application={application}
+              actions={
+                <RuleActionsButtons rule={rulerRule} promRule={promRule} groupIdentifier={groupIdentifier} compact />
+              }
+              showLocation={false}
+            />
+          );
+        }
+
+        const rulerRuleIndex = rulerGroup.rules.indexOf(rulerRule);
+        return (
           <RuleOperationListItem
-            key={getRuleName(rulerRule)}
+            key={`${getRuleName(rulerRule)}-${rulerRuleIndex}`}
             name={getRuleName(rulerRule)}
             namespace={namespace.name}
             group={groupName}
@@ -219,18 +226,21 @@ export function RulerBasedGroupRules({
           />
         );
       })}
-      {promOnlyRules.map((rule) => (
-        <RuleOperationListItem
-          key={rule.name}
-          name={rule.name}
-          namespace={namespace.name}
-          group={groupName}
-          rulesSource={groupIdentifier.rulesSource}
-          application={application}
-          operation="deleting"
-          showLocation={false}
-        />
-      ))}
+      {promOnlyRules.map((rule) => {
+        const promRuleIndex = promGroup.rules.indexOf(rule);
+        return (
+          <RuleOperationListItem
+            key={`${rule.name}-${promRuleIndex}`}
+            name={rule.name}
+            namespace={namespace.name}
+            group={groupName}
+            rulesSource={groupIdentifier.rulesSource}
+            application={application}
+            operation="deleting"
+            showLocation={false}
+          />
+        );
+      })}
       {hasMore && (
         <li aria-selected="false" role="treeitem" className={styles.loadMoreWrapper}>
           <LoadMoreButton onClick={loadMore} />

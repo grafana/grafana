@@ -43,6 +43,22 @@ export interface PromRuleWithOrigin {
   rule: PromRuleDTO;
   groupIdentifier: DataSourceRuleGroupIdentifier;
   origin: 'datasource';
+  /**
+   * Position hash encoding both the rule's index and the total number of rules in the group.
+   * Format: "<index>:<totalRules>" (e.g., "0:3", "1:5")
+   *
+   * This is used as a tiebreaker when multiple identical rules exist in a group and need to be
+   * matched against their counterparts in another rule source (e.g., matching Prometheus rules
+   * to Ruler API rules). The hash ensures that identical rules are matched by their position
+   * only when both groups have the same structure (same number of rules).
+   *
+   * @example
+   * // Two identical alerts in different positions
+   * Rule at position 0 in a 3-rule group: rulePositionHash = "0:3"
+   * Rule at position 1 in a 3-rule group: rulePositionHash = "1:3"
+   * // These won't match rules in a 2-rule group (e.g., "0:2") even if identical
+   */
+  rulePositionHash: string;
 }
 
 interface GetIteratorResult {
@@ -99,9 +115,9 @@ export function useFilteredRulesIteratorProvider() {
           concatMap((groups) =>
             groups
               .filter((group) => groupFilter(group, normalizedFilterState))
-              .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
+              .flatMap((group) => group.rules.map((rule, index) => ({ group, rule, index })))
               .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
-              .map(({ group, rule }) => mapRuleToRuleWithOrigin(dataSourceIdentifier, group, rule))
+              .map(({ group, rule, index }) => mapRuleToRuleWithOrigin(dataSourceIdentifier, group, rule, index))
           ),
           catchError(() => empty())
         );
@@ -163,10 +179,15 @@ function getRulesSourcesFromFilter(filter: RulesFilter): DataSourceRulesSourceId
   }, []);
 }
 
+function createRulePositionHash(ruleIndex: number, totalRules: number): string {
+  return `${ruleIndex}:${totalRules}`;
+}
+
 function mapRuleToRuleWithOrigin(
   rulesSource: DataSourceRulesSourceIdentifier,
   group: PromRuleGroupDTO,
-  rule: PromRuleDTO
+  rule: PromRuleDTO,
+  ruleIndex: number
 ): PromRuleWithOrigin {
   return {
     rule,
@@ -177,6 +198,7 @@ function mapRuleToRuleWithOrigin(
       groupOrigin: 'datasource',
     },
     origin: 'datasource',
+    rulePositionHash: createRulePositionHash(ruleIndex, group.rules.length),
   };
 }
 
