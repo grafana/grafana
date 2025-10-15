@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/scope
 
-go 1.25.2
+go 1.25.3
 
 require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20251007081214-26e147d01f0a

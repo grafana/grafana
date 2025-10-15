@@ -1,12 +1,12 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 
-import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
-import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../utils/dashboard';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../../utils/dashboard';
 
-import DashboardEmpty, { Props } from './DashboardEmpty';
+import DashboardEmpty, { type Props } from './DashboardEmpty';
 
 jest.mock('app/types/store', () => ({
   ...jest.requireActual('app/types/store'),
@@ -39,6 +39,9 @@ jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => 
 const mockUseGetResourceRepositoryView = jest.mocked(
   require('app/features/provisioning/hooks/useGetResourceRepositoryView').useGetResourceRepositoryView
 );
+
+const mockSearchParams = new URLSearchParams();
+jest.spyOn(require('react-router-dom-v5-compat'), 'useSearchParams').mockReturnValue([mockSearchParams]);
 
 function setup(options?: Partial<Props>) {
   const props = {
@@ -149,4 +152,52 @@ it('renders with buttons disabled when repository is read-only', () => {
   expect(screen.getByRole('button', { name: 'Add visualization' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Import dashboard' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Add library panel' })).toBeDisabled();
+});
+
+describe('wrapperMaxWidth CSS class', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('applies wrapperMaxWidth class when dashboardLibrary feature is disabled', () => {
+    config.featureToggles.dashboardLibrary = false;
+
+    mockSearchParams.delete('dashboardLibraryDatasourceUid');
+
+    const { container } = render(
+      <DashboardEmpty dashboard={createDashboardModelFixture(defaultDashboard)} canCreate={true} />
+    );
+
+    const wrapperElement = container.querySelector('[class*="dashboard-empty-wrapper"]');
+    expect(wrapperElement).toBeInTheDocument();
+    expect(wrapperElement).toHaveStyle('max-width: 890px');
+  });
+
+  it('applies wrapperMaxWidth class when dashboardLibrary feature is enabled but no dashboardLibraryDatasourceUid param', () => {
+    config.featureToggles.dashboardLibrary = true;
+
+    mockSearchParams.delete('dashboardLibraryDatasourceUid');
+
+    const { container } = render(
+      <DashboardEmpty dashboard={createDashboardModelFixture(defaultDashboard)} canCreate={true} />
+    );
+
+    const wrapperElement = container.querySelector('[class*="dashboard-empty-wrapper"]');
+    expect(wrapperElement).toBeInTheDocument();
+    expect(wrapperElement).toHaveStyle('max-width: 890px');
+  });
+
+  it('does not apply wrapperMaxWidth class when dashboardLibrary feature is enabled and dashboardLibraryDatasourceUid param exists', () => {
+    config.featureToggles.dashboardLibrary = true;
+
+    mockSearchParams.set('dashboardLibraryDatasourceUid', 'test-uid');
+
+    const { container } = render(
+      <DashboardEmpty dashboard={createDashboardModelFixture(defaultDashboard)} canCreate={true} />
+    );
+
+    const wrapperElement = container.querySelector('[class*="dashboard-empty-wrapper"]');
+    expect(wrapperElement).toBeInTheDocument();
+    expect(wrapperElement).not.toHaveStyle('max-width: 890px');
+  });
 });
