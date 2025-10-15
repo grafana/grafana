@@ -4,9 +4,15 @@ import { memo, useContext, useEffect, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { ModalsContext, Modal, Button, useStyles2 } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { contextSrv } from 'app/core/services/context_srv';
+import { ObjectMeta } from 'app/features/apiserver/types';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
+import { DashboardMeta } from 'app/types/dashboard';
 
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -18,7 +24,8 @@ interface DashboardPromptProps {
 
 export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const originalPath = useMemo(() => locationService.getLocation().pathname, [dashboard]);
+  const originalLocation = useMemo(() => locationService.getLocation(), [dashboard]);
+  const originalPath = useMemo(() => originalLocation.pathname, [originalLocation]);
   const { showModal, hideModal } = useContext(ModalsContext);
 
   useEffect(() => {
@@ -94,7 +101,11 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       onDiscard: () => {
         dashboard.exitEditMode({ skipConfirm: true });
         hideModal();
-        moveToBlockedLocationAfterReactStateUpdate(location);
+        if (originalPath === DASHBOARD_LIBRARY_ROUTES.Template) {
+          moveToBlockedLocationAfterReactStateUpdate(location, true);
+        } else {
+          moveToBlockedLocationAfterReactStateUpdate(location);
+        }
       },
       onDismiss: hideModal,
     });
@@ -107,9 +118,9 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
 
 DashboardPrompt.displayName = 'DashboardPrompt';
 
-function moveToBlockedLocationAfterReactStateUpdate(location?: H.Location | null) {
+function moveToBlockedLocationAfterReactStateUpdate(location?: H.Location | null, replace = false) {
   if (location) {
-    setTimeout(() => locationService.push(location), 10);
+    setTimeout(() => (replace ? locationService.replace(location) : locationService.push(location)), 10);
   }
 }
 
@@ -178,10 +189,37 @@ export function ignoreChanges(scene: DashboardScene | null) {
     return true;
   }
 
+  const dashboard = scene.getSaveModel();
+  // Ignore changes if the dashboard is empty (new dashboard)
+  if (isEmptyDashboard(dashboard, scene?.serializer.metadata)) {
+    return true;
+  }
+
   const { canSave, fromScript, fromFile } = scene.state.meta;
   if (!contextSrv.isEditor && !canSave) {
     return true;
   }
 
   return !canSave || fromScript || fromFile;
+}
+
+export function isEmptyDashboard(
+  dashboard: Dashboard | DashboardV2Spec,
+  metadata?: DashboardMeta | ObjectMeta
+): boolean {
+  if (isDashboardV2Spec(dashboard)) {
+    const hasNoPanels = Object.keys(dashboard.elements).length === 0;
+    const hasNoLinks = !dashboard.links.length;
+    const hasNoTemplates = !dashboard.variables.length;
+    const hasNoUid = !metadata || !('name' in metadata) || !metadata.name;
+
+    return hasNoPanels && hasNoLinks && hasNoTemplates && hasNoUid;
+  }
+
+  const hasNoPanels = !dashboard.panels?.length;
+  const hasNoLinks = !dashboard.links?.length;
+  const hasNoTemplates = !dashboard.templating?.list?.length;
+  const hasNoUid = !dashboard.uid;
+
+  return hasNoPanels && hasNoLinks && hasNoTemplates && hasNoUid;
 }

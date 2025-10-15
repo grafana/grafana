@@ -4829,7 +4829,11 @@
       "add-visualization-header": "Start your new dashboard by adding a visualization",
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
-      "import-dashboard-button": "Import dashboard"
+      "import-dashboard-button": "Import dashboard",
+      "show-less-dashboards": "Show less",
+      "show-more-dashboards": "Show more",
+      "start-with-suggested-dashboards": "Start with a pre-made dashboard from your data source",
+      "use-template-button": "Use this dashboard"
     },
     "errors": {
       "failed-to-load": "Failed to load dashboard"

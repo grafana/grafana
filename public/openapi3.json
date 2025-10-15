@@ -1405,6 +1405,14 @@
         },
         "description": "InternalServerPublicError is a general error indicating something went wrong internally."
       },
+      "interpolateDashboardResponse": {
+        "content": {
+          "application/json": {
+            "schema": {}
+          }
+        },
+        "description": "(empty)"
+      },
       "jwksResponse": {
         "content": {
           "application/json": {
@@ -17737,6 +17745,32 @@
           }
         },
         "summary": "Import dashboard.",
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
+    "/dashboards/interpolate": {
+      "post": {
+        "operationId": "interpolateDashboard",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/interpolateDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Interpolate dashboard. This is an experimental endpoint under dashboardLibrary FF and is subject to change.",
         "tags": [
           "dashboards"
         ]
