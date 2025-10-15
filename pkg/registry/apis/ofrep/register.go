@@ -362,7 +362,10 @@ func (b *APIBuilder) isAuthenticatedRequest(r *http.Request) bool {
 
 // validateNamespace checks if the namespace in the evaluation context matches the namespace in the request
 func (b *APIBuilder) validateNamespace(r *http.Request) bool {
-	// Extract namespace from request context or URL path
+	ctx, span := tracer.Start(r.Context(), "ofrep.validateNamespace")
+	defer span.End()
+	r = r.WithContext(ctx)
+
 	var namespace string
 	user, ok := types.AuthInfoFrom(r.Context())
 	if !ok {
@@ -375,19 +378,25 @@ func (b *APIBuilder) validateNamespace(r *http.Request) bool {
 		namespace = mux.Vars(r)["namespace"]
 	}
 
-	// Extract namespace from feature flag evaluation context
+	// Read request body for namespace validation and tracing
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		_ = tracing.Errorf(span, "failed to read request body: %w", err)
 		b.logger.Error("Error reading evaluation request body", "error", err)
+		span.SetAttributes(attribute.Bool("validation.success", false))
 		return false
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
+	span.SetAttributes(attribute.String("request.body", string(body)))
+
 	evalCtxNamespace := b.namespaceFromEvalCtx(body)
 	// "default" namespace case can only occur in on-prem grafana
 	if (namespace == "default" && evalCtxNamespace == "") || (evalCtxNamespace == namespace) {
+		span.SetAttributes(attribute.Bool("validation.success", true))
 		return true
 	}
 
+	span.SetAttributes(attribute.Bool("validation.success", false))
 	return false
 }
