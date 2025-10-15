@@ -5,8 +5,8 @@ import { Trans } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
 
 import { ActiveFields } from './ActiveFields';
+import { AvailableFields } from './AvailableFields';
 import { FieldWithStats } from './FieldSelector';
-//import { LogsTableAvailableFields } from './LogsTableAvailableFields';
 
 interface Props {
   activeFields: string[];
@@ -35,11 +35,7 @@ export const FieldList = ({ activeFields, clear, fields, reorder, toggle }: Prop
         <div className={styles.columnHeader}>
           <Trans i18nKey="explore.logs-table-multi-select.fields">Fields</Trans>
         </div>
-        {/*<LogsTableAvailableFields
-          toggleColumn={toggleColumn}
-          labels={filteredColumnsWithMeta ?? columnsWithMeta}
-          valueFilter={(value) => !props.columnsWithMeta[value]?.active}
-        />*/}
+        <AvailableFields activeFields={activeFields} fields={fields} reorder={reorder} toggle={toggle} />
       </>
     </div>
   );

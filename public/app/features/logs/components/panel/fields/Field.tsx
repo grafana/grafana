@@ -3,12 +3,12 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Checkbox, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { Checkbox, Icon, useStyles2 } from '@grafana/ui';
 
 import { FieldWithStats } from './FieldSelector';
 
 interface Props {
-  active: boolean;
+  active?: boolean;
   field: FieldWithStats;
   onChange(key: string): void;
   draggable?: boolean;
@@ -16,7 +16,7 @@ interface Props {
 }
 
 export function Field({
-  active,
+  active = false,
   draggable = false,
   field,
   onChange,
@@ -29,7 +29,7 @@ export function Field({
       <div className={styles.contentWrap}>
         <Checkbox className={styles.checkboxLabel} label={field.name} onChange={onChange} checked={active} />
         {showCount && (
-          <button className={styles.labelCount} onClick={props.onChange}>
+          <button className={styles.labelCount} onClick={onChange}>
             {field.stats.percentOfLinesWithLabel}%
           </button>
         )}

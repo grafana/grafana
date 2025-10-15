@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, DraggableProvided, Droppable, DropResult } from '@hello-pangea/dnd';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
+import { EmptyFields } from './EmptyFields';
 import { Field } from './Field';
 import { FieldWithStats } from './FieldSelector';
-import { LogsTableEmptyFields } from './LogsTableEmptyFields';
-import { useMemo } from 'react';
 
 export function getLogsFieldsStyles(theme: GrafanaTheme2) {
   return {
@@ -81,5 +81,5 @@ export const ActiveFields = ({ activeFields, fields, toggle, reorder }: Props): 
     );
   }
 
-  return <LogsTableEmptyFields />;
+  return <EmptyFields />;
 };
