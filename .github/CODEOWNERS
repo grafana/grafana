@@ -86,6 +86,7 @@
 /apps/playlist/ @grafana/grafana-app-platform-squad
 /apps/plugins/ @grafana/plugins-platform-backend
 /apps/preferences/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
+/apps/querycaching/ @grafana/grafana-operator-experience-squad
 /apps/shorturl/ @grafana/sharing-squad
 /apps/secret/ @grafana/grafana-operator-experience-squad
 /apps/scope/ @grafana/grafana-operator-experience-squad
