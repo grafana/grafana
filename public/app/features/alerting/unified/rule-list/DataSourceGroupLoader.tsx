@@ -191,15 +191,14 @@ export function RulerBasedGroupRules({
 
   return (
     <>
-      {pageItems.map((rulerRule) => {
+      {pageItems.map((rulerRule, index) => {
+        // If rules are indistinguishable by name, labels, annotations, and query, we need to use the index to disambiguate
         const promRule = matches.get(rulerRule);
 
         if (promRule) {
-          // If rules are indistinguishable by name, labels, annotations, and query, we need to use the index to disambiguate
-          const promRuleIndex = promGroup.rules.indexOf(promRule);
           return (
             <DataSourceRuleListItem
-              key={`${hashRule(promRule)}-${promRuleIndex}`}
+              key={`${hashRule(promRule)}-${index}`}
               rule={promRule}
               rulerRule={rulerRule}
               groupIdentifier={groupIdentifier}
@@ -212,10 +211,9 @@ export function RulerBasedGroupRules({
           );
         }
 
-        const rulerRuleIndex = rulerGroup.rules.indexOf(rulerRule);
         return (
           <RuleOperationListItem
-            key={`${getRuleName(rulerRule)}-${rulerRuleIndex}`}
+            key={`${getRuleName(rulerRule)}-${index}`}
             name={getRuleName(rulerRule)}
             namespace={namespace.name}
             group={groupName}
@@ -226,11 +224,10 @@ export function RulerBasedGroupRules({
           />
         );
       })}
-      {promOnlyRules.map((rule) => {
-        const promRuleIndex = promGroup.rules.indexOf(rule);
+      {promOnlyRules.map((rule, index) => {
         return (
           <RuleOperationListItem
-            key={`${rule.name}-${promRuleIndex}`}
+            key={`${rule.name}-${index}`}
             name={rule.name}
             namespace={namespace.name}
             group={groupName}

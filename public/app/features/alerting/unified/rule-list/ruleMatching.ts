@@ -10,10 +10,7 @@ import { getPromRuleFingerprint, getRulerRuleFingerprint } from '../utils/rule-i
 import { getRuleName } from '../utils/rules';
 
 import { PromRuleWithOrigin } from './hooks/useFilteredRulesIterator';
-
-function createRulePositionHash(ruleIndex: number, totalRules: number): string {
-  return `${ruleIndex}:${totalRules}`;
-}
+import { RulePositionHash, createRulePositionHash } from './rulePositionHash';
 
 export function getMatchingRulerRule(
   rulerRuleGroup: RulerRuleGroupDTO<RulerCloudRuleDTO>,
@@ -77,7 +74,7 @@ type RulerRuleWithRulePosition = RulerCloudRuleDTO & {
    * Prometheus rule at position 0 in a 2-rule group: rulePositionHash = "0:2" → Match!
    * Prometheus rule at position 0 in a 3-rule group: rulePositionHash = "0:3" → No match
    */
-  rulePositionHash: string;
+  rulePositionHash: RulePositionHash;
 };
 
 export function getMatchingPromRule(

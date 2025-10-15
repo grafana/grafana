@@ -22,6 +22,7 @@ import {
   getExternalRulesSources,
   isSupportedExternalRulesSourceType,
 } from '../../utils/datasource';
+import { RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
 import { groupFilter, ruleFilter } from './filters';
 import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
@@ -58,7 +59,7 @@ export interface PromRuleWithOrigin {
    * Rule at position 1 in a 3-rule group: rulePositionHash = "1:3"
    * // These won't match rules in a 2-rule group (e.g., "0:2") even if identical
    */
-  rulePositionHash: string;
+  rulePositionHash: RulePositionHash;
 }
 
 interface GetIteratorResult {
@@ -177,10 +178,6 @@ function getRulesSourcesFromFilter(filter: RulesFilter): DataSourceRulesSourceId
 
     return acc;
   }, []);
-}
-
-function createRulePositionHash(ruleIndex: number, totalRules: number): string {
-  return `${ruleIndex}:${totalRules}`;
 }
 
 function mapRuleToRuleWithOrigin(

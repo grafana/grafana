@@ -5,6 +5,7 @@ import { alertingFactory } from '../mocks/server/db';
 
 import { PromRuleWithOrigin } from './hooks/useFilteredRulesIterator';
 import { getMatchingPromRule, getMatchingRulerRule, matchRulesGroup } from './ruleMatching';
+import { RulePositionHash, createRulePositionHash } from './rulePositionHash';
 
 // Helper to create PromRuleWithOrigin mock
 function createPromRuleWithOrigin(rule: PromRuleDTO, ruleIndex: number, totalRules: number): PromRuleWithOrigin {
@@ -17,7 +18,7 @@ function createPromRuleWithOrigin(rule: PromRuleDTO, ruleIndex: number, totalRul
       groupOrigin: 'datasource',
     },
     origin: 'datasource',
-    rulePositionHash: `${ruleIndex}:${totalRules}`,
+    rulePositionHash: createRulePositionHash(ruleIndex, totalRules),
   };
 }
 
@@ -26,10 +27,10 @@ function createRulerRuleWithPosition(
   rule: RulerCloudRuleDTO,
   ruleIndex: number,
   totalRules: number
-): RulerCloudRuleDTO & { rulePositionHash: string } {
+): RulerCloudRuleDTO & { rulePositionHash: RulePositionHash } {
   return {
     ...rule,
-    rulePositionHash: `${ruleIndex}:${totalRules}`,
+    rulePositionHash: createRulePositionHash(ruleIndex, totalRules),
   };
 }
 
