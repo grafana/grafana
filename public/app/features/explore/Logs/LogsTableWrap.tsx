@@ -111,6 +111,29 @@ export function LogsTableWrap(props: Props) {
 
   const logsFrame = parseLogsFrame(currentDataFrame);
 
+  const updateDisplayedFields = useCallback(
+    (pendingLabelState: FieldNameMetaStore): string[] => {
+      // Get all active columns and sort by index
+      const newColumnsArray = Object.keys(pendingLabelState)
+        .filter((key) => pendingLabelState[key]?.active)
+        .sort((a, b) => {
+          const pa = pendingLabelState[a];
+          const pb = pendingLabelState[b];
+          if (pa.index !== undefined && pb.index !== undefined) {
+            return pa.index - pb.index;
+          }
+          return 0;
+        });
+
+      const newColumns = Object.values(newColumnsArray);
+      const levelName = getLevelFieldNameFromLabels(logsFrame);
+
+      // Filter out default columns and level field
+      return newColumns.filter((column) => !DEFAULT_URL_COLUMNS.includes(column) && column !== levelName);
+    },
+    [logsFrame]
+  );
+
   useEffect(() => {
     if (logsFrame?.timeField.name && logsFrame?.bodyField.name && !propsColumns) {
       const levelName = getLevelFieldNameFromLabels(logsFrame);
@@ -430,11 +453,9 @@ export function LogsTableWrap(props: Props) {
           0: logsFrame?.timeField.name ?? '',
           1: logsFrame?.bodyField.name ?? '',
         };
-    // Sync displayed fields with the table selected fields, remove the default columns
-    // Also exclude the level field if it exists (it should be treated as a default column)
-    const newDisplayedFields = Object.values(newColumns).filter(
-      (column) => !DEFAULT_URL_COLUMNS.includes(column) && column !== levelName
-    );
+
+    // Use the extracted updateDisplayedFields function
+    const newDisplayedFields = updateDisplayedFields(pendingLabelState);
 
     const newPanelState: ExploreLogsPanelState = {
       ...props.panelState,

@@ -56,6 +56,7 @@ import { LogRowContextModal } from 'app/features/logs/components/log-context/Log
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList, LogListOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
+import { DEFAULT_URL_COLUMNS, DETECTED_LEVEL, LEVEL } from 'app/features/logs/logsFrame';
 import { LogLevelColor, dedupLogRows } from 'app/features/logs/logsModel';
 import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
@@ -346,14 +347,33 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     ]
   );
 
+  // Sync between local displayedFields and panelState and show original line button
   useEffect(() => {
-    if (!shallowCompare(displayedFields, panelState?.logs?.displayedFields ?? [])) {
-      updatePanelState({
-        ...panelState?.logs,
-        displayedFields,
-      });
+    const panelDisplayedFields = panelState?.logs?.displayedFields ?? [];
+
+    if (!shallowCompare(displayedFields, panelDisplayedFields)) {
+      // Special case: In logs mode, if local displayedFields is empty and panel has fields,
+      if (visualisationType === 'logs' && displayedFields.length === 0 && panelDisplayedFields.length > 0) {
+        // Don't update, we're in the process of clearing via clearDisplayedFields
+        return;
+      }
+
+      if (visualisationType === 'logs' && displayedFields.length > 0) {
+        // In logs mode with fields: merge and write to panelState
+        const mergedFields = Array.from(new Set([...panelDisplayedFields, ...displayedFields]));
+        // Update local state first to prevent loop
+        setDisplayedFields(mergedFields);
+
+        updatePanelState({
+          ...panelState?.logs,
+          displayedFields: mergedFields,
+        });
+      } else {
+        // In table mode always sync with panelState
+        setDisplayedFields(panelDisplayedFields);
+      }
     }
-  }, [displayedFields, panelState?.logs, updatePanelState]);
+  }, [displayedFields, panelState?.logs?.displayedFields, visualisationType, panelState?.logs, updatePanelState]);
 
   // actions
   const onLogRowHover = useCallback(
@@ -570,8 +590,31 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
 
   const clearDisplayedFields = useCallback(() => {
+    // Clear local displayedFields state
     setDisplayedFields([]);
-  }, []);
+
+    // Get current columns from panelState
+    const currentColumns = panelState?.logs?.columns;
+
+    if (currentColumns) {
+      // Filter columns to keep only defaults: DEFAULT_URL_COLUMNS + DETECTED_LEVEL + LEVEL
+      const defaultColumnNames = [...DEFAULT_URL_COLUMNS, DETECTED_LEVEL, LEVEL];
+      const resetColumns = Object.values(currentColumns).filter((col) => defaultColumnNames.includes(col));
+
+      // Update panelState with reset columns and empty displayedFields
+      updatePanelState({
+        ...panelState?.logs,
+        columns: resetColumns,
+        displayedFields: [],
+      });
+    } else {
+      // If no columns in panelState, just clear displayedFields
+      updatePanelState({
+        ...panelState?.logs,
+        displayedFields: [],
+      });
+    }
+  }, [panelState?.logs, updatePanelState]);
 
   const onCloseCallbackRef = useRef<() => void>(() => {});
 
