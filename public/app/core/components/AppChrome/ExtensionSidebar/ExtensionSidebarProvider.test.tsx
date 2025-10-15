@@ -1,6 +1,6 @@
 import { render, screen, act } from '@testing-library/react';
 
-import { store, EventBusSrv, EventBus } from '@grafana/data';
+import { store, EventBusSrv, EventBus, ExtensionInfo } from '@grafana/data';
 import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
@@ -17,13 +17,13 @@ const mockComponent = {
   title: 'Test Component',
   description: 'Test Description',
   targets: [],
-};
+} as ExtensionInfo;
 
 const mockDifferentComponent = {
   title: 'Different Component',
   description: 'Different Description',
   targets: [],
-};
+} as ExtensionInfo;
 
 const mockPluginMeta = {
   pluginId: 'grafana-investigations-app',
