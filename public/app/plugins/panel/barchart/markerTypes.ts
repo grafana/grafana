@@ -1,10 +1,9 @@
-
 export type BarMarkerOpts = {
   label: string;
   width: number;
   color: string;
   shape: string;
-  isRotated: boolean
+  isRotated: boolean;
   opacity: number;
 };
 
@@ -12,7 +11,7 @@ export interface Marker {
   id: number;
   targetField: string;
   dataField: string;
-  opts: BarMarkerOpts 
+  opts: BarMarkerOpts;
 }
 /**
  * User-specified marker persisted in panel options (runtime shape).
@@ -24,7 +23,7 @@ export interface PreparedMarker {
   yScaleKey?: string;
   yValue?: number | null;
   seriesIdx?: number | null;
-  opts: BarMarkerOpts 
+  opts: BarMarkerOpts;
 }
 
 /**
@@ -32,8 +31,8 @@ export interface PreparedMarker {
  * and cached for the draw hook.
  */
 export interface ResolvedMarker {
-  x: number
-  y:  number
+  x: number;
+  y: number;
   opts: BarMarkerOpts | null;
 }
 

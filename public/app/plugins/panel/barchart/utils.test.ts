@@ -19,7 +19,7 @@ import {
 } from '@grafana/schema';
 
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
-import { prepSeries, prepConfig, PrepConfigOpts, prepareMarkers, hideMarkerSeries } from './utils';
+import { prepSeries, prepConfig, PrepConfigOpts, prepMarkers, hideMarkerSeries } from './utils';
 import { scale } from 'ol/transform';
 
 const fieldConfig: FieldConfigSource = {
@@ -265,136 +265,163 @@ describe('BarChart utils', () => {
 
     describe('prepareMarkers', () => {
       const vizFields = [
-      { name: 'x', type: FieldType.string, values: ['a', 'b', 'c'], config: {} },
-      { name: 'series1', type: FieldType.number, values: [10, 20, 30], config: {} },
-      { name: 'series2', type: FieldType.number, values: [15, 25, 35], config: {} },
+        { name: 'x', type: FieldType.string, values: ['a', 'b', 'c'], config: {} },
+        { name: 'series1', type: FieldType.number, values: [10, 20, 30], config: {} },
+        { name: 'series2', type: FieldType.number, values: [15, 25, 35], config: {} },
       ] as any[];
 
       const markerFields = [
-      { name: 'marker1_data', type: FieldType.number, values: [5, 5, 5], config: { unit: '__fixed' } },
-      { name: 'marker2_data', type: FieldType.number, values: [7, 7, 7], config: {unit: '__log'} },
+        { name: 'marker1_data', type: FieldType.number, values: [5, 5, 5], config: { unit: '__fixed' } },
+        { name: 'marker2_data', type: FieldType.number, values: [7, 7, 7], config: { unit: '__log' } },
       ] as any[];
 
       const markers = [
-      {id: 1, dataField: 'marker1_data', targetField: 'series1', opts: {label:"john", shape: 'circle', color: 'red', width: 1, isRotated: false, opacity: 1 } },
-      {id: 2, dataField: 'marker2_data', targetField: 'series2', opts: { label:"jane", shape: 'circle', color: 'blue', width: 1, isRotated: false, opacity: 1 } },
-      {id: 3, dataField: 'fake_name', targetField: 'series2', opts: { label:"jane", shape: 'circle', color: 'blue', width: 1, isRotated: false, opacity: 1 } },
+        {
+          id: 1,
+          dataField: 'marker1_data',
+          targetField: 'series1',
+          opts: { label: 'john', shape: 'circle', color: 'red', width: 1, isRotated: false, opacity: 1 },
+        },
+        {
+          id: 2,
+          dataField: 'marker2_data',
+          targetField: 'series2',
+          opts: { label: 'jane', shape: 'circle', color: 'blue', width: 1, isRotated: false, opacity: 1 },
+        },
+        {
+          id: 3,
+          dataField: 'fake_name',
+          targetField: 'series2',
+          opts: { label: 'jane', shape: 'circle', color: 'blue', width: 1, isRotated: false, opacity: 1 },
+        },
       ];
 
       it('should prepare markers for StackingMode.None', () => {
-      const result = prepareMarkers(vizFields, markerFields, markers, StackingMode.None);
-      expect(result).toHaveLength(6);
-      expect(result).toEqual(
-        expect.arrayContaining([
-        expect.objectContaining({ groupIdx: 0, yValue: 5, seriesIdx: 1, yScaleKey: '__fixed' }),
-        expect.objectContaining({ groupIdx: 1, yValue: 5, seriesIdx: 1, yScaleKey: '__fixed' }),
-        expect.objectContaining({ groupIdx: 2, yValue: 5, seriesIdx: 1, yScaleKey: '__fixed' }),
-        expect.objectContaining({ groupIdx: 0, yValue: 7, seriesIdx: 2, yScaleKey: '__log' }),
-        expect.objectContaining({ groupIdx: 1, yValue: 7, seriesIdx: 2, yScaleKey: '__log' }),
-        expect.objectContaining({ groupIdx: 2, yValue: 7, seriesIdx: 2, yScaleKey: '__log' }),
-        ])
-      );
+        const result = prepMarkers(vizFields, markerFields, markers, StackingMode.None);
+        expect(result).toHaveLength(6);
+        expect(result).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ groupIdx: 0, yValue: 5, seriesIdx: 1, yScaleKey: '__fixed' }),
+            expect.objectContaining({ groupIdx: 1, yValue: 5, seriesIdx: 1, yScaleKey: '__fixed' }),
+            expect.objectContaining({ groupIdx: 2, yValue: 5, seriesIdx: 1, yScaleKey: '__fixed' }),
+            expect.objectContaining({ groupIdx: 0, yValue: 7, seriesIdx: 2, yScaleKey: '__log' }),
+            expect.objectContaining({ groupIdx: 1, yValue: 7, seriesIdx: 2, yScaleKey: '__log' }),
+            expect.objectContaining({ groupIdx: 2, yValue: 7, seriesIdx: 2, yScaleKey: '__log' }),
+          ])
+        );
       });
 
       it('should prepare markers for StackingMode.Normal', () => {
-      const result = prepareMarkers(vizFields, markerFields, markers, StackingMode.Normal);
-      expect(result).toHaveLength(6);
-      expect(result).toEqual(
-        expect.arrayContaining([
-        // marker1 on series1 (yValue = marker value)
-        expect.objectContaining({ groupIdx: 0, yValue: 5, seriesIdx: 1, yScaleKey: '__fixed' }),
-        expect.objectContaining({ groupIdx: 1, yValue: 5, seriesIdx: 1, yScaleKey: '__fixed' }),
-        expect.objectContaining({ groupIdx: 2, yValue: 5, seriesIdx: 1, yScaleKey: '__fixed' }),
-        // marker2 on series2 (yValue = series1 value + marker value)
-        expect.objectContaining({ groupIdx: 0, yValue: 10 + 7, seriesIdx: 2, yScaleKey: '__log' }),
-        expect.objectContaining({ groupIdx: 1, yValue: 20 + 7, seriesIdx: 2, yScaleKey: '__log' }),
-        expect.objectContaining({ groupIdx: 2, yValue: 30 + 7, seriesIdx: 2, yScaleKey: '__log' }),
-        ])
-      );
+        const result = prepMarkers(vizFields, markerFields, markers, StackingMode.Normal);
+        expect(result).toHaveLength(6);
+        expect(result).toEqual(
+          expect.arrayContaining([
+            // marker1 on series1 (yValue = marker value)
+            expect.objectContaining({ groupIdx: 0, yValue: 5, seriesIdx: 1, yScaleKey: '__fixed' }),
+            expect.objectContaining({ groupIdx: 1, yValue: 5, seriesIdx: 1, yScaleKey: '__fixed' }),
+            expect.objectContaining({ groupIdx: 2, yValue: 5, seriesIdx: 1, yScaleKey: '__fixed' }),
+            // marker2 on series2 (yValue = series1 value + marker value)
+            expect.objectContaining({ groupIdx: 0, yValue: 10 + 7, seriesIdx: 2, yScaleKey: '__log' }),
+            expect.objectContaining({ groupIdx: 1, yValue: 20 + 7, seriesIdx: 2, yScaleKey: '__log' }),
+            expect.objectContaining({ groupIdx: 2, yValue: 30 + 7, seriesIdx: 2, yScaleKey: '__log' }),
+          ])
+        );
       });
 
       it('should prepare markers for StackingMode.Percent', () => {
-      const result = prepareMarkers(vizFields, markerFields, markers, StackingMode.Percent);
-      expect(result).toHaveLength(6);
-      expect(result).toEqual(
-        expect.arrayContaining([
-        // marker1 on series1 (yValue = marker value / total)
-        expect.objectContaining({ groupIdx: 0, yValue: 5 / (10 + 15), seriesIdx: 1, yScaleKey: '__fixed'  }),
-        expect.objectContaining({ groupIdx: 1, yValue: 5 / (20 + 25), seriesIdx: 1, yScaleKey: '__fixed'  }),
-        expect.objectContaining({ groupIdx: 2, yValue: 5 / (30 + 35), seriesIdx: 1, yScaleKey: '__fixed'  }),
-        // marker2 on series2 (yValue = (series1 value + marker value) / total)
-        expect.objectContaining({ groupIdx: 0, yValue: (10 + 7) / (10 + 15), seriesIdx: 2, yScaleKey: '__log' }),
-        expect.objectContaining({ groupIdx: 1, yValue: (20 + 7) / (20 + 25), seriesIdx: 2, yScaleKey: '__log' }),
-        expect.objectContaining({ groupIdx: 2, yValue: (30 + 7) / (30 + 35), seriesIdx: 2, yScaleKey: '__log' }),
-        ])
-      );
+        const result = prepMarkers(vizFields, markerFields, markers, StackingMode.Percent);
+        expect(result).toHaveLength(6);
+        expect(result).toEqual(
+          expect.arrayContaining([
+            // marker1 on series1 (yValue = marker value / total)
+            expect.objectContaining({ groupIdx: 0, yValue: 5 / (10 + 15), seriesIdx: 1, yScaleKey: '__fixed' }),
+            expect.objectContaining({ groupIdx: 1, yValue: 5 / (20 + 25), seriesIdx: 1, yScaleKey: '__fixed' }),
+            expect.objectContaining({ groupIdx: 2, yValue: 5 / (30 + 35), seriesIdx: 1, yScaleKey: '__fixed' }),
+            // marker2 on series2 (yValue = (series1 value + marker value) / total)
+            expect.objectContaining({ groupIdx: 0, yValue: (10 + 7) / (10 + 15), seriesIdx: 2, yScaleKey: '__log' }),
+            expect.objectContaining({ groupIdx: 1, yValue: (20 + 7) / (20 + 25), seriesIdx: 2, yScaleKey: '__log' }),
+            expect.objectContaining({ groupIdx: 2, yValue: (30 + 7) / (30 + 35), seriesIdx: 2, yScaleKey: '__log' }),
+          ])
+        );
       });
 
       describe('hideMarkerSeries', () => {
+        it('removes marker fields from a deep-copied PanelData and returns them in markerData', () => {
+          const df = new MutableDataFrame({
+            fields: [
+              { name: 'x', type: FieldType.string, values: ['a', 'b'] },
+              { name: 'metric', type: FieldType.number, values: [1, 2] },
+              { name: 'marker', type: FieldType.number, values: [5, 6] },
+            ],
+          });
+          df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-      it('removes marker fields from a deep-copied PanelData and returns them in markerData', () => {
-        const df = new MutableDataFrame({
-          fields: [
-            { name: 'x', type: FieldType.string, values: ['a', 'b'] },
-            { name: 'metric', type: FieldType.number, values: [1, 2] },
-            { name: 'marker', type: FieldType.number, values: [5, 6] },
-          ],
+          const panelData = { series: [df] } as any;
+          const markers = [
+            {
+              id: 1,
+              dataField: 'marker',
+              targetField: 'series1',
+              opts: { label: 'john', shape: 'circle', color: 'red', width: 1, isRotated: false, opacity: 1 },
+            },
+          ];
+
+          const originalFieldCount = panelData.series[0].fields.length;
+
+          const { barData, markerData } = hideMarkerSeries(panelData, markers);
+
+          // marker removed from returned barData
+          expect(barData.series[0].fields.find((f: any) => f.name === 'marker')).toBeUndefined();
+          // marker returned in markerData
+          expect(markerData).toHaveLength(1);
+          expect(markerData[0].name).toBe('marker');
+
+          // original panelData must remain unchanged (deep copy)
+          expect(panelData.series[0].fields.find((f: any) => f.name === 'marker')).toBeDefined();
+          expect(panelData.series[0].fields.length).toBe(originalFieldCount);
         });
-        df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-        const panelData = { series: [df] } as any;
-        const markers = [
-          {id: 1, dataField: 'marker', targetField: 'series1', opts: {label:"john", shape: 'circle', color: 'red', width: 1, isRotated: false, opacity: 1 } },
+        it('ignores markers that reference missing fields and handles duplicate marker references gracefully', () => {
+          const df = new MutableDataFrame({
+            fields: [
+              { name: 'x', type: FieldType.string, values: ['a'] },
+              { name: 'metric', type: FieldType.number, values: [1] },
+              { name: 'markerA', type: FieldType.number, values: [9] },
+            ],
+          });
+          df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-        ];
+          const panelData = { series: [df] } as any;
 
-        const originalFieldCount = panelData.series[0].fields.length;
+          // two markers refer to the same dataField and one refers to a non-existent field
+          const markers = [
+            {
+              id: 1,
+              dataField: 'markerA',
+              targetField: 'metric',
+              opts: { label: 'john', shape: 'circle', color: 'red', width: 1, isRotated: false, opacity: 1 },
+            },
+            {
+              id: 3,
+              dataField: 'markerA',
+              targetField: 'none_existent',
+              opts: { label: 'jane', shape: 'circle', color: 'blue', width: 1, isRotated: false, opacity: 1 },
+            },
+          ];
 
-        const { barData, markerData } = hideMarkerSeries(panelData, markers);
+          const { barData, markerData } = hideMarkerSeries(panelData, markers);
 
-        // marker removed from returned barData
-        expect(barData.series[0].fields.find((f: any) => f.name === 'marker')).toBeUndefined();
-        // marker returned in markerData
-        expect(markerData).toHaveLength(1);
-        expect(markerData[0].name).toBe('marker');
+          // only one marker field present and removed once
+          expect(markerData).toHaveLength(1);
+          expect(markerData[0].name).toBe('markerA');
 
-        // original panelData must remain unchanged (deep copy)
-        expect(panelData.series[0].fields.find((f: any) => f.name === 'marker')).toBeDefined();
-        expect(panelData.series[0].fields.length).toBe(originalFieldCount);
-      });
+          // barData no longer contains the marker field
+          expect(barData.series[0].fields.find((f: any) => f.name === 'markerA')).toBeUndefined();
 
-      it('ignores markers that reference missing fields and handles duplicate marker references gracefully', () => {
-        const df = new MutableDataFrame({
-          fields: [
-            { name: 'x', type: FieldType.string, values: ['a'] },
-            { name: 'metric', type: FieldType.number, values: [1] },
-            { name: 'markerA', type: FieldType.number, values: [9] },
-          ],
+          // missing marker had no effect
+          expect(barData.series[0].fields.find((f: any) => f.name === 'does_not_exist')).toBeUndefined();
         });
-        df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
-
-        const panelData = { series: [df] } as any;
-
-        // two markers refer to the same dataField and one refers to a non-existent field
-       const markers = [
-          {id: 1, dataField: 'markerA', targetField: 'metric', opts: {label:"john", shape: 'circle', color: 'red', width: 1, isRotated: false, opacity: 1 } },
-          {id: 3, dataField: 'markerA', targetField: 'none_existent', opts: { label:"jane", shape: 'circle', color: 'blue', width: 1, isRotated: false, opacity: 1 } },
-        ]
-
-        const { barData, markerData } = hideMarkerSeries(panelData, markers);
-
-        // only one marker field present and removed once
-        expect(markerData).toHaveLength(1);
-        expect(markerData[0].name).toBe('markerA');
-
-        // barData no longer contains the marker field
-        expect(barData.series[0].fields.find((f: any) => f.name === 'markerA')).toBeUndefined();
-
-        // missing marker had no effect
-        expect(barData.series[0].fields.find((f: any) => f.name === 'does_not_exist')).toBeUndefined();
-      });
       });
     });
-   
   });
 });

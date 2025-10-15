@@ -19,9 +19,7 @@ import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
-import { hideMarkerSeries, prepConfig, prepSeries, prepareMarkers} from './utils';
-
-
+import { hideMarkerSeries, prepConfig, prepSeries, prepMarkers } from './utils';
 
 const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
 const toRads = Math.PI / 180;
@@ -49,9 +47,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     fullHighlight,
     xField,
     colorByField,
-    markers
+    markers,
   } = options;
-
 
   // size-dependent, calculated opts that should cause viz re-config
   let { orientation, xTickLabelMaxLength = 0 } = options;
@@ -72,18 +69,13 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
         // auto max length clamps to half viz height, subracts 3 chars for ... ellipsis
         Math.floor(height / 2 / Math.sin(Math.abs(xTickLabelRotation * toRads)) / charWidth - 3);
 
-  const { barData, markerData} = useMemo(
-    () => hideMarkerSeries(data, markers)
-    , [data, markers]
-  );
+  const { barData, markerData } = useMemo(() => hideMarkerSeries(data, markers), [data, markers]);
 
   // TODO: config data links
   const info = useMemo(
     () => prepSeries(barData.series, fieldConfig, stacking, theme, xField, colorByField),
     [barData.series, fieldConfig, stacking, theme, xField, colorByField]
   );
-
-
 
   const vizSeries = useMemo(
     () =>
@@ -98,15 +90,26 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   const seriesCount = vizSeries[0]?.fields.length ?? 0;
   const totalSeries = Math.max(0, (info.series[0]?.fields.length ?? 0) - 1);
 
-
-  const preparedMarkers = useMemo(() => prepareMarkers(vizSeries[0].fields ?? [], markerData ?? [], options.markers ?? [], stacking), [markerData, options.markers, stacking, vizSeries]);
+  const preparedMarkers = useMemo(
+    () => prepMarkers(vizSeries[0].fields ?? [], markerData ?? [], options.markers ?? [], stacking),
+    [markerData, options.markers, stacking, vizSeries]
+  );
 
   let { builder, prepData } = useMemo(
     () => {
-      
       return xGroupsCount === 0
         ? { builder: null, prepData: null }
-        : prepConfig({ series: vizSeries, totalSeries: totalSeries, color: info.color, orientation, options, timeZone, theme,preparedMarkers, markerData });
+        : prepConfig({
+            series: vizSeries,
+            totalSeries: totalSeries,
+            color: info.color,
+            orientation,
+            options,
+            timeZone,
+            theme,
+            preparedMarkers,
+            markerData,
+          });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -158,7 +161,6 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     legend.showLegend && hasVisibleLegendSeries(builder, info.series!) ? (
       <BarChartLegend data={info.series!} colorField={info.color} {...legend} />
     ) : null;
-
 
   return (
     <VizLayout

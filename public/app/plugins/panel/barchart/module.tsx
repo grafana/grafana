@@ -45,8 +45,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
     },
     useCustomConfig: (builder) => {
       const cfg = defaultFieldConfig;
-    
-     
+
       builder
         .addSliderInput({
           path: 'lineWidth',
@@ -76,7 +75,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
             options: getGraphFieldOptions().fillGradient,
           },
         });
-    
+
       builder.addSelect({
         category: ['Graph styles'],
         name: t('barchart.config.name-transform', 'Transform'),
@@ -125,7 +124,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
     },
   })
   .setPanelOptions((builder) => {
-      const markersCategory = [t('barchart.config.category-markers', 'Markers')];
+    const markersCategory = [t('barchart.config.category-markers', 'Markers')];
 
     builder
       .addFieldNamePicker({
@@ -248,14 +247,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         showIf: (c) => c.stacking === StackingMode.None,
       });
 
-      builder.addCustomEditor({
-        category: markersCategory,
-        id: 'Markers',
-        path: 'markers',
-        name: 'Add Markers',
-        editor: BarMarkersEditor,
-      
-      });
+    builder.addCustomEditor({
+      category: markersCategory,
+      id: 'Markers',
+      path: 'markers',
+      name: 'Add Markers',
+      editor: BarMarkersEditor,
+    });
 
     builder.addFieldNamePicker({
       path: 'colorByField',
@@ -265,7 +263,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         'Use the color value for a sibling field to color each bar value.'
       ),
     });
-
 
     commonOptionsBuilder.addTooltipOptions(builder, false, false, optsWithHideZeros);
     commonOptionsBuilder.addLegendOptions(builder);

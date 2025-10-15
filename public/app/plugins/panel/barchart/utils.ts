@@ -1,6 +1,5 @@
 import uPlot, { Padding } from 'uplot';
 
-
 import {
   DataFrame,
   Field,
@@ -41,10 +40,11 @@ import { AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 
 import { drawBarMarkers } from './barmarkers';
-import { BarsOptions, getConfig} from './bars';
+import { BarsOptions, getConfig } from './bars';
 import { PreparedMarker, Marker } from './markerTypes';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
-// import isLegendOrdered from './utils';
+// import { isLegendOrdered } from './utils';
+import { isFinite } from 'lodash';
 
 interface BarSeries {
   series: DataFrame[];
@@ -72,7 +72,7 @@ export function prepSeries(
 
   cacheFieldDisplayNames(frames);
   decoupleHideFromState(frames, fieldConfig);
- 
+
   let frame: DataFrame | undefined = { ...frames[0] };
 
   // auto-sort and/or join on first time field (if any)
@@ -139,7 +139,6 @@ export function prepSeries(
 
     setClassicPaletteIdxs(series, theme, 0);
 
-
     return {
       series,
       _rest,
@@ -168,7 +167,17 @@ export interface PrepConfigOpts {
   markerData: Field[];
 }
 
-export const prepConfig = ({ series, totalSeries, color, orientation, options, timeZone, theme, preparedMarkers, markerData }: PrepConfigOpts) => {
+export const prepConfig = ({
+  series,
+  totalSeries,
+  color,
+  orientation,
+  options,
+  timeZone,
+  theme,
+  preparedMarkers,
+  markerData,
+}: PrepConfigOpts) => {
   let {
     showValue,
     groupWidth,
@@ -269,8 +278,6 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     }
   }
 
-
-  
   const opts: BarsOptions = {
     xOri: vizOrientation.xOri,
     xDir: vizOrientation.xDir,
@@ -298,7 +305,6 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
   };
 
-  
   const config = getConfig(opts, theme);
 
   builder.setCursor(config.cursor);
@@ -306,12 +312,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
 
-
   builder.addHook('draw', drawBarMarkers(builder, config.resolvedMarkers));
-
-
-
-  
 
   if (xTickLabelRotation !== 0) {
     // these are the amount of space we already have available between plot edge and first label
@@ -364,15 +365,14 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   //Calculate min and max marker values
   let markerMin = 0;
   let markerMax = 0;
-  for(let i = 0; i < markerData.length; i++) {
-
-    const vals = markerData[i].values.toArray().filter(v => v != null);
+  for (let i = 0; i < markerData.length; i++) {
+    const vals = markerData[i].values.filter((v) => v != null);
     const min = Math.min(...vals);
     const max = Math.max(...vals);
-    if (min < markerMin) {
+    if (min < markerMin && isFinite(min)) {
       markerMin = min;
     }
-    if (max > markerMax) {
+    if (max > markerMax && isFinite(max)) {
       markerMax = max;
     }
   }
@@ -394,22 +394,19 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     let softMin = customConfig.axisSoftMin;
     let softMax = customConfig.axisSoftMax;
 
-
     //move soft min and max to accomodate marker values
     if (softMin == null && field.config.min == null) {
-      if(stacking === StackingMode.Percent) {
+      if (stacking === StackingMode.Percent) {
         softMin = 0;
-      }
-      else {
+      } else {
         softMin = markerMin;
       }
     }
 
     if (softMax == null && field.config.max == null) {
-      if(stacking === StackingMode.Percent) {
+      if (stacking === StackingMode.Percent) {
         softMax = 0;
-      }
-      else {
+      } else {
         softMax = markerMax;
       }
     }
@@ -513,8 +510,6 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       }
 
       builder.addAxis(axisOpts);
-
-      
     }
   }
 
@@ -606,134 +601,132 @@ function getScaleOrientation(orientation: VizOrientation) {
     yOri: ScaleOrientation.Horizontal,
     yDir: ScaleDirection.Right,
   };
-
-  
 }
 
-export function prepareMarkers(vizFields: Field[], markerFields: Field[], markers: Marker[], stacking: StackingMode ): PreparedMarker[] {
-  
+export function prepMarkers(
+  vizFields: Field[],
+  markerFields: Field[],
+  markers: Marker[],
+  stacking: StackingMode
+): PreparedMarker[] {
   let prepMarkerList = [];
-  
-  switch(stacking) {
-    
-    case StackingMode.None:
-      {
-      for (const m of markers ?? []) {
 
+  switch (stacking) {
+    case StackingMode.None: {
+      for (const m of markers ?? []) {
         const i = markerFields.findIndex((f) => f.name === m.dataField);
 
-        if(i === -1) {continue;} 
+        if (i === -1) {
+          continue;
+        }
 
         const fi = markerFields[i];
 
         const targetIdx = vizFields.findIndex((f) => f.name === m.targetField);
-        
 
-        for(let j=0; j< fi.values.length; j++){
-          
+        for (let j = 0; j < fi.values.length; j++) {
           const pm: PreparedMarker = {
             groupIdx: j,
             yValue: fi.values[j],
-            seriesIdx: targetIdx, 
+            seriesIdx: targetIdx,
             yScaleKey: fi.config.unit || FIXED_UNIT,
-            opts: m.opts ,
+            opts: m.opts,
           };
 
           prepMarkerList.push(pm);
-        }  
-      }
-    
-      return prepMarkerList
-    };
-    case StackingMode.Normal:{
-
-      for (let a =0; a < markers.length; a++) {
-
-        const i = markerFields.findIndex((f) => f.name === markers[a].dataField);
-
-        if(i === -1) {continue;} 
-
-        const fi = markerFields[i];
-
-        const targetIdx = vizFields.findIndex((f) => f.name === markers[a].targetField);
-
-        for(let j=0; j< fi.values.length; j++){
-          let yTotal = 0;
-            for(let k=1; k < targetIdx; k++) {
-              yTotal += vizFields[k].values[j];
-            }
-          const pm: PreparedMarker = {
-            groupIdx: j,
-            yValue: yTotal + fi.values[j],
-            seriesIdx: targetIdx, 
-            yScaleKey: fi.config.unit || FIXED_UNIT,
-            opts: markers[a].opts ,
-          };
-
-          prepMarkerList.push(pm);
-        }  
+        }
       }
 
       return prepMarkerList;
     }
-    case StackingMode.Percent:{
-      for (let a =0; a < markers.length; a++) {
-
+    case StackingMode.Normal: {
+      for (let a = 0; a < markers.length; a++) {
         const i = markerFields.findIndex((f) => f.name === markers[a].dataField);
 
-        if(i === -1) {continue;} 
+        if (i === -1) {
+          continue;
+        }
+
+        const fi = markerFields[i];
+
+        const targetIdx = vizFields.findIndex((f) => f.name === markers[a].targetField);
+
+        for (let j = 0; j < fi.values.length; j++) {
+          let yTotal = 0;
+          for (let k = 1; k < targetIdx; k++) {
+            yTotal += vizFields[k].values[j];
+          }
+          const pm: PreparedMarker = {
+            groupIdx: j,
+            yValue: yTotal + fi.values[j],
+            seriesIdx: targetIdx,
+            yScaleKey: fi.config.unit || FIXED_UNIT,
+            opts: markers[a].opts,
+          };
+
+          prepMarkerList.push(pm);
+        }
+      }
+
+      return prepMarkerList;
+    }
+    case StackingMode.Percent: {
+      for (let a = 0; a < markers.length; a++) {
+        const i = markerFields.findIndex((f) => f.name === markers[a].dataField);
+
+        if (i === -1) {
+          continue;
+        }
 
         const fi = markerFields[i];
         const targetIdx = vizFields.findIndex((f) => f.name === markers[a].targetField);
 
-        for(let j=0; j< fi.values.length; j++){
+        for (let j = 0; j < fi.values.length; j++) {
           let yTotal = 0;
           let yBase = 0;
-          for(let k=1; k < vizFields.length; k++) {
+          for (let k = 1; k < vizFields.length; k++) {
             yTotal += vizFields[k].values[j];
-            
-            if(k === targetIdx - 1){ 
+
+            if (k === targetIdx - 1) {
               yBase = yTotal;
             }
           }
 
-        const val = fi.values[j] + yBase;
+          const val = fi.values[j] + yBase;
 
-        const pm: PreparedMarker = {
-          groupIdx: j,
-          yValue: val === 0 ? 0 :  val/yTotal,
-          seriesIdx: targetIdx, 
-          yScaleKey: fi.config.unit || FIXED_UNIT,
-          opts: markers[a].opts ,
-        };
+          const pm: PreparedMarker = {
+            groupIdx: j,
+            yValue: val === 0 ? 0 : val / yTotal,
+            seriesIdx: targetIdx,
+            yScaleKey: fi.config.unit || FIXED_UNIT,
+            opts: markers[a].opts,
+          };
 
-        prepMarkerList.push(pm);
-
-        }  
-      };
+          prepMarkerList.push(pm);
+        }
+      }
       return prepMarkerList;
     }
   }
 }
 
-export function hideMarkerSeries(data: PanelData, markers: Marker[]): {barData: PanelData, markerData: Field[]} {
+export function hideMarkerSeries(data: PanelData, markers: Marker[]): { barData: PanelData; markerData: Field[] } {
   const barData = deepCopy(data); //deepCopy to ensure useMemo works correctly
   const markerData: Field[] = [];
   for (const m of markers ?? []) {
-
     const i = barData.series[0].fields.findIndex((f) => f.name === m.dataField);
 
-    if(i === -1) {continue;} 
-    
-    let fi = null
-    fi = barData.series[0].fields.splice(i,1)[0];
+    if (i === -1) {
+      continue;
+    }
+
+    let fi = null;
+    fi = barData.series[0].fields.splice(i, 1)[0];
 
     markerData.push(fi);
-    
   }
-  return { barData, markerData};
+  return { barData, markerData };
 }
-
 
 export function deepCopy<T>(obj: T, seen = new Map<any, any>()): T {
   if (obj === null || typeof obj !== 'object') {
@@ -763,4 +756,3 @@ export function deepCopy<T>(obj: T, seen = new Map<any, any>()): T {
   }
   return result;
 }
-

@@ -1,6 +1,14 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 
-import { colorManipulator, DataFrame, dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone, Field } from '@grafana/data';
+import {
+  colorManipulator,
+  DataFrame,
+  dateTimeFormat,
+  GrafanaTheme2,
+  systemDateFormats,
+  TimeZone,
+  Field,
+} from '@grafana/data';
 import {
   StackingMode,
   VisibilityMode,
@@ -318,7 +326,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     },
     // collect rendered bar geometry
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
-
       // we get back raw canvas coords (included axes & padding)
       // translate to the plotting area origin
       lft -= u.bbox.left;
@@ -345,7 +352,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           barRect.w = u.bbox.width;
         }
       }
-      
+
       qt.add(barRect);
 
       if (showValue !== VisibilityMode.Never) {
@@ -454,12 +461,21 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             w: textMetrics.width * scaleFactor,
             h: (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor,
           };
-          
-          //Calculate marker positions and fill markerList to prepare drawing
-          const m = populateMarkerList(markers ?? [], dataIdx, seriesIdx, xOri, wid, hgt, u, barRect.x + u.bbox.left, barRect.y + u.bbox.top);
 
-          resolvedMarkers.push(...m);  
-              
+          //Calculate marker positions and fill markerList to prepare drawing
+          const m = populateMarkerList(
+            markers ?? [],
+            dataIdx,
+            seriesIdx,
+            xOri,
+            wid,
+            hgt,
+            u,
+            barRect.x + u.bbox.left,
+            barRect.y + u.bbox.top
+          );
+
+          resolvedMarkers.push(...m);
         }
       }
     },
@@ -523,14 +539,13 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       prox: 1e3,
       dist: (u, seriesIdx) => (hRect?.sidx === seriesIdx ? 0 : Infinity),
     },
-    
   };
 
   // Build bars
   const drawClear = (u: uPlot) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
     qt.clear();
-    
+
     resolvedMarkers.length = 0;
 
     // clear the path cache to force drawBars() to rebuild new quadtree
@@ -542,7 +557,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     if (isStacked) {
       barsPctLayout = [null, ...distrOne(u.data[0].length, u.data.length - 1)];
     } else {
-      barsPctLayout = [null, ...distrTwo(u.data[0].length, u.data.length - 1)];  
+      barsPctLayout = [null, ...distrTwo(u.data[0].length, u.data.length - 1)];
     }
 
     if (useMappedColors) {
@@ -565,7 +580,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         });
       }
     }
-    
 
     labels = {};
     fontSize = opts.text?.valueSize ?? VALUE_MAX_FONT_SIZE;
@@ -652,7 +666,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     u.ctx.restore();
   };
 
-
   let alignedTotals: AlignedData | null = null;
 
   function prepData(frames: DataFrame[], stackingGroups: StackingGroup[]) {
@@ -681,22 +694,28 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   };
 }
 
-export function populateMarkerList(markers: PreparedMarker[], dataIdx: number, seriesIdx: number,
-   xOri: ScaleOrientation, wid: number, hgt: number, u: uPlot, barX: number, barY: number){ 
-    
+export function populateMarkerList(
+  markers: PreparedMarker[],
+  dataIdx: number,
+  seriesIdx: number,
+  xOri: ScaleOrientation,
+  wid: number,
+  hgt: number,
+  u: uPlot,
+  barX: number,
+  barY: number
+) {
   const resolvedMarkerList: ResolvedMarker[] = [];
   if (markers) {
     for (const marker of markers) {
-
       if (
-      (marker.groupIdx  === dataIdx && seriesIdx === marker.seriesIdx) //match to bar
-        ) {
-        if(xOri === ScaleOrientation.Horizontal) {
-          
-            
+        marker.groupIdx === dataIdx &&
+        seriesIdx === marker.seriesIdx //match to bar
+      ) {
+        if (xOri === ScaleOrientation.Horizontal) {
           // Compute marker position at center of bar
-          const markerX = (barX + (wid/2));
-          const markerY = (marker.yValue);
+          const markerX = barX + wid / 2;
+          const markerY = marker.yValue;
 
           let resolvedY: number;
           if (markerY != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
@@ -707,27 +726,26 @@ export function populateMarkerList(markers: PreparedMarker[], dataIdx: number, s
           const m: ResolvedMarker = {
             x: markerX!,
             y: resolvedY,
-            opts:{ ...marker.opts, isRotated: false,  width: marker.opts.width * wid },
+            opts: { ...marker.opts, isRotated: false, width: marker.opts.width * wid },
           };
           resolvedMarkerList.push(m);
-          }
-          else{
-            const markerY = (barY + (hgt/2));
-            const markerX = (marker.yValue);
+        } else {
+          const markerY = barY + hgt / 2;
+          const markerX = marker.yValue;
 
-            let resolvedX: number;
-            if (markerX != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
-              resolvedX = u.valToPos(markerX, marker.yScaleKey, true);
-            } else {
-              resolvedX = Infinity;
-            }
-            const m: ResolvedMarker = {
-              x: resolvedX!,
-              y: markerY!,
-              opts: { ...marker.opts, isRotated: true,  width: marker.opts.width * hgt },
-            };
-            resolvedMarkerList.push(m);
+          let resolvedX: number;
+          if (markerX != null && marker.yScaleKey !== '' && marker.yScaleKey != null) {
+            resolvedX = u.valToPos(markerX, marker.yScaleKey, true);
+          } else {
+            resolvedX = Infinity;
           }
+          const m: ResolvedMarker = {
+            x: resolvedX!,
+            y: markerY!,
+            opts: { ...marker.opts, isRotated: true, width: marker.opts.width * hgt },
+          };
+          resolvedMarkerList.push(m);
+        }
       }
     }
   }

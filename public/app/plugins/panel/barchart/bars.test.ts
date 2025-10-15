@@ -1,8 +1,7 @@
 import uPlot from 'uplot';
 import { ScaleOrientation } from '@grafana/schema';
 import { PreparedMarker, ResolvedMarker } from './markerTypes';
-import {populateMarkerList} from './bars';
-
+import { populateMarkerList } from './bars';
 
 describe('populateMarkerList', () => {
   const mockValToPos = jest.fn((val: number) => val * 10);
