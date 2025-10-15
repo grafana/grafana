@@ -1,0 +1,788 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": 1013,
+  "graphTooltip": 0,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "访问日志"
+      ],
+      "title": "点我查看访问日志",
+      "type": "dashboards"
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "业务日志"
+      ],
+      "title": "点我查看业务日志",
+      "type": "dashboards"
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "监控"
+      ],
+      "title": "点我查看监控",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "autoMigrateFrom": "grafana-worldmap-panel",
+      "circleMaxSize": "15",
+      "circleMinSize": "1",
+      "colors": [
+        "rgba(245, 236, 236, 0.9)",
+        "rgba(132, 245, 12, 0.89)",
+        "rgba(215, 35, 35, 0.97)"
+      ],
+      "datasource": {
+        "uid": "${DS_PROXY-NGINXACCESSLOG}"
+      },
+      "decimals": 0,
+      "editable": true,
+      "error": false,
+      "esGeoPoint": "geoip.location",
+      "esLocationName": "geoip.city_name",
+      "esMetric": "Count",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "hideEmpty": false,
+      "hideZero": true,
+      "id": 18,
+      "initialZoom": 1,
+      "locationData": "geohash",
+      "mapCenter": "custom",
+      "mapCenterLatitude": "10",
+      "mapCenterLongitude": "5",
+      "maxDataPoints": 1,
+      "showLegend": true,
+      "stickyLabels": false,
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "fake": true,
+              "field": "geoip.city_name",
+              "id": "3",
+              "settings": {
+                "order": "desc",
+                "orderBy": "_term",
+                "size": "0"
+              },
+              "type": "terms"
+            },
+            {
+              "field": "geoip.location",
+              "id": "2",
+              "settings": {
+                "precision": 7
+              },
+              "type": "geohash_grid"
+            }
+          ],
+          "datasource": {
+            "uid": "${DS_PROXY-NGINXACCESSLOG}"
+          },
+          "dsType": "elasticsearch",
+          "metrics": [
+            {
+              "field": "select field",
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "server_name:$dm AND status:$status",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "thresholds": "500,10000",
+      "title": "$dm $status访问分布",
+      "transparent": true,
+      "type": "geomap",
+      "unitPlural": "个",
+      "unitSingle": "",
+      "unitSingular": "个",
+      "valueName": "total"
+    },
+    {
+      "aliasColors": {
+        "10.80.2.144": "#D683CE"
+      },
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_PROXY-NGINXACCESSLOG}"
+      },
+      "decimals": 0,
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "grid": {
+        "threshold1Color": "rgba(216, 200, 27, 0.27)",
+        "threshold2Color": "rgba(234, 112, 112, 0.22)"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 15,
+        "x": 8,
+        "y": 0
+      },
+      "hideTimeOverride": false,
+      "id": 8,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "game.51.com BJVM-2-182",
+          "yaxis": 1
+        }
+      ],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "fake": true,
+              "field": "server_ip",
+              "id": "6",
+              "settings": {
+                "order": "desc",
+                "orderBy": "_count",
+                "size": "5"
+              },
+              "type": "terms"
+            },
+            {
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "$inter",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "uid": "${DS_PROXY-NGINXACCESSLOG}"
+          },
+          "dsType": "elasticsearch",
+          "hide": false,
+          "metrics": [
+            {
+              "field": "count",
+              "id": "1",
+              "meta": {},
+              "settings": {},
+              "type": "sum"
+            }
+          ],
+          "query": "server_name:$dm",
+          "refId": "A",
+          "timeField": "@timestamp"
+        },
+        {
+          "bucketAggs": [
+            {
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "$inter",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "uid": "${DS_PROXY-NGINXACCESSLOG}"
+          },
+          "dsType": "elasticsearch",
+          "hide": false,
+          "metrics": [
+            {
+              "field": "count",
+              "id": "1",
+              "meta": {},
+              "settings": {},
+              "type": "sum"
+            }
+          ],
+          "query": "server_name:$dm",
+          "refId": "B",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "$dm",
+      "tooltip": {
+        "msResolution": true,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "show": true
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "label": "访问量",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "autoMigrateFrom": "graph",
+      "bars": false,
+      "datasource": {
+        "uid": "${DS_PROXY-NGINXACCESSLOG}"
+      },
+      "decimals": 0,
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "grid": {
+        "threshold1Color": "rgba(216, 200, 27, 0.27)",
+        "threshold2Color": "rgba(234, 112, 112, 0.22)"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 17,
+        "x": 0,
+        "y": 8
+      },
+      "id": 16,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sortDesc": false,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "game.51.com BJVM-2-182",
+          "yaxis": 1
+        }
+      ],
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "fake": true,
+              "field": "status",
+              "id": "6",
+              "settings": {
+                "order": "desc",
+                "orderBy": "_count",
+                "size": "0"
+              },
+              "type": "terms"
+            },
+            {
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "$inter",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "uid": "${DS_PROXY-NGINXACCESSLOG}"
+          },
+          "dsType": "elasticsearch",
+          "metrics": [
+            {
+              "field": "count",
+              "id": "1",
+              "meta": {},
+              "settings": {},
+              "type": "sum"
+            }
+          ],
+          "query": "server_name:$dm",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "$dm状态码曲线",
+      "tooltip": {
+        "msResolution": true,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "timeseries",
+      "xaxis": {
+        "show": true
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "label": "状态码数量",
+          "logBase": 10,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ]
+    },
+    {
+      "autoMigrateFrom": "table-old",
+      "columns": [
+        {
+          "text": "clientip",
+          "value": "clientip"
+        },
+        {
+          "text": "Sum",
+          "value": "Sum"
+        },
+        {
+          "text": "geoip.city_name",
+          "value": "geoip.city_name"
+        }
+      ],
+      "datasource": {
+        "uid": "${DS_PROXY-NGINXACCESSLOG}"
+      },
+      "editable": true,
+      "error": false,
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 17,
+        "y": 8
+      },
+      "id": 17,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 1,
+        "desc": true
+      },
+      "styles": [],
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "fake": true,
+              "field": "geoip.city_name",
+              "id": "3",
+              "settings": {
+                "order": "desc",
+                "orderBy": "_count",
+                "size": "10"
+              },
+              "type": "terms"
+            },
+            {
+              "field": "clientip",
+              "id": "2",
+              "settings": {
+                "order": "desc",
+                "orderBy": "_count",
+                "size": "10"
+              },
+              "type": "terms"
+            }
+          ],
+          "datasource": {
+            "uid": "${DS_PROXY-NGINXACCESSLOG}"
+          },
+          "dsType": "elasticsearch",
+          "metrics": [
+            {
+              "field": "count",
+              "id": "1",
+              "meta": {},
+              "settings": {},
+              "type": "sum"
+            }
+          ],
+          "query": "server_name:$dm AND status:$status",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "$dm $status状态码客户端IP前10",
+      "transform": "json",
+      "type": "table"
+    },
+    {
+      "autoMigrateFrom": "table-old",
+      "columns": [
+        {
+          "text": "@timestamp",
+          "value": "@timestamp"
+        },
+        {
+          "text": "server_name",
+          "value": "server_name"
+        },
+        {
+          "text": "status",
+          "value": "status"
+        },
+        {
+          "text": "server_ip",
+          "value": "server_ip"
+        },
+        {
+          "text": "clientip",
+          "value": "clientip"
+        },
+        {
+          "text": "geoip.city_name",
+          "value": "geoip.city_name"
+        },
+        {
+          "text": "request",
+          "value": "request"
+        },
+        {
+          "text": "referrer",
+          "value": "referrer"
+        }
+      ],
+      "datasource": {
+        "uid": "${DS_PROXY-NGINXACCESSLOG}"
+      },
+      "editable": true,
+      "error": false,
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 15,
+      "pageSize": 100,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "align": "auto",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "/@time.*/",
+          "type": "date"
+        }
+      ],
+      "targets": [
+        {
+          "bucketAggs": [],
+          "datasource": {
+            "uid": "${DS_PROXY-NGINXACCESSLOG}"
+          },
+          "dsType": "elasticsearch",
+          "metrics": [
+            {
+              "field": "select field",
+              "id": "1",
+              "meta": {},
+              "settings": {},
+              "type": "raw_document"
+            }
+          ],
+          "query": "server_name:$dm AND status:$status AND server_ip:$dh",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "状态码$status",
+      "transform": "json",
+      "type": "table"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 42,
+  "tags": [
+    "51.com",
+    "访问日志"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": "${DS_PROXY-NGINXACCESSLOG}",
+        "hide": 0,
+        "includeAll": true,
+        "label": "域名",
+        "multi": false,
+        "name": "dm",
+        "options": [],
+        "query": "{\"find\": \"terms\", \"field\": \"server_name\"}",
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": "${DS_PROXY-NGINXACCESSLOG}",
+        "hide": 0,
+        "includeAll": true,
+        "label": "服务器IP",
+        "multi": true,
+        "name": "dh",
+        "options": [],
+        "query": "{\"find\": \"terms\", \"field\": \"server_ip\", \"query\": \"server_name:$dm\"}",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "tags": [],
+          "text": "200",
+          "value": [
+            "200"
+          ]
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "状态码",
+        "multi": true,
+        "name": "status",
+        "options": [
+          {
+            "selected": true,
+            "text": "200",
+            "value": "200"
+          },
+          {
+            "selected": false,
+            "text": "301",
+            "value": "301"
+          },
+          {
+            "selected": false,
+            "text": "302",
+            "value": "302"
+          },
+          {
+            "selected": false,
+            "text": "403",
+            "value": "403"
+          },
+          {
+            "selected": false,
+            "text": "404",
+            "value": "404"
+          },
+          {
+            "selected": false,
+            "text": "499",
+            "value": "499"
+          },
+          {
+            "selected": false,
+            "text": "500",
+            "value": "500"
+          },
+          {
+            "selected": false,
+            "text": "502",
+            "value": "502"
+          },
+          {
+            "selected": false,
+            "text": "503",
+            "value": "503"
+          },
+          {
+            "selected": false,
+            "text": "504",
+            "value": "504"
+          }
+        ],
+        "query": "200,301,302,403,404,499,500,502,503,504",
+        "refresh": 0,
+        "type": "custom"
+      },
+      {
+        "auto": true,
+        "auto_count": 100,
+        "auto_min": "10s",
+        "current": {
+          "selected": true,
+          "text": "auto",
+          "value": "$__auto_interval"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "时间间隔",
+        "multi": false,
+        "name": "inter",
+        "options": [
+          {
+            "selected": true,
+            "text": "auto",
+            "value": "$__auto_interval"
+          },
+          {
+            "selected": false,
+            "text": "1s",
+            "value": "1s"
+          },
+          {
+            "selected": false,
+            "text": "5s",
+            "value": "5s"
+          },
+          {
+            "selected": false,
+            "text": "15s",
+            "value": "15s"
+          },
+          {
+            "selected": false,
+            "text": "30s",
+            "value": "30s"
+          },
+          {
+            "selected": false,
+            "text": "45s",
+            "value": "45s"
+          },
+          {
+            "selected": false,
+            "text": "1m",
+            "value": "1m"
+          },
+          {
+            "selected": false,
+            "text": "5s",
+            "value": "5s"
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m"
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h"
+          }
+        ],
+        "query": "1s,5s,15s,30s,45s,1m,5s,10m,30m,1h",
+        "refresh": 0,
+        "type": "interval"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1d/d",
+    "to": "now-1d/d"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "51.com-域名日志",
+  "weekStart": ""
+}
