@@ -35,6 +35,8 @@ type translation struct {
 	actionSetMapping  map[string][]string
 	folderSupport     bool
 	skipScopeOnCreate bool
+	// use this option if you need to limit access to users that can access all resources
+	useWildcardScope bool
 }
 
 func (t translation) Action(verb string) (string, bool) {
@@ -48,6 +50,9 @@ func (t translation) ActionSets(verb string) []string {
 }
 
 func (t translation) Scope(name string) string {
+	if t.useWildcardScope {
+		return "*"
+	}
 	return t.resource + ":" + t.attribute + ":" + name
 }
 
@@ -197,6 +202,22 @@ func NewMapperRegistry() MapperRegistry {
 				},
 				folderSupport:     false,
 				skipScopeOnCreate: false,
+			},
+			"rolebindings": translation{
+				resource: "rolebindings",
+				// rolebidings should only be modifiable by admins with a wildcard access
+				useWildcardScope: true,
+				verbMapping: map[string]string{
+					utils.VerbCreate:           "users.roles:add",
+					utils.VerbGet:              "users.roles:read",
+					utils.VerbUpdate:           "users.roles:add",
+					utils.VerbPatch:            "users.roles:add",
+					utils.VerbDelete:           "users.roles:remove",
+					utils.VerbDeleteCollection: "users.roles:remove",
+					utils.VerbList:             "users.roles:read",
+					utils.VerbWatch:            "users.roles:read",
+				},
+				folderSupport: false,
 			},
 		},
 		"secret.grafana.app": {
