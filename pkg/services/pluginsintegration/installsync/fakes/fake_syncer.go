@@ -15,11 +15,7 @@ type FakeSyncer struct {
 }
 
 func NewFakeSyncer() *FakeSyncer {
-	return &FakeSyncer{
-		SyncFunc: func(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error {
-			return nil
-		},
-	}
+	return &FakeSyncer{}
 }
 
 func (f *FakeSyncer) Sync(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error {

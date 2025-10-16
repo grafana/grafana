@@ -17,23 +17,7 @@ type FakePluginInstallClient struct {
 }
 
 func NewFakePluginInstallClient() *FakePluginInstallClient {
-	return &FakePluginInstallClient{
-		GetFunc: func(ctx context.Context, identifier resource.Identifier) (*pluginsv0alpha1.PluginInstall, error) {
-			return nil, nil
-		},
-		ListAllFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (*pluginsv0alpha1.PluginInstallList, error) {
-			return &pluginsv0alpha1.PluginInstallList{}, nil
-		},
-		CreateFunc: func(ctx context.Context, identifier *pluginsv0alpha1.PluginInstall, options resource.CreateOptions) (*pluginsv0alpha1.PluginInstall, error) {
-			return identifier, nil
-		},
-		UpdateFunc: func(ctx context.Context, identifier *pluginsv0alpha1.PluginInstall, options resource.UpdateOptions) (*pluginsv0alpha1.PluginInstall, error) {
-			return identifier, nil
-		},
-		DeleteFunc: func(ctx context.Context, identifier resource.Identifier, options resource.DeleteOptions) error {
-			return nil
-		},
-	}
+	return &FakePluginInstallClient{}
 }
 
 func (f *FakePluginInstallClient) Get(ctx context.Context, identifier resource.Identifier) (*pluginsv0alpha1.PluginInstall, error) {

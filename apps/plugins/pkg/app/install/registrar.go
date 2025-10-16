@@ -103,7 +103,7 @@ func NewInstallRegistrar(clientGenerator resource.ClientGenerator) *InstallRegis
 	}
 }
 
-func (r *InstallRegistrar) getClient() (*pluginsv0alpha1.PluginInstallClient, error) {
+func (r *InstallRegistrar) GetClient() (*pluginsv0alpha1.PluginInstallClient, error) {
 	r.clientOnce.Do(func() {
 		client, err := pluginsv0alpha1.NewPluginInstallClientFromGenerator(r.clientGenerator)
 		if err != nil {
@@ -113,12 +113,12 @@ func (r *InstallRegistrar) getClient() (*pluginsv0alpha1.PluginInstallClient, er
 		r.client = client
 	})
 
-	return pluginsv0alpha1.NewPluginInstallClientFromGenerator(r.clientGenerator)
+	return r.client, nil
 }
 
 // Register creates or updates a plugin install in the registry.
 func (r *InstallRegistrar) Register(ctx context.Context, namespace string, install *PluginInstall) error {
-	client, err := r.getClient()
+	client, err := r.GetClient()
 	if err != nil {
 		return nil
 	}
@@ -143,7 +143,7 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 
 // Unregister removes a plugin install from the registry.
 func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, name string, source Source) error {
-	client, err := r.getClient()
+	client, err := r.GetClient()
 	if err != nil {
 		return err
 	}

@@ -9,11 +9,7 @@ type FakeClientGenerator struct {
 }
 
 func NewFakeClientGenerator() *FakeClientGenerator {
-	return &FakeClientGenerator{
-		ClientFunc: func(kind resource.Kind) (resource.Client, error) {
-			return nil, nil
-		},
-	}
+	return &FakeClientGenerator{}
 }
 
 func (f *FakeClientGenerator) ClientFor(kind resource.Kind) (resource.Client, error) {

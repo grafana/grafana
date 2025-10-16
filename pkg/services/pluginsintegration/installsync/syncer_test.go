@@ -545,12 +545,12 @@ func TestSyncer_getClient(t *testing.T) {
 			)
 
 			// First call
-			client1, err1 := s.getClient()
+			client1, err1 := s.installRegistrar.GetClient()
 			require.NoError(t, err1)
 			require.NotNil(t, client1)
 
 			// Second call should return cached client
-			client2, err2 := s.getClient()
+			client2, err2 := s.installRegistrar.GetClient()
 			require.NoError(t, err2)
 			require.NotNil(t, client2)
 			// Both calls should return the same client instance

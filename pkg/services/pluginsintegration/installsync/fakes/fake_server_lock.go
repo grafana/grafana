@@ -10,12 +10,7 @@ type FakeServerLock struct {
 }
 
 func NewFakeServerLock() *FakeServerLock {
-	return &FakeServerLock{
-		LockExecuteAndReleaseFunc: func(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error {
-			fn(ctx)
-			return nil
-		},
-	}
+	return &FakeServerLock{}
 }
 
 func (f *FakeServerLock) LockExecuteAndRelease(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error {

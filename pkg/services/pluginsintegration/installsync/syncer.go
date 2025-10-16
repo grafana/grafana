@@ -2,12 +2,10 @@ package installsync
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 
-	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -28,8 +26,6 @@ type ServerLock interface {
 
 type syncer struct {
 	featureToggles   featuremgmt.FeatureToggles
-	clientOnce       sync.Once
-	client           *pluginsv0alpha1.PluginInstallClient
 	clientGenerator  resource.ClientGenerator
 	installRegistrar *install.InstallRegistrar
 	orgService       org.Service
@@ -48,7 +44,6 @@ func newSyncer(
 ) *syncer {
 	return &syncer{
 		clientGenerator:  clientGenerator,
-		clientOnce:       sync.Once{},
 		featureToggles:   featureToggles,
 		installRegistrar: installRegistrar,
 		orgService:       orgService,
@@ -82,21 +77,12 @@ func ProvideSyncer(
 	), nil
 }
 
-func (s *syncer) getClient() (*pluginsv0alpha1.PluginInstallClient, error) {
-	s.clientOnce.Do(func() {
-		client, err := pluginsv0alpha1.NewPluginInstallClientFromGenerator(s.clientGenerator)
-		if err != nil {
-			s.client = nil
-			return
-		}
-		s.client = client
-	})
-
-	return s.client, nil
-}
-
 func (s *syncer) Sync(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error {
 	if !s.featureToggles.IsEnabled(ctx, featuremgmt.FlagPluginInstallAPISync) {
+		return nil
+	}
+
+	if len(installedPlugins) == 0 {
 		return nil
 	}
 
@@ -128,7 +114,7 @@ func (s *syncer) syncAllNamespaces(ctx context.Context, source install.Source, i
 }
 
 func (s *syncer) syncNamespace(ctx context.Context, namespace string, source install.Source, installedPlugins []*plugins.Plugin) error {
-	client, err := s.getClient()
+	client, err := s.installRegistrar.GetClient()
 	if err != nil {
 		return err
 	}
