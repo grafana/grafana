@@ -22,7 +22,7 @@ import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
-import { StateTimelineTooltip2 } from './StateTimelineTooltip2';
+import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { usePagination } from './hooks';
 import { Options } from './panelcfg.gen';
 import { containerStyles } from './styles';
@@ -129,7 +129,7 @@ export const StateTimelinePanel = ({
                     };
 
                     return (
-                      <StateTimelineTooltip2
+                      <StateTimelineTooltip
                         series={alignedFrame}
                         dataIdxs={dataIdxs}
                         seriesIdx={seriesIdx}

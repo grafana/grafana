@@ -19,7 +19,7 @@ import {
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
 
-import { StateTimelineTooltip2 } from '../state-timeline/StateTimelineTooltip2';
+import { StateTimelineTooltip } from '../state-timeline/StateTimelineTooltip';
 import { usePagination } from '../state-timeline/hooks';
 import { containerStyles } from '../state-timeline/styles';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
@@ -142,7 +142,7 @@ export const StatusHistoryPanel = ({
                     };
 
                     return (
-                      <StateTimelineTooltip2
+                      <StateTimelineTooltip
                         series={alignedFrame}
                         dataIdxs={dataIdxs}
                         seriesIdx={seriesIdx}
