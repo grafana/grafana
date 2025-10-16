@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/kinds/dataquery"
 )
 
 // Query represents the time series query model of the datasource
@@ -18,10 +19,7 @@ type Query struct {
 	RefID         string
 	MaxDataPoints int64
 	TimeRange     backend.TimeRange
-	// RawDSL indicates whether this query uses raw Elasticsearch Query DSL
-	RawDSL bool `json:"rawDsl"`
-	// RawDSLQuery contains the raw Elasticsearch Query DSL JSON string
-	RawDSLQuery string `json:"rawDslQuery"`
+	RawDSLQuery   *dataquery.RawQuery
 }
 
 // BucketAgg represents a bucket aggregation of the time series query model of the datasource

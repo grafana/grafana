@@ -2,11 +2,14 @@ import { css } from '@emotion/css';
 import { useCallback, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { CodeEditor, Monaco, monacoTypes, useStyles2, Button, Stack } from '@grafana/ui';
+import { EditorField, EditorRow, EditorRows } from '@grafana/plugin-ui';
+import { CodeEditor, Monaco, monacoTypes, useStyles2, Button, Stack, Combobox } from '@grafana/ui';
+
+import { ProcessAsType, RawQuery } from '../../dataquery.gen';
 
 interface Props {
-  value?: string;
-  onChange: (value: string) => void;
+  value?: RawQuery;
+  onChange: (value: RawQuery) => void;
   onRunQuery: () => void;
 }
 
@@ -36,12 +39,52 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
     }
   }, []);
 
-  const handleChange = useCallback((newValue: string) => {
-    onChange(newValue);
-  }, [onChange]);
+  const handleQueryChange = useCallback((newValue: string) => {
+    if (!newValue) {
+      return;
+    }
+    onChange({...value, query: newValue});
+  }, [onChange, value]);
+
+  const handleQueryTypeChange = useCallback((newValue: ProcessAsType) => {
+    if (!newValue) {
+      return;
+    }
+    onChange({...value, processAs: newValue});
+  }, [onChange, value]);
 
   return (
     <div className={styles.container}>
+    <EditorRows>
+        <EditorRow>
+          {/* define query response processing */}
+          <EditorField label="Process query as" tooltip="Define how the query response should be processed.">
+            <Combobox<ProcessAsType>
+              options={[
+                { label: 'Metrics', value: ProcessAsType.Metrics},
+                { label: 'Logs', value: ProcessAsType.Logs },
+                { label: 'Raw data', value: ProcessAsType.Raw_data },
+              ]}
+              onChange={(e) => handleQueryTypeChange(e.value)}
+              value={value?.processAs}
+            />
+          </EditorField>
+          {/* {props.query.rawQuerySettings?.processAs === 'metrics' && (
+            <EditorRow>
+              <EditorField label="Aggregation IDs" description="Enter the aggregation ID(s) to be processed into data frames. In case of multiple, separate IDs with a comma">
+                <Input
+                  onChange={(e) =>
+                    props.onChange({
+                      ...props.query,
+                      rawQuerySettings: { ...props.query.rawQuerySettings, valueField: e.currentTarget.value },
+                    })
+                  }
+                />
+              </EditorField>
+            </EditorRow>
+          )} */}
+        </EditorRow>
+      </EditorRows>
       <div className={styles.header}>
         <Stack gap={1}>
           <Button
@@ -65,12 +108,11 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
         </Stack>
       </div>
       <CodeEditor
-        value={value ?? DEFAULT_RAW_QUERY}
+        value={value?.query ?? DEFAULT_RAW_QUERY}
         language="json"
         height={200}
         width="100%"
-        onBlur={handleChange}
-        onChange={handleChange}
+        onBlur={handleQueryChange}
         monacoOptions={{
           fontSize: 14,
           lineNumbers: 'on',

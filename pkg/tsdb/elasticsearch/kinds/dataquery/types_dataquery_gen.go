@@ -509,6 +509,24 @@ func NewTopMetrics() *TopMetrics {
 	}
 }
 
+type RawQuery struct {
+	Query     *string        `json:"query,omitempty"`
+	ProcessAs *ProcessAsType `json:"processAs,omitempty"`
+}
+
+// NewRawQuery creates a new RawQuery object.
+func NewRawQuery() *RawQuery {
+	return &RawQuery{}
+}
+
+type ProcessAsType string
+
+const (
+	ProcessAsTypeLogs    ProcessAsType = "logs"
+	ProcessAsTypeMetrics ProcessAsType = "metrics"
+	ProcessAsTypeRawData ProcessAsType = "raw_data"
+)
+
 type BaseBucketAggregation struct {
 	Id       string                `json:"id"`
 	Type     BucketAggregationType `json:"type"`
@@ -790,14 +808,13 @@ type ElasticsearchDataQuery struct {
 	Alias *string `json:"alias,omitempty"`
 	// Lucene query
 	Query *string `json:"query,omitempty"`
-	// Raw Elasticsearch Query DSL JSON
-	RawQuery *string `json:"rawQuery,omitempty"`
 	// Name of time field
 	TimeField *string `json:"timeField,omitempty"`
 	// List of bucket aggregations
 	BucketAggs []BucketAggregation `json:"bucketAggs,omitempty"`
 	// List of metric aggregations
-	Metrics []MetricAggregation `json:"metrics,omitempty"`
+	Metrics  []MetricAggregation `json:"metrics,omitempty"`
+	RawQuery *RawQuery           `json:"rawQuery,omitempty"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.

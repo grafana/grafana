@@ -1,12 +1,14 @@
 package elasticsearch
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/kinds/dataquery"
 )
 
 func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, error) {
@@ -21,13 +23,12 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 		// please do not create a new field with that name, to avoid potential problems with old, persisted queries.
 
 		rawQuery := model.Get("query").MustString()
-		rawDSLQuery := model.Get("rawDslQuery").MustString("")
-		rawDSL := model.Get("rawDsl").MustBool(false)
-
-		// For backward compatibility, also check if rawDslQuery field is populated
-		if rawDSLQuery != "" {
-			rawDSL = true
+		var rawDSLQuery dataquery.RawQuery
+		rr := model.Get("rawQuery")
+		if rrBytes, err := rr.Encode(); err == nil {
+			_ = json.Unmarshal(rrBytes, &rawDSLQuery)
 		}
+
 		bucketAggs, err := parseBucketAggs(model)
 		if err != nil {
 			logger.Error("Failed to parse bucket aggs in query", "error", err, "model", string(q.JSON))
@@ -52,8 +53,7 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 			RefID:         q.RefID,
 			MaxDataPoints: q.MaxDataPoints,
 			TimeRange:     q.TimeRange,
-			RawDSL:        rawDSL,
-			RawDSLQuery:   rawDSLQuery,
+			RawDSLQuery:   &rawDSLQuery,
 		})
 	}
 

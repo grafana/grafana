@@ -44,7 +44,7 @@ export const rawQueryReducer = (prevRawQuery: ElasticsearchDataQuery['rawQuery']
   }
 
   if (initQuery.match(action)) {
-    return prevRawQuery || '';
+    return prevRawQuery;
   }
 
   return prevRawQuery;

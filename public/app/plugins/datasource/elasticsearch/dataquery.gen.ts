@@ -37,6 +37,17 @@ export interface DateHistogram extends BucketAggregationWithField {
   type: 'date_histogram';
 }
 
+export interface RawQuery {
+  processAs?: ProcessAsType;
+  query?: string;
+}
+
+export enum ProcessAsType {
+  Logs = 'logs',
+  Metrics = 'metrics',
+  Raw_data = 'raw_data',
+}
+
 export interface DateHistogramSettings {
   interval?: string;
   min_doc_count?: string;
@@ -398,10 +409,7 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    * Lucene query
    */
   query?: string;
-  /**
-   * Raw Elasticsearch Query DSL JSON
-   */
-  rawQuery?: string;
+  rawQuery?: RawQuery;
   /**
    * Name of time field
    */

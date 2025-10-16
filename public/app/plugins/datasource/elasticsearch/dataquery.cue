@@ -31,14 +31,15 @@ composableKinds: DataQuery: {
 				alias?: string
 				// Lucene query
 				query?: string
-				// Raw Elasticsearch Query DSL JSON
-				rawQuery?: string
 				// Name of time field
 				timeField?: string
 				// List of bucket aggregations
 				bucketAggs?: [...#BucketAggregation]
 				// List of metric aggregations
 				metrics?: [...#MetricAggregation]
+				// settingsfor raw query
+
+				rawQuery?: #RawQuery
 
 				#BucketAggregation: #DateHistogram | #Histogram | #Terms | #Filters | #GeoHashGrid | #Nested @cuetsy(kind="type")
 				#MetricAggregation: #Count | #PipelineMetricAggregation | #MetricAggregationWithSettings     @cuetsy(kind="type")
@@ -61,6 +62,13 @@ composableKinds: DataQuery: {
 					type:      #BucketAggregationType & "date_histogram"
 					settings?: #DateHistogramSettings
 				} @cuetsy(kind="interface")
+
+				#RawQuery: {
+					query?: string
+					processAs?: #ProcessAsType
+				} @cuetsy(kind="interface")
+
+				#ProcessAsType: "logs" | "metrics" | "raw_data" @cuetsy(kind="enum")
 
 				#DateHistogramSettings: {
 					interval?:      string

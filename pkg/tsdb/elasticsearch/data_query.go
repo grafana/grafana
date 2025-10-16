@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/kinds/dataquery"
 )
 
 const (
@@ -111,7 +112,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 
 func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
 	// Handle raw DSL queries
-	if q.RawQuery != "" {
+	if q.RawDSLQuery != nil {
 		return e.processRawDSLQuery(q, ms, from, to)
 	}
 
@@ -140,13 +141,13 @@ func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchReques
 }
 
 func (e *elasticsearchDataQuery) processRawDSLQuery(q *Query, ms *es.MultiSearchRequestBuilder, _ /* from */, _ /* to */ int64) error {
-	if q.RawDSLQuery == "" {
+	if *q.RawDSLQuery.Query == "" {
 		return backend.DownstreamError(fmt.Errorf("raw DSL query is empty"))
 	}
 
 	// Parse the raw DSL query JSON
 	var queryBody map[string]any
-	if err := json.Unmarshal([]byte(q.RawDSLQuery), &queryBody); err != nil {
+	if err := json.Unmarshal([]byte(*q.RawDSLQuery.Query), &queryBody); err != nil {
 		return backend.DownstreamError(fmt.Errorf("invalid raw DSL query JSON: %w", err))
 	}
 
@@ -381,7 +382,7 @@ func isQueryWithError(query *Query) error {
 }
 
 func isLogsQuery(query *Query) bool {
-	return query.Metrics[0].Type == logsType
+	return query.Metrics[0].Type == logsType || query.RawDSLQuery != nil && *query.RawDSLQuery.ProcessAs == dataquery.ProcessAsTypeLogs
 }
 
 func isDocumentQuery(query *Query) bool {
@@ -389,7 +390,7 @@ func isDocumentQuery(query *Query) bool {
 }
 
 func isRawDataQuery(query *Query) bool {
-	return query.Metrics[0].Type == rawDataType
+	return query.Metrics[0].Type == rawDataType || query.RawDSLQuery != nil && *query.RawDSLQuery.ProcessAs == dataquery.ProcessAsTypeRawData
 }
 
 func isRawDocumentQuery(query *Query) bool {
