@@ -17,7 +17,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	playlistInstaller := &playlist.PlaylistAppInstaller{}
 	pluginsInstaller := &plugins.PluginsAppInstaller{}
 	rulesInstaller := &rules.AlertingRulesAppInstaller{}
-	correlationsAppInstaller := &correlations.CorrelationsAppInstaller{}
+	correlationsAppInstaller := &correlations.AppInstaller{}
 	notificationsAppInstaller := &notifications.AlertingNotificationsAppInstaller{}
 
 	tests := []struct {

@@ -981,7 +981,7 @@ var (
 			Description:  "Enable suggested dashboards when creating new dashboards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
-			FrontendOnly: true,
+			FrontendOnly: false,
 		},
 		{
 			Name:         "logsExploreTableDefaultVisualization",
@@ -2094,14 +2094,6 @@ var (
 			Owner:           grafanaOSSBigTent,
 			Expression:      "false",
 			RequiresRestart: true,
-		},
-		{
-			Name:         "filterOutBotsFromFrontendLogs",
-			Description:  "Filter out bots from collecting data for Frontend Observability",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
-			Expression:   "false",
 		},
 		{
 			Name:         "cdnPluginsLoadFirst",
