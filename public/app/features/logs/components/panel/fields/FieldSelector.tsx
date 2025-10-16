@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { Resizable, ResizeCallback } from 're-resizable';
 import { startTransition, useCallback, useLayoutEffect, useMemo, useState } from 'react';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, fuzzySearch, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getDragStyles, useStyles2 } from '@grafana/ui';
 import { parseLogsFrame } from 'app/features/logs/logsFrame';
@@ -128,15 +128,37 @@ export const FieldSelector = ({
     });
   }, []);
 
+  const filteredFields = useMemo(() => {
+    if (!searchValue) {
+      return fields;
+    }
+    const idxs = fuzzySearch(
+      fields.map((field) => field.name),
+      searchValue
+    );
+    return fields.filter((_, index) => idxs.includes(index));
+  }, [fields, searchValue]);
+
+  const filteredSuggestedFields = useMemo(() => {
+    if (!searchValue) {
+      return suggestedFields;
+    }
+    const idxs = fuzzySearch(
+      suggestedFields.map((field) => field.name),
+      searchValue
+    );
+    return suggestedFields.filter((_, index) => idxs.includes(index));
+  }, [searchValue, suggestedFields]);
+
   return (
     <section className={styles.sidebar}>
       <FieldSearch value={searchValue} onChange={onSearchInputChange} />
       <FieldList
         activeFields={activeFields}
         clear={clear}
-        fields={fields}
+        fields={filteredFields}
         reorder={reorder}
-        suggestedFields={suggestedFields}
+        suggestedFields={filteredSuggestedFields}
         toggle={toggle}
       />
     </section>
