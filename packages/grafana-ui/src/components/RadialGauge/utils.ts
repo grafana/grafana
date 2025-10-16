@@ -60,13 +60,14 @@ export function calculateDimensions(
   }
 
   // Max radius based on width
-  let maxRadiusH = width / 2 - margin;
+  let maxRadiusW = width / 2 - margin;
 
   // Max radius based on height
   let heightRatioV = Math.sin(toRad(yMaxAngle));
-  let maxRadiusV = (height - margin * 2) / (1 + heightRatioV);
+  let maxRadiusH = (height - margin * 2) / (1 + heightRatioV);
 
-  let maxRadius = Math.min(maxRadiusH, maxRadiusV);
+  let maxRadius = Math.min(maxRadiusW, maxRadiusH);
+  let maxRadiusIsLimitedByHeight = maxRadiusH === maxRadius;
   let outerRadius = maxRadius;
 
   const barWidth = Math.max(barWidthFactor * (maxRadius / 3), 2);
@@ -74,6 +75,8 @@ export function calculateDimensions(
   // If rounded bars is enabled they need a bit more vertical space
   if (yMaxAngle < 180 && roundedBars) {
     outerRadius -= barWidth;
+    maxRadiusH -= barWidth;
+    maxRadiusW -= barWidth;
   }
 
   // Scale labels
@@ -88,8 +91,17 @@ export function calculateDimensions(
     scaleLabelsSpacing = scaleLabelsFontSize / 3;
     const labelsSize = scaleLabelsFontSize * 1.2 + scaleLabelsSpacing;
     outerRadius -= labelsSize;
+    maxRadiusW -= labelsSize;
     maxRadiusH -= labelsSize;
-    maxRadiusV -= labelsSize;
+
+    // For gauges the max label needs a bit more vertical space so that it does not get clipped
+    if (maxRadiusIsLimitedByHeight && endAngle < 180) {
+      const amount = outerRadius * 0.07;
+      scaleLabelsRadius -= amount;
+      maxRadiusH -= amount;
+      maxRadiusW -= amount;
+      outerRadius -= amount;
+    }
   }
 
   // Thresholds bar
@@ -100,9 +112,9 @@ export function calculateDimensions(
 
   if (thresholdsBarWidth > 0) {
     thresholdsBarRadius = outerRadius - thresholdsBarWidth / 2;
+    maxRadiusW -= thresholdsBarWidth + thresholdsBarSpacing;
     maxRadiusH -= thresholdsBarWidth + thresholdsBarSpacing;
-    maxRadiusV -= thresholdsBarWidth + thresholdsBarSpacing;
-    outerRadius = Math.min(maxRadiusH, maxRadiusV);
+    outerRadius = Math.min(maxRadiusW, maxRadiusH);
   }
 
   let innerRadius = outerRadius - barWidth / 2;
