@@ -330,7 +330,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate folder existence if specified
-	if !a.IsDryRun() && !folder.IsRootFolder(accessor) {
+	if !a.IsDryRun() && !folder.IsRootFolder(accessor.GetFolder()) {
 		folder, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID())
 		if err != nil {
 			return err

@@ -31,8 +31,7 @@ const (
 	SharedWithMeFolderUID = "sharedwithme"
 )
 
-func IsRootFolder(obj utils.GrafanaMetaAccessor) bool {
-	f := obj.GetFolder()
+func IsRootFolder(f string) bool {
 	return f == "" || f == GeneralFolderUID
 }
 

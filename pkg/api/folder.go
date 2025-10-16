@@ -317,7 +317,7 @@ func (hs *HTTPServer) GetFolderDescendantCounts(c *contextmodel.ReqContext) resp
 	return response.JSON(http.StatusOK, counts)
 }
 func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folder) (dtos.Folder, error) {
-	if f.ParentUID == folder.GeneralFolderUID {
+	if folder.IsRootFolder(f.ParentUID) {
 		f.ParentUID = folder.EmptyFolderUID // ""
 	}
 	ctx := c.Req.Context()

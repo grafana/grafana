@@ -159,7 +159,7 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 		return fmt.Errorf("expecting folder with name")
 	}
 
-	isNested := parentUID != folder.GeneralFolderUID
+	isNested := !folder.IsRootFolder(parentUID)
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
 		// No permissions on nested folders when kubernetesDashboards is enabled
 		return nil

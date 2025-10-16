@@ -10,7 +10,7 @@ import (
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folderLegacy "github.com/grafana/grafana/pkg/services/folder"
+	folderModel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 type parentsGetter = func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error)
@@ -21,7 +21,7 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 			Items: []folders.FolderInfo{},
 		}
 		id := folder.Name
-		if id == folderLegacy.GeneralFolderUID || id == folderLegacy.SharedWithMeFolderUID {
+		if id == folderModel.GeneralFolderUID || id == folderModel.SharedWithMeFolderUID {
 			info.Items = []folders.FolderInfo{{
 				Name:  folder.Name,
 				Title: folder.Spec.Title,
@@ -44,7 +44,7 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 				item.Description = *folder.Spec.Description
 			}
 			info.Items = append(info.Items, item)
-			if item.Parent == "" || item.Parent == "general" {
+			if folderModel.IsRootFolder(item.Parent) {
 				break
 			}
 

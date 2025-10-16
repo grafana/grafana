@@ -127,7 +127,7 @@ var (
 		Status:     "quota-reached",
 	}
 
-	ErrFolderNotFound             = errors.New("folder not foundXXX")
+	ErrFolderNotFound             = errors.New("folder not found")
 	ErrFolderVersionMismatch      = errors.New("the folder has been changed by someone else")
 	ErrFolderTitleEmpty           = errors.New("folder title cannot be empty")
 	ErrFolderWithSameUIDExists    = errors.New("a folder/dashboard with the same uid already exists")

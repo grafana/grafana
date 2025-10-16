@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"testing"
 
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -25,8 +25,7 @@ import (
 func TestIntegrationLibraryPanelConnections(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	//	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -40,10 +39,10 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 			adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
 
 			// create the library element first
-			libraryElement := map[string]any{
+			libraryElement := map[string]interface{}{
 				"kind": 1,
 				"name": "Test Library Panel",
-				"model": map[string]any{
+				"model": map[string]interface{}{
 					"type":  "timeseries",
 					"title": "Test Library Panel",
 				},
@@ -52,18 +51,18 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 			libraryElementData, err := postHelper(t, &ctx, libraryElementURL, libraryElement, ctx.AdminUser)
 			require.NoError(t, err)
 			require.NotNil(t, libraryElementData)
-			data := libraryElementData["result"].(map[string]any)
+			data := libraryElementData["result"].(map[string]interface{})
 			uid := data["uid"].(string)
 			require.NotEmpty(t, uid)
 
 			// then reference the library element in the dashboard
 			dashboard := createDashboardObject(t, "Library Panel Test", "", 1)
-			dashboard.Object["spec"].(map[string]any)["panels"] = []any{
-				map[string]any{
+			dashboard.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
+				map[string]interface{}{
 					"id":    1,
 					"title": "Library Panel",
 					"type":  "library-panel-ref",
-					"libraryPanel": map[string]any{
+					"libraryPanel": map[string]interface{}{
 						"uid":  uid,
 						"name": "Test Library Panel",
 					},
@@ -79,7 +78,7 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 			connectionsData, err := getDashboardViaHTTP(t, &ctx, connectionsURL, ctx.AdminUser)
 			require.NoError(t, err)
 			require.NotNil(t, connectionsData)
-			connections := connectionsData["result"].([]any)
+			connections := connectionsData["result"].([]interface{})
 			require.Len(t, connections, 1)
 		})
 	}
@@ -248,10 +247,10 @@ func getLibraryElementGVR() schema.GroupVersionResource {
 // currently through /api
 func createLibraryElement(t *testing.T, ctx TestContext, user apis.User, title string, folderUID string, uid *string) (string, error) {
 	t.Helper()
-	libraryElement := map[string]any{
+	libraryElement := map[string]interface{}{
 		"kind": 1,
 		"name": title,
-		"model": map[string]any{
+		"model": map[string]interface{}{
 			"type":  "text",
 			"title": title,
 		},
@@ -267,7 +266,7 @@ func createLibraryElement(t *testing.T, ctx TestContext, user apis.User, title s
 	}
 
 	require.NotNil(t, libraryElementData)
-	data := libraryElementData["result"].(map[string]any)
+	data := libraryElementData["result"].(map[string]interface{})
 	uidStr := data["uid"].(string)
 	require.NotEmpty(t, uidStr)
 
@@ -316,11 +315,11 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 			setResourceUserPermission(t, ctx, ctx.AdminUser, false, accessibleFolder.UID, addUserPermission(t, nil, ctx.ViewerUser, ResourcePermissionLevelView))
 			setResourceUserPermission(t, ctx, ctx.AdminUser, false, inaccessibleFolder.UID, []ResourcePermissionSetting{})
 
-			libraryElement := map[string]any{
+			libraryElement := map[string]interface{}{
 				"kind":      1,
 				"name":      "Accessible Library Panel",
 				"folderUid": accessibleFolder.UID,
-				"model": map[string]any{
+				"model": map[string]interface{}{
 					"type":  "text",
 					"title": "Accessible Library Panel",
 				},
@@ -329,17 +328,17 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 			libraryElementData, err := postHelper(t, &ctx, libraryElementURL, libraryElement, ctx.AdminUser)
 			require.NoError(t, err)
 			require.NotNil(t, libraryElementData)
-			data := libraryElementData["result"].(map[string]any)
+			data := libraryElementData["result"].(map[string]interface{})
 			uid := data["uid"].(string)
 			require.NotEmpty(t, uid)
 
 			dashInGeneral := createDashboardObject(t, "Dashboard in General", "", 1)
-			dashInGeneral.Object["spec"].(map[string]any)["panels"] = []any{
-				map[string]any{
+			dashInGeneral.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
+				map[string]interface{}{
 					"id":    1,
 					"title": "Library Panel",
 					"type":  "library-panel-ref",
-					"libraryPanel": map[string]any{
+					"libraryPanel": map[string]interface{}{
 						"uid":  uid,
 						"name": "Accessible Library Panel",
 					},
@@ -351,12 +350,12 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 			require.NotNil(t, createdDashInGeneral)
 
 			dashInAccessibleFolder := createDashboardObject(t, "Dashboard in Accessible Folder", accessibleFolder.UID, 1)
-			dashInAccessibleFolder.Object["spec"].(map[string]any)["panels"] = []any{
-				map[string]any{
+			dashInAccessibleFolder.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
+				map[string]interface{}{
 					"id":    1,
 					"title": "Library Panel",
 					"type":  "library-panel-ref",
-					"libraryPanel": map[string]any{
+					"libraryPanel": map[string]interface{}{
 						"uid":  uid,
 						"name": "Accessible Library Panel",
 					},
@@ -367,12 +366,12 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 			require.NotNil(t, createdDashInAccessible)
 
 			dashInInaccessibleFolder := createDashboardObject(t, "Dashboard in Inaccessible Folder", inaccessibleFolder.UID, 1)
-			dashInInaccessibleFolder.Object["spec"].(map[string]any)["panels"] = []any{
-				map[string]any{
+			dashInInaccessibleFolder.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
+				map[string]interface{}{
 					"id":    1,
 					"title": "Library Panel",
 					"type":  "library-panel-ref",
-					"libraryPanel": map[string]any{
+					"libraryPanel": map[string]interface{}{
 						"uid":  uid,
 						"name": "Accessible Library Panel",
 					},
@@ -386,11 +385,11 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 			connectionsData, err := getDashboardViaHTTP(t, &ctx, connectionsURL, ctx.AdminUser)
 			require.NoError(t, err)
 			require.NotNil(t, connectionsData)
-			connections := connectionsData["result"].([]any)
+			connections := connectionsData["result"].([]interface{})
 			require.Len(t, connections, 3, "Admin should see all connections")
 			connectionUIDs := make([]string, 0, len(connections))
 			for _, conn := range connections {
-				connMap := conn.(map[string]any)
+				connMap := conn.(map[string]interface{})
 				if connectionUID, ok := connMap["connectionUid"].(string); ok {
 					connectionUIDs = append(connectionUIDs, connectionUID)
 				}
@@ -409,12 +408,12 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 			connectionsDataLimited, err := getDashboardViaHTTP(t, &ctx, connectionsURL, limitedUser)
 			require.NoError(t, err)
 			require.NotNil(t, connectionsDataLimited)
-			connectionsLimited := connectionsDataLimited["result"].([]any)
+			connectionsLimited := connectionsDataLimited["result"].([]interface{})
 			require.Len(t, connectionsLimited, 2, "Limited user should only see connections to accessible dashboards")
 
 			connectionUIDsLimited := make([]string, 0, len(connectionsLimited))
 			for _, conn := range connectionsLimited {
-				connMap := conn.(map[string]any)
+				connMap := conn.(map[string]interface{})
 				if connectionUID, ok := connMap["connectionUid"].(string); ok {
 					connectionUIDsLimited = append(connectionUIDsLimited, connectionUID)
 				}
