@@ -24,14 +24,14 @@ const (
 )
 
 type check struct {
-	DatasourceSvc         datasources.DataSourceService
-	PluginStore           pluginstore.Store
-	PluginContextProvider pluginContextProvider
-	PluginClient          plugins.Client
-	PluginRepo            repo.Service
-	GrafanaVersion        string
-	pluginExistsCache     map[string]bool
-	pluginExistsCacheMu   sync.RWMutex
+	DatasourceSvc           datasources.DataSourceService
+	PluginStore             pluginstore.Store
+	PluginContextProvider   pluginContextProvider
+	PluginClient            plugins.Client
+	PluginRepo              repo.Service
+	GrafanaVersion          string
+	pluginAvailabilityCache map[string]bool
+	pluginExistsCacheMu     sync.RWMutex
 }
 
 func New(
@@ -43,13 +43,13 @@ func New(
 	grafanaVersion string,
 ) checks.Check {
 	return &check{
-		DatasourceSvc:         datasourceSvc,
-		PluginStore:           pluginStore,
-		PluginContextProvider: pluginContextProvider,
-		PluginClient:          pluginClient,
-		PluginRepo:            pluginRepo,
-		GrafanaVersion:        grafanaVersion,
-		pluginExistsCache:     make(map[string]bool),
+		DatasourceSvc:           datasourceSvc,
+		PluginStore:             pluginStore,
+		PluginContextProvider:   pluginContextProvider,
+		PluginClient:            pluginClient,
+		PluginRepo:              pluginRepo,
+		GrafanaVersion:          grafanaVersion,
+		pluginAvailabilityCache: make(map[string]bool),
 	}
 }
 
@@ -97,54 +97,69 @@ func (c *check) Init(ctx context.Context) error {
 }
 
 func (c *check) Steps() []checks.Step {
+	c.pluginAvailabilityCache = make(map[string]bool)
 	return []checks.Step{
-		&uidValidationStep{},
-		&healthCheckStep{
-			PluginContextProvider: c.PluginContextProvider,
-			PluginClient:          c.PluginClient,
-		},
-		&missingPluginStep{
-			PluginStore:    c.PluginStore,
-			PluginRepo:     c.PluginRepo,
-			GrafanaVersion: c.GrafanaVersion,
-		},
+		// &uidValidationStep{},
+		// &healthCheckStep{
+		// 	PluginContextProvider: c.PluginContextProvider,
+		// 	PluginClient:          c.PluginClient,
+		// },
+		// &missingPluginStep{
+		// 	PluginStore:    c.PluginStore,
+		// 	PluginRepo:     c.PluginRepo,
+		// 	GrafanaVersion: c.GrafanaVersion,
+		// },
 		&promDepAuthStep{
-			GetPluginExistsFunc: c.getPluginExistsFunc,
+			IsPluginInstalledOrAvailableFunc: c.isPluginInstalled,
 		},
 	}
 }
 
-func (c *check) getPluginExistsFunc(ctx context.Context, pluginType string) (bool, error) {
-	// Check cache first with read lock
+// isPluginInstalled checks if a plugin is already installed or if it's available in the plugin repository.
+// Returns true if:
+// - The plugin is already installed, OR
+// - The plugin is NOT available in the repository (nothing to install)
+// Returns false if:
+// - The plugin is NOT installed AND it IS available in the repository (can be installed)
+func (c *check) isPluginInstalled(ctx context.Context, pluginType string) (bool, error) {
+	// Check cache first with read lock for performance
 	c.pluginExistsCacheMu.RLock()
-	if exists, found := c.pluginExistsCache[pluginType]; found {
+	if isInstalledOrUnavailable, found := c.pluginAvailabilityCache[pluginType]; found {
 		c.pluginExistsCacheMu.RUnlock()
-		return exists, nil
+		return isInstalledOrUnavailable, nil
 	}
 	c.pluginExistsCacheMu.RUnlock()
 
-	// Cache miss, fetch from repo with write lock
+	// Cache miss - acquire write lock and check again (double-checked locking pattern)
 	c.pluginExistsCacheMu.Lock()
 	defer c.pluginExistsCacheMu.Unlock()
 
-	// Double-check in case another goroutine fetched it while we were waiting for the lock
-	if exists, found := c.pluginExistsCache[pluginType]; found {
-		return exists, nil
+	// Another goroutine may have populated the cache while we waited for the lock
+	if isInstalledOrUnavailable, found := c.pluginAvailabilityCache[pluginType]; found {
+		return isInstalledOrUnavailable, nil
 	}
 
-	// Fetch from repository
-	plugins, err := c.PluginRepo.GetPluginsInfo(ctx, repo.GetPluginsInfoOptions{
+	// Check if plugin is already installed
+	if _, isInstalled := c.PluginStore.Plugin(ctx, pluginType); isInstalled {
+		c.pluginAvailabilityCache[pluginType] = true
+		return true, nil
+	}
+
+	// Plugin is not installed - check if it's available in the repository
+	availablePlugins, err := c.PluginRepo.GetPluginsInfo(ctx, repo.GetPluginsInfoOptions{
 		IncludeDeprecated: true,
 		Plugins:           []string{pluginType},
 	}, repo.NewCompatOpts(c.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH))
 	if err != nil {
-		return false, err
+		// On error, assume plugin is installed/unavailable to avoid showing incorrect install links
+		return true, err
 	}
 
-	// Cache the result
-	exists := len(plugins) > 0
-	c.pluginExistsCache[pluginType] = exists
-	return exists, nil
+	// Plugin is not installed but IS available - return false to show install link
+	// Plugin is not installed and NOT available in repo - return true (nothing to install)
+	isAvailableInRepo := len(availablePlugins) > 0
+	c.pluginAvailabilityCache[pluginType] = !isAvailableInRepo
+	return !isAvailableInRepo, nil
 }
 
 type pluginContextProvider interface {
