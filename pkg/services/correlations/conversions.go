@@ -1,6 +1,8 @@
 package correlations
 
 import (
+	"encoding/json"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
@@ -69,17 +71,17 @@ func ToCorrelation(obj *correlationsV0.Correlation) (*Correlation, error) {
 }
 
 func ToSpecConfig(orig CorrelationConfig) correlationsV0.CorrelationConfigSpec {
-	return correlationsV0.CorrelationConfigSpec{
-		Field: orig.Field,
-		// TODO!!! this is obviously still incomplete
-	}
+	out := correlationsV0.CorrelationConfigSpec{}
+	raw, _ := json.Marshal(orig)
+	json.Unmarshal(raw, &out)
+	return out
 }
 
 func ToConfig(orig correlationsV0.CorrelationConfigSpec) CorrelationConfig {
-	return CorrelationConfig{
-		Field: orig.Field,
-		// TODO!!! this is obviously still incomplete
-	}
+	out := CorrelationConfig{}
+	raw, _ := json.Marshal(orig)
+	json.Unmarshal(raw, &out)
+	return out
 }
 
 func ToUpdateCorrelationCommand(obj *correlationsV0.Correlation) (*UpdateCorrelationCommand, error) {
