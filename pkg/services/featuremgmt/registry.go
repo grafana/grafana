@@ -966,7 +966,7 @@ var (
 			Description:  "Enable suggested dashboards when creating new dashboards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
-			FrontendOnly: true,
+			FrontendOnly: false,
 		},
 		{
 			Name:         "logsExploreTableDefaultVisualization",
@@ -1782,6 +1782,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "kubernetesAuthzZanzanaSync",
+			Description:       "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:              "kubernetesAuthnMutation",
 			Description:       "Enables create, delete, and update mutations for resources owned by IAM identity",
 			Stage:             FeatureStageExperimental,
@@ -2015,6 +2023,12 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaFrontendSearchNavOrganise,
 			Expression:   "false",
+		},
+		{
+			Name:        "grafanaPathfinder",
+			Description: "Enables Pathfinder app",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaPathfinderSquad,
 		},
 		{
 			Name:              "alertingTriage",

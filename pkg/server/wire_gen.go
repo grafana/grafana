@@ -258,6 +258,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -814,7 +815,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl, storageBackendImpl, storageBackendImpl)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, storageBackendImpl, storageBackendImpl)
 	if err != nil {
 		return nil, err
 	}
@@ -1419,7 +1420,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl, storageBackendImpl, storageBackendImpl)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, storageBackendImpl, storageBackendImpl)
 	if err != nil {
 		return nil, err
 	}
@@ -1624,7 +1625,11 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	hooksService := hooks.ProvideService()
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	moduleRegisterer := ProvideNoopModuleRegisterer()
-	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer)
+	storageBackend, err := sql.ProvideStorageBackend(cfg)
+	if err != nil {
+		return nil, err
+	}
+	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, storageBackend)
 	if err != nil {
 		return nil, err
 	}

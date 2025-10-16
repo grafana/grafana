@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/preferences
 
-go 1.25.2
+go 1.25.3
 
 require (
 	github.com/grafana/grafana-app-sdk v0.46.0
@@ -53,7 +53,7 @@ require (
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/term v0.35.0 // indirect
-	golang.org/x/text v0.29.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/time v0.13.0 // indirect
 	google.golang.org/protobuf v1.36.9 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
