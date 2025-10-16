@@ -6,6 +6,7 @@ import { DataFrame, fuzzySearch, GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
+import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../../LogDetailsBody';
@@ -27,7 +28,7 @@ interface LogListFieldSelectorProps {
 }
 
 const DEFAULT_WIDTH = 220;
-const MIN_WIDTH = 20;
+export const MIN_WIDTH = 20;
 
 export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: LogListFieldSelectorProps) => {
   const { displayedFields, onClickShowField, onClickHideField, setDisplayedFields, logOptionsStorageKey } =
@@ -131,6 +132,7 @@ const logsFieldSelectorWrapperStyles = {
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',
+    paddingTop: 2,
   }),
 };
 
@@ -163,7 +165,7 @@ export const LogsTableFieldSelector = ({
   }, [setSidebarWidth]);
 
   const expand = useCallback(() => {
-    const width = getSidebarWidth();
+    const width = getSidebarWidth(SETTING_KEY_ROOT);
     setSidebarWidth(width < 2 * MIN_WIDTH ? DEFAULT_WIDTH : width);
   }, [setSidebarWidth]);
 
@@ -340,7 +342,7 @@ function getSuggestedFields(logs: LogListModel[], displayedFields: string[]) {
   return suggestedFields;
 }
 
-function getSidebarWidth(logOptionsStorageKey?: string): number {
+export function getSidebarWidth(logOptionsStorageKey?: string): number {
   const width =
     (logOptionsStorageKey
       ? parseInt(store.get(`${logOptionsStorageKey}.fieldSelector.width`) ?? DEFAULT_WIDTH, 10)

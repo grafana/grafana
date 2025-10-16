@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Resizable, ResizeCallback } from 're-resizable';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   DataFrame,
@@ -14,12 +14,17 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { InlineField, Select, Themeable2 } from '@grafana/ui';
-import { LogsTableFieldSelector } from 'app/features/logs/components/panel/fields/FieldSelector';
+import { getDragStyles, InlineField, Select, Themeable2, useStyles2 } from '@grafana/ui';
+import {
+  getSidebarWidth,
+  LogsTableFieldSelector,
+  MIN_WIDTH,
+} from 'app/features/logs/components/panel/fields/FieldSelector';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsTable } from './LogsTable';
+import { SETTING_KEY_ROOT } from './utils/logs';
 
 interface Props extends Themeable2 {
   logsFrames: DataFrame[];
@@ -60,6 +65,7 @@ export function LogsTableWrap(props: Props) {
   const propsColumns = panelState?.columns;
   // Save the normalized cardinality of each label
   const [columnsWithMeta, setColumnsWithMeta] = useState<FieldNameMetaStore | undefined>(undefined);
+  const dragStyles = useStyles2(getDragStyles);
 
   // Filtered copy of columnsWithMeta that only includes matching results
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<FieldNameMetaStore | undefined>(undefined);
@@ -87,7 +93,8 @@ export function LogsTableWrap(props: Props) {
     },
     [props.panelState?.columns]
   );
-  const logsFrame = parseLogsFrame(currentDataFrame);
+
+  const logsFrame = useMemo(() => parseLogsFrame(currentDataFrame), [currentDataFrame]);
 
   useEffect(() => {
     if (logsFrame?.timeField.name && logsFrame?.bodyField.name && !propsColumns) {
@@ -264,7 +271,7 @@ export function LogsTableWrap(props: Props) {
     // The panel state is updated when the user interacts with the multi-select sidebar
   }, [currentDataFrame, getColumnsFromProps]);
 
-  const [sidebarWidth, setSidebarWidth] = useState(220);
+  const [sidebarWidth, setSidebarWidth] = useState(getSidebarWidth(SETTING_KEY_ROOT));
   const tableWidth = props.width - sidebarWidth;
 
   if (!columnsWithMeta) {
@@ -470,7 +477,11 @@ export function LogsTableWrap(props: Props) {
           enable={{
             right: true,
           }}
-          handleClasses={{ right: styles.rzHandle }}
+          handleClasses={{ right: dragStyles.dragHandleVertical }}
+          size={{ width: sidebarWidth, height: getLogsTableHeight() }}
+          defaultSize={{ width: sidebarWidth, height: getLogsTableHeight() }}
+          minWidth={MIN_WIDTH}
+          maxWidth={tableWidth * 0.8}
           onResize={getOnResize}
         >
           <LogsTableFieldSelector
@@ -517,22 +528,6 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
       overflowY: 'hidden',
       width: width,
       paddingRight: theme.spacing(3),
-    }),
-    rzHandle: css({
-      background: theme.colors.secondary.main,
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: '0.3s background ease-in-out',
-      },
-      position: 'relative',
-      height: '50% !important',
-      width: `${theme.spacing(1)} !important`,
-      top: '25% !important',
-      right: `${theme.spacing(1)} !important`,
-      cursor: 'grab',
-      borderRadius: theme.shape.radius.pill,
-      ['&:hover']: {
-        background: theme.colors.secondary.shade,
-      },
     }),
   };
 }
