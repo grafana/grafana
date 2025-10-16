@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack } from '@grafana/ui';
 import { Job, RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -79,6 +79,12 @@ export function DeleteProvisionedDashboardForm({
       console.error('Missing required repository for deletion:', { repo });
       return;
     }
+
+    reportInteraction('grafana_provisioning_dashboard_delete_submitted', {
+      workflow,
+      repositoryName: repo,
+      repositoryType: repository?.type ?? 'unknown',
+    });
 
     // Branch workflow: use /files API for direct file operations
     if (workflow === 'branch') {

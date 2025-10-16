@@ -63,7 +63,7 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 	versionedPlugins := descriptor.versionedPlugins
 
 	if runtime.GOOS == "linux" && descriptor.containerMode.enabled {
-		return containerClientConfig(executablePath, descriptor.containerMode.image, logger, versionedPlugins, skipHostEnvVars, tracer)
+		return containerClientConfig(executablePath, descriptor.containerMode.image, descriptor.containerMode.tag, logger, versionedPlugins, skipHostEnvVars, tracer)
 	}
 
 	logger.Debug("Using process mode", "os", runtime.GOOS, "executablePath", executablePath)
@@ -92,13 +92,14 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 	}
 }
 
-func containerClientConfig(executablePath, containerImage string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet, skipHostEnvVars bool, tracer trace.Tracer) *goplugin.ClientConfig {
-	logger.Info("Using container mode", "executable", executablePath, "image", containerImage)
+func containerClientConfig(executablePath, containerImage, containerTag string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet, skipHostEnvVars bool, tracer trace.Tracer) *goplugin.ClientConfig {
+	logger.Info("Using container mode", "executable", executablePath, "image", containerImage, "tag", containerTag)
 	return &goplugin.ClientConfig{
 		RunnerFunc: func(l hclog.Logger, cmd *exec.Cmd, tmpDir string) (runner.Runner, error) {
 			logger.Info("Creating container runner", "executablePath", executablePath, "tmpDir", tmpDir)
 			config := &plugincontainer.Config{
 				Image: containerImage,
+				Tag:   containerTag,
 				Env:   cmd.Env,
 			}
 
@@ -133,6 +134,7 @@ type PluginDescriptor struct {
 type containerModeOpts struct {
 	enabled bool
 	image   string
+	tag     string
 }
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.

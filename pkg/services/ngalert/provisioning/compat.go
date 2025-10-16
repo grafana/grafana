@@ -61,7 +61,7 @@ func GrafanaIntegrationConfigToEmbeddedContactPoint(r *models.Integration, prove
 	return definitions.EmbeddedContactPoint{
 		UID:                   r.UID,
 		Name:                  r.Name,
-		Type:                  r.Config.Type,
+		Type:                  string(r.Config.Type()),
 		DisableResolveMessage: r.DisableResolveMessage,
 		Settings:              settingJson,
 		Provenance:            string(provenance),
