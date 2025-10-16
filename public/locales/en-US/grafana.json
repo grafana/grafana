@@ -7678,6 +7678,7 @@
   },
   "gauge": {
     "category-gauge": "Gauge",
+    "category-radial-bar": "Gauge",
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
     "description-neutral": "Leave empty to use Min as neutral point",
@@ -12050,6 +12051,27 @@
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "Bar width",
+      "effects": {
+        "bar-glow": "Bar glow",
+        "center-glow": "Center glow",
+        "rounded-bars": "Rounded bars",
+        "spotlight": "Spotlight"
+      },
+      "gradient": "Gradient",
+      "gradient-auto": "Auto",
+      "gradient-none": "None",
+      "segment-count": "Segments",
+      "segment-spacing": "Segment spacing",
+      "shape": "Shape",
+      "shape-circle": "Circle",
+      "shape-gauge": "Gauge",
+      "sparkline": "Show sparkline",
+      "threshold-markers": "Show thresholds"
+    }
   },
   "recently-deleted": {
     "buttons": {
