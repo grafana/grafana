@@ -24,6 +24,10 @@ assertion_attribute_org = Org
 org_mapping = Engineering:2:Editor, Sales:3:Admin
 ```
 
+{{< admonition type="warning" >}}
+The `org_mapping` option stores mappings in the database as JSON. Size limits depend on your database. In MySQL before Grafana 12.3, the limit is 65,535 bytes. From Grafana 12.3, the column uses `MEDIUMTEXT`, raising the MySQL limit to 16,777,215 bytes (~16 MB). If you need to split users into more granular control, we suggest using [Role and Team Sync](../configure-saml-team-role-mapping/) instead.
+{{< /admonition >}}
+
 Starting from Grafana version 11.5, you can use the organization name instead of the organization ID in the `org_mapping` option. Ensure that the organization name you configure matches exactly with the organization name in Grafana, as it is case-sensitive. If the organization name is not found in Grafana, the mapping will be ignored. If the external organization or the organization name contains spaces, use the JSON syntax for the `org_mapping` option:
 
 ```ini
