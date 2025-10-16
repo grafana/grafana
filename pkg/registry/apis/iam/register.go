@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -45,6 +46,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+const MaxConcurrentZanzanaWrites = 20
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
@@ -63,6 +66,7 @@ func RegisterAPIService(
 	store := legacy.NewLegacySQLStores(dbProvider)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
+	registerMetrics(reg)
 
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                      store,
@@ -75,21 +79,19 @@ func RegisterAPIService(
 		legacyAccessClient:         legacyAccessClient,
 		accessClient:               accessClient,
 		zClient:                    zClient,
+		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
 		display:                    user.NewLegacyDisplayREST(store),
 		reg:                        reg,
 		logger:                     log.New("iam.apis"),
 		features:                   features,
-		// enableAuthZApis:              features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
-		// enableResourcePermissionApis: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
-		// enableAuthnMutation:          features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
-		enableDualWriter: true,
+		enableDualWriter:           true,
 	}
 	apiregistration.RegisterAPI(builder)
 
 	return builder, nil
 }
 
-// TODO zClient, reg
+// TODO zClient, zTickets, reg
 func NewAPIService(
 	accessClient types.AccessClient,
 	dbProvider legacysql.LegacyDatabaseProvider,
@@ -191,7 +193,22 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
-	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
+	teamBindingLegacyStore := teambinding.NewLegacyBindingStore(b.store, enableAuthnMutation)
+	storage[teamBindingResource.StoragePath()] = teamBindingLegacyStore
+
+	if b.enableDualWriter {
+		teamBindingStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamBindingResource, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		teamBindingDW, err := opts.DualWriteBuilder(teamBindingResource.GroupResource(), teamBindingLegacyStore, teamBindingStore)
+		if err != nil {
+			return err
+		}
+
+		storage[teamBindingResource.StoragePath()] = teamBindingDW
+	}
 
 	// User store registration
 	userResource := iamv0.UserResourceInfo
@@ -360,6 +377,8 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			return serviceaccount.ValidateOnCreate(ctx, typedObj)
 		case *iamv0.Team:
 			return team.ValidateOnCreate(ctx, typedObj)
+		case *iamv0.TeamBinding:
+			return teambinding.ValidateOnCreate(ctx, typedObj)
 		case *iamv0.ResourcePermission:
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
 		}

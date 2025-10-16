@@ -1655,6 +1655,15 @@
     "inspector-yaml-tab": {
       "apply": "Apply"
     },
+    "instance-details": {
+      "history-error": "Failed to load state history",
+      "history-error-desc": "Unable to fetch state transition history for this instance.",
+      "no-history": "No recent state changes",
+      "state-history": "Recent State Changes"
+    },
+    "instance-details-drawer": {
+      "title-instance-details": "Instance Details"
+    },
     "instance-match": {
       "non-matching-labels": "Non-matching labels",
       "notification-policy": "View route"
@@ -2314,6 +2323,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Data source"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": "View alert rule"
+    },
     "rule-details-expression": {
       "label-expression": "Expression"
     },
@@ -2559,6 +2571,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Alert rule has been added or updated. Changes may take up to a minute to appear on the Alert rules list view.",
         "alert-title": "Update in progress"
+      },
+      "tab": {
+        "details": "Details",
+        "query-conditions": "Query and conditions"
       },
       "title-something-wrong-evaluating-alert": "Something went wrong when evaluating this alert rule"
     },
@@ -2930,10 +2946,22 @@
     },
     "triage": {
       "alert-instances": "Alert instances",
+      "error-loading-rule": "Error loading rule",
       "firing-instances-count": "{{firingCount}} firing instances",
+      "instance-details": "Instance Details",
       "no-instances-found": "No alert instances found for rule: {ruleUID}",
       "no-labels": "No labels",
-      "pending-instances-count": "{{pendingCount}} pending instances"
+      "open-in-sidebar": "Open in sidebar",
+      "open-rule-details": "Open rule details",
+      "pending-instances-count": "{{pendingCount}} pending instances",
+      "rule-details": {
+        "subtitle": "Rule details and conditions",
+        "title": "Rule Details"
+      },
+      "rule-not-found": {
+        "description": "The requested rule could not be found.",
+        "title": "Rule not found"
+      }
     },
     "type-selector-button": {
       "add-expression": "Add expression"
@@ -4801,7 +4829,11 @@
       "add-visualization-header": "Start your new dashboard by adding a visualization",
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
-      "import-dashboard-button": "Import dashboard"
+      "import-dashboard-button": "Import dashboard",
+      "show-less-dashboards": "Show less",
+      "show-more-dashboards": "Show more",
+      "start-with-suggested-dashboards": "Start with a pre-made dashboard from your data source",
+      "use-template-button": "Use this dashboard"
     },
     "errors": {
       "failed-to-load": "Failed to load dashboard"
@@ -9065,6 +9097,8 @@
       "make-time-range-permanent": "Make time range absolute/permanent",
       "move-time-range-back": "Move time range back",
       "move-time-range-forward": "Move time range forward",
+      "open-alerting": "Go to Alerting",
+      "open-assistant": "Open Assistant",
       "open-search": "Open search",
       "open-share-embed-drawer": "Share panel embed",
       "open-share-link-drawer": "Share panel link",
