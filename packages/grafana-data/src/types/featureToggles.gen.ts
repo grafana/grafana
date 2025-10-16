@@ -1200,11 +1200,6 @@ export interface FeatureToggles {
   */
   tempoSearchBackendMigration?: boolean;
   /**
-  * Filter out bots from collecting data for Frontend Observability
-  * @default false
-  */
-  filterOutBotsFromFrontendLogs?: boolean;
-  /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
   */
