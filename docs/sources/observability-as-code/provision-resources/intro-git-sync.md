@@ -54,15 +54,15 @@ With Git Sync, you can make changes in your provisioned files in GitHub and see 
 
 Git Sync is under development and the following limitations apply:
 
-- You can only sync dashboards and folders. 
-  - If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and can't be synced. 
+- You can only sync dashboards and folders.
+  - If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and can't be synced.
   - If you're using Git Sync in Grafana Cloud, Git Sync only works with specific folders for the moment. Full-instance sync is not currently supported.
   - Refer to [Supported resources](#supported-resources) for more information.
 - You can only authenticate in GitHub using your Personal Access Token token.
 - Support for native Git, Git app, and other providers, such as GitLab or Bitbucket, is on the roadmap.
 - Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
 
-## Supported resources 
+## Supported resources
 
 Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet. If you're using Git Sync in Grafana OSS and Grafana Enterprise, some supported resources might be in an incompatible data format. If this happens, syncing will be blocked.
 
@@ -70,16 +70,16 @@ Git Sync only supports dashboards and folders. Alerts, panels, and other resourc
 
 A resource can be:
 
-|  | Compatible | Incompatible |
-| Supported |  The resource can be managed with Git Sync.  |  The resource is supported but has compatibility issues. It **cannot** be managed with Git Sync.   |
-| Unsupported | The resource is **not** supported and **cannot** be managed with Git Sync. | Not applicable. | 
+| | Compatible | Incompatible |
+| Supported | The resource can be managed with Git Sync. | The resource is supported but has compatibility issues. It **cannot** be managed with Git Sync. |
+| Unsupported | The resource is **not** supported and **cannot** be managed with Git Sync. | Not applicable. |
 
 ### Instance states
 
 An instance can be in one of the following states:
 
 - **Unprovisioned**: None of the instance's resources are being managed by Git Sync.
-- **Partially provisioned**: Some of the resources are controlled by Git Sync. 
+- **Partially provisioned**: Some of the resources are controlled by Git Sync.
 - **Fully provisioned**: All supported resource types are managed by Git Sync. Note that unsupported resources are not managed.
 
 ## Common use cases
