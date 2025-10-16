@@ -501,7 +501,7 @@ var (
 			Name:            "kubernetesLogsDrilldown",
 			Description:     "Adds support for Kubernetes logs drilldown",
 			Stage:           FeatureStageExperimental,
-			Owner:           grafanaDataProSquad,
+			Owner:           grafanaObservabilityLogsSquad,
 			RequiresRestart: true,
 		},
 		{

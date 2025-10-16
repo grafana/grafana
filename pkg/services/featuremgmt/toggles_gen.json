@@ -2266,13 +2266,16 @@
     {
       "metadata": {
         "name": "kubernetesLogsDrilldown",
-        "resourceVersion": "1759865168805",
-        "creationTimestamp": "2025-10-07T19:26:08Z"
+        "resourceVersion": "1760632282014",
+        "creationTimestamp": "2025-10-07T19:26:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-16 16:31:22.014483 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Adds support for Kubernetes logs drilldown",
         "stage": "experimental",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/observability-logs",
         "requiresRestart": true
       }
     },
