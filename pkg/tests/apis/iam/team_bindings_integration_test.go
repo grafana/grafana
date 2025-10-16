@@ -261,6 +261,7 @@ func doTeamBindingCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTest
 		}`
 
 		type legacyTeamBindingResponse struct {
+			UID        string `json:"uid"`
 			UserID     int64  `json:"userId"`
 			TeamID     int64  `json:"teamId"`
 			Permission string `json:"permission"`
@@ -283,7 +284,7 @@ func doTeamBindingCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTest
 			GVR:       gvrTeamBindings,
 		})
 
-		teamBindingName := fmt.Sprintf("teambinding-%d-%d", teamRsp.Result.ID, userRsp.Result.ID)
+		teamBindingName := teamBindingRsp.Result.UID
 		teamBinding, err := teamBindingClient.Resource.Get(ctx, teamBindingName, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, teamBinding)
