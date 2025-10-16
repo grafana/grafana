@@ -4809,7 +4809,11 @@
       "add-visualization-header": "Mulai dasbor baru Anda dengan menambahkan visualisasi",
       "import-a-dashboard-body": "Impor dasbor dari file atau <2>grafana.com</2>.",
       "import-a-dashboard-header": "Impor dasbor",
-      "import-dashboard-button": "Impor dasbor"
+      "import-dashboard-button": "Impor dasbor",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Gagal memuat dasbor"

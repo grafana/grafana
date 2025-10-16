@@ -14,7 +14,10 @@ import { DEFAULT_TIME_WINDOW, LogLineContext, PAGE_SIZE } from './LogLineContext
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
-  useAssistant: jest.fn(() => [true, jest.fn()]),
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: true,
+    openAssistant: jest.fn(),
+  }),
 }));
 
 const dfBefore = createDataFrame({

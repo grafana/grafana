@@ -4869,7 +4869,11 @@
       "add-visualization-header": "Začněte novou nástěnku přidáním vizualizace",
       "import-a-dashboard-body": "Importujte nástěnky ze souborů nebo z <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importovat nástěnku",
-      "import-dashboard-button": "Importovat nástěnku"
+      "import-dashboard-button": "Importovat nástěnku",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Nástěnku se nepodařilo načíst"

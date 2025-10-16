@@ -4829,7 +4829,11 @@
       "add-visualization-header": "Starta din nya instrumentpanel genom att lägga till en visualisering",
       "import-a-dashboard-body": "Importera instrumentpaneler från filer eller från <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importera en instrumentpanel",
-      "import-dashboard-button": "Importera instrumentpanel"
+      "import-dashboard-button": "Importera instrumentpanel",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Det gick inte att ladda instrumentpanelen"

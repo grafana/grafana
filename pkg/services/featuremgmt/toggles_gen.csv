@@ -267,7 +267,6 @@ azureResourcePickerUpdates,preview,@grafana/partner-datasources,false,false,true
 prometheusTypeMigration,experimental,@grafana/partner-datasources,false,true,false
 pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,false
 tempoSearchBackendMigration,GA,@grafana/oss-big-tent,false,true,false
-filterOutBotsFromFrontendLogs,experimental,@grafana/plugins-platform-backend,false,false,true
 cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
 cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
 pluginInstallAPISync,experimental,@grafana/plugins-platform-backend,false,false,false
