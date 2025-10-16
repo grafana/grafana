@@ -35,7 +35,7 @@ func ProvideAppInstallers(
 	pluginsApplInstaller *plugins.PluginsAppInstaller,
 	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
 	rulesAppInstaller *rules.AlertingRulesAppInstaller,
-	correlationsAppInstaller *correlations.CorrelationsAppInstaller,
+	correlationsAppInstaller *correlations.AppInstaller,
 	alertingNotificationAppInstaller *notifications.AlertingNotificationsAppInstaller,
 	logsdrilldownAppInstaller *logsdrilldown.LogsDrilldownAppInstaller,
 ) []appsdkapiserver.AppInstaller {
