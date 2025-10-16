@@ -58,7 +58,7 @@ func InitOpenFeature(config OpenFeatureConfig) error {
 	return nil
 }
 
-// InitOpenFeatureWithCfg initializes OpenFeature from a setting.Cfg (backward compatibility)
+// InitOpenFeatureWithCfg initializes OpenFeature from setting.Cfg
 func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
 	if err != nil {
