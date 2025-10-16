@@ -119,7 +119,7 @@ func createProvider(
 		return newStaticProvider(staticFlags)
 	}
 
-	if u.String() == "" {
+	if u == nil || u.String() == "" {
 		return nil, fmt.Errorf("feature provider url is required for GOFFProviderType")
 	}
 
