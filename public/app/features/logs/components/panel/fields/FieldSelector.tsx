@@ -11,11 +11,15 @@ import { parseLogsFrame } from 'app/features/logs/logsFrame';
 import { LOG_LINE_BODY_FIELD_NAME } from '../../LogDetailsBody';
 import { getDisplayedFieldsForLogs } from '../../otel/formats';
 import { useLogListContext } from '../LogListContext';
+import { reportInteractionOnce } from '../analytics';
 import { LogListModel } from '../processing';
 
 import { FieldList } from './FieldList';
 import { FieldSearch } from './FieldSearch';
 
+/**
+ * FieldSelector wrapper for the LogList visualization.
+ */
 interface LogListFieldSelectorProps {
   containerElement: HTMLDivElement;
   logs: LogListModel[];
@@ -25,9 +29,6 @@ interface LogListFieldSelectorProps {
 const DEFAULT_WIDTH = 220;
 const MIN_WIDTH = 20;
 
-/**
- * FieldSelector wrapper for the LogList visualization.
- */
 export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: LogListFieldSelectorProps) => {
   const { displayedFields, onClickShowField, onClickHideField, setDisplayedFields, logOptionsStorageKey } =
     useLogListContext();
@@ -133,6 +134,64 @@ const logsFieldSelectorWrapperStyles = {
   }),
 };
 
+/**
+ * FieldSelector wrapper for the LogList visualization.
+ */
+interface LogsTableFieldSelectorProps {
+  displayedColumns: string[];
+  clear(): void;
+  dataFrames: DataFrame[];
+  logs: LogListModel[];
+  reorder(columns: string[]): void;
+  setSidebarWidth(width: number): void;
+  sidebarWidth: number;
+  toggle(key: string): void;
+}
+
+export const LogsTableFieldSelector = ({
+  clear,
+  dataFrames,
+  displayedColumns,
+  logs,
+  reorder,
+  setSidebarWidth,
+  sidebarWidth,
+  toggle,
+}: LogsTableFieldSelectorProps) => {
+  const collapse = useCallback(() => {
+    setSidebarWidth(MIN_WIDTH);
+  }, [setSidebarWidth]);
+
+  const expand = useCallback(() => {
+    const width = getSidebarWidth();
+    setSidebarWidth(width < 2 * MIN_WIDTH ? DEFAULT_WIDTH : width);
+  }, [setSidebarWidth]);
+
+  const suggestedFields = useMemo(() => getSuggestedFields(logs, displayedColumns), [displayedColumns, logs]);
+  const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
+
+  return sidebarWidth > MIN_WIDTH * 2 ? (
+    <FieldSelector
+      activeFields={displayedColumns}
+      clear={clear}
+      collapse={collapse}
+      fields={fields}
+      reorder={reorder}
+      suggestedFields={suggestedFields}
+      toggle={toggle}
+    />
+  ) : (
+    <div className={logsFieldSelectorWrapperStyles.collapsedButtonContainer}>
+      <IconButton
+        onClick={expand}
+        name="arrow-from-right"
+        tooltip={t('logs.field-selector.expand', 'Expand sidebar')}
+        size="sm"
+      />
+    </div>
+  );
+};
+
 interface FieldStats {
   percentOfLinesWithLabel: number;
 }
@@ -147,7 +206,7 @@ export interface FieldSelectorProps {
   clear(): void;
   collapse(): void;
   fields: FieldWithStats[];
-  reorder: (fields: string[]) => void;
+  reorder(fields: string[]): void;
   suggestedFields: FieldWithStats[];
   toggle: (key: string) => void;
 }
@@ -168,6 +227,7 @@ export const FieldSelector = ({
     startTransition(() => {
       setSearchValue(e.currentTarget.value);
     });
+    reportInteractionOnce('grafana_explore_logs_table_text_search');
   }, []);
 
   const filteredFields = useMemo(() => {

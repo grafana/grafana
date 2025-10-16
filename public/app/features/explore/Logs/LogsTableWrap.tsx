@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { Resizable, ResizeCallback } from 're-resizable';
 import { useCallback, useEffect, useState } from 'react';
-import * as React from 'react';
 
 import {
   DataFrame,
@@ -16,13 +15,11 @@ import {
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { InlineField, Select, Themeable2 } from '@grafana/ui';
+import { LogsTableFieldSelector } from 'app/features/logs/components/panel/fields/FieldSelector';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
-import { LogsColumnSearch } from './LogsColumnSearch';
 import { LogsTable } from './LogsTable';
-import { LogsTableMultiSelect } from './LogsTableMultiSelect';
-import { fuzzySearch } from './utils/uFuzzy';
 
 interface Props extends Themeable2 {
   logsFrames: DataFrame[];
@@ -66,7 +63,6 @@ export function LogsTableWrap(props: Props) {
 
   // Filtered copy of columnsWithMeta that only includes matching results
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<FieldNameMetaStore | undefined>(undefined);
-  const [searchValue, setSearchValue] = useState<string>('');
 
   const height = getLogsTableHeight();
   const panelStateRefId = props?.panelState?.refId;
@@ -288,13 +284,6 @@ export function LogsTableWrap(props: Props) {
     }
   }
 
-  function searchFilterEvent(searchResultCount: number) {
-    reportInteraction('grafana_explore_logs_table_text_search_result_count', {
-      resultCount: searchResultCount,
-      datasourceType: props.datasourceType ?? 'unknown',
-    });
-  }
-
   const clearSelection = () => {
     const pendingLabelState = { ...columnsWithMeta };
     let index = 0;
@@ -308,26 +297,11 @@ export function LogsTableWrap(props: Props) {
     setColumnsWithMeta(pendingLabelState);
   };
 
-  const reorderColumn = (sourceIndex: number, destinationIndex: number) => {
-    if (sourceIndex === destinationIndex) {
-      return;
-    }
-
+  const reorderColumn = (newColumns: string[]) => {
     const pendingLabelState = { ...columnsWithMeta };
 
-    const keys = Object.keys(pendingLabelState)
-      .filter((key) => pendingLabelState[key].active)
-      .map((key) => ({
-        fieldName: key,
-        index: pendingLabelState[key].index ?? 0,
-      }))
-      .sort((a, b) => a.index - b.index);
-
-    const [source] = keys.splice(sourceIndex, 1);
-    keys.splice(destinationIndex, 0, source);
-
-    keys.forEach((key, index) => {
-      pendingLabelState[key.fieldName].index = index;
+    newColumns.forEach((key, index) => {
+      pendingLabelState[key].index = index;
     });
 
     // Set local state
@@ -438,38 +412,6 @@ export function LogsTableWrap(props: Props) {
     updateExploreState(pendingLabelState);
   };
 
-  // uFuzzy search dispatcher, adds any matches to the local state
-  const dispatcher = (data: string[][]) => {
-    const matches = data[0];
-    let newColumnsWithMeta: FieldNameMetaStore = {};
-    let numberOfResults = 0;
-    matches.forEach((match) => {
-      if (match in columnsWithMeta) {
-        newColumnsWithMeta[match] = columnsWithMeta[match];
-        numberOfResults++;
-      }
-    });
-    setFilteredColumnsWithMeta(newColumnsWithMeta);
-    searchFilterEvent(numberOfResults);
-  };
-
-  // uFuzzy search
-  const search = (needle: string) => {
-    fuzzySearch(Object.keys(columnsWithMeta), needle, dispatcher);
-  };
-
-  // onChange handler for search input
-  const onSearchInputChange = (e: React.FormEvent<HTMLInputElement>) => {
-    const value = e.currentTarget?.value;
-    setSearchValue(value);
-    if (value) {
-      search(value);
-    } else {
-      // If the search input is empty, reset the local search state.
-      setFilteredColumnsWithMeta(undefined);
-    }
-  };
-
   const onFrameSelectorChange = (value: SelectableValue<string>) => {
     const matchingDataFrame = logsFrames.find((frame) => frame.refId === value.value);
     if (matchingDataFrame) {
@@ -486,6 +428,12 @@ export function LogsTableWrap(props: Props) {
       setSidebarWidth(newSidebarWidth);
     }
   };
+
+  const displayedColumns = Object.keys(columnsWithMeta)
+    .filter((column) => columnsWithMeta[column].index !== undefined)
+    .sort((a, b) =>
+      columnsWithMeta[a].index && columnsWithMeta[b].index ? columnsWithMeta[a].index - columnsWithMeta[b].index : 0
+    );
 
   return (
     <>
@@ -525,16 +473,16 @@ export function LogsTableWrap(props: Props) {
           handleClasses={{ right: styles.rzHandle }}
           onResize={getOnResize}
         >
-          <section className={styles.sidebar}>
-            <LogsColumnSearch value={searchValue} onChange={onSearchInputChange} />
-            <LogsTableMultiSelect
-              reorderColumn={reorderColumn}
-              toggleColumn={toggleColumn}
-              filteredColumnsWithMeta={filteredColumnsWithMeta}
-              columnsWithMeta={columnsWithMeta}
-              clear={clearSelection}
-            />
-          </section>
+          <LogsTableFieldSelector
+            clear={clearSelection}
+            dataFrames={[currentDataFrame]}
+            displayedColumns={displayedColumns}
+            logs={[]}
+            reorder={reorderColumn}
+            setSidebarWidth={setSidebarWidth}
+            sidebarWidth={sidebarWidth}
+            toggle={toggleColumn}
+          />
         </Resizable>
         <LogsTable
           logsFrame={logsFrame}
