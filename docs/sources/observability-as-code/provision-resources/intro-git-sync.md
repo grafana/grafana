@@ -9,6 +9,7 @@ labels:
   products:
     - enterprise
     - oss
+    - cloud
 title: Git Sync
 weight: 100
 ---
