@@ -333,7 +333,7 @@ jobs:
           body-includes: GitHub Actions Build
           token: ${{ steps.generate_token.outputs.token }}
       - name: Create or update comment
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v4
         with:
           token: ${{ steps.generate_token.outputs.token }}
           comment-id: ${{ steps.fc.outputs.comment-id }}
