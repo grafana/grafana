@@ -691,11 +691,6 @@
       "count": 3
     }
   },
-  "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Forms/Form.story.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 9
@@ -783,11 +778,6 @@
   "packages/grafana-ui/src/components/JSONFormatter/json_explorer/json_explorer.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "packages/grafana-ui/src/components/Layout/Stack/Stack.story.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/List/AbstractList.tsx": {
@@ -2897,7 +2887,7 @@
       "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 17
+      "count": 16
     }
   },
   "public/app/features/dashboard/state/DashboardModel.repeat.test.ts": {
