@@ -1,0 +1,247 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "traceFormat": "jaeger"
+//      },
+//      "preferredVisualisationType": "trace"
+//  }
+//  Name: test
+//  Dimensions: 11 Fields by 2 Rows
+//  +------------------+------------------+--------------------+-------------------------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------+-----------------+-------------------------+-------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+//  | Name: traceID    | Name: spanID     | Name: parentSpanID | Name: operationName           | Name: serviceName | Name: serviceTags                                                                                                                                                                 | Name: startTime        | Name: duration  | Name: logs              | Name: references        | Name: tags                                                                                                                                                                                                                                                                                                    |
+//  | Labels:          | Labels:          | Labels:            | Labels:                       | Labels:           | Labels:                                                                                                                                                                           | Labels:                | Labels:         | Labels:                 | Labels:                 | Labels:                                                                                                                                                                                                                                                                                                       |
+//  | Type: []string   | Type: []string   | Type: []*string    | Type: []string                | Type: []string    | Type: []json.RawMessage                                                                                                                                                           | Type: []float64        | Type: []float64 | Type: []json.RawMessage | Type: []json.RawMessage | Type: []json.RawMessage                                                                                                                                                                                                                                                                                       |
+//  +------------------+------------------+--------------------+-------------------------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------+-----------------+-------------------------+-------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+//  | 3fa414edcef6ad90 | 3fa414edcef6ad90 |                    | HTTP GET - api_traces_traceid | tempo-querier     | [{"key":"service.name","type":"string","value":"tempo-querier"},{"key":"cluster","type":"string","value":"ops-tools1"},{"key":"container","type":"string","value":"tempo-query"}] | 1.6058738946804092e+12 | 1049.140992     | null                    | []                      | [{"key":"sampler.type","type":"string","value":"probabilistic"},{"key":"sampler.param","type":"float64","value":100},{"key":"otel.scope.name","type":"string","value":"some_scope1"},{"key":"otel.scope.version","type":"string","value":"0.0.39"},{"key":"span.kind","type":"string","value":"unspecified"}] |
+//  | 3fa414edcef6ad90 | 0f5c1808567e4403 | 3fa414edcef6ad90   | HTTP GET - api_traces_traceid | tempo-querier     | [{"key":"service.name","type":"string","value":"tempo-querier"},{"key":"cluster","type":"string","value":"ops-tools1"},{"key":"container","type":"string","value":"tempo-query"}] | 1.605873894680587e+12  | 1.84704         | null                    | []                      | [{"key":"component","type":"string","value":"gRPC"},{"key":"otel.scope.name","type":"string","value":"some_scope1"},{"key":"otel.scope.version","type":"string","value":"0.0.39"}]                                                                                                                            |
+//  +------------------+------------------+--------------------+-------------------------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------+-----------------+-------------------------+-------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "test",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "traceFormat": "jaeger"
+          },
+          "preferredVisualisationType": "trace"
+        },
+        "fields": [
+          {
+            "name": "traceID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "spanID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "parentSpanID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "operationName",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "serviceName",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "serviceTags",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "startTime",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          },
+          {
+            "name": "duration",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          },
+          {
+            "name": "logs",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "references",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "tags",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "3fa414edcef6ad90",
+            "3fa414edcef6ad90"
+          ],
+          [
+            "3fa414edcef6ad90",
+            "0f5c1808567e4403"
+          ],
+          [
+            "",
+            "3fa414edcef6ad90"
+          ],
+          [
+            "HTTP GET - api_traces_traceid",
+            "HTTP GET - api_traces_traceid"
+          ],
+          [
+            "tempo-querier",
+            "tempo-querier"
+          ],
+          [
+            [
+              {
+                "key": "service.name",
+                "type": "string",
+                "value": "tempo-querier"
+              },
+              {
+                "key": "cluster",
+                "type": "string",
+                "value": "ops-tools1"
+              },
+              {
+                "key": "container",
+                "type": "string",
+                "value": "tempo-query"
+              }
+            ],
+            [
+              {
+                "key": "service.name",
+                "type": "string",
+                "value": "tempo-querier"
+              },
+              {
+                "key": "cluster",
+                "type": "string",
+                "value": "ops-tools1"
+              },
+              {
+                "key": "container",
+                "type": "string",
+                "value": "tempo-query"
+              }
+            ]
+          ],
+          [
+            1605873894680.4092,
+            1605873894680.587
+          ],
+          [
+            1049.140992,
+            1.84704
+          ],
+          [
+            null,
+            null
+          ],
+          [
+            [],
+            []
+          ],
+          [
+            [
+              {
+                "key": "sampler.type",
+                "type": "string",
+                "value": "probabilistic"
+              },
+              {
+                "key": "sampler.param",
+                "type": "float64",
+                "value": 100
+              },
+              {
+                "key": "otel.scope.name",
+                "type": "string",
+                "value": "some_scope1"
+              },
+              {
+                "key": "otel.scope.version",
+                "type": "string",
+                "value": "0.0.39"
+              },
+              {
+                "key": "span.kind",
+                "type": "string",
+                "value": "unspecified"
+              }
+            ],
+            [
+              {
+                "key": "component",
+                "type": "string",
+                "value": "gRPC"
+              },
+              {
+                "key": "otel.scope.name",
+                "type": "string",
+                "value": "some_scope1"
+              },
+              {
+                "key": "otel.scope.version",
+                "type": "string",
+                "value": "0.0.39"
+              }
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -209,209 +209,335 @@ func TestGetAttributes(t *testing.T) {
 	})
 }
 
-// func TestTransformGrpcTraceResponse(t *testing.T) {
-// 	t.Run("simple_trace", func(t *testing.T) {
-// 		trace := types.GrpcResourceSpans{
-// 			Resource: types.GrpcResource{
-// 				Attributes: []types.GrpcKeyValue{
-// 					{
-// 						Key: "service.name",
-// 						Value: types.GrpcAnyValue{
-// 							StringValue: "tempo-querier",
-// 						},
-// 					},
-// 					{
-// 						Key: "cluster",
-// 						Value: types.GrpcAnyValue{
-// 							StringValue: "ops-tools1",
-// 						},
-// 					},
-// 					{
-// 						Key: "container",
-// 						Value: types.GrpcAnyValue{
-// 							StringValue: "tempo-query",
-// 						},
-// 					},
-// 				},
-// 			},
-// 			ScopeSpans: []types.GrpcScopeSpans{
-// 				{
-// 					Scope: types.GrpcInstrumentationScope{
-// 						Name: "some_scope1",
-// 						Version: "0.0.39",
-// 					},
-// 					Spans: []types.GrpcSpan{
-// 						{
-// 							TraceID: "3fa414edcef6ad90",
-// 							SpanID: "3fa414edcef6ad90",
-// 							ParentSpanID: "",
-// 							Name: "HTTP GET - api_traces_traceid",
-// 							Attributes: []types.GrpcKeyValue{
-// 								{
-// 									Key: "sampler.type",
-// 									Value: types.GrpcAnyValue{
-// 										StringValue: "probabilistic",
-// 									},
-// 								},
-// 								{
-// 									Key: "sampler.param",
-// 									Value: types.GrpcAnyValue{
-// 										DoubleValue: 1,
-// 									},
-// 								},
-// 							},
-// 							StartTimeUnixNano: "1605873894680409000",
-// 							EndTimeUnixNano: "1605873895729550000",
-// 						},
-// 						{
-// 							TraceID: "3fa414edcef6ad90",
-// 							SpanID: "0f5c1808567e4403",
-// 							ParentSpanID: "3fa414edcef6ad90",
-// 							Name: "HTTP GET - api_traces_traceid",
-// 							Attributes: []types.GrpcKeyValue{
-// 								{
-// 									Key: "component",
-// 									Value: types.GrpcAnyValue{
-// 										StringValue: "gRPC",
-// 									},
-// 								},
-// 								{
-// 									Key: "span.kind",
-// 									Value: types.GrpcAnyValue{
-// 										DoubleValue: "client",
-// 									},
-// 								},
-// 							},
-// 							StartTimeUnixNano: "1605873894680587000",
-// 							EndTimeUnixNano: "1605873894682434000",
-// 						},
-// 					},
-// 				},
-// 			},
-// 		}
-// 		frame := TransformGrpcTraceResponse(trace, "test")
-// 		experimental.CheckGoldenJSONFrame(t, "./testdata", "simple_trace.golden", frame, false)
-// 	})
+func TestTransformGrpcTraceResponse(t *testing.T) {
+	t.Run("simple_trace", func(t *testing.T) {
+		trace := []types.GrpcResourceSpans{
+			{
+				Resource: types.GrpcResource{
+					Attributes: []types.GrpcKeyValue{
+						{
+							Key: "service.name",
+							Value: types.GrpcAnyValue{
+								StringValue: "tempo-querier",
+							},
+						},
+						{
+							Key: "cluster",
+							Value: types.GrpcAnyValue{
+								StringValue: "ops-tools1",
+							},
+						},
+						{
+							Key: "container",
+							Value: types.GrpcAnyValue{
+								StringValue: "tempo-query",
+							},
+						},
+					},
+				},
+				ScopeSpans: []types.GrpcScopeSpans{
+					{
+						Scope: types.GrpcInstrumentationScope{
+							Name:    "some_scope1",
+							Version: "0.0.39",
+						},
+						Spans: []types.GrpcSpan{
+							{
+								TraceID:      "3fa414edcef6ad90",
+								SpanID:       "3fa414edcef6ad90",
+								ParentSpanID: "",
+								Name:         "HTTP GET - api_traces_traceid",
+								Attributes: []types.GrpcKeyValue{
+									{
+										Key: "sampler.type",
+										Value: types.GrpcAnyValue{
+											StringValue: "probabilistic",
+										},
+									},
+									{
+										Key: "sampler.param",
+										Value: types.GrpcAnyValue{
+											DoubleValue: "100.00",
+										},
+									},
+								},
+								StartTimeUnixNano: "1605873894680409000",
+								EndTimeUnixNano:   "1605873895729550000",
+							},
+							{
+								TraceID:      "3fa414edcef6ad90",
+								SpanID:       "0f5c1808567e4403",
+								ParentSpanID: "3fa414edcef6ad90",
+								Name:         "HTTP GET - api_traces_traceid",
+								Attributes: []types.GrpcKeyValue{
+									{
+										Key: "component",
+										Value: types.GrpcAnyValue{
+											StringValue: "gRPC",
+										},
+									},
+									{
+										Key: "span.kind",
+										Value: types.GrpcAnyValue{
+											DoubleValue: "client",
+										},
+									},
+								},
+								StartTimeUnixNano: "1605873894680587000",
+								EndTimeUnixNano:   "1605873894682434000",
+							},
+						},
+					},
+				},
+			},
+		}
+		frame := TransformGrpcTraceResponse(trace, "test")
+		experimental.CheckGoldenJSONFrame(t, "../testdata", "simple_trace_grpc.golden", frame, false)
+	})
 
-// 	t.Run("complex_trace", func(t *testing.T) {
-// 		trace := types.TraceResponse{
-// 			TraceID: "3fa414edcef6ad90",
-// 			Spans: []types.Span{
-// 				{
-// 					TraceID:       "3fa414edcef6ad90",
-// 					SpanID:        "3fa414edcef6ad90",
-// 					OperationName: "HTTP GET - api_traces_traceid",
-// 					References:    []types.TraceSpanReference{},
-// 					StartTime:     1605873894680409,
-// 					Duration:      1049141,
-// 					Tags: []types.TraceKeyValuePair{
-// 						{Key: "sampler.type", Type: "string", Value: "probabilistic"},
-// 						{Key: "sampler.param", Type: "float64", Value: 1},
-// 						{Key: "error", Type: "bool", Value: true},
-// 						{Key: "http.status_code", Type: "int", Value: 500},
-// 					},
-// 					Logs: []types.TraceLog{
-// 						{
-// 							Timestamp: 1605873894681000,
-// 							Fields: []types.TraceKeyValuePair{
-// 								{Key: "event", Type: "string", Value: "error"},
-// 								{Key: "message", Type: "string", Value: "Internal server error"},
-// 							},
-// 						},
-// 					},
-// 					ProcessID: "p1",
-// 					Warnings:  []string{"High latency detected", "Error rate above threshold"},
-// 					Flags:     0,
-// 				},
-// 				{
-// 					TraceID:       "3fa414edcef6ad90",
-// 					SpanID:        "0f5c1808567e4403",
-// 					OperationName: "/tempopb.Querier/FindTraceByID",
-// 					References: []types.TraceSpanReference{
-// 						{
-// 							RefType: "CHILD_OF",
-// 							TraceID: "3fa414edcef6ad90",
-// 							SpanID:  "3fa414edcef6ad90",
-// 						},
-// 					},
-// 					StartTime: 1605873894680587,
-// 					Duration:  1847,
-// 					Tags: []types.TraceKeyValuePair{
-// 						{Key: "component", Type: "string", Value: "gRPC"},
-// 						{Key: "span.kind", Type: "string", Value: "client"},
-// 						{Key: "error", Type: "bool", Value: true},
-// 						{Key: "grpc.status_code", Type: "int", Value: 13},
-// 					},
-// 					Logs: []types.TraceLog{
-// 						{
-// 							Timestamp: 1605873894680700,
-// 							Fields: []types.TraceKeyValuePair{
-// 								{Key: "event", Type: "string", Value: "error"},
-// 								{Key: "message", Type: "string", Value: "gRPC error: INTERNAL"},
-// 							},
-// 						},
-// 					},
-// 					ProcessID: "p1",
-// 					Warnings:  []string{"gRPC call failed", "Retry attempt 3"},
-// 					Flags:     0,
-// 				},
-// 				{
-// 					TraceID:       "3fa414edcef6ad90",
-// 					SpanID:        "1a2b3c4d5e6f7g8h",
-// 					OperationName: "db.query",
-// 					References: []types.TraceSpanReference{
-// 						{
-// 							RefType: "CHILD_OF",
-// 							TraceID: "3fa414edcef6ad90",
-// 							SpanID:  "0f5c1808567e4403",
-// 						},
-// 					},
-// 					StartTime: 1605873894680800,
-// 					Duration:  500,
-// 					Tags: []types.TraceKeyValuePair{
-// 						{Key: "db.type", Type: "string", Value: "postgresql"},
-// 						{Key: "db.statement", Type: "string", Value: "SELECT * FROM traces WHERE id = $1"},
-// 						{Key: "error", Type: "bool", Value: true},
-// 					},
-// 					Logs: []types.TraceLog{
-// 						{
-// 							Timestamp: 1605873894680850,
-// 							Fields: []types.TraceKeyValuePair{
-// 								{Key: "event", Type: "string", Value: "error"},
-// 								{Key: "message", Type: "string", Value: "Database connection timeout"},
-// 							},
-// 						},
-// 					},
-// 					ProcessID: "p2",
-// 					Warnings:  []string{"Database connection slow", "Query timeout"},
-// 					Flags:     0,
-// 				},
-// 			},
-// 			Processes: map[string]types.TraceProcess{
-// 				"p1": {
-// 					ServiceName: "tempo-querier",
-// 					Tags: []types.TraceKeyValuePair{
-// 						{Key: "cluster", Type: "string", Value: "ops-tools1"},
-// 						{Key: "container", Type: "string", Value: "tempo-query"},
-// 						{Key: "version", Type: "string", Value: "1.2.3"},
-// 					},
-// 				},
-// 				"p2": {
-// 					ServiceName: "tempo-storage",
-// 					Tags: []types.TraceKeyValuePair{
-// 						{Key: "cluster", Type: "string", Value: "ops-tools1"},
-// 						{Key: "container", Type: "string", Value: "tempo-storage"},
-// 						{Key: "version", Type: "string", Value: "2.0.1"},
-// 					},
-// 				},
-// 			},
-// 			Warnings: []string{"Trace contains errors", "Multiple service failures"},
-// 		}
+	t.Run("complex_trace", func(t *testing.T) {
+		trace := []types.GrpcResourceSpans{
+			{
+				Resource: types.GrpcResource{
+					Attributes: []types.GrpcKeyValue{
+						{
+							Key: "service.name",
+							Value: types.GrpcAnyValue{
+								StringValue: "tempo-querier",
+							},
+						},
+						{
+							Key: "cluster",
+							Value: types.GrpcAnyValue{
+								StringValue: "ops-tools1",
+							},
+						},
+						{
+							Key: "container",
+							Value: types.GrpcAnyValue{
+								StringValue: "tempo-storage",
+							},
+						},
+						{
+							Key: "version",
+							Value: types.GrpcAnyValue{
+								StringValue: "2.0.1",
+							},
+						},
+					},
+				},
+				ScopeSpans: []types.GrpcScopeSpans{
+					{
+						Spans: []types.GrpcSpan{
+							{
+								TraceID:           "3fa414edcef6ad90",
+								SpanID:            "3fa414edcef6ad90",
+								Name:              "HTTP GET - api_traces_traceid",
+								Links:             []types.GrpcSpanLink{},
+								StartTimeUnixNano: "1605873894680409000",
+								EndTimeUnixNano:   "1605873895729550000",
+								Attributes: []types.GrpcKeyValue{
+									{
+										Key: "sampler.type",
+										Value: types.GrpcAnyValue{
+											StringValue: "probabilistic",
+										},
+									},
+									{
+										Key: "sampler.param",
+										Value: types.GrpcAnyValue{
+											DoubleValue: "1",
+										},
+									},
+									{
+										Key: "error",
+										Value: types.GrpcAnyValue{
+											BoolValue: "true",
+										},
+									},
+									{
+										Key: "http.status_code",
+										Value: types.GrpcAnyValue{
+											IntValue: "500",
+										},
+									},
+								},
+								Events: []types.GrpcSpanEvent{
+									{
+										TimeUnixNano: 1605873894681000000,
+										Attributes: []types.GrpcKeyValue{
+											{
+												Key: "event",
+												Value: types.GrpcAnyValue{
+													StringValue: "error",
+												},
+											},
+											{
+												Key: "message",
+												Value: types.GrpcAnyValue{
+													StringValue: "Internal server error",
+												},
+											},
+										},
+									},
+								},
+							},
+							{
+								TraceID: "3fa414edcef6ad90",
+								SpanID:  "0f5c1808567e4403",
+								Name:    "/tempopb.Querier/FindTraceByID",
+								Links: []types.GrpcSpanLink{
+									{
+										TraceID: "3fa414edcef6ad90",
+										SpanID:  "3fa414edcef6ad90",
+									},
+								},
+								StartTimeUnixNano: "1605873894680587000",
+								EndTimeUnixNano:   "1605873894682434000",
+								Attributes: []types.GrpcKeyValue{
+									{
+										Key: "component",
+										Value: types.GrpcAnyValue{
+											StringValue: "gRPC",
+										},
+									},
+									{
+										Key: "span.kind",
+										Value: types.GrpcAnyValue{
+											StringValue: "client",
+										},
+									},
+									{
+										Key: "error",
+										Value: types.GrpcAnyValue{
+											BoolValue: "true",
+										},
+									},
+									{
+										Key: "grpc.status_code",
+										Value: types.GrpcAnyValue{
+											IntValue: "13",
+										},
+									},
+								},
+								Events: []types.GrpcSpanEvent{
+									{
+										TimeUnixNano: 1605873894680700000,
+										Attributes: []types.GrpcKeyValue{
+											{
+												Key: "event",
+												Value: types.GrpcAnyValue{
+													StringValue: "error",
+												},
+											},
+											{
+												Key: "message",
+												Value: types.GrpcAnyValue{
+													StringValue: "gRPC error: INTERNAL",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				Resource: types.GrpcResource{
+					Attributes: []types.GrpcKeyValue{
+						{
+							Key: "service.name",
+							Value: types.GrpcAnyValue{
+								StringValue: "tempo-storage",
+							},
+						},
+						{
+							Key: "cluster",
+							Value: types.GrpcAnyValue{
+								StringValue: "ops-tools1",
+							},
+						},
+						{
+							Key: "container",
+							Value: types.GrpcAnyValue{
+								StringValue: "tempo-storage",
+							},
+						},
+						{
+							Key: "version",
+							Value: types.GrpcAnyValue{
+								StringValue: "2.0.1",
+							},
+						},
+					},
+				},
+				ScopeSpans: []types.GrpcScopeSpans{
+					{
+						Spans: []types.GrpcSpan{
+							{
+								TraceID: "3fa414edcef6ad90",
+								SpanID:  "1a2b3c4d5e6f7g8h",
+								Name:    "db.query",
+								Links: []types.GrpcSpanLink{
+									{
+										TraceID: "3fa414edcef6ad90",
+										SpanID:  "0f5c1808567e4403",
+									},
+								},
+								StartTimeUnixNano: "1605873894680800000",
+								EndTimeUnixNano:   "1605873894681300000",
+								Attributes: []types.GrpcKeyValue{
+									{
+										Key: "db.type",
+										Value: types.GrpcAnyValue{
+											StringValue: "postgresql",
+										},
+									},
+									{
+										Key: "db.statement",
+										Value: types.GrpcAnyValue{
+											StringValue: "SELECT * FROM traces WHERE id = $1",
+										},
+									},
+									{
+										Key: "error",
+										Value: types.GrpcAnyValue{
+											BoolValue: "true",
+										},
+									},
+								},
+								Events: []types.GrpcSpanEvent{
+									{
+										TimeUnixNano: 1605873894681000000,
+										Attributes: []types.GrpcKeyValue{
+											{
+												Key: "event",
+												Value: types.GrpcAnyValue{
+													StringValue: "error",
+												},
+											},
+											{
+												Key: "message",
+												Value: types.GrpcAnyValue{
+													StringValue: "Database connection timeout",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
 
-// 		frame := TransformTraceResponse(trace, "test")
-// 		experimental.CheckGoldenJSONFrame(t, "./testdata", "complex_trace.golden", frame, false)
-// 	})
-// }
+		frame := TransformGrpcTraceResponse(trace, "test")
+		experimental.CheckGoldenJSONFrame(t, "../testdata", "complex_trace_grpc.golden", frame, false)
+	})
+}
 
 func TestProcessSpanKind(t *testing.T) {
 	t.Run("converts unspecified span kind", func(t *testing.T) {
