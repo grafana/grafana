@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
-import { Trans } from '@grafana/i18n';
-import { Card, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Card, Stack, Text, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1/endpoints.gen';
 
 import { CONNECT_URL } from '../constants';
@@ -15,6 +16,7 @@ export function RepositoryTypeCards() {
 
   const availableTypes = frontendSettings?.availableRepositoryTypes ?? [];
   const { gitProviders, otherProviders } = getOrderedRepositoryConfigs(availableTypes);
+  const isLegacyStorage = frontendSettings?.legacyStorage ?? false;
 
   return (
     <Stack direction="column" gap={2}>
@@ -26,7 +28,12 @@ export function RepositoryTypeCards() {
 
           <Stack direction="row" gap={1} wrap>
             {gitProviders.map((config) => (
-              <Card key={config.type} href={`${CONNECT_URL}/${config.type}`} className={styles.card} noMargin>
+              <Card 
+                key={config.type} 
+                href={isLegacyStorage ? undefined : `${CONNECT_URL}/${config.type}`} 
+                className={isLegacyStorage ? styles.disabledCard : styles.card} 
+                noMargin
+              >
                 <Stack gap={2} alignItems="center">
                   <RepoIcon type={config.type} />
                   <Trans
@@ -52,7 +59,12 @@ export function RepositoryTypeCards() {
 
           <Stack direction="row" gap={1} wrap>
             {otherProviders.map((config) => (
-              <Card key={config.type} href={`${CONNECT_URL}/${config.type}`} className={styles.card} noMargin>
+              <Card 
+                key={config.type} 
+                href={isLegacyStorage ? undefined : `${CONNECT_URL}/${config.type}`} 
+                className={isLegacyStorage ? styles.disabledCard : styles.card} 
+                noMargin
+              >
                 <Stack gap={2} alignItems="center">
                   <RepoIcon type={config.type} />
                   {config.type === 'local' ? (
@@ -77,10 +89,21 @@ export function RepositoryTypeCards() {
   );
 }
 
-function getStyles() {
+function getStyles(theme: GrafanaTheme2) {
   return {
     card: css({
       width: 220,
+    }),
+    disabledCard: css({
+      width: 220,
+      opacity: 0.6,
+      cursor: 'default',
+      pointerEvents: 'none',
+      backgroundColor: theme.colors.action.disabledBackground,
+      
+      '& *': {
+        color: theme.colors.text.disabled,
+      },
     }),
   };
 }
