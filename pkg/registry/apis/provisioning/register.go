@@ -573,7 +573,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	}
 
 	if b.storageStatus != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus) {
-		return fmt.Errorf("resources are stored in a data format that's not supported by this version")
+		return fmt.Errorf("resources are stored in an incompatible data format")
 	}
 
 	repo, err := b.asRepository(ctx, obj, a.GetOldObject())
