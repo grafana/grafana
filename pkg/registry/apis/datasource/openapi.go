@@ -3,6 +3,7 @@ package datasource
 import (
 	"fmt"
 	"maps"
+	"slices"
 	"strings"
 
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -154,9 +155,11 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 			}
 			v.Parameters = append(v.Parameters, ds.Parameters[0:2]...)
 			for m, op := range builder.GetPathOperations(v) {
-				op.Tags = append(op.Tags, "Route") // Custom resource?
 				if op.Extensions == nil {
 					op.Extensions = make(spec.Extensions)
+				}
+				if !slices.Contains(op.Tags, "Route") {
+					op.Tags = append(op.Tags, "Route") // Custom resource?
 				}
 				tmp := strings.ReplaceAll(strings.ReplaceAll(k, "{", ""), "}", "")
 				op.OperationId = fmt.Sprintf("%s_route%s", strings.ToLower(m), strings.ReplaceAll(tmp, "/", "_"))

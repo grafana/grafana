@@ -9,29 +9,28 @@ import (
 
 func TestdataOpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error) {
 	oas := &datasourceV0.DataSourceOpenAPIExtension{
-		SecureValues: []datasourceV0.SecureValueInfo{{
-			Key:         "aaa",
-			Description: "describe aaa",
-			Required:    true,
-		}, {
-			Key:         "bbb",
-			Description: "describe bbb",
-		}},
+		SecureValues: []datasourceV0.SecureValueInfo{ // empty
+			// {
+			// 	Key:         "aaa",
+			// 	Description: "describe aaa",
+			// 	Required:    true,
+			// }, {
+			// 	Key:         "bbb",
+			// 	Description: "describe bbb",
+			// },
+		},
 	}
 
 	// Dummy spec
 	p := &spec.Schema{} //SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
-	p.Description = "HELLO!"
-	p.Required = []string{"url"}
+	p.Description = "Test data does not require any explicit configuration"
+	p.Required = []string{}
 	p.AdditionalProperties = &spec.SchemaOrBool{Allows: false}
 	p.Properties = map[string]spec.Schema{
-		"url":   *spec.StringProperty(),
-		"str":   *spec.StringProperty(), // ??? must this be under jsonData?
-		"int64": *spec.Int64Property(),  // ??? must this be under jsonData?
+		"url": *spec.StringProperty().WithDescription("not used"),
 	}
 	p.Example = map[string]any{
-		"url":   "http://xxxx",
-		"int64": 1234,
+		"url": "http://xxxx",
 	}
 	oas.DataSourceSpec = p
 
