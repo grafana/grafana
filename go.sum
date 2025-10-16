@@ -2119,8 +2119,8 @@ github.com/onsi/gomega v1.4.3/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1Cpa
 github.com/onsi/gomega v1.5.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/onsi/gomega v1.36.2 h1:koNYke6TVk6ZmnyHrCXba/T/MoLBXFjeC1PtvYgw0A8=
 github.com/onsi/gomega v1.36.2/go.mod h1:DdwyADRjrc825LhMEkD76cHR5+pUnjhUN8GlHlRPHzY=
-github.com/open-feature/go-sdk v1.14.1 h1:jcxjCIG5Up3XkgYwWN5Y/WWfc6XobOhqrIwjyDBsoQo=
-github.com/open-feature/go-sdk v1.14.1/go.mod h1:t337k0VB/t/YxJ9S0prT30ISUHwYmUd/jhUZgFcOvGg=
+github.com/open-feature/go-sdk v1.16.0 h1:5NCHYv5slvNBIZhYXAzAufo0OI59OACZ5tczVqSE+Tg=
+github.com/open-feature/go-sdk v1.16.0/go.mod h1:EIF40QcoYT1VbQkMPy2ZJH4kvZeY+qGUXAorzSWgKSo=
 github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3 h1:6jpO63NCEZv4xunJj+aNlDuFVuRkVBPMcIuxvFPYRWQ=
 github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3/go.mod h1:dPUHjAIFzg+ci/wt6XxlNiiMkOh5Yw4SGyeRY0AFT0g=
 github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 h1:ZdqlGnNwhWf3luhBQlIpbglvcCzjkcuEgOEhYhr5Emc=
