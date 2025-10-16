@@ -10,6 +10,7 @@ import {
   LogsSortOrder,
   SelectableValue,
   SplitOpen,
+  store,
   TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -433,6 +434,7 @@ export function LogsTableWrap(props: Props) {
     const newSidebarWidth = Number(ref.style.width.slice(0, -2));
     if (!isNaN(newSidebarWidth)) {
       setSidebarWidth(newSidebarWidth);
+      store.set(`${SETTING_KEY_ROOT}.fieldSelector.width`, newSidebarWidth);
     }
   };
 
@@ -481,7 +483,7 @@ export function LogsTableWrap(props: Props) {
           size={{ width: sidebarWidth, height: getLogsTableHeight() }}
           defaultSize={{ width: sidebarWidth, height: getLogsTableHeight() }}
           minWidth={MIN_WIDTH}
-          maxWidth={tableWidth * 0.8}
+          maxWidth={props.width * 0.8}
           onResize={getOnResize}
         >
           <LogsTableFieldSelector
