@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { Resizable, ResizeCallback } from 're-resizable';
 import { startTransition, useCallback, useLayoutEffect, useMemo, useState } from 'react';
 
-import { DataFrame, fuzzySearch, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, fuzzySearch, GrafanaTheme2, store } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { getDragStyles, useStyles2 } from '@grafana/ui';
+import { getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
 import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../../LogDetailsBody';
@@ -21,13 +22,17 @@ interface LogListFieldSelectorProps {
   dataFrames: DataFrame[];
 }
 
+const DEFAULT_WIDTH = 220;
+const MIN_WIDTH = 20;
+
 /**
  * FieldSelector wrapper for the LogList visualization.
  */
 export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: LogListFieldSelectorProps) => {
+  const { displayedFields, onClickShowField, onClickHideField, setDisplayedFields, logOptionsStorageKey } =
+    useLogListContext();
   const [sidebarHeight, setSidebarHeight] = useState(220);
-  const [sidebarWidth, setSidebarWidth] = useState(220);
-  const { displayedFields, onClickShowField, onClickHideField, setDisplayedFields } = useLogListContext();
+  const [sidebarWidth, setSidebarWidth] = useState(getSidebarWidth(logOptionsStorageKey));
   const dragStyles = useStyles2(getDragStyles);
 
   useLayoutEffect(() => {
@@ -44,9 +49,22 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
     setDisplayedFields?.([]);
   }, [setDisplayedFields]);
 
-  const handleResize: ResizeCallback = useCallback((event, direction, ref) => {
-    setSidebarWidth(ref.clientWidth);
+  const collapse = useCallback(() => {
+    setSidebarWidth(MIN_WIDTH);
   }, []);
+
+  const expand = useCallback(() => {
+    const width = getSidebarWidth(logOptionsStorageKey);
+    setSidebarWidth(width < 2 * MIN_WIDTH ? DEFAULT_WIDTH : width);
+  }, [logOptionsStorageKey]);
+
+  const handleResize: ResizeCallback = useCallback(
+    (event, direction, ref) => {
+      setSidebarWidth(ref.clientWidth);
+      store.set(`${logOptionsStorageKey}.fieldSelector.width`, ref.clientWidth);
+    },
+    [logOptionsStorageKey]
+  );
 
   const toggleField = useCallback(
     (name: string) => {
@@ -67,7 +85,6 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
     return null;
   }
   if (sidebarHeight === 0) {
-    console.log('no height');
     return;
   }
 
@@ -79,18 +96,41 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
       handleClasses={{ right: dragStyles.dragHandleVertical }}
       size={{ width: sidebarWidth, height: sidebarHeight }}
       defaultSize={{ width: sidebarWidth, height: sidebarHeight }}
+      minWidth={MIN_WIDTH}
+      maxWidth={containerElement.clientWidth * 0.8}
       onResize={handleResize}
     >
-      <FieldSelector
-        activeFields={displayedFields}
-        clear={clearFields}
-        fields={fields}
-        reorder={setDisplayedFields}
-        suggestedFields={suggestedFields}
-        toggle={toggleField}
-      />
+      {sidebarWidth > MIN_WIDTH * 2 ? (
+        <FieldSelector
+          activeFields={displayedFields}
+          clear={clearFields}
+          collapse={collapse}
+          fields={fields}
+          reorder={setDisplayedFields}
+          suggestedFields={suggestedFields}
+          toggle={toggleField}
+        />
+      ) : (
+        <div className={logsFieldSelectorWrapperStyles.collapsedButtonContainer}>
+          <IconButton
+            onClick={expand}
+            name="arrow-from-right"
+            tooltip={t('logs.field-selector.expand', 'Expand sidebar')}
+            size="sm"
+          />
+        </div>
+      )}
     </Resizable>
   );
+};
+
+const logsFieldSelectorWrapperStyles = {
+  collapsedButtonContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  }),
 };
 
 interface FieldStats {
@@ -105,6 +145,7 @@ export interface FieldWithStats {
 export interface FieldSelectorProps {
   activeFields: string[];
   clear(): void;
+  collapse(): void;
   fields: FieldWithStats[];
   reorder: (fields: string[]) => void;
   suggestedFields: FieldWithStats[];
@@ -114,6 +155,7 @@ export interface FieldSelectorProps {
 export const FieldSelector = ({
   activeFields,
   clear,
+  collapse,
   fields,
   reorder,
   suggestedFields,
@@ -152,7 +194,7 @@ export const FieldSelector = ({
 
   return (
     <section className={styles.sidebar}>
-      <FieldSearch value={searchValue} onChange={onSearchInputChange} />
+      <FieldSearch collapse={collapse} onChange={onSearchInputChange} value={searchValue} />
       <FieldList
         activeFields={activeFields}
         clear={clear}
@@ -173,6 +215,7 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
+      position: 'relative',
     }),
   };
 }
@@ -235,4 +278,13 @@ function getSuggestedFields(logs: LogListModel[], displayedFields: string[]) {
   }
 
   return suggestedFields;
+}
+
+function getSidebarWidth(logOptionsStorageKey?: string): number {
+  const width =
+    (logOptionsStorageKey
+      ? parseInt(store.get(`${logOptionsStorageKey}.fieldSelector.width`) ?? DEFAULT_WIDTH, 10)
+      : undefined) ?? DEFAULT_WIDTH;
+
+  return width < MIN_WIDTH ? MIN_WIDTH : width;
 }
