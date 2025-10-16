@@ -3,7 +3,6 @@ package builder
 import (
 	"bytes"
 	"encoding/json"
-	"iter"
 	"maps"
 	"net/http"
 	"strings"
@@ -236,37 +235,31 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 	}
 }
 
-func GetPathOperations(path *spec3.Path) iter.Seq2[string, *spec3.Operation] {
-	return func(yield func(string, *spec3.Operation) bool) {
-		if path.Get != nil && !yield(http.MethodGet, path.Get) {
-			return
-		}
-		if path.Get != nil && !yield(http.MethodGet, path.Get) {
-			return
-		}
-		if path.Head != nil && !yield(http.MethodHead, path.Head) {
-			return
-		}
-		if path.Delete != nil && !yield(http.MethodDelete, path.Delete) {
-			return
-		}
-		if path.Patch != nil && !yield(http.MethodPatch, path.Patch) {
-			return
-		}
-		if path.Post != nil && !yield(http.MethodPost, path.Post) {
-			return
-		}
-		if path.Post != nil && !yield(http.MethodPost, path.Post) {
-			return
-		}
-		if path.Put != nil && !yield(http.MethodPut, path.Put) {
-			return
-		}
-		if path.Trace != nil && !yield(http.MethodTrace, path.Trace) {
-			return
-		}
-		if path.Options != nil && !yield(http.MethodOptions, path.Options) {
-			return
-		}
+func GetPathOperations(path *spec3.Path) map[string]*spec3.Operation {
+	ops := make(map[string]*spec3.Operation)
+	if path.Get != nil {
+		ops[http.MethodGet] = path.Get
 	}
+	if path.Head != nil {
+		ops[http.MethodHead] = path.Head
+	}
+	if path.Delete != nil {
+		ops[http.MethodDelete] = path.Delete
+	}
+	if path.Post != nil {
+		ops[http.MethodPost] = path.Post
+	}
+	if path.Put != nil {
+		ops[http.MethodPut] = path.Put
+	}
+	if path.Patch != nil {
+		ops[http.MethodPatch] = path.Patch
+	}
+	if path.Trace != nil {
+		ops[http.MethodTrace] = path.Trace
+	}
+	if path.Options != nil {
+		ops[http.MethodOptions] = path.Options
+	}
+	return ops
 }
