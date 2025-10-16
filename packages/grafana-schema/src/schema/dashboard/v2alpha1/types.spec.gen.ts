@@ -1416,6 +1416,7 @@ export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
 	key: "",
 	operator: "",
 	value: "",
+	origin: FilterOrigin,
 });
 
 // Determine the origin of the adhoc variable filter

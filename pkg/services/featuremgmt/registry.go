@@ -536,6 +536,13 @@ var (
 			RequiresRestart: true, // Adds a route at startup
 		},
 		{
+			Name:            "queryServiceWithConnections",
+			Description:     "Adds datasource connections to the query service",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: true, // Adds a route at startup
+		},
+		{
 			Name:            "queryServiceRewrite",
 			Description:     "Rewrite requests targeting /ds/query to the query service",
 			Stage:           FeatureStageExperimental,
@@ -646,6 +653,13 @@ var (
 		{
 			Name:         "dashboardUndoRedo",
 			Description:  "Enables undo/redo in dynamic dashboards",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "unlimitedLayoutsNesting",
+			Description:  "Enables unlimited dashboard panel grouping",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
@@ -817,15 +831,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "promQLScope",
-			Description:       "In-development feature that will allow injection of labels into prometheus queries.",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaOSSBigTent,
-			Expression:        "true",
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:              "logQLScope",
 			Description:       "In-development feature that will allow injection of labels into loki queries.",
 			Stage:             FeatureStagePrivatePreview,
@@ -961,7 +966,7 @@ var (
 			Description:  "Enable suggested dashboards when creating new dashboards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
-			FrontendOnly: true,
+			FrontendOnly: false,
 		},
 		{
 			Name:         "logsExploreTableDefaultVisualization",
@@ -1777,6 +1782,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "kubernetesAuthzZanzanaSync",
+			Description:       "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:              "kubernetesAuthnMutation",
 			Description:       "Enables create, delete, and update mutations for resources owned by IAM identity",
 			Stage:             FeatureStageExperimental,
@@ -1887,6 +1900,16 @@ var (
 			Expression:        "false", // extensions will be disabled by default
 		},
 		{
+			Name:              "enableDashboardEmptyExtensions",
+			Description:       "Set this to true to enable all dashboard empty state extensions registered by plugins.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+			Expression:        "false", // extensions will be disabled by default
+		},
+		{
 			Name:              "foldersAppPlatformAPI",
 			Description:       "Enables use of app platform API for folders",
 			Stage:             FeatureStageExperimental,
@@ -1921,16 +1944,6 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			Expression:        "false",
-		},
-		{
-			Name:              "pluginAssetProvider",
-			Description:       "Allows decoupled core plugins to load from the Grafana CDN",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaPluginsPlatformSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			Expression:        "false",
-			RequiresRestart:   true,
 		},
 		{
 			Name:              "unifiedStorageSearchDualReaderEnabled",
@@ -2012,6 +2025,12 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:        "grafanaPathfinder",
+			Description: "Enables Pathfinder app",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaPathfinderSquad,
+		},
+		{
 			Name:              "alertingTriage",
 			Description:       "Enables the alerting triage feature",
 			Stage:             FeatureStageExperimental,
@@ -2060,14 +2079,6 @@ var (
 			Owner:           grafanaOSSBigTent,
 			Expression:      "false",
 			RequiresRestart: true,
-		},
-		{
-			Name:         "filterOutBotsFromFrontendLogs",
-			Description:  "Filter out bots from collecting data for Frontend Observability",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
-			Expression:   "false",
 		},
 		{
 			Name:         "cdnPluginsLoadFirst",

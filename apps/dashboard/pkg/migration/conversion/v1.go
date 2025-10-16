@@ -33,7 +33,23 @@ func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboa
 				Error:         ptr.To(err.Error()),
 			},
 		}
-		return err
+	}
+
+	// We need to make sure the layout is set to some value, otherwise the JSON marshaling will fail.
+	out.Spec.Layout = dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+		GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
+			Kind: "GridLayout",
+			Spec: dashv2alpha1.DashboardGridLayoutSpec{},
+		},
+	}
+
+	out.Status = dashv2alpha1.DashboardStatus{
+		Conversion: &dashv2alpha1.DashboardConversionStatus{
+			StoredVersion: ptr.To(dashv1.VERSION),
+			Failed:        true,
+			Error:         ptr.To("backend conversion not yet implemented"),
+			Source:        in,
+		},
 	}
 
 	return nil
@@ -52,15 +68,15 @@ func Convert_V1beta1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard
 		return err
 	}
 
-	if err := ConvertDashboard_V2alpha1_to_V2beta1(v2alpha1, out, scope); err != nil {
-		out.Status = dashv2beta1.DashboardStatus{
-			Conversion: &dashv2beta1.DashboardConversionStatus{
-				StoredVersion: ptr.To(dashv1.VERSION),
-				Failed:        true,
-				Error:         ptr.To(err.Error()),
-			},
-		}
-		return err
+	// TODO: implement V1 to v2beta1 conversion
+
+	out.Status = dashv2beta1.DashboardStatus{
+		Conversion: &dashv2beta1.DashboardConversionStatus{
+			StoredVersion: ptr.To(dashv1.VERSION),
+			Failed:        true,
+			Error:         ptr.To("backend conversion not yet implemented"),
+			Source:        in,
+		},
 	}
 
 	return nil

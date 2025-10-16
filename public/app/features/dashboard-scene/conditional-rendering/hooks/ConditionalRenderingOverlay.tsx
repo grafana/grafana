@@ -9,12 +9,7 @@ export const ConditionalRenderingOverlay = () => {
 
   return (
     <div className={styles.container}>
-      <Tooltip
-        content={t(
-          'dashboard.conditional-rendering.overlay.tooltip',
-          'Element is hidden due to conditional rendering.'
-        )}
-      >
+      <Tooltip content={t('dashboard.conditional-rendering.overlay.tooltip', 'Element is hidden by show/hide rules.')}>
         <Icon name="eye-slash" />
       </Tooltip>
     </div>

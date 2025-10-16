@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Een toestemming toevoegen",
+      "loading": "",
       "no-permissions": "Er zijn geen toestemmingen",
       "permissions-change-warning": "Dit wijzigt de toestemmingen voor deze map en alle onderliggende mappen. In totaal heeft dit invloed op:",
       "role": "Rol",
       "serviceaccount": "Serviceaccount",
       "team": "Team",
-      "title": "Toestemmingen",
       "user": "Gebruiker"
     }
   },
@@ -1535,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "De groep wordt verwijderd"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Expressie '{{refId}}' verwijderen"
     },
@@ -1652,6 +1655,15 @@
     "inspector-yaml-tab": {
       "apply": "Toepassen"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1709,6 +1721,9 @@
       },
       "placeholder-key": "sleutel",
       "placeholder-value": "waarde"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Contactpunten bekijken of maken",
@@ -2025,6 +2040,12 @@
       "body-selected-alertmanager-not-found": "De geselecteerde waarschuwingsmanager bestaat niet meer of je hebt mogelijk geen toestemming om deze te openen. Je kunt een andere waarschuwingsmanager selecteren in de vervolgkeuzelijst.",
       "title-selected-alertmanager-not-found": "Geselecteerde Alertmanager niet gevonden."
     },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
+    },
     "panel-alert-tab-content": {
       "alert": {
         "title-errors-loading-rules": "Er is een fout opgetreden bij het laden van regels"
@@ -2302,6 +2323,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Gegevensbron"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Expressie"
     },
@@ -2547,6 +2571,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Waarschuwingsregel is toegevoegd of bijgewerkt. Het kan tot een minuut duren voordat wijzigingen worden weergegeven in de lijstweergave met waarschuwingsregels.",
         "alert-title": "Update wordt uitgevoerd"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Er ging iets mis bij het evalueren van deze waarschuwingsregel"
     },
@@ -2914,6 +2942,25 @@
         "body": "De doelmap is niet leeg, sommige regels kunnen worden overschreven of verwijderd. Weet je zeker dat je deze waarschuwingsregels wilt importeren naar door Grafana beheerde regels?",
         "summary": "De volgende waarschuwingsregels worden geïmporteerd:",
         "title-warning": "Waarschuwing"
+      }
+    },
+    "triage": {
+      "alert-instances": "",
+      "error-loading-rule": "",
+      "firing-instances-count": "",
+      "instance-details": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
       }
     },
     "type-selector-button": {
@@ -3485,7 +3532,7 @@
       "delete-button": "Verwijderen",
       "delete-modal-invalid-text": "Een of meer mappen bevatten bibliotheekpanelen of waarschuwingsregels. Verwijder deze eerst om verder te gaan.",
       "delete-modal-invalid-title": "Kan de map niet verwijderen",
-      "delete-modal-restore-dashboards-text": "Deze actie verwijdert de geselecteerde mappen onmiddellijk, maar de geselecteerde dashboards worden gemarkeerd voor verwijdering over 30 dagen. Je organisatiebeheerder kan de dashboards op elk moment herstellen voordat de 30 dagen verlopen. Mappen kunnen niet worden hersteld.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Met deze actie wordt de volgende inhoud verwijderd:",
       "delete-modal-title": "Verwijderen",
       "delete-provisioned-folder": "Geprovisioneerde map verwijderen",
@@ -4477,6 +4524,8 @@
     },
     "canvas-actions": {
       "add-panel": "Paneel toevoegen",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Groeperen in rij",
       "group-into-tab": "Groeperen in tabblad",
       "group-panels": "Groeperen van panelen",
@@ -4485,7 +4534,8 @@
       "paste-panel": "Paneel plakken",
       "paste-row": "Rij plakken",
       "paste-tab": "Tabblad plakken",
-      "un-group-panels": "Groepering opheffen"
+      "un-group-panels": "Groepering opheffen",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4553,7 +4603,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "Element is verborgen vanwege voorwaardelijke weergave."
+        "tooltip": ""
       },
       "root": {
         "title": "Regels tonen / verbergen"
@@ -4585,7 +4635,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "Dashboard {{dashboardName}}"
+      "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Laden van het dashboard annuleren"
@@ -4727,8 +4778,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Waarden gescheiden door komma",
-          "values-placeholder": "1, 10, mijnsleutel : mijnwaarde, mijnwaarde, escaped,waarde"
+          "close": "",
+          "modal-title": "",
+          "values": "Waarden gescheiden door komma"
         },
         "datasource-options": {
           "name-filter": "Filter een naam geven",
@@ -4777,7 +4829,11 @@
       "add-visualization-header": "Begin je nieuwe dashboard door een visualisatie toe te voegen",
       "import-a-dashboard-body": "Importeer dashboards uit bestanden of <1>grafana.com</1>.",
       "import-a-dashboard-header": "Dashboard importeren",
-      "import-dashboard-button": "Dashboard importeren"
+      "import-dashboard-button": "Dashboard importeren",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Kan dashboard niet laden"
@@ -5148,10 +5204,16 @@
       "title-row-options": "Opties voor rijen"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Als je deze rij verwijdert, worden ook alle panelen verwijderd. Weet je zeker dat je wilt doorgaan?",
       "delete-row-title": "Rij verwijderen?",
       "delete-row-yes": "Verwijderen",
       "description": "Inklapbare paneelgroepen met koppen",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Koptekst van de rij is alleen zichtbaar in bewerkingsmodus",
       "name": "Rijen",
       "row": {
@@ -5181,7 +5243,11 @@
       },
       "row-warning": {
         "title-not-unique": "Deze titel is niet uniek"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard opgeslagen"
@@ -5800,6 +5866,7 @@
         "dynamically-switch-source-multiple-panels": "Schakel dynamisch tussen gegevensbronnen voor meerdere panelen",
         "group": "Voeg direct sleutels toe om te groeperen",
         "hidden-constant-variable": "Een verborgen constante variabele, handig voor metrische voorvoegsels in dashboards die je wilt delen",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Gebruikers kunnen willekeurige strings invoeren in een tekstvak",
         "values-are-static-and-defined-manually": "Waarden zijn statisch en handmatig gedefinieerd",
         "values-fetched-source-query": "Waarden worden opgehaald uit een gegevensbronquery",
@@ -5813,6 +5880,7 @@
         "group-by": "Groeperen op",
         "interval": "Interval",
         "query": "Query",
+        "switch": "",
         "textbox": "Tekstvak"
       }
     },
@@ -6156,6 +6224,17 @@
       "title": {
         "copy-to-clipboard-failed": "Kopiëren naar klembord mislukt"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Standaardwaarde"
@@ -6605,6 +6684,7 @@
         "service-now-integration-and-data-source": "ServiceNow-integratie en -gegevensbron",
         "signal-fx-integration-and-datasource": "SignalFx-integratie en -gegevensbron",
         "snowflake-integration-and-data-source": "Snowflake-integratie en -gegevensbron",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic-integratie en -gegevensbron",
         "visualize-and-explore-dynatrace-data": "Visualiseer en verken Dynatrace-gegevens",
         "visualize-and-explore-oracle-sql": "Visualiseer en verken Oracle SQL",
@@ -9446,6 +9526,7 @@
     "description-enable-infinite-scrolling": "Experimenteel. Vraag meer resultaten op door naar de onderkant van de loglijst te scrollen.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Weergavebesturingselementen om naar de laatste of eerste logregel te gaan en filters op logniveau",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9496,9 +9577,6 @@
       "collapse": "Labels samenvouwen",
       "expand": "Labels uitvouwen"
     },
-    "log-labels-list": {
-      "log-line": "loglijn"
-    },
     "log-line": {
       "has-error": "Bevat fouten",
       "is-sampled": "Is bemonsterd",
@@ -9538,6 +9616,7 @@
       "inline-mode": "Inline weergave",
       "link-value-tooltip": "",
       "links-section": "Links",
+      "log-attributes-field": "",
       "log-line-field": "Logregel",
       "log-line-section": "Logregel",
       "move-displayed-field-down": "Naar beneden verplaatsen",
@@ -9744,6 +9823,7 @@
       "line-contains": "Toevoegen als regel filter bevat",
       "line-contains-not": "Toevoegen als regel geen filter bevat"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Tijdstempelresolutie",
     "un-themed-log-details": {
       "aria-label-data-links": "Gegevenslinks",
@@ -10335,7 +10415,7 @@
       "title": "Profielen"
     },
     "recently-deleted": {
-      "subtitle": "Alle items die hier langer dan 30 dagen worden vermeld, worden automatisch verwijderd.",
+      "subtitle": "",
       "title": "Onlangs verwijderd"
     },
     "recorded-queries": {
@@ -11551,6 +11631,7 @@
       "active-jobs": "actieve taken",
       "column-action": "Actie",
       "column-duration": "Duur",
+      "column-job-id": "",
       "column-message": "Bericht",
       "column-started": "Gestart",
       "column-status": "Status",
@@ -11569,12 +11650,6 @@
       "settings": "Instellingen",
       "view": "Weergave"
     },
-    "repository-health": {
-      "details": "Details:",
-      "no-errors-found": "Geen fouten gevonden",
-      "title-repository-is-healthy": "Repository is gezond",
-      "title-repository-is-unhealthy": "Repository is ongezond"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Tak vergelijken",
@@ -11589,7 +11664,7 @@
     },
     "repository-overview": {
       "checked": "Gecontroleerd:",
-      "finished": "Beëindigd:",
+      "finished": "",
       "health": "Gezondheid",
       "healthy": "Gezond",
       "job-id": "Taak-id:",
@@ -11598,7 +11673,6 @@
       "not-available": "N.v.t.",
       "pull-status": "Pull-status",
       "resources": "Bronnen",
-      "started": "Begonnen:",
       "status": "Status:",
       "unhealthy": "Ongezond",
       "view-folder": "Map bekijken",
@@ -12257,9 +12331,6 @@
       "title-disable-service-account": "Serviceaccount uitschakelen",
       "tokens": "Tokens",
       "tooltip-managed-service-account-cannot-modified": "Dit is een beheerd serviceaccount dat niet kan worden gewijzigd"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Toestemmingen"
     },
     "service-account-profile": {
       "information": "Informatie",
@@ -12934,6 +13005,10 @@
     "name-mode": "Modus",
     "name-show-line-numbers": "Regelnummers tonen",
     "name-show-mini-map": "Minikaart weergeven"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -14098,14 +14173,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Optie toevoegen",
-      "description": "Aangepaste opties toevoegen naast zoekresultaten",
-      "label-placeholder": "label weergeven",
-      "remove-option-button-label": "Optie verwijderen",
-      "value-placeholder": "waarde, standaard lege string"
+      "description": "Aangepaste opties toevoegen naast zoekresultaten"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Statische opties sorteren met zoekresultaten"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Standaardwaarde",

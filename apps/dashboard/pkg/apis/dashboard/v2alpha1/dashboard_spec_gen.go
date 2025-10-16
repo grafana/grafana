@@ -1782,7 +1782,7 @@ type DashboardAdHocFilterWithLabels struct {
 	KeyLabel    *string  `json:"keyLabel,omitempty"`
 	ValueLabels []string `json:"valueLabels,omitempty"`
 	ForceEdit   *bool    `json:"forceEdit,omitempty"`
-	Origin      string   `json:"origin,omitempty"`
+	Origin      *string  `json:"origin,omitempty"`
 	// @deprecated
 	Condition *string `json:"condition,omitempty"`
 }
@@ -1790,7 +1790,7 @@ type DashboardAdHocFilterWithLabels struct {
 // NewDashboardAdHocFilterWithLabels creates a new DashboardAdHocFilterWithLabels object.
 func NewDashboardAdHocFilterWithLabels() *DashboardAdHocFilterWithLabels {
 	return &DashboardAdHocFilterWithLabels{
-		Origin: DashboardFilterOrigin,
+		Origin: (func(input string) *string { return &input })(DashboardFilterOrigin),
 	}
 }
 

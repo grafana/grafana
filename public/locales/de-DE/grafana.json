@@ -27,12 +27,12 @@
     },
     "permissions": {
       "add-label": "Berechtigung hinzufügen",
+      "loading": "",
       "no-permissions": "Keine Berechtigungen vorhanden",
       "permissions-change-warning": "Dadurch werden die Berechtigungen für diesen Ordner und alle seine Unterordner geändert. Insgesamt betrifft dies Folgendes:",
       "role": "Rolle",
       "serviceaccount": "Service-Konto",
       "team": "Team",
-      "title": "Berechtigung",
       "user": "Nutzer"
     }
   },
@@ -1535,6 +1535,9 @@
     "group-status": {
       "content-the-group-is-being-deleted": "Die Gruppe wird gelöscht"
     },
+    "group-wrapper": {
+      "toggle": ""
+    },
     "header": {
       "tooltip-remove": "Ausdruck „{{refId}}“ entfernen"
     },
@@ -1652,6 +1655,15 @@
     "inspector-yaml-tab": {
       "apply": "Anwenden"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -1709,6 +1721,9 @@
       },
       "placeholder-key": "Key",
       "placeholder-value": "Wert"
+    },
+    "left-column": {
+      "label-instances": ""
     },
     "link-to-contact-points": {
       "aria-label-view-or-create-contact-points": "Kontaktpunkte anzeigen oder erstellen",
@@ -2025,6 +2040,12 @@
       "body-selected-alertmanager-not-found": "Der ausgewählte Alertmanager existiert nicht mehr oder Sie haben keine Berechtigung, darauf zuzugreifen. Sie können einen anderen Alertmanager aus der Dropdown-Liste auswählen.",
       "title-selected-alertmanager-not-found": "Der ausgewählte Alertmanager wurde nicht gefunden."
     },
+    "pages": {
+      "triage": {
+        "subtitle": "",
+        "title": ""
+      }
+    },
     "panel-alert-tab-content": {
       "alert": {
         "title-errors-loading-rules": "Fehler beim Laden der Regeln"
@@ -2302,6 +2323,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Datenquelle"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Ausdruck"
     },
@@ -2547,6 +2571,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Die Warnregel wurde hinzugefügt oder aktualisiert. Es kann bis zu einer Minute dauern, bis Änderungen in der Listenansicht der Warnregeln angezeigt werden.",
         "alert-title": "Aktualisierung wird durchgeführt"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Bei der Bewertung dieser Warnregel ist ein Fehler aufgetreten"
     },
@@ -2914,6 +2942,25 @@
         "body": "Der Zielordner ist nicht leer, einige Regeln können überschrieben oder entfernt werden. Sind Sie sicher, dass Sie diese Warnregeln zu von Grafana verwalteten Regeln importieren möchten?",
         "summary": "Die folgenden Warnregeln werden importiert:",
         "title-warning": "Warnung"
+      }
+    },
+    "triage": {
+      "alert-instances": "",
+      "error-loading-rule": "",
+      "firing-instances-count": "",
+      "instance-details": "",
+      "no-instances-found": "",
+      "no-labels": "",
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
       }
     },
     "type-selector-button": {
@@ -3485,7 +3532,7 @@
       "delete-button": "Löschen",
       "delete-modal-invalid-text": "Ein oder mehrere Ordner enthalten Bibliotheksfenster oder Alarmierungsregeln. Löschen Sie diese zuerst, um fortzufahren.",
       "delete-modal-invalid-title": "Ordner kann nicht gelöscht werden",
-      "delete-modal-restore-dashboards-text": "Durch diese Aktion werden die ausgewählten Ordner sofort gelöscht, aber die ausgewählten Dashboards werden innerhalb von 30 Tagen zur Löschung markiert. Der Administrator Ihrer Organisation kann die Dashboards jederzeit vor Ablauf der 30 Tage wiederherstellen. Ordner können nicht wiederhergestellt werden.",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Diese Aktion wird folgenden Inhalt löschen:",
       "delete-modal-title": "Löschen",
       "delete-provisioned-folder": "Bereitgestellten Ordner löschen",
@@ -4477,6 +4524,8 @@
     },
     "canvas-actions": {
       "add-panel": "Panel hinzufügen",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "In Zeile gruppieren",
       "group-into-tab": "In Registerkarte gruppieren",
       "group-panels": "Panels gruppieren",
@@ -4485,7 +4534,8 @@
       "paste-panel": "Panel einfügen",
       "paste-row": "Zeile einfügen",
       "paste-tab": "Tab einfügen",
-      "un-group-panels": "Gruppierung aufheben"
+      "un-group-panels": "Gruppierung aufheben",
+      "ungroup-rows": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4553,7 +4603,7 @@
         "unsupported-object-type": ""
       },
       "overlay": {
-        "tooltip": "Das Element wird aufgrund von bedingtem Rendering ausgeblendet."
+        "tooltip": ""
       },
       "root": {
         "title": "Regeln ein-/ausblenden"
@@ -4585,7 +4635,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "{{dashboardName}} Dashboard"
+      "aria-label-dashboard-name": "{{dashboardName}} Dashboard",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Laden des Dashboards abbrechen"
@@ -4727,8 +4778,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Werte werden durch Komma getrennt",
-          "values-placeholder": "1, 10, mykey: myvalue, myvalue, escaped, value"
+          "close": "",
+          "modal-title": "",
+          "values": "Werte werden durch Komma getrennt"
         },
         "datasource-options": {
           "name-filter": "Namensfilter",
@@ -4777,7 +4829,11 @@
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
       "import-a-dashboard-body": "Importieren Sie Dashboards aus Dateien oder von <2>grafana.com</2>.",
       "import-a-dashboard-header": "Dashboard importieren",
-      "import-dashboard-button": "Dashboard importieren"
+      "import-dashboard-button": "Dashboard importieren",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Dashboard konnte nicht geladen werden"
@@ -5148,10 +5204,16 @@
       "title-row-options": "Zeilenoptionen"
     },
     "rows-layout": {
+      "cancel": "",
+      "continue": "",
+      "convert-to": "",
       "delete-row-text": "Wenn Sie diese Zeile löschen, werden auch alle Panels entfernt. Sind Sie sicher, dass Sie fortfahren möchten?",
       "delete-row-title": "Zeile löschen?",
       "delete-row-yes": "Löschen",
       "description": "Einklappbare Panel-Gruppen mit Überschriften",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Kopfzeile nur im Bearbeitungsmodus sichtbar",
       "name": "Zeilen",
       "row": {
@@ -5181,7 +5243,11 @@
       },
       "row-warning": {
         "title-not-unique": "Dieser Titel ist nicht eindeutig"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard gespeichert"
@@ -5800,6 +5866,7 @@
         "dynamically-switch-source-multiple-panels": "Dynamisches Wechseln der Datenquelle für mehrere Panels",
         "group": "Fügen Sie spontan Schlüssel zum Gruppieren hinzu",
         "hidden-constant-variable": "Eine ausgeblendete konstante Variable, nützlich für metrische Präfixe in Dashboards, die Sie teilen möchten",
+        "users-enter-arbitrary-strings-switch": "",
         "users-enter-arbitrary-strings-textbox": "Nutzer können beliebige Zeichenfolgen in ein Textfeld eingeben",
         "values-are-static-and-defined-manually": "Werte sind statisch und manuell festgelegt",
         "values-fetched-source-query": "Werte werden über eine Datenquellenabfrage abgerufen",
@@ -5813,6 +5880,7 @@
         "group-by": "Gruppieren nach",
         "interval": "Intervall",
         "query": "Abfrage",
+        "switch": "",
         "textbox": "Textfeld"
       }
     },
@@ -6156,6 +6224,17 @@
       "title": {
         "copy-to-clipboard-failed": "Kopieren in die Zwischenablage fehlgeschlagen"
       }
+    },
+    "switch-variable-form": {
+      "disabled-value": "",
+      "disabled-value-description": "",
+      "disabled-value-placeholder": "",
+      "enabled-value": "",
+      "enabled-value-description": "",
+      "enabled-value-placeholder": "",
+      "switch-options": "",
+      "value-pair-type": "",
+      "value-pair-type-description": ""
     },
     "text-box-variable": {
       "name-default-value": "Standardwert"
@@ -6605,6 +6684,7 @@
         "service-now-integration-and-data-source": "ServiceNow-Integration und -Datenquelle",
         "signal-fx-integration-and-datasource": "SignalFx-Integration und -Datenquelle",
         "snowflake-integration-and-data-source": "Snowflake-Integration und -Datenquelle",
+        "solarwinds-datasource": "",
         "sumo-logic-integration-and-datasource": "SumoLogic-Integration und -Datenquelle",
         "visualize-and-explore-dynatrace-data": "Dynatrace-Daten visualisieren und untersuchen",
         "visualize-and-explore-oracle-sql": "Oracle SQL visualisieren und untersuchen",
@@ -9446,6 +9526,7 @@
     "description-enable-infinite-scrolling": "Experimentell. Fordern Sie weitere Ergebnisse an, indem Sie zum Ende der Logs-Liste scrollen.",
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Anzeige von Steuerelementen für den Sprung zur letzten oder ersten Log-Linie und Filtern nach Log-Ebene",
+    "description-show-log-attributes": "",
     "fields": {
       "type": {
         "loki": {
@@ -9496,9 +9577,6 @@
       "collapse": "Labels einklappen",
       "expand": "Labels ausklappen"
     },
-    "log-labels-list": {
-      "log-line": "Log-Zeile"
-    },
     "log-line": {
       "has-error": "Hat Fehler",
       "is-sampled": "Ist gesampelt",
@@ -9538,6 +9616,7 @@
       "inline-mode": "Inline anzeigen",
       "link-value-tooltip": "",
       "links-section": "Links",
+      "log-attributes-field": "",
       "log-line-field": "Log-Zeile",
       "log-line-section": "Log-Linie",
       "move-displayed-field-down": "Nach unten",
@@ -9744,6 +9823,7 @@
       "line-contains": "„Als Zeile hinzufügen“ enthält Filter",
       "line-contains-not": "„Als Zeile hinzufügen“ enthält keinen Filter"
     },
+    "show-log-attributes": "",
     "timestamp-format": "Zeitstempelauflösung",
     "un-themed-log-details": {
       "aria-label-data-links": "Datenlinks",
@@ -10335,7 +10415,7 @@
       "title": "Profile"
     },
     "recently-deleted": {
-      "subtitle": "Alle hier länger als 30 Tage aufgeführten Elemente werden automatisch gelöscht.",
+      "subtitle": "",
       "title": "Kürzlich gelöscht"
     },
     "recorded-queries": {
@@ -11551,6 +11631,7 @@
       "active-jobs": "Aktive Aufträge",
       "column-action": "Aktion",
       "column-duration": "Dauer",
+      "column-job-id": "",
       "column-message": "Nachricht",
       "column-started": "Gestartet",
       "column-status": "Status",
@@ -11569,12 +11650,6 @@
       "settings": "Einstellungen",
       "view": "Anzeigen"
     },
-    "repository-health": {
-      "details": "Details:",
-      "no-errors-found": "Keine Fehler gefunden",
-      "title-repository-is-healthy": "Repository in Ordnung",
-      "title-repository-is-unhealthy": "Repository nicht in Ordnung"
-    },
     "repository-link": {
       "delete-or-move-job": {
         "compare-branch": "Branch vergleichen",
@@ -11589,7 +11664,7 @@
     },
     "repository-overview": {
       "checked": "Geprüft:",
-      "finished": "Abgeschlossen:",
+      "finished": "",
       "health": "Zustand",
       "healthy": "Guter Zustand",
       "job-id": "Auftrags-ID:",
@@ -11598,7 +11673,6 @@
       "not-available": "N/A",
       "pull-status": "Pull-Status",
       "resources": "Ressourcen",
-      "started": "Gestartet:",
       "status": "Status:",
       "unhealthy": "Schlechter Zustand",
       "view-folder": "Ordner anzeigen",
@@ -12257,9 +12331,6 @@
       "title-disable-service-account": "Dienstkonto deaktivieren",
       "tokens": "Tokens",
       "tooltip-managed-service-account-cannot-modified": "Dies ist ein verwaltetes Dienstkonto und kann nicht geändert werden"
-    },
-    "service-account-permissions": {
-      "title-permissions": "Berechtigungen"
     },
     "service-account-profile": {
       "information": "Informationen",
@@ -12934,6 +13005,10 @@
     "name-mode": "Modus",
     "name-show-line-numbers": "Zeilennummern anzeigen",
     "name-show-mini-map": "Minikarte anzeigen"
+  },
+  "theme-playground": {
+    "label-base-theme": "",
+    "title": ""
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -14098,14 +14173,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Option hinzufügen",
-      "description": "Fügen Sie neben den Abfrageergebnissen benutzerdefinierte Optionen hinzu",
-      "label-placeholder": "Label anzeigen",
-      "remove-option-button-label": "Option entfernen",
-      "value-placeholder": "Wert, standardmäßig leere Zeichenfolge"
+      "description": "Fügen Sie neben den Abfrageergebnissen benutzerdefinierte Optionen hinzu"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "So sortieren Sie statische Optionen mit Abfrageergebnissen"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Standardwert",
