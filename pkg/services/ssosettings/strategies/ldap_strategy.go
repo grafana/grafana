@@ -37,6 +37,7 @@ func (s *LDAPStrategy) GetProviderConfig(_ context.Context, _ string) (map[strin
 
 	result := map[string]any{
 		"enabled":             section.Key("enabled").MustBool(false),
+		"config_file":         section.Key("config_file").Value(),
 		"config":              config,
 		"allow_sign_up":       section.Key("allow_sign_up").MustBool(false),
 		"skip_org_role_sync":  section.Key("skip_org_role_sync").MustBool(false),
