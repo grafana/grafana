@@ -613,8 +613,8 @@ var (
 			Owner:           identityAccessTeam,
 		},
 		{
-			Name:            "annotationsAPIServer",
-			Description:     "Run the annotations apiserver",
+			Name:            "kubernetesAnnotations",
+			Description:     "Run the annotations API server",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
 			Owner:           grafanaBackendServicesSquad,

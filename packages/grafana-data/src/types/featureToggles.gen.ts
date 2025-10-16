@@ -369,9 +369,9 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
-  * Run the annotations apiserver
+  * Run the annotations API server
   */
-  annotationsAPIServer?: boolean;
+  kubernetesAnnotations?: boolean;
   /**
   * read annotations from the APIServer
   */

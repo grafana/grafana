@@ -335,9 +335,9 @@ const (
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
-	// FlagAnnotationsAPIServer
-	// Run the annotations apiserver
-	FlagAnnotationsAPIServer = "annotationsAPIServer"
+	// FlagKubernetesAnnotations
+	// Run the annotations API server
+	FlagKubernetesAnnotations = "kubernetesAnnotations"
 
 	// FlagAnnotationsFromAPIServer
 	// read annotations from the APIServer

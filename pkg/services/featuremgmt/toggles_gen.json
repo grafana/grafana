@@ -708,7 +708,8 @@
       "metadata": {
         "name": "annotationsAPIServer",
         "resourceVersion": "1760446518121",
-        "creationTimestamp": "2025-10-14T12:55:18Z"
+        "creationTimestamp": "2025-10-14T12:55:18Z",
+        "deletionTimestamp": "2025-10-16T20:41:22Z"
       },
       "spec": {
         "description": "Run the annotations apiserver",
@@ -2139,6 +2140,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAnnotations",
+        "resourceVersion": "1760647282481",
+        "creationTimestamp": "2025-10-16T20:41:22Z"
+      },
+      "spec": {
+        "description": "Run the annotations API server",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "requiresDevMode": true
       }
     },
     {

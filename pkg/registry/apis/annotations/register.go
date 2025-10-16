@@ -42,7 +42,7 @@ func RegisterAPIService(features *featuremgmt.FeatureManager,
 	apiregistration builder.APIRegistrar,
 	cfg *setting.Cfg,
 ) *APIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAnnotationsAPIServer) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
 		return nil
 	}
 	builder := &APIBuilder{
