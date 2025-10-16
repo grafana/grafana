@@ -1,11 +1,8 @@
 package store
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
 	"fmt"
-	"io"
 	"runtime"
 	"sync"
 	"time"
@@ -25,17 +22,18 @@ const (
 )
 
 // AlertRuleCache is an abstraction for caching alert rules using a two-tier approach:
-// 1. All lite rules in one key (for fast filtering)
-// 2. Individual full rules in separate keys (fetched with MGET after filtering)
+// 1. Individual lite rules per UID (fetched with MGET for filtering)
+// 2. Individual full rules per UID (fetched with MGET after filtering)
 type AlertRuleCache interface {
 	// GetLiteRules retrieves all cached lite alert rules for an organization
+	// For remote cache, this uses MGET to fetch all lite rules efficiently
 	GetLiteRules(ctx context.Context, orgID int64) ([]*ngmodels.AlertRuleLite, bool)
 
 	// GetFullRules retrieves specific full rules by their UIDs (uses MGET for remote cache)
 	GetFullRules(ctx context.Context, orgID int64, uids []string) (map[string]*ngmodels.AlertRule, error)
 
 	// SetRules stores both lite and full rules in the cache
-	// Lite rules go in one key, full rules go in individual keys per UID
+	// Both lite and full rules are stored individually per UID to avoid Redis size limits
 	SetRules(ctx context.Context, orgID int64, rules ngmodels.RulesGroup) error
 
 	// Delete invalidates all cached alert rules for an organization (both lite and full)
@@ -153,56 +151,136 @@ func (c *remoteAlertRuleCache) GetLiteRules(ctx context.Context, orgID int64) ([
 		return nil, false
 	}
 
-	key := fmt.Sprintf("alert_rules:org:%d:lite", orgID)
-	compressedData, err := c.remoteCache.Get(ctx, key)
+	// First, get the index of UIDs for this org
+	indexKey := fmt.Sprintf("alert_rules:org:%d:index", orgID)
+	indexData, err := c.remoteCache.Get(ctx, indexKey)
 	if err != nil {
 		if err == remotecache.ErrCacheItemNotFound {
-			c.logger.Debug("Lite rules not found in cache (cache miss)", "orgID", orgID)
+			c.logger.Debug("Lite rules index not found in cache (cache miss)", "orgID", orgID)
 			return nil, false
 		}
-		c.logger.Error("Failed to get lite rules from remote cache - Redis connection issue?",
+		c.logger.Error("Failed to get lite rules index from remote cache",
 			"error", err,
-			"key", key,
-			"orgID", orgID,
-			"error_type", fmt.Sprintf("%T", err))
+			"key", indexKey,
+			"orgID", orgID)
 		return nil, false
 	}
 
-	// Decompress the data
-	gr, err := gzip.NewReader(bytes.NewReader(compressedData))
-	if err != nil {
-		c.logger.Error("Failed to create gzip reader for lite rules", "error", err, "key", key)
-		_ = c.remoteCache.Delete(ctx, key)
+	// Unmarshal the UID index
+	var uids []string
+	if err := msgpack.Unmarshal(indexData, &uids); err != nil {
+		c.logger.Error("Failed to unmarshal lite rules index", "error", err, "key", indexKey)
+		_ = c.remoteCache.Delete(ctx, indexKey)
 		return nil, false
 	}
-	defer gr.Close()
 
-	data, err := io.ReadAll(gr)
-	if err != nil {
-		c.logger.Error("Cache corruption detected: Failed to decompress lite rules - data truncated or incomplete",
-			"error", err,
-			"key", key,
-			"orgID", orgID,
-			"compressed_size_bytes", len(compressedData),
-			"action", "deleting corrupted cache entry")
-		if delErr := c.remoteCache.Delete(ctx, key); delErr != nil {
-			c.logger.Warn("Failed to delete corrupted cache entry", "error", delErr, "key", key)
-		} else {
-			c.logger.Info("Deleted corrupted cache entry - will reload from database", "key", key, "orgID", orgID)
+	if len(uids) == 0 {
+		c.logger.Debug("Lite rules index is empty", "orgID", orgID)
+		return []*ngmodels.AlertRuleLite{}, true
+	}
+
+	c.logger.Debug("Retrieved lite rules index", "orgID", orgID, "uid_count", len(uids))
+
+	// Build keys for MGET to fetch all lite rules
+	keys := make([]string, len(uids))
+	for i, uid := range uids {
+		keys[i] = fmt.Sprintf("alert_rule:org:%d:uid:%s:lite", orgID, uid)
+	}
+
+	startMget := time.Now()
+	var rawValues [][]byte
+
+	// Batch MGET for large datasets
+	const mgetBatchSize = 10000
+	if len(keys) <= mgetBatchSize {
+		rawValues, err = c.remoteCache.MGet(ctx, keys...)
+		if err != nil {
+			c.logger.Error("Failed to MGET lite rules from Redis", "error", err, "count", len(keys))
+			return nil, false
 		}
-		return nil, false
+	} else {
+		c.logger.Info("Batching large MGET operation for lite rules", "total_keys", len(keys), "batch_size", mgetBatchSize)
+		rawValues = make([][]byte, 0, len(keys))
+		for i := 0; i < len(keys); i += mgetBatchSize {
+			end := i + mgetBatchSize
+			if end > len(keys) {
+				end = len(keys)
+			}
+			batchKeys := keys[i:end]
+			batchValues, err := c.remoteCache.MGet(ctx, batchKeys...)
+			if err != nil {
+				c.logger.Error("Failed to MGET lite batch from Redis", "error", err,
+					"batch_start", i, "batch_size", len(batchKeys))
+				return nil, false
+			}
+			rawValues = append(rawValues, batchValues...)
+		}
+	}
+	mgetDuration := time.Since(startMget)
+
+	// Unmarshal lite rules in parallel
+	startUnmarshal := time.Now()
+	results := make([]*ngmodels.AlertRuleLite, len(rawValues))
+
+	workerCount := runtime.NumCPU() * 2
+	if workerCount > 64 {
+		workerCount = 64
+	}
+	if workerCount > len(rawValues) {
+		workerCount = len(rawValues)
 	}
 
-	var rules []*ngmodels.AlertRuleLite
-	if err := msgpack.Unmarshal(data, &rules); err != nil {
-		c.logger.Error("Failed to unmarshal lite rules from cache", "error", err, "key", key)
-		// Cache corruption - invalidate
-		_ = c.remoteCache.Delete(ctx, key)
-		return nil, false
+	type item struct {
+		index int
+		data  []byte
+	}
+	ch := make(chan item, workerCount*2)
+	var wg sync.WaitGroup
+
+	// Start workers
+	for w := 0; w < workerCount; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for it := range ch {
+				if it.data == nil {
+					continue
+				}
+				var liteRule ngmodels.AlertRuleLite
+				if err := msgpack.Unmarshal(it.data, &liteRule); err != nil {
+					// skip malformed entries
+					continue
+				}
+				results[it.index] = &liteRule
+			}
+		}()
 	}
 
-	c.logger.Info("Retrieved lite rules from cache", "orgID", orgID, "count", len(rules))
-	return rules, true
+	// Feed data to workers
+	for i, val := range rawValues {
+		ch <- item{index: i, data: val}
+	}
+	close(ch)
+	wg.Wait()
+
+	// Build result slice, filtering out nil entries
+	liteRules := make([]*ngmodels.AlertRuleLite, 0, len(results))
+	for _, r := range results {
+		if r != nil {
+			liteRules = append(liteRules, r)
+		}
+	}
+	unmarshalDuration := time.Since(startUnmarshal)
+
+	c.logger.Info("Retrieved lite rules from cache via MGET",
+		"orgID", orgID,
+		"requested", len(uids),
+		"found", len(liteRules),
+		"mget_ms", mgetDuration.Milliseconds(),
+		"unmarshal_ms", unmarshalDuration.Milliseconds(),
+		"workers", workerCount)
+
+	return liteRules, true
 }
 
 func (c *remoteAlertRuleCache) GetFullRules(ctx context.Context, orgID int64, uids []string) (map[string]*ngmodels.AlertRule, error) {
@@ -348,76 +426,64 @@ func (c *remoteAlertRuleCache) SetRules(ctx context.Context, orgID int64, rules 
 	c.logger.Debug("SetRules starting", "orgID", orgID, "rule_count", len(rules))
 	start := time.Now()
 
-	// 1. Create and cache lite rules in one key
-	liteRules := make([]*ngmodels.AlertRuleLite, len(rules))
+	// Build UID index for this org
+	uids := make([]string, len(rules))
 	for i, rule := range rules {
-		liteRules[i] = rule.ToLite()
+		uids[i] = rule.UID
 	}
 
-	// Marshal and compress lite rules
-	liteMsgpack, err := msgpack.Marshal(liteRules)
+	// Store the UID index
+	indexKey := fmt.Sprintf("alert_rules:org:%d:index", orgID)
+	indexData, err := msgpack.Marshal(uids)
 	if err != nil {
-		return fmt.Errorf("failed to marshal lite rules: %w", err)
+		return fmt.Errorf("failed to marshal UID index: %w", err)
 	}
 
-	var liteBuf bytes.Buffer
-	liteGw := gzip.NewWriter(&liteBuf)
-	if _, err := liteGw.Write(liteMsgpack); err != nil {
-		return fmt.Errorf("failed to compress lite rules: %w", err)
-	}
-	liteGw.Close()
-	liteCompressed := liteBuf.Bytes()
-
-	// Store lite rules
-	liteKey := fmt.Sprintf("alert_rules:org:%d:lite", orgID)
-	c.logger.Debug("Setting lite rules in Redis",
-		"orgID", orgID,
-		"uncompressed_bytes", len(liteMsgpack),
-		"compressed_bytes", len(liteCompressed),
-		"compression_ratio", float64(len(liteMsgpack))/float64(max(len(liteCompressed), 1)))
-
-	if err := c.remoteCache.Set(ctx, liteKey, liteCompressed, AlertRuleCacheTTL); err != nil {
-		c.logger.Error("Failed to SET lite rules in Redis - connection issue?",
+	if err := c.remoteCache.Set(ctx, indexKey, indexData, AlertRuleCacheTTL); err != nil {
+		c.logger.Error("Failed to SET UID index in Redis",
 			"error", err,
 			"orgID", orgID,
-			"key", liteKey,
-			"size_bytes", len(liteCompressed),
-			"error_type", fmt.Sprintf("%T", err))
-		return fmt.Errorf("failed to cache lite rules in Redis: %w", err)
+			"key", indexKey)
+		return fmt.Errorf("failed to cache UID index: %w", err)
 	}
 
-	// Verify the write by reading back the size
-	verifyData, verifyErr := c.remoteCache.Get(ctx, liteKey)
-	if verifyErr != nil {
-		c.logger.Warn("Failed to verify lite rules write to Redis",
-			"error", verifyErr,
-			"orgID", orgID,
-			"expected_size", len(liteCompressed))
-	} else if len(verifyData) != len(liteCompressed) {
-		c.logger.Error("Redis write corruption detected: Size mismatch after SET",
-			"orgID", orgID,
-			"expected_size", len(liteCompressed),
-			"actual_size", len(verifyData),
-			"key", liteKey)
-		// Delete corrupted entry
-		_ = c.remoteCache.Delete(ctx, liteKey)
-		return fmt.Errorf("redis write corruption: expected %d bytes, got %d bytes", len(liteCompressed), len(verifyData))
-	} else {
-		c.logger.Debug("Verified lite rules write to Redis", "orgID", orgID, "size_bytes", len(verifyData))
-	}
-
-	// 2. Cache each full rule individually (msgpack only for per-item for faster decode)
+	// Store each lite and full rule individually
+	totalLiteSize := 0
 	totalFullSize := 0
+	liteErrors := 0
+	fullErrors := 0
+
 	for _, rule := range rules {
-		// Marshal each rule
+		// 1. Marshal and store lite rule
+		liteRule := rule.ToLite()
+		liteMsgpack, err := msgpack.Marshal(liteRule)
+		if err != nil {
+			c.logger.Warn("Failed to marshal lite rule", "uid", rule.UID, "error", err)
+			liteErrors++
+			continue
+		}
+		totalLiteSize += len(liteMsgpack)
+
+		liteKey := fmt.Sprintf("alert_rule:org:%d:uid:%s:lite", orgID, rule.UID)
+		if err := c.remoteCache.Set(ctx, liteKey, liteMsgpack, AlertRuleCacheTTL); err != nil {
+			c.logger.Warn("Failed to SET lite rule in Redis",
+				"uid", rule.UID,
+				"error", err,
+				"orgID", orgID,
+				"key", liteKey,
+				"size_bytes", len(liteMsgpack))
+			liteErrors++
+		}
+
+		// 2. Marshal and store full rule
 		fullMsgpack, err := msgpack.Marshal(rule)
 		if err != nil {
 			c.logger.Warn("Failed to marshal full rule", "uid", rule.UID, "error", err)
+			fullErrors++
 			continue
 		}
 		totalFullSize += len(fullMsgpack)
 
-		// Store full rule (no gzip)
 		fullKey := fmt.Sprintf("alert_rule:org:%d:uid:%s", orgID, rule.UID)
 		if err := c.remoteCache.Set(ctx, fullKey, fullMsgpack, AlertRuleCacheTTL); err != nil {
 			c.logger.Warn("Failed to SET full rule in Redis",
@@ -425,17 +491,18 @@ func (c *remoteAlertRuleCache) SetRules(ctx context.Context, orgID int64, rules 
 				"error", err,
 				"orgID", orgID,
 				"key", fullKey,
-				"size_bytes", len(fullMsgpack),
-				"error_type", fmt.Sprintf("%T", err))
+				"size_bytes", len(fullMsgpack))
+			fullErrors++
 		}
 	}
 
 	duration := time.Since(start)
-	c.logger.Info("Cached rules in Redis",
+	c.logger.Info("Cached rules in Redis (individual keys)",
 		"rule_count", len(rules),
-		"lite_size_mb", len(liteMsgpack)/(1024*1024),
-		"lite_compressed_mb", len(liteCompressed)/(1024*1024),
-		"full_size_mb", totalFullSize/(1024*1024),
+		"lite_size_kb", totalLiteSize/1024,
+		"full_size_kb", totalFullSize/1024,
+		"lite_errors", liteErrors,
+		"full_errors", fullErrors,
 		"duration_ms", duration.Milliseconds())
 
 	return nil
@@ -446,14 +513,14 @@ func (c *remoteAlertRuleCache) Delete(ctx context.Context, orgID int64) error {
 		return nil
 	}
 
-	// Delete lite rules key
-	liteKey := fmt.Sprintf("alert_rules:org:%d:lite", orgID)
-	if err := c.remoteCache.Delete(ctx, liteKey); err != nil {
-		c.logger.Error("Failed to delete lite rules from cache", "error", err, "key", liteKey)
+	// Delete the UID index
+	indexKey := fmt.Sprintf("alert_rules:org:%d:index", orgID)
+	if err := c.remoteCache.Delete(ctx, indexKey); err != nil {
+		c.logger.Error("Failed to delete UID index from cache", "error", err, "key", indexKey)
 		return err
 	}
 
-	// Note: Individual full rule keys will expire via TTL
+	// Note: Individual lite and full rule keys will expire via TTL
 	// For complete cleanup, we'd need to scan keys with pattern alert_rule:org:N:uid:*
 	// but that's expensive. TTL-based expiry is sufficient.
 
