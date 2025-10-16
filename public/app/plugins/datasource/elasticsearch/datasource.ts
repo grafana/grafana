@@ -81,6 +81,7 @@ import {
   isElasticsearchResponseWithAggregations,
   isElasticsearchResponseWithHits,
   ElasticsearchHits,
+  QueryType,
 } from './types';
 import { getScriptValue, isTimeSeriesQuery } from './utils';
 
@@ -127,6 +128,7 @@ export class ElasticDatasource
   includeFrozen: boolean;
   isProxyAccess: boolean;
   databaseVersion: SemVer | null;
+  defaultQueryMode?: QueryType;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -157,7 +159,7 @@ export class ElasticDatasource
     this.annotations = {
       QueryEditor: ElasticsearchAnnotationsQueryEditor,
     };
-
+    this.defaultQueryMode = settingsData.defaultQueryMode;
     if (this.logLevelField === '') {
       this.logLevelField = undefined;
     }
