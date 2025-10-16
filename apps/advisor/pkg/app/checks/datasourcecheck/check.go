@@ -3,6 +3,8 @@ package datasourcecheck
 import (
 	"context"
 	"errors"
+	sysruntime "runtime"
+	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
@@ -28,6 +30,8 @@ type check struct {
 	PluginClient          plugins.Client
 	PluginRepo            repo.Service
 	GrafanaVersion        string
+	pluginExistsCache     map[string]bool
+	pluginExistsCacheMu   sync.RWMutex
 }
 
 func New(
@@ -45,6 +49,7 @@ func New(
 		PluginClient:          pluginClient,
 		PluginRepo:            pluginRepo,
 		GrafanaVersion:        grafanaVersion,
+		pluginExistsCache:     make(map[string]bool),
 	}
 }
 
@@ -104,10 +109,42 @@ func (c *check) Steps() []checks.Step {
 			GrafanaVersion: c.GrafanaVersion,
 		},
 		&promDepAuthStep{
-			PluginRepo:     c.PluginRepo,
-			GrafanaVersion: c.GrafanaVersion,
+			GetPluginExistsFunc: c.getPluginExistsFunc,
 		},
 	}
+}
+
+func (c *check) getPluginExistsFunc(ctx context.Context, pluginType string) (bool, error) {
+	// Check cache first with read lock
+	c.pluginExistsCacheMu.RLock()
+	if exists, found := c.pluginExistsCache[pluginType]; found {
+		c.pluginExistsCacheMu.RUnlock()
+		return exists, nil
+	}
+	c.pluginExistsCacheMu.RUnlock()
+
+	// Cache miss, fetch from repo with write lock
+	c.pluginExistsCacheMu.Lock()
+	defer c.pluginExistsCacheMu.Unlock()
+
+	// Double-check in case another goroutine fetched it while we were waiting for the lock
+	if exists, found := c.pluginExistsCache[pluginType]; found {
+		return exists, nil
+	}
+
+	// Fetch from repository
+	plugins, err := c.PluginRepo.GetPluginsInfo(ctx, repo.GetPluginsInfoOptions{
+		IncludeDeprecated: true,
+		Plugins:           []string{pluginType},
+	}, repo.NewCompatOpts(c.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH))
+	if err != nil {
+		return false, err
+	}
+
+	// Cache the result
+	exists := len(plugins) > 0
+	c.pluginExistsCache[pluginType] = exists
+	return exists, nil
 }
 
 type pluginContextProvider interface {
