@@ -54,7 +54,8 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 			var err error
 			if useGrpc {
 				// call grpc client search function
-				frames, err = dsInfo.JaegerClient.GrpcSearch(&query, q.TimeRange.From, q.TimeRange.To)
+				// TODO: enable routing to gRPC when ready, currently pending on: https://github.com/jaegertracing/jaeger/issues/7594
+				// frames, err = dsInfo.JaegerClient.GrpcSearch(&query, q.TimeRange.From, q.TimeRange.To)
 			} else {
 				frames, err = dsInfo.JaegerClient.Search(&query, q.TimeRange.From.UnixMicro(), q.TimeRange.To.UnixMicro())
 			}
