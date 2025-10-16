@@ -1,4 +1,4 @@
-package fakes
+package installsyncfakes
 
 import (
 	"context"

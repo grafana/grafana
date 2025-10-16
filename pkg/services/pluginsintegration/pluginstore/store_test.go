@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
-	installsyncfakes "github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/fakes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/installsyncfakes"
 )
 
 func TestStore_ProvideService(t *testing.T) {
