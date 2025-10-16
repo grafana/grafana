@@ -4829,7 +4829,11 @@
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
       "import-a-dashboard-body": "Importa dashboards desde archivos o <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importar un tablero",
-      "import-dashboard-button": "Importar panel de control"
+      "import-dashboard-button": "Importar panel de control",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Error al cargar el panel de control"

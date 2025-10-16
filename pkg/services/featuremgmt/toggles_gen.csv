@@ -125,7 +125,7 @@ cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
 disableNumericMetricsSortingInExpressions,experimental,@grafana/oss-big-tent,false,true,false
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 queryLibrary,preview,@grafana/sharing-squad,false,false,false
-dashboardLibrary,experimental,@grafana/sharing-squad,false,false,true
+dashboardLibrary,experimental,@grafana/sharing-squad,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
@@ -267,6 +267,5 @@ azureResourcePickerUpdates,preview,@grafana/partner-datasources,false,false,true
 prometheusTypeMigration,experimental,@grafana/partner-datasources,false,true,false
 pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,false
 tempoSearchBackendMigration,GA,@grafana/oss-big-tent,false,true,false
-filterOutBotsFromFrontendLogs,experimental,@grafana/plugins-platform-backend,false,false,true
 cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
 cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false

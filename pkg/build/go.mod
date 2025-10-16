@@ -15,9 +15,9 @@ require (
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/net v0.45.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/sync v0.17.0 // @grafana/alerting-backend
-	golang.org/x/text v0.29.0 // indirect; @grafana/grafana-backend-group
-	google.golang.org/grpc v1.75.1 // indirect; @grafana/plugins-platform-backend
-	google.golang.org/protobuf v1.36.9 // indirect; @grafana/plugins-platform-backend
+	golang.org/x/text v0.30.0 // indirect; @grafana/grafana-backend-group
+	google.golang.org/grpc v1.76.0 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/protobuf v1.36.10 // indirect; @grafana/plugins-platform-backend
 )
 
 require (
@@ -31,14 +31,14 @@ require (
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250908214217-97024824d090 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250908214217-97024824d090 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251002232023-7c0ddcbb5797 // indirect
 )
 
 require (
 	dagger.io/dagger v0.18.8
 	github.com/Masterminds/semver v1.5.0
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
-	github.com/urfave/cli/v3 v3.3.3
+	github.com/urfave/cli/v3 v3.4.1
 )
 
 require (
