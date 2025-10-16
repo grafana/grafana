@@ -364,7 +364,7 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			if !ok {
 				return fmt.Errorf("expected old object to be a User, got %T", oldUserObj)
 			}
-			return user.ValidateOnUpdate(ctx, oldUserObj, typedObj)
+			return user.ValidateOnUpdate(ctx, b.userSearchClient, oldUserObj, typedObj)
 		case *iamv0.ResourcePermission:
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
 		case *iamv0.Team:

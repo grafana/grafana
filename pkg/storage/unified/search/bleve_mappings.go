@@ -21,7 +21,7 @@ func GetBleveMappings(fields resource.SearchableDocumentFields, useFullNgram boo
 	return mapper, nil
 }
 
-func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentMapping {
+func getBleveDocMappings(fields resource.SearchableDocumentFields) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 
 	nameMapping := &mapping.FieldMapping{
@@ -145,6 +145,28 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
 
 	fieldMapper := bleve.NewDocumentMapping()
+	fieldMapper.DefaultAnalyzer = keyword.Name
+	// TODO: If the Analyzer only specified like the following then it does not work as expected.
+	// if fields != nil {
+	// 	fieldMapper.Fields = []*mapping.FieldMapping{}
+	// 	for _, field := range fields.Fields() {
+	// 		def := fields.Field(field)
+	// 		fm := &mapping.FieldMapping{
+	// 			Name:               def.Name,
+	// 			Type:               "text",
+	// 			Analyzer:           keyword.Name,
+	// 			Store:              true,
+	// 			Index:              true,
+	// 			IncludeTermVectors: false,
+	// 			IncludeInAll:       false,
+	// 		}
+	// 		if def.Properties != nil && def.Properties.ExactMatch {
+	// 			fm.Analyzer = keyword.Name
+	// 		}
+	// 		fieldMapper.Fields = append(fieldMapper.Fields, fm)
+	// 	}
+	// }
+
 	mapper.AddSubDocumentMapping("fields", fieldMapper)
 
 	return mapper

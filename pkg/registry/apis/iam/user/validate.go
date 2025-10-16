@@ -13,8 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// func ValidateOnCreate(ctx context.Context, clientGenerator func(ctx context.Context) (*k8s.ClientRegistry, error), obj *iamv0alpha1.User) error {
-
 func ValidateOnCreate(ctx context.Context, userSearchClient resourcepb.ResourceIndexClient, obj *iamv0alpha1.User) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -43,7 +41,7 @@ func ValidateOnCreate(ctx context.Context, userSearchClient resourcepb.ResourceI
 	return nil
 }
 
-func ValidateOnUpdate(ctx context.Context, oldObj, newObj *iamv0alpha1.User) error {
+func ValidateOnUpdate(ctx context.Context, userSearchClient resourcepb.ResourceIndexClient, oldObj, newObj *iamv0alpha1.User) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -92,6 +90,11 @@ func ValidateOnUpdate(ctx context.Context, oldObj, newObj *iamv0alpha1.User) err
 		return err
 	}
 
+	// TODO: Finish this to only check if login/email changed
+	if err := validateEmailLogin(ctx, userSearchClient, requester.GetNamespace(), newObj.Spec.Login, newObj.Spec.Email); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -117,19 +120,21 @@ func validateEmailLogin(ctx context.Context, searchClient resourcepb.ResourceInd
 				Namespace: namespace,
 			},
 			Fields: []*resourcepb.Requirement{
+				// TODO: commented out to test with just login uniqueness
 				{
 					Key:      "email",
 					Operator: string(selection.Equals),
 					Values:   []string{email},
 				},
-				{
-					Key:      "login",
-					Operator: string(selection.Equals),
-					Values:   []string{login},
-				}},
+				// {
+				// 	Key:      "login",
+				// 	Operator: string(selection.Equals),
+				// 	Values:   []string{login},
+				// }},
+			},
 		},
-		Fields: []string{"login", "email"},
-		Limit:  10,
+		// Fields:  []string{"login", "email", "name"},
+		Explain: true,
 	}
 	resp, err := searchClient.Search(ctx, req)
 	if err != nil {

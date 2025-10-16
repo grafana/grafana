@@ -1,13 +1,14 @@
 package search
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const (
@@ -22,7 +23,9 @@ func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
 			Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 			Description: "The email address of the user",
 			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
+				UniqueValues: true,
+				Filterable:   true,
+				ExactMatch:   true,
 			},
 		},
 		{
@@ -32,6 +35,7 @@ func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
 			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				UniqueValues: true,
 				Filterable:   true,
+				ExactMatch:   true,
 			},
 		},
 	})
@@ -48,33 +52,26 @@ type userDocumentBuilder struct{}
 
 // BuildDocument implements resource.DocumentBuilder.
 func (u *userDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
-	tmp := &unstructured.Unstructured{}
-	err := tmp.UnmarshalJSON(value)
+	user := &iamv0.User{}
+	err := json.NewDecoder(bytes.NewReader(value)).Decode(user)
 	if err != nil {
 		return nil, err
 	}
 
-	obj, err := utils.MetaAccessor(tmp)
+	obj, err := utils.MetaAccessor(user)
 	if err != nil {
 		return nil, err
 	}
 
 	doc := resource.NewIndexableDocument(key, rv, obj)
 
-	if spec, err := obj.GetSpec(); err == nil {
-		if m, ok := spec.(map[string]any); ok {
-			email, _ := m[USER_EMAIL].(string)
-			login, _ := m[USER_LOGIN].(string)
-			if email != "" || login != "" {
-				doc.Fields = make(map[string]any)
-				if email != "" {
-					doc.Fields[USER_EMAIL] = email
-				}
-				if login != "" {
-					doc.Fields[USER_LOGIN] = login
-				}
-			}
-		}
+	doc.Fields = make(map[string]any)
+	if user.Spec.Email != "" {
+		doc.Fields[USER_EMAIL] = user.Spec.Email
 	}
+	if user.Spec.Login != "" {
+		doc.Fields[USER_LOGIN] = user.Spec.Login
+	}
+
 	return doc, nil
 }

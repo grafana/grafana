@@ -1200,7 +1200,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// filters
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
-			q, err := requirementQuery(v, "")
+			q, err := requirementQuery(v, "") // TODO: should the prefix be "fields."?
 			if err != nil {
 				return nil, err
 			}
@@ -1546,6 +1546,12 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 	case selection.Equals, selection.DoubleEquals:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
+		}
+
+		if req.Exact && len(req.Values) == 1 {
+			tq := bleve.NewTermQuery(req.Values[0])
+			tq.SetField(prefix + req.Key)
+			return tq, nil
 		}
 
 		if len(req.Values) == 1 {
