@@ -437,7 +437,7 @@ export { attachDebugger } from './utils/debug';
 export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
 export { fuzzyMatch } from './utils/fuzzy';
 export { logOptions } from './utils/logOptions';
-export { shimmer, ripple } from './utils/keyframes';
+export { shimmer } from './utils/keyframes';
 
 export { DOMUtil, ReactUtils, floatingUtils };
 
