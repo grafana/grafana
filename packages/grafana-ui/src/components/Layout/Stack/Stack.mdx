@@ -30,6 +30,6 @@ The Stack component intentionally does not allow you to pass in a className, and
 
 ## Design decisions
 
-Stack is designed for the common simple cases where it's faster to write `<Stack direction="column">...</Stack>` than it is to set up the styles hooks. If you are writing custom styles anyway, you should add the flex styles there instead of using a Stack.
+Stack is designed for the common simple cases where it's faster to write `<Stack direction="column">...</Stack>` than it is to set up the styles hooks. If you are writing custom styles anyway, you should add the flex styles there instead of using a Stack. You can use `theme.spacing(number)` in your styles to match how numbers are used in props like `gap` and `width`.
 
 The style-related props that Stack supports are intentionally limited to the flex and sizing props. It's not expected that there would be changes needed to Stack unless browsers add new css properties related to flex.
