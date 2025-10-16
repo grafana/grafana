@@ -162,7 +162,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
                 />
               );
             case 'datasource':
-              return <DataSourceRuleLoader key={key} rule={rule} groupIdentifier={groupIdentifier} />;
+              return <DataSourceRuleLoader key={key} ruleWithOrigin={ruleWithOrigin} />;
             default:
               return (
                 <UnknownRuleListItem
@@ -212,7 +212,9 @@ function getGrafanaRuleKey(ruleWithOrigin: GrafanaRuleWithOrigin) {
 function getDataSourceRuleKey(ruleWithOrigin: PromRuleWithOrigin) {
   const {
     rule,
+    rulePositionHash,
     groupIdentifier: { rulesSource, namespace, groupName },
   } = ruleWithOrigin;
-  return `${rulesSource.name}-${namespace.name}-${groupName}-${rule.name}-${rule.type}-${hashRule(rule)}`;
+
+  return `${rulesSource.name}-${namespace.name}-${groupName}-${rule.name}-${rule.type}-${hashRule(rule)}-${rulePositionHash}`;
 }
