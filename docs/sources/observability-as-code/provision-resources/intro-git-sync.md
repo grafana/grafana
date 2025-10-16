@@ -70,10 +70,10 @@ Git Sync only supports dashboards and folders. Alerts, panels, and other resourc
 
 A resource can be:
 
-| Is the resource? | **Compatible** | **Incompatible** |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------------- |
-| **Supported** | The resource can be managed with Git Sync. | The resource is supported but has compatibility issues. It **cannot** be managed with Git Sync. |
-| **Unsupported** | The resource is **not** supported and **cannot** be managed with Git Sync. | Not applicable. |
+| Is the resource? | **Compatible**                                                             | **Incompatible**                                                                                |
+| ---------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Supported**    | The resource can be managed with Git Sync.                                 | The resource is supported but has compatibility issues. It **cannot** be managed with Git Sync. |
+| **Unsupported**  | The resource is **not** supported and **cannot** be managed with Git Sync. | Not applicable.                                                                                 |
 
 ### Instance states
 
