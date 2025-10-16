@@ -1650,6 +1650,15 @@
     "inspector-yaml-tab": {
       "apply": "Terapkan"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2306,6 +2315,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Sumber data"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Ekspresi"
     },
@@ -2547,6 +2559,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Aturan peringatan telah ditambahkan atau diperbarui. Perubahan mungkin memerlukan waktu hingga satu menit untuk muncul di tampilan daftar aturan Peringatan.",
         "alert-title": "Pembaruan sedang berlangsung"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Terjadi kesalahan saat mengevaluasi aturan peringatan ini"
     },
@@ -2918,10 +2934,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "Tambah pola"
@@ -4587,7 +4615,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "dasbor {{dashboardName}}"
+      "aria-label-dashboard-name": "dasbor {{dashboardName}}",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Batalkan memuat dasbor"
@@ -4780,7 +4809,11 @@
       "add-visualization-header": "Mulai dasbor baru Anda dengan menambahkan visualisasi",
       "import-a-dashboard-body": "Impor dasbor dari file atau <2>grafana.com</2>.",
       "import-a-dashboard-header": "Impor dasbor",
-      "import-dashboard-button": "Impor dasbor"
+      "import-dashboard-button": "Impor dasbor",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Gagal memuat dasbor"

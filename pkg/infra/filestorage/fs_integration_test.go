@@ -176,9 +176,6 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 }
 
 func TestIntegrationFsStorage(t *testing.T) {
-	if true {
-		t.Skip("flakey tests - skipping")
-	}
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	//skipTest := true
