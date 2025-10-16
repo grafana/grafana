@@ -59,7 +59,7 @@ type GenericMeta = {
 export type FieldNameMeta = (InactiveFieldMeta | ActiveFieldMeta) & GenericMeta;
 
 type FieldName = string;
-type FieldNameMetaStore = Record<FieldName, FieldNameMeta>;
+export type FieldNameMetaStore = Record<FieldName, FieldNameMeta>;
 
 export function LogsTableWrap(props: Props) {
   const { logsFrames, updatePanelState, panelState } = props;
@@ -438,12 +438,6 @@ export function LogsTableWrap(props: Props) {
     }
   };
 
-  const displayedColumns = Object.keys(columnsWithMeta)
-    .filter((column) => columnsWithMeta[column].index !== undefined)
-    .sort((a, b) =>
-      columnsWithMeta[a].index && columnsWithMeta[b].index ? columnsWithMeta[a].index - columnsWithMeta[b].index : 0
-    );
-
   return (
     <>
       <div>
@@ -488,8 +482,8 @@ export function LogsTableWrap(props: Props) {
         >
           <LogsTableFieldSelector
             clear={clearSelection}
+            columnsWithMeta={columnsWithMeta}
             dataFrames={[currentDataFrame]}
-            displayedColumns={displayedColumns}
             logs={[]}
             reorder={reorderColumn}
             setSidebarWidth={setSidebarWidth}

@@ -80,6 +80,7 @@ export interface Props {
   prettifyJSON?: boolean;
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
+  showFieldSelector?: boolean;
   /**
    * Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata
    * @alpha
@@ -156,6 +157,7 @@ export const LogList = ({
   prettifyJSON = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true) : true,
   setDisplayedFields,
   showControls,
+  showFieldSelector,
   showLogAttributes,
   showTime,
   showUniqueLabels,
@@ -223,6 +225,7 @@ export const LogList = ({
           loadMore={loadMore}
           logs={logs}
           showControls={showControls}
+          showFieldSelector={showFieldSelector}
           timeRange={timeRange}
           timeZone={timeZone}
         />
@@ -243,6 +246,7 @@ const LogListComponent = ({
   loadMore,
   logs,
   showControls,
+  showFieldSelector,
   timeRange,
   timeZone,
 }: LogListComponentProps) => {
@@ -529,7 +533,7 @@ const LogListComponent = ({
           )}
         </InfiniteScroll>
       </div>
-      {processedLogs.length > 0 && (
+      {showFieldSelector && processedLogs.length > 0 && (
         <LogListFieldSelector containerElement={containerElement} dataFrames={dataFrames} logs={processedLogs} />
       )}
     </div>

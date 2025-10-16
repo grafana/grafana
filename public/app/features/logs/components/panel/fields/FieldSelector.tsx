@@ -6,6 +6,7 @@ import { DataFrame, fuzzySearch, GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
+import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
@@ -140,7 +141,7 @@ const logsFieldSelectorWrapperStyles = {
  * FieldSelector wrapper for the LogList visualization.
  */
 interface LogsTableFieldSelectorProps {
-  displayedColumns: string[];
+  columnsWithMeta: FieldNameMetaStore;
   clear(): void;
   dataFrames: DataFrame[];
   logs: LogListModel[];
@@ -151,9 +152,9 @@ interface LogsTableFieldSelectorProps {
 }
 
 export const LogsTableFieldSelector = ({
+  columnsWithMeta,
   clear,
   dataFrames,
-  displayedColumns,
   logs,
   reorder,
   setSidebarWidth,
@@ -169,7 +170,43 @@ export const LogsTableFieldSelector = ({
     setSidebarWidth(width < 2 * MIN_WIDTH ? DEFAULT_WIDTH : width);
   }, [setSidebarWidth]);
 
-  const suggestedFields = useMemo(() => getSuggestedFields(logs, displayedColumns), [displayedColumns, logs]);
+  const displayedColumns = useMemo(
+    () =>
+      columnsWithMeta
+        ? Object.keys(columnsWithMeta)
+            .filter((column) => columnsWithMeta[column].active)
+            .sort((a, b) =>
+              columnsWithMeta[a].index && columnsWithMeta[b].index
+                ? columnsWithMeta[a].index - columnsWithMeta[b].index
+                : 0
+            )
+        : [],
+    [columnsWithMeta]
+  );
+
+  const defaultColumns = useMemo(
+    () =>
+      columnsWithMeta
+        ? Object.keys(columnsWithMeta)
+            .sort((a, b) => {
+              const pa = columnsWithMeta[a];
+              const pb = columnsWithMeta[b];
+              if (pa.index !== undefined && pb.index !== undefined) {
+                return pa.index - pb.index; // sort by index
+              }
+              return 0;
+            })
+            .filter(
+              (column) => columnsWithMeta[column].type === 'TIME_FIELD' || columnsWithMeta[column].type === 'BODY_FIELD'
+            )
+        : [],
+    [columnsWithMeta]
+  );
+
+  const suggestedFields = useMemo(
+    () => getSuggestedFields(logs, displayedColumns, defaultColumns),
+    [defaultColumns, displayedColumns, logs]
+  );
   const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
 
   return sidebarWidth > MIN_WIDTH * 2 ? (
@@ -317,8 +354,13 @@ function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
   }));
 }
 
-function getSuggestedFields(logs: LogListModel[], displayedFields: string[]) {
-  const suggestedFields: FieldWithStats[] = [];
+function getSuggestedFields(logs: LogListModel[], displayedFields: string[], defaultFields: string[] = []) {
+  const suggestedFields: FieldWithStats[] = defaultFields.map((field) => ({
+    name: field,
+    stats: {
+      percentOfLinesWithLabel: 100,
+    },
+  }));
   if (config.featureToggles.otelLogsFormatting) {
     getDisplayedFieldsForLogs(logs).forEach((field) => {
       suggestedFields.push({
@@ -330,7 +372,11 @@ function getSuggestedFields(logs: LogListModel[], displayedFields: string[]) {
     });
   }
 
-  if (displayedFields.length && !suggestedFields.find((field) => field.name === LOG_LINE_BODY_FIELD_NAME)) {
+  if (
+    !defaultFields.length &&
+    displayedFields.length &&
+    !suggestedFields.find((field) => field.name === LOG_LINE_BODY_FIELD_NAME)
+  ) {
     suggestedFields.push({
       name: LOG_LINE_BODY_FIELD_NAME,
       stats: {
