@@ -179,8 +179,6 @@ export function PanelChrome({
   const showOnHoverClass = showMenuAlways ? 'always-show' : 'show-on-hover';
   const isPanelTransparent = displayMode === 'transparent';
 
-  const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
-
   const headerHeight = getHeaderHeight(theme, hasHeader);
   const subHeaderHeight = !collapsed && subHeaderContent ? headerHeight : 0;
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(
@@ -199,6 +197,7 @@ export function PanelChrome({
   };
 
   const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height };
+  const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   /** Old property name now maps to actions */
   if (leftItems) {
