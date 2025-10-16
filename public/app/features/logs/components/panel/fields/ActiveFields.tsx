@@ -31,12 +31,8 @@ export const ActiveFields = ({ activeFields, clear, fields, reorder, suggestedFi
     newActiveFields.splice(result.source.index, 1);
     newActiveFields.splice(result.destination.index, 0, element);
 
-    console.log(newActiveFields);
-
     reorder(newActiveFields);
   };
-
-  console.log(activeFields);
 
   const active = useMemo(
     () => [

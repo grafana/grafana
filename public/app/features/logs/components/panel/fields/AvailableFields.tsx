@@ -19,7 +19,7 @@ export const AvailableFields = ({ activeFields, fields, toggle, reorder }: Props
   const styles = useStyles2(getLogsFieldsStyles);
 
   const availableFields = useMemo(
-    () => fields.filter((field) => !activeFields.includes(field.name)),
+    () => fields.filter((field) => !activeFields.includes(field.name)).sort(sortFields),
     [activeFields, fields]
   );
 
@@ -44,3 +44,9 @@ export const AvailableFields = ({ activeFields, fields, toggle, reorder }: Props
 
   return <EmptyFields />;
 };
+
+const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
+
+function sortFields(a: FieldWithStats, b: FieldWithStats) {
+  return collator.compare(a.name, b.name);
+}
