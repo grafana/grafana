@@ -107,6 +107,6 @@ func mapToTeamMember(m legacy.TeamMember) iamv0.TeamMember {
 			InternalID:  m.UserID,
 		},
 		External:   m.External,
-		Permission: mapPermisson(m.Permission),
+		Permission: common.MapUserTeamPermission(m.Permission),
 	}
 }
