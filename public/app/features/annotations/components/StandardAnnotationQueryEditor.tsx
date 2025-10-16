@@ -311,6 +311,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
             annotation={annotation}
             datasource={datasource}
             onQueryReplace={this.onQueryReplace}
+            isLoading={this.state.running}
           >
             <QueryEditor
               key={datasource?.name}

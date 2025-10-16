@@ -12,16 +12,25 @@ interface Props {
   annotation: AnnotationQuery<DataQuery>;
   datasource: DataSourceApi;
   onQueryReplace: (query: DataQuery) => void;
+  isLoading?: boolean;
 }
 
-export function AnnotationQueryEditorActionsWrapper({ children, annotation, datasource, onQueryReplace }: Props) {
+export function AnnotationQueryEditorActionsWrapper({
+  children,
+  annotation,
+  datasource,
+  onQueryReplace,
+  isLoading,
+}: Props) {
   const { renderSavedQueryButtons } = useQueryLibraryContext();
 
   const savedQueryButtons = renderSavedQueryButtons(
     getDataQueryFromAnnotationForSavedQueries(annotation, datasource),
     CoreApp.Dashboard,
     undefined,
-    onQueryReplace
+    onQueryReplace,
+    undefined,
+    isLoading
   );
 
   return (
