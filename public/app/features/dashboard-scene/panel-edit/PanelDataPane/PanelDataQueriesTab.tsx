@@ -15,6 +15,7 @@ import {
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { Button, Stack, Tab } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
+import { trackQueryExecution } from 'app/core/utils/querySaveTracking';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
@@ -68,6 +69,23 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   private onActivate() {
     this.loadDataSource();
+
+    // Subscribe to query runner state to track query executions triggered by refresh button
+    const subscription = this.queryRunner.subscribeToState((newState, oldState) => {
+      // Track when a new query execution starts (requestId changes)
+      const newRequestId = newState.data?.request?.requestId;
+      const oldRequestId = oldState.data?.request?.requestId;
+
+      if (newRequestId && newRequestId !== oldRequestId && config.featureToggles.queryLibrary) {
+        newState.queries.forEach((query) => {
+          trackQueryExecution(query);
+        });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }
 
   private async loadDataSource() {
@@ -192,6 +210,13 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     queryRunner.setState({ datasource: getDataSourceRef(newSettings), queries });
 
     if (defaultQueries) {
+      // Track query executions for save animation feature (with feature toggle guard)
+      if (config.featureToggles.queryLibrary) {
+        queryRunner.state.queries.forEach((query) => {
+          trackQueryExecution(query);
+        });
+      }
+
       queryRunner.runQueries();
     }
 
@@ -236,6 +261,14 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     panel.setState(panelStateUpdate);
 
     dataObj.setState(dataObjStateUpdate);
+
+    // Track query executions for save animation feature (with feature toggle guard)
+    if (config.featureToggles.queryLibrary) {
+      dataObj.state.queries.forEach((query) => {
+        trackQueryExecution(query);
+      });
+    }
+
     dataObj.runQueries();
   };
 
@@ -245,6 +278,13 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   };
 
   public onRunQueries = () => {
+    // Track query executions for save animation feature (with feature toggle guard)
+    if (config.featureToggles.queryLibrary) {
+      this.queryRunner.state.queries.forEach((query) => {
+        trackQueryExecution(query);
+      });
+    }
+
     this.queryRunner.runQueries();
   };
 
