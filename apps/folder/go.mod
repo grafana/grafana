@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/folder
 go 1.25.3
 
 require (
-	github.com/grafana/grafana-app-sdk v0.46.0
+	github.com/grafana/grafana-app-sdk v0.47.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	k8s.io/apimachinery v0.34.1
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b
@@ -23,7 +23,7 @@ require (
 	github.com/go-test/deep v1.1.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.45.0 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.46.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
