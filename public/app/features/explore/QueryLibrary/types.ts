@@ -1,4 +1,3 @@
-import { SelectableValue } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 
 export type User = {

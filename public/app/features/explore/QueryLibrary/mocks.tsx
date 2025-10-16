@@ -33,6 +33,7 @@ export function QueryLibraryContextProviderMock(props: PropsWithChildren<Props>)
         onAddHistoryQueryToLibrary: jest.fn(),
         highlightedQuery: undefined,
         newQuery: undefined,
+        setCloseGuard: jest.fn(),
       }}
     >
       {props.children}

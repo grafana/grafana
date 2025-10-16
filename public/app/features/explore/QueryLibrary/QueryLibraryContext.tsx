@@ -85,6 +85,8 @@ export type QueryLibraryContextType = {
   highlightedQuery: string | undefined;
   newQuery: SavedQuery | undefined;
   activeDatasources: string[];
+  /** Set a guard function that returns true to allow closing, false to prevent closing */
+  setCloseGuard: (shouldAllowClose: () => boolean) => void;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
@@ -119,6 +121,7 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   highlightedQuery: undefined,
   newQuery: undefined,
   activeDatasources: [],
+  setCloseGuard: () => {},
 });
 
 export function useQueryLibraryContext() {
