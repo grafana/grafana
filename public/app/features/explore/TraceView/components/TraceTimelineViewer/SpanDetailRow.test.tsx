@@ -40,7 +40,7 @@ const setup = (propOverrides?: SpanDetailRowProps) => {
     logItemToggle: jest.fn(),
     logsToggle: jest.fn(),
     processToggle: jest.fn(),
-    createFocusSpanLink: jest.fn(),
+    createFocusSpanLink: jest.fn().mockReturnValue({}),
     hoverIndentGuideIds: new Map(),
     span: testSpan,
     tagsToggle: jest.fn(),
