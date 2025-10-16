@@ -19,14 +19,8 @@ import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getTabFromClipboard } from '../layouts-shared/paste';
-import {
-  generateUniqueTitle,
-  ungroupLayout,
-  GridLayoutType,
-  mapIdToGridLayoutType,
-  showUngroupConfirmation,
-  showConvertMixedGridsModal,
-} from '../layouts-shared/utils';
+import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
+import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
