@@ -15,7 +15,7 @@ type OpenFeatureSettings struct {
 	ProviderType string
 	URL          *url.URL
 	TargetingKey string
-	ContextAttrs map[string]string
+	ContextAttrs map[string]any
 }
 
 func (cfg *Cfg) readOpenFeatureSettings() error {
@@ -43,9 +43,20 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 
 	// build the eval context attributes using [feature_toggles.openfeature.context] section
 	ctxConf := cfg.Raw.Section("feature_toggles.openfeature.context")
-	attrs := map[string]string{}
+	attrs := map[string]any{}
+
+	// stackId is a mandatory property required by MTFF in cloud, it has to be int
 	for _, key := range ctxConf.KeyStrings() {
-		attrs[key] = ctxConf.Key(key).String()
+		if key == "stackId" {
+			v, err := ctxConf.Key(key).Int64()
+			if err != nil {
+				return fmt.Errorf("invalid feature context key: %w", err)
+			}
+
+			attrs[key] = v
+		} else {
+			attrs[key] = ctxConf.Key(key).String()
+		}
 	}
 
 	// Some default attributes

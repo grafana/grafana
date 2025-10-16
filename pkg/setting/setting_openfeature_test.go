@@ -11,11 +11,11 @@ func Test_CtxAttrs(t *testing.T) {
 	testCases := []struct {
 		name     string
 		conf     string
-		expected map[string]string
+		expected map[string]any
 	}{
 		{
 			name: "empty config - only default attributes should be present",
-			expected: map[string]string{
+			expected: map[string]any{
 				"grafana_version": "",
 				"namespace":       "default",
 			},
@@ -27,7 +27,7 @@ func Test_CtxAttrs(t *testing.T) {
 foo = bar
 baz = qux
 quux = corge`,
-			expected: map[string]string{
+			expected: map[string]any{
 				"foo":             "bar",
 				"baz":             "qux",
 				"quux":            "corge",
@@ -41,7 +41,7 @@ quux = corge`,
 [feature_toggles.openfeature.context]
 grafana_version = 10.0.0
 foo = bar`,
-			expected: map[string]string{
+			expected: map[string]any{
 				"grafana_version": "10.0.0",
 				"foo":             "bar",
 				"namespace":       "default",
