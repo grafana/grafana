@@ -82,7 +82,7 @@ export const ActiveFields = ({ activeFields, clear, fields, reorder, suggestedFi
                           active={activeFields.includes(field.name)}
                           field={field}
                           toggle={toggle}
-                          draggable={true}
+                          draggable={activeFields.includes(field.name)}
                         />
                       </div>
                     )}
