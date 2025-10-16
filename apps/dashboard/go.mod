@@ -5,8 +5,8 @@ go 1.25.3
 require (
 	cuelang.org/go v0.11.1
 	github.com/grafana/authlib/types v0.0.0-20250926065801-df98203cff37
-	github.com/grafana/grafana-app-sdk v0.46.0
-	github.com/grafana/grafana-app-sdk/logging v0.45.0
+	github.com/grafana/grafana-app-sdk v0.47.0
+	github.com/grafana/grafana-app-sdk/logging v0.46.0
 	github.com/grafana/grafana-plugin-sdk-go v0.279.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/prometheus/client_golang v1.23.2
@@ -131,7 +131,7 @@ require (
 	golang.org/x/tools v0.37.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250908214217-97024824d090 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251002232023-7c0ddcbb5797 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250908214217-97024824d090 // indirect
 	google.golang.org/grpc v1.76.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
