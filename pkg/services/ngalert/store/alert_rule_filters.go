@@ -7,6 +7,139 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+// filterLiteRuleUIDs applies filters to lite rules and returns matching UIDs in input order
+func filterLiteRuleUIDs(liteRules []*ngmodels.AlertRuleLite, query *ngmodels.ListAlertRulesExtendedQuery) []string {
+	if !hasAnyFilters(query) && query.RuleType == ngmodels.RuleTypeFilterAll {
+		// No filters: return all UIDs
+		uids := make([]string, 0, len(liteRules))
+		for _, lr := range liteRules {
+			uids = append(uids, lr.UID)
+		}
+		return uids
+	}
+	uids := make([]string, 0, len(liteRules))
+	for _, lr := range liteRules {
+		if matchesAllFiltersLite(lr, query) {
+			uids = append(uids, lr.UID)
+		}
+	}
+	return uids
+}
+
+func matchesAllFiltersLite(rule *ngmodels.AlertRuleLite, query *ngmodels.ListAlertRulesExtendedQuery) bool {
+	// RuleType
+	if query.RuleType != ngmodels.RuleTypeFilterAll {
+		isRecording := rule.IsRecording
+		if query.RuleType == ngmodels.RuleTypeFilterRecording && !isRecording {
+			return false
+		}
+		if query.RuleType == ngmodels.RuleTypeFilterAlerting && isRecording {
+			return false
+		}
+	}
+	// NamespaceUIDs
+	if len(query.NamespaceUIDs) > 0 {
+		found := false
+		for _, uid := range query.NamespaceUIDs {
+			if rule.NamespaceUID == uid {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	// RuleGroups exact
+	if len(query.RuleGroups) > 0 {
+		found := false
+		for _, g := range query.RuleGroups {
+			if rule.RuleGroup == g {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	// Namespace string
+	if query.Namespace != "" && !containsCaseInsensitive(rule.NamespaceUID, query.Namespace) {
+		return false
+	}
+	// Group name substring
+	if query.GroupName != "" && !containsCaseInsensitive(rule.RuleGroup, query.GroupName) {
+		return false
+	}
+	// Rule name substring
+	if query.RuleName != "" && !containsCaseInsensitive(rule.Title, query.RuleName) {
+		return false
+	}
+	// Labels
+	if len(query.Labels) > 0 {
+		if !matchesLabelsLite(rule.Labels, query.Labels) {
+			return false
+		}
+	}
+	// Dashboard UID and panel
+	if query.DashboardUID != "" {
+		if rule.DashboardUID == nil || *rule.DashboardUID != query.DashboardUID {
+			return false
+		}
+		if query.PanelID != 0 {
+			if rule.PanelID == nil || *rule.PanelID != query.PanelID {
+				return false
+			}
+		}
+	}
+	// Receiver/contact point
+	if query.ReceiverName != "" || query.ContactPointName != "" {
+		name := query.ReceiverName
+		if name == "" {
+			name = query.ContactPointName
+		}
+		if !sliceContainsCI(rule.ReceiverNames, name) {
+			return false
+		}
+	}
+	// Hide plugin rules by label
+	if query.HidePluginRules {
+		if rule.Labels == nil {
+			return false
+		}
+		if _, ok := rule.Labels[GrafanaOriginLabel]; ok {
+			return false
+		}
+	}
+	return true
+}
+
+func matchesLabelsLite(labels map[string]string, matchers []string) bool {
+	if labels == nil {
+		return false
+	}
+	for _, matcherStr := range matchers {
+		matcher, err := parseLabelMatcher(matcherStr)
+		if err != nil {
+			continue
+		}
+		if !matcher.Matches(labels) {
+			return false
+		}
+	}
+	return true
+}
+
+func sliceContainsCI(arr []string, needle string) bool {
+	needle = strings.ToLower(needle)
+	for _, v := range arr {
+		if strings.ToLower(v) == needle {
+			return true
+		}
+	}
+	return false
+}
+
 const (
 	// GrafanaOriginLabel is the label key used to identify plugin-provided rules
 	GrafanaOriginLabel = "__grafana_origin"

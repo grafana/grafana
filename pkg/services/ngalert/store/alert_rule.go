@@ -606,11 +606,18 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 	// Continue token and limits are fine - we'll paginate the cached results
 	canUseCache := !query.DisableCache && len(query.RuleUIDs) == 0
 
+	st.Logger.Info("ListAlertRulesByGroup cache check",
+		"canUseCache", canUseCache,
+		"disableCache", query.DisableCache,
+		"ruleUIDs_count", len(query.RuleUIDs),
+		"ruleType", query.RuleType,
+		"org_id", query.OrgID)
+
 	var allRules ngmodels.RulesGroup
 
 	if canUseCache {
-		// Try to get from cache
-		if cachedRules, found := st.getCachedAlertRules(ctx, query.OrgID, query.RuleType); found {
+		// Try to get from cache using lite+MGET strategy
+		if cachedRules, found := st.getCachedAlertRulesFiltered(ctx, query); found {
 			st.Logger.Info("Store ListAlertRulesByGroup cache hit", "orgID", query.OrgID, "cachedCount", len(cachedRules))
 			allRules = cachedRules
 		}
@@ -1004,14 +1011,14 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 
 	if canUseCache {
 		startCache := time.Now()
-		if cachedRules, found := st.getCachedAlertRules(ctx, query.OrgID, query.RuleType); found {
+		if cachedRules, found := st.getCachedAlertRulesFiltered(ctx, query); found {
 			cacheRetrievalDuration = time.Since(startCache)
 			cacheHit = true
 
-			// Apply in-memory filters to cached results
+			// Apply in-memory filters to cached results (redundant but safe)
 			startFiltering := time.Now()
 			filteredRules := applyInMemoryFilters(cachedRules, query)
-			filteringDuration := time.Since(startFiltering)
+			filteringDuration = time.Since(startFiltering)
 
 			// Apply pagination to filtered results
 			result = filteredRules

@@ -279,6 +279,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(ldapservice.LDAP), new(*ldapservice.LDAPImpl)),
 	jwt.ProvideService,
 	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
+	ngstore.ProvideAlertRuleCache,
 	ngstore.ProvideDBStore,
 	ngimage.ProvideDeleteExpiredService,
 	ngalert.ProvideService,

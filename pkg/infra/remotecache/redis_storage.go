@@ -107,6 +107,32 @@ func (s *redisStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	return item, nil
 }
 
+// MGet returns multiple values as byte arrays in a single operation
+func (s *redisStorage) MGet(ctx context.Context, keys ...string) ([][]byte, error) {
+	if len(keys) == 0 {
+		return [][]byte{}, nil
+	}
+
+	result, err := s.c.MGet(ctx, keys...).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert []interface{} to [][]byte, with nil for missing keys
+	values := make([][]byte, len(result))
+	for i, val := range result {
+		if val == nil {
+			values[i] = nil
+		} else if strVal, ok := val.(string); ok {
+			values[i] = []byte(strVal)
+		} else {
+			values[i] = nil
+		}
+	}
+
+	return values, nil
+}
+
 // Delete delete a key from session.
 func (s *redisStorage) Delete(ctx context.Context, key string) error {
 	cmd := s.c.Del(ctx, key)

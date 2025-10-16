@@ -369,6 +369,47 @@ type AlertRule struct {
 	MissingSeriesEvalsToResolve *int64
 }
 
+// AlertRuleLite is a lightweight version of AlertRule containing only fields needed for
+// filtering and pagination. This is used for caching to reduce memory/network overhead.
+// Full rule details can be fetched from DB for the final result set.
+type AlertRuleLite struct {
+	UID          string
+	OrgID        int64
+	NamespaceUID string
+	RuleGroup    string
+	Title        string
+	Labels       map[string]string
+	DashboardUID *string
+	PanelID      *int64
+	// ReceiverNames contains only the receiver names from NotificationSettings for filtering
+	ReceiverNames  []string
+	RuleGroupIndex int
+	IsRecording    bool
+}
+
+// ToLite converts an AlertRule to its lightweight version for caching
+func (r *AlertRule) ToLite() *AlertRuleLite {
+	// Extract receiver names from NotificationSettings
+	receiverNames := make([]string, 0, len(r.NotificationSettings))
+	for _, ns := range r.NotificationSettings {
+		receiverNames = append(receiverNames, ns.Receiver)
+	}
+
+	return &AlertRuleLite{
+		UID:            r.UID,
+		OrgID:          r.OrgID,
+		NamespaceUID:   r.NamespaceUID,
+		RuleGroup:      r.RuleGroup,
+		Title:          r.Title,
+		Labels:         r.Labels,
+		DashboardUID:   r.DashboardUID,
+		PanelID:        r.PanelID,
+		ReceiverNames:  receiverNames,
+		RuleGroupIndex: r.RuleGroupIndex,
+		IsRecording:    r.Type() == RuleTypeRecording,
+	}
+}
+
 type AlertRuleMetadata struct {
 	EditorSettings      EditorSettings       `json:"editor_settings"`
 	PrometheusStyleRule *PrometheusStyleRule `json:"prometheus_style_rule,omitempty"`
