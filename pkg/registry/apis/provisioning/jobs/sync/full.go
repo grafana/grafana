@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -25,6 +26,7 @@ func FullSync(
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
+	maxSyncWorkers int,
 ) error {
 	cfg := repo.Config()
 
@@ -59,10 +61,100 @@ func FullSync(
 		return nil
 	}
 
-	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer)
+	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers)
 }
 
-func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
+func applyChange(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) {
+	if ctx.Err() != nil {
+		return
+	}
+
+	if change.Action == repository.FileActionDeleted {
+		deleteCtx, deleteSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.delete")
+		result := jobs.JobResourceResult{
+			Path:   change.Path,
+			Action: change.Action,
+		}
+
+		if change.Existing == nil || change.Existing.Name == "" {
+			result.Error = fmt.Errorf("processing deletion for file %s: missing existing reference", change.Path)
+			progress.Record(deleteCtx, result)
+			deleteSpan.RecordError(result.Error)
+			deleteSpan.End()
+			return
+		}
+		result.Name = change.Existing.Name
+		result.Group = change.Existing.Group
+
+		versionlessGVR := schema.GroupVersionResource{
+			Group:    change.Existing.Group,
+			Resource: change.Existing.Resource,
+		}
+
+		// TODO: should we use the clients or the resource manager instead?
+		client, gvk, err := clients.ForResource(deleteCtx, versionlessGVR)
+		if err != nil {
+			result.Kind = versionlessGVR.Resource // could not find a kind
+			result.Error = fmt.Errorf("get client for deleted object: %w", err)
+			progress.Record(deleteCtx, result)
+			deleteSpan.End()
+			return
+		}
+		result.Kind = gvk.Kind
+
+		if err := client.Delete(deleteCtx, change.Existing.Name, metav1.DeleteOptions{}); err != nil {
+			result.Error = fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err)
+		}
+		progress.Record(deleteCtx, result)
+		deleteSpan.End()
+		return
+	}
+
+	// Handle folders based on action type
+	if safepath.IsDir(change.Path) {
+		// For non-deletions, ensure folder exists
+		ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.ensure_folder_exists")
+		result := jobs.JobResourceResult{
+			Path:   change.Path,
+			Action: change.Action,
+			Group:  resources.FolderKind.Group,
+			Kind:   resources.FolderKind.Kind,
+		}
+
+		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path)
+		if err != nil {
+			result.Error = fmt.Errorf("ensuring folder exists at path %s: %w", change.Path, err)
+			ensureFolderSpan.RecordError(err)
+			ensureFolderSpan.End()
+			progress.Record(ctx, result)
+			return
+		}
+
+		result.Name = folder
+		progress.Record(ensureFolderCtx, result)
+		ensureFolderSpan.End()
+		return
+	}
+
+	writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
+	name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
+	result := jobs.JobResourceResult{
+		Path:   change.Path,
+		Action: change.Action,
+		Name:   name,
+		Group:  gvk.Group,
+		Kind:   gvk.Kind,
+	}
+
+	if err != nil {
+		writeSpan.RecordError(err)
+		result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
+	}
+	progress.Record(writeCtx, result)
+	writeSpan.End()
+}
+
+func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int) error {
 	progress.SetTotal(ctx, len(changes))
 
 	_, applyChangesSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes",
@@ -70,98 +162,139 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 	)
 	defer applyChangesSpan.End()
 
+	// Separate changes into four categories for proper ordering:
+	// 1. File deletions (must happen before folder deletions)
+	// 2. Folder deletions
+	// 3. Folder creations (must happen before file creations)
+	// 4. File creations (must happen after folder creations)
+	var fileDeletions []ResourceFileChange
+	var folderDeletions []ResourceFileChange
+	var folderCreations []ResourceFileChange
+	var fileCreations []ResourceFileChange
+
 	for _, change := range changes {
-		if ctx.Err() != nil {
-			return ctx.Err()
+		isFolder := safepath.IsDir(change.Path)
+		isDeleted := change.Action == repository.FileActionDeleted
+
+		if isDeleted {
+			if isFolder {
+				folderDeletions = append(folderDeletions, change)
+			} else {
+				fileDeletions = append(fileDeletions, change)
+			}
+		} else {
+			if isFolder {
+				folderCreations = append(folderCreations, change)
+			} else {
+				fileCreations = append(fileCreations, change)
+			}
 		}
+	}
 
-		if err := progress.TooManyErrors(); err != nil {
-			return tracing.Error(applyChangesSpan, err)
+	applyChangesSpan.SetAttributes(
+		attribute.Int("file_deletions", len(fileDeletions)),
+		attribute.Int("folder_deletions", len(folderDeletions)),
+		attribute.Int("folder_creations", len(folderCreations)),
+		attribute.Int("file_creations", len(fileCreations)),
+	)
+
+	if len(fileDeletions) > 0 {
+		if err := applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers); err != nil {
+			return err
 		}
+	}
 
-		if change.Action == repository.FileActionDeleted {
-			deleteCtx, deleteSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.delete")
-			result := jobs.JobResourceResult{
-				Path:   change.Path,
-				Action: change.Action,
-			}
-
-			if change.Existing == nil || change.Existing.Name == "" {
-				result.Error = fmt.Errorf("processing deletion for file %s: missing existing reference", change.Path)
-				progress.Record(deleteCtx, result)
-				deleteSpan.RecordError(result.Error)
-				deleteSpan.End()
-				continue
-			}
-			result.Name = change.Existing.Name
-			result.Group = change.Existing.Group
-
-			versionlessGVR := schema.GroupVersionResource{
-				Group:    change.Existing.Group,
-				Resource: change.Existing.Resource,
-			}
-
-			// TODO: should we use the clients or the resource manager instead?
-			client, gvk, err := clients.ForResource(deleteCtx, versionlessGVR)
-			if err != nil {
-				result.Kind = versionlessGVR.Resource // could not find a kind
-				result.Error = fmt.Errorf("get client for deleted object: %w", err)
-				progress.Record(deleteCtx, result)
-				continue
-			}
-			result.Kind = gvk.Kind
-
-			if err := client.Delete(deleteCtx, change.Existing.Name, metav1.DeleteOptions{}); err != nil {
-				result.Error = fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err)
-			}
-			progress.Record(deleteCtx, result)
-			deleteSpan.End()
-			continue
+	if len(folderDeletions) > 0 {
+		if err := applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer); err != nil {
+			return err
 		}
+	}
 
-		// If folder ensure it exists
-		if safepath.IsDir(change.Path) {
-			ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.ensure_folder_exists")
-			result := jobs.JobResourceResult{
-				Path:   change.Path,
-				Action: change.Action,
-				Group:  resources.FolderKind.Group,
-				Kind:   resources.FolderKind.Kind,
-			}
-
-			folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path)
-			if err != nil {
-				result.Error = fmt.Errorf("ensuring folder exists at path %s: %w", change.Path, err)
-				ensureFolderSpan.RecordError(err)
-				ensureFolderSpan.End()
-				progress.Record(ctx, result)
-				continue
-			}
-
-			result.Name = folder
-			progress.Record(ensureFolderCtx, result)
-			ensureFolderSpan.End()
-
-			continue
+	if len(folderCreations) > 0 {
+		if err := applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer); err != nil {
+			return err
 		}
+	}
 
-		writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
-		name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
-		result := jobs.JobResourceResult{
-			Path:   change.Path,
-			Action: change.Action,
-			Name:   name,
-			Group:  gvk.Group,
-			Kind:   gvk.Kind,
-		}
-
-		if err != nil {
-			writeSpan.RecordError(err)
-			result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
-		}
-		progress.Record(writeCtx, result)
-		writeSpan.End()
+	if len(fileCreations) > 0 {
+		return applyResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer, maxSyncWorkers)
 	}
 
 	return nil
+}
+
+func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
+	folderCtx, folderCancel := context.WithCancel(ctx)
+	defer folderCancel()
+
+	for _, folder := range folders {
+		if folderCtx.Err() != nil {
+			return folderCtx.Err()
+		}
+
+		if err := progress.TooManyErrors(); err != nil {
+			return err
+		}
+
+		applyChange(folderCtx, folder, clients, repositoryResources, progress, tracer)
+	}
+
+	return nil
+}
+
+func applyResourcesInParallel(ctx context.Context, resources []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int) error {
+	if len(resources) == 0 {
+		return nil
+	}
+
+	workerCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	changeChan := make(chan ResourceFileChange, len(resources))
+	var wg sync.WaitGroup
+
+	for i := 0; i < maxSyncWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case change, ok := <-changeChan:
+					if !ok {
+						return
+					}
+
+					if err := progress.TooManyErrors(); err != nil {
+						cancel()
+						return
+					}
+					if workerCtx.Err() != nil {
+						return
+					}
+
+					applyChange(workerCtx, change, clients, repositoryResources, progress, tracer)
+
+				case <-workerCtx.Done():
+					return
+				}
+			}
+		}()
+	}
+
+	for _, change := range resources {
+		select {
+		case changeChan <- change:
+		case <-workerCtx.Done():
+			goto done
+		}
+	}
+done:
+	close(changeChan)
+	wg.Wait()
+
+	if err := progress.TooManyErrors(); err != nil {
+		return err
+	}
+
+	return ctx.Err()
 }

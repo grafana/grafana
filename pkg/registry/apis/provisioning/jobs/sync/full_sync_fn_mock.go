@@ -29,7 +29,7 @@ func (_m *MockFullSyncFn) EXPECT() *MockFullSyncFn_Expecter {
 }
 
 // Execute provides a mock function with given fields: ctx, repo, compare, clients, currentRef, repositoryResources, progress, tracer
-func (_m *MockFullSyncFn) Execute(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
+func (_m *MockFullSyncFn) Execute(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int) error {
 	ret := _m.Called(ctx, repo, compare, clients, currentRef, repositoryResources, progress, tracer)
 
 	if len(ret) == 0 {

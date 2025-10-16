@@ -160,6 +160,7 @@ func TestSyncer_Sync(t *testing.T) {
 				fullSyncFn.Execute,
 				incrementalSyncFn.Execute,
 				tracing.NewNoopTracerService(),
+				10,
 			)
 
 			ref, err := syncer.Sync(context.Background(), repo, tt.options, repoResources, clients, progress)
