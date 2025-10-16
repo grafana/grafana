@@ -574,7 +574,6 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       datasource: query.datasource || datasourceInstance?.getRef(),
     }));
 
-    // Track query executions for save animation feature (with feature toggle guard)
     if (config.featureToggles.queryLibrary) {
       queries.forEach((query) => {
         trackQueryExecution(query);
