@@ -3,6 +3,14 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
+type CorrelationCorrelationType string
+
+const (
+	CorrelationCorrelationTypeQuery    CorrelationCorrelationType = "query"
+	CorrelationCorrelationTypeExternal CorrelationCorrelationType = "external"
+)
+
+// +k8s:openapi-gen=true
 type CorrelationDataSourceRef struct {
 	// same as pluginId
 	Group string `json:"group"`
@@ -33,10 +41,10 @@ type CorrelationTargetSpec map[string]interface{}
 
 // +k8s:openapi-gen=true
 type CorrelationTransformationSpec struct {
-	Type       string `json:"type"`
-	Expression string `json:"expression"`
-	Field      string `json:"field"`
-	MapValue   string `json:"mapValue"`
+	Type       CorrelationTransformationSpecType `json:"type"`
+	Expression string                            `json:"expression"`
+	Field      string                            `json:"field"`
+	MapValue   string                            `json:"mapValue"`
 }
 
 // NewCorrelationTransformationSpec creates a new CorrelationTransformationSpec object.
@@ -45,28 +53,27 @@ func NewCorrelationTransformationSpec() *CorrelationTransformationSpec {
 }
 
 // +k8s:openapi-gen=true
-type CorrelationCorrelationType string
-
-const (
-	CorrelationCorrelationTypeQuery    CorrelationCorrelationType = "query"
-	CorrelationCorrelationTypeExternal CorrelationCorrelationType = "external"
-)
-
-// +k8s:openapi-gen=true
 type CorrelationSpec struct {
-	SourceDsRef CorrelationDataSourceRef   `json:"source_ds_ref"`
-	TargetDsRef *CorrelationDataSourceRef  `json:"target_ds_ref,omitempty"`
-	Label       string                     `json:"label"`
-	Description *string                    `json:"description,omitempty"`
-	Config      CorrelationConfigSpec      `json:"config"`
-	Provisioned bool                       `json:"provisioned"`
 	Type        CorrelationCorrelationType `json:"type"`
+	Source      CorrelationDataSourceRef   `json:"source"`
+	Target      *CorrelationDataSourceRef  `json:"target,omitempty"`
+	Description *string                    `json:"description,omitempty"`
+	Label       string                     `json:"label"`
+	Config      CorrelationConfigSpec      `json:"config"`
 }
 
 // NewCorrelationSpec creates a new CorrelationSpec object.
 func NewCorrelationSpec() *CorrelationSpec {
 	return &CorrelationSpec{
-		SourceDsRef: *NewCorrelationDataSourceRef(),
-		Config:      *NewCorrelationConfigSpec(),
+		Source: *NewCorrelationDataSourceRef(),
+		Config: *NewCorrelationConfigSpec(),
 	}
 }
+
+// +k8s:openapi-gen=true
+type CorrelationTransformationSpecType string
+
+const (
+	CorrelationTransformationSpecTypeRegex  CorrelationTransformationSpecType = "regex"
+	CorrelationTransformationSpecTypeLogfmt CorrelationTransformationSpecType = "logfmt"
+)

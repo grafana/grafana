@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	rawSchemaCorrelationv0alpha1     = []byte(`{"ConfigSpec":{"additionalProperties":false,"description":"there was a deprecated field here called type, we will need to move that for conversion and provisioning","properties":{"field":{"type":"string"},"target":{"$ref":"#/components/schemas/TargetSpec"},"transformations":{"items":{"$ref":"#/components/schemas/TransformationSpec"},"type":"array"}},"required":["field","target"],"type":"object"},"Correlation":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"CorrelationType":{"enum":["query","external"],"type":"string"},"DataSourceRef":{"additionalProperties":false,"properties":{"group":{"description":"same as pluginId","type":"string"},"name":{"description":"same as grafana uid","type":"string"}},"required":["group","name"],"type":"object"},"TargetSpec":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"TransformationSpec":{"additionalProperties":false,"properties":{"expression":{"type":"string"},"field":{"type":"string"},"mapValue":{"type":"string"},"type":{"type":"string"}},"required":["type","expression","field","mapValue"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"config":{"$ref":"#/components/schemas/ConfigSpec"},"description":{"type":"string"},"label":{"type":"string"},"provisioned":{"type":"boolean"},"source_ds_ref":{"$ref":"#/components/schemas/DataSourceRef"},"target_ds_ref":{"$ref":"#/components/schemas/DataSourceRef"},"type":{"$ref":"#/components/schemas/CorrelationType"}},"required":["source_ds_ref","label","config","provisioned","type"],"type":"object"}}`)
+	rawSchemaCorrelationv0alpha1     = []byte(`{"ConfigSpec":{"additionalProperties":false,"description":"there was a deprecated field here called type, we will need to move that for conversion and provisioning","properties":{"field":{"type":"string"},"target":{"$ref":"#/components/schemas/TargetSpec"},"transformations":{"items":{"$ref":"#/components/schemas/TransformationSpec"},"type":"array"}},"required":["field","target"],"type":"object"},"Correlation":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"CorrelationType":{"enum":["query","external"],"type":"string"},"DataSourceRef":{"additionalProperties":false,"properties":{"group":{"description":"same as pluginId","type":"string"},"name":{"description":"same as grafana uid","type":"string"}},"required":["group","name"],"type":"object"},"TargetSpec":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"TransformationSpec":{"additionalProperties":false,"properties":{"expression":{"type":"string"},"field":{"type":"string"},"mapValue":{"type":"string"},"type":{"enum":["regex","logfmt"],"type":"string"}},"required":["type","expression","field","mapValue"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"config":{"$ref":"#/components/schemas/ConfigSpec"},"description":{"type":"string"},"label":{"type":"string"},"source":{"$ref":"#/components/schemas/DataSourceRef"},"target":{"$ref":"#/components/schemas/DataSourceRef"},"type":{"$ref":"#/components/schemas/CorrelationType"}},"required":["type","source","label","config"],"type":"object"}}`)
 	versionSchemaCorrelationv0alpha1 app.VersionSchema
 	_                                = json.Unmarshal(rawSchemaCorrelationv0alpha1, &versionSchemaCorrelationv0alpha1)
 )
@@ -40,6 +40,9 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaCorrelationv0alpha1,
+					SelectableFields: []string{
+						"spec.datasource.name",
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
