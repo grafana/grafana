@@ -40,7 +40,7 @@ export function RadialBarSegmented({
     const angleValue = ((max - min) / segmentCountAdjusted) * i;
     const angleColor = colorDefs.getSegmentColor(angleValue);
     const segmentAngle = startAngle + (angleRange / segmentCountAdjusted) * i + 0.01;
-    const segmentColor = angleValue > value ? theme.colors.action.hover : angleColor;
+    const segmentColor = angleValue >= value ? theme.colors.action.hover : angleColor;
 
     segments.push(
       <RadialArcPath
