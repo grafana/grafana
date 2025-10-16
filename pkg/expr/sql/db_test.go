@@ -174,6 +174,24 @@ func TestQueryFramesNumericSelect(t *testing.T) {
 	}
 }
 
+func TestSumOfZeroRowFrame(t *testing.T) {
+	// This handles a case where the response schema says the field is not nullable,
+	// but the data contains NULL values.
+	f := &data.Frame{
+		RefID: "a",
+		Name:  "a",
+		Fields: []*data.Field{
+			data.NewField("d", nil, []float64{}),
+		},
+	}
+
+	db := DB{}
+	qry := `SELECT SUM(1) AS s FROM A`
+
+	_, err := db.QueryFrames(context.Background(), &testTracer{}, "b", qry, []*data.Frame{f})
+	require.NoError(t, err)
+}
+
 func TestQueryFramesDateTimeSelect(t *testing.T) {
 	expectedFrame := &data.Frame{
 		RefID: "a",
