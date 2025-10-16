@@ -40,13 +40,15 @@ func InitOpenFeature(config OpenFeatureConfig) error {
 		return fmt.Errorf("URL is required for GOFF provider")
 	}
 
-	// Initialize the provider
-	err := initOpenFeature(config.ProviderType, config.URL, config.StaticFlags, config.HTTPClient)
+	p, err := createProvider(config.ProviderType, config.URL, config.StaticFlags, config.HTTPClient)
 	if err != nil {
-		return fmt.Errorf("failed to initialize OpenFeature: %w", err)
+		return err
 	}
 
-	// Set evaluation context
+	if err = openfeature.SetProviderAndWait(p); err != nil {
+		return fmt.Errorf("failed to set global feature provider: %s, %w", config.ProviderType, err)
+	}
+
 	contextAttrs := make(map[string]any)
 	for k, v := range config.ContextAttrs {
 		contextAttrs[k] = v
@@ -89,24 +91,6 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 		TargetingKey: cfg.OpenFeature.TargetingKey,
 		ContextAttrs: contextAttrs,
 	})
-}
-
-func initOpenFeature(
-	providerType string,
-	u *url.URL,
-	staticFlags map[string]bool,
-	httpClient *http.Client,
-) error {
-	p, err := createProvider(providerType, u, staticFlags, httpClient)
-	if err != nil {
-		return err
-	}
-
-	if err := openfeature.SetProviderAndWait(p); err != nil {
-		return fmt.Errorf("failed to set global feature provider: %s, %w", providerType, err)
-	}
-
-	return nil
 }
 
 func createProvider(
