@@ -594,9 +594,7 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 				limit = "-1"
 			}
 
-			query := `WITH delete_ids AS (
-				SELECT id FROM annotation WHERE ` + annotationType + ` ORDER BY id DESC LIMIT ` + limit + ` OFFSET ?
-			) DELETE FROM annotation WHERE id IN (SELECT id FROM delete_ids)`
+			query := `DELETE FROM annotation WHERE id IN (SELECT id FROM annotation WHERE ` + annotationType + ` ORDER BY id DESC LIMIT ` + limit + ` OFFSET ?)`
 
 			res, err := sess.Exec(query, cfg.MaxCount)
 			if err != nil {
