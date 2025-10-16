@@ -172,34 +172,23 @@ export const LogsTableFieldSelector = ({
 
   const displayedColumns = useMemo(
     () =>
-      columnsWithMeta
-        ? Object.keys(columnsWithMeta)
-            .filter((column) => columnsWithMeta[column].active)
-            .sort((a, b) =>
-              columnsWithMeta[a].index && columnsWithMeta[b].index
-                ? columnsWithMeta[a].index - columnsWithMeta[b].index
-                : 0
-            )
-        : [],
+      Object.keys(columnsWithMeta)
+        .filter((column) => columnsWithMeta[column].active)
+        .sort((a, b) =>
+          columnsWithMeta[a].index && columnsWithMeta[b].index ? columnsWithMeta[a].index - columnsWithMeta[b].index : 0
+        ),
     [columnsWithMeta]
   );
 
   const defaultColumns = useMemo(
     () =>
-      columnsWithMeta
-        ? Object.keys(columnsWithMeta)
-            .sort((a, b) => {
-              const pa = columnsWithMeta[a];
-              const pb = columnsWithMeta[b];
-              if (pa.index !== undefined && pb.index !== undefined) {
-                return pa.index - pb.index; // sort by index
-              }
-              return 0;
-            })
-            .filter(
-              (column) => columnsWithMeta[column].type === 'TIME_FIELD' || columnsWithMeta[column].type === 'BODY_FIELD'
-            )
-        : [],
+      Object.keys(columnsWithMeta)
+        .sort((a, b) =>
+          columnsWithMeta[a].index && columnsWithMeta[b].index ? columnsWithMeta[a].index - columnsWithMeta[b].index : 0
+        )
+        .filter(
+          (column) => columnsWithMeta[column].type === 'TIME_FIELD' || columnsWithMeta[column].type === 'BODY_FIELD'
+        ),
     [columnsWithMeta]
   );
 
