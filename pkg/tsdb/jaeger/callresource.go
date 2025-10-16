@@ -50,7 +50,7 @@ func getOperationsHandler(ds *datasourceInfo) http.HandlerFunc {
 		var operations []string
 		var err error
 		if cfg.FeatureToggles().IsEnabled("jaegerEnableGrpcEndpoint") {
-			operations, err = ds.JaegerClient.GrpcOperations(strings.TrimSpace(r.PathValue("service")))
+			operations, err = ds.JaegerClient.GrpcOperations(service)
 		} else {
 			operations, err = ds.JaegerClient.Operations(service)
 		}
