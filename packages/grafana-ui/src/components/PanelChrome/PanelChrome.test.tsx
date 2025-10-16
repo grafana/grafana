@@ -196,3 +196,30 @@ it('collapses the uncontrolled panel when user clicks on the chevron or the titl
   expect(button).not.toHaveAttribute('aria-controlls');
   expect(screen.queryByTestId(selectors.components.Panels.Panel.content)?.id).toBe(undefined);
 });
+
+it('renders panel with a header if prop subHeaderContent', () => {
+  setup({
+    subHeaderContent: <div key="sub-header-test">This should be a sub-header node</div>,
+  });
+
+  expect(screen.getByTestId(selectors.components.Panels.Panel.headerContainer)).toBeInTheDocument();
+});
+
+it('renders panel with sub-header content in place if prop subHeaderContent', () => {
+  setup({
+    subHeaderContent: <div key="sub-header-test">This should be a sub-header node</div>,
+  });
+
+  expect(screen.getByText('This should be a sub-header node')).toBeInTheDocument();
+});
+
+it('does not render sub-header content when panel is collapsed', () => {
+  setup({
+    title: 'Test Panel',
+    collapsible: true,
+    collapsed: true,
+    subHeaderContent: <div key="sub-header-test">This should be a sub-header node</div>,
+  });
+
+  expect(screen.queryByText('This should be a sub-header node')).not.toBeInTheDocument();
+});

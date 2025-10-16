@@ -30,6 +30,7 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
+import { PanelNonApplicableFiltersSubHeader } from '../../scene/PanelNonApplicableFiltersSubHeader';
 import { PanelNotices } from '../../scene/PanelNotices';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -70,6 +71,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     seriesLimit: config.panelSeriesLimit,
     $data: createPanelDataProvider(panel),
     titleItems,
+    subHeaderContent: [new PanelNonApplicableFiltersSubHeader()],
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     // _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel), //FIXME: Angular Migration
@@ -110,6 +112,7 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     titleItems,
+    subHeaderContent: [new PanelNonApplicableFiltersSubHeader()],
     seriesLimit: config.panelSeriesLimit,
     $behaviors: [
       new LibraryPanelBehavior({
