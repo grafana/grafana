@@ -54,31 +54,33 @@ With Git Sync, you can make changes in your provisioned files in GitHub and see 
 
 Git Sync is under development and the following limitations apply:
 
+- You can only sync dashboards and folders. 
+  - If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and can't be synced. 
+  - If you're using Git Sync in Grafana Cloud, Git Sync only works with specific folders for the moment. Full-instance sync is not currently supported.
+  - Refer to [Supported resources](#supported-resources) for more information.
 - You can only authenticate in GitHub using your Personal Access Token token.
 - Support for native Git, Git app, and other providers, such as GitLab or Bitbucket, is on the roadmap.
-- If you're using Git Sync in Grafana Cloud you can only sync specific folders for the moment. Git Sync will be available for your full instance soon.
 - Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
 
-## Git Sync resource requirements
+## Supported resources 
 
-Git Sync doesn't support all available resources. 
-
-To migrate and fully operate a resource using Git Sync, the following is required:
-
-- The resource type has been onboarded into App Platform and is exposed using standardized APIs.
-- Existing resources have been migrated to Unified Storage.
-- Sync has been extended to push and pull resources of that type from and to the Git repository.
-- Corresponding sections in Grafana Frontend have been extended to manage resources through Git Sync, rather than calling the APIs for that particular resource type directly.
-- For Cloud stacks, the resource must be exposed by a multi-tenant API server.
+Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet. If you're using Git Sync in Grafana OSS and Grafana Enterprise, some supported resources might be in an incompatible data format. If this happens, syncing will be blocked.
 
 ### Resource states
 
-With regards to Git Sync, a resource can have one of these states:
+A resource can be:
 
-- **Unsupported**: The resource doesn't meet [the criteria](#git-sync-resource-requirements) and cannot be managed with Git Sync.
-- **Unmanaged**: While you still control the resource, you could migrate it to Git Sync. 
-- **Partially Managed**: Some of the resources are controlled by Git Sync. 
-- **Fully Managed**: All supported resource types are managed by Git Sync. Note that unsupported resources are not managed.
+|  | Compatible | Incompatible |
+| Supported |  The resource can be managed with Git Sync.  |  The resource is supported but has compatibility issues. It **cannot** be managed with Git Sync.   |
+| Unsupported | The resource is **not** supported and **cannot** be managed with Git Sync. | Not applicable. | 
+
+### Instance states
+
+An instance can be in one of the following states:
+
+- **Unprovisioned**: None of the instance's resources are being managed by Git Sync.
+- **Partially provisioned**: Some of the resources are controlled by Git Sync. 
+- **Fully provisioned**: All supported resource types are managed by Git Sync. Note that unsupported resources are not managed.
 
 ## Common use cases
 
