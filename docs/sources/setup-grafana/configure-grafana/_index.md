@@ -1679,6 +1679,10 @@ Requests per second limit enforced per an extended period, for Grafana backend l
 
 Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log-grafana-javascript-agent`. Default is `15`.
 
+#### `bot_filter_enabled`
+
+Enables the bot filter for the Grafana Faro javascript agent integration. Default is `false`. When enabled, it will filter out requests from known bots and crawlers.
+
 <hr>
 
 ### `[quota]`
