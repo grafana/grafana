@@ -11828,7 +11828,8 @@
       "button-cancelling": "Cancelling...",
       "button-previous": "Previous",
       "button-submitting": "Submitting...",
-      "error-instance-repository-exists": "Instance repository already exists"
+      "error-instance-repository-exists": "Instance repository already exists",
+      "error-save-repository-setting": "Failed to save repository setting"
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "Push to a new branch",
