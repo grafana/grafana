@@ -1692,7 +1692,8 @@
       "metadata": {
         "name": "filterOutBotsFromFrontendLogs",
         "resourceVersion": "1758000919535",
-        "creationTimestamp": "2025-09-16T05:35:19Z"
+        "creationTimestamp": "2025-09-16T05:35:19Z",
+        "deletionTimestamp": "2025-10-13T11:09:22Z"
       },
       "spec": {
         "description": "Filter out bots from collecting data for Frontend Observability",
@@ -2271,6 +2272,22 @@
         "description": "Routes library panel requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesLogsDrilldown",
+        "resourceVersion": "1760632282014",
+        "creationTimestamp": "2025-10-07T19:26:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-16 16:31:22.014483 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes logs drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
         "requiresRestart": true
       }
     },

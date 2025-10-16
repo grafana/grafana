@@ -1,551 +1,511 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "definitions": {
-        "DeepPartial<ThemeColorsBase<ThemeRichColor>>": {
-            "properties": {
-                "action": {
-                    "$ref": "#/definitions/DeepPartial<{selected:string;selectedBorder:string;hover:string;hoverOpacity:number;focus:string;disabledBackground:string;disabledText:string;disabledOpacity:number;}>"
-                },
-                "background": {
-                    "$ref": "#/definitions/DeepPartial<{canvas:string;primary:string;secondary:string;elevated:string;}>"
-                },
-                "border": {
-                    "$ref": "#/definitions/DeepPartial<{weak:string;medium:string;strong:string;}>"
-                },
-                "contrastThreshold": {
-                    "type": "number"
-                },
-                "error": {
-                    "$ref": "#/definitions/DeepPartial<ThemeRichColor>"
-                },
-                "gradients": {
-                    "$ref": "#/definitions/DeepPartial<{brandVertical:string;brandHorizontal:string;}>"
-                },
-                "hoverFactor": {
-                    "type": "number"
-                },
-                "info": {
-                    "$ref": "#/definitions/DeepPartial<ThemeRichColor>"
-                },
-                "mode": {
-                    "enum": [
-                        "dark",
-                        "light"
-                    ],
-                    "type": "string"
-                },
-                "primary": {
-                    "$ref": "#/definitions/DeepPartial<ThemeRichColor>"
-                },
-                "secondary": {
-                    "$ref": "#/definitions/DeepPartial<ThemeRichColor>"
-                },
-                "success": {
-                    "$ref": "#/definitions/DeepPartial<ThemeRichColor>"
-                },
-                "text": {
-                    "$ref": "#/definitions/DeepPartial<{primary:string;secondary:string;disabled:string;link:string;maxContrast:string;}>"
-                },
-                "tonalOffset": {
-                    "type": "number"
-                },
-                "warning": {
-                    "$ref": "#/definitions/DeepPartial<ThemeRichColor>"
-                }
-            },
-            "type": "object"
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "DeepPartial<ThemeColorsBase<ThemeRichColor>>": {
+      "properties": {
+        "action": {
+          "$ref": "#/definitions/DeepPartial<{selected:string;selectedBorder:string;hover:string;hoverOpacity:number;focus:string;disabledBackground:string;disabledText:string;disabledOpacity:number;}>"
         },
-        "DeepPartial<ThemeRichColor>": {
-            "properties": {
-                "border": {
-                    "description": "Used for borders",
-                    "type": "string"
-                },
-                "borderTransparent": {
-                    "description": "Used for weak colored borders like larger alert/banner boxes and smaller badges and tags",
-                    "type": "string"
-                },
-                "contrastText": {
-                    "description": "Text color for text ontop of main",
-                    "type": "string"
-                },
-                "main": {
-                    "description": "Main color",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "color intent (primary, secondary, info, error, etc)",
-                    "type": "string"
-                },
-                "shade": {
-                    "description": "Used for hover",
-                    "type": "string"
-                },
-                "text": {
-                    "description": "Used for text",
-                    "type": "string"
-                },
-                "transparent": {
-                    "description": "Used subtly colored backgrounds",
-                    "type": "string"
-                }
-            },
-            "type": "object"
+        "background": {
+          "$ref": "#/definitions/DeepPartial<{canvas:string;primary:string;secondary:string;elevated:string;}>"
         },
-        "DeepPartial<{brandVertical:string;brandHorizontal:string;}>": {
-            "properties": {
-                "brandHorizontal": {
-                    "type": "string"
-                },
-                "brandVertical": {
-                    "type": "string"
-                }
-            },
-            "type": "object"
+        "border": {
+          "$ref": "#/definitions/DeepPartial<{weak:string;medium:string;strong:string;}>"
         },
-        "DeepPartial<{canvas:string;primary:string;secondary:string;elevated:string;}>": {
-            "properties": {
-                "canvas": {
-                    "description": "Dashboard and body background",
-                    "type": "string"
-                },
-                "elevated": {
-                    "description": "For popovers and menu backgrounds. This is the same color as primary in most light themes but in dark\nthemes it has a brighter shade to help give it contrast against the primary background.",
-                    "type": "string"
-                },
-                "primary": {
-                    "description": "Primary content pane background (panels etc)",
-                    "type": "string"
-                },
-                "secondary": {
-                    "description": "Cards and elements that need to stand out on the primary background",
-                    "type": "string"
-                }
-            },
-            "type": "object"
+        "contrastThreshold": {
+          "type": "number"
         },
-        "DeepPartial<{primary:string;secondary:string;disabled:string;link:string;maxContrast:string;}>": {
-            "properties": {
-                "disabled": {
-                    "type": "string"
-                },
-                "link": {
-                    "type": "string"
-                },
-                "maxContrast": {
-                    "description": "Used for auto white or dark text on colored backgrounds",
-                    "type": "string"
-                },
-                "primary": {
-                    "type": "string"
-                },
-                "secondary": {
-                    "type": "string"
-                }
-            },
-            "type": "object"
+        "error": {
+          "$ref": "#/definitions/DeepPartial<ThemeRichColor>"
         },
-        "DeepPartial<{selected:string;selectedBorder:string;hover:string;hoverOpacity:number;focus:string;disabledBackground:string;disabledText:string;disabledOpacity:number;}>": {
-            "properties": {
-                "disabledBackground": {
-                    "description": "Used for disabled buttons and inputs",
-                    "type": "string"
-                },
-                "disabledOpacity": {
-                    "description": "Disablerd opacity",
-                    "type": "number"
-                },
-                "disabledText": {
-                    "description": "Disabled text",
-                    "type": "string"
-                },
-                "focus": {
-                    "description": "Used focused menu item / select option",
-                    "type": "string"
-                },
-                "hover": {
-                    "description": "Used for hovered menu item / select option",
-                    "type": "string"
-                },
-                "hoverOpacity": {
-                    "description": "Used for button/colored background hover opacity",
-                    "type": "number"
-                },
-                "selected": {
-                    "description": "Used for selected menu item / select option",
-                    "type": "string"
-                },
-                "selectedBorder": {
-                    "type": "string"
-                }
-            },
-            "type": "object"
+        "gradients": {
+          "$ref": "#/definitions/DeepPartial<{brandVertical:string;brandHorizontal:string;}>"
         },
-        "DeepPartial<{weak:string;medium:string;strong:string;}>": {
-            "properties": {
-                "medium": {
-                    "type": "string"
-                },
-                "strong": {
-                    "type": "string"
-                },
-                "weak": {
-                    "type": "string"
-                }
-            },
-            "type": "object"
+        "hoverFactor": {
+          "type": "number"
         },
-        "ThemeShapeInput": {
-            "properties": {
-                "borderRadius": {
-                    "type": "number"
-                }
-            },
-            "type": "object"
+        "info": {
+          "$ref": "#/definitions/DeepPartial<ThemeRichColor>"
         },
-        "ThemeTypographyInput": {
-            "properties": {
-                "fontFamily": {
-                    "type": "string"
-                },
-                "fontFamilyMonospace": {
-                    "type": "string"
-                },
-                "fontSize": {
-                    "type": "number"
-                },
-                "fontWeightBold": {
-                    "type": "number"
-                },
-                "fontWeightLight": {
-                    "type": "number"
-                },
-                "fontWeightMedium": {
-                    "type": "number"
-                },
-                "fontWeightRegular": {
-                    "type": "number"
-                },
-                "htmlFontSize": {
-                    "type": "number"
-                }
-            },
-            "type": "object"
+        "mode": {
+          "enum": ["dark", "light"],
+          "type": "string"
         },
-        "ThemeVizColor<\"blue\">": {
-            "properties": {
-                "aliases": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "color": {
-                    "type": "string"
-                },
-                "name": {
-                    "$ref": "#/definitions/ThemeVizColorShadeName_4"
-                },
-                "primary": {
-                    "type": "boolean"
-                }
-            },
-            "type": "object"
+        "primary": {
+          "$ref": "#/definitions/DeepPartial<ThemeRichColor>"
         },
-        "ThemeVizColor<\"green\">": {
-            "properties": {
-                "aliases": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "color": {
-                    "type": "string"
-                },
-                "name": {
-                    "$ref": "#/definitions/ThemeVizColorShadeName_3"
-                },
-                "primary": {
-                    "type": "boolean"
-                }
-            },
-            "type": "object"
+        "secondary": {
+          "$ref": "#/definitions/DeepPartial<ThemeRichColor>"
         },
-        "ThemeVizColor<\"orange\">": {
-            "properties": {
-                "aliases": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "color": {
-                    "type": "string"
-                },
-                "name": {
-                    "$ref": "#/definitions/ThemeVizColorShadeName_1"
-                },
-                "primary": {
-                    "type": "boolean"
-                }
-            },
-            "type": "object"
+        "success": {
+          "$ref": "#/definitions/DeepPartial<ThemeRichColor>"
         },
-        "ThemeVizColor<\"purple\">": {
-            "properties": {
-                "aliases": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "color": {
-                    "type": "string"
-                },
-                "name": {
-                    "$ref": "#/definitions/ThemeVizColorShadeName_5"
-                },
-                "primary": {
-                    "type": "boolean"
-                }
-            },
-            "type": "object"
+        "text": {
+          "$ref": "#/definitions/DeepPartial<{primary:string;secondary:string;disabled:string;link:string;maxContrast:string;}>"
         },
-        "ThemeVizColor<\"red\">": {
-            "properties": {
-                "aliases": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "color": {
-                    "type": "string"
-                },
-                "name": {
-                    "$ref": "#/definitions/ThemeVizColorShadeName"
-                },
-                "primary": {
-                    "type": "boolean"
-                }
-            },
-            "type": "object"
+        "tonalOffset": {
+          "type": "number"
         },
-        "ThemeVizColor<\"yellow\">": {
-            "properties": {
-                "aliases": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "color": {
-                    "type": "string"
-                },
-                "name": {
-                    "$ref": "#/definitions/ThemeVizColorShadeName_2"
-                },
-                "primary": {
-                    "type": "boolean"
-                }
-            },
-            "type": "object"
-        },
-        "ThemeVizColorShadeName": {
-            "enum": [
-                "dark-red",
-                "light-red",
-                "red",
-                "semi-dark-red",
-                "super-light-red"
-            ],
-            "type": "string"
-        },
-        "ThemeVizColorShadeName_1": {
-            "enum": [
-                "dark-orange",
-                "light-orange",
-                "orange",
-                "semi-dark-orange",
-                "super-light-orange"
-            ],
-            "type": "string"
-        },
-        "ThemeVizColorShadeName_2": {
-            "enum": [
-                "dark-yellow",
-                "light-yellow",
-                "semi-dark-yellow",
-                "super-light-yellow",
-                "yellow"
-            ],
-            "type": "string"
-        },
-        "ThemeVizColorShadeName_3": {
-            "enum": [
-                "dark-green",
-                "green",
-                "light-green",
-                "semi-dark-green",
-                "super-light-green"
-            ],
-            "type": "string"
-        },
-        "ThemeVizColorShadeName_4": {
-            "enum": [
-                "blue",
-                "dark-blue",
-                "light-blue",
-                "semi-dark-blue",
-                "super-light-blue"
-            ],
-            "type": "string"
-        },
-        "ThemeVizColorShadeName_5": {
-            "enum": [
-                "dark-purple",
-                "light-purple",
-                "purple",
-                "semi-dark-purple",
-                "super-light-purple"
-            ],
-            "type": "string"
-        },
-        "ThemeVizHue": {
-            "anyOf": [
-                {
-                    "properties": {
-                        "name": {
-                            "const": "red",
-                            "type": "string"
-                        },
-                        "shades": {
-                            "items": {
-                                "$ref": "#/definitions/ThemeVizColor<\"red\">"
-                            },
-                            "type": "array"
-                        }
-                    },
-                    "type": "object"
-                },
-                {
-                    "properties": {
-                        "name": {
-                            "const": "orange",
-                            "type": "string"
-                        },
-                        "shades": {
-                            "items": {
-                                "$ref": "#/definitions/ThemeVizColor<\"orange\">"
-                            },
-                            "type": "array"
-                        }
-                    },
-                    "type": "object"
-                },
-                {
-                    "properties": {
-                        "name": {
-                            "const": "yellow",
-                            "type": "string"
-                        },
-                        "shades": {
-                            "items": {
-                                "$ref": "#/definitions/ThemeVizColor<\"yellow\">"
-                            },
-                            "type": "array"
-                        }
-                    },
-                    "type": "object"
-                },
-                {
-                    "properties": {
-                        "name": {
-                            "const": "green",
-                            "type": "string"
-                        },
-                        "shades": {
-                            "items": {
-                                "$ref": "#/definitions/ThemeVizColor<\"green\">"
-                            },
-                            "type": "array"
-                        }
-                    },
-                    "type": "object"
-                },
-                {
-                    "properties": {
-                        "name": {
-                            "const": "blue",
-                            "type": "string"
-                        },
-                        "shades": {
-                            "items": {
-                                "$ref": "#/definitions/ThemeVizColor<\"blue\">"
-                            },
-                            "type": "array"
-                        }
-                    },
-                    "type": "object"
-                },
-                {
-                    "properties": {
-                        "name": {
-                            "const": "purple",
-                            "type": "string"
-                        },
-                        "shades": {
-                            "items": {
-                                "$ref": "#/definitions/ThemeVizColor<\"purple\">"
-                            },
-                            "type": "array"
-                        }
-                    },
-                    "type": "object"
-                }
-            ]
+        "warning": {
+          "$ref": "#/definitions/DeepPartial<ThemeRichColor>"
         }
+      },
+      "type": "object"
     },
-    "properties": {
-        "colors": {
-            "$ref": "#/definitions/DeepPartial<ThemeColorsBase<ThemeRichColor>>"
+    "DeepPartial<ThemeRichColor>": {
+      "properties": {
+        "border": {
+          "description": "Used for borders",
+          "type": "string"
+        },
+        "borderTransparent": {
+          "description": "Used for weak colored borders like larger alert/banner boxes and smaller badges and tags",
+          "type": "string"
+        },
+        "contrastText": {
+          "description": "Text color for text ontop of main",
+          "type": "string"
+        },
+        "main": {
+          "description": "Main color",
+          "type": "string"
         },
         "name": {
-            "type": "string"
+          "description": "color intent (primary, secondary, info, error, etc)",
+          "type": "string"
         },
-        "shape": {
-            "$ref": "#/definitions/ThemeShapeInput"
+        "shade": {
+          "description": "Used for hover",
+          "type": "string"
         },
-        "spacing": {
-            "properties": {
-                "gridSize": {
-                    "type": "number"
-                }
-            },
-            "type": "object"
+        "text": {
+          "description": "Used for text",
+          "type": "string"
         },
-        "typography": {
-            "$ref": "#/definitions/ThemeTypographyInput"
-        },
-        "visualization": {
-            "properties": {
-                "hues": {
-                    "items": {
-                        "$ref": "#/definitions/ThemeVizHue"
-                    },
-                    "type": "array"
-                },
-                "palette": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                }
-            },
-            "type": "object"
+        "transparent": {
+          "description": "Used subtly colored backgrounds",
+          "type": "string"
         }
+      },
+      "type": "object"
     },
-    "type": "object"
+    "DeepPartial<{brandVertical:string;brandHorizontal:string;}>": {
+      "properties": {
+        "brandHorizontal": {
+          "type": "string"
+        },
+        "brandVertical": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "DeepPartial<{canvas:string;primary:string;secondary:string;elevated:string;}>": {
+      "properties": {
+        "canvas": {
+          "description": "Dashboard and body background",
+          "type": "string"
+        },
+        "elevated": {
+          "description": "For popovers and menu backgrounds. This is the same color as primary in most light themes but in dark\nthemes it has a brighter shade to help give it contrast against the primary background.",
+          "type": "string"
+        },
+        "primary": {
+          "description": "Primary content pane background (panels etc)",
+          "type": "string"
+        },
+        "secondary": {
+          "description": "Cards and elements that need to stand out on the primary background",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "DeepPartial<{primary:string;secondary:string;disabled:string;link:string;maxContrast:string;}>": {
+      "properties": {
+        "disabled": {
+          "type": "string"
+        },
+        "link": {
+          "type": "string"
+        },
+        "maxContrast": {
+          "description": "Used for auto white or dark text on colored backgrounds",
+          "type": "string"
+        },
+        "primary": {
+          "type": "string"
+        },
+        "secondary": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "DeepPartial<{selected:string;selectedBorder:string;hover:string;hoverOpacity:number;focus:string;disabledBackground:string;disabledText:string;disabledOpacity:number;}>": {
+      "properties": {
+        "disabledBackground": {
+          "description": "Used for disabled buttons and inputs",
+          "type": "string"
+        },
+        "disabledOpacity": {
+          "description": "Disablerd opacity",
+          "type": "number"
+        },
+        "disabledText": {
+          "description": "Disabled text",
+          "type": "string"
+        },
+        "focus": {
+          "description": "Used focused menu item / select option",
+          "type": "string"
+        },
+        "hover": {
+          "description": "Used for hovered menu item / select option",
+          "type": "string"
+        },
+        "hoverOpacity": {
+          "description": "Used for button/colored background hover opacity",
+          "type": "number"
+        },
+        "selected": {
+          "description": "Used for selected menu item / select option",
+          "type": "string"
+        },
+        "selectedBorder": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "DeepPartial<{weak:string;medium:string;strong:string;}>": {
+      "properties": {
+        "medium": {
+          "type": "string"
+        },
+        "strong": {
+          "type": "string"
+        },
+        "weak": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ThemeShapeInput": {
+      "properties": {
+        "borderRadius": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "ThemeTypographyInput": {
+      "properties": {
+        "fontFamily": {
+          "type": "string"
+        },
+        "fontFamilyMonospace": {
+          "type": "string"
+        },
+        "fontSize": {
+          "type": "number"
+        },
+        "fontWeightBold": {
+          "type": "number"
+        },
+        "fontWeightLight": {
+          "type": "number"
+        },
+        "fontWeightMedium": {
+          "type": "number"
+        },
+        "fontWeightRegular": {
+          "type": "number"
+        },
+        "htmlFontSize": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "ThemeVizColor<\"blue\">": {
+      "properties": {
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "color": {
+          "type": "string"
+        },
+        "name": {
+          "$ref": "#/definitions/ThemeVizColorShadeName_4"
+        },
+        "primary": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "ThemeVizColor<\"green\">": {
+      "properties": {
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "color": {
+          "type": "string"
+        },
+        "name": {
+          "$ref": "#/definitions/ThemeVizColorShadeName_3"
+        },
+        "primary": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "ThemeVizColor<\"orange\">": {
+      "properties": {
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "color": {
+          "type": "string"
+        },
+        "name": {
+          "$ref": "#/definitions/ThemeVizColorShadeName_1"
+        },
+        "primary": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "ThemeVizColor<\"purple\">": {
+      "properties": {
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "color": {
+          "type": "string"
+        },
+        "name": {
+          "$ref": "#/definitions/ThemeVizColorShadeName_5"
+        },
+        "primary": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "ThemeVizColor<\"red\">": {
+      "properties": {
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "color": {
+          "type": "string"
+        },
+        "name": {
+          "$ref": "#/definitions/ThemeVizColorShadeName"
+        },
+        "primary": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "ThemeVizColor<\"yellow\">": {
+      "properties": {
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "color": {
+          "type": "string"
+        },
+        "name": {
+          "$ref": "#/definitions/ThemeVizColorShadeName_2"
+        },
+        "primary": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "ThemeVizColorShadeName": {
+      "enum": ["dark-red", "light-red", "red", "semi-dark-red", "super-light-red"],
+      "type": "string"
+    },
+    "ThemeVizColorShadeName_1": {
+      "enum": ["dark-orange", "light-orange", "orange", "semi-dark-orange", "super-light-orange"],
+      "type": "string"
+    },
+    "ThemeVizColorShadeName_2": {
+      "enum": ["dark-yellow", "light-yellow", "semi-dark-yellow", "super-light-yellow", "yellow"],
+      "type": "string"
+    },
+    "ThemeVizColorShadeName_3": {
+      "enum": ["dark-green", "green", "light-green", "semi-dark-green", "super-light-green"],
+      "type": "string"
+    },
+    "ThemeVizColorShadeName_4": {
+      "enum": ["blue", "dark-blue", "light-blue", "semi-dark-blue", "super-light-blue"],
+      "type": "string"
+    },
+    "ThemeVizColorShadeName_5": {
+      "enum": ["dark-purple", "light-purple", "purple", "semi-dark-purple", "super-light-purple"],
+      "type": "string"
+    },
+    "ThemeVizHue": {
+      "anyOf": [
+        {
+          "properties": {
+            "name": {
+              "const": "red",
+              "type": "string"
+            },
+            "shades": {
+              "items": {
+                "$ref": "#/definitions/ThemeVizColor<\"red\">"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "properties": {
+            "name": {
+              "const": "orange",
+              "type": "string"
+            },
+            "shades": {
+              "items": {
+                "$ref": "#/definitions/ThemeVizColor<\"orange\">"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "properties": {
+            "name": {
+              "const": "yellow",
+              "type": "string"
+            },
+            "shades": {
+              "items": {
+                "$ref": "#/definitions/ThemeVizColor<\"yellow\">"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "properties": {
+            "name": {
+              "const": "green",
+              "type": "string"
+            },
+            "shades": {
+              "items": {
+                "$ref": "#/definitions/ThemeVizColor<\"green\">"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "properties": {
+            "name": {
+              "const": "blue",
+              "type": "string"
+            },
+            "shades": {
+              "items": {
+                "$ref": "#/definitions/ThemeVizColor<\"blue\">"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "properties": {
+            "name": {
+              "const": "purple",
+              "type": "string"
+            },
+            "shades": {
+              "items": {
+                "$ref": "#/definitions/ThemeVizColor<\"purple\">"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "properties": {
+    "colors": {
+      "$ref": "#/definitions/DeepPartial<ThemeColorsBase<ThemeRichColor>>"
+    },
+    "name": {
+      "type": "string"
+    },
+    "shape": {
+      "$ref": "#/definitions/ThemeShapeInput"
+    },
+    "spacing": {
+      "properties": {
+        "gridSize": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "typography": {
+      "$ref": "#/definitions/ThemeTypographyInput"
+    },
+    "visualization": {
+      "properties": {
+        "hues": {
+          "items": {
+            "$ref": "#/definitions/ThemeVizHue"
+          },
+          "type": "array"
+        },
+        "palette": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
 }
-
