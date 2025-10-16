@@ -1,4 +1,4 @@
-package fakes
+package pluginfakes
 
 import (
 	"archive/zip"

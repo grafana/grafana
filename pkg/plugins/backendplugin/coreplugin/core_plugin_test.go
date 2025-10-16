@@ -8,14 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCorePlugin(t *testing.T) {
 	t.Run("New core plugin with empty opts should return expected values", func(t *testing.T) {
 		factory := coreplugin.New(backend.ServeOpts{})
-		p, err := factory("plugin", log.New("test"), fakes.InitializeNoopTracerForTest(), nil)
+		p, err := factory("plugin", log.New("test"), pluginfakes.InitializeNoopTracerForTest(), nil)
 		require.NoError(t, err)
 		require.NotNil(t, p)
 		require.NoError(t, p.Start(context.Background()))
@@ -48,7 +48,7 @@ func TestCorePlugin(t *testing.T) {
 				return nil
 			}),
 		})
-		p, err := factory("plugin", log.New("test"), fakes.InitializeNoopTracerForTest(), nil)
+		p, err := factory("plugin", log.New("test"), pluginfakes.InitializeNoopTracerForTest(), nil)
 		require.NoError(t, err)
 		require.NotNil(t, p)
 		require.NoError(t, p.Start(context.Background()))
