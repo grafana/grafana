@@ -145,8 +145,9 @@ export default function GettingStarted({ items }: Props) {
           )}
         >
           <Trans i18nKey="provisioning.getting-started.alert-incompatible-data-format">
-            Your instance uses a data format for resources that's not supported by this version, so you can't use the Git Sync feature. Migration isn't available yet.
-            To try the Git Sync feature, use a fresh instance or sign up for the Private Preview in Grafana Cloud.
+            Your instance uses a data format for resources that's not supported by this version, so you can't use the
+            Git Sync feature. Migration isn't available yet. To try the Git Sync feature, use a fresh instance or sign
+            up for the Private Preview in Grafana Cloud.
           </Trans>
         </Alert>
       )}

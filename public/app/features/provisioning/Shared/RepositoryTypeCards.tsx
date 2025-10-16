@@ -28,10 +28,10 @@ export function RepositoryTypeCards() {
 
           <Stack direction="row" gap={1} wrap>
             {gitProviders.map((config) => (
-              <Card 
-                key={config.type} 
-                href={isLegacyStorage ? undefined : `${CONNECT_URL}/${config.type}`} 
-                className={isLegacyStorage ? styles.disabledCard : styles.card} 
+              <Card
+                key={config.type}
+                href={isLegacyStorage ? undefined : `${CONNECT_URL}/${config.type}`}
+                className={isLegacyStorage ? styles.disabledCard : styles.card}
                 noMargin
               >
                 <Stack gap={2} alignItems="center">
@@ -59,10 +59,10 @@ export function RepositoryTypeCards() {
 
           <Stack direction="row" gap={1} wrap>
             {otherProviders.map((config) => (
-              <Card 
-                key={config.type} 
-                href={isLegacyStorage ? undefined : `${CONNECT_URL}/${config.type}`} 
-                className={isLegacyStorage ? styles.disabledCard : styles.card} 
+              <Card
+                key={config.type}
+                href={isLegacyStorage ? undefined : `${CONNECT_URL}/${config.type}`}
+                className={isLegacyStorage ? styles.disabledCard : styles.card}
                 noMargin
               >
                 <Stack gap={2} alignItems="center">
@@ -100,7 +100,7 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: 'default',
       pointerEvents: 'none',
       backgroundColor: theme.colors.action.disabledBackground,
-      
+
       '& *': {
         color: theme.colors.text.disabled,
       },
