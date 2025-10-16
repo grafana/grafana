@@ -82,7 +82,6 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 			// If schema said NOT NULL but the data contains NULL, upgrade on-the-fly.
 			if fV == nil && !f.Fields[i].Type().Nullable() {
 				switchFieldToNullable(f, i)
-				// fV is nil and remains correct for the now-nullable field
 			}
 
 			f.Fields[i].Append(fV)
