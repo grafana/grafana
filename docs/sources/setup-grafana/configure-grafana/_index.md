@@ -1681,7 +1681,7 @@ Maximum requests accepted per short interval of time for Grafana backend log ing
 
 #### `bot_filter_enabled`
 
-Enables the bot filter for the Grafana Faro javascript agent integration. Default is `false`. When enabled, it will filter out requests from known bots and crawlers.
+Enables the bot filter for the Grafana Faro JavaScript agent integration. Default is `false`. When enabled, it will filter out requests from known bots and crawlers.
 
 <hr>
 
