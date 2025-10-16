@@ -2,7 +2,7 @@ import { DataSourceSettings } from '@grafana/data';
 
 import { ElasticsearchOptions } from '../types';
 
-import { defaultMaxConcurrentShardRequests } from './ElasticDetails';
+import { defaultMaxConcurrentShardRequests, defaultQueryMode } from './ElasticDetails';
 
 export const coerceOptions = (
   options: DataSourceSettings<ElasticsearchOptions, {}>
@@ -16,6 +16,7 @@ export const coerceOptions = (
       logMessageField: options.jsonData.logMessageField || '',
       logLevelField: options.jsonData.logLevelField || '',
       includeFrozen: options.jsonData.includeFrozen ?? false,
+      defaultQueryMode: options.jsonData.defaultQueryMode ?? defaultQueryMode(),
     },
   };
 };
