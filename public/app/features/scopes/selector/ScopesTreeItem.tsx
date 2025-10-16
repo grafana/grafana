@@ -18,22 +18,24 @@ export interface ScopesTreeItemProps {
   selectedScopes: SelectedScope[];
   highlighted: boolean;
 
-  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
+  filterNode: (scopeNodeId: string, query: string) => void;
   selectScope: (scopeNodeId: string) => void;
   deselectScope: (scopeNodeId: string) => void;
+  toggleExpandedNode: (scopeNodeId: string) => void;
 }
 
 export function ScopesTreeItem({
   anyChildExpanded,
   loadingNodeName,
   treeNode,
-  onNodeUpdate,
+  filterNode,
   scopeNodes,
   selected,
   selectedScopes,
   selectScope,
   deselectScope,
   highlighted,
+  toggleExpandedNode,
 }: ScopesTreeItemProps) {
   const styles = useStyles2(getStyles);
 
@@ -124,9 +126,13 @@ export function ScopesTreeItem({
           <button
             className={styles.expand}
             data-testid={`scopes-tree-${treeNode.scopeNodeId}-expand`}
-            aria-label={treeNode.expanded ? t('scopes.tree.collapse', 'Collapse') : t('scopes.tree.expand', 'Expand')}
+            aria-label={
+              treeNode.expanded
+                ? t('scopes.tree.collapse', 'Collapse {{title}}', { title: titleText })
+                : t('scopes.tree.expand', 'Expand {{title}}', { title: titleText })
+            }
             onClick={() => {
-              onNodeUpdate(treeNode.scopeNodeId, !treeNode.expanded, treeNode.query);
+              toggleExpandedNode(treeNode.scopeNodeId);
             }}
           >
             <Icon name={!treeNode.expanded ? 'angle-right' : 'angle-down'} />
@@ -145,11 +151,12 @@ export function ScopesTreeItem({
           <ScopesTree
             tree={treeNode}
             loadingNodeName={loadingNodeName}
-            onNodeUpdate={onNodeUpdate}
+            filterNode={filterNode}
             scopeNodes={scopeNodes}
             selectedScopes={selectedScopes}
             selectScope={selectScope}
             deselectScope={deselectScope}
+            toggleExpandedNode={toggleExpandedNode}
           />
         )}
       </div>

@@ -1771,11 +1771,45 @@
             }
           },
           {
+            "name": "type",
+            "in": "query",
+            "description": "search dashboards or folders.  When empty, this will search both",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "folder",
+                "dashboard"
+              ]
+            }
+          },
+          {
             "name": "folder",
             "in": "query",
             "description": "search/list within a folder (not recursive)",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "facet",
+            "in": "query",
+            "description": "count distinct terms for selected fields",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "description": "tag query filter",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
@@ -1798,6 +1832,23 @@
                 "value": "title"
               }
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "number of results to return",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "explain",
+            "in": "query",
+            "description": "add debugging info that may help explain why the result matched",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -1805,59 +1856,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "totalHits",
-                    "hits"
-                  ],
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "facets": {
-                      "description": "Facet results",
-                      "type": "object",
-                      "additionalProperties": {
-                        "default": {}
-                      }
-                    },
-                    "hits": {
-                      "description": "The dashboard body (unstructured for now)",
-                      "type": "array",
-                      "items": {
-                        "default": {}
-                      }
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    },
-                    "maxScore": {
-                      "description": "Max score",
-                      "type": "number",
-                      "format": "double"
-                    },
-                    "offset": {
-                      "description": "Where the query started from",
-                      "type": "integer",
-                      "format": "int64"
-                    },
-                    "queryCost": {
-                      "description": "Cost of running the query",
-                      "type": "number",
-                      "format": "double"
-                    },
-                    "sortBy": {
-                      "description": "How are the results sorted"
-                    },
-                    "totalHits": {
-                      "description": "The number of matching results",
-                      "type": "integer",
-                      "format": "int64",
-                      "default": 0
-                    }
-                  }
+                  "$ref": "#/components/schemas/SearchResults"
                 }
               }
             }
@@ -1919,6 +1918,180 @@
   },
   "components": {
     "schemas": {
+      "DashboardHit": {
+        "type": "object",
+        "required": [
+          "resource",
+          "name",
+          "title"
+        ],
+        "properties": {
+          "description": {
+            "description": "Dashboard description",
+            "type": "string"
+          },
+          "explain": {
+            "description": "Explain the score (if possible)"
+          },
+          "field": {
+            "description": "Stick untyped extra fields in this object (including the sort value)"
+          },
+          "folder": {
+            "description": "The k8s name (eg, grafana UID) for the parent folder",
+            "type": "string"
+          },
+          "managedBy": {
+            "$ref": "#/components/schemas/ManagedBy"
+          },
+          "name": {
+            "description": "The k8s \"name\" (eg, grafana UID)",
+            "type": "string",
+            "default": ""
+          },
+          "resource": {
+            "description": "Dashboard or folder",
+            "type": "string",
+            "default": ""
+          },
+          "score": {
+            "description": "When using \"real\" search, this is the score",
+            "type": "number",
+            "format": "double"
+          },
+          "tags": {
+            "description": "Filter tags",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "title": {
+            "description": "The display name",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "FacetResult": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "missing": {
+            "description": "The number of documents that do *not* have this field",
+            "type": "integer",
+            "format": "int64"
+          },
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TermFacet"
+            }
+          },
+          "total": {
+            "description": "The distinct terms",
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ManagedBy": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "SearchResults": {
+        "type": "object",
+        "required": [
+          "totalHits",
+          "hits"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "facets": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FacetResult"
+            }
+          },
+          "hits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardHit"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "maxScore": {
+            "description": "Max score",
+            "type": "number",
+            "format": "double"
+          },
+          "offset": {
+            "description": "Where the query started from",
+            "type": "integer",
+            "format": "int64"
+          },
+          "queryCost": {
+            "description": "Cost of running the query",
+            "type": "number",
+            "format": "double"
+          },
+          "sortBy": {
+            "$ref": "#/components/schemas/SortBy"
+          },
+          "totalHits": {
+            "description": "The number of matching results",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          }
+        }
+      },
+      "SortBy": {
+        "type": "object",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "desc": {
+            "type": "boolean"
+          },
+          "field": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "TermFacet": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "term": {
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataQuery": {
         "description": "Generic query properties",
         "type": "object",
@@ -2207,6 +2380,10 @@
             "description": "Whether from another version has failed. If true, means that the dashboard is not valid, and the caller should instead fetch the stored version.",
             "type": "boolean",
             "default": false
+          },
+          "source": {
+            "description": "The original value map[string]any",
+            "type": "object"
           },
           "storedVersion": {
             "description": "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",

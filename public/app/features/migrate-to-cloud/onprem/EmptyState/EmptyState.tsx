@@ -6,7 +6,7 @@ import { InfoPaneRight } from './InfoPaneRight';
 
 export const EmptyState = () => {
   return (
-    <Box backgroundColor="secondary" display="flex" alignItems="center" direction="column">
+    <Box borderRadius="lg" backgroundColor="secondary" display="flex" alignItems="center" direction="column">
       <Box maxWidth={180} paddingY={6} paddingX={2}>
         <Stack gap={5} direction="column">
           <CallToAction />

@@ -1010,9 +1010,9 @@ export type JobResourceSummary = {
   /** Report errors for this resource type This may not be an exhaustive list and recommend looking at the logs for more info */
   errors?: string[];
   group?: string;
+  kind?: string;
   /** No action required (useful for sync) */
   noop?: number;
-  resource?: string;
   total?: number;
   update?: number;
   write?: number;
@@ -1289,6 +1289,8 @@ export type WebhookStatus = {
   url?: string;
 };
 export type RepositoryStatus = {
+  /** Error information during repository deletion (if any) */
+  deleteError?: string;
   /** This will get updated with the current health status (and updated periodically) */
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */

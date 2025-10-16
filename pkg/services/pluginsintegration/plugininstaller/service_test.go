@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -26,10 +26,10 @@ func TestService_IsDisabled(t *testing.T) {
 		&setting.Cfg{
 			PreinstallPluginsAsync: []setting.InstallPlugin{{ID: "myplugin"}},
 		},
-		pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
-		&fakes.FakePluginInstaller{},
+		pluginstore.New(registry.NewInMemory(), &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}),
+		&pluginfakes.FakePluginInstaller{},
 		prometheus.NewRegistry(),
-		&fakes.FakePluginRepo{},
+		&pluginfakes.FakePluginRepo{},
 		featuremgmt.WithFeatures(),
 		&pluginchecker.FakePluginUpdateChecker{},
 	)
@@ -160,13 +160,15 @@ func TestService_Run(t *testing.T) {
 			}
 			installed := 0
 			installedFromURL := 0
+			store, err := pluginstore.NewPluginStoreForTest(preg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+			require.NoError(t, err)
 			s, err := ProvideService(
 				&setting.Cfg{
 					PreinstallPluginsAsync: tt.pluginsToInstall,
 					PreinstallPluginsSync:  tt.pluginsToInstallSync,
 				},
-				pluginstore.New(preg, &fakes.FakeLoader{}),
-				&fakes.FakePluginInstaller{
+				store,
+				&pluginfakes.FakePluginInstaller{
 					AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.AddOpts) error {
 						for _, plugin := range tt.pluginsToFail {
 							if plugin == pluginID {
@@ -191,7 +193,7 @@ func TestService_Run(t *testing.T) {
 					},
 				},
 				prometheus.NewRegistry(),
-				&fakes.FakePluginRepo{
+				&pluginfakes.FakePluginRepo{
 					GetPluginArchiveInfoFunc: func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
 						return tt.latestPlugin, nil
 					},
@@ -203,12 +205,25 @@ func TestService_Run(t *testing.T) {
 					&pluginchecker.FakePluginPreinstall{},
 				),
 			)
+			require.NoError(t, err)
+
+			t.Cleanup(func() {
+				s.StopAsync()
+				err := s.AwaitTerminated(context.Background())
+				if tt.shouldThrowError {
+					require.ErrorContains(t, err, "Failed to install plugin")
+					return
+				}
+				require.NoError(t, err)
+			})
+
+			err = s.StartAsync(context.Background())
+			require.NoError(t, err)
+			err = s.AwaitRunning(context.Background())
 			if tt.shouldThrowError {
 				require.ErrorContains(t, err, "Failed to install plugin")
 				return
 			}
-			require.NoError(t, err)
-			err = s.Run(context.Background())
 			require.NoError(t, err)
 
 			if tt.shouldInstall {
@@ -232,6 +247,7 @@ func TestService_Run(t *testing.T) {
 						expectedInstalled++
 					}
 				}
+				<-s.installComplete
 				require.Equal(t, expectedInstalled, installed)
 				require.Equal(t, expectedInstalledFromURL, installedFromURL)
 			}

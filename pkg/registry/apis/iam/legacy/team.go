@@ -2,7 +2,6 @@ package legacy
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -214,7 +213,7 @@ func (r createTeamQuery) Validate() error {
 }
 
 func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd CreateTeamCommand) (*CreateTeamResult, error) {
-	now := time.Now().UTC().Truncate(time.Second)
+	now := time.Now().UTC()
 
 	cmd.Created = NewDBTime(now)
 	cmd.Updated = NewDBTime(now)
@@ -265,228 +264,150 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 	return &CreateTeamResult{Team: createdTeam}, nil
 }
 
-type ListTeamBindingsQuery struct {
-	// UID is team uid to list bindings for. If not set store should list bindings for all teams
-	UID        string
-	OrgID      int64
-	Pagination common.Pagination
+type UpdateTeamCommand struct {
+	UID           string
+	Name          string
+	Updated       DBTime
+	Email         string
+	ExternalID    string
+	IsProvisioned bool
+	ExternalUID   string
 }
 
-type ListTeamBindingsResult struct {
-	Bindings []TeamBinding
-	Continue int64
-	RV       int64
+type UpdateTeamResult struct {
+	Team team.Team
 }
 
-type TeamMember struct {
-	ID         int64
-	TeamID     int64
-	TeamUID    string
-	UserID     int64
-	UserUID    string
-	Name       string
-	Email      string
-	Username   string
-	External   bool
-	Updated    time.Time
-	Created    time.Time
-	Permission team.PermissionType
+var sqlUpdateTeamTemplate = mustTemplate("update_team.sql")
+
+func newUpdateTeam(sql *legacysql.LegacyDatabaseHelper, cmd *UpdateTeamCommand) updateTeamQuery {
+	return updateTeamQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		TeamTable:   sql.Table("team"),
+		Command:     cmd,
+	}
 }
 
-func (m TeamMember) MemberID() string {
-	return claims.NewTypeID(claims.TypeUser, m.UserUID)
-}
-
-type TeamBinding struct {
-	TeamUID string
-	Members []TeamMember
-}
-
-var sqlQueryTeamBindingsTemplate = mustTemplate("team_bindings_query.sql")
-
-type listTeamBindingsQuery struct {
+type updateTeamQuery struct {
 	sqltemplate.SQLTemplate
-	Query           *ListTeamBindingsQuery
-	UserTable       string
-	TeamTable       string
-	TeamMemberTable string
+	TeamTable string
+	Command   *UpdateTeamCommand
 }
 
-func (r listTeamBindingsQuery) Validate() error {
-	return nil // TODO
+func (r updateTeamQuery) Validate() error {
+	return nil
 }
 
-func newListTeamBindings(sql *legacysql.LegacyDatabaseHelper, q *ListTeamBindingsQuery) listTeamBindingsQuery {
-	return listTeamBindingsQuery{
-		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
-		UserTable:       sql.Table("user"),
-		TeamTable:       sql.Table("team"),
-		TeamMemberTable: sql.Table("team_member"),
-		Query:           q,
-	}
-}
+func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateTeamCommand) (*UpdateTeamResult, error) {
+	now := time.Now().UTC()
 
-// ListTeamsBindings implements LegacyIdentityStore.
-func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.NamespaceInfo, query ListTeamBindingsQuery) (*ListTeamBindingsResult, error) {
-	// for continue
-	query.Pagination.Limit += 1
-	query.OrgID = ns.OrgID
-	if query.OrgID == 0 {
-		return nil, fmt.Errorf("expected non zero orgID")
-	}
+	cmd.Updated = NewDBTime(now)
 
 	sql, err := s.sql(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	req := newListTeamBindings(sql, &query)
-	q, err := sqltemplate.Execute(sqlQueryTeamBindingsTemplate, req)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamsTemplate.Name(), err)
-	}
+	req := newUpdateTeam(sql, &cmd)
 
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
-	defer func() {
-		if rows != nil {
-			_ = rows.Close()
-		}
-	}()
-
-	if err != nil {
-		return nil, err
-	}
-
-	res := &ListTeamBindingsResult{}
-	grouped := map[string][]TeamMember{}
-
-	var lastID int64
-	var atTeamLimit bool
-
-	for rows.Next() {
-		m := TeamMember{}
-		err = rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.Created, &m.Updated, &m.Permission)
-		if err != nil {
-			return res, err
-		}
-
-		lastID = m.TeamID
-		members, ok := grouped[m.TeamUID]
-		if ok {
-			grouped[m.TeamUID] = append(members, m)
-		} else if !atTeamLimit {
-			grouped[m.TeamUID] = []TeamMember{m}
-		}
-
-		if len(grouped) >= int(query.Pagination.Limit)-1 {
-			atTeamLimit = true
-			res.Continue = lastID
-		}
-	}
-
-	if query.UID == "" {
-		res.RV, err = sql.GetResourceVersion(ctx, "team_member", "updated")
-	}
-
-	res.Bindings = make([]TeamBinding, 0, len(grouped))
-	for uid, members := range grouped {
-		res.Bindings = append(res.Bindings, TeamBinding{
-			TeamUID: uid,
-			Members: members,
+	var updatedTeam team.Team
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		_, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
+			OrgID: ns.OrgID,
+			UID:   cmd.UID,
 		})
+		if err != nil {
+			return fmt.Errorf("team not found: %w", err)
+		}
+
+		teamQuery, err := sqltemplate.Execute(sqlUpdateTeamTemplate, req)
+		if err != nil {
+			return fmt.Errorf("failed to execute team update template %q: %w", sqlUpdateTeamTemplate.Name(), err)
+		}
+
+		_, err = st.Exec(ctx, teamQuery, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to update team: %w", err)
+		}
+
+		updatedTeam = team.Team{
+			UID:           cmd.UID,
+			Name:          cmd.Name,
+			Email:         cmd.Email,
+			ExternalUID:   cmd.ExternalUID,
+			IsProvisioned: cmd.IsProvisioned,
+			Updated:       cmd.Updated.Time,
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
-	return res, err
+	return &UpdateTeamResult{Team: updatedTeam}, nil
 }
 
-type ListTeamMembersQuery struct {
-	UID        string
-	OrgID      int64
-	Pagination common.Pagination
+type DeleteTeamCommand struct {
+	UID string
 }
 
-type ListTeamMembersResult struct {
-	Continue int64
-	Members  []TeamMember
+var sqlDeleteTeamTemplate = mustTemplate("delete_team.sql")
+
+func newDeleteTeam(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteTeamCommand) deleteTeamQuery {
+	return deleteTeamQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		TeamTable:   sql.Table("team"),
+		Command:     cmd,
+	}
 }
 
-// Templates.
-var sqlQueryTeamMembersTemplate = mustTemplate("team_members_query.sql")
-
-type listTeamMembersQuery struct {
+type deleteTeamQuery struct {
 	sqltemplate.SQLTemplate
-	Query           *ListTeamMembersQuery
-	UserTable       string
-	TeamTable       string
-	TeamMemberTable string
+	TeamTable string
+	Command   *DeleteTeamCommand
 }
 
-func (r listTeamMembersQuery) Validate() error {
-	return nil // TODO
+func (r deleteTeamQuery) Validate() error {
+	return nil
 }
 
-func newListTeamMembers(sql *legacysql.LegacyDatabaseHelper, q *ListTeamMembersQuery) listTeamMembersQuery {
-	return listTeamMembersQuery{
-		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
-		UserTable:       sql.Table("user"),
-		TeamTable:       sql.Table("team"),
-		TeamMemberTable: sql.Table("team_member"),
-		Query:           q,
-	}
-}
-
-// ListTeamMembers implements LegacyIdentityStore.
-func (s *legacySQLStore) ListTeamMembers(ctx context.Context, ns claims.NamespaceInfo, query ListTeamMembersQuery) (*ListTeamMembersResult, error) {
-	query.Pagination.Limit += 1
-	query.OrgID = ns.OrgID
-	if query.OrgID == 0 {
-		return nil, fmt.Errorf("expected non zero org id")
-	}
-
+func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteTeamCommand) error {
 	sql, err := s.sql(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	req := newListTeamMembers(sql, &query)
-	q, err := sqltemplate.Execute(sqlQueryTeamMembersTemplate, req)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamsTemplate.Name(), err)
+	req := newDeleteTeam(sql, &cmd)
+	if err := req.Validate(); err != nil {
+		return err
 	}
 
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
-	defer func() {
-		if rows != nil {
-			_ = rows.Close()
-		}
-	}()
-
-	if err != nil {
-		return nil, err
-	}
-
-	res := &ListTeamMembersResult{}
-	var lastID int64
-	for rows.Next() {
-		m, err := scanMember(rows)
+	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		_, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
+			OrgID: ns.OrgID,
+			UID:   cmd.UID,
+		})
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		lastID = m.ID
-		res.Members = append(res.Members, m)
-		if len(res.Members) > int(query.Pagination.Limit)-1 {
-			res.Continue = lastID
-			res.Members = res.Members[0 : len(res.Members)-1]
-			break
+		teamDeleteReq := newDeleteTeam(sql, &cmd)
+		if err := teamDeleteReq.Validate(); err != nil {
+			return err
 		}
-	}
 
-	return res, err
-}
+		teamDeleteQuery, err := sqltemplate.Execute(sqlDeleteTeamTemplate, teamDeleteReq)
+		if err != nil {
+			return fmt.Errorf("error executing team delete template: %w", err)
+		}
 
-func scanMember(rows *sql.Rows) (TeamMember, error) {
-	m := TeamMember{}
-	err := rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Name, &m.Email, &m.Username, &m.External, &m.Created, &m.Updated, &m.Permission)
-	return m, err
+		_, err = st.Exec(ctx, teamDeleteQuery, teamDeleteReq.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to delete team: %w", err)
+		}
+
+		return nil
+	})
 }

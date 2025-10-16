@@ -1,16 +1,51 @@
 import { config, reportInteraction } from '@grafana/runtime';
 
+import { DashboardTrackingInfo, DynamicDashboardsTrackingInformation } from '../serialization/DashboardSceneSerializer';
+
 let isScenesContextSet = false;
+
+type DashboardLibraryTrackingInfo = {
+  pluginId?: string;
+  sourceEntryPoint?: string;
+  libraryItemId?: string;
+  creationOrigin?: string;
+};
 
 export const DashboardInteractions = {
   // Dashboard interactions:
-  dashboardInitialized: (properties?: Record<string, unknown>) => {
-    reportDashboardInteraction('init_dashboard_completed', { ...properties });
+  dashboardInitialized: (
+    properties: { theme: undefined; duration: number | undefined; isScene: boolean } & Partial<DashboardTrackingInfo> &
+      Partial<DynamicDashboardsTrackingInformation> &
+      Partial<{ version_before_migration: number | undefined }>
+  ) => {
+    reportDashboardInteraction('init_dashboard_completed', properties);
+  },
+
+  dashboardCopied: (properties: { name: string; url: string }) => {
+    reportInteraction('grafana_dashboard_copied', properties);
+  },
+
+  dashboardCreatedOrSaved: (
+    isNew: boolean | undefined,
+    properties:
+      | ({ name: string; url: string } & DashboardLibraryTrackingInfo)
+      | ({
+          name: string;
+          url: string;
+          numPanels: number;
+          uid: string;
+          conditionalRenderRules: number;
+          autoLayoutCount: number;
+          customGridLayoutCount: number;
+          panelsByDatasourceType: Record<string, number>;
+        } & DashboardLibraryTrackingInfo)
+  ) => {
+    reportDashboardInteraction(isNew ? 'created' : 'saved', properties, 'grafana_dashboard');
   },
 
   // grafana_dashboards_edit_button_clicked
   // when a user clicks the ‘edit’ or ‘make editable’ button in a dashboard view mode
-  editButtonClicked: (properties: { outlineExpanded: boolean }) => {
+  editButtonClicked: (properties: { outlineExpanded: boolean; dashboardUid?: string }) => {
     reportDashboardInteraction('edit_button_clicked', properties);
   },
 
@@ -192,14 +227,18 @@ export const DashboardInteractions = {
   },
 };
 
-const reportDashboardInteraction: typeof reportInteraction = (name, properties) => {
+const reportDashboardInteraction = (
+  name: string,
+  properties?: Record<string, unknown>,
+  interactionPrefix = 'dashboards'
+) => {
   const meta = isScenesContextSet ? { scenesView: true } : {};
   const isDynamicDashboard = config.featureToggles?.dashboardNewLayouts ?? false;
 
   if (properties) {
-    reportInteraction(`dashboards_${name}`, { ...properties, ...meta, isDynamicDashboard });
+    reportInteraction(`${interactionPrefix}_${name}`, { ...properties, ...meta, isDynamicDashboard });
   } else {
-    reportInteraction(`dashboards_${name}`, { isDynamicDashboard });
+    reportInteraction(`${interactionPrefix}_${name}`, { isDynamicDashboard });
   }
 };
 
