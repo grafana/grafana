@@ -338,7 +338,9 @@ func calculatePanelDimensionsFromSpan(span float64, panel map[string]interface{}
 		}
 	}
 
-	panelWidth := int(math.Floor(span * widthFactor))
+	// Match frontend logic: Math.floor(panel.span) * widthFactor (line 914 in DashboardMigrator.ts)
+	// Frontend floors the span FIRST, then multiplies by widthFactor
+	panelWidth := int(math.Floor(span)) * int(widthFactor)
 	panelHeight := defaultHeight
 
 	if panelHeightValue, hasHeight := panel["height"]; hasHeight {
