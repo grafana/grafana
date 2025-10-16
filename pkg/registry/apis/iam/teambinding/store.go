@@ -1,4 +1,4 @@
-package team
+package teambinding
 
 import (
 	"context"
@@ -15,7 +15,6 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -74,20 +73,20 @@ func (l *LegacyBindingStore) ConvertToTable(ctx context.Context, object runtime.
 }
 
 func (l *LegacyBindingStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+	return nil, false, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "update")
 }
 
 func (l *LegacyBindingStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+	return nil, false, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "delete")
 }
 
 func (l *LegacyBindingStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "deleteCollection")
+	return nil, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "deleteCollection")
 }
 
 func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	if !l.enableAuthnMutation {
-		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
+		return nil, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "create")
 	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -168,7 +167,7 @@ func (l *LegacyBindingStore) Get(ctx context.Context, name string, options *meta
 
 	if len(res.Bindings) != 1 {
 		// FIXME: maybe empty result?
-		return nil, resource.NewNotFound(name)
+		return nil, bindingResource.NewNotFound(name)
 	}
 
 	obj := mapToBindingObject(ns, res.Bindings[0])
@@ -259,12 +258,4 @@ func mapFromBindingName(name string) (int64, int64) {
 	}
 
 	return teamID, userID
-}
-
-func mapPermisson(p team.PermissionType) iamv0.TeamPermission {
-	if p == team.PermissionTypeAdmin {
-		return iamv0.TeamPermissionAdmin
-	} else {
-		return iamv0.TeamPermissionMember
-	}
 }
