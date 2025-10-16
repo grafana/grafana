@@ -73,11 +73,12 @@ export default function RepositoryStatusPage() {
       <Page.Contents isLoading={query.isLoading}>
         {settings.data?.legacyStorage && (
           <Alert
-            title={t('provisioning.repository-status-page.title-legacy-storage', 'Legacy Storage')}
+            title={t('provisioning.repository-status-page.title-incompatible-data-format', 'Incompatible data format detected')}
             severity="error"
           >
-            <Trans i18nKey="provisioning.repository-status-page.legacy-storage-message">
-              Instance is not yet running unified storage -- requires migration wizard
+            <Trans i18nKey="provisioning.repository-status-page.incompatible-data-format-message">
+              Resources are stored in a data format that's not supported by this version of the Git Sync feature. Configured repositories can't use resources with this format.
+              Remove the repository and start over with a fresh instance.
             </Trans>
           </Alert>
         )}

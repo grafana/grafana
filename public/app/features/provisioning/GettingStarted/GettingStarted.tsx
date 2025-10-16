@@ -140,13 +140,13 @@ export default function GettingStarted({ items }: Props) {
         <Alert
           severity="info"
           title={t(
-            'provisioning.getting-started.title-setting-connection-could-cause-temporary-outage',
-            'Setting up this connection could cause a temporary outage'
+            'provisioning.getting-started.title-incompatible-data-format',
+            'Resources stored in an incompatible data format'
           )}
         >
-          <Trans i18nKey="provisioning.getting-started.alert-temporary-outage">
-            When you connect your whole instance, dashboards will be unavailable while running the migration. We
-            recommend warning your users before starting the process.
+          <Trans i18nKey="provisioning.getting-started.alert-incompatible-data-format">
+            Your instance uses a data format for resources that's not supported by this version, so you can't use the Git Sync feature. Migration isn't available yet.
+            To try the Git Sync feature, use a fresh instance or sign up for the Private Preview in Grafana Cloud.
           </Trans>
         </Alert>
       )}

@@ -73,7 +73,7 @@ export default function HomePage() {
       <Page.Contents isLoading={isLoading}>
         {settings.data?.legacyStorage && (
           <Alert
-            title={t('provisioning.home-page.title-legacy-storage-detected', 'Legacy storage detected')}
+            title={t('provisioning.home-page.title-incompatible-data-format', 'Incompatible data format detected')}
             severity="error"
             buttonContent={
               <Trans i18nKey="provisioning.home-page.remove-all-configured-repositories">
@@ -84,8 +84,9 @@ export default function HomePage() {
               setShowDeleteModal(true);
             }}
           >
-            <Trans i18nKey="provisioning.home-page.configured-repositories-while-running-legacy-storage">
-              Configured repositories will not work while running legacy storage.
+            <Trans i18nKey="provisioning.home-page.incompatible-data-format-detected">
+              Resources are stored in a data format that's not supported by this version of the Git Sync feature. Configured repositories can't use resources with this format.
+              We recommend you to remove all configured repositories and start over with a fresh instance.
             </Trans>
           </Alert>
         )}

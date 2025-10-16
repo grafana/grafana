@@ -11478,7 +11478,7 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "When you connect your whole instance, dashboards will be unavailable while running the migration. We recommend warning your users before starting the process.",
+      "alert-incompatible-data-format": "Your instance uses a data format for resources that's not supported by this version, so you can't use the Git Sync feature. Migration isn't available yet. To try the Git Sync feature, use a fresh instance or sign up for the Private Preview in Grafana Cloud.",
       "modal-description-public-access": "Set up public access to your Grafana instance to enable GitHub integration",
       "modal-description-required-features": "Enable required Grafana features for provisioning",
       "modal-title-set-up-public-access": "Set up public access",
@@ -11491,7 +11491,7 @@
       "step-title-enable-feature-toggles": "Enable Required Feature Toggles",
       "step-title-start-ngrok": "Start ngrok for temporary public access",
       "step-title-update-grafana-config": "Update your Grafana configuration",
-      "title-setting-connection-could-cause-temporary-outage": "Setting up this connection could cause a temporary outage"
+      "title-incompatible-data-format": "Resources stored in an incompatible data format"
     },
     "getting-started-page": {
       "header": "Provisioning",
@@ -11561,9 +11561,9 @@
     },
     "home-page": {
       "button-delete-repositories": "Delete repositories",
-      "configured-repositories-while-running-legacy-storage": "Configured repositories will not work while running legacy storage.",
       "confirm-delete-repositories": "Are you sure you want to delete all configured repositories? This action cannot be undone.",
       "error-delete-all-repositories": "Failed to delete all repositories",
+      "incompatible-data-format-detected": "Resources are stored in a data format that's not supported by this version of the Git Sync feature. Configured repositories can't use resources with this format. We recommend you to remove all configured repositories and start over with a fresh instance.",
       "remove-all-configured-repositories": "Remove all configured repositories",
       "subtitle": "View and manage your configured repositories",
       "success-all-repositories-deleted": "All configured repositories deleted",
@@ -11572,7 +11572,7 @@
       "tab-repositories": "Repositories",
       "tab-repositories-title": "List of repositories",
       "title-delete-all-configured-repositories": "Delete all configured repositories",
-      "title-legacy-storage-detected": "Legacy storage detected"
+      "title-incompatible-data-format": "Incompatible data format detected"
     },
     "http-utils": {
       "access-denied": "Access denied. Please check your token permissions.",
@@ -11693,7 +11693,7 @@
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
       "cleaning-up-resources": "Cleaning up repository resources",
-      "legacy-storage-message": "Instance is not yet running unified storage -- requires migration wizard",
+      "incompatible-data-format-message": "Resources are stored in a data format that's not supported by this version of the Git Sync feature. Configured repositories can't use resources with this format. Remove the repository and start over with a fresh instance.",
       "not-found": "not found",
       "not-found-message": "Repository not found",
       "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
@@ -11704,7 +11704,7 @@
       "tab-resources": "Resources",
       "tab-resources-title": "Resources saved in grafana database",
       "title": "Repository Status",
-      "title-legacy-storage": "Legacy Storage",
+      "title-incompatible-data-format": "Incompatible data format detected",
       "title-queued-for-deletion": "Queued for deletion"
     },
     "repository-type-cards": {
