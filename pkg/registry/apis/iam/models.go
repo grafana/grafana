@@ -53,6 +53,8 @@ type IdentityAccessManagementAPIBuilder struct {
 	// - permissions
 	// - assignments
 	zClient zanzana.Client
+	// Buffered channel to limit the amount of concurrent writes to Zanzana
+	zTickets chan bool
 
 	reg    prometheus.Registerer
 	logger log.Logger
