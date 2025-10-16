@@ -238,7 +238,11 @@ func (r *GoJsonResponseWithTiming) WriteTo(ctx *contextmodel.ReqContext) {
 			}
 			timingParts = append(timingParts, part)
 		}
-		ctx.Resp.Header().Set("Server-Timing", strings.Join(timingParts, ", "))
+		// Set standard Server-Timing header
+		timingHeader := strings.Join(timingParts, ", ")
+		ctx.Resp.Header().Set("Server-Timing", timingHeader)
+		// Also set custom header that Cloudflare won't strip
+		ctx.Resp.Header().Set("X-Grafana-Timing", timingHeader)
 	}
 
 	ctx.Resp.WriteHeader(r.status)

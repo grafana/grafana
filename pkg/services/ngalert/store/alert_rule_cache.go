@@ -149,6 +149,7 @@ func NewRemoteAlertRuleCache(cache remotecache.CacheStorage, logger log.Logger) 
 
 func (c *remoteAlertRuleCache) GetLiteRules(ctx context.Context, orgID int64) ([]*ngmodels.AlertRuleLite, bool) {
 	if c.remoteCache == nil {
+		c.logger.Warn("GetLiteRules called but remoteCache is nil - cache unavailable")
 		return nil, false
 	}
 
@@ -156,9 +157,14 @@ func (c *remoteAlertRuleCache) GetLiteRules(ctx context.Context, orgID int64) ([
 	compressedData, err := c.remoteCache.Get(ctx, key)
 	if err != nil {
 		if err == remotecache.ErrCacheItemNotFound {
+			c.logger.Debug("Lite rules not found in cache (cache miss)", "orgID", orgID)
 			return nil, false
 		}
-		c.logger.Error("Failed to get lite rules from remote cache", "error", err, "key", key)
+		c.logger.Error("Failed to get lite rules from remote cache - Redis connection issue?",
+			"error", err,
+			"key", key,
+			"orgID", orgID,
+			"error_type", fmt.Sprintf("%T", err))
 		return nil, false
 	}
 
@@ -173,8 +179,17 @@ func (c *remoteAlertRuleCache) GetLiteRules(ctx context.Context, orgID int64) ([
 
 	data, err := io.ReadAll(gr)
 	if err != nil {
-		c.logger.Error("Failed to decompress lite rules from cache", "error", err, "key", key)
-		_ = c.remoteCache.Delete(ctx, key)
+		c.logger.Error("Cache corruption detected: Failed to decompress lite rules - data truncated or incomplete",
+			"error", err,
+			"key", key,
+			"orgID", orgID,
+			"compressed_size_bytes", len(compressedData),
+			"action", "deleting corrupted cache entry")
+		if delErr := c.remoteCache.Delete(ctx, key); delErr != nil {
+			c.logger.Warn("Failed to delete corrupted cache entry", "error", delErr, "key", key)
+		} else {
+			c.logger.Info("Deleted corrupted cache entry - will reload from database", "key", key, "orgID", orgID)
+		}
 		return nil, false
 	}
 
@@ -195,44 +210,88 @@ func (c *remoteAlertRuleCache) GetFullRules(ctx context.Context, orgID int64, ui
 		return make(map[string]*ngmodels.AlertRule), nil
 	}
 
+	c.logger.Debug("GetFullRules called", "orgID", orgID, "uids_count", len(uids))
+
 	// Build keys for MGET
 	keys := make([]string, len(uids))
 	for i, uid := range uids {
 		keys[i] = fmt.Sprintf("alert_rule:org:%d:uid:%s", orgID, uid)
 	}
 
-	// Fetch all full rules with one Redis MGET operation
+	c.logger.Debug("Starting MGET", "keys_count", len(keys))
 	startMget := time.Now()
-	rawValues, err := c.remoteCache.MGet(ctx, keys...)
-	if err != nil {
-		c.logger.Error("Failed to MGET full rules from Redis", "error", err, "count", len(keys))
-		return nil, err
+	var rawValues [][]byte
+	var err error
+
+	// For very large MGET operations, batch them to avoid Redis timeouts
+	// Most Redis setups can handle 10k+ keys in one MGET, but we batch anyway for safety
+	const mgetBatchSize = 10000
+	if len(keys) <= mgetBatchSize {
+		// Single MGET for normal sizes
+		rawValues, err = c.remoteCache.MGet(ctx, keys...)
+		if err != nil {
+			c.logger.Error("Failed to MGET full rules from Redis", "error", err, "count", len(keys))
+			// Return empty map instead of error to allow fallback to DB
+			return make(map[string]*ngmodels.AlertRule), nil
+		}
+	} else {
+		// Batch MGET for very large sets
+		c.logger.Info("Batching large MGET operation", "total_keys", len(keys), "batch_size", mgetBatchSize)
+		rawValues = make([][]byte, 0, len(keys))
+		for i := 0; i < len(keys); i += mgetBatchSize {
+			end := i + mgetBatchSize
+			if end > len(keys) {
+				end = len(keys)
+			}
+			batchKeys := keys[i:end]
+			batchValues, err := c.remoteCache.MGet(ctx, batchKeys...)
+			if err != nil {
+				c.logger.Error("Failed to MGET batch from Redis", "error", err,
+					"batch_start", i, "batch_size", len(batchKeys))
+				// Return empty map instead of error to allow fallback to DB
+				return make(map[string]*ngmodels.AlertRule), nil
+			}
+			rawValues = append(rawValues, batchValues...)
+		}
 	}
 	mgetDuration := time.Since(startMget)
+	c.logger.Debug("MGET completed", "duration_ms", mgetDuration.Milliseconds(), "values_count", len(rawValues))
 
 	// Unmarshal each rule in parallel (no gzip for per-item to reduce CPU)
 	startUnmarshal := time.Now()
+	c.logger.Debug("Starting parallel unmarshal", "values_count", len(rawValues))
 	results := make([]*ngmodels.AlertRule, len(rawValues))
 
-	workerCount := runtime.NumCPU() * 2
-	if workerCount > 32 {
-		workerCount = 32
+	// Optimize worker count based on workload size and CPU count
+	// For large datasets (200k rules), we want more parallelism
+	workerCount := runtime.NumCPU() * 4 // Increased from 2x to 4x
+	if workerCount > 128 {              // Increased cap from 32 to 128
+		workerCount = 128
 	}
 	if workerCount > len(rawValues) {
 		workerCount = len(rawValues)
+	}
+
+	// Use buffered channel sized to minimize blocking
+	// Larger buffer = producer (main goroutine) can feed data faster
+	bufferSize := workerCount * 4 // Increased from 2x to 4x
+	if bufferSize > 1000 {
+		bufferSize = 1000 // Cap to avoid excessive memory
 	}
 
 	type item struct {
 		index int
 		data  []byte
 	}
-	ch := make(chan item, workerCount*2)
+	ch := make(chan item, bufferSize)
 	var wg sync.WaitGroup
 
+	// Start workers
 	for w := 0; w < workerCount; w++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			// Process items until channel is closed
 			for it := range ch {
 				if it.data == nil {
 					continue
@@ -247,11 +306,15 @@ func (c *remoteAlertRuleCache) GetFullRules(ctx context.Context, orgID int64, ui
 		}()
 	}
 
+	// Feed data to workers
+	// This happens concurrently with workers unmarshaling
 	for i, val := range rawValues {
 		ch <- item{index: i, data: val}
 	}
 	close(ch)
+	c.logger.Debug("Channel closed, waiting for workers")
 	wg.Wait()
+	c.logger.Debug("All workers completed")
 
 	// Build result map maintaining requested order
 	result := make(map[string]*ngmodels.AlertRule, len(uids))
@@ -269,16 +332,20 @@ func (c *remoteAlertRuleCache) GetFullRules(ctx context.Context, orgID int64, ui
 		"found", found,
 		"mget_ms", mgetDuration.Milliseconds(),
 		"unmarshal_ms", unmarshalDuration.Milliseconds(),
-		"workers", workerCount)
+		"total_ms", (mgetDuration + unmarshalDuration).Milliseconds(),
+		"workers", workerCount,
+		"avg_unmarshal_us", unmarshalDuration.Microseconds()/int64(max(len(rawValues), 1)))
 
 	return result, nil
 }
 
 func (c *remoteAlertRuleCache) SetRules(ctx context.Context, orgID int64, rules ngmodels.RulesGroup) error {
 	if c.remoteCache == nil {
+		c.logger.Warn("SetRules called but remoteCache is nil - cannot cache rules", "orgID", orgID, "rule_count", len(rules))
 		return nil
 	}
 
+	c.logger.Debug("SetRules starting", "orgID", orgID, "rule_count", len(rules))
 	start := time.Now()
 
 	// 1. Create and cache lite rules in one key
@@ -303,8 +370,40 @@ func (c *remoteAlertRuleCache) SetRules(ctx context.Context, orgID int64, rules 
 
 	// Store lite rules
 	liteKey := fmt.Sprintf("alert_rules:org:%d:lite", orgID)
+	c.logger.Debug("Setting lite rules in Redis",
+		"orgID", orgID,
+		"uncompressed_bytes", len(liteMsgpack),
+		"compressed_bytes", len(liteCompressed),
+		"compression_ratio", float64(len(liteMsgpack))/float64(max(len(liteCompressed), 1)))
+
 	if err := c.remoteCache.Set(ctx, liteKey, liteCompressed, AlertRuleCacheTTL); err != nil {
-		return fmt.Errorf("failed to cache lite rules: %w", err)
+		c.logger.Error("Failed to SET lite rules in Redis - connection issue?",
+			"error", err,
+			"orgID", orgID,
+			"key", liteKey,
+			"size_bytes", len(liteCompressed),
+			"error_type", fmt.Sprintf("%T", err))
+		return fmt.Errorf("failed to cache lite rules in Redis: %w", err)
+	}
+
+	// Verify the write by reading back the size
+	verifyData, verifyErr := c.remoteCache.Get(ctx, liteKey)
+	if verifyErr != nil {
+		c.logger.Warn("Failed to verify lite rules write to Redis",
+			"error", verifyErr,
+			"orgID", orgID,
+			"expected_size", len(liteCompressed))
+	} else if len(verifyData) != len(liteCompressed) {
+		c.logger.Error("Redis write corruption detected: Size mismatch after SET",
+			"orgID", orgID,
+			"expected_size", len(liteCompressed),
+			"actual_size", len(verifyData),
+			"key", liteKey)
+		// Delete corrupted entry
+		_ = c.remoteCache.Delete(ctx, liteKey)
+		return fmt.Errorf("redis write corruption: expected %d bytes, got %d bytes", len(liteCompressed), len(verifyData))
+	} else {
+		c.logger.Debug("Verified lite rules write to Redis", "orgID", orgID, "size_bytes", len(verifyData))
 	}
 
 	// 2. Cache each full rule individually (msgpack only for per-item for faster decode)
@@ -321,7 +420,13 @@ func (c *remoteAlertRuleCache) SetRules(ctx context.Context, orgID int64, rules 
 		// Store full rule (no gzip)
 		fullKey := fmt.Sprintf("alert_rule:org:%d:uid:%s", orgID, rule.UID)
 		if err := c.remoteCache.Set(ctx, fullKey, fullMsgpack, AlertRuleCacheTTL); err != nil {
-			c.logger.Warn("Failed to cache full rule", "uid", rule.UID, "error", err)
+			c.logger.Warn("Failed to SET full rule in Redis",
+				"uid", rule.UID,
+				"error", err,
+				"orgID", orgID,
+				"key", fullKey,
+				"size_bytes", len(fullMsgpack),
+				"error_type", fmt.Sprintf("%T", err))
 		}
 	}
 
