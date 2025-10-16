@@ -190,6 +190,10 @@ test.describe(
       // Now test ungrouping all remaining rows at once
       await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.ungroupRows).click();
 
+      // Handle the ConvertMixedGridsModal that appears when there are mixed grid types
+      // The modal asks which grid type to convert to - we'll choose "Custom" (GridLayout)
+      await page.getByRole('button', { name: 'Convert to Custom' }).click();
+
       // Verify all remaining rows are gone and all panels are now in a single grid
       await expect(firstRow).toBeHidden();
       await expect(thirdRow).toBeHidden();
