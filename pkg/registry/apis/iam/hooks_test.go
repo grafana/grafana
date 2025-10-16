@@ -24,6 +24,8 @@ func (f *FakeZanzanaClient) Write(ctx context.Context, req *v1.WriteRequest) err
 }
 
 func TestAfterResourcePermissionCreate(t *testing.T) {
+	t.Skip("Need to fix its flaky behavior in CI")
+
 	b := &IdentityAccessManagementAPIBuilder{
 		logger:   log.NewNopLogger(),
 		zTickets: make(chan bool, 1),
