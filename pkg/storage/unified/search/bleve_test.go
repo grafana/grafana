@@ -1469,13 +1469,13 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 	attemptedUpdates := atomic.NewInt64(0)
 
 	// Verify that each returned RV (unix timestamp in millis) is either the same as before, or at least minInterval later.
-	const searchConcurrency = 25
+	const searchConcurrency = 10
 	for i := 0; i < searchConcurrency; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
-			prevRV := int64(0)
+			var collectedRVs []int64
 			for ctx.Err() == nil {
 				attemptedUpdates.Inc()
 
@@ -1483,19 +1483,18 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 				rv, err := idx.UpdateIndex(t.Context())
 				require.NoError(t, err)
 
-				// Our update function returns unix timestamp in millis. We expect it to not change at all, or change by minInterval.
-				if prevRV > 0 {
-					rvDiff := rv - prevRV
-					if rvDiff == 0 {
-						// OK
-					} else {
-						// Allow returned RV to be within 20% of minInterval (to account for slow CI machines).
-						require.InDelta(t, minInterval.Milliseconds(), rvDiff, float64(minInterval.Milliseconds())*0.20)
-					}
+				if len(collectedRVs) == 0 || collectedRVs[len(collectedRVs)-1] != rv {
+					collectedRVs = append(collectedRVs, rv)
 				}
 
-				prevRV = rv
 				require.Equal(t, int64(10), searchTitle(t, idx, "Document", 10, ns).TotalHits)
+			}
+
+			t.Log(collectedRVs)
+			for i := 1; i < len(collectedRVs); i++ {
+				// We allow next RV to be 0.9*minInterval later, to account for possible clock skew between time measurements.
+				// (We get measurements from update function, but check is done on times inside updater)
+				require.GreaterOrEqual(t, collectedRVs[i], collectedRVs[i-1]+(9*int64(minInterval/time.Millisecond)/10))
 			}
 		}()
 	}

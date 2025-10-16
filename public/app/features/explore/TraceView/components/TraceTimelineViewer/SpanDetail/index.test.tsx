@@ -253,6 +253,7 @@ describe('<SpanDetail>', () => {
   it('renders deep link URL', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     expect(screen.getByTestId('share-span-button')).toBeInTheDocument();
+    expect(screen.getByText('test-spanID')).toBeInTheDocument();
   });
 
   it('renders the flame graph', async () => {
