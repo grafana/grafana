@@ -14,6 +14,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
+const (
+	syncerLockActionName = "plugin-install-api-sync"
+)
+
+var (
+	lockTimeout = 10 * time.Minute
+)
+
 // Syncer is the interface for syncing plugin installations to the Kubernetes-style API.
 type Syncer interface {
 	Sync(ctx context.Context, source install.Source, installedPlugins []*plugins.Plugin) error
@@ -87,7 +95,7 @@ func (s *syncer) Sync(ctx context.Context, source install.Source, installedPlugi
 	}
 
 	var syncErr error
-	lockErr := s.serverLock.LockExecuteAndRelease(ctx, "plugin-install-api-sync", 10*time.Minute, func(ctx context.Context) {
+	lockErr := s.serverLock.LockExecuteAndRelease(ctx, syncerLockActionName, lockTimeout, func(ctx context.Context) {
 		syncErr = s.syncAllNamespaces(ctx, source, installedPlugins)
 	})
 

@@ -40,7 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	installsyncfakes "github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/fakes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/installsyncfakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
