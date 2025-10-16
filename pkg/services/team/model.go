@@ -130,11 +130,12 @@ type SearchTeamQueryResult struct {
 
 // TeamMember model
 type TeamMember struct {
-	ID         int64 `xorm:"pk autoincr 'id'"`
-	OrgID      int64 `xorm:"org_id"`
-	TeamID     int64 `xorm:"team_id"`
-	UserID     int64 `xorm:"user_id"`
-	External   bool  // Signals that the membership has been created by an external systems, such as LDAP
+	ID         int64  `xorm:"pk autoincr 'id'"`
+	UID        string `xorm:"uid"`
+	OrgID      int64  `xorm:"org_id"`
+	TeamID     int64  `xorm:"team_id"`
+	UserID     int64  `xorm:"user_id"`
+	External   bool   // Signals that the membership has been created by an external systems, such as LDAP
 	Permission PermissionType
 
 	Created time.Time
@@ -180,9 +181,10 @@ type GetTeamMembersQuery struct {
 // Projections and DTOs
 
 type TeamMemberDTO struct {
+	UID        string         `json:"uid" xorm:"uid"`
 	OrgID      int64          `json:"orgId" xorm:"org_id"`
 	TeamID     int64          `json:"teamId" xorm:"team_id"`
-	TeamUID    string         `json:"teamUID" xorm:"uid"`
+	TeamUID    string         `json:"teamUID" xorm:"team_uid"`
 	UserID     int64          `json:"userId" xorm:"user_id"`
 	UserUID    string         `json:"userUID" xorm:"user_uid"`
 	External   bool           `json:"-"`

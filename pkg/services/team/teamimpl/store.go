@@ -423,6 +423,7 @@ func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal boo
 	}
 
 	entity := team.TeamMember{
+		UID:        util.GenerateShortUID(),
 		OrgID:      orgID,
 		TeamID:     teamID,
 		UserID:     userID,
@@ -559,6 +560,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		sess.Select(fmt.Sprintf(`team_member.org_id,
 			team_member.team_id,
 			team_member.user_id,
+			team_member.uid,
 			%[1]s.email,
 			%[1]s.name,
 			%[1]s.login,
@@ -566,7 +568,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 			team_member.external,
 			team_member.permission,
 			user_auth.auth_module,
-			team.uid`, ss.db.GetDialect().Quote("user")))
+			team.uid as team_uid`, ss.db.GetDialect().Quote("user")))
 		sess.Asc("user.login", "user.email")
 
 		err := sess.Find(&queryResult)
