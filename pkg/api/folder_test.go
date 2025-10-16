@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	clientrest "k8s.io/client-go/rest"
 
@@ -19,7 +18,6 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -113,8 +111,7 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 	for _, tc := range tcs {
 		folderService.ExpectedFolder = tc.expectedFolder
 		folderService.ExpectedError = tc.expectedFolderSvcError
-		folderPermService := acmock.NewMockedPermissionsService()
-		folderPermService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+		folderPermService := &actest.FakePermissionsService{}
 
 		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.Cfg = setting.NewCfg()
@@ -664,8 +661,7 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 	folderService := &foldertest.FakeService{
 		ExpectedFolder: &folder.Folder{UID: "uid", Title: "Folder"},
 	}
-	folderPermService := acmock.NewMockedPermissionsService()
-	folderPermService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+	folderPermService := &actest.FakePermissionsService{}
 
 	srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg

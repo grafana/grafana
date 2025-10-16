@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -28,7 +28,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		ac := accesscontrolmock.New()
+		ac := &actest.FakeService{}
 		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer))
 		ctx, err := setupContext()
 		require.NoError(t, err)
@@ -44,7 +44,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		ac := accesscontrolmock.New()
+		ac := &actest.FakeService{}
 		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleEditor}, ac, grpccontext.ProvideContextHandler(tracer))
 		ctx, err := setupContext()
 		require.NoError(t, err)
@@ -60,7 +60,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		ac := accesscontrolmock.New()
+		ac := &actest.FakeService{}
 		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer))
 		ctx, err := setupContext()
 		require.NoError(t, err)
@@ -82,7 +82,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		ac := accesscontrolmock.New()
+		ac := &actest.FakeService{}
 		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer))
 		ctx, err := setupContext()
 		require.NoError(t, err)
@@ -106,7 +106,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 				Scope:  accesscontrol.ScopeUsersAll,
 			},
 		}
-		ac := accesscontrolmock.New().WithPermissions(permissions)
+		ac := &actest.FakeService{ExpectedPermissions: permissions}
 		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, ac, grpccontext.ProvideContextHandler(tracer))
 		ctx, err := setupContext()
 		require.NoError(t, err)

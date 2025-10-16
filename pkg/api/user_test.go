@@ -29,7 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/auth/idtest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -64,9 +64,10 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	settings := setting.NewCfg()
 	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
 	hs := &HTTPServer{
-		Cfg:           settings,
-		SQLStore:      sqlStore,
-		AccessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		Cfg:                  settings,
+		SQLStore:             sqlStore,
+		accesscontrolService: &actest.FakeService{},
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 	}
 
 	mockResult := user.SearchUserQueryResult{
@@ -414,10 +415,11 @@ func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 
 	hs := &HTTPServer{
-		Cfg:           settings,
-		SQLStore:      sqlStore,
-		AccessControl: acmock.New(),
-		SocialService: &socialtest.FakeSocialService{ExpectedAuthInfoProvider: &social.OAuthInfo{Enabled: true}},
+		Cfg:                  settings,
+		SQLStore:             sqlStore,
+		accesscontrolService: &actest.FakeService{},
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		SocialService:        &socialtest.FakeSocialService{ExpectedAuthInfoProvider: &social.OAuthInfo{Enabled: true}},
 		authnService: &authntest.FakeService{
 			EnabledClients: []string{authn.ClientSAML},
 		},
@@ -1167,10 +1169,11 @@ func TestIntegrationHTTPServer_UpdateSignedInUser(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 
 	hs := &HTTPServer{
-		Cfg:           settings,
-		SQLStore:      sqlStore,
-		AccessControl: acmock.New(),
-		SocialService: &socialtest.FakeSocialService{},
+		Cfg:                  settings,
+		SQLStore:             sqlStore,
+		accesscontrolService: &actest.FakeService{},
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		SocialService:        &socialtest.FakeSocialService{},
 		authnService: &authntest.FakeService{
 			EnabledClients: []string{authn.ClientSAML},
 		},
