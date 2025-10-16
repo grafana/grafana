@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
 import { DashboardCursorSync, PanelProps, useDataLinksContext } from '@grafana/data';
@@ -26,15 +25,9 @@ import { getTimezones } from '../timeseries/utils';
 import { StateTimelineTooltip2 } from './StateTimelineTooltip2';
 import { usePagination } from './hooks';
 import { Options } from './panelcfg.gen';
+import { containerStyles } from './styles';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
-
-const containerStyles = {
-  container: css({
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-};
 
 /**
  * @alpha
@@ -86,7 +79,7 @@ export const StateTimelinePanel = ({
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   return (
-    <div className={containerStyles.container}>
+    <div className={containerStyles}>
       <TimelineChart
         theme={theme}
         frames={paginatedFrames}

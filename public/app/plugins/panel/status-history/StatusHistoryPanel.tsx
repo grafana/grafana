@@ -20,7 +20,8 @@ import {
 } from 'app/core/components/TimelineChart/utils';
 
 import { StateTimelineTooltip2 } from '../state-timeline/StateTimelineTooltip2';
-import { containerStyles, usePagination } from '../state-timeline/hooks';
+import { usePagination } from '../state-timeline/hooks';
+import { containerStyles } from '../state-timeline/styles';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
@@ -91,7 +92,7 @@ export const StatusHistoryPanel = ({
   }
 
   return (
-    <div className={containerStyles.container}>
+    <div className={containerStyles}>
       <TimelineChart
         theme={theme}
         frames={paginatedFrames}
