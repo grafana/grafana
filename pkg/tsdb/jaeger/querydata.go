@@ -50,15 +50,9 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 		// TODO: migrate this to use gRPC feature toggle
 		useGrpc := true
 		if query.QueryType == "search" {
-			var frames *data.Frame
-			var err error
-			if useGrpc {
-				// call grpc client search function
-				// TODO: enable routing to gRPC when ready, currently pending on: https://github.com/jaegertracing/jaeger/issues/7594
-				// frames, err = dsInfo.JaegerClient.GrpcSearch(&query, q.TimeRange.From, q.TimeRange.To)
-			} else {
-				frames, err = dsInfo.JaegerClient.Search(&query, q.TimeRange.From.UnixMicro(), q.TimeRange.To.UnixMicro())
-			}
+			// TODO: enable routing to gRPC when ready, currently pending on: https://github.com/jaegertracing/jaeger/issues/7594
+
+			frames, err := dsInfo.JaegerClient.Search(&query, q.TimeRange.From.UnixMicro(), q.TimeRange.To.UnixMicro())
 			if err != nil {
 				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
 				continue
