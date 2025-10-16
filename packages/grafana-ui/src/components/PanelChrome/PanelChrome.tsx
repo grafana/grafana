@@ -75,6 +75,11 @@ interface BaseProps {
    * If true, the VizPanelMenu will always be visible in the panel header. Defaults to false.
    */
   showMenuAlways?: boolean;
+  /**
+   * Content to display in the sub-header area below the main header.
+   * Can contain text, pills, links, buttons, or any other React elements.
+   */
+  subHeaderContent?: ReactNode;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -147,6 +152,7 @@ export function PanelChrome({
   onMouseEnter,
   onDragStart,
   showMenuAlways = false,
+  subHeaderContent,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -173,12 +179,16 @@ export function PanelChrome({
   const showOnHoverClass = showMenuAlways ? 'always-show' : 'show-on-hover';
   const isPanelTransparent = displayMode === 'transparent';
 
+  const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
+
   const headerHeight = getHeaderHeight(theme, hasHeader);
+  const subHeaderHeight = !collapsed && subHeaderContent ? headerHeight : 0;
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(
     padding,
     theme,
     headerHeight,
     collapsed,
+    subHeaderHeight,
     height,
     width
   );
@@ -189,7 +199,6 @@ export function PanelChrome({
   };
 
   const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height };
-  const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   /** Old property name now maps to actions */
   if (leftItems) {
@@ -376,37 +385,40 @@ export function PanelChrome({
       )}
 
       {hasHeader && (
-        <div
-          className={cx(styles.headerContainer, dragClass)}
-          style={headerStyles}
-          data-testid={selectors.components.Panels.Panel.headerContainer}
-          onPointerDown={onPointerDown}
-          onMouseEnter={isSelectable ? onHeaderEnter : undefined}
-          onMouseLeave={isSelectable ? onHeaderLeave : undefined}
-          onPointerUp={onPointerUp}
-        >
-          {statusMessage && (
-            <div className={dragClassCancel}>
-              <PanelStatus
-                message={statusMessage}
-                onClick={statusMessageOnClick}
-                ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+        <>
+          <div
+            className={cx(styles.headerContainer, dragClass)}
+            style={headerStyles}
+            data-testid={selectors.components.Panels.Panel.headerContainer}
+            onPointerDown={onPointerDown}
+            onMouseEnter={isSelectable ? onHeaderEnter : undefined}
+            onMouseLeave={isSelectable ? onHeaderLeave : undefined}
+            onPointerUp={onPointerUp}
+          >
+            {statusMessage && (
+              <div className={dragClassCancel}>
+                <PanelStatus
+                  message={statusMessage}
+                  onClick={statusMessageOnClick}
+                  ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+                />
+              </div>
+            )}
+
+            {headerContent}
+
+            {menu && (
+              <PanelMenu
+                menu={menu}
+                title={typeof title === 'string' ? title : undefined}
+                placement="bottom-end"
+                menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
+                onOpenMenu={onOpenMenu}
               />
-            </div>
-          )}
-
-          {headerContent}
-
-          {menu && (
-            <PanelMenu
-              menu={menu}
-              title={typeof title === 'string' ? title : undefined}
-              placement="bottom-end"
-              menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
-              onOpenMenu={onOpenMenu}
-            />
-          )}
-        </div>
+            )}
+          </div>
+          {!collapsed && subHeaderContent && <div className={styles.subHeader}>{subHeaderContent}</div>}
+        </>
       )}
 
       {!collapsed && (
@@ -442,6 +454,7 @@ const getContentStyle = (
   theme: GrafanaTheme2,
   headerHeight: number,
   collapsed: boolean,
+  subHeaderHeight: number,
   height?: number,
   width?: number
 ) => {
@@ -457,7 +470,7 @@ const getContentStyle = (
 
   let innerHeight = 0;
   if (height) {
-    innerHeight = height - headerHeight - panelPadding - panelBorder;
+    innerHeight = height - headerHeight - panelPadding - panelBorder - subHeaderHeight;
   }
 
   if (collapsed) {
@@ -546,6 +559,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
+    }),
+    subHeader: css({
+      label: 'panel-sub-header',
+      display: 'flex',
+      alignItems: 'center',
+      maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
+      padding: theme.spacing(0, padding),
+      overflow: 'hidden',
+      gap: theme.spacing(1),
     }),
     pointer: css({
       cursor: 'pointer',
