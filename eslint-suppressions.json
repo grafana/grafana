@@ -858,6 +858,11 @@
       "count": 1
     }
   },
+  "packages/grafana-ui/src/components/RadialGauge/RadialColorDefs.tsx": {
+    "react-prefer-function-component/react-prefer-function-component": {
+      "count": 1
+    }
+  },
   "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
