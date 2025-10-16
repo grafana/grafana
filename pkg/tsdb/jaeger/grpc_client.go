@@ -51,7 +51,7 @@ func (j *JaegerClient) GrpcOperations(s string) ([]string, error) {
 	}
 
 	urlQuery := jaegerURL.Query()
-	urlQuery.Set("service", url.QueryEscape(s))
+	urlQuery.Set("service", s)
 	jaegerURL.RawQuery = urlQuery.Encode()
 
 	res, err := j.httpClient.Get(jaegerURL.String())
