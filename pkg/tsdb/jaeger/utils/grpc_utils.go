@@ -122,6 +122,8 @@ func TransformGrpcTraceResponse(trace []types.GrpcResourceSpans, refID string) *
 		data.NewField("serviceTags", nil, []json.RawMessage{}),
 		data.NewField("startTime", nil, []float64{}),
 		data.NewField("duration", nil, []float64{}),
+		data.NewField("logs", nil, []json.RawMessage{}),
+		data.NewField("references", nil, []json.RawMessage{}),
 		data.NewField("tags", nil, []json.RawMessage{}),
 	)
 
@@ -181,6 +183,30 @@ func TransformGrpcTraceResponse(trace []types.GrpcResourceSpans, refID string) *
 					tags = json.RawMessage(tagsMarshaled)
 				}
 
+				// Convert logs
+				// In the new API (OTLP based), logs are span events. See:
+				// https://github.com/jaegertracing/jaeger-idl/blob/7c7460fc400325ae69435c0aa65697f4cc1ab581/swagger/api_v3/query_service.swagger.json#L630C9-L636C11
+				logs := json.RawMessage{}
+				logsMarshaled, err := json.Marshal(span.Events)
+				if err == nil {
+					logs = json.RawMessage(logsMarshaled)
+				}
+
+				// Convert references (excluding parent)
+				references := json.RawMessage{}
+				filteredRefs := []types.GrpcSpanLink{}
+				// in the new API (OTLP based), references are defined as "SpanLinks" see:
+				// https://github.com/jaegertracing/jaeger-idl/blob/7c7460fc400325ae69435c0aa65697f4cc1ab581/swagger/api_v3/query_service.swagger.json#L642C8-L648C11
+				for _, ref := range span.Links {
+					if parentSpanID == "" || ref.SpanID != parentSpanID {
+						filteredRefs = append(filteredRefs, ref)
+					}
+				}
+				refsMarshaled, err := json.Marshal(filteredRefs)
+				if err == nil {
+					references = json.RawMessage(refsMarshaled)
+				}
+
 				// convert start time and calculate duration
 				startTimeFloat, startErr := strconv.ParseFloat(span.StartTimeUnixNano, 64)
 				endTimeFloat, endErr := strconv.ParseFloat(span.EndTimeUnixNano, 64)
@@ -199,6 +225,8 @@ func TransformGrpcTraceResponse(trace []types.GrpcResourceSpans, refID string) *
 					serviceTags,
 					startTimeFloat/1000000, // Convert nanoseconds to milliseconds
 					duration,
+					logs,
+					references,
 					tags,
 				)
 			}
