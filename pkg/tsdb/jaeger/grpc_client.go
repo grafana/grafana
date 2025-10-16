@@ -163,8 +163,6 @@ func (j *JaegerClient) GrpcTrace(ctx context.Context, traceID string, start, end
 		return nil, err
 	}
 
-	// We only support one trace at a time
-	// this is how it was implemented in the frontend before
-	frame := utils.TransformGrpcTraceResponse(response.Result.ResourceSpans[0], refID)
+	frame := utils.TransformGrpcTraceResponse(response.Result.ResourceSpans, refID)
 	return frame, err
 }

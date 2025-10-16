@@ -112,7 +112,7 @@ func TransformGrpcSearchResponse(response types.GrpcTracesResult, dsUID string, 
 	return frame
 }
 
-func TransformGrpcTraceResponse(trace types.GrpcResourceSpans, refID string) *data.Frame {
+func TransformGrpcTraceResponse(trace []types.GrpcResourceSpans, refID string) *data.Frame {
 	frame := data.NewFrame(refID,
 		data.NewField("traceID", nil, []string{}),
 		data.NewField("spanID", nil, []string{}),
@@ -133,74 +133,76 @@ func TransformGrpcTraceResponse(trace types.GrpcResourceSpans, refID string) *da
 		},
 	}
 
-	// Process each span in the trace
-	scope := trace.ScopeSpans[0]
-	for _, span := range scope.Spans {
-		parentSpanID := span.ParentSpanID
+	// each resource is a difference service name or "process"
+	for _, resource := range trace {
+		for _, scopeSpan := range resource.ScopeSpans {
+			for _, span := range scopeSpan.Spans {
+				parentSpanID := span.ParentSpanID
+				// Get service name and tags
+				serviceName := getAttribute(resource.Resource.Attributes, "service.name").StringValue
+				serviceTags := json.RawMessage{}
+				processedResAttributes := processAttributesIntoTags(resource.Resource.Attributes)
+				tagsMarshaled, err := json.Marshal(processedResAttributes)
+				if err == nil {
+					serviceTags = json.RawMessage(tagsMarshaled)
+				}
 
-		// Get service name and tags
-		serviceName := getAttribute(trace.Resource.Attributes, "service.name").StringValue
-		serviceTags := json.RawMessage{}
-		processedResAttributes := processAttributesIntoTags(trace.Resource.Attributes)
-		tagsMarshaled, err := json.Marshal(processedResAttributes)
-		if err == nil {
-			serviceTags = json.RawMessage(tagsMarshaled)
-		}
+				// Convert tags
+				tags := json.RawMessage{}
+				processedSpanAttributes := processAttributesIntoTags(span.Attributes)
+				// add otel attributes scope name, scope version and span kind
+				if scopeSpan.Scope.Name != "" {
+					processedSpanAttributes = append(processedSpanAttributes, types.KeyValueType{
+						Key:   "otel.scope.name",
+						Value: scopeSpan.Scope.Name,
+						Type:  "string",
+					})
+				}
 
-		// Convert tags
-		tags := json.RawMessage{}
-		processedSpanAttributes := processAttributesIntoTags(span.Attributes)
-		// add otel attributes scope name, scope version and span kind
-		if scope.Scope.Name != "" {
-			processedSpanAttributes = append(processedSpanAttributes, types.KeyValueType{
-				Key:   "otel.scope.name",
-				Value: scope.Scope.Name,
-				Type:  "string",
-			})
-		}
+				if scopeSpan.Scope.Version != "" {
+					processedSpanAttributes = append(processedSpanAttributes, types.KeyValueType{
+						Key:   "otel.scope.version",
+						Value: scopeSpan.Scope.Version,
+						Type:  "string",
+					})
+				}
 
-		if scope.Scope.Version != "" {
-			processedSpanAttributes = append(processedSpanAttributes, types.KeyValueType{
-				Key:   "otel.scope.version",
-				Value: scope.Scope.Version,
-				Type:  "string",
-			})
-		}
+				spanKindAtt := getAttribute(span.Attributes, "span.kind")
+				if isEmptyAttribute(spanKindAtt) {
+					// it may be the case that the span already contains a span.kind att, in that case, honor that attribute
+					processedSpanAttributes = append(processedSpanAttributes, types.KeyValueType{
+						Key:   "span.kind",
+						Value: processSpanKind(span.Kind),
+						Type:  "string",
+					})
+				}
+				tagsMarshaled, err = json.Marshal(processedSpanAttributes)
+				if err == nil {
+					tags = json.RawMessage(tagsMarshaled)
+				}
 
-		spanKindAtt := getAttribute(span.Attributes, "span.kind")
-		if isEmptyAttribute(spanKindAtt) {
-			// it may be the case that the span already contains a span.kind att, in that case, honor that attribute
-			processedSpanAttributes = append(processedSpanAttributes, types.KeyValueType{
-				Key:   "span.kind",
-				Value: processSpanKind(span.Kind),
-				Type:  "string",
-			})
-		}
-		tagsMarshaled, err = json.Marshal(processedSpanAttributes)
-		if err == nil {
-			tags = json.RawMessage(tagsMarshaled)
-		}
+				// convert start time and calculate duration
+				startTimeFloat, startErr := strconv.ParseFloat(span.StartTimeUnixNano, 64)
+				endTimeFloat, endErr := strconv.ParseFloat(span.EndTimeUnixNano, 64)
+				duration := float64(0)
+				if startErr == nil && endErr == nil {
+					duration = (endTimeFloat - startTimeFloat) / 1000000 // convert to milliseconds
+				}
 
-		// convert start time and calculate duration
-		startTimeFloat, startErr := strconv.ParseFloat(span.StartTimeUnixNano, 64)
-		endTimeFloat, endErr := strconv.ParseFloat(span.EndTimeUnixNano, 64)
-		duration := float64(0)
-		if startErr == nil && endErr == nil {
-			duration = (endTimeFloat - startTimeFloat) / 1000000 // convert to milliseconds
+				// Add span to frame
+				frame.AppendRow(
+					span.TraceID,
+					span.SpanID,
+					&parentSpanID,
+					span.Name,
+					serviceName,
+					serviceTags,
+					startTimeFloat/1000000, // Convert nanoseconds to milliseconds
+					duration,
+					tags,
+				)
+			}
 		}
-
-		// Add span to frame
-		frame.AppendRow(
-			span.TraceID,
-			span.SpanID,
-			&parentSpanID,
-			span.Name,
-			serviceName,
-			serviceTags,
-			startTimeFloat/1000000, // Convert nanoseconds to milliseconds
-			duration,
-			tags,
-		)
 	}
 
 	return frame
