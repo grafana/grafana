@@ -154,14 +154,12 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 			}
 			v.Parameters = append(v.Parameters, ds.Parameters[0:2]...)
 			for m, op := range builder.GetPathOperations(v) {
-				if op != nil {
-					op.Tags = append(op.Tags, "Route") // Custom resource?
-					if op.Extensions == nil {
-						op.Extensions = make(spec.Extensions)
-					}
-					tmp := strings.ReplaceAll(strings.ReplaceAll(k, "{", ""), "}", "")
-					op.OperationId = fmt.Sprintf("%s_route%s", strings.ToLower(m), strings.ReplaceAll(tmp, "/", "_"))
+				op.Tags = append(op.Tags, "Route") // Custom resource?
+				if op.Extensions == nil {
+					op.Extensions = make(spec.Extensions)
 				}
+				tmp := strings.ReplaceAll(strings.ReplaceAll(k, "{", ""), "}", "")
+				op.OperationId = fmt.Sprintf("%s_route%s", strings.ToLower(m), strings.ReplaceAll(tmp, "/", "_"))
 			}
 			oas.Paths.Paths[prefix+k] = v
 		}
