@@ -66,7 +66,7 @@ Git Sync is under development and the following limitations apply:
 
 Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet. 
 
-If you're using Git Sync in Grafana OSS and Grafana Enterprise, some supported resources might be in an incompatible data format. If this happens, syncing will be blocked. Compatibility issues will be fixed with an upcoming migration tool.
+If you're using Git Sync in Grafana OSS or Grafana Enterprise, some supported resources might be in an incompatible data format. If this happens, syncing will be blocked. Compatibility issues will be fixed with an upcoming migration tool.
 
 ### Resource states
 
