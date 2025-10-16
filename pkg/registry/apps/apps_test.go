@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
+	"github.com/grafana/grafana/pkg/registry/apps/querycaching"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -19,6 +20,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	rulesInstaller := &rules.AlertingRulesAppInstaller{}
 	correlationsAppInstaller := &correlations.CorrelationsAppInstaller{}
 	notificationsAppInstaller := &notifications.AlertingNotificationsAppInstaller{}
+	queryCachingAppInstaller := &querycaching.QueryCachingAppInstaller{}
 
 	tests := []struct {
 		name           string
@@ -35,7 +37,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			features := featuremgmt.WithFeatures(tt.flags...)
-			got := ProvideAppInstallers(features, playlistInstaller, pluginsInstaller, nil, tt.rulesInst, correlationsAppInstaller, notificationsAppInstaller)
+			got := ProvideAppInstallers(features, playlistInstaller, pluginsInstaller, nil, tt.rulesInst, correlationsAppInstaller, notificationsAppInstaller, queryCachingAppInstaller)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)
 			} else {

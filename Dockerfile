@@ -92,6 +92,7 @@ COPY pkg/storage/unified/resourcepb pkg/storage/unified/resourcepb
 COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
+COPY apps/querycaching apps/querycaching
 COPY apps/playlist apps/playlist
 COPY apps/plugins apps/plugins
 COPY apps/shorturl apps/shorturl
