@@ -145,27 +145,22 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields) *mapping.Docu
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
 
 	fieldMapper := bleve.NewDocumentMapping()
-	fieldMapper.DefaultAnalyzer = keyword.Name
-	// TODO: If the Analyzer only specified like the following then it does not work as expected.
-	// if fields != nil {
-	// 	fieldMapper.Fields = []*mapping.FieldMapping{}
-	// 	for _, field := range fields.Fields() {
-	// 		def := fields.Field(field)
-	// 		fm := &mapping.FieldMapping{
-	// 			Name:               def.Name,
-	// 			Type:               "text",
-	// 			Analyzer:           keyword.Name,
-	// 			Store:              true,
-	// 			Index:              true,
-	// 			IncludeTermVectors: false,
-	// 			IncludeInAll:       false,
-	// 		}
-	// 		if def.Properties != nil && def.Properties.ExactMatch {
-	// 			fm.Analyzer = keyword.Name
-	// 		}
-	// 		fieldMapper.Fields = append(fieldMapper.Fields, fm)
-	// 	}
-	// }
+	if fields != nil {
+		for _, field := range fields.Fields() {
+			def := fields.Field(field)
+
+			// Filterable should use keyword analyzer for exact matches
+			if def.Properties != nil && def.Properties.Filterable {
+				keywordMapping := bleve.NewKeywordFieldMapping()
+				keywordMapping.Store = true
+
+				fieldMapper.AddFieldMappingsAt(def.Name, keywordMapping)
+			}
+			// For all other fields, we do nothing.
+			// Bleve will see them at index time and dynamically map them as
+			// numeric, datetime, boolean, or standard text based on their content.
+		}
+	}
 
 	mapper.AddSubDocumentMapping("fields", fieldMapper)
 

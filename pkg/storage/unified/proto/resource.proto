@@ -544,9 +544,6 @@ message ResourceTableColumnDefinition {
 
     // When missing, this value can be used
     bytes default_value = 5;
-
-    // When true, use the keyword analyzer for string values 
-    bool exact_match = 6; // when true, only exact matches should be returned
   }
 
   // name is a human readable name for the column.

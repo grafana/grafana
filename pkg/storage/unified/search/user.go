@@ -25,7 +25,6 @@ func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
 			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				UniqueValues: true,
 				Filterable:   true,
-				ExactMatch:   true,
 			},
 		},
 		{
@@ -35,7 +34,6 @@ func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
 			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				UniqueValues: true,
 				Filterable:   true,
-				ExactMatch:   true,
 			},
 		},
 	})
