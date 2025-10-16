@@ -115,6 +115,39 @@ Changes are saved automatically.
 
 For more information about dashboard permissions, refer to [Dashboard permissions](ref:dashboard-permissions).
 
+## Dashboard and folder deletion
+
+**Folders** - When you delete folders, the action is immediate and can't be reversed.
+
+**Dashboards** - Deleted dashboards are stored in the deletion history and can be [restored](#restore-dashboards) if needed (Cloud only).
+
+## Restore deleted dashboards
+
+{{% admonition type="caution" %}}
+The feature is only available in Grafana Cloud.  
+{{% /admonition %}}
+
+When you delete dashboards, they’re stored in the deletion history for up to 12 months, allowing you to restore them if needed.
+The deletion history can contain a maximum of 1000 dashboards.
+After this limit is reached, the oldest deleted dashboards are permanently removed even if the 12-month expiration period isn't over yet.
+
+You can access the list of deleted dashboards from the **Dashboards** page by clicking the **Recently deleted** button, or by navigating to **Dashboards > Recently deleted**.
+
+To restore one or more dashboards, follow these steps:
+
+1. In the main menu, click **Dashboards > Recently deleted** or click the **Recently deleted** button from the **Dashboards** page.
+2. Select the dashboards you want to restore.
+3. Click **Restore** and select a folder to which the dashboards will be moved:
+   - If you select one dashboard and its original folder still exists, that folder is preselected.
+   - If you select multiple dashboards from the _same_ folder, that folder is preselected.
+   - If you select dashboards from _different_ folders, you’ll need to choose one target folder for all of them.
+   - If the original folder no longer exists, you’ll need to select a new target folder.
+4. Click **Restore**.
+
+{{% admonition type="note" %}}
+Only users with admin rights can access the **Restore dashboards** page.
+{{% /admonition %}}
+
 ## Set up generative AI features for dashboards
 
 You can use generative AI to help you with the following tasks:
