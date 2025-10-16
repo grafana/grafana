@@ -48,11 +48,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -706,42 +704,31 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 				b.tracer,
 			)
-			signerFactory := signature.NewSignerFactory(b.clients)
-			legacyResources := migrate.NewLegacyResourcesMigrator(
-				b.repositoryResources,
-				b.parsers,
-				b.legacyMigrator,
-				signerFactory,
-				b.clients,
-				export.ExportAll,
-			)
-			storageSwapper := migrate.NewStorageSwapper(b.unified, b.storageStatus)
-			legacyMigrator := migrate.NewLegacyMigrator(
-				legacyResources,
-				storageSwapper,
-				syncWorker,
-				stageIfPossible,
-			)
 
-			cleaner := migrate.NewNamespaceCleaner(b.clients)
-			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
-				cleaner,
-				exportWorker,
-				syncWorker,
-			)
-
-			migrationWorker := migrate.NewMigrationWorker(
-				legacyMigrator,
-				unifiedStorageMigrator,
-				b.storageStatus,
-			)
+			// MigrationWorker is deprecated, as it's not safe to use today due to the lack of support for alerts and library
+			// panels.
+			// IMPORTANT: This worker is not registered anywhere and is not used in production.
+			// We keep it around for now as a reference implementation of how a migration job could be implemented.
+			// https://github.com/grafana/git-ui-sync-project/issues/604
+			// https://github.com/grafana/git-ui-sync-project/issues/606
+			// cleaner := migrate.NewNamespaceCleaner(b.clients)
+			// unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
+			// 	cleaner,
+			// 	exportWorker,
+			// 	syncWorker,
+			// )
+			// migrationWorker := migrate.NewMigrationWorker(
+			// 	legacyMigrator,
+			// 	unifiedStorageMigrator,
+			// 	b.storageStatus,
+			// )
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			workers := []jobs.Worker{
 				deleteWorker,
 				exportWorker,
-				migrationWorker,
+				// migrationWorker,
 				moveWorker,
 				syncWorker,
 			}
@@ -1203,6 +1190,7 @@ spec:
 // FIXME: This logic does not belong in provisioning! (but required for now)
 // When starting an empty instance, we shift so that we never reference legacy storage
 // This should run somewhere else at startup by default (dual writer? dashboards?)
+// We keep this around until we have a better story for migration to make this work for fresh instances.
 func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
 	ctx := context.Background()
 

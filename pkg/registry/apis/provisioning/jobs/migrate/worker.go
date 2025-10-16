@@ -15,9 +15,14 @@ type Migrator interface {
 	Migrate(ctx context.Context, rw repository.ReaderWriter, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error
 }
 
+// MigrationWorker is deprecated, as it's not safe to use today due to the lack of support for alerts and library
+// panels.
+// IMPORTANT: This worker is not registered anywhere and is not used in production.
+// We keep it around for now as a reference implementation of how a migration job could be implemented.
+// https://github.com/grafana/git-ui-sync-project/issues/604
+// https://github.com/grafana/git-ui-sync-project/issues/606
 type MigrationWorker struct {
 	storageStatus   dualwrite.Service
-	legacyMigrator  Migrator
 	unifiedMigrator Migrator
 }
 
@@ -29,13 +34,11 @@ func NewMigrationWorkerFromUnified(unifiedMigrator Migrator) *MigrationWorker {
 
 // HACK: we should decouple the implementation of these two
 func NewMigrationWorker(
-	legacyMigrator Migrator,
 	unifiedMigrator Migrator,
 	storageStatus dualwrite.Service,
 ) *MigrationWorker {
 	return &MigrationWorker{
 		unifiedMigrator: unifiedMigrator,
-		legacyMigrator:  legacyMigrator,
 		storageStatus:   storageStatus,
 	}
 }
@@ -63,6 +66,8 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	// Block migrate for legacy resources if repository type is folder
+	// FIXME: this is probably duplicate with the check below, but let's review this if/when we implement a new version of
+	// migrate
 	if repo.Config().Spec.Sync.Target == provisioning.SyncTargetTypeFolder {
 		// HACK: we should not have to check for storage existence here
 		if w.storageStatus != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
@@ -70,9 +75,8 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		}
 	}
 
-	// HACK: we should not have to check for storage existence here
 	if w.storageStatus != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
-		return w.legacyMigrator.Migrate(ctx, rw, *options, progress)
+		return errors.New("migration of legacy resources is not supported")
 	}
 
 	if options.History {
