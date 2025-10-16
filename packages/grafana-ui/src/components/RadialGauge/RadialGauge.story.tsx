@@ -45,7 +45,7 @@ const meta: Meta<StoryProps> = {
     gradient: 'none',
     seriesCount: 1,
     segmentCount: 0,
-    segmentSpacing: 0.4,
+    segmentSpacing: 0.2,
     roundedBars: false,
     thresholdsBar: false,
     colorScheme: FieldColorModeId.Thresholds,
@@ -97,28 +97,69 @@ export const Basic: StoryFn<StoryProps> = (args) => {
   );
 };
 
-export const Examples: StoryFn = (args) => {
+export const Examples: StoryFn<StoryProps> = (args) => {
   return (
     <Stack direction={'column'} gap={3} wrap="wrap">
       <div>Bar width</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialGaugeExample seriesName="0.1" value={60} color="blue" barWidthFactor={0.1} />
-        <RadialGaugeExample seriesName="0.4" value={60} color="green" barWidthFactor={0.4} />
-        <RadialGaugeExample seriesName="0.6" value={60} color="red" barWidthFactor={0.6} />
-        <RadialGaugeExample seriesName="0.8" value={60} color="purple" barWidthFactor={0.8} />
+        <RadialGaugeExample
+          seriesName="0.1"
+          value={args.value ?? 30}
+          color="blue"
+          gradient="auto"
+          barWidthFactor={0.1}
+        />
+        <RadialGaugeExample
+          seriesName="0.4"
+          value={args.value ?? 40}
+          color="green"
+          gradient="auto"
+          barWidthFactor={0.4}
+        />
+        <RadialGaugeExample
+          seriesName="0.6"
+          value={args.value ?? 60}
+          color="red"
+          gradient="auto"
+          barWidthFactor={0.6}
+        />
+        <RadialGaugeExample
+          seriesName="0.8"
+          value={args.value ?? 70}
+          color="purple"
+          gradient="auto"
+          barWidthFactor={0.8}
+        />
       </Stack>
       <div>Effects</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
-        <RadialGaugeExample value={30} spotlight glowBar glowCenter color="blue" gradient="auto" />
-        <RadialGaugeExample value={40} spotlight glowBar glowCenter color="green" gradient="auto" />
-        <RadialGaugeExample value={60} spotlight glowBar glowCenter color="red" gradient="auto" roundedBars />
-        <RadialGaugeExample value={70} spotlight glowBar glowCenter color="purple" gradient="auto" roundedBars />
+        <RadialGaugeExample value={args.value ?? 30} spotlight glowBar glowCenter color="blue" gradient="auto" />
+        <RadialGaugeExample value={args.value ?? 40} spotlight glowBar glowCenter color="green" gradient="auto" />
+        <RadialGaugeExample
+          value={args.value ?? 60}
+          spotlight
+          glowBar
+          glowCenter
+          color="red"
+          gradient="auto"
+          roundedBars
+        />
+        <RadialGaugeExample
+          value={args.value ?? 70}
+          spotlight
+          glowBar
+          glowCenter
+          color="purple"
+          gradient="auto"
+          roundedBars
+        />
       </Stack>
       <div>Shape: Gauge & color scale</div>
       <Stack direction="row" alignItems="center" gap={3} wrap="wrap">
         <RadialGaugeExample
           value={40}
           shape="gauge"
+          width={250}
           gradient="auto"
           colorScheme={FieldColorModeId.ContinuousGrYlRd}
           glowCenter={true}
@@ -127,6 +168,7 @@ export const Examples: StoryFn = (args) => {
         <RadialGaugeExample
           colorScheme={FieldColorModeId.ContinuousGrYlRd}
           gradient="auto"
+          width={250}
           value={90}
           barWidthFactor={0.6}
           roundedBars={false}
@@ -138,10 +180,9 @@ export const Examples: StoryFn = (args) => {
       <div>Sparklines</div>
       <Stack direction={'row'} gap={3}>
         <RadialGaugeExample
-          value={70}
+          value={args.value ?? 70}
           color="blue"
           shape="gauge"
-          {...args}
           gradient="auto"
           sparkline={true}
           spotlight
@@ -150,10 +191,9 @@ export const Examples: StoryFn = (args) => {
           barWidthFactor={0.2}
         />
         <RadialGaugeExample
-          value={30}
+          value={args.value ?? 30}
           color="green"
           shape="gauge"
-          {...args}
           gradient="auto"
           sparkline={true}
           spotlight
@@ -162,9 +202,8 @@ export const Examples: StoryFn = (args) => {
           barWidthFactor={0.8}
         />
         <RadialGaugeExample
-          value={50}
+          value={args.value ?? 50}
           color="red"
-          {...args}
           shape="gauge"
           width={250}
           gradient="auto"
@@ -175,9 +214,8 @@ export const Examples: StoryFn = (args) => {
           barWidthFactor={0.2}
         />
         <RadialGaugeExample
-          value={50}
+          value={args.value ?? 50}
           color="red"
-          {...args}
           width={250}
           shape="gauge"
           gradient="auto"
@@ -191,39 +229,36 @@ export const Examples: StoryFn = (args) => {
       <div>Segmented</div>
       <Stack direction={'row'} gap={3}>
         <RadialGaugeExample
-          value={70}
+          value={args.value ?? 70}
           color="green"
-          {...args}
           gradient="auto"
           glowCenter={true}
           segmentCount={8}
+          segmentSpacing={0.1}
           barWidthFactor={0.4}
         />
         <RadialGaugeExample
-          value={30}
-          color="green"
-          {...args}
+          value={args.value ?? 30}
+          color="purple"
           gradient="auto"
-          segmentCount={20}
+          segmentCount={30}
           glowCenter={true}
-          barWidthFactor={0.5}
+          barWidthFactor={0.6}
         />
         <RadialGaugeExample
-          value={50}
+          value={args.value ?? 50}
           color="red"
-          {...args}
           gradient="auto"
           segmentCount={40}
           glowCenter={true}
-          barWidthFactor={0.7}
-          segmentSpacing={0.4}
+          barWidthFactor={1}
+          segmentSpacing={0.6}
         />
       </Stack>
       <div>Segmented color scale</div>
       <Stack direction={'row'} gap={3}>
         <RadialGaugeExample
-          value={70}
-          {...args}
+          value={args.value ?? 80}
           colorScheme={FieldColorModeId.ContinuousGrYlRd}
           spotlight
           glowBar={true}
@@ -232,24 +267,25 @@ export const Examples: StoryFn = (args) => {
           barWidthFactor={0.4}
         />
         <RadialGaugeExample
-          value={70}
-          {...args}
+          value={args.value ?? 80}
           width={250}
           colorScheme={FieldColorModeId.ContinuousGrYlRd}
           spotlight
           shape="gauge"
+          gradient="auto"
           glowBar={true}
           glowCenter={true}
-          segmentCount={20}
-          barWidthFactor={0.4}
+          segmentCount={40}
+          segmentSpacing={0.5}
+          barWidthFactor={0.8}
         />
       </Stack>
       <div>Thresholds</div>
       <Stack direction={'row'} gap={3}>
         <RadialGaugeExample
-          value={70}
-          {...args}
+          value={args.value ?? 70}
           colorScheme={FieldColorModeId.Thresholds}
+          gradient="auto"
           thresholdsBar={true}
           roundedBars={false}
           spotlight
@@ -257,10 +293,10 @@ export const Examples: StoryFn = (args) => {
           barWidthFactor={0.7}
         />
         <RadialGaugeExample
-          value={70}
-          {...args}
+          value={args.value ?? 70}
           width={250}
           colorScheme={FieldColorModeId.Thresholds}
+          gradient="auto"
           glowCenter={true}
           thresholdsBar={true}
           roundedBars={false}
@@ -268,14 +304,15 @@ export const Examples: StoryFn = (args) => {
           barWidthFactor={0.7}
         />
         <RadialGaugeExample
-          value={70}
-          {...args}
+          value={args.value ?? 70}
+          width={250}
           colorScheme={FieldColorModeId.Thresholds}
+          gradient="auto"
           glowCenter={true}
           thresholdsBar={true}
           roundedBars={false}
           segmentCount={40}
-          segmentSpacing={0.2}
+          segmentSpacing={0.3}
           shape="gauge"
           barWidthFactor={0.7}
         />
