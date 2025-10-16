@@ -1650,6 +1650,15 @@
     "inspector-yaml-tab": {
       "apply": "適用"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2306,6 +2315,9 @@
     "rule-details-data-sources": {
       "label-data-source": "データソース"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "式"
     },
@@ -2547,6 +2559,10 @@
       "prometheus-consistency-check": {
         "alert-message": "アラートルールが追加または更新されました。変更がアラートルール一覧に反映されるまでに、最大1分かかる場合があります。",
         "alert-title": "更新中"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "このアラートルールの評価中に問題が発生しました"
     },
@@ -2918,10 +2934,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "式を追加"
@@ -4587,7 +4615,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "{{dashboardName}}ダッシュボード"
+      "aria-label-dashboard-name": "{{dashboardName}}ダッシュボード",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "ダッシュボードの読み込みをキャンセル"
@@ -4780,7 +4809,11 @@
       "add-visualization-header": "視覚化を追加して新しいダッシュボードを開始します",
       "import-a-dashboard-body": "ファイルまたは<1>grafana.com</1>からダッシュボードをインポートします。",
       "import-a-dashboard-header": "ダッシュボードをインポートする",
-      "import-dashboard-button": "ダッシュボードをインポート"
+      "import-dashboard-button": "ダッシュボードをインポート",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "ダッシュボードの読み込みに失敗しました"

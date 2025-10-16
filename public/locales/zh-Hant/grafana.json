@@ -1650,6 +1650,15 @@
     "inspector-yaml-tab": {
       "apply": "套用"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2306,6 +2315,9 @@
     "rule-details-data-sources": {
       "label-data-source": "資料來源"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "表達式"
     },
@@ -2547,6 +2559,10 @@
       "prometheus-consistency-check": {
         "alert-message": "警報規則已新增或更新。變更可能需要一分鐘才會顯示在「警報規則」清單檢視中。",
         "alert-title": "更新進行中"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "評估此警報規則時發生錯誤"
     },
@@ -2918,10 +2934,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "新增表達式"
@@ -4587,7 +4615,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "「{{dashboardName}}」儀表板"
+      "aria-label-dashboard-name": "「{{dashboardName}}」儀表板",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "取消載入儀表板"
@@ -4780,7 +4809,11 @@
       "add-visualization-header": "透過新增可視化來啟動您的新儀表板",
       "import-a-dashboard-body": "從檔案或 <2>grafana.com</2> 匯入儀表板。",
       "import-a-dashboard-header": "匯入儀表板",
-      "import-dashboard-button": "匯入儀表板"
+      "import-dashboard-button": "匯入儀表板",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "無法載入儀表板"
