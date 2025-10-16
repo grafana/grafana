@@ -12070,6 +12070,7 @@
       "shape-circle": "Circle",
       "shape-gauge": "Gauge",
       "sparkline": "Show sparkline",
+      "threshold-labels": "Show threshold labels",
       "threshold-markers": "Show thresholds"
     }
   },
