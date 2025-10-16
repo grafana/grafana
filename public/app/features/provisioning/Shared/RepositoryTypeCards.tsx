@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { Trans, t } from '@grafana/i18n';
-import { Alert, Card, Stack, Text, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { Card, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1/endpoints.gen';
 
 import { CONNECT_URL } from '../constants';
