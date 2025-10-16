@@ -22,7 +22,10 @@ describe('useShortcuts', () => {
   });
 
   it('should return shortcuts without assistant shortcut when assistant is not available', () => {
-    mockUseAssistant.mockReturnValue([false, jest.fn(), jest.fn()]);
+    mockUseAssistant.mockReturnValue({
+      isAvailable: false,
+      toggleAssistant: jest.fn(),
+    } as unknown as ReturnType<typeof useAssistant>);
 
     const { result } = renderHook(() => useShortcuts());
 
@@ -32,14 +35,17 @@ describe('useShortcuts', () => {
     const globalCategory = result.current.find((category) => category.category.includes('Global'));
     expect(globalCategory).toBeDefined();
 
-    const assistantShortcut = globalCategory!.shortcuts.find(
-      (shortcut) => shortcut.keys.includes('o') && shortcut.keys.includes('a')
-    );
+    const assistantShortcut = globalCategory!.shortcuts.find((shortcut) => shortcut.keys.includes('ctrl + .'));
     expect(assistantShortcut).toBeUndefined();
   });
 
   it('should return shortcuts with assistant shortcut when assistant is available', () => {
-    mockUseAssistant.mockReturnValue([true, jest.fn(), jest.fn()]);
+    mockUseAssistant.mockReturnValue({
+      isAvailable: true,
+      openAssistant: jest.fn(),
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
 
     const { result } = renderHook(() => useShortcuts());
 
@@ -49,15 +55,18 @@ describe('useShortcuts', () => {
     const globalCategory = result.current.find((category) => category.category.includes('Global'));
     expect(globalCategory).toBeDefined();
 
-    const assistantShortcut = globalCategory!.shortcuts.find(
-      (shortcut) => shortcut.keys.includes('o') && shortcut.keys.includes('a')
-    );
+    const assistantShortcut = globalCategory!.shortcuts.find((shortcut) => shortcut.keys.includes('ctrl + .'));
     expect(assistantShortcut).toBeDefined();
     expect(assistantShortcut!.description).toContain('Assistant');
   });
 
   it('should include all expected shortcut categories', () => {
-    mockUseAssistant.mockReturnValue([false, jest.fn(), jest.fn()]);
+    mockUseAssistant.mockReturnValue({
+      isAvailable: false,
+      openAssistant: jest.fn(),
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
 
     const { result } = renderHook(() => useShortcuts());
 
@@ -74,7 +83,12 @@ describe('useShortcuts', () => {
   });
 
   it('should use the correct modKey in shortcuts', () => {
-    mockUseAssistant.mockReturnValue([false, jest.fn(), jest.fn()]);
+    mockUseAssistant.mockReturnValue({
+      isAvailable: false,
+      openAssistant: jest.fn(),
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
 
     const { result } = renderHook(() => useShortcuts());
 
@@ -89,7 +103,12 @@ describe('useShortcuts', () => {
   });
 
   it('should memoize results when dependencies do not change', () => {
-    mockUseAssistant.mockReturnValue([false, jest.fn(), jest.fn()]);
+    mockUseAssistant.mockReturnValue({
+      isAvailable: false,
+      openAssistant: jest.fn(),
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
 
     const { result, rerender } = renderHook(() => useShortcuts());
     const firstResult = result.current;
@@ -102,13 +121,23 @@ describe('useShortcuts', () => {
   });
 
   it('should update when assistant availability changes', () => {
-    mockUseAssistant.mockReturnValue([false, jest.fn(), jest.fn()]);
+    mockUseAssistant.mockReturnValue({
+      isAvailable: false,
+      openAssistant: jest.fn(),
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
 
     const { result, rerender } = renderHook(() => useShortcuts());
     const firstResult = result.current;
 
     // Change assistant availability
-    mockUseAssistant.mockReturnValue([true, jest.fn(), jest.fn()]);
+    mockUseAssistant.mockReturnValue({
+      isAvailable: true,
+      openAssistant: jest.fn(),
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
     rerender();
 
     // Should return a different reference (not memoized)
@@ -116,9 +145,7 @@ describe('useShortcuts', () => {
 
     // And should now include assistant shortcut
     const globalCategory = result.current.find((category) => category.category.includes('Global'));
-    const assistantShortcut = globalCategory!.shortcuts.find(
-      (shortcut) => shortcut.keys.includes('o') && shortcut.keys.includes('a')
-    );
+    const assistantShortcut = globalCategory!.shortcuts.find((shortcut) => shortcut.keys.includes('ctrl + .'));
     expect(assistantShortcut).toBeDefined();
   });
 });

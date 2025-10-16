@@ -60,7 +60,7 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
 };
 
 export const useShortcuts = () => {
-  const [assistantAvailable] = useAssistant();
+  const { isAvailable: assistantAvailable } = useAssistant();
   const modKey = useMemo(() => getModKey(), []);
 
   return useMemo(() => {
@@ -91,7 +91,7 @@ export const useShortcuts = () => {
     // Add assistant shortcut only if assistant is available
     if (assistantAvailable) {
       globalShortcuts.push({
-        keys: ['o', 'a'],
+        keys: [`${modKey} + .`],
         description: t('help-modal.shortcuts-description.open-assistant', 'Open Assistant'),
       });
     }

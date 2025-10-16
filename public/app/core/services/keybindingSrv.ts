@@ -1,4 +1,4 @@
-import { openAssistant, isAssistantAvailable } from '@grafana/assistant';
+import { toggleAssistant, isAssistantAvailable } from '@grafana/assistant';
 import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent, locationUtil } from '@grafana/data';
 import { LocationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -132,16 +132,16 @@ export class KeybindingSrv {
     // Subscribe to assistant availability and bind/unbind shortcut accordingly
     this.assistantSubscription = isAssistantAvailable().subscribe((available) => {
       if (available) {
-        this.bind('o a', this.openAssistant);
+        this.bind('mod+.', this.toggleAssistant);
       } else {
         // Unbind the shortcut if assistant becomes unavailable
-        mousetrap.unbind('o a');
+        mousetrap.unbind('mod+.');
       }
     });
   }
 
-  private openAssistant() {
-    openAssistant({
+  private toggleAssistant() {
+    toggleAssistant({
       origin: 'grafana/keyboard-shortcut',
       prompt: '',
       context: [],
