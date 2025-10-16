@@ -1,4 +1,5 @@
-import { PanelPlugin, PluginMeta, PluginType } from '@grafana/data';
+import { PanelPlugin } from '../panel/PanelPlugin';
+import { PluginMeta, PluginType } from '../types/plugin';
 
 import { throwIfAngular } from './throwIfAngular';
 
