@@ -4809,7 +4809,11 @@
       "add-visualization-header": "透過新增可視化來啟動您的新儀表板",
       "import-a-dashboard-body": "從檔案或 <2>grafana.com</2> 匯入儀表板。",
       "import-a-dashboard-header": "匯入儀表板",
-      "import-dashboard-button": "匯入儀表板"
+      "import-dashboard-button": "匯入儀表板",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "無法載入儀表板"

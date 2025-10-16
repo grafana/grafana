@@ -4829,7 +4829,11 @@
       "add-visualization-header": "Indítsa el az új irányítópultot vizualizáció hozzáadásával",
       "import-a-dashboard-body": "Irányítópultok importálása fájlokból vagy a <2>grafana.com</2> webhelyről.",
       "import-a-dashboard-header": "Irányítópult importálása",
-      "import-dashboard-button": "Irányítópult importálása"
+      "import-dashboard-button": "Irányítópult importálása",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Az irányítópult betöltése sikertelen volt"

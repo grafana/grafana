@@ -4869,7 +4869,11 @@
       "add-visualization-header": "Создание нового дашборда с добавлением визуализации",
       "import-a-dashboard-body": "Импортируйте дашборды из файлов или с <1>grafana.com</1>.",
       "import-a-dashboard-header": "Импорт дашборда",
-      "import-dashboard-button": "Импорт дашборда"
+      "import-dashboard-button": "Импорт дашборда",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Не удалось загрузить дашборд"

@@ -4829,7 +4829,11 @@
       "add-visualization-header": "Bir görselleştirme ekleyerek yeni panonuzu başlatın",
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Bir panoyu içe aktar",
-      "import-dashboard-button": "Panoyu içe aktar"
+      "import-dashboard-button": "Panoyu içe aktar",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Pano yüklenemedi"

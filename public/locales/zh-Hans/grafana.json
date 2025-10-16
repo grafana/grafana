@@ -4809,7 +4809,11 @@
       "add-visualization-header": "通过添加可视化开始您的新仪表板",
       "import-a-dashboard-body": "从文件或 <2>grafana.com</2> 导入数据面板。",
       "import-a-dashboard-header": "导入仪表板",
-      "import-dashboard-button": "导入仪表板"
+      "import-dashboard-button": "导入仪表板",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "加载数据面板失败"

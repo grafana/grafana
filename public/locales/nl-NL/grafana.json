@@ -4829,7 +4829,11 @@
       "add-visualization-header": "Begin je nieuwe dashboard door een visualisatie toe te voegen",
       "import-a-dashboard-body": "Importeer dashboards uit bestanden of <1>grafana.com</1>.",
       "import-a-dashboard-header": "Dashboard importeren",
-      "import-dashboard-button": "Dashboard importeren"
+      "import-dashboard-button": "Dashboard importeren",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Kan dashboard niet laden"
