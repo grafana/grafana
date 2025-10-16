@@ -55,6 +55,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   // New state for auto-collapse feature
   const [shouldAutoCollapse, setShouldAutoCollapse] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const outlineItemsShouldIndent = outlineItems.some(
     (item) => item.children && !(item.mergeSingleChild && item.children?.length === 1) && item.children.length > 0
@@ -72,7 +73,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   // Check if content height is less than viewport height for auto-collapse
   useEffect(() => {
     const checkContentHeight = () => {
-      if (contentRef.current && scroller) {
+      if (contentRef.current && scroller && isInitialized && outlineItems.length > 0) {
         const contentHeight = contentRef.current.scrollHeight;
         const viewportHeight = scroller.clientHeight;
         
@@ -82,15 +83,25 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       }
     };
 
+    // Wait for content to be rendered before checking
+    if (!isInitialized && outlineItems.length > 0 && scroller && contentRef.current) {
+      // Use requestAnimationFrame to ensure DOM has been painted
+      requestAnimationFrame(() => {
+        setIsInitialized(true);
+      });
+    }
+
     // Check on mount and when outline items change
-    checkContentHeight();
+    if (isInitialized) {
+      checkContentHeight();
+    }
     
     // Also check when window resizes
     window.addEventListener('resize', checkContentHeight);
     
     // Set up a MutationObserver to watch for content changes
     const observer = new MutationObserver(checkContentHeight);
-    if (scroller) {
+    if (scroller && isInitialized) {
       observer.observe(scroller, { childList: true, subtree: true });
     }
     
@@ -98,7 +109,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       window.removeEventListener('resize', checkContentHeight);
       observer.disconnect();
     };
-  }, [outlineItems, scroller]);
+  }, [outlineItems, scroller, isInitialized]);
 
   const scrollIntoView = (ref: HTMLElement | null, customOffsetTop = 0) => {
     let scrollValue = 0;
