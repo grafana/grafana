@@ -26,7 +26,7 @@ func (s *promDepAuthStep) Description() string {
 }
 
 func (s *promDepAuthStep) Resolution() string {
-	return "Enable the feature toggle for 'prometheusTypeMigration'. If this feature toggle is already enabled, install 'Azure Monitor Managed Service for Prometheus' and/or 'Amazon Managed Service for Prometheus' data sources."
+	return "Enable the feature toggle for 'prometheusTypeMigration'. If this feature toggle is already enabled, make sure that 'Azure Monitor Managed Service for Prometheus' and/or 'Amazon Managed Service for Prometheus' plugins are installed."
 }
 
 func (s *promDepAuthStep) ID() string {
@@ -74,7 +74,8 @@ func (s *promDepAuthStep) checkUsingAWSAuth(ctx context.Context, dataSource *dat
 	var errorLinks []advisor.CheckErrorLink
 	if sigV4Auth, found := dataSource.JsonData.CheckGet("sigV4Auth"); found {
 		if enabled, err := sigV4Auth.Bool(); err != nil || !enabled {
-			return nil, err
+			// Disabled or not a valid boolean
+			return nil, nil
 		}
 		readOnlyLink, err := checkReadOnly(dataSource)
 		if err != nil {
