@@ -1665,6 +1665,15 @@
     "inspector-yaml-tab": {
       "apply": "Zastosuj"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2330,6 +2339,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Źródło danych"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Wyrażenie"
     },
@@ -2583,6 +2595,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Dodano lub zaktualizowano regułę alertu. Pojawienie się zmian w widoku Lista reguł alertów może potrwać do minuty.",
         "alert-title": "Aktualizacja w toku"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Podczas oceniania tej reguły alertu wystąpił problem"
     },
@@ -2954,10 +2970,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "Dodaj wyrażenie"
@@ -4647,7 +4675,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "Pulpit {{dashboardName}}"
+      "aria-label-dashboard-name": "Pulpit {{dashboardName}}",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Anuluj wczytywanie pulpitu"
@@ -4840,7 +4869,11 @@
       "add-visualization-header": "Dodaj wizualizację, aby rozpocząć tworzenie nowego pulpitu",
       "import-a-dashboard-body": "Zaimportuj pulpity z plików lub witryny <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importuj pulpit",
-      "import-dashboard-button": "Importuj pulpit"
+      "import-dashboard-button": "Importuj pulpit",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Nie udało się załadować pulpitu"

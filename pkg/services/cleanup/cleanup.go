@@ -454,8 +454,11 @@ func (srv *CleanUpService) cleanupStaleLBACRules(ctx context.Context) {
 
 		totalDataSources++
 
+		// needed for permissions to search teams and update data source
+		// msg="Failed to get teams for LBAC cleanup" error="missing permissions"
+		ctx, systemIdentity := identity.WithServiceIdentity(ctx, ds.OrgID)
 		// Extract team UIDs and check if teams still exist
-		cleanedRules, removedCount := srv.getLBACRulesForTeamsStillExisting(ctx, teamHTTPHeaders, ds.OrgID)
+		cleanedRules, removedCount := srv.getLBACRulesForTeamsStillExisting(ctx, teamHTTPHeaders, ds.OrgID, systemIdentity)
 
 		if removedCount > 0 {
 			// Update the datasource with cleaned rules
@@ -478,13 +481,15 @@ func (srv *CleanUpService) cleanupStaleLBACRules(ctx context.Context) {
 	}
 }
 
-func (srv *CleanUpService) getLBACRulesForTeamsStillExisting(ctx context.Context, teamHeaders *datasources.TeamHTTPHeaders, orgID int64) (*datasources.TeamHTTPHeaders, int) {
+func (srv *CleanUpService) getLBACRulesForTeamsStillExisting(ctx context.Context, teamHeaders *datasources.TeamHTTPHeaders, orgID int64, systemIdentity identity.Requester) (*datasources.TeamHTTPHeaders, int) {
 	logger := srv.log.FromContext(ctx)
-	cleanedHeaders := &datasources.TeamHTTPHeaders{Headers: make(map[string][]datasources.TeamHTTPHeader)}
+	cleanedHeaders := &datasources.TeamHTTPHeaders{Headers: make(map[string][]datasources.AccessRule)}
 	removedCount := 0
 
+	// needed for permissions to search for teams
 	allTeams, err := srv.teamService.SearchTeams(ctx, &team.SearchTeamsQuery{
-		OrgID: orgID,
+		OrgID:        orgID,
+		SignedInUser: systemIdentity,
 	})
 	if err != nil {
 		logger.Error("Failed to get teams for LBAC cleanup", "error", err)

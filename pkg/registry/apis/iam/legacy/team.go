@@ -509,7 +509,7 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 
 	for rows.Next() {
 		m := TeamMember{}
-		err = rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Created, &m.Updated, &m.Permission)
+		err = rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Created, &m.Updated, &m.Permission, &m.External)
 		if err != nil {
 			return res, err
 		}
