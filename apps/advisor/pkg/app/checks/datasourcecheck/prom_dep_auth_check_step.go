@@ -74,10 +74,7 @@ func (s *promDepAuthStep) checkUsingAWSAuth(ctx context.Context, dataSource *dat
 			// Disabled or not a valid boolean
 			return nil, nil
 		}
-		readOnlyLink, err := checkReadOnly(dataSource)
-		if err != nil {
-			return nil, err
-		}
+		readOnlyLink := checkReadOnly(dataSource)
 
 		if readOnlyLink != nil {
 			errorLinks = append(errorLinks, *readOnlyLink)
@@ -88,10 +85,7 @@ func (s *promDepAuthStep) checkUsingAWSAuth(ctx context.Context, dataSource *dat
 				Message: "View SigV4 docs",
 				Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/",
 			})
-		pluginLink, err := s.linkDataSource(ctx, datasources.DS_AMAZON_PROMETHEUS, "Amazon Managed Service for Prometheus")
-		if err != nil {
-			return nil, err
-		}
+		pluginLink := s.linkDataSource(ctx, datasources.DS_AMAZON_PROMETHEUS, "Amazon Managed Service for Prometheus")
 		if pluginLink != nil {
 			errorLinks = append(errorLinks, *pluginLink)
 		}
@@ -106,10 +100,7 @@ func (s *promDepAuthStep) checkUsingAzureAuth(ctx context.Context, dataSource *d
 			// azureAuth does not have a value
 			return nil, nil
 		}
-		readOnlyLink, err := checkReadOnly(dataSource)
-		if err != nil {
-			return nil, err
-		}
+		readOnlyLink := checkReadOnly(dataSource)
 		if readOnlyLink != nil {
 			errorLinks = append(errorLinks, *readOnlyLink)
 		}
@@ -118,10 +109,7 @@ func (s *promDepAuthStep) checkUsingAzureAuth(ctx context.Context, dataSource *d
 				Message: "View Azure auth docs",
 				Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/",
 			})
-		pluginLink, err := s.linkDataSource(ctx, datasources.DS_AZURE_PROMETHEUS, "Azure Monitor Managed Service for Prometheus")
-		if err != nil {
-			return errorLinks, err
-		}
+		pluginLink := s.linkDataSource(ctx, datasources.DS_AZURE_PROMETHEUS, "Azure Monitor Managed Service for Prometheus")
 		if pluginLink != nil {
 			errorLinks = append(errorLinks, *pluginLink)
 		}
@@ -129,31 +117,31 @@ func (s *promDepAuthStep) checkUsingAzureAuth(ctx context.Context, dataSource *d
 	return errorLinks, nil
 }
 
-func checkReadOnly(dataSource *datasources.DataSource) (*advisor.CheckErrorLink, error) {
+func checkReadOnly(dataSource *datasources.DataSource) *advisor.CheckErrorLink {
 	if readOnly, found := dataSource.JsonData.CheckGet("readonly"); found {
 		if enabled, err := readOnly.Bool(); err != nil || !enabled {
 			// Disabled or not a valid boolean
-			return nil, nil
+			return nil
 		}
 		return &advisor.CheckErrorLink{
 			Message: "Change provisioning file",
 			Url:     "https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources",
-		}, nil
+		}
 	}
-	return nil, nil
+	return nil
 }
 
-func (s *promDepAuthStep) linkDataSource(ctx context.Context, pluginType string, pluginName string) (*advisor.CheckErrorLink, error) {
+func (s *promDepAuthStep) linkDataSource(ctx context.Context, pluginType string, pluginName string) *advisor.CheckErrorLink {
 	isPluginAvailable, err := s.IsPluginInstalledOrAvailableFunc(ctx, pluginType)
 	if err != nil {
-		return nil, nil
+		return nil
 	}
 	if !isPluginAvailable {
 		// Plugin is available in the repo
 		return &advisor.CheckErrorLink{
 			Message: fmt.Sprintf("Install %s", pluginName),
 			Url:     fmt.Sprintf("/plugins/%s", pluginType),
-		}, nil
+		}
 	}
-	return nil, nil
+	return nil
 }
