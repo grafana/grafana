@@ -25,7 +25,8 @@ func (f *FakeZanzanaClient) Write(ctx context.Context, req *v1.WriteRequest) err
 
 func TestAfterResourcePermissionCreate(t *testing.T) {
 	b := &IdentityAccessManagementAPIBuilder{
-		logger: log.NewNopLogger(),
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
 	}
 	t.Run("should create zanzana entries for folder resource permissions", func(t *testing.T) {
 		folderPerm := iamv0.ResourcePermission{
@@ -47,7 +48,7 @@ func TestAfterResourcePermissionCreate(t *testing.T) {
 			require.NotNil(t, req)
 			require.NotNil(t, req.Writes)
 			require.Len(t, req.Writes.TupleKeys, 2)
-			require.Equal(t, req.Namespace, "org-2")
+			require.Equal(t, "org-2", req.Namespace)
 			require.Equal(
 				t,
 				req.Writes.TupleKeys[0],
@@ -64,6 +65,9 @@ func TestAfterResourcePermissionCreate(t *testing.T) {
 		b.zClient = &FakeZanzanaClient{writeCallback: testFolderEntries}
 		b.AfterResourcePermissionCreate(&folderPerm, nil)
 	})
+
+	// Wait for the ticket to be released
+	<-b.zTickets
 
 	t.Run("should create zanzana entries for dashboard resource permissions", func(t *testing.T) {
 		dashPerm := iamv0.ResourcePermission{
@@ -87,7 +91,7 @@ func TestAfterResourcePermissionCreate(t *testing.T) {
 			require.NotNil(t, req)
 			require.NotNil(t, req.Writes)
 			require.Len(t, req.Writes.TupleKeys, 2)
-			require.Equal(t, req.Namespace, "default")
+			require.Equal(t, "default", req.Namespace)
 
 			tuple1 := req.Writes.TupleKeys[0]
 			require.NotNil(t, tuple1.Condition)
