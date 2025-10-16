@@ -173,6 +173,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   list: css({
     listStyleType: 'none',
     marginBottom: theme.spacing(2),
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
   }),
   card: css({
     [theme.breakpoints.up('sm')]: {
