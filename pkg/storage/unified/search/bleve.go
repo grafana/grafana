@@ -1200,7 +1200,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// filters
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
-			q, err := requirementQuery(v, "") // TODO: should the prefix be "fields."?
+			q, err := requirementQuery(v, "")
 			if err != nil {
 				return nil, err
 			}
@@ -1548,7 +1548,9 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 			return query.NewMatchAllQuery(), nil
 		}
 
-		if req.Exact && len(req.Values) == 1 {
+		// FIXME: special case for login and email to use term query only because those fields are using keyword analyzer
+		// This should be fixed by using the info from the schema
+		if (req.Key == "login" || req.Key == "email") && len(req.Values) == 1 {
 			tq := bleve.NewTermQuery(req.Values[0])
 			tq.SetField(prefix + req.Key)
 			return tq, nil

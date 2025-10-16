@@ -121,7 +121,6 @@ func TestUserSearch(t *testing.T) {
 				Key:      "fields.login",
 				Operator: string(selection.Equals),
 				Values:   []string{"user.one"},
-				Exact:    true,
 			},
 		}), []string{"user1"})
 		checkUserSearchQuery(t, index, newTestUserQueryWithReqs(key, []*resourcepb.Requirement{
@@ -129,7 +128,6 @@ func TestUserSearch(t *testing.T) {
 				Key:      "fields.login",
 				Operator: string(selection.Equals),
 				Values:   []string{"user.two"},
-				Exact:    true,
 			},
 		}), []string{"user2"})
 	})
@@ -151,7 +149,6 @@ func TestUserSearch(t *testing.T) {
 				Key:      "fields.email",
 				Operator: string(selection.Equals),
 				Values:   []string{"user.one@test.com"},
-				Exact:    true,
 			},
 		}), []string{"user1"})
 
@@ -160,7 +157,6 @@ func TestUserSearch(t *testing.T) {
 				Key:      "fields.email",
 				Operator: string(selection.Equals),
 				Values:   []string{"user.two@test.com"},
-				Exact:    true,
 			},
 		}), []string{"user2"})
 	})

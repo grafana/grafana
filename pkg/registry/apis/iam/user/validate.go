@@ -122,7 +122,7 @@ func validateEmailLogin(ctx context.Context, searchClient resourcepb.ResourceInd
 			Fields: []*resourcepb.Requirement{
 				// TODO: commented out to test with just login uniqueness
 				{
-					Key:      "email",
+					Key:      "fields.email",
 					Operator: string(selection.Equals),
 					Values:   []string{email},
 				},

@@ -7,6 +7,7 @@ import (
 	"github.com/blevesearch/bleve/v2/mapping"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func GetBleveMappings(fields resource.SearchableDocumentFields, useFullNgram bool) (mapping.IndexMapping, error) {
@@ -150,7 +151,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields) *mapping.Docu
 			def := fields.Field(field)
 
 			// Filterable should use keyword analyzer for exact matches
-			if def.Properties != nil && def.Properties.Filterable {
+			if def.Properties != nil && def.Properties.Filterable && def.Type == resourcepb.ResourceTableColumnDefinition_STRING {
 				keywordMapping := bleve.NewKeywordFieldMapping()
 				keywordMapping.Store = true
 
