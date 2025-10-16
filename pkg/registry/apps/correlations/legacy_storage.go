@@ -94,7 +94,10 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		Items: make([]correlationsV0.Correlation, len(rsp.Correlations)),
 	}
 	for i, orig := range rsp.Correlations {
-		c := correlations.ToResource(orig, s.namespacer)
+		c, err := correlations.ToResource(orig, s.namespacer)
+		if err != nil {
+			return nil, err
+		}
 		list.Items[i] = *c
 	}
 	return list, nil
@@ -113,8 +116,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	obj := correlations.ToResource(c, s.namespacer)
-	return obj, nil
+	return correlations.ToResource(c, s.namespacer)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
