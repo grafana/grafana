@@ -1061,7 +1061,6 @@ func cleanupDashboardDefaults(dashboard map[string]interface{}) {
 
 	// Remove transient properties that frontend filters out during getSaveModelClone()
 	// These properties are lost during frontend's property copying loop in getSaveModelCloneOld()
-	delete(dashboard, "preload")   // Transient dashboard loading state
 	delete(dashboard, "iteration") // Template variable iteration timestamp
 	delete(dashboard, "nav")       // Removed after V7 migration
 	delete(dashboard, "pulldowns") // Removed after V6 migration - frontend doesn't have this property
