@@ -109,6 +109,7 @@ async function initFaroBackend() {
       tracingInstrumentalizationEnabled: config.grafanaJavascriptAgent.tracingInstrumentalizationEnabled,
       webVitalsAttribution: config.grafanaJavascriptAgent.webVitalsAttribution,
       internalLoggerLevel: config.grafanaJavascriptAgent.internalLoggerLevel,
+      botFilterEnabled: config.grafanaJavascriptAgent.botFilterEnabled,
     })
   );
 }

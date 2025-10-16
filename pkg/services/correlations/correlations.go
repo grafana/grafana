@@ -50,7 +50,10 @@ func ProvideService(sqlStore db.DB, routeRegister routing.RouteRegister, ds data
 }
 
 type Service interface {
+	GetCorrelation(ctx context.Context, cmd GetCorrelationQuery) (Correlation, error)
+	GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error)
 	CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error)
+	UpdateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error)
 	CreateOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error
 	DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error
 	DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error
