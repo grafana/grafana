@@ -99,16 +99,16 @@ func (c *check) Init(ctx context.Context) error {
 func (c *check) Steps() []checks.Step {
 	c.pluginAvailabilityCache = make(map[string]bool)
 	return []checks.Step{
-		// &uidValidationStep{},
-		// &healthCheckStep{
-		// 	PluginContextProvider: c.PluginContextProvider,
-		// 	PluginClient:          c.PluginClient,
-		// },
-		// &missingPluginStep{
-		// 	PluginStore:    c.PluginStore,
-		// 	PluginRepo:     c.PluginRepo,
-		// 	GrafanaVersion: c.GrafanaVersion,
-		// },
+		&uidValidationStep{},
+		&healthCheckStep{
+			PluginContextProvider: c.PluginContextProvider,
+			PluginClient:          c.PluginClient,
+		},
+		&missingPluginStep{
+			PluginStore:    c.PluginStore,
+			PluginRepo:     c.PluginRepo,
+			GrafanaVersion: c.GrafanaVersion,
+		},
 		&promDepAuthStep{
 			IsPluginInstalledOrAvailableFunc: c.isPluginInstalled,
 		},
