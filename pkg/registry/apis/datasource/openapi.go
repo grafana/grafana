@@ -159,7 +159,8 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 					if op.Extensions == nil {
 						op.Extensions = make(spec.Extensions)
 					}
-					op.OperationId = fmt.Sprintf("%s_route%s", strings.ToLower(m), strings.ReplaceAll(k, "/", "_"))
+					tmp := strings.ReplaceAll(strings.ReplaceAll(k, "{", ""), "}", "")
+					op.OperationId = fmt.Sprintf("%s_route%s", strings.ToLower(m), strings.ReplaceAll(tmp, "/", "_"))
 				}
 			}
 			oas.Paths.Paths[prefix+k] = v
