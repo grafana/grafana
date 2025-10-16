@@ -2,7 +2,15 @@ import { css, cx } from '@emotion/css';
 
 import { VariableHide, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { sceneGraph, useSceneObjectState, SceneVariable, SceneVariableState, ControlsLabel } from '@grafana/scenes';
+import {
+  sceneGraph,
+  useSceneObjectState,
+  SceneVariable,
+  SceneVariableState,
+  ControlsLabel,
+  ControlsLayout,
+  sceneUtils,
+} from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
@@ -13,7 +21,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   return (
     <>
       {variables
-        .filter((v) => !v.state.showInControlsMenu)
+        .filter((v) => v.state.hide !== VariableHide.inControlsMenu)
         .map((variable) => (
           <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
         ))}
@@ -23,9 +31,10 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
 
 interface VariableSelectProps {
   variable: SceneVariable;
+  inMenu?: boolean;
 }
 
-export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
+export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectProps) {
   const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
   const { isSelected, onSelect, isSelectable } = useElementSelection(variable.state.key);
   const styles = useStyles2(getStyles);
@@ -56,6 +65,27 @@ export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
     }
   };
 
+  // For switch variables in menu, we want to show the switch on the left and the label on the right
+  if (inMenu && sceneUtils.isSwitchVariable(variable)) {
+    return (
+      <div className={styles.switchMenuContainer} data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}>
+        <div className={styles.switchControl}>
+          <variable.Component model={variable} />
+        </div>
+        <VariableLabel variable={variable} layout={'vertical'} className={styles.switchLabel} />
+      </div>
+    );
+  }
+
+  if (inMenu) {
+    return (
+      <div className={styles.verticalContainer} data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}>
+        <VariableLabel variable={variable} layout={'vertical'} />
+        <variable.Component model={variable} />
+      </div>
+    );
+  }
+
   return (
     <div
       className={cx(
@@ -72,7 +102,15 @@ export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
   );
 }
 
-function VariableLabel({ variable, className }: { variable: SceneVariable; className?: string }) {
+function VariableLabel({
+  variable,
+  className,
+  layout,
+}: {
+  variable: SceneVariable;
+  className?: string;
+  layout?: ControlsLayout;
+}) {
   const { state } = variable;
 
   if (variable.state.hide === VariableHide.hideLabel) {
@@ -89,7 +127,7 @@ function VariableLabel({ variable, className }: { variable: SceneVariable; class
       onCancel={() => variable.onCancel?.()}
       label={labelOrName}
       error={state.error}
-      layout={'horizontal'}
+      layout={layout ?? 'horizontal'}
       description={state.description ?? undefined}
       className={className}
     />
@@ -104,6 +142,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderTopLeftRadius: 'unset',
       borderBottomLeftRadius: 'unset',
     }),
+  }),
+  verticalContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  switchMenuContainer: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  switchControl: css({
+    '& > div': {
+      border: 'none',
+      background: 'transparent',
+      paddingRight: theme.spacing(0.5),
+    },
+  }),
+  switchLabel: css({
+    marginTop: theme.spacing(0.5),
   }),
   labelWrapper: css({
     display: 'flex',

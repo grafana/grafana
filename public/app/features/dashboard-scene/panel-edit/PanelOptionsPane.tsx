@@ -32,6 +32,7 @@ import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './interaction';
+import { useScrollReflowLimit } from './useScrollReflowLimit';
 
 export interface PanelOptionsPaneState extends SceneObjectState {
   isVizPickerOpen?: boolean;
@@ -91,7 +92,11 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     }
 
     if (options.fieldConfig) {
-      panel.onFieldConfigChange(options.fieldConfig, true);
+      const fieldConfigWithOverrides = {
+        ...options.fieldConfig,
+        overrides: newFieldConfig.overrides,
+      };
+      panel.onFieldConfigChange(fieldConfigWithOverrides, true);
     }
 
     this.onToggleVizPicker();
@@ -132,16 +137,14 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
   const hasFieldConfig = !isSearching && !panel.getPlugin()?.fieldConfigRegistry.isEmpty();
   const [isSearchingOptions, setIsSearchingOptions] = useToggle(false);
   const onlyOverrides = listMode === OptionFilter.Overrides;
+  const isScrollingLayout = useScrollReflowLimit();
 
   return (
     <>
       {!isVizPickerOpen && (
         <>
           <div className={styles.top}>
-            <Field
-              label={t('dashboard.panel-edit.visualization-button-label', 'Visualization')}
-              className={styles.vizField}
-            >
+            <Field label={t('dashboard.panel-edit.visualization-button-label', 'Visualization')} noMargin>
               <Stack gap={1}>
                 <VisualizationButton pluginId={pluginId} onOpen={model.onToggleVizPicker} />
                 <Button
@@ -178,7 +181,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
               />
             )}
           </div>
-          <ScrollContainer>
+          <ScrollContainer minHeight={isScrollingLayout ? 'max-content' : 0}>
             <PanelOptions panel={panel} searchQuery={searchQuery} listMode={listMode} data={data} />
           </ScrollContainer>
         </>
@@ -208,9 +211,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     searchWrapper: css({
       padding: theme.spacing(2, 2, 2, 0),
-    }),
-    vizField: css({
-      marginBottom: theme.spacing(0),
     }),
     rotateIcon: css({
       rotate: '180deg',

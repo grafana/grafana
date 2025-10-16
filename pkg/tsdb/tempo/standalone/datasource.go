@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 
+	"go.opentelemetry.io/otel/trace/noop"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -11,8 +13,10 @@ import (
 )
 
 var (
-	_ backend.QueryDataHandler = (*Datasource)(nil)
-	_ backend.StreamHandler    = (*Datasource)(nil)
+	_ backend.CheckHealthHandler  = (*Datasource)(nil)
+	_ backend.QueryDataHandler    = (*Datasource)(nil)
+	_ backend.StreamHandler       = (*Datasource)(nil)
+	_ backend.CallResourceHandler = (*Datasource)(nil)
 )
 
 type Datasource struct {
@@ -21,8 +25,12 @@ type Datasource struct {
 
 func NewDatasource(c context.Context, b backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	return &Datasource{
-		Service: tempo.ProvideService(httpclient.NewProvider()),
+		Service: tempo.ProvideService(httpclient.NewProvider(), noop.NewTracerProvider().Tracer("tempo")),
 	}, nil
+}
+
+func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	return d.Service.CheckHealth(ctx, req)
 }
 
 func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -39,4 +47,8 @@ func (d *Datasource) PublishStream(ctx context.Context, req *backend.PublishStre
 
 func (d *Datasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return d.Service.RunStream(ctx, req, sender)
+}
+
+func (d *Datasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return d.Service.CallResource(ctx, req, sender)
 }

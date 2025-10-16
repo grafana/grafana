@@ -39,10 +39,6 @@ type UserGrafanaConfig struct {
 	SmtpConfig                SmtpConfig                `json:"smtp_config"`
 }
 
-func (mc *Mimir) ShouldPromoteConfig() bool {
-	return mc.promoteConfig
-}
-
 func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error) {
 	gc := &UserGrafanaConfig{}
 	response := successResponse{
@@ -62,16 +58,8 @@ func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafana
 	return gc, nil
 }
 
-func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg GrafanaAlertmanagerConfig, hash string, createdAt int64, isDefault bool) error {
-	payload, err := definition.MarshalJSONWithSecrets(&UserGrafanaConfig{
-		GrafanaAlertmanagerConfig: cfg,
-		Hash:                      hash,
-		CreatedAt:                 createdAt,
-		Default:                   isDefault,
-		Promoted:                  mc.promoteConfig,
-		ExternalURL:               mc.externalURL,
-		SmtpConfig:                mc.smtpConfig,
-	})
+func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg *UserGrafanaConfig) error {
+	payload, err := definition.MarshalJSONWithSecrets(cfg)
 	if err != nil {
 		return err
 	}

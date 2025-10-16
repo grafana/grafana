@@ -56,7 +56,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Set up version (Release Branches)
@@ -96,7 +96,7 @@ jobs:
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
           repositories: '["grafana-enterprise"]'
           permissions: '{"actions": "write"}'
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         env:
           REF: ${{ github.ref_name }}
           VERSION: ${{ needs.setup.outputs.version }}
@@ -140,7 +140,7 @@ jobs:
         # The downside to this is that the frontend will be built for each one when it could be reused for all of them.
         # This could be a future improvement.
         include:
-          - name: linux-amd64
+          - name: linux-amd64 # publish-npm relies on this step building npm packages
             artifacts: targz:grafana:linux/amd64,deb:grafana:linux/amd64,rpm:grafana:linux/amd64,docker:grafana:linux/amd64,docker:grafana:linux/amd64:ubuntu,npm:grafana,storybook
             verify: true
           - name: linux-arm64
@@ -169,7 +169,7 @@ jobs:
             verify: true
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Set up QEMU
@@ -197,6 +197,7 @@ jobs:
           name: artifacts-${{ matrix.name }}
           path: ${{ steps.build.outputs.dist-dir }}
           retention-days: 1
+
   publish-artifacts:
     name: Upload artifacts
     uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
@@ -211,6 +212,7 @@ jobs:
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
+
   publish-dockerhub:
     if: github.ref_name == 'main'
     permissions:
@@ -222,27 +224,27 @@ jobs:
       - build
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: artifacts-list-linux-amd64
           path: .
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: artifacts-list-linux-arm64
           path: .
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: artifacts-list-linux-armv7
           path: .
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: artifacts-linux-amd64
           path: dist
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: artifacts-linux-arm64
           path: dist
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: artifacts-linux-armv7
           path: dist
@@ -268,3 +270,77 @@ jobs:
           docker manifest push grafana/grafana:main-ubuntu
           docker manifest push "grafana/grafana-dev:${VERSION}"
           docker manifest push "grafana/grafana-dev:${VERSION}-ubuntu"
+
+  dispatch-npm-canaries:
+    if: github.ref_name == 'main'
+    name: Dispatch publish NPM canaries
+    permissions:
+      actions: write
+      contents: read
+    runs-on: ubuntu-x64-small
+    needs:
+      - setup
+    steps:
+      - name: Dispatch action
+        env:
+          GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
+          VERSION: ${{ needs.setup.outputs.version }}
+          BUILD_ID: ${{ github.run_id }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run release-npm.yml \
+            --repo grafana/grafana \
+            --ref main \
+            --field grafana_commit="$GRAFANA_COMMIT" \
+            --field version="$VERSION" \
+            --field build_id="$BUILD_ID"\
+            --field version_type="canary"
+
+  # notify-pr creates (or updates) a comment in a pull request to link to this workflow where the release artifacts are
+  # being built.
+  notify-pr:
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+      id-token: write
+    needs:
+      - setup
+    steps:
+      - id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        with:
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          repositories: '["grafana"]'
+          permissions: '{"issues": "write", "pull_requests": "write", "contents": "read"}'
+      - name: Find PR
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
+        run: echo "ISSUE_NUMBER=$(gh api "/repos/grafana/grafana/commits/${GRAFANA_COMMIT}/pulls" | jq -r '.[0].number')" >> "$GITHUB_ENV"
+      - name: Find Comment
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
+        id: fc
+        with:
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          comment-author: 'grafana-delivery-bot[bot]'
+          body-includes: GitHub Actions Build
+          token: ${{ steps.generate_token.outputs.token }}
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v4
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          body: |
+            :rocket: Your submission is now being built and packaged.
+
+            - [GitHub Actions Build](https://github.com/grafana/grafana/actions/runs/${{ github.run_id }})
+            - Version: ${{ needs.setup.outputs.version }}
+          edit-mode: replace

@@ -1,8 +1,3 @@
-config.define_bool("use-zig")
-cfg = config.parse()
-
-use_zig = cfg.get('docker-builder', False)
-
 # --- Frontend processes
 local_resource(
   'yarn install',
@@ -30,10 +25,6 @@ local_resource(
   labels=["local"]
 )
 
-build_backend_env = {}
-if use_zig:
-  build_backend_env['USE_ZIG'] = "true"
-
 local_resource(
   'backend-build',
   "bash ./build-grafana.sh",
@@ -48,7 +39,6 @@ local_resource(
     '../../go.sum',
     '../../go.mod',
   ],
-  env=build_backend_env,
   allow_parallel=True,
   labels=["local"]
 )
@@ -87,6 +77,8 @@ docker_build('grafana-fs-dev',
   only=[
     'devenv/frontend-service/build/grafana',
     'devenv/frontend-service/provisioning',
+    'devenv/frontend-service/configs/grafana-api.local.ini',
+    'devenv/frontend-service/configs/frontend-service.local.ini',
     'conf/defaults.ini',
     'public/emails',
     'public/views',
@@ -109,6 +101,8 @@ docker_build('grafana-fs-dev',
     sync('../../public/app/plugins', '/grafana/public/app/plugins'),
     sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
     sync('./provisioning', '/ignore/provisioning'),  # Just to trigger a restart instead of rebuild
+    sync('./configs/grafana-api.local.ini', '/ignore/grafana-api.local.ini'),  # Just to trigger a restart instead of rebuild
+    sync('./configs/frontend-service.local.ini', '/ignore/frontend-service.local.ini'),  # Just to trigger a restart instead of rebuild
     restart_container()
   ]
 )

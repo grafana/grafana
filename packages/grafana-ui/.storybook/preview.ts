@@ -64,7 +64,18 @@ const preview: Preview = {
     docs: {
       container: ThemedDocsContainer,
     },
-    a11y: { test: 'error' },
+    a11y: {
+      test: 'error',
+      config: {
+        rules: [
+          {
+            id: 'scrollable-region-focusable',
+            selector: 'body',
+            enabled: false,
+          },
+        ],
+      },
+    },
     knobs: {
       disable: true,
     },
@@ -183,6 +194,9 @@ const preview: Preview = {
   },
   tags: ['autodocs'],
   loaders: [mswLoader],
+  initialGlobals: {
+    theme: process.env.STORYBOOK_THEME || 'system',
+  },
 };
 
 export default preview;

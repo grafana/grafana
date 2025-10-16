@@ -86,7 +86,6 @@ runs:
             - '.github/actions/change-detection/**'
             - '**.cue'
             - '.prettier*'
-            - '.betterer*'
             - '.yarnrc.yml'
             - 'eslint.config.js'
             - 'jest.config.js'

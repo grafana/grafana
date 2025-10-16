@@ -30,7 +30,7 @@ jobs:
       changed: ${{ steps.detect-changes.outputs.e2e }}
       cloud_plugins_changed: ${{ steps.detect-changes.outputs.e2e-cloud-plugins }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 2
@@ -48,7 +48,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -65,8 +65,9 @@ jobs:
       # If no cache hit, build Grafana
       - name: Build Grafana
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
+          version: 0.18.8
           verb: run
           args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" > out.txt
       - name: Cat built artifact
@@ -117,7 +118,7 @@ jobs:
     outputs:
       artifact: ${{ steps.artifact.outputs.artifact }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Setup Go
@@ -148,25 +149,17 @@ jobs:
     needs:
       - build-grafana
     steps:
-      - id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - id: get-github-token
+        name: "create github app token"
+        uses: grafana/shared-workflows/actions/create-github-app-token@eb02241ed0a92aff205feab8ac3afcdf51c757c8 # create-github-app-token-v0.2.0
         with:
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          repositories: '["grafana"]'
-          permissions: '{"checks": "write"}'
+          github_app: "delivery-bot-app"
       - uses: grafana/shared-workflows/actions/login-to-gar@main
         id: login-to-gar
         with:
           registry: 'us-docker.pkg.dev'
           environment: 'dev'
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: grafana-docker-tar-gz
           path: .
@@ -183,7 +176,7 @@ jobs:
           echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_ENV"
       - name: Add PR status check
         env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GH_TOKEN: ${{ steps.get-github-token.outputs.token }}
           SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           gh api \
@@ -207,8 +200,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - suite: various-suite
-            path: e2e/various-suite
           - suite: various-suite (old arch)
             path: e2e/old-arch/various-suite
             flags: --flags="--env dashboardScene=false"
@@ -227,20 +218,21 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: grafana-tar-gz
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: ${{ needs.build-e2e-runner.outputs.artifact }}
       - name: chmod +x
         run: chmod +x ./e2e-runner
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
+          version: 0.18.8
           verb: run
           args: go run ./pkg/build/e2e --package=grafana.tar.gz
             --suite=${{ matrix.path }}
@@ -270,7 +262,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -303,15 +295,16 @@ jobs:
         shardTotal: [8]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: grafana-tar-gz
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
+          version: 0.18.8
           verb: run
           args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --blob-dir=./blob-report
       - uses: actions/upload-artifact@v4
@@ -322,7 +315,7 @@ jobs:
           retention-days: 1
 
   run-azure-monitor-e2e:
-    if: needs.detect-changes.outputs.cloud_plugins_changed == 'true' && github.event.pull_request.head.repo.fork == false
+    if: needs.detect-changes.outputs.cloud_plugins_changed == 'true' && github.event.pull_request.head.repo.fork == false && github.event_name == 'pull_request'
     runs-on: ubuntu-x64-large
     needs:
       - build-grafana
@@ -331,7 +324,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -367,13 +360,14 @@ jobs:
         run: |
           docker cp cpp-e2e-deploy:/outputs.json /tmp/outputs.json
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: grafana-tar-gz
 
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
+          version: 0.18.8
           verb: run
           args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --playwright-command="yarn e2e:playwright:cloud-plugins" --cloud-plugin-creds=/tmp/outputs.json
 
@@ -397,7 +391,7 @@ jobs:
     name: All Playwright tests complete
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -406,7 +400,7 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: Download blob reports from GitHub Actions Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: blobs
           pattern: playwright-blob-*
@@ -482,22 +476,24 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: grafana-tar-gz
       - name: Run PR a11y test
         if: github.event_name == 'pull_request'
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
+          version: 0.18.8
           verb: run
           args: go run ./pkg/build/a11y --package=grafana.tar.gz
       - name: Run non-PR a11y test
         if: github.event_name != 'pull_request'
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
+          version: 0.18.8
           verb: run
           args: go run ./pkg/build/a11y --package=grafana.tar.gz --no-threshold-fail --results=./pa11y-ci-results.json
       - name: Upload pa11y results
@@ -525,7 +521,7 @@ jobs:
           repo_secrets: |
             GRAFANA_MISC_STATS_API_KEY=grafana-misc-stats:api_key
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Setup Node.js
@@ -535,7 +531,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
       - name: Get pa11y results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: pa11y-ci-results
       - name: Extract and publish metrics
@@ -560,7 +556,7 @@ jobs:
     name: All E2E tests complete
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 

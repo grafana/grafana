@@ -18,6 +18,7 @@ export function useScopeServicesState() {
       selectScope: () => {},
       resetSelection: () => {},
       searchAllNodes: () => Promise.resolve([]),
+      getScopeNodes: (_: string[]) => Promise.resolve([]),
       apply: () => {},
       deselectScope: () => {},
       nodes: {},
@@ -31,7 +32,7 @@ export function useScopeServicesState() {
       },
     };
   }
-  const { updateNode, selectScope, resetSelection, searchAllNodes, deselectScope, apply } =
+  const { updateNode, filterNode, selectScope, resetSelection, searchAllNodes, deselectScope, apply, getScopeNodes } =
     services.scopesSelectorService;
   const selectorServiceState: ScopesSelectorServiceState | undefined = useObservable(
     services.scopesSelectorService.stateObservable ?? new Observable(),
@@ -39,6 +40,8 @@ export function useScopeServicesState() {
   );
 
   return {
+    getScopeNodes,
+    filterNode,
     updateNode,
     selectScope,
     resetSelection,
@@ -89,7 +92,12 @@ export function mapScopesNodesTreeToActions(
       if (child.spec.nodeType === 'leaf' && scopeIsSelected) {
         continue;
       }
-      let action = mapScopeNodeToAction(child, selectScope, parentId);
+      let action = mapScopeNodeToAction(
+        child,
+        selectScope,
+        parentId,
+        child.spec.parentName ? nodes[child.spec.parentName]?.spec.title : undefined
+      );
       actions.push(action);
       traverse(childTreeNode, action.id);
     }
@@ -109,13 +117,16 @@ export function mapScopesNodesTreeToActions(
 export function mapScopeNodeToAction(
   scopeNode: ScopeNode,
   selectScope: (id: string) => void,
-  parentId?: string
+  parentId?: string,
+  parentName?: string
 ): CommandPaletteAction {
   let action: CommandPaletteAction;
+  const subtitle = parentName || scopeNode.spec.parentName || undefined;
   if (parentId) {
     action = {
       id: `${parentId}/${scopeNode.metadata.name}`,
       name: scopeNode.spec.title,
+      subtitle: subtitle,
       keywords: `${scopeNode.spec.title} ${scopeNode.metadata.name}`,
       priority: SCOPES_PRIORITY,
       parent: parentId,
@@ -134,7 +145,7 @@ export function mapScopeNodeToAction(
       keywords: `${scopeNode.spec.title} ${scopeNode.metadata.name}`,
       priority: SCOPES_PRIORITY,
       section: t('command-palette.action.scopes', 'Scopes'),
-      subtitle: scopeNode.spec.parentName,
+      subtitle: subtitle,
       perform: () => {
         selectScope(scopeNode.metadata.name);
       },

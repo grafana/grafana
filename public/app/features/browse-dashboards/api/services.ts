@@ -51,6 +51,7 @@ export async function listDashboards(parentUID?: string, page = 1, pageSize = PA
     location: parentUID || 'general',
     from: (page - 1) * pageSize, // our pages are 1-indexed, so we need to -1 to convert that to correct value to skip
     limit: pageSize,
+    offset: (page - 1) * pageSize,
   });
 
   return dashboardsResults.view.map((item) => {

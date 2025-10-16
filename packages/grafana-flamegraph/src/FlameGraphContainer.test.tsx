@@ -10,8 +10,12 @@ import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 
 jest.mock('@grafana/assistant', () => ({
-  useAssistant: jest.fn(() => [false, null]), // [isAvailable, openAssistant]
-  createContext: jest.fn(),
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: false,
+    openAssistant: undefined,
+  }),
+  createAssistantContextItem: jest.fn(),
+  OpenAssistantButton: () => <div>OpenAssistantButton</div>,
 }));
 
 jest.mock('react-use', () => ({

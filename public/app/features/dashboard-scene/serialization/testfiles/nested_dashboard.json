@@ -1,0 +1,1159 @@
+{
+  "timeSettings": {
+    "nowDelay": "10s",
+    "from": "",
+    "to": "",
+    "autoRefresh": "",
+    "autoRefreshIntervals": [],
+    "hideTimepicker": false,
+    "fiscalYearStartMonth": 0,
+    "timezone": ""
+  },
+  "liveNow": true,
+  "annotations": [
+    {
+      "kind": "AnnotationQuery",
+      "spec": {
+        "builtIn": true,
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "query": {
+          "datasource": {
+            "name": "-- Grafana --"
+          },
+          "group": "grafana",
+          "kind": "DataQuery",
+          "spec": {},
+          "version": "v0"
+        }
+      }
+    }
+  ],
+  "cursorSync": "Off",
+  "description": "",
+  "editable": true,
+  "elements": {
+    "panel-1": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "datasource": {
+                      "name": "xpyRJd9Mz"
+                    },
+                    "group": "cloudwatch",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "dimensions": {
+                        "InstanceId": "i-010ef79e665760230"
+                      },
+                      "expression": "",
+                      "id": "",
+                      "label": "",
+                      "logGroups": [],
+                      "matchExact": true,
+                      "metricEditorMode": 0,
+                      "metricName": "CPUCreditUsage",
+                      "metricQueryType": 0,
+                      "namespace": "AWS/EC2",
+                      "period": "",
+                      "queryLanguage": "CWLI",
+                      "queryMode": "Metrics",
+                      "region": "default",
+                      "sqlExpression": "",
+                      "statistic": "Average"
+                    },
+                    "version": "v0"
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "",
+        "id": 1,
+        "links": [],
+        "title": "EC2 Credit Usage for one instance",
+        "vizConfig": {
+          "group": "timeseries",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "barWidthFactor": 0.6,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 5,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "showValues": false,
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": 0
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "CPUCreditUsage"
+                  },
+                  "properties": [
+                    {
+                      "id": "color",
+                      "value": {
+                        "fixedColor": "purple",
+                        "mode": "fixed"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "single",
+                "sort": "none"
+              }
+            }
+          },
+          "version": "12.2.0-pre"
+        }
+      }
+    },
+    "panel-11": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "datasource": {
+                      "name": "grafana"
+                    },
+                    "group": "datasource",
+                    "kind": "DataQuery",
+                    "spec": {},
+                    "version": "v0"
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "",
+        "id": 11,
+        "links": [],
+        "title": "random 1",
+        "vizConfig": {
+          "group": "timeseries",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "barWidthFactor": 0.6,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 5,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "showValues": false,
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": 0
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "single",
+                "sort": "none"
+              }
+            }
+          },
+          "version": "12.2.0-pre"
+        }
+      }
+    },
+    "panel-12": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "datasource": {
+                      "name": "xpyRJd9Mz"
+                    },
+                    "group": "cloudwatch",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "dimensions": {
+                        "InstanceId": "*"
+                      },
+                      "expression": "",
+                      "id": "",
+                      "label": "",
+                      "logGroups": [],
+                      "matchExact": true,
+                      "metricEditorMode": 0,
+                      "metricName": "CPUUtilization",
+                      "metricQueryType": 0,
+                      "namespace": "AWS/EC2",
+                      "period": "",
+                      "queryLanguage": "CWLI",
+                      "queryMode": "Metrics",
+                      "region": "default",
+                      "sqlExpression": "",
+                      "statistic": "Average"
+                    },
+                    "version": "v0"
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "",
+        "id": 12,
+        "links": [],
+        "title": "GF datasource",
+        "vizConfig": {
+          "group": "timeseries",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "barWidthFactor": 0.6,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 5,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "showValues": false,
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": 0
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "single",
+                "sort": "none"
+              }
+            }
+          },
+          "version": "12.2.0-pre"
+        }
+      }
+    },
+    "panel-3": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "datasource": {
+                      "name": "xpyRJd9Mz"
+                    },
+                    "group": "cloudwatch",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "dimensions": {
+                        "InstanceId": "i-010ef79e665760230"
+                      },
+                      "expression": "",
+                      "id": "",
+                      "label": "",
+                      "logGroups": [],
+                      "matchExact": true,
+                      "metricEditorMode": 0,
+                      "metricName": "CPUCreditUsage",
+                      "metricQueryType": 0,
+                      "namespace": "AWS/EC2",
+                      "period": "",
+                      "queryLanguage": "CWLI",
+                      "queryMode": "Metrics",
+                      "region": "default",
+                      "sqlExpression": "",
+                      "statistic": "Average"
+                    },
+                    "version": "v0"
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "",
+        "id": 3,
+        "links": [],
+        "title": "EC2 Credit Usage for one instance",
+        "vizConfig": {
+          "group": "timeseries",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "barWidthFactor": 0.6,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 5,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "showValues": false,
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": 0
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "CPUCreditUsage"
+                  },
+                  "properties": [
+                    {
+                      "id": "color",
+                      "value": {
+                        "fixedColor": "dark-blue",
+                        "mode": "fixed"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "single",
+                "sort": "none"
+              }
+            }
+          },
+          "version": "12.2.0-pre"
+        }
+      }
+    },
+    "panel-4": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "datasource": {
+                      "name": "xpyRJd9Mz"
+                    },
+                    "group": "cloudwatch",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "dimensions": {
+                        "InstanceId": "i-010ef79e665760230"
+                      },
+                      "expression": "",
+                      "id": "",
+                      "label": "",
+                      "logGroups": [],
+                      "matchExact": true,
+                      "metricEditorMode": 0,
+                      "metricName": "CPUCreditUsage",
+                      "metricQueryType": 0,
+                      "namespace": "AWS/EC2",
+                      "period": "",
+                      "queryLanguage": "CWLI",
+                      "queryMode": "Metrics",
+                      "region": "default",
+                      "sqlExpression": "",
+                      "statistic": "Average"
+                    },
+                    "version": "v0"
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "",
+        "id": 4,
+        "links": [],
+        "title": "EC2 Credit Usage for one instance",
+        "vizConfig": {
+          "group": "timeseries",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "barWidthFactor": 0.6,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 5,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "showValues": false,
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": 0
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "single",
+                "sort": "none"
+              }
+            }
+          },
+          "version": "12.2.0-pre"
+        }
+      }
+    },
+    "panel-6": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [
+              {
+                "kind": "PanelQuery",
+                "spec": {
+                  "hidden": false,
+                  "query": {
+                    "datasource": {
+                      "name": "xpyRJd9Mz"
+                    },
+                    "group": "cloudwatch",
+                    "kind": "DataQuery",
+                    "spec": {
+                      "dimensions": {
+                        "AutoScalingGroupName": "$groupName"
+                      },
+                      "expression": "",
+                      "id": "",
+                      "label": "",
+                      "logGroups": [],
+                      "matchExact": true,
+                      "metricEditorMode": 0,
+                      "metricName": "CPUUtilization",
+                      "metricQueryType": 0,
+                      "namespace": "AWS/EC2",
+                      "period": "",
+                      "queryLanguage": "CWLI",
+                      "queryMode": "Metrics",
+                      "region": "default",
+                      "sqlExpression": "",
+                      "statistic": "Average"
+                    },
+                    "version": "v0"
+                  },
+                  "refId": "A"
+                }
+              }
+            ],
+            "queryOptions": {},
+            "transformations": []
+          }
+        },
+        "description": "",
+        "id": 6,
+        "links": [],
+        "title": "EC2 Credit Usage for one instance",
+        "vizConfig": {
+          "group": "timeseries",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "barWidthFactor": 0.6,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 5,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "showValues": false,
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": 0
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "CPUCreditUsage"
+                  },
+                  "properties": [
+                    {
+                      "id": "color",
+                      "value": {
+                        "fixedColor": "semi-dark-red",
+                        "mode": "fixed"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "tooltip": {
+                "hideZeros": false,
+                "mode": "single",
+                "sort": "none"
+              }
+            }
+          },
+          "version": "12.2.0-pre"
+        }
+      }
+    }
+  },
+  "layout": {
+    "kind": "RowsLayout",
+    "spec": {
+      "rows": [
+        {
+          "kind": "RowsLayoutRow",
+          "spec": {
+            "collapse": false,
+            "layout": {
+              "kind": "RowsLayout",
+              "spec": {
+                "rows": [
+                  {
+                    "kind": "RowsLayoutRow",
+                    "spec": {
+                      "collapse": true,
+                      "layout": {
+                        "kind": "TabsLayout",
+                        "spec": {
+                          "tabs": [
+                            {
+                              "kind": "TabsLayoutTab",
+                              "spec": {
+                                "layout": {
+                                  "kind": "AutoGridLayout",
+                                  "spec": {
+                                    "columnWidthMode": "standard",
+                                    "items": [
+                                      {
+                                        "kind": "AutoGridLayoutItem",
+                                        "spec": {
+                                          "element": {
+                                            "kind": "ElementReference",
+                                            "name": "panel-1"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "kind": "AutoGridLayoutItem",
+                                        "spec": {
+                                          "element": {
+                                            "kind": "ElementReference",
+                                            "name": "panel-4"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "kind": "AutoGridLayoutItem",
+                                        "spec": {
+                                          "element": {
+                                            "kind": "ElementReference",
+                                            "name": "panel-3"
+                                          }
+                                        }
+                                      }
+                                    ],
+                                    "maxColumnCount": 3,
+                                    "rowHeightMode": "standard"
+                                  }
+                                },
+                                "title": "us-east-1"
+                              }
+                            },
+                            {
+                              "kind": "TabsLayoutTab",
+                              "spec": {
+                                "layout": {
+                                  "kind": "AutoGridLayout",
+                                  "spec": {
+                                    "columnWidthMode": "standard",
+                                    "items": [],
+                                    "maxColumnCount": 3,
+                                    "rowHeightMode": "standard"
+                                  }
+                                },
+                                "title": "us-east-2"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "title": "Credit Usage"
+                    }
+                  },
+                  {
+                    "kind": "RowsLayoutRow",
+                    "spec": {
+                      "collapse": false,
+                      "conditionalRendering": {
+                        "kind": "ConditionalRenderingGroup",
+                        "spec": {
+                          "condition": "and",
+                          "items": [
+                            {
+                              "kind": "ConditionalRenderingTimeRangeSize",
+                              "spec": {
+                                "value": "7d"
+                              }
+                            }
+                          ],
+                          "visibility": "hide"
+                        }
+                      },
+                      "layout": {
+                        "kind": "RowsLayout",
+                        "spec": {
+                          "rows": [
+                            {
+                              "kind": "RowsLayoutRow",
+                              "spec": {
+                                "collapse": false,
+                                "layout": {
+                                  "kind": "GridLayout",
+                                  "spec": {
+                                    "items": [
+                                      {
+                                        "kind": "GridLayoutItem",
+                                        "spec": {
+                                          "element": {
+                                            "kind": "ElementReference",
+                                            "name": "panel-6"
+                                          },
+                                          "height": 10,
+                                          "repeat": {
+                                            "direction": "h",
+                                            "maxPerRow": 4,
+                                            "mode": "variable",
+                                            "value": "groupName"
+                                          },
+                                          "width": 24,
+                                          "x": 0,
+                                          "y": 0
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                "title": "duplicated CPU"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "repeat": {
+                        "mode": "variable",
+                        "value": "dimensionsValues"
+                      },
+                      "title": "EC2 credit usage"
+                    }
+                  }
+                ]
+              }
+            },
+            "title": "Credit"
+          }
+        },
+        {
+          "kind": "RowsLayoutRow",
+          "spec": {
+            "collapse": false,
+            "layout": {
+              "kind": "RowsLayout",
+              "spec": {
+                "rows": [
+                  {
+                    "kind": "RowsLayoutRow",
+                    "spec": {
+                      "collapse": true,
+                      "conditionalRendering": {
+                        "kind": "ConditionalRenderingGroup",
+                        "spec": {
+                          "condition": "and",
+                          "items": [
+                            {
+                              "kind": "ConditionalRenderingVariable",
+                              "spec": {
+                                "operator": "equals",
+                                "value": "1",
+                                "variable": "groupName"
+                              }
+                            },
+                            {
+                              "kind": "ConditionalRenderingTimeRangeSize",
+                              "spec": {
+                                "value": "7d"
+                              }
+                            }
+                          ],
+                          "visibility": "hide"
+                        }
+                      },
+                      "layout": {
+                        "kind": "TabsLayout",
+                        "spec": {
+                          "tabs": [
+                            {
+                              "kind": "TabsLayoutTab",
+                              "spec": {
+                                "layout": {
+                                  "kind": "GridLayout",
+                                  "spec": {
+                                    "items": [
+                                      {
+                                        "kind": "GridLayoutItem",
+                                        "spec": {
+                                          "element": {
+                                            "kind": "ElementReference",
+                                            "name": "panel-12"
+                                          },
+                                          "height": 8,
+                                          "width": 21,
+                                          "x": 0,
+                                          "y": 0
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                "title": "CW"
+                              }
+                            },
+                            {
+                              "kind": "TabsLayoutTab",
+                              "spec": {
+                                "layout": {
+                                  "kind": "AutoGridLayout",
+                                  "spec": {
+                                    "columnWidthMode": "standard",
+                                    "items": [
+                                      {
+                                        "kind": "AutoGridLayoutItem",
+                                        "spec": {
+                                          "element": {
+                                            "kind": "ElementReference",
+                                            "name": "panel-11"
+                                          }
+                                        }
+                                      }
+                                    ],
+                                    "maxColumnCount": 3,
+                                    "rowHeightMode": "standard"
+                                  }
+                                },
+                                "title": "tab with test data"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "title": "GF-ds"
+                    }
+                  }
+                ]
+              }
+            },
+            "title": "CPU "
+          }
+        }
+      ]
+    }
+  },
+  "title": "Cloudwatch ec2 new layout",
+  "variables": [
+    {
+      "kind": "QueryVariable",
+      "spec": {
+        "allowCustomValue": true,
+        "current": {
+          "text": ["cloud-datasources-test"],
+          "value": ["cloud-datasources-test"]
+        },
+        "definition": "",
+        "hide": "dontHide",
+        "includeAll": true,
+        "multi": true,
+        "name": "groupName",
+        "options": [],
+        "query": {
+          "datasource": {
+            "name": "xpyRJd9Mz"
+          },
+          "group": "cloudwatch",
+          "kind": "DataQuery",
+          "spec": {
+            "dimensionKey": "AutoScalingGroupName",
+            "metricName": "CPUUtilization",
+            "namespace": "AWS/EC2",
+            "queryType": "dimensionValues",
+            "refId": "CloudWatchVariableQueryEditor-VariableQuery",
+            "region": "default"
+          },
+          "version": "v0"
+        },
+        "refresh": "onDashboardLoad",
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": "disabled"
+      }
+    },
+    {
+      "kind": "CustomVariable",
+      "spec": {
+        "allowCustomValue": true,
+        "current": {
+          "text": "test",
+          "value": "test"
+        },
+        "hide": "dontHide",
+        "includeAll": false,
+        "multi": false,
+        "name": "custom0",
+        "options": [
+          {
+            "selected": true,
+            "text": "test",
+            "value": "test"
+          }
+        ],
+        "query": "test",
+        "skipUrlSync": false
+      }
+    }
+  ]
+}

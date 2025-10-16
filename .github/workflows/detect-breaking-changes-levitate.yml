@@ -29,7 +29,7 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: './pr'
           persist-credentials: false
@@ -80,7 +80,7 @@ jobs:
         working-directory: './base'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: './base'
           ref: ${{ github.event.pull_request.base.ref }}
@@ -132,7 +132,7 @@ jobs:
       id-token: 'write'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -141,12 +141,12 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: Get built packages from pr
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: buildPr
 
       - name: Get built packages from base
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: buildBase
 
@@ -157,7 +157,7 @@ jobs:
         run: unzip -j base_built_packages.zip -d ./base && rm base_built_packages.zip
 
       - id: 'auth'
-        uses: 'google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f'
+        uses: 'google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093'
         if: github.event.pull_request.head.repo.full_name == github.repository
         with:
           workload_identity_provider: projects/304398677251/locations/global/workloadIdentityPools/github/providers/github-provider
@@ -220,17 +220,17 @@ jobs:
           app-id: ${{ env.GITHUB_APP_ID }}
           private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: 'Download artifact'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: levitate
 
       - name: Parsing levitate result
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         id: levitate-run
         with:
           script: |
@@ -241,7 +241,7 @@ jobs:
       # Check if label exists
       - name: Check if "levitate breaking change" label exists
         id: does-label-exist
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
@@ -334,7 +334,7 @@ jobs:
       # Add the label
       - name: Add "levitate breaking change" label
         if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
@@ -350,7 +350,7 @@ jobs:
       # Remove label (no more breaking changes)
       - name: Remove "levitate breaking change" label
         if: steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
@@ -368,7 +368,7 @@ jobs:
       # Related issue: https://github.com/renovatebot/renovate/issues/1908
       - name: Add "grafana/plugins-platform-frontend" as a reviewer
         if: steps.levitate-run.outputs.exit_code == 1
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
@@ -385,7 +385,7 @@ jobs:
       # Remove reviewers (no more breaking changes)
       - name: Remove "grafana/plugins-platform-frontend" from the list of reviewers
         if: steps.levitate-run.outputs.exit_code == 0
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:

@@ -13,11 +13,16 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getTabFromClipboard } from '../layouts-shared/paste';
-import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
+import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
+import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { TabItem } from './TabItem';
@@ -66,6 +71,21 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     throw new Error('Method not implemented.');
   }
 
+  public merge(other: DashboardLayoutManager) {
+    if (!(other instanceof TabsLayoutManager)) {
+      throw new Error('Cannot merge non-tabs layout');
+    }
+
+    // Merge all tabs from the other layout into this one
+    const otherTabs = other.state.tabs;
+    const mergedTabs = [...this.state.tabs, ...otherTabs];
+
+    // Clear parent from merged tabs to avoid conflicts
+    otherTabs.forEach((tab) => tab.clearParent());
+
+    this.setState({ tabs: mergedTabs });
+  }
+
   public duplicateTab(tab: TabItem) {
     const newTab = tab.duplicate();
     this.addNewTab(newTab);
@@ -94,7 +114,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public getCurrentTab(): TabItem | undefined {
-    const tabs = this.getTabs();
+    const tabs = this.getTabsIncludingRepeats();
     const selectedTab = tabs.find((tab) => tab.getSlug() === this.state.currentTabSlug);
     if (selectedTab) {
       return selectedTab;
@@ -114,7 +134,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     return tabs[0];
   }
 
-  public getTabs(): TabItem[] {
+  public getTabsIncludingRepeats(): TabItem[] {
     return this.state.tabs.reduce<TabItem[]>((acc, tab) => {
       acc.push(tab, ...(tab.state.repeatedTabs ?? []));
 
@@ -133,7 +153,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
 
-    for (const tab of this.getTabs()) {
+    for (const tab of this.state.tabs) {
       const innerPanels = tab.getLayout().getVizPanels();
       panels.push(...innerPanels);
     }
@@ -164,7 +184,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   public addNewTab(tab?: TabItem) {
     const newTab = tab ?? new TabItem({});
     const existingNames = new Set(
-      this.getTabs()
+      this.getTabsIncludingRepeats()
         .map((tab) => tab.state.title)
         .filter((title) => title !== undefined)
     );
@@ -200,44 +220,152 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public shouldUngroup(): boolean {
-    return this.getTabs().length === 1;
+    return this.state.tabs.length === 1;
   }
 
-  public removeTab(tabToRemove: TabItem) {
+  public convertAllTabsLayouts(gridLayoutType: GridLayoutType) {
+    for (const tab of this.state.tabs) {
+      switch (gridLayoutType) {
+        case GridLayoutType.AutoGridLayout:
+          if (!(tab.getLayout() instanceof AutoGridLayoutManager)) {
+            tab.switchLayout(AutoGridLayoutManager.createFromLayout(tab.getLayout()));
+          }
+          break;
+        case GridLayoutType.GridLayout:
+          if (!(tab.getLayout() instanceof DefaultGridLayoutManager)) {
+            tab.switchLayout(DefaultGridLayoutManager.createFromLayout(tab.getLayout()));
+          }
+          break;
+      }
+    }
+  }
+
+  public ungroupTabs() {
+    const hasNonGridLayout = this.state.tabs.some((tab) => !tab.getLayout().descriptor.isGridLayout);
+    const gridTypes = new Set(findAllGridTypes(this));
+
+    showUngroupConfirmation({
+      hasNonGridLayout,
+      gridTypes,
+      onConfirm: (gridLayoutType) => {
+        this.wrapUngroupTabsInEdit(gridLayoutType);
+      },
+      onConvertMixedGrids: (availableIds) => {
+        this._confirmConvertMixedGrids(availableIds);
+      },
+    });
+  }
+
+  private _confirmConvertMixedGrids(availableIds: Set<string>) {
+    showConvertMixedGridsModal(availableIds, (id: string) => {
+      const selected = mapIdToGridLayoutType(id);
+      if (selected) {
+        this.wrapUngroupTabsInEdit(selected);
+      }
+    });
+  }
+
+  private wrapUngroupTabsInEdit(gridLayoutType: GridLayoutType) {
+    const parent = this.parent;
+    if (!parent || !isLayoutParent(parent)) {
+      throw new Error('Ungroup tabs failed: parent is not a layout container');
+    }
+
+    const previousLayout = this.clone({});
+    const scene = getDashboardSceneFor(this);
+
+    dashboardEditActions.edit({
+      description: t('dashboard.tabs-layout.edit.ungroup-tabs', 'Ungroup tabs'),
+      source: scene,
+      perform: () => {
+        this._ungroupTabs(gridLayoutType);
+      },
+      undo: () => {
+        parent.switchLayout(previousLayout);
+      },
+    });
+  }
+
+  private _ungroupTabs(gridLayoutType: GridLayoutType) {
+    const hasNonGridLayout = this.state.tabs.some((tab) => !tab.getLayout().descriptor.isGridLayout);
+
+    if (hasNonGridLayout) {
+      for (const tab of this.state.tabs) {
+        const layout = tab.getLayout();
+        if (!layout.descriptor.isGridLayout) {
+          if (layout instanceof TabsLayoutManager) {
+            layout._ungroupTabs(gridLayoutType);
+          } else if (layout instanceof RowsLayoutManager) {
+            layout.ungroupRows();
+          } else {
+            throw new Error(`Ungrouping not supported for layout type: ${layout.descriptor.name}`);
+          }
+        }
+      }
+    }
+
+    this.convertAllTabsLayouts(gridLayoutType);
+
+    const firstTab = this.state.tabs[0];
+    const firstTabLayout = firstTab.getLayout();
+    const otherTabs = this.state.tabs.slice(1);
+
+    for (const tab of otherTabs) {
+      const layout = tab.getLayout();
+      if (firstTabLayout.merge) {
+        firstTabLayout.merge(layout);
+      } else {
+        throw new Error(`Layout type ${firstTabLayout.descriptor.name} does not support merging`);
+      }
+    }
+
+    this.setState({ tabs: [firstTab] });
+    this.removeTab(firstTab, true);
+  }
+
+  public removeTab(tabToRemove: TabItem, skipUndo?: boolean) {
     // When removing last tab replace ourselves with the inner tab layout
     if (this.shouldUngroup()) {
-      ungroupLayout(this, tabToRemove.state.layout);
+      ungroupLayout(this, tabToRemove.state.layout, skipUndo ?? false);
       return;
     }
 
     const tabIndex = this.state.tabs.findIndex((t) => t === tabToRemove);
 
-    dashboardEditActions.removeElement({
-      removedObject: tabToRemove,
-      source: this,
-      perform: () => {
-        const tabs = this.state.tabs;
-        const tabIndex = tabs.findIndex((t) => t === tabToRemove);
-        const newCurrentTabIndex = tabIndex > 0 ? tabIndex - 1 : 0;
+    const perform = () => {
+      const tabs = this.state.tabs;
+      const tabIndex = tabs.findIndex((t) => t === tabToRemove);
+      const newCurrentTabIndex = tabIndex > 0 ? tabIndex - 1 : 0;
 
-        const newTabsState = tabs.filter((t) => t !== tabToRemove);
+      const newTabsState = tabs.filter((t) => t !== tabToRemove);
 
-        this.setState({
-          tabs: newTabsState,
-          currentTabSlug: newTabsState[newCurrentTabIndex]?.getSlug(),
-        });
-      },
-      undo: () => {
-        const tabs = [...this.state.tabs];
-        tabs.splice(tabIndex, 0, tabToRemove);
-        this.setState({ tabs, currentTabSlug: tabToRemove.getSlug() });
-      },
-    });
+      this.setState({
+        tabs: newTabsState,
+        currentTabSlug: newTabsState[newCurrentTabIndex]?.getSlug(),
+      });
+    };
+
+    const undo = () => {
+      const tabs = [...this.state.tabs];
+      tabs.splice(tabIndex, 0, tabToRemove);
+      this.setState({ tabs, currentTabSlug: tabToRemove.getSlug() });
+    };
+
+    if (skipUndo) {
+      perform();
+    } else {
+      dashboardEditActions.removeElement({
+        removedObject: tabToRemove,
+        source: this,
+        perform,
+        undo,
+      });
+    }
   }
 
   public moveTab(fromIndex: number, toIndex: number) {
     // fromIndex and toIndex include repeated tab so we need to find original indexes
-    const allTabs = this.getTabs();
+    const allTabs = this.getTabsIncludingRepeats();
     const objectToMove = allTabs[fromIndex];
     let destinationTab = allTabs[toIndex];
     let selectionIndex = toIndex;
@@ -282,8 +410,8 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public forceSelectTab(tabKey: string) {
-    const tabIndex = this.getTabs().findIndex((tab) => tab.state.key === tabKey);
-    const tab = this.getTabs()[tabIndex];
+    const tabIndex = this.getTabsIncludingRepeats().findIndex((tab) => tab.state.key === tabKey);
+    const tab = this.getTabsIncludingRepeats()[tabIndex];
 
     if (!tab) {
       return;
@@ -352,7 +480,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const titleCounts = new Map<string | undefined, number>();
     const duplicateTitles = new Set<string | undefined>();
 
-    this.getTabs().forEach((tab) => {
+    this.getTabsIncludingRepeats().forEach((tab) => {
       const title = sceneGraph.interpolate(tab, tab.state.title);
       const count = (titleCounts.get(title) ?? 0) + 1;
       titleCounts.set(title, count);

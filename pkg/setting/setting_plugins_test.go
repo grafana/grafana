@@ -85,14 +85,10 @@ func Test_readPluginSettings(t *testing.T) {
 				_, err = sec.NewKey("plugin_catalog_hidden_plugins", tc.f("plugin3"))
 				require.NoError(t, err)
 
-				_, err = sec.NewKey("hide_angular_deprecation", tc.f("a", "b", "c"))
-				require.NoError(t, err)
-
 				err = cfg.readPluginSettings(cfg.Raw)
 				require.NoError(t, err)
 				require.Equal(t, []string{"plugin1", "plugin2"}, cfg.DisablePlugins)
 				require.Equal(t, []string{"plugin3", "plugin1", "plugin2"}, cfg.PluginCatalogHiddenPlugins)
-				require.Equal(t, []string{"a", "b", "c"}, cfg.HideAngularDeprecation)
 			})
 		}
 	})

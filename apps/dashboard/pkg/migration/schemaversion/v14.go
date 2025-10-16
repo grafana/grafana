@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V14 migrates the sharedCrosshair boolean property to graphTooltip integer property.
 // This migration converts the old boolean shared crosshair setting to the new integer-based
 // graph tooltip setting for consistency with updated dashboard tooltip behavior.
@@ -20,7 +22,7 @@ package schemaversion
 //   "panels": [...]
 // }
 
-func V14(dashboard map[string]interface{}) error {
+func V14(_ context.Context, dashboard map[string]interface{}) error {
 	// Convert sharedCrosshair boolean to graphTooltip integer
 	sharedCrosshair := GetBoolValue(dashboard, "sharedCrosshair")
 

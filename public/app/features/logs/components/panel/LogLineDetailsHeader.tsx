@@ -237,7 +237,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
           />
         )}
         <IconButton
-          name={detailsMode === 'inline' ? 'columns' : 'gf-layout-simple'}
+          name={detailsMode === 'inline' ? 'web-section' : 'gf-layout-simple'}
           tooltip={
             detailsMode === 'inline'
               ? t('logs.log-line-details.sidebar-mode', 'Anchor to the right')
@@ -247,7 +247,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
         />
         <IconButton
           name="times"
-          aria-label={t('logs.log-line-details.close', 'Close log details')}
+          tooltip={t('logs.log-line-details.close', 'Close log details')}
           onClick={closeDetails}
         />
       </div>

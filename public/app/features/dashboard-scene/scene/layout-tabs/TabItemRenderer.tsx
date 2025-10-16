@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
-import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
+import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
@@ -24,7 +24,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
   const isActive = mySlug === currentTabSlug;
-  const myIndex = parentLayout.state.tabs.findIndex((tab) => tab === model);
+  const myIndex = parentLayout.getTabsIncludingRepeats().findIndex((tab) => tab === model);
   const location = useLocation();
   const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { [urlKey]: mySlug }));
   const styles = useStyles2(getStyles);
@@ -101,12 +101,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 function IsHiddenSuffix() {
   return (
     <Box paddingLeft={1} display={'inline'}>
-      <Tooltip
-        content={t(
-          'dashboard.conditional-rendering.overlay.tooltip',
-          'Element is hidden due to conditional rendering.'
-        )}
-      >
+      <Tooltip content={t('dashboard.conditional-rendering.overlay.tooltip', 'Element is hidden by show/hide rules.')}>
         <Icon name="eye-slash" />
       </Tooltip>
     </Box>

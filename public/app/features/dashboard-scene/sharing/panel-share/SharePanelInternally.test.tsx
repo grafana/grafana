@@ -30,6 +30,7 @@ describe('SharePanelInternally', () => {
     expect(screen.getByPlaceholderText('1')).toBeDisabled(); // Scale factor input
     expect(screen.getByRole('button', { name: /generate image/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /download image/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /copy image link/i })).toBeDisabled();
   });
 
   it('should enable all image generation inputs when renderer is available', async () => {
@@ -55,6 +56,19 @@ describe('SharePanelInternally', () => {
 
     expect(screen.getByRole('button', { name: /generate image/i })).toBeEnabled();
     expect(screen.getByRole('button', { name: /download image/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /copy image link/i })).toBeEnabled();
+  });
+
+  it('should copy image link when copy image link button is clicked', async () => {
+    document.execCommand = jest.fn();
+
+    config.rendererAvailable = true;
+    buildAndRenderScenario();
+
+    const copyImageLinkButton = screen.getByRole('button', { name: /copy image link/i });
+    await userEvent.click(copyImageLinkButton);
+
+    expect(document.execCommand).toHaveBeenCalledWith('copy');
   });
 });
 

@@ -90,6 +90,17 @@ const config: ConfigFile = {
       tag: true,
     },
 
+    '../public/app/api/clients/shorturl/v1alpha1/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/shorturl/v1alpha1/baseAPI.ts',
+      schemaFile: '../data/openapi/shorturl.grafana.app-v1alpha1.json',
+      tag: true,
+    },
+    '../public/app/api/clients/preferences/v1alpha1/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/preferences/v1alpha1/baseAPI.ts',
+      schemaFile: '../data/openapi/preferences.grafana.app-v1alpha1.json',
+      tag: true,
+      hooks: true,
+    },
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };

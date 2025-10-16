@@ -6,17 +6,33 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
-import { Stack, Button, useStyles2, Text, Box, Card } from '@grafana/ui';
+import { Box, Button, Card, Stack, Text, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
 
+function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
+  const variableListId = useId();
+  const options = useMemo(() => {
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'variables' }).addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: variableListId,
+        skipField: true,
+        render: () => <VariableList set={set} />,
+      })
+    );
+  }, [set, variableListId]);
+
+  return [options];
+}
 export class VariableSetEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
   public readonly typeName = 'Variable';
@@ -35,26 +51,10 @@ export class VariableSetEditableElement implements EditableDashboardElement {
     return this.set.state.variables;
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const variableListId = useId();
-    const set = this.set;
-
-    const options = useMemo(() => {
-      return new OptionsPaneCategoryDescriptor({ title: '', id: 'variables' }).addItem(
-        new OptionsPaneItemDescriptor({
-          title: '',
-          id: variableListId,
-          skipField: true,
-          render: () => <VariableList set={set} />,
-        })
-      );
-    }, [set, variableListId]);
-
-    return [options];
-  }
+  public useEditPaneOptions = useEditPaneOptions.bind(this, this.set);
 }
 
-function VariableList({ set }: { set: SceneVariableSet }) {
+export function VariableList({ set }: { set: SceneVariableSet }) {
   const { variables } = set.useState();
   const styles = useStyles2(getStyles);
   const [isAdding, setIsAdding] = useToggle(false);
@@ -103,7 +103,10 @@ function VariableList({ set }: { set: SceneVariableSet }) {
             icon="plus"
             size="sm"
             variant="secondary"
-            onClick={setIsAdding}
+            onClick={() => {
+              DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
+              setIsAdding();
+            }}
             data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
           >
             <Trans i18nKey="dashboard.edit-pane.variables.add-variable">Add variable</Trans>
@@ -127,18 +130,21 @@ function VariableTypeSelection({ onAddVariable }: VariableTypeSelectionProps) {
       <Box paddingBottom={1} display={'flex'}>
         <Trans i18nKey="dashboard.edit-pane.variables.select-type">Choose variable type</Trans>
       </Box>
-      {options.map((option) => (
-        <Card
-          isCompact
-          onClick={() => onAddVariable(option.value!)}
-          key={option.value}
-          title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
-          data-testid={selectors.components.PanelEditor.ElementEditPane.variableType(option.value!)}
-        >
-          <Card.Heading>{option.label}</Card.Heading>
-          <Card.Description className={styles.cardDescription}>{option.description}</Card.Description>
-        </Card>
-      ))}
+      <Stack direction="column">
+        {options.map((option) => (
+          <Card
+            isCompact
+            noMargin
+            onClick={() => onAddVariable(option.value!)}
+            key={option.value}
+            title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
+            data-testid={selectors.components.PanelEditor.ElementEditPane.variableType(option.value!)}
+          >
+            <Card.Heading>{option.label}</Card.Heading>
+            <Card.Description className={styles.cardDescription}>{option.description}</Card.Description>
+          </Card>
+        ))}
+      </Stack>
     </Stack>
   );
 }

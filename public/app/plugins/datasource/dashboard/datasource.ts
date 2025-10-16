@@ -21,7 +21,7 @@ import {
   DrilldownsApplicability,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
+import { isSceneObject, SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,
   findVizPanelByKey,
@@ -46,7 +46,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
   query(options: DataQueryRequest<DashboardQuery>): Observable<DataQueryResponse> {
     const sceneScopedVar: ScopedVar | undefined = options.scopedVars?.__sceneObject;
-    let scene: SceneObject | undefined = sceneScopedVar ? (sceneScopedVar.value.valueOf() as SceneObject) : undefined;
+    const sceneScopedVarValue: unknown | undefined = sceneScopedVar?.value.valueOf();
+    const scene: SceneObject | undefined =
+      sceneScopedVarValue && isSceneObject(sceneScopedVarValue) ? sceneScopedVarValue : undefined;
 
     if (!scene) {
       throw new Error('Can only be called from a scene');
@@ -87,7 +89,13 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         sourceDataProvider?.setContainerWidth(500);
       }
 
-      const cleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
+      /**
+       * Ignore the isInView flag on the original data provider
+       * This allows queries to be run even if the original datasource is outside the viewport
+       */
+      sourceDataProvider?.bypassIsInViewChanged?.(true);
+
+      const activateCleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
 
       return sourceDataProvider!.getResultsStream!().pipe(
         debounceTime(50),
@@ -101,7 +109,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
           };
         }),
         this.emitFirstLoadedDataIfMixedDS(options.requestId),
-        finalize(() => cleanUp?.())
+        finalize(() => {
+          sourceDataProvider?.bypassIsInViewChanged?.(false);
+
+          activateCleanUp?.();
+        })
       );
     });
   }
@@ -128,10 +140,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             ...field,
             config: {
               ...field.config,
-              // Enable AdHoc filtering for string and numeric fields only when feature toggle is enabled
-              filterable: config.featureToggles.dashboardDsAdHocFiltering
-                ? field.type === FieldType.string || field.type === FieldType.number
-                : field.config.filterable,
+              // Enable AdHoc filtering for string and numeric fields only when feature toggle and per-panel setting are enabled
+              filterable:
+                config.featureToggles.dashboardDsAdHocFiltering && query.adHocFiltersEnabled
+                  ? field.type === FieldType.string || field.type === FieldType.number
+                  : field.config.filterable,
             },
             state: {
               ...field.state,
@@ -140,7 +153,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         };
       });
 
-      if (!config.featureToggles.dashboardDsAdHocFiltering || filters.length === 0) {
+      if (!config.featureToggles.dashboardDsAdHocFiltering || !query.adHocFiltersEnabled || filters.length === 0) {
         return [...series, ...annotations];
       }
 
@@ -345,6 +358,13 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     options?: DataSourceGetDrilldownsApplicabilityOptions<DashboardQuery>
   ): Promise<DrilldownsApplicability[]> {
     if (!config.featureToggles.dashboardDsAdHocFiltering) {
+      return [];
+    }
+
+    // Check if any query has adhoc filters enabled
+    const hasAdHocFiltersEnabled = options?.queries?.some((query) => query.adHocFiltersEnabled);
+
+    if (!hasAdHocFiltersEnabled) {
       return [];
     }
 

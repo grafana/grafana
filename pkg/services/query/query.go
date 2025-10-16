@@ -234,7 +234,13 @@ func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheSer
 		headers:                    headers,
 		concurrentQueryLimit:       16, // TODO: make it configurable
 	}
-	return s.QueryDataNew(ctx, nil, false, reqDTO)
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.QueryDataNew(ctx, user, false, reqDTO)
 }
 
 // handleExpressions handles queries when there is an expression.
