@@ -130,7 +130,7 @@ export function RedirectToRuleViewer(): JSX.Element | null {
       <div className={styles.rules}>
         {rules.map((rule, index) => {
           return (
-            <Card key={`${rule.name}-${index}`} href={createViewLink(rulesSource, rule, '/alerting/list')}>
+            <Card noMargin key={`${rule.name}-${index}`} href={createViewLink(rulesSource, rule, '/alerting/list')}>
               <Card.Heading>{rule.name}</Card.Heading>
               <Card.Meta separator={''}>
                 <Icon name="folder" />
