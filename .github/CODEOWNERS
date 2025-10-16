@@ -412,8 +412,8 @@
 
 /crowdin.yml @grafana/grafana-frontend-platform
 /public/locales/ @grafanabot
-/public/locales/i18next-parser.config.cjs @grafana/grafana-frontend-platform
-/public/locales/i18next-parser-enterprise.config.cjs @grafana/grafana-frontend-platform
+i18next.config.ts @grafana/grafana-frontend-platform
+/public/locales/enterprise/i18next.config.ts @grafana/grafana-frontend-platform
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e/ @grafana/grafana-frontend-platform
 /e2e-playwright/cloud-plugins-suite/ @grafana/partner-datasources
