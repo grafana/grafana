@@ -11,7 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) *correlationsV0.Correlation {
+func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) (*correlationsV0.Correlation, error) {
+	cfg, err := ToSpecConfig(orig.Config)
+	if err != nil {
+		return nil, err
+	}
 	obj := &correlationsV0.Correlation{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      orig.UID,
@@ -24,7 +28,7 @@ func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) *correl
 				Group: ptr.Deref(orig.SourceType, ""),
 				Name:  orig.SourceUID,
 			},
-			Config: ToSpecConfig(orig.Config),
+			Config: *cfg,
 		},
 	}
 	if orig.TargetUID != nil {
@@ -42,11 +46,15 @@ func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) *correl
 			Kind: utils.ManagerKindClassicFP, // nolint:staticcheck
 		})
 	}
-	return obj
+	return obj, nil
 }
 
 func ToCorrelation(obj *correlationsV0.Correlation) (*Correlation, error) {
 	ns, err := authlib.ParseNamespace(obj.Namespace)
+	if err != nil {
+		return nil, err
+	}
+	cfg, err := ToConfig(obj.Spec.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +66,7 @@ func ToCorrelation(obj *correlationsV0.Correlation) (*Correlation, error) {
 		SourceUID:   obj.Spec.Source.Name,
 		SourceType:  ptr.To(obj.Spec.Source.Group),
 		Type:        CorrelationType(obj.Spec.Type),
-		Config:      ToConfig(obj.Spec.Config),
+		Config:      *cfg,
 	}
 	if obj.Annotations[utils.AnnoKeyManagerKind] != "" {
 		result.Provisioned = true
@@ -70,18 +78,36 @@ func ToCorrelation(obj *correlationsV0.Correlation) (*Correlation, error) {
 	return result, nil
 }
 
-func ToSpecConfig(orig CorrelationConfig) correlationsV0.CorrelationConfigSpec {
-	out := correlationsV0.CorrelationConfigSpec{}
-	raw, _ := json.Marshal(orig)
-	json.Unmarshal(raw, &out)
-	return out
+func ToSpecConfig(orig CorrelationConfig) (*correlationsV0.CorrelationConfigSpec, error) {
+	out := &correlationsV0.CorrelationConfigSpec{}
+	raw, err := json.Marshal(orig)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(raw, out)
+	if err != nil {
+		return nil, err
+	}
+	if len(out.Target) == 0 {
+		out.Target = nil
+	}
+	return out, err
 }
 
-func ToConfig(orig correlationsV0.CorrelationConfigSpec) CorrelationConfig {
-	out := CorrelationConfig{}
-	raw, _ := json.Marshal(orig)
-	json.Unmarshal(raw, &out)
-	return out
+func ToConfig(orig correlationsV0.CorrelationConfigSpec) (*CorrelationConfig, error) {
+	out := &CorrelationConfig{}
+	raw, err := json.Marshal(orig)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(raw, out)
+	if err != nil {
+		return nil, err
+	}
+	if len(out.Target) == 0 {
+		out.Target = nil
+	}
+	return out, err
 }
 
 func ToUpdateCorrelationCommand(obj *correlationsV0.Correlation) (*UpdateCorrelationCommand, error) {
@@ -89,7 +115,9 @@ func ToUpdateCorrelationCommand(obj *correlationsV0.Correlation) (*UpdateCorrela
 	if err != nil {
 		return nil, err
 	}
-
+	if tmp.Config.Target == nil {
+		tmp.Config.Target = map[string]any{} // replace it
+	}
 	return &UpdateCorrelationCommand{
 		UID:         tmp.UID,
 		OrgId:       tmp.OrgID,
@@ -98,8 +126,9 @@ func ToUpdateCorrelationCommand(obj *correlationsV0.Correlation) (*UpdateCorrela
 		Description: &tmp.Description,
 		Type:        &tmp.Type,
 		Config: &CorrelationConfigUpdateDTO{
-			Field: &tmp.Config.Field,
-			// TODO!!! more (or add a conversion?)
+			Field:           &tmp.Config.Field,
+			Target:          &tmp.Config.Target,
+			Transformations: tmp.Config.Transformations,
 		},
 	}, nil
 }

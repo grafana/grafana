@@ -18,6 +18,8 @@ func TestConversion(t *testing.T) {
 		name   string
 		input  Correlation
 		expect correlationsV0.Correlation
+		create CreateCorrelationCommand
+		update UpdateCorrelationCommand
 	}{
 		{
 			name: "Basic fields",
@@ -61,17 +63,50 @@ func TestConversion(t *testing.T) {
 					},
 				},
 			},
+			create: CreateCorrelationCommand{
+				OrgId:       2,
+				Label:       "Test Label",
+				Type:        query,
+				SourceUID:   "source",
+				TargetUID:   ptr.To("target"),
+				Description: "A test correlation",
+				Provisioned: true,
+				Config: CorrelationConfig{
+					Field: "test-field",
+				},
+			},
+			update: UpdateCorrelationCommand{
+				UID:         "uid",
+				OrgId:       2,
+				Label:       ptr.To("Test Label"),
+				Type:        ptr.To(query),
+				SourceUID:   "source",
+				Description: ptr.To("A test correlation"),
+				Config: &CorrelationConfigUpdateDTO{
+					Field:  ptr.To("test-field"),
+					Target: &map[string]any{},
+				},
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res := ToResource(tt.input, namespacer)
+			res, err := ToResource(tt.input, namespacer)
+			require.NoError(t, err)
 			require.Equal(t, &tt.expect, res, "conversion")
 
 			roundtrip, err := ToCorrelation(res)
 			require.NoError(t, err)
 			require.Equal(t, &tt.input, roundtrip, "roundtrip")
+
+			create, err := ToCreateCorrelationCommand(res)
+			require.NoError(t, err)
+			require.Equal(t, &tt.create, create, "create")
+
+			update, err := ToUpdateCorrelationCommand(res)
+			require.NoError(t, err)
+			require.Equal(t, &tt.update, update, "update")
 		})
 	}
 }
