@@ -9097,6 +9097,8 @@
       "make-time-range-permanent": "Make time range absolute/permanent",
       "move-time-range-back": "Move time range back",
       "move-time-range-forward": "Move time range forward",
+      "open-alerting": "Go to Alerting",
+      "open-assistant": "Open Assistant",
       "open-search": "Open search",
       "open-share-embed-drawer": "Share panel embed",
       "open-share-link-drawer": "Share panel link",

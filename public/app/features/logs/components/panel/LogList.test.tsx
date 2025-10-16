@@ -21,7 +21,9 @@ import { LogList, Props } from './LogList';
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
-  useAssistant: jest.fn(() => [true, jest.fn()]),
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: true,
+  }),
 }));
 
 jest.mock('@grafana/runtime', () => {

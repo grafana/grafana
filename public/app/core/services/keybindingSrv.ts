@@ -1,3 +1,4 @@
+import { toggleAssistant, isAssistantAvailable } from '@grafana/assistant';
 import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent, locationUtil } from '@grafana/data';
 import { LocationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -38,6 +39,7 @@ export class KeybindingSrv {
   }
   /** string for VizPanel key and number for panelId */
   private panelId: string | number | null = null;
+  private assistantSubscription: { unsubscribe: () => void } | null = null;
 
   clearAndInitGlobalBindings(route: RouteDescriptor) {
     mousetrap.reset();
@@ -51,6 +53,8 @@ export class KeybindingSrv {
       this.bind('g e', this.goToExplore);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
+      // Conditionally bind open Assistant shortcut ('o a') if Assistant is available
+      this.bindAssistantShortcutIfAvailable();
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
     }
@@ -118,6 +122,30 @@ export class KeybindingSrv {
 
   private showHelpModal() {
     appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
+  }
+
+  private bindAssistantShortcutIfAvailable() {
+    // Clean up any existing subscription
+    if (this.assistantSubscription) {
+      this.assistantSubscription.unsubscribe();
+    }
+    // Subscribe to assistant availability and bind/unbind shortcut accordingly
+    this.assistantSubscription = isAssistantAvailable().subscribe((available) => {
+      if (available) {
+        this.bind('mod+.', this.toggleAssistant);
+      } else {
+        // Unbind the shortcut if assistant becomes unavailable
+        mousetrap.unbind('mod+.');
+      }
+    });
+  }
+
+  private toggleAssistant() {
+    toggleAssistant({
+      origin: 'grafana/keyboard-shortcut',
+      prompt: '',
+      context: [],
+    });
   }
 
   private exit() {
