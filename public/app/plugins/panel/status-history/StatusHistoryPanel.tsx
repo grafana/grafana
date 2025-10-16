@@ -20,7 +20,7 @@ import {
 } from 'app/core/components/TimelineChart/utils';
 
 import { StateTimelineTooltip2 } from '../state-timeline/StateTimelineTooltip2';
-import { containerStyles, usePagination } from '../state-timeline/utils';
+import { containerStyles, usePagination } from '../state-timeline/hooks';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';

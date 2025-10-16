@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
 import { DashboardCursorSync, PanelProps, useDataLinksContext } from '@grafana/data';
@@ -23,10 +24,17 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip2 } from './StateTimelineTooltip2';
+import { usePagination } from './hooks';
 import { Options } from './panelcfg.gen';
-import { containerStyles, usePagination } from './utils';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
+
+const containerStyles = {
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+};
 
 /**
  * @alpha
