@@ -3,23 +3,28 @@ import { Resizable, ResizeCallback } from 're-resizable';
 import { startTransition, useCallback, useLayoutEffect, useMemo, useState } from 'react';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { getDragStyles, useStyles2 } from '@grafana/ui';
 import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
+import { LOG_LINE_BODY_FIELD_NAME } from '../../LogDetailsBody';
+import { getDisplayedFieldsForLogs } from '../../otel/formats';
 import { useLogListContext } from '../LogListContext';
+import { LogListModel } from '../processing';
 
 import { FieldList } from './FieldList';
 import { FieldSearch } from './FieldSearch';
 
 interface LogListFieldSelectorProps {
   containerElement: HTMLDivElement;
+  logs: LogListModel[];
   dataFrames: DataFrame[];
 }
 
 /**
  * FieldSelector wrapper for the LogList visualization.
  */
-export const LogListFieldSelector = ({ containerElement, dataFrames }: LogListFieldSelectorProps) => {
+export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: LogListFieldSelectorProps) => {
   const [sidebarHeight, setSidebarHeight] = useState(220);
   const [sidebarWidth, setSidebarWidth] = useState(220);
   const { displayedFields, onClickShowField, onClickHideField, setDisplayedFields } = useLogListContext();
@@ -54,6 +59,7 @@ export const LogListFieldSelector = ({ containerElement, dataFrames }: LogListFi
     [displayedFields, onClickHideField, onClickShowField]
   );
 
+  const suggestedFields = useMemo(() => getSuggestedFields(logs, displayedFields), [displayedFields, logs]);
   const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
 
   if (!onClickShowField || !onClickHideField || !setDisplayedFields) {
@@ -79,8 +85,9 @@ export const LogListFieldSelector = ({ containerElement, dataFrames }: LogListFi
         activeFields={displayedFields}
         clear={clearFields}
         fields={fields}
-        toggle={toggleField}
         reorder={setDisplayedFields}
+        suggestedFields={suggestedFields}
+        toggle={toggleField}
       />
     </Resizable>
   );
@@ -99,24 +106,39 @@ export interface FieldSelectorProps {
   activeFields: string[];
   clear(): void;
   fields: FieldWithStats[];
-  toggle: (key: string) => void;
   reorder: (fields: string[]) => void;
+  suggestedFields: FieldWithStats[];
+  toggle: (key: string) => void;
 }
 
-export const FieldSelector = ({ activeFields, clear, fields, reorder, toggle }: FieldSelectorProps) => {
+export const FieldSelector = ({
+  activeFields,
+  clear,
+  fields,
+  reorder,
+  suggestedFields,
+  toggle,
+}: FieldSelectorProps) => {
   const [searchValue, setSearchValue] = useState<string>('');
   const styles = useStyles2(getStyles);
 
-  const onSearchInputChange = (e: React.FormEvent<HTMLInputElement>) => {
+  const onSearchInputChange = useCallback((e: React.FormEvent<HTMLInputElement>) => {
     startTransition(() => {
       setSearchValue(e.currentTarget.value);
     });
-  };
+  }, []);
 
   return (
     <section className={styles.sidebar}>
       <FieldSearch value={searchValue} onChange={onSearchInputChange} />
-      <FieldList activeFields={activeFields} clear={clear} fields={fields} reorder={reorder} toggle={toggle} />
+      <FieldList
+        activeFields={activeFields}
+        clear={clear}
+        fields={fields}
+        reorder={reorder}
+        suggestedFields={suggestedFields}
+        toggle={toggle}
+      />
     </section>
   );
 };
@@ -166,4 +188,29 @@ function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
       percentOfLinesWithLabel: Math.ceil((100 * (cardinality.get(label) ?? 0)) / totalLines),
     },
   }));
+}
+
+function getSuggestedFields(logs: LogListModel[], displayedFields: string[]) {
+  const suggestedFields: FieldWithStats[] = [];
+  if (config.featureToggles.otelLogsFormatting) {
+    getDisplayedFieldsForLogs(logs).forEach((field) => {
+      suggestedFields.push({
+        name: field,
+        stats: {
+          percentOfLinesWithLabel: 100,
+        },
+      });
+    });
+  }
+
+  if (displayedFields.length && !suggestedFields.find((field) => field.name === LOG_LINE_BODY_FIELD_NAME)) {
+    suggestedFields.push({
+      name: LOG_LINE_BODY_FIELD_NAME,
+      stats: {
+        percentOfLinesWithLabel: 100,
+      },
+    });
+  }
+
+  return suggestedFields;
 }

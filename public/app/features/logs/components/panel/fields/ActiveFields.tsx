@@ -13,11 +13,12 @@ interface Props {
   activeFields: string[];
   clear(): void;
   fields: FieldWithStats[];
-  toggle: (key: string) => void;
   reorder: (columns: string[]) => void;
+  suggestedFields: FieldWithStats[];
+  toggle: (key: string) => void;
 }
 
-export const ActiveFields = ({ activeFields, clear, fields, toggle, reorder }: Props) => {
+export const ActiveFields = ({ activeFields, clear, fields, reorder, suggestedFields, toggle }: Props) => {
   const styles = useStyles2(getLogsFieldsStyles);
 
   const onDragEnd = (result: DropResult) => {
@@ -30,13 +31,23 @@ export const ActiveFields = ({ activeFields, clear, fields, toggle, reorder }: P
     newActiveFields.splice(result.source.index, 1);
     newActiveFields.splice(result.destination.index, 0, element);
 
+    console.log(newActiveFields);
+
     reorder(newActiveFields);
   };
 
+  console.log(activeFields);
+
   const active = useMemo(
-    () =>
-      activeFields.map((name) => fields.find((field) => field.name === name)).filter((field) => field !== undefined),
-    [activeFields, fields]
+    () => [
+      ...activeFields
+        .map(
+          (name) => fields.find((field) => field.name === name) ?? suggestedFields.find((field) => field.name === name)
+        )
+        .filter((field) => field !== undefined),
+      ...suggestedFields.filter((suggestedField) => !activeFields.includes(suggestedField.name)),
+    ],
+    [activeFields, fields, suggestedFields]
   );
 
   if (active.length) {
@@ -53,7 +64,12 @@ export const ActiveFields = ({ activeFields, clear, fields, toggle, reorder }: P
             {(provided) => (
               <div className={styles.columnWrapper} {...provided.droppableProps} ref={provided.innerRef}>
                 {active.map((field, index) => (
-                  <Draggable draggableId={field.name} key={field.name} index={index}>
+                  <Draggable
+                    draggableId={field.name}
+                    key={field.name}
+                    index={index}
+                    isDragDisabled={!activeFields.includes(field.name)}
+                  >
                     {(provided: DraggableProvided, snapshot) => (
                       <div
                         className={cx(styles.wrap, snapshot.isDragging ? styles.dragging : undefined)}
@@ -66,7 +82,12 @@ export const ActiveFields = ({ activeFields, clear, fields, toggle, reorder }: P
                           { fieldName: field.name, percentage: field.stats.percentOfLinesWithLabel }
                         )}
                       >
-                        <Field active field={field} toggle={toggle} draggable={true} />
+                        <Field
+                          active={activeFields.includes(field.name)}
+                          field={field}
+                          toggle={toggle}
+                          draggable={true}
+                        />
                       </div>
                     )}
                   </Draggable>

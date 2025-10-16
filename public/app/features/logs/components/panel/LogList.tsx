@@ -529,7 +529,9 @@ const LogListComponent = ({
           )}
         </InfiniteScroll>
       </div>
-      {processedLogs.length > 0 && <LogListFieldSelector containerElement={containerElement} dataFrames={dataFrames} />}
+      {processedLogs.length > 0 && (
+        <LogListFieldSelector containerElement={containerElement} dataFrames={dataFrames} logs={processedLogs} />
+      )}
     </div>
   );
 };

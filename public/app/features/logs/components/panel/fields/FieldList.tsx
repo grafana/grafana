@@ -13,10 +13,11 @@ interface Props {
   clear: () => void;
   fields: FieldWithStats[];
   reorder: (columns: string[]) => void;
+  suggestedFields: FieldWithStats[];
   toggle: (columnName: string) => void;
 }
 
-export const FieldList = ({ activeFields, clear, fields, reorder, toggle }: Props) => {
+export const FieldList = ({ activeFields, clear, fields, reorder, suggestedFields, toggle }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
@@ -24,7 +25,14 @@ export const FieldList = ({ activeFields, clear, fields, reorder, toggle }: Prop
     <div className={styles.sidebarWrap}>
       {/* Sidebar columns */}
       <>
-        <ActiveFields activeFields={activeFields} clear={clear} fields={fields} reorder={reorder} toggle={toggle} />
+        <ActiveFields
+          activeFields={activeFields}
+          clear={clear}
+          fields={fields}
+          reorder={reorder}
+          suggestedFields={suggestedFields}
+          toggle={toggle}
+        />
 
         <div className={styles.columnHeader}>
           <Trans i18nKey="explore.logs-table-multi-select.fields">Fields</Trans>

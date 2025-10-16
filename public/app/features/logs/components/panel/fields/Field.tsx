@@ -6,6 +6,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, Icon, useStyles2 } from '@grafana/ui';
 
+import { getNormalizedFieldName } from '../processing';
+
 import { FieldWithStats } from './FieldSelector';
 
 interface Props {
@@ -32,7 +34,12 @@ export function Field({
   return (
     <>
       <div className={styles.contentWrap}>
-        <Checkbox className={styles.checkboxLabel} label={field.name} onChange={handleChange} checked={active} />
+        <Checkbox
+          className={styles.checkboxLabel}
+          label={getNormalizedFieldName(field.name)}
+          onChange={handleChange}
+          checked={active}
+        />
         {showCount && (
           <button className={styles.labelCount} onClick={handleChange}>
             {field.stats.percentOfLinesWithLabel}%
