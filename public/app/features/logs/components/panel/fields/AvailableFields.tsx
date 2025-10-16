@@ -18,8 +18,11 @@ interface Props {
 export const AvailableFields = ({ activeFields, fields, toggle, reorder }: Props): JSX.Element => {
   const styles = useStyles2(getLogsFieldsStyles);
 
-  const availableFields = useMemo(() => fields.filter(field => !activeFields.includes(field.name)), [activeFields, fields]);
-  
+  const availableFields = useMemo(
+    () => fields.filter((field) => !activeFields.includes(field.name)),
+    [activeFields, fields]
+  );
+
   if (availableFields.length) {
     return (
       <div className={styles.columnWrapper}>
@@ -27,11 +30,10 @@ export const AvailableFields = ({ activeFields, fields, toggle, reorder }: Props
           <div
             key={field.name}
             className={styles.wrap}
-            title={t(
-              'logs.field-selector.label-title',
-              `{{fieldName}} appears in {{percentage}}% of log lines`,
-              { fieldName: field.name, percentage: field.stats.percentOfLinesWithLabel }
-            )}
+            title={t('logs.field-selector.label-title', `{{fieldName}} appears in {{percentage}}% of log lines`, {
+              fieldName: field.name,
+              percentage: field.stats.percentOfLinesWithLabel,
+            })}
           >
             <Field field={field} toggle={toggle} showCount />
           </div>

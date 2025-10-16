@@ -24,13 +24,7 @@ export const FieldList = ({ activeFields, clear, fields, reorder, toggle }: Prop
     <div className={styles.sidebarWrap}>
       {/* Sidebar columns */}
       <>
-        <div className={styles.columnHeader}>
-          <Trans i18nKey="explore.logs-table-multi-select.selected-fields">Selected fields</Trans>
-          <button onClick={clear} className={styles.columnHeaderButton}>
-            <Trans i18nKey="explore.logs-table-multi-select.reset">Reset</Trans>
-          </button>
-        </div>
-        <ActiveFields activeFields={activeFields} fields={fields} reorder={reorder} toggle={toggle} />
+        <ActiveFields activeFields={activeFields} clear={clear} fields={fields} reorder={reorder} toggle={toggle} />
 
         <div className={styles.columnHeader}>
           <Trans i18nKey="explore.logs-table-multi-select.fields">Fields</Trans>
@@ -52,12 +46,6 @@ function getStyles(theme: GrafanaTheme2) {
       },
       /* Hide scrollbar for Firefox */
       scrollbarWidth: 'none',
-    }),
-    columnHeaderButton: css({
-      appearance: 'none',
-      background: 'none',
-      border: 'none',
-      fontSize: theme.typography.pxToRem(11),
     }),
     columnHeader: css({
       display: 'flex',
