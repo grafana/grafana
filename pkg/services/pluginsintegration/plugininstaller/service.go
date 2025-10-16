@@ -8,15 +8,19 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/dskit/services"
+	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	pluginsappregistry "github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 const ServiceName = "plugin.backgroundinstaller"
@@ -47,6 +51,7 @@ type Service struct {
 	pluginRepo      repo.Service
 	features        featuremgmt.FeatureToggles
 	updateChecker   pluginchecker.PluginUpdateChecker
+	clientRegistry  *pluginsappregistry.ClientRegistry
 	installComplete chan struct{} // closed when all plugins are installed (used for testing)
 }
 
@@ -58,6 +63,7 @@ func ProvideService(
 	pluginRepo repo.Service,
 	features featuremgmt.FeatureToggles,
 	updateChecker pluginchecker.PluginUpdateChecker,
+	clientRegistry *pluginsappregistry.ClientRegistry,
 ) (*Service, error) {
 	once.Do(func() {
 		promReg.MustRegister(installRequestCounter)
@@ -72,6 +78,7 @@ func ProvideService(
 		pluginRepo:      pluginRepo,
 		features:        features,
 		updateChecker:   updateChecker,
+		clientRegistry:  clientRegistry,
 		installComplete: make(chan struct{}),
 	}
 
@@ -82,7 +89,7 @@ func ProvideService(
 
 // IsDisabled disables background installation of plugins.
 func (s *Service) IsDisabled() bool {
-	return len(s.cfg.PreinstallPluginsAsync) == 0
+	return len(s.cfg.PreinstallPluginsAsync)+len(s.cfg.PreinstallPluginsSync) == 0
 }
 
 func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion string, pluginURL string) bool {
@@ -150,15 +157,82 @@ func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting
 	return nil
 }
 
+func (s *Service) getPluginInstallFromAPI(ctx context.Context) ([]setting.InstallPlugin, error) {
+	installClient, err := s.clientRegistry.ClientFor(pluginsv0alpha1.PluginInstallKind())
+	if err != nil {
+		s.log.Error("Failed to get PluginInstall client", "error", err)
+		return nil, err
+	}
+
+	pluginInstalls, err := installClient.List(ctx, "default", resource.ListOptions{})
+	if err != nil {
+		s.log.Error("Failed to list PluginInstall resources", "error", err)
+		return nil, err
+	}
+
+	installPlugins := make([]setting.InstallPlugin, 0, len(pluginInstalls.GetItems()))
+	for _, pluginInstall := range pluginInstalls.GetItems() {
+		installPlugins = append(installPlugins, setting.InstallPlugin{
+			ID:      pluginInstall.GetSpec().(pluginsv0alpha1.PluginInstallSpec).PluginID,
+			Version: pluginInstall.GetSpec().(pluginsv0alpha1.PluginInstallSpec).Version,
+			URL:     pluginInstall.GetSpec().(pluginsv0alpha1.PluginInstallSpec).Url,
+		})
+	}
+
+	return installPlugins, nil
+}
+
+func (s *Service) addInstallsToAPI(ctx context.Context, installs []setting.InstallPlugin) error {
+	installClient, err := s.clientRegistry.ClientFor(pluginsv0alpha1.PluginInstallKind())
+	if err != nil {
+		s.log.Error("Failed to get PluginInstall client", "error", err)
+		return err
+	}
+
+	for _, install := range installs {
+		pluginInstall := &pluginsv0alpha1.PluginInstall{
+			Spec: pluginsv0alpha1.PluginInstallSpec{
+				PluginID: install.ID,
+				Version:  install.Version,
+				Url:      install.URL,
+			},
+		}
+		_, err := installClient.Update(ctx, resource.Identifier{Namespace: "default", Name: install.ID}, pluginInstall, resource.UpdateOptions{})
+		if err != nil {
+			s.log.Error("Failed to create PluginInstall resource", "error", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (s *Service) starting(ctx context.Context) error {
-	if len(s.cfg.PreinstallPluginsSync) > 0 {
-		s.log.Info("Installing plugins", "plugins", s.cfg.PreinstallPluginsSync)
-		if err := s.installPlugins(ctx, s.cfg.PreinstallPluginsSync, true); err != nil {
+	fromAPI, err := s.getPluginInstallFromAPI(ctx)
+	if err != nil {
+		s.log.Error("Failed to get plugin install from API", "error", err)
+	}
+
+	pluginsToInstall := make([]setting.InstallPlugin, 0, len(fromAPI)+len(s.cfg.PreinstallPluginsSync))
+	pluginsToInstall = append(pluginsToInstall, fromAPI...)
+	pluginsToInstall = append(pluginsToInstall, s.cfg.PreinstallPluginsSync...)
+
+	if len(pluginsToInstall) > 0 {
+		s.log.Info("Installing plugins", "plugins", pluginsToInstall)
+		if err := s.installPlugins(ctx, pluginsToInstall, false); err != nil {
 			s.log.Error("Failed to install plugins", "error", err)
 			return err
 		}
 	}
-	s.log.Info("Plugins installed", "plugins", s.cfg.PreinstallPluginsSync)
+
+	pluginsToAdd := append([]setting.InstallPlugin{}, s.cfg.PreinstallPluginsSync...)
+	pluginsToAdd = append(pluginsToAdd, s.cfg.PreinstallPluginsAsync...)
+	if err := s.addInstallsToAPI(ctx, pluginsToAdd); err != nil {
+		s.log.Error("Failed to add installs to API", "error", err)
+		return err
+	}
+
+	s.log.Info("Plugins installed", "plugins", pluginsToInstall)
 	return nil
 }
 

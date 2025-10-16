@@ -1471,7 +1471,7 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginAssetsProvider),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
-		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop(), nil),
 		terminate, errTracker)
 }
 
@@ -1501,7 +1501,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginassets.NewLocalProvider()),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
-		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop(), nil),
 		terminate, errTracker)
 }
 
