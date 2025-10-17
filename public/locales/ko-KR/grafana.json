@@ -4515,7 +4515,8 @@
       "paste-row": "행 붙여넣기",
       "paste-tab": "탭 붙여넣기",
       "un-group-panels": "그룹 해제",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4809,7 +4810,11 @@
       "add-visualization-header": "시각화 추가하여 새 대시보드 시작하기",
       "import-a-dashboard-body": "파일 또는 <1>grafana.com</1>에서 대시보드 가져오기",
       "import-a-dashboard-header": "대시보드 가져오기",
-      "import-dashboard-button": "대시보드 가져오기"
+      "import-dashboard-button": "대시보드 가져오기",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "대시보드 로딩에 실패했습니다."
@@ -5022,6 +5027,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "복사",
         "copy-or-duplicate": "복사 또는 복제",
@@ -5031,7 +5037,10 @@
         "group-layout-disabled": "이 레벨에는 그룹이 존재하지 않습니다",
         "panel-layout": "패널 레이아웃",
         "panel-layout-disabled": "패널 레이아웃 옵션을 변경하려면 행 또는 탭을 선택하세요"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5180,7 +5189,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "이 행을 삭제하면 패널도 모두 삭제됩니다. 정말 계속하시겠어요?",
       "delete-row-title": "행을 삭제하시겠어요?",
@@ -5220,9 +5228,7 @@
         "title-not-unique": "이 제목은 고유하지 않습니다"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "대시보드가 저장되었습니다"
@@ -5312,6 +5318,9 @@
       "delete-tab-title": "탭을 삭제하시겠어요?",
       "delete-tab-yes": "삭제",
       "description": "패널을 가로 탭으로 구성",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "탭",
       "tab": {
         "new": "새 탭",
@@ -7651,6 +7660,7 @@
   },
   "gauge": {
     "category-gauge": "게이지",
+    "category-radial-bar": "",
     "description-min-height": "행 최소 높이(가로 방향)",
     "description-min-width": "열 최소 너비(세로 방향)",
     "description-neutral": "'최소'를 중립점으로 사용하려면 비워둡니다",
@@ -9070,6 +9080,8 @@
       "make-time-range-permanent": "시간 범위를 절대적/영구적으로 설정",
       "move-time-range-back": "과거 시간 범위로 변경",
       "move-time-range-forward": "미래 시간 범위로 변경",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "검색 열기",
       "open-share-embed-drawer": "패널 임베드 공유",
       "open-share-link-drawer": "패널 링크 공유",
@@ -11781,7 +11793,8 @@
       "button-cancelling": "취소 중...",
       "button-previous": "이전",
       "button-submitting": "제출 중…",
-      "error-instance-repository-exists": "인스턴스 리포지토리가 이미 존재합니다"
+      "error-instance-repository-exists": "인스턴스 리포지토리가 이미 존재합니다",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12003,6 +12016,27 @@
       "show-response": "응답 표시"
     },
     "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {

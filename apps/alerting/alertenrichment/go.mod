@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/alerting/alertenrichment
 go 1.25.3
 
 require (
-	github.com/grafana/grafana-app-sdk v0.46.0
+	github.com/grafana/grafana-app-sdk v0.47.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250901080157-a0280d701b28
 	k8s.io/apimachinery v0.34.1
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b
@@ -28,7 +28,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/net v0.45.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
-	google.golang.org/protobuf v1.36.9 // indirect
+	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect

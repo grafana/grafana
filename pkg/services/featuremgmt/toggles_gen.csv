@@ -64,6 +64,7 @@ kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,
 useKubernetesShortURLsAPI,experimental,@grafana/sharing-squad,false,false,true
 kubernetesAlertingRules,experimental,@grafana/alerting-squad,false,true,false
 kubernetesCorrelations,experimental,@grafana/datapro,false,true,false
+kubernetesLogsDrilldown,experimental,@grafana/observability-logs,false,true,false
 dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardSchemaValidationLogging,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -267,6 +268,7 @@ azureResourcePickerUpdates,preview,@grafana/partner-datasources,false,false,true
 prometheusTypeMigration,experimental,@grafana/partner-datasources,false,true,false
 pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,false
 tempoSearchBackendMigration,GA,@grafana/oss-big-tent,false,true,false
-filterOutBotsFromFrontendLogs,experimental,@grafana/plugins-platform-backend,false,false,true
 cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
 cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
+preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
+jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false

@@ -4575,7 +4575,8 @@
       "paste-row": "Вставить строку",
       "paste-tab": "Вставить вкладку",
       "un-group-panels": "Разгруппировать",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4869,7 +4870,11 @@
       "add-visualization-header": "Создание нового дашборда с добавлением визуализации",
       "import-a-dashboard-body": "Импортируйте дашборды из файлов или с <1>grafana.com</1>.",
       "import-a-dashboard-header": "Импорт дашборда",
-      "import-dashboard-button": "Импорт дашборда"
+      "import-dashboard-button": "Импорт дашборда",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Не удалось загрузить дашборд"
@@ -5082,6 +5087,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Копировать",
         "copy-or-duplicate": "Копировать или дублировать",
@@ -5091,7 +5097,10 @@
         "group-layout-disabled": "На этом уровне нет групп",
         "panel-layout": "Расположение панелей",
         "panel-layout-disabled": "Выбрать строку или вкладку для изменения макета панели"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5243,7 +5252,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "Удаление этой строки также приведет к удалению всех панелей. Действительно продолжить?",
       "delete-row-title": "Удалить строку?",
@@ -5283,9 +5291,7 @@
         "title-not-unique": "Заголовок не является уникальным"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Дашборд сохранен"
@@ -5375,6 +5381,9 @@
       "delete-tab-title": "Удалить вкладку?",
       "delete-tab-yes": "Удалить",
       "description": "Организуйте панели в горизонтальные вкладки",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Вкладки",
       "tab": {
         "new": "Новая вкладка",
@@ -7720,6 +7729,7 @@
   },
   "gauge": {
     "category-gauge": "Индикатор",
+    "category-radial-bar": "",
     "description-min-height": "Минимальная высота строки (горизонтальная ориентация)",
     "description-min-width": "Минимальная ширина столбца (вертикальная ориентация)",
     "description-neutral": "Оставить пустым, чтобы использовать мин. как нейтральную точку",
@@ -9139,6 +9149,8 @@
       "make-time-range-permanent": "Сделать временной диапазон абсолютным/постоянным",
       "move-time-range-back": "Переместить временной диапазон назад",
       "move-time-range-forward": "Переместить временной диапазон вперед",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Открыть поиск",
       "open-share-embed-drawer": "Поделиться панелью в виде вложения",
       "open-share-link-drawer": "Поделиться панелью в виде ссылки",
@@ -11901,7 +11913,8 @@
       "button-cancelling": "Отмена...",
       "button-previous": "Назад",
       "button-submitting": "Отправка...",
-      "error-instance-repository-exists": "Репозиторий экземпляров уже существует"
+      "error-instance-repository-exists": "Репозиторий экземпляров уже существует",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12126,6 +12139,27 @@
       "show-response": "Показать ответ"
     },
     "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {

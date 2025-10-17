@@ -299,6 +299,10 @@ export interface FeatureToggles {
   */
   kubernetesCorrelations?: boolean;
   /**
+  * Adds support for Kubernetes logs drilldown
+  */
+  kubernetesLogsDrilldown?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -1200,11 +1204,6 @@ export interface FeatureToggles {
   */
   tempoSearchBackendMigration?: boolean;
   /**
-  * Filter out bots from collecting data for Frontend Observability
-  * @default false
-  */
-  filterOutBotsFromFrontendLogs?: boolean;
-  /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
   */
@@ -1214,4 +1213,13 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsUrls?: boolean;
+  /**
+  * Restrict PanelChrome contents with overflow: hidden;
+  * @default true
+  */
+  preventPanelChromeOverflow?: boolean;
+  /**
+  * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
+  */
+  jaegerEnableGrpcEndpoint?: boolean;
 }

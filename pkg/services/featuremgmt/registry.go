@@ -498,6 +498,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesLogsDrilldown",
+			Description:     "Adds support for Kubernetes logs drilldown",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaObservabilityLogsSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -2081,14 +2088,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:         "filterOutBotsFromFrontendLogs",
-			Description:  "Filter out bots from collecting data for Frontend Observability",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
-			Expression:   "false",
-		},
-		{
 			Name:         "cdnPluginsLoadFirst",
 			Description:  "Prioritize loading plugins from the CDN before other sources",
 			Stage:        FeatureStageExperimental,
@@ -2103,6 +2102,20 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
+		},
+		{
+			Name:         "preventPanelChromeOverflow",
+			Description:  "Restrict PanelChrome contents with overflow: hidden;",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "true",
+		},
+		{
+			Name:        "jaegerEnableGrpcEndpoint",
+			Description: "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
 		},
 	}
 )
