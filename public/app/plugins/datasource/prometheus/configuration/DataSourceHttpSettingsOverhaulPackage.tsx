@@ -162,16 +162,28 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
             azureAuthSettings.setAzureAuthEnabled(options, method === azureAuthId);
           }
 
+          // Clean up auth-specific properties when switching auth methods
+          const updatedJsonData = {
+            ...options.jsonData,
+            azureCredentials: method === azureAuthId ? options.jsonData.azureCredentials : undefined,
+            sigV4Auth: method === sigV4Id,
+            oauthPassThru: method === AuthMethod.OAuthForward,
+          };
+
+          // Clean up SigV4-specific properties when not using SigV4 auth
+          if (method !== sigV4Id) {
+            // Remove common SigV4 properties from jsonData
+            delete updatedJsonData.sigV4Region;
+            delete updatedJsonData.sigV4Service;
+            delete updatedJsonData.sigV4AccessKey;
+            // Note: sigV4SecretKey would be in secureJsonData and is handled separately by the backend
+          }
+
           onOptionsChange({
             ...options,
             basicAuth: method === AuthMethod.BasicAuth,
             withCredentials: method === AuthMethod.CrossSiteCredentials,
-            jsonData: {
-              ...options.jsonData,
-              azureCredentials: method === azureAuthId ? options.jsonData.azureCredentials : undefined,
-              sigV4Auth: method === sigV4Id,
-              oauthPassThru: method === AuthMethod.OAuthForward,
-            },
+            jsonData: updatedJsonData,
           });
         }}
         // If your method is selected pass its id to `selectedMethod`,
