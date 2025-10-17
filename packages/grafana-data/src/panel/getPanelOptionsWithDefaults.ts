@@ -37,7 +37,7 @@ export function getPanelOptionsWithDefaults({
   currentFieldConfig,
   isAfterPluginChange,
 }: Props): OptionDefaults {
-  const optionsWithDefaults = mergeWith({}, plugin.defaults, currentOptions || {}, (objValue, srcValue) => {
+  const optionsWithDefaults = mergeWith({}, plugin.defaults ?? {}, currentOptions || {}, (objValue, srcValue) => {
     if (isArray(srcValue)) {
       return srcValue;
     }
