@@ -97,7 +97,7 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
     return null;
   }
   if (sidebarHeight === 0) {
-    return;
+    return null;
   }
 
   return (
