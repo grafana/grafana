@@ -1,109 +1,184 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
-import { useAsyncRetry } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Icon, ToolbarButton } from '@grafana/ui';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/preferences/v1alpha1';
+import {
+  useGetStarsQuery as useLegacyGetStarsQuery,
+  useStarDashboardMutation as useLegacyStarDashboardMutation,
+  useUnstarDashboardMutation as useLegacyUnstarDashboardMutation,
+} from 'app/api/legacy/user/api';
+import { updateNavIndex } from 'app/core/actions';
 import { contextSrv } from 'app/core/core';
-import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
+import { removeNavIndex } from 'app/core/reducers/navModel';
+import { useDispatch, useSelector } from 'app/types/store';
 
-import { DashboardScene } from '../dashboard-scene/scene/DashboardScene';
-
-const getStarTooltips = () => ({
-  star: t('dashboard.toolbar.mark-favorite', 'Mark as favorite'),
-  unstar: t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite'),
+const getStarTooltips = (title: string) => ({
+  star: t('stars.mark-as-starred', 'Mark "{{title}}" as favorite', {
+    title,
+  }),
+  unstar: t('stars.unmark-as-starred', 'Unmark "{{title}}" as favorite', {
+    title,
+  }),
 });
 
-export type Props = {
+type Props = {
+  title: string;
   group: string;
   kind: string;
-  dashboard: DashboardScene;
+  id: string;
+  onStarChange?: (id: string, isStarred: boolean) => void;
 };
 
-export function StarToolbarButtonApiServer({ group, kind, id }: Pick<Props, 'group' | 'kind'> & { id: string }) {
-  const name = `user-${contextSrv.user.uid}`;
-  const stars = useListStarsQuery({ fieldSelector: `metadata.name=${name}` });
+type StarItemArgs = {
+  id: string;
+  /** Title of the item - this is displayed in the nav */
+  title: string;
+};
+
+/** Star or unstar an item */
+const useStarItem = (group: string, kind: string) => {
   const [addStar] = useAddStarMutation();
   const [removeStar] = useRemoveStarMutation();
 
-  const isStarred = useMemo(() => {
-    const starredItems = stars.data?.items || [];
-    if (!starredItems.length) {
-      return false;
-    }
-    const matchingInfo = starredItems[0]?.spec.resource.find((info) => info.group === group && info.kind === kind);
-    return matchingInfo ? matchingInfo.names.includes(id) : false;
-  }, [stars.data?.items, id, group, kind]);
+  const [addStarLegacy] = useLegacyStarDashboardMutation();
+  const [removeStarLegacy] = useLegacyUnstarDashboardMutation();
 
-  const handleStarToggle = () => {
-    const mutationArgs = { name, group, kind, id };
-    if (isStarred) {
-      removeStar(mutationArgs);
-    } else {
-      addStar(mutationArgs);
-    }
-  };
+  const updateStarred = useUpdateNavStarredItems();
 
-  // Do not render the icon until data is loaded to make sure correct icon is displayed
-  if (stars.isLoading) {
-    return null;
+  if (config.featureToggles.starsFromAPIServer) {
+    return async ({ id, title }: StarItemArgs, newStarredState: boolean) => {
+      const name = `user-${contextSrv.user.uid}`;
+      const mutationArgs = { id, name, group, kind };
+      if (newStarredState) {
+        await addStar(mutationArgs);
+      } else {
+        await removeStar(mutationArgs);
+      }
+
+      updateStarred({ id, title }, newStarredState);
+    };
   }
 
-  const tooltips = getStarTooltips();
+  return async ({ id, title }: StarItemArgs, newStarredState: boolean) => {
+    if (newStarredState) {
+      await addStarLegacy({ id });
+    } else {
+      await removeStarLegacy({ id });
+    }
 
+    updateStarred({ id, title }, newStarredState);
+  };
+};
+
+/**
+ * Get starred items from legacy or app platform API
+ */
+const useStarredItems = (group: string, kind: string) => {
+  const name = `user-${contextSrv.user.uid}`;
+  const appPlatform = config.featureToggles.starsFromAPIServer;
+  const legacyResponse = useLegacyGetStarsQuery(appPlatform ? skipToken : undefined);
+  const appPlatformResponse = useListStarsQuery(!appPlatform ? skipToken : { fieldSelector: `metadata.name=${name}` });
+
+  const appPlatformStarredItems = useMemo(() => {
+    const { data } = appPlatformResponse;
+    if (data) {
+      const starredItems = appPlatformResponse.data?.items || [];
+      if (!starredItems.length) {
+        return [];
+      }
+      return starredItems[0]?.spec.resource.find((info) => info.group === group && info.kind === kind)?.names || [];
+    }
+    return undefined;
+  }, [appPlatformResponse, group, kind]);
+
+  return appPlatform
+    ? {
+        ...appPlatformResponse,
+        data: appPlatformStarredItems,
+      }
+    : legacyResponse;
+};
+
+/**
+ * Update the nav menu with starred items
+ */
+const useUpdateNavStarredItems = () => {
+  const dispatch = useDispatch();
+  const navIndex = useSelector((state) => state.navIndex);
+  const { starred: starredNavItem } = navIndex;
+
+  return function ({ id, title }: { id: string; title: string }, isStarred: boolean) {
+    const url = '/d/' + id;
+    dispatch(setStarred({ id, title, url, isStarred }));
+
+    const navID = ID_PREFIX + id;
+
+    if (isStarred) {
+      starredNavItem.children?.push({
+        id: navID,
+        text: title,
+        url: url ?? '',
+        parentItem: starredNavItem,
+      });
+    } else {
+      dispatch(removeNavIndex(navID));
+      const indexToRemove = starredNavItem.children?.findIndex((element) => element.id === navID);
+      if (indexToRemove) {
+        starredNavItem.children?.splice(indexToRemove, 1);
+      }
+    }
+    dispatch(updateNavIndex(starredNavItem));
+  };
+};
+
+export function StarToolbarButton({ title, group, kind, id, onStarChange }: Props) {
+  const tooltips = getStarTooltips(title);
+
+  const handleItemStar = useStarItem(group, kind);
+
+  const { data: stars, isLoading } = useStarredItems(group, kind);
+
+  const isStarred = useMemo(() => {
+    const starredItems = stars || [];
+
+    return starredItems.includes(id);
+  }, [id, stars]);
+
+  const handleStarToggle = async () => {
+    await handleItemStar({ id, title }, !isStarred);
+    onStarChange?.(id, !isStarred);
+  };
+
+  const iconProps = (() => {
+    if (isLoading) {
+      return { name: 'spinner', type: 'default' } as const;
+    }
+    if (isStarred) {
+      return { name: 'favorite', type: 'mono' } as const;
+    }
+    return { name: 'star', type: 'default' } as const;
+  })();
+
+  const tooltip = (() => {
+    if (isLoading) {
+      return undefined;
+    }
+    return isStarred ? tooltips.unstar : tooltips.star;
+  })();
+
+  const icon = <Icon {...iconProps} size="lg" />;
   return (
     <ToolbarButton
-      tooltip={isStarred ? tooltips.unstar : tooltips.star}
-      icon={<Icon name={isStarred ? 'favorite' : 'star'} size="lg" type={isStarred ? 'mono' : 'default'} />}
+      disabled={isLoading}
+      tooltip={tooltip}
+      icon={icon}
       data-testid={selectors.components.NavToolbar.markAsFavorite}
       onClick={handleStarToggle}
     />
   );
-}
-
-function StarToolbarButtonLegacy({ dashboard }: { dashboard: Props['dashboard'] }) {
-  const { meta, uid: uidFromState } = dashboard.useState();
-  // uidFromState is used for legacy dashboards (kubernetesDashboards toggle is off)
-  const uid = meta.uid || meta.k8s?.name || uidFromState;
-  const tooltips = getStarTooltips();
-
-  const { value: starredUids, retry } = useAsyncRetry(async () => {
-    return getBackendSrv().get('api/user/stars');
-  });
-
-  if (!starredUids || !uid) {
-    return null;
-  }
-
-  const isStarred = starredUids?.includes(uid);
-  return (
-    <ToolbarButton
-      tooltip={isStarred ? tooltips.unstar : tooltips.star}
-      icon={<Icon name={isStarred ? 'favorite' : 'star'} size="lg" type={isStarred ? 'mono' : 'default'} />}
-      data-testid={selectors.components.NavToolbar.markAsFavorite}
-      onClick={async () => {
-        DashboardInteractions.toolbarFavoritesClick();
-        await dashboard.onStarDashboard(isStarred);
-        retry();
-      }}
-    />
-  );
-}
-
-export function StarToolbarButton({ dashboard, group, kind }: Props) {
-  const state = dashboard.useState();
-  // In legacy storage dashboard uid is stored in state.uid
-  const uid = state.meta.uid || state.uid;
-
-  if (!contextSrv.user.uid || !uid?.length) {
-    return null;
-  }
-
-  if (config.featureToggles.starsFromAPIServer) {
-    return <StarToolbarButtonApiServer group={group} kind={kind} id={uid} />;
-  }
-
-  return <StarToolbarButtonLegacy dashboard={dashboard} />;
 }
