@@ -17,7 +17,7 @@ import (
 )
 
 func (j *JaegerClient) GrpcServices() ([]string, error) {
-	var response GrpcServicesResponse
+	var response types.GrpcServicesResponse
 	services := []string{}
 
 	u, err := url.JoinPath(j.url, "/api/v3/services")
@@ -53,7 +53,7 @@ func (j *JaegerClient) GrpcServices() ([]string, error) {
 }
 
 func (j *JaegerClient) GrpcOperations(s string) ([]string, error) {
-	var response GrpcOperationsResponse
+	var response types.GrpcOperationsResponse
 	operations := []string{}
 
 	u, err := url.JoinPath(j.url, "/api/v3/operations")
