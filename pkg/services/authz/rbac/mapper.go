@@ -181,7 +181,8 @@ func newFolderTranslation() translation {
 func NewMapperRegistry() MapperRegistry {
 	mapper := mapper(map[string]map[string]translation{
 		"dashboard.grafana.app": {
-			"dashboards": newDashboardTranslation(),
+			"dashboards":    newDashboardTranslation(),
+			"librarypanels": newResourceTranslation("library.panels", "uid", true, false),
 		},
 		"folder.grafana.app": {
 			"folders": newFolderTranslation(),
