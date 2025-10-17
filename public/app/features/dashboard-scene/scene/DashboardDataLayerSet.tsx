@@ -1,9 +1,12 @@
+import React from 'react';
+
 import {
   SceneDataLayerProviderState,
   SceneDataLayerProvider,
   SceneDataLayerSetBase,
   SceneComponentProps,
 } from '@grafana/scenes';
+import { AnnotationQueryPlacement } from '@grafana/schema/dist/esm/index.gen';
 
 import { AlertStatesDataLayer } from './AlertStatesDataLayer';
 
@@ -16,6 +19,10 @@ export class DashboardDataLayerSet
   extends SceneDataLayerSetBase<DashboardDataLayerSetState>
   implements SceneDataLayerProvider
 {
+  public static Component: React.ComponentType<
+    { placement?: AnnotationQueryPlacement } & SceneComponentProps<DashboardDataLayerSet>
+  > = DashboardDataLayerSetRenderer;
+
   public constructor(state: Partial<DashboardDataLayerSetState>) {
     super({
       ...state,
@@ -56,16 +63,16 @@ export class DashboardDataLayerSet
 
     return layers;
   }
+}
 
-  public static Component = ({ model }: SceneComponentProps<DashboardDataLayerSet>) => {
-    const { annotationLayers } = model.useState();
+function DashboardDataLayerSetRenderer({ model }: SceneComponentProps<DashboardDataLayerSet>) {
+  const { annotationLayers } = model.useState();
 
-    return (
-      <>
-        {annotationLayers.map((layer) => (
-          <layer.Component model={layer} key={layer.state.key} />
-        ))}
-      </>
-    );
-  };
+  return (
+    <>
+      {annotationLayers.map((layer) => (
+        <layer.Component model={layer} key={layer.state.key} />
+      ))}
+    </>
+  );
 }

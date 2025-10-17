@@ -117,6 +117,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),
       isHidden: Boolean(annotation.spec.hide),
+      placement: annotation.spec.placement,
     };
 
     return new DashboardAnnotationsDataLayer(layerState);
