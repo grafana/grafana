@@ -1,20 +1,15 @@
 import { take } from 'lodash';
-import { SyntheticEvent, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useThrottle } from 'react-use';
 
 import { InterpolateFunction, PanelProps, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { useStyles2, IconButton, ScrollContainer, Box, Text, EmptyState, Link } from '@grafana/ui';
+import { useStyles2, ScrollContainer, Box, Text, EmptyState, Link } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
-import { removeNavIndex, updateNavIndex } from 'app/core/reducers/navModel';
 import impressionSrv from 'app/core/services/impression_srv';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { DashboardQueryResult, LocationInfo, QueryResponse, SearchQuery } from 'app/features/search/service/types';
-import { StarToolbarButtonApiServer } from 'app/features/stars/StarToolbarButton';
-import { useDispatch, useSelector } from 'app/types/store';
+import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 
 import { Options } from './panelcfg.gen';
 import { getStyles } from './styles';
@@ -121,8 +116,6 @@ const collator = new Intl.Collator();
 export function DashList(props: PanelProps<Options>) {
   const [dashboards, setDashboards] = useState(new Map<string, Dashboard>());
   const [foldersTitleMap, setFoldersTitleMap] = useState<Record<string, LocationInfo>>({});
-  const dispatch = useDispatch();
-  const navIndex = useSelector((state) => state.navIndex);
 
   const throttledRenderCount = useThrottle(props.renderCounter, 5000);
 
@@ -139,35 +132,6 @@ export function DashList(props: PanelProps<Options>) {
       });
     }
   }, [props.options.showFolderNames, dashboards]);
-
-  const toggleDashboardStar = async (e: SyntheticEvent, dash: Dashboard) => {
-    const { uid, name, url } = dash;
-    e.preventDefault();
-    e.stopPropagation();
-
-    const isStarred = await getDashboardSrv().starDashboard(dash.uid, Boolean(dash.isStarred));
-    const updatedDashboards = new Map(dashboards);
-    updatedDashboards.set(dash?.uid ?? '', { ...dash, isStarred });
-    setDashboards(updatedDashboards);
-    dispatch(setStarred({ id: uid ?? '', title: name, url, isStarred }));
-
-    const starredNavItem = navIndex.starred;
-    if (isStarred) {
-      starredNavItem.children?.push({
-        id: ID_PREFIX + uid,
-        text: name,
-        url: url ?? '',
-        parentItem: starredNavItem,
-      });
-    } else {
-      dispatch(removeNavIndex(ID_PREFIX + uid));
-      const indexToRemove = starredNavItem.children?.findIndex((element) => element.id === ID_PREFIX + uid);
-      if (indexToRemove) {
-        starredNavItem.children?.splice(indexToRemove, 1);
-      }
-    }
-    dispatch(updateNavIndex(starredNavItem));
-  };
 
   const [starredDashboards, recentDashboards, searchedDashboards] = useMemo(() => {
     const dashboardList = [...dashboards.values()];
@@ -215,6 +179,12 @@ export function DashList(props: PanelProps<Options>) {
     },
   ];
 
+  const handleStarChange = (id: string, isStarred: boolean) => {
+    const updatedDashboards = new Map(dashboards);
+    updatedDashboards.set(id, { ...dashboards.get(id)!, isStarred });
+    setDashboards(updatedDashboards);
+  };
+
   const css = useStyles2(getStyles);
   const urlParams = useDashListUrlParams(props);
 
@@ -223,12 +193,6 @@ export function DashList(props: PanelProps<Options>) {
       {dashboards.map((dash) => {
         let url = dash.url + urlParams;
         url = getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
-        const markAsStarredText = t('panel.dashlist.mark-as-starred', 'Mark "{{title}}" as favorite', {
-          title: dash.title,
-        });
-        const unmarkAsStarredText = t('panel.dashlist.unmark-as-starred', 'Unmark "{{title}}" as favorite', {
-          title: dash.title,
-        });
 
         const locationInfo = showFolderNames && dash.location ? foldersTitleMap[dash.location] : undefined;
         return (
@@ -242,16 +206,13 @@ export function DashList(props: PanelProps<Options>) {
                   </Text>
                 )}
               </Box>
-              {config.featureToggles.starsFromAPIServer ? (
-                <StarToolbarButtonApiServer group="dashboard.grafana.app" kind="Dashboard" id={dash.uid ?? ''} />
-              ) : (
-                <IconButton
-                  tooltip={dash.isStarred ? unmarkAsStarredText : markAsStarredText}
-                  name={dash.isStarred ? 'favorite' : 'star'}
-                  iconType={dash.isStarred ? 'mono' : 'default'}
-                  onClick={(e) => toggleDashboardStar(e, dash)}
-                />
-              )}
+              <StarToolbarButton
+                title={dash.name}
+                group="dashboard.grafana.app"
+                kind="Dashboard"
+                id={dash.uid}
+                onStarChange={handleStarChange}
+              />
             </div>
           </li>
         );
