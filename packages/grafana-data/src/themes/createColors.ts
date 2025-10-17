@@ -99,9 +99,9 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgba(${this.whiteBase}, 0.12)`,
-    medium: `rgba(${this.whiteBase}, 0.2)`,
-    strong: `rgba(${this.whiteBase}, 0.30)`,
+    weak: '#32353b',
+    medium: '#42444a',
+    strong: '#56585f',
   };
 
   text = {
@@ -119,12 +119,12 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: `rgba(${this.whiteBase}, 0.10)`,
-    shade: `rgba(${this.whiteBase}, 0.14)`,
+    main: '#2e3136',
+    shade: '#37393E',
     transparent: `rgba(${this.whiteBase}, 0.08)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
-    border: `rgba(${this.whiteBase}, 0.08)`,
+    border: '#3D4045',
   };
 
   info = this.primary;
@@ -152,13 +152,13 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   action = {
-    hover: `rgba(${this.whiteBase}, 0.16)`,
-    selected: `rgba(${this.whiteBase}, 0.12)`,
+    hover: '#3A3D43',
+    selected: '#32353B',
     selectedBorder: palette.orangeDarkMain,
-    focus: `rgba(${this.whiteBase}, 0.16)`,
+    focus: '#3A3D43',
     hoverOpacity: 0.08,
     disabledText: this.text.disabled,
-    disabledBackground: `rgba(${this.whiteBase}, 0.04)`,
+    disabledBackground: '#212427',
     disabledOpacity: 0.38,
   };
 
@@ -192,14 +192,14 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   border = {
-    weak: `rgba(${this.blackBase}, 0.12)`,
-    medium: `rgba(${this.blackBase}, 0.3)`,
-    strong: `rgba(${this.blackBase}, 0.4)`,
+    weak: '#e7e7e8',
+    medium: '#c4c5c6',
+    strong: '#afb1b2',
   };
 
   secondary = {
-    main: `rgba(${this.blackBase}, 0.08)`,
-    shade: `rgba(${this.blackBase}, 0.15)`,
+    main: '#F0F0F0',
+    shade: '#E2E2E3',
     transparent: `rgba(${this.blackBase}, 0.08)`,
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
@@ -235,12 +235,12 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   action = {
-    hover: `rgba(${this.blackBase}, 0.12)`,
-    selected: `rgba(${this.blackBase}, 0.08)`,
+    hover: '#E7E7E8',
+    selected: '#F0F0F0',
     selectedBorder: palette.orangeLightMain,
     hoverOpacity: 0.08,
-    focus: `rgba(${this.blackBase}, 0.12)`,
-    disabledBackground: `rgba(${this.blackBase}, 0.04)`,
+    focus: '#E7E7E8',
+    disabledBackground: '#F7F7F8',
     disabledText: this.text.disabled,
     disabledOpacity: 0.38,
   };
