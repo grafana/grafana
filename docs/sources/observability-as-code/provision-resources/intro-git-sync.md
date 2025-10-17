@@ -42,7 +42,7 @@ Git Sync only works with specific folders for the moment. Full-instance sync is 
 
 {{< /admonition >}}
 
-Git Sync is bidirectional and works both with changes done directly in GitHub as well as in the Grafana UI. 
+Git Sync is bidirectional and works both with changes done directly in GitHub as well as in the Grafana UI.
 
 ### Provisioning folder
 
