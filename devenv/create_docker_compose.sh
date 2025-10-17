@@ -9,14 +9,16 @@ blocks_dir="${SCRIPT_DIR}/docker/blocks"
 docker_dir="${SCRIPT_DIR}/docker"
 template_dir="${SCRIPT_DIR}/templates"
 
-grafana_config_file=conf.tmp
+grafana_config_file="${SCRIPT_DIR}/conf.tmp"
 grafana_config=config
 
 compose_header_file="${SCRIPT_DIR}/docker/compose_header.yml"
 compose_volume_section_file="${SCRIPT_DIR}/docker/compose_volume_section.yml"
 compose_volume_section_create_flag=docker_volume_create_true
-compose_file=docker-compose.yaml
-env_file=.env
+compose_file="${SCRIPT_DIR}/docker-compose.yaml"
+compose_file_name="docker-compose.yaml"
+env_file="${SCRIPT_DIR}/.env"
+env_file_name=".env"
 
 if [ "$#" == 0 ]; then
     blocks=`ls $blocks_dir`
@@ -54,16 +56,16 @@ for dir in $@; do
         echo "" >> $grafana_config_file
     fi
 
-    if [ -e $current_dir/$compose_file ]; then
-        echo "Adding $current_dir/$compose_file to $compose_file"
-        cat $current_dir/$compose_file >> $compose_file
+    if [ -e $current_dir/$compose_file_name ]; then
+        echo "Adding $current_dir/$compose_file_name to $compose_file"
+        cat $current_dir/$compose_file_name >> $compose_file
         echo "" >> $compose_file
     fi
 
-    if [ -e $current_dir/$env_file ]; then
-        echo "Adding $current_dir/$env_file to .env"
-        cat $current_dir/$env_file >> .env
-        echo "" >> .env
+    if [ -e $current_dir/$env_file_name ]; then
+        echo "Adding $current_dir/$env_file_name to $env_file"
+        cat $current_dir/$env_file_name >> $env_file
+        echo "" >> $env_file
     fi
 done
 

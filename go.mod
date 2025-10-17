@@ -97,8 +97,8 @@ require (
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
-	github.com/grafana/grafana-app-sdk v0.46.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-app-sdk/logging v0.45.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.47.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk/logging v0.46.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.2.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.3.1 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.9.0 // @grafana/grafana-operator-experience-squad
@@ -204,15 +204,15 @@ require (
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // @grafana/alerting-backend
 	golang.org/x/mod v0.28.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/net v0.45.0 // @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.30.0 // @grafana/identity-access-team
+	golang.org/x/oauth2 v0.31.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.17.0 // @grafana/alerting-backend
 	golang.org/x/text v0.30.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.13.0 // @grafana/grafana-backend-group
 	golang.org/x/tools v0.37.0 // indirect; @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.16.0 // @grafana/oss-big-tent
 	google.golang.org/api v0.235.0 // @grafana/grafana-backend-group
-	google.golang.org/grpc v1.75.1 // @grafana/plugins-platform-backend
-	google.golang.org/protobuf v1.36.9 // @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.76.0 // @grafana/plugins-platform-backend
+	google.golang.org/protobuf v1.36.10 // @grafana/plugins-platform-backend
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v2 v2.4.0 // @grafana/alerting-backend
