@@ -11,7 +11,7 @@ import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../../LogDetailsBody';
-import { getDisplayedFieldsForLogs } from '../../otel/formats';
+import { getSuggestedFieldsForLogs } from '../../otel/formats';
 import { useLogListContext } from '../LogListContext';
 import { reportInteractionOnce } from '../analytics';
 import { LogListModel } from '../processing';
@@ -355,7 +355,7 @@ function getSuggestedFields(logs: LogListModel[], displayedFields: string[], def
     },
   }));
   if (config.featureToggles.otelLogsFormatting) {
-    getDisplayedFieldsForLogs(logs).forEach((field) => {
+    getSuggestedFieldsForLogs(logs).forEach((field) => {
       suggestedFields.push({
         name: field,
         stats: {
