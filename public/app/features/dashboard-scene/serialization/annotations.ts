@@ -5,7 +5,6 @@ import { getRuntimePanelDataSource } from './layoutSerializers/utils';
 
 export function transformV1ToV2AnnotationQuery(
   annotation: AnnotationQuery,
-
   dsType: string,
   dsUID?: string,
   // Overrides are used to provide properties based on scene's annotations data layer object state

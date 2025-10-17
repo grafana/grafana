@@ -614,12 +614,9 @@ func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOve
 	if yOverride != nil {
 		y = *yOverride
 	} else {
-		// Apply frontend-style position adjustments
-		// This matches the frontend scene processing behavior
-		if y == 0 {
-			// Frontend moves panels from y=0 to y=9 in some cases
-			y = 9
-		}
+		// Frontend scene processing normalizes positions to 0 for simple layouts
+		// Don't apply position adjustments - let frontend handle position calculations
+		// Keep original y position as-is to match frontend behavior
 	}
 
 	item := dashv2alpha1.DashboardGridLayoutItemKind{
@@ -1486,14 +1483,6 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 				Uid:  &datasourceUID,
 			}
 		}
-	} else {
-		// If no datasource defined in annotation, use "grafana" as default
-		// Frontend round-trip behavior: annotations without datasource fall back to default "grafana"
-		datasourceType = "grafana"
-		// Create datasource ref with type only (no UID) to pass type to v2beta1 conversion
-		datasourceRef = &dashv2alpha1.DashboardDataSourceRef{
-			Type: &datasourceType,
-		}
 	}
 
 	// Build the query from target
@@ -1655,9 +1644,6 @@ func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *das
 		// If we have a UID, use it to get the correct type from the datasource service
 		if queryDatasourceUID != "" {
 			queryDatasourceType = getDatasourceTypeByUID(queryDatasourceUID)
-		} else if queryDatasourceType == "" {
-			// If no UID and no type, use default
-			queryDatasourceType = *getDefaultDatasourceRef().Type
 		}
 	} else if panelDatasource != nil {
 		if panelDatasource.Type != nil {
@@ -1666,9 +1652,6 @@ func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *das
 		if panelDatasource.Uid != nil {
 			queryDatasourceUID = *panelDatasource.Uid
 		}
-	} else {
-		queryDatasourceType = *getDefaultDatasourceRef().Type
-		queryDatasourceUID = *getDefaultDatasourceRef().Uid
 	}
 
 	// Build query spec by excluding known fields

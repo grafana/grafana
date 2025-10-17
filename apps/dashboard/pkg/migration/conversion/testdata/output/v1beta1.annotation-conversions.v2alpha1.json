@@ -147,9 +147,6 @@
       {
         "kind": "AnnotationQuery",
         "spec": {
-          "datasource": {
-            "type": "grafana"
-          },
           "query": {
             "kind": "DataQuery",
             "spec": {
@@ -262,9 +259,6 @@
       {
         "kind": "AnnotationQuery",
         "spec": {
-          "datasource": {
-            "type": "grafana"
-          },
           "query": {
             "kind": "DataQuery",
             "spec": {}
@@ -287,7 +281,7 @@
     "layout": {
       "kind": "GridLayout",
       "spec": {
-        "items": []
+        "items": null
       }
     },
     "links": [],

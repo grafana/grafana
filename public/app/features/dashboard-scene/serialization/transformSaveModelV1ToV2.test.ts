@@ -1,17 +1,15 @@
 import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
-import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
-
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from './transformSaveModelToScene';
-import { transformSceneToSaveModelSchemaV2, getDefaultDataSourceRef } from './transformSceneToSaveModelSchemaV2';
+import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
 // Mock the config to provide datasource information
 jest.mock('@grafana/runtime', () => {
   const mockConfig = {
     ...jest.requireActual('@grafana/runtime').config,
-    defaultDatasource: '-- Grafana --',
+    defaultDatasource: 'default-ds-uid',
     datasources: {
       '-- Grafana --': {
         type: 'grafana',
@@ -70,7 +68,7 @@ jest.mock('@grafana/runtime', () => {
     },
     featureToggles: {
       dashboardNewLayouts: true,
-      kubernetesDashboards: false,
+      kubernetesDashboards: true,
       unifiedAlertingEnabled: true,
       scopeFilters: false,
       reloadDashboardsOnParamsChange: false,
@@ -184,8 +182,6 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
           canStar: false,
           canAdmin: false,
           isSnapshot: false,
-          hasAcl: false,
-          isFolder: false,
           provisioned: false,
           version: 1,
         },
@@ -198,7 +194,7 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       expect(backendOutputAfterLoadedByScene).toBeDefined();
 
       // Compare only the spec structures - this is the core transformation
-      expect(frontendOutput).toEqual(backendOutputAfterLoadedByScene);
+      expect(backendOutputAfterLoadedByScene).toEqual(frontendOutput);
     });
   });
 });

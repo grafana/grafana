@@ -154,9 +154,8 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "grafana",
+            "group": "",
             "version": "v0",
-            "datasource": {},
             "spec": {
               "expr": "static_annotation_query",
               "refId": "Anno"
@@ -272,9 +271,8 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "grafana",
+            "group": "",
             "version": "v0",
-            "datasource": {},
             "spec": {}
           },
           "enable": false,

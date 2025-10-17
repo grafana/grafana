@@ -12,9 +12,6 @@
       {
         "kind": "AnnotationQuery",
         "spec": {
-          "datasource": {
-            "type": "grafana"
-          },
           "query": {
             "kind": "DataQuery",
             "spec": {
@@ -51,10 +48,6 @@
                       "kind": "DataQuery",
                       "spec": {}
                     },
-                    "datasource": {
-                      "type": "prometheus",
-                      "uid": "default-ds-uid"
-                    },
                     "refId": "A",
                     "hidden": false
                   }
@@ -81,21 +74,7 @@
     "layout": {
       "kind": "GridLayout",
       "spec": {
-        "items": [
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "x": 0,
-              "y": 9,
-              "width": 12,
-              "height": 8,
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-1"
-              }
-            }
-          }
-        ]
+        "items": null
       }
     },
     "links": [

@@ -14,9 +14,8 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "grafana",
+            "group": "",
             "version": "v0",
-            "datasource": {},
             "spec": {
               "refId": "Anno"
             }
@@ -49,11 +48,8 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "prometheus",
+                      "group": "",
                       "version": "v0",
-                      "datasource": {
-                        "name": "default-ds-uid"
-                      },
                       "spec": {}
                     },
                     "refId": "A",
@@ -88,7 +84,7 @@
             "kind": "GridLayoutItem",
             "spec": {
               "x": 0,
-              "y": 9,
+              "y": 0,
               "width": 12,
               "height": 8,
               "element": {
