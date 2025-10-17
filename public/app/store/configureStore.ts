@@ -6,6 +6,7 @@ import { notificationsAPIv0alpha1, rulesAPIv0alpha1 } from '@grafana/alerting/un
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { preferencesAPIv1alpha1 } from 'app/api/clients/preferences/v1alpha1';
 import { shortURLAPIv1alpha1 } from 'app/api/clients/shorturl/v1alpha1';
+import { legacyUserAPI } from 'app/api/legacy/user/api';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
@@ -53,6 +54,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         // other Grafana core APIs
         publicDashboardApi.middleware,
         browseDashboardsAPI.middleware,
+        legacyUserAPI.middleware,
         cloudMigrationAPI.middleware,
         userPreferencesAPI.middleware,
         iamAPIv0alpha1.middleware,
