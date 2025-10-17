@@ -2776,6 +2776,24 @@
     },
     {
       "metadata": {
+        "name": "onlyStoreActionSets",
+        "resourceVersion": "1759844046154",
+        "creationTimestamp": "2025-10-07T13:24:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-07 13:34:06.15476 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "otelLogsFormatting",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-07-16T15:42:14Z"

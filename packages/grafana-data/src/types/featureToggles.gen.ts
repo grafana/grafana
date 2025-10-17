@@ -1213,4 +1213,9 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsUrls?: boolean;
+  /**
+  * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
+  * @default true
+  */
+  onlyStoreActionSets?: boolean;
 }
