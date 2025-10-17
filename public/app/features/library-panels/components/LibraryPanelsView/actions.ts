@@ -1,4 +1,4 @@
-import { AnyAction } from '@reduxjs/toolkit';
+import { Action } from '@reduxjs/toolkit';
 import { Dispatch } from 'react';
 import { from, merge, of, Subscription, timer } from 'rxjs';
 import { catchError, finalize, mapTo, mergeMap, share, takeUntil } from 'rxjs/operators';
@@ -7,7 +7,7 @@ import { deleteLibraryPanel as apiDeleteLibraryPanel, getLibraryPanels } from '.
 
 import { initialLibraryPanelsViewState, initSearch, searchCompleted } from './reducer';
 
-type SearchDispatchResult = (dispatch: Dispatch<AnyAction>, abortController?: AbortController) => void;
+type SearchDispatchResult = (dispatch: Dispatch<Action>, abortController?: AbortController) => void;
 
 interface SearchArgs {
   perPage: number;
@@ -73,10 +73,9 @@ export function searchForLibraryPanels(args: SearchArgs): SearchDispatchResult {
 }
 
 export function deleteLibraryPanel(uid: string, args: SearchArgs) {
-  return async function (dispatch: Dispatch<AnyAction>) {
+  return async function (dispatch: Dispatch<Action>) {
     try {
       await apiDeleteLibraryPanel(uid);
-      // No need for abort controller - this is a one-time search after delete
       searchForLibraryPanels(args)(dispatch);
     } catch (e) {
       console.error(e);
@@ -84,15 +83,11 @@ export function deleteLibraryPanel(uid: string, args: SearchArgs) {
   };
 }
 
-export function asyncDispatcher(dispatch: Dispatch<AnyAction>) {
-  return function (action: AnyAction | SearchDispatchResult | Function, abortController?: AbortController) {
-    if (!(action instanceof Function)) {
-      // Plain action
-      dispatch(action);
-      return;
+export function asyncDispatcher(dispatch: Dispatch<Action>) {
+  return function (action: Action | SearchDispatchResult | Function, abortController?: AbortController) {
+    if (action instanceof Function) {
+      return action(dispatch, abortController);
     }
-    // Function action - pass abort controller if provided (search with cancellation)
-    // or just dispatch (delete, or search without cancellation)
-    return action(dispatch, abortController);
+    return dispatch(action);
   };
 }
