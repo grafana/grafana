@@ -45,8 +45,15 @@ export function ThresholdsBar({
 
   for (let i = 1; i < thresholds.length; i++) {
     const threshold = thresholds[i];
-    const valueDeg = ((threshold.value - min) / (max - min)) * angleRange;
-    const lengthDeg = valueDeg - currentStart + startAngle;
+    let valueDeg = ((threshold.value - min) / (max - min)) * angleRange;
+
+    if (valueDeg > angleRange) {
+      valueDeg = angleRange;
+    } else if (valueDeg < 0) {
+      valueDeg = 0;
+    }
+
+    let lengthDeg = valueDeg - currentStart + startAngle;
 
     paths.push(
       <RadialArcPath

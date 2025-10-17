@@ -1213,4 +1213,9 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsUrls?: boolean;
+  /**
+  * Enable new gauge visualization
+  * @default false
+  */
+  newGauge?: boolean;
 }
