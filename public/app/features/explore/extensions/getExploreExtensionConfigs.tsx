@@ -27,18 +27,7 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
         targets: [PluginExtensionPoints.ExploreToolbarAction],
         icon: 'apps',
         category: 'Dashboards',
-        configure: () => {
-          const canAddPanelToDashboard =
-            contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
-            contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
-
-          // hide option if user has insufficient permissions
-          if (!canAddPanelToDashboard) {
-            return undefined;
-          }
-
-          return {};
-        },
+        configure: configureAddToDashboard,
         onClick: (_, { context, openModal }) => {
           openModal({
             title: getAddToDashboardTitle(),
@@ -71,18 +60,7 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
         targets: ['grafana-metricsdrilldown-app/add-to-dashboard/v1'],
         icon: 'apps',
         category: 'Dashboards',
-        configure: () => {
-          const canAddPanelToDashboard =
-            contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
-            contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
-
-          // hide option if user has insufficient permissions
-          if (!canAddPanelToDashboard) {
-            return undefined;
-          }
-
-          return {};
-        },
+        configure: configureAddToDashboard,
         onClick: (_, { context, openModal }) => {
           const panelData = context?.panelData;
 
@@ -105,3 +83,16 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
     return [];
   }
 }
+
+const configureAddToDashboard = () => {
+  const canAddPanelToDashboard =
+    contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
+    contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
+
+  // hide option if user has insufficient permissions
+  if (!canAddPanelToDashboard) {
+    return undefined;
+  }
+
+  return {};
+};
