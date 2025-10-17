@@ -19,6 +19,10 @@ const (
 	// AlertRuleCacheTTL defines how long to cache alert rules (5 minutes)
 	// Since we invalidate on CUD operations, we can afford a longer TTL
 	AlertRuleCacheTTL = 5 * time.Minute
+
+	// uidIndexChunkSize is the number of UIDs stored per index chunk
+	// With ~20 char UIDs, 5000 UIDs = ~100KB raw, well under Redis 64KB limit after msgpack
+	uidIndexChunkSize = 5000
 )
 
 // AlertRuleCache is an abstraction for caching alert rules using a two-tier approach:
@@ -151,35 +155,76 @@ func (c *remoteAlertRuleCache) GetLiteRules(ctx context.Context, orgID int64) ([
 		return nil, false
 	}
 
-	// First, get the index of UIDs for this org
-	indexKey := fmt.Sprintf("alert_rules:org:%d:index", orgID)
-	indexData, err := c.remoteCache.Get(ctx, indexKey)
+	// First, get the chunk count
+	chunkCountKey := fmt.Sprintf("alert_rules:org:%d:index:count", orgID)
+	chunkCountData, err := c.remoteCache.Get(ctx, chunkCountKey)
 	if err != nil {
 		if err == remotecache.ErrCacheItemNotFound {
 			c.logger.Debug("Lite rules index not found in cache (cache miss)", "orgID", orgID)
 			return nil, false
 		}
-		c.logger.Error("Failed to get lite rules index from remote cache",
+		c.logger.Error("Failed to get lite rules index chunk count",
 			"error", err,
-			"key", indexKey,
+			"key", chunkCountKey,
 			"orgID", orgID)
 		return nil, false
 	}
 
-	// Unmarshal the UID index
-	var uids []string
-	if err := msgpack.Unmarshal(indexData, &uids); err != nil {
-		c.logger.Error("Failed to unmarshal lite rules index", "error", err, "key", indexKey)
-		_ = c.remoteCache.Delete(ctx, indexKey)
+	// Unmarshal chunk count
+	var chunkCount int
+	if err := msgpack.Unmarshal(chunkCountData, &chunkCount); err != nil {
+		c.logger.Error("Failed to unmarshal chunk count", "error", err, "key", chunkCountKey)
+		_ = c.remoteCache.Delete(ctx, chunkCountKey)
 		return nil, false
 	}
 
-	if len(uids) == 0 {
-		c.logger.Debug("Lite rules index is empty", "orgID", orgID)
+	if chunkCount == 0 {
+		c.logger.Debug("Lite rules index is empty (zero chunks)", "orgID", orgID)
 		return []*ngmodels.AlertRuleLite{}, true
 	}
 
-	c.logger.Debug("Retrieved lite rules index", "orgID", orgID, "uid_count", len(uids))
+	c.logger.Debug("Retrieved chunk count", "orgID", orgID, "chunk_count", chunkCount)
+
+	// Build keys for all index chunks
+	chunkKeys := make([]string, chunkCount)
+	for i := 0; i < chunkCount; i++ {
+		chunkKeys[i] = fmt.Sprintf("alert_rules:org:%d:index:%d", orgID, i)
+	}
+
+	// Fetch all chunks in one MGET
+	startFetchChunks := time.Now()
+	chunkData, err := c.remoteCache.MGet(ctx, chunkKeys...)
+	if err != nil {
+		c.logger.Error("Failed to MGET index chunks", "error", err, "chunk_count", chunkCount)
+		return nil, false
+	}
+	fetchChunksDuration := time.Since(startFetchChunks)
+
+	// Unmarshal and combine all chunks
+	uids := make([]string, 0, chunkCount*uidIndexChunkSize)
+	for i, data := range chunkData {
+		if data == nil {
+			c.logger.Warn("Index chunk missing", "orgID", orgID, "chunk", i)
+			continue
+		}
+		var chunkUIDs []string
+		if err := msgpack.Unmarshal(data, &chunkUIDs); err != nil {
+			c.logger.Error("Failed to unmarshal index chunk", "error", err, "chunk", i)
+			continue
+		}
+		uids = append(uids, chunkUIDs...)
+	}
+
+	if len(uids) == 0 {
+		c.logger.Debug("No UIDs found in index chunks", "orgID", orgID)
+		return []*ngmodels.AlertRuleLite{}, true
+	}
+
+	c.logger.Debug("Retrieved lite rules index from chunks",
+		"orgID", orgID,
+		"uid_count", len(uids),
+		"chunk_count", chunkCount,
+		"fetch_chunks_ms", fetchChunksDuration.Milliseconds())
 
 	// Build keys for MGET to fetch all lite rules
 	keys := make([]string, len(uids))
@@ -426,25 +471,62 @@ func (c *remoteAlertRuleCache) SetRules(ctx context.Context, orgID int64, rules 
 	c.logger.Debug("SetRules starting", "orgID", orgID, "rule_count", len(rules))
 	start := time.Now()
 
-	// Build UID index for this org
+	// Build UID list
 	uids := make([]string, len(rules))
 	for i, rule := range rules {
 		uids[i] = rule.UID
 	}
 
-	// Store the UID index
-	indexKey := fmt.Sprintf("alert_rules:org:%d:index", orgID)
-	indexData, err := msgpack.Marshal(uids)
-	if err != nil {
-		return fmt.Errorf("failed to marshal UID index: %w", err)
+	// Split UIDs into chunks to avoid Redis size limits
+	chunkCount := (len(uids) + uidIndexChunkSize - 1) / uidIndexChunkSize
+	c.logger.Debug("Chunking UID index",
+		"total_uids", len(uids),
+		"chunk_size", uidIndexChunkSize,
+		"chunk_count", chunkCount)
+
+	for i := 0; i < chunkCount; i++ {
+		start := i * uidIndexChunkSize
+		end := start + uidIndexChunkSize
+		if end > len(uids) {
+			end = len(uids)
+		}
+		chunkUIDs := uids[start:end]
+
+		// Marshal chunk
+		chunkData, err := msgpack.Marshal(chunkUIDs)
+		if err != nil {
+			return fmt.Errorf("failed to marshal UID index chunk %d: %w", i, err)
+		}
+
+		// Store chunk
+		chunkKey := fmt.Sprintf("alert_rules:org:%d:index:%d", orgID, i)
+		if err := c.remoteCache.Set(ctx, chunkKey, chunkData, AlertRuleCacheTTL); err != nil {
+			c.logger.Error("Failed to SET UID index chunk in Redis",
+				"error", err,
+				"orgID", orgID,
+				"chunk", i,
+				"key", chunkKey,
+				"size_bytes", len(chunkData))
+			return fmt.Errorf("failed to cache UID index chunk %d: %w", i, err)
+		}
+		c.logger.Debug("Stored UID index chunk",
+			"chunk", i,
+			"uids_in_chunk", len(chunkUIDs),
+			"size_bytes", len(chunkData))
 	}
 
-	if err := c.remoteCache.Set(ctx, indexKey, indexData, AlertRuleCacheTTL); err != nil {
-		c.logger.Error("Failed to SET UID index in Redis",
+	// Store chunk count
+	chunkCountKey := fmt.Sprintf("alert_rules:org:%d:index:count", orgID)
+	chunkCountData, err := msgpack.Marshal(chunkCount)
+	if err != nil {
+		return fmt.Errorf("failed to marshal chunk count: %w", err)
+	}
+	if err := c.remoteCache.Set(ctx, chunkCountKey, chunkCountData, AlertRuleCacheTTL); err != nil {
+		c.logger.Error("Failed to SET chunk count in Redis",
 			"error", err,
 			"orgID", orgID,
-			"key", indexKey)
-		return fmt.Errorf("failed to cache UID index: %w", err)
+			"key", chunkCountKey)
+		return fmt.Errorf("failed to cache chunk count: %w", err)
 	}
 
 	// Store each lite and full rule individually
@@ -513,15 +595,15 @@ func (c *remoteAlertRuleCache) Delete(ctx context.Context, orgID int64) error {
 		return nil
 	}
 
-	// Delete the UID index
-	indexKey := fmt.Sprintf("alert_rules:org:%d:index", orgID)
-	if err := c.remoteCache.Delete(ctx, indexKey); err != nil {
-		c.logger.Error("Failed to delete UID index from cache", "error", err, "key", indexKey)
-		return err
+	// Delete the chunk count key
+	chunkCountKey := fmt.Sprintf("alert_rules:org:%d:index:count", orgID)
+	if err := c.remoteCache.Delete(ctx, chunkCountKey); err != nil {
+		c.logger.Error("Failed to delete chunk count from cache", "error", err, "key", chunkCountKey)
+		// Continue anyway to try deleting other keys
 	}
 
-	// Note: Individual lite and full rule keys will expire via TTL
-	// For complete cleanup, we'd need to scan keys with pattern alert_rule:org:N:uid:*
+	// Note: Individual index chunk keys and lite/full rule keys will expire via TTL
+	// For complete cleanup, we'd need to scan keys with pattern alert_rule:org:N:*
 	// but that's expensive. TTL-based expiry is sufficient.
 
 	return nil
