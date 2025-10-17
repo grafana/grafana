@@ -44,7 +44,8 @@
       "outputs": [
         "{workspaceRoot}/public/sass/_variables.generated.scss",
         "{workspaceRoot}/public/sass/_variables.dark.generated.scss",
-        "{workspaceRoot}/public/sass/_variables.light.generated.scss"
+        "{workspaceRoot}/public/sass/_variables.light.generated.scss",
+        "{workspaceRoot}/public/app/features/theme-playground/schema.json"
       ],
       "cache": true
     }

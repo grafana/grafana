@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
 
@@ -129,7 +128,7 @@ func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit
 	return p, handler, nil
 }
 
-func NewInstanceSettings(logger log.Logger, features featuremgmt.FeatureToggles, dataPath string) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(logger log.Logger, dataPath string) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		cfg := backend.GrafanaConfigFromContext(ctx)
 		sqlCfg, err := cfg.SQL()
@@ -167,14 +166,14 @@ func NewInstanceSettings(logger log.Logger, features featuremgmt.FeatureToggles,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}
 
-		isPGX := features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX)
-
 		userFacingDefaultError, err := cfg.UserFacingDefaultError()
 		if err != nil {
 			return nil, err
 		}
 
-		if isPGX {
+		usePGX := cfg.FeatureToggles().IsEnabled("postgresDSUsePGX")
+
+		if usePGX {
 			pgxlogger := logger.FromContext(ctx).With("driver", "pgx")
 			pgxTlsManager := newPgxTlsManager(pgxlogger)
 			pgxTlsSettings, err := pgxTlsManager.getTLSSettings(dsInfo)
@@ -184,7 +183,7 @@ func NewInstanceSettings(logger log.Logger, features featuremgmt.FeatureToggles,
 
 			// Ensure cleanupCertFiles is called after the connection is opened
 			defer pgxTlsManager.cleanupCertFiles(pgxTlsSettings)
-			cnnstr, err := generateConnectionString(dsInfo, pgxTlsSettings, isPGX, pgxlogger)
+			cnnstr, err := generateConnectionString(dsInfo, pgxTlsSettings, usePGX, pgxlogger)
 			if err != nil {
 				return "", err
 			}
@@ -202,7 +201,7 @@ func NewInstanceSettings(logger log.Logger, features featuremgmt.FeatureToggles,
 			if err != nil {
 				return "", err
 			}
-			cnnstr, err := generateConnectionString(dsInfo, tlsSettings, isPGX, pqlogger)
+			cnnstr, err := generateConnectionString(dsInfo, tlsSettings, usePGX, pqlogger)
 			if err != nil {
 				return nil, err
 			}

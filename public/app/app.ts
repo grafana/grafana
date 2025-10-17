@@ -37,12 +37,14 @@ import {
   setCurrentUser,
   setChromeHeaderHeightHook,
   setPluginLinksHook,
+  setHelpNavItemHook,
   setFolderPicker,
   setCorrelationsService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
 } from '@grafana/runtime';
 import {
+  initOpenFeature,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
   setPanelDataErrorView,
@@ -59,6 +61,7 @@ import { AppWrapper } from './AppWrapper';
 import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { useChromeHeaderHeight } from './core/components/AppChrome/TopBar/useChromeHeaderHeight';
+import { useHelpNode } from './core/components/AppChrome/TopBar/useHelpNode';
 import { LazyFolderPicker } from './core/components/NestedFolderPicker/LazyFolderPicker';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
@@ -129,8 +132,20 @@ export class GrafanaApp {
   async init() {
     try {
       await preInitTasks();
+
       // Let iframe container know grafana has started loading
       window.parent.postMessage('GrafanaAppInit', '*');
+
+      // Currently the OpenFeature API requires a signed in user. This means feature flags cannot be used
+      // on the login page.
+      if (contextSrv.user.isSignedIn) {
+        try {
+          await initOpenFeature();
+        } catch (err) {
+          console.error('Failed to initialize OpenFeature provider', err);
+        }
+      }
+
       const regionalFormat = config.featureToggles.localeFormatPreference
         ? config.regionalFormat
         : contextSrv.user.language;
@@ -247,6 +262,7 @@ export class GrafanaApp {
         await preloadPlugins(appPluginsToAwait);
       }
 
+      setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);
       setPluginComponentHook(usePluginComponent);
       setPluginComponentsHook(usePluginComponents);

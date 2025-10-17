@@ -1,6 +1,6 @@
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
@@ -415,6 +415,13 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
 
+      // Special handling for Template route - set up edit mode and dirty state
+      if (config.featureToggles.dashboardLibrary && options.route === DashboardRoutes.Template) {
+        scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
+        scene.onEnterEditMode();
+        scene.setState({ isDirty: true });
+      }
+
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
       if (options.uid) {
         this.setSceneCache(options.uid, scene);
@@ -439,6 +446,57 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     }
 
     throw new Error('Snapshot not found');
+  }
+
+  private async loadTemplateDashboard(): Promise<DashboardDTO> {
+    // Extract template parameters from URL
+    const searchParams = new URLSearchParams(window.location.search);
+    const datasource = searchParams.get('datasource');
+    const pluginId = searchParams.get('pluginId');
+    const path = searchParams.get('path');
+
+    if (!datasource || !pluginId || !path) {
+      throw new Error('Missing required parameters for template dashboard');
+    }
+
+    const ds = getDataSourceSrv().getInstanceSettings(datasource);
+    if (!ds) {
+      throw new Error(`Datasource "${datasource}" not found. Please check your datasource configuration.`);
+    }
+
+    const data = {
+      pluginId,
+      path,
+      overwrite: true,
+      inputs: [
+        {
+          name: '*',
+          type: 'datasource',
+          pluginId,
+          value: datasource,
+        },
+      ],
+    };
+
+    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+
+    return {
+      dashboard: {
+        ...interpolatedDashboard,
+        uid: '',
+        version: 0,
+        id: null,
+      },
+      meta: {
+        canSave: true,
+        canEdit: true,
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+        isNew: true,
+        folderUid: '',
+      },
+    };
   }
 
   public async fetchDashboard({
@@ -473,6 +531,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           break;
         case DashboardRoutes.New:
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
+          break;
+        case DashboardRoutes.Template:
+          rsp = await this.loadTemplateDashboard();
           break;
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);
