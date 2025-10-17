@@ -74,7 +74,7 @@ type GrpcSpan struct {
 }
 
 type GrpcSpanEvent struct {
-	TimeUnixNano           int64          `json:"timeUnixNano"`
+	TimeUnixNano           string         `json:"timeUnixNano"`
 	Name                   string         `json:"name"`
 	Attributes             []GrpcKeyValue `json:"attributes"`
 	DroppedAttributesCount int64          `json:"droppedAttributesCount"`
@@ -120,10 +120,4 @@ type GrpcArrayValue struct {
 
 type KeyValueList struct {
 	Values []GrpcKeyValue `json:"values"`
-}
-
-type KeyValueType struct {
-	Key   string      `json:"key"`
-	Type  string      `json:"type"`
-	Value interface{} `json:"value"`
 }

@@ -28,15 +28,15 @@ type ServiceDependency struct {
 	CallCount int    `json:"callCount"`
 }
 
-type TraceKeyValuePair struct {
+type KeyValueType struct {
 	Key   string      `json:"key"`
 	Type  string      `json:"type"`
 	Value interface{} `json:"value"`
 }
 
 type TraceProcess struct {
-	ServiceName string              `json:"serviceName"`
-	Tags        []TraceKeyValuePair `json:"tags"`
+	ServiceName string         `json:"serviceName"`
+	Tags        []KeyValueType `json:"tags"`
 }
 
 type TraceSpanReference struct {
@@ -47,9 +47,9 @@ type TraceSpanReference struct {
 
 type TraceLog struct {
 	// Millisecond epoch time
-	Timestamp int64               `json:"timestamp"`
-	Fields    []TraceKeyValuePair `json:"fields"`
-	Name      string              `json:"name"`
+	Timestamp int64          `json:"timestamp"`
+	Fields    []KeyValueType `json:"fields"`
+	Name      string         `json:"name"`
 }
 
 type Span struct {
@@ -62,7 +62,7 @@ type Span struct {
 	Duration    int64                `json:"duration"`
 	Logs        []TraceLog           `json:"logs"`
 	References  []TraceSpanReference `json:"references"`
-	Tags        []TraceKeyValuePair  `json:"tags"`
+	Tags        []KeyValueType       `json:"tags"`
 	Warnings    []string             `json:"warnings"`
 	Flags       int                  `json:"flags"`
 	StackTraces []string             `json:"stackTraces"`
