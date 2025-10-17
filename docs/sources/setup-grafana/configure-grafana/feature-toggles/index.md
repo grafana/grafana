@@ -111,6 +111,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `logsPanelControls`             | Enables a control component for the logs panel in Explore                                              |
 | `grafanaPathfinder`             | Enables Pathfinder app                                                                                 |
 | `azureResourcePickerUpdates`    | Enables the updated Azure Monitor resource picker                                                      |
+| `preventPanelChromeOverflow`    | Restrict PanelChrome contents with overflow: hidden;                                                   |
 
 ## Development feature toggles
 

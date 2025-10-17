@@ -1213,4 +1213,9 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsUrls?: boolean;
+  /**
+  * Restrict PanelChrome contents with overflow: hidden;
+  * @default true
+  */
+  preventPanelChromeOverflow?: boolean;
 }

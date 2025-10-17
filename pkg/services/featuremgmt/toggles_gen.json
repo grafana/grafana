@@ -3040,6 +3040,20 @@
     },
     {
       "metadata": {
+        "name": "preventPanelChromeOverflow",
+        "resourceVersion": "1760704390127",
+        "creationTimestamp": "2025-10-17T12:33:10Z"
+      },
+      "spec": {
+        "description": "Restrict PanelChrome contents with overflow: hidden;",
+        "stage": "preview",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "promQLScope",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-01-29T20:22:17Z",
