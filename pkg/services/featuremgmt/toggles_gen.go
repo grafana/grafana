@@ -1090,6 +1090,10 @@ const (
 	// Enable loading plugins via declarative URLs
 	FlagCdnPluginsUrls = "cdnPluginsUrls"
 
+	// FlagPreventPanelChromeOverflow
+	// Restrict PanelChrome contents with overflow: hidden;
+	FlagPreventPanelChromeOverflow = "preventPanelChromeOverflow"
+
 	// FlagJaegerEnableGrpcEndpoint
 	// Enable querying trace data through Jaeger&#39;s gRPC endpoint (HTTP)
 	FlagJaegerEnableGrpcEndpoint = "jaegerEnableGrpcEndpoint"
