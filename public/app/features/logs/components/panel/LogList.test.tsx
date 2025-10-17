@@ -68,6 +68,7 @@ describe('LogList', () => {
       containerElement: document.createElement('div'),
       dedupStrategy: LogsDedupStrategy.none,
       displayedFields: [],
+      dataFrames: [],
       enableLogDetails: true,
       logs,
       showControls: false,
