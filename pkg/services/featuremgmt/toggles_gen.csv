@@ -270,3 +270,4 @@ pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,fal
 tempoSearchBackendMigration,GA,@grafana/oss-big-tent,false,true,false
 cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
 cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
+jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false

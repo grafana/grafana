@@ -2038,6 +2038,18 @@
     },
     {
       "metadata": {
+        "name": "jaegerEnableGrpcEndpoint",
+        "resourceVersion": "1760451551713",
+        "creationTimestamp": "2025-10-14T14:19:11Z"
+      },
+      "spec": {
+        "description": "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent"
+      }
+    },
+    {
+      "metadata": {
         "name": "jitterAlertRulesWithinGroups",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-01-18T18:48:11Z"

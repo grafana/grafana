@@ -13,41 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
-type JaegerClient struct {
-	logger     log.Logger
-	url        string
-	httpClient *http.Client
-	settings   backend.DataSourceInstanceSettings
-}
-
-type ServicesResponse struct {
-	Data   []string    `json:"data"`
-	Errors interface{} `json:"errors"`
-	Limit  int         `json:"limit"`
-	Offset int         `json:"offset"`
-	Total  int         `json:"total"`
-}
-
-type SettingsJSONData struct {
-	TraceIdTimeParams struct {
-		Enabled bool `json:"enabled"`
-	} `json:"traceIdTimeParams"`
-}
-
-type DependenciesResponse struct {
-	Data   []ServiceDependency `json:"data"`
-	Errors []struct {
-		Code int    `json:"code"`
-		Msg  string `json:"msg"`
-	} `json:"errors"`
-}
-
-type ServiceDependency struct {
-	Parent    string `json:"parent"`
-	Child     string `json:"child"`
-	CallCount int    `json:"callCount"`
-}
-
 func New(hc *http.Client, logger log.Logger, settings backend.DataSourceInstanceSettings) (JaegerClient, error) {
 	client := JaegerClient{
 		logger:     logger,
