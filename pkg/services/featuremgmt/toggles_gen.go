@@ -267,6 +267,10 @@ const (
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
 
+	// FlagKubernetesLogsDrilldown
+	// Adds support for Kubernetes logs drilldown
+	FlagKubernetesLogsDrilldown = "kubernetesLogsDrilldown"
+
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
 	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
