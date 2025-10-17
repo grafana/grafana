@@ -145,13 +145,6 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		return defaultSignature, nil
 	}
 
-	if src.PluginClass(ctx) == plugins.ClassCore {
-		s.log.Debug("Skipping signature verification for core plugin", "id", plugin.JSONData.ID)
-		return plugins.Signature{
-			Status: plugins.SignatureStatusValid,
-		}, nil
-	}
-
 	manifest, err := s.ReadPluginManifestFromFS(ctx, plugin.FS)
 	switch {
 	case errors.Is(err, ErrSignatureTypeUnsigned):
