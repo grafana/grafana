@@ -187,22 +187,24 @@ func TransformGrpcTraceResponse(trace []types.GrpcResourceSpans, refID string) *
 				// In the new API (OTLP based), logs are span events. See:
 				// https://github.com/jaegertracing/jaeger-idl/blob/7c7460fc400325ae69435c0aa65697f4cc1ab581/swagger/api_v3/query_service.swagger.json#L630C9-L636C11
 				logs := json.RawMessage{}
-				logsMarshaled, err := json.Marshal(span.Events)
+				processedEvents := convertGrpcEventsToLogs(span.Events)
+				logsMarshaled, err := json.Marshal(processedEvents)
 				if err == nil {
 					logs = json.RawMessage(logsMarshaled)
 				}
 
 				// Convert references (excluding parent)
 				references := json.RawMessage{}
-				filteredRefs := []types.GrpcSpanLink{}
+				filteredLinks := []types.GrpcSpanLink{}
 				// in the new API (OTLP based), references are defined as "SpanLinks" see:
 				// https://github.com/jaegertracing/jaeger-idl/blob/7c7460fc400325ae69435c0aa65697f4cc1ab581/swagger/api_v3/query_service.swagger.json#L642C8-L648C11
 				for _, ref := range span.Links {
 					if parentSpanID == "" || ref.SpanID != parentSpanID {
-						filteredRefs = append(filteredRefs, ref)
+						filteredLinks = append(filteredLinks, ref)
 					}
 				}
-				refsMarshaled, err := json.Marshal(filteredRefs)
+				processedLinks := convertGrpcLinkToReference(filteredLinks)
+				refsMarshaled, err := json.Marshal(processedLinks)
 				if err == nil {
 					references = json.RawMessage(refsMarshaled)
 				}
@@ -376,4 +378,40 @@ func isEmptyAttribute(attribute types.GrpcAnyValue) bool {
 		return false
 	}
 	return true
+}
+
+// This is to help ensure backwards compatibility with the current non OTLP based Jager trace format
+// a few fields are different between TraceLogs and GrpcSpanEvents
+func convertGrpcEventsToLogs(events []types.GrpcSpanEvent) []types.TraceLog {
+	var logs []types.TraceLog
+
+	for _, event := range events {
+		timestamp, err := strconv.Atoi(event.TimeUnixNano)
+		if err == nil {
+			timestamp = timestamp / 1000 // converting from nanoseconds to miliseconds
+		}
+		log := types.TraceLog{
+			Name:      event.Name,
+			Timestamp: int64(timestamp),
+			Fields:    processAttributes(event.Attributes),
+		}
+		logs = append(logs, log)
+	}
+
+	return logs
+}
+
+// this is to help ensure backwards compatibility between references and links with the curent non OTLP based Jaeger trace format
+// There is no convccept of RefType in the new OTLP based SpanLink, so we are only converting the SpanID and TraceID
+func convertGrpcLinkToReference(links []types.GrpcSpanLink) []types.TraceSpanReference {
+	var references []types.TraceSpanReference
+
+	for _, ref := range references {
+		references = append(references, types.TraceSpanReference{
+			TraceID: ref.TraceID,
+			SpanID:  ref.SpanID,
+		})
+	}
+
+	return references
 }
