@@ -60,7 +60,7 @@ jobs:
           echo "github.ref: $GITHUB_REF"
 
       - name: Checkout workflow ref
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
           fetch-depth: 100
@@ -86,7 +86,7 @@ jobs:
         shell: bash
 
       - name: Checkout build commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
           ref: ${{ inputs.grafana_commit }}
