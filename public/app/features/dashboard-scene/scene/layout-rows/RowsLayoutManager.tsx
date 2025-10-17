@@ -229,15 +229,10 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
     this.setState({ rows: [firstRow] });
     this.removeRow(firstRow, true);
+    ungroupLayout(this, firstRow.state.layout, true);
   }
 
   public removeRow(row: RowItem, skipUndo?: boolean) {
-    // When removing last row replace ourselves with the inner row layout
-    if (this.shouldUngroup()) {
-      ungroupLayout(this, row.state.layout, skipUndo ?? false);
-      return;
-    }
-
     const indexOfRowToRemove = this.state.rows.findIndex((r) => r === row);
 
     const perform = () => this.setState({ rows: this.state.rows.filter((r) => r !== row) });

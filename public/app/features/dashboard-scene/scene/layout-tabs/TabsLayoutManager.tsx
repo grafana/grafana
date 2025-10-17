@@ -308,16 +308,10 @@ export class TabsLayoutManager
     }
 
     this.setState({ tabs: [firstTab] });
-    this.removeTab(firstTab, true);
+    ungroupLayout(this, firstTab.state.layout, true);
   }
 
   public removeTab(tabToRemove: TabItem, skipUndo?: boolean) {
-    // When removing last tab replace ourselves with the inner tab layout
-    if (this.shouldUngroup()) {
-      ungroupLayout(this, tabToRemove.state.layout, skipUndo ?? false);
-      return;
-    }
-
     const tabIndex = this.state.tabs.findIndex((t) => t === tabToRemove);
 
     const perform = () => {
