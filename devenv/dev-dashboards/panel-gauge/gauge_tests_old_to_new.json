@@ -58,10 +58,6 @@
                 "value": 0
               },
               {
-                "color": "yellow",
-                "value": 30
-              },
-              {
                 "color": "orange",
                 "value": 60
               },
@@ -109,7 +105,9 @@
       "pluginVersion": "12.3.0-pre",
       "targets": [
         {
-          "refId": "A"
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,22"
         }
       ],
       "title": "Plain",
@@ -136,10 +134,6 @@
               {
                 "color": "green",
                 "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 30
               },
               {
                 "color": "orange",
@@ -190,7 +184,9 @@
       "pluginVersion": "12.3.0-pre",
       "targets": [
         {
-          "refId": "A"
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,55.5"
         }
       ],
       "title": "With unit",
@@ -217,10 +213,6 @@
               {
                 "color": "green",
                 "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 30
               },
               {
                 "color": "orange",
@@ -270,7 +262,9 @@
       "pluginVersion": "12.3.0-pre",
       "targets": [
         {
-          "refId": "A"
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,70"
         }
       ],
       "title": "",
@@ -298,10 +292,6 @@
               {
                 "color": "green",
                 "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 30
               },
               {
                 "color": "orange",
@@ -352,7 +342,9 @@
       "pluginVersion": "12.3.0-pre",
       "targets": [
         {
-          "refId": "A"
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,80"
         }
       ],
       "title": "long value",
@@ -381,10 +373,6 @@
                 "value": 0
               },
               {
-                "color": "yellow",
-                "value": 30
-              },
-              {
                 "color": "orange",
                 "value": 60
               },
@@ -399,7 +387,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 17,
+        "h": 16,
         "w": 7,
         "x": 17,
         "y": 1
@@ -433,7 +421,9 @@
       "pluginVersion": "12.3.0-pre",
       "targets": [
         {
-          "refId": "A"
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,80.5"
         }
       ],
       "title": "Tall",
@@ -462,10 +452,6 @@
                 "value": 0
               },
               {
-                "color": "yellow",
-                "value": 30
-              },
-              {
                 "color": "orange",
                 "value": 60
               },
@@ -480,7 +466,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 12,
+        "h": 11,
         "w": 10,
         "x": 0,
         "y": 6
@@ -517,104 +503,13 @@
       "pluginVersion": "12.3.0-pre",
       "targets": [
         {
-          "refId": "A"
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,47"
         }
       ],
       "title": "custom font size",
       "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "fixedColor": "blue",
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 60
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 24,
-        "x": 0,
-        "y": 18
-      },
-      "id": 14,
-      "options": {
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": true,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
-        "showThresholdLabels": false,
-        "showThresholdMarkers": false,
-        "sizing": "auto",
-        "sparkline": false,
-        "text": {}
-      },
-      "pluginVersion": "12.3.0-pre",
-      "targets": [
-        {
-          "refId": "A",
-          "scenarioId": "random_walk",
-          "seriesCount": 4
-        }
-      ],
-      "title": "Multi series",
-      "type": "gauge"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 27
-      },
-      "id": 15,
-      "panels": [],
-      "title": "Data links",
-      "type": "row"
     },
     {
       "datasource": {
@@ -646,10 +541,6 @@
                 "value": 0
               },
               {
-                "color": "yellow",
-                "value": 30
-              },
-              {
                 "color": "orange",
                 "value": 60
               },
@@ -664,9 +555,9 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 4,
-        "x": 0,
-        "y": 28
+        "w": 7,
+        "x": 10,
+        "y": 6
       },
       "id": 16,
       "options": {
@@ -697,10 +588,12 @@
       "pluginVersion": "12.3.0-pre",
       "targets": [
         {
-          "refId": "A"
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,44"
         }
       ],
-      "title": "Single link",
+      "title": "Single data link",
       "type": "gauge"
     },
     {
@@ -738,10 +631,6 @@
                 "value": 0
               },
               {
-                "color": "yellow",
-                "value": 30
-              },
-              {
                 "color": "orange",
                 "value": 60
               },
@@ -755,10 +644,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 4,
-        "y": 28
+        "h": 6,
+        "w": 7,
+        "x": 10,
+        "y": 11
       },
       "id": 17,
       "options": {
@@ -789,10 +678,122 @@
       "pluginVersion": "12.3.0-pre",
       "targets": [
         {
-          "refId": "A"
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,78"
         }
       ],
-      "title": "Multiple links",
+      "title": "Multiple data links",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 60
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 14,
+      "options": {
+        "barWidthFactor": 0.4,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": true,
+          "rounded": false,
+          "spotlight": false
+        },
+        "gradient": "none",
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "gauge",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "sizing": "auto",
+        "sparkline": false,
+        "text": {}
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,20.5"
+        },
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,40.5"
+        },
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,60.5"
+        },
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,90.5"
+        }
+      ],
+      "title": "Multi series",
       "type": "gauge"
     },
     {
@@ -801,7 +802,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 33
+        "y": 25
       },
       "id": 6,
       "panels": [],
@@ -838,10 +839,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
-        "w": 12,
+        "h": 9,
+        "w": 9,
         "x": 0,
-        "y": 34
+        "y": 26
       },
       "id": 1,
       "options": {
@@ -872,7 +873,9 @@
       "pluginVersion": "12.3.0-pre",
       "targets": [
         {
-          "refId": "A"
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,66"
         }
       ],
       "title": "Old gauge with static blue color and show threshold markers enabled",
@@ -919,10 +922,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
-        "w": 12,
-        "x": 12,
-        "y": 34
+        "h": 9,
+        "w": 9,
+        "x": 9,
+        "y": 26
       },
       "id": 2,
       "options": {
@@ -953,7 +956,9 @@
       "pluginVersion": "12.3.0-pre",
       "targets": [
         {
-          "refId": "A"
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,20"
         }
       ],
       "title": "Many thresholds with labels",
@@ -965,7 +970,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 45
+        "y": 35
       },
       "id": 5,
       "panels": [],
@@ -1013,10 +1018,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
-        "w": 12,
+        "h": 8,
+        "w": 7,
         "x": 0,
-        "y": 46
+        "y": 36
       },
       "id": 3,
       "options": {
@@ -1096,10 +1101,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
-        "w": 12,
-        "x": 12,
-        "y": 46
+        "h": 8,
+        "w": 9,
+        "x": 7,
+        "y": 36
       },
       "id": 4,
       "options": {
@@ -1153,5 +1158,5 @@
   "timezone": "browser",
   "title": "Panel tests - Old gauge to new ",
   "uid": "panel-tests-old-gauge-to-new",
-  "version": 8
+  "version": 12
 }
