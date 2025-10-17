@@ -66,6 +66,10 @@ function getDisplayFormatForLanguage(language: string) {
  * Given a list of logs, return a list of suggested fields to display for the user.
  */
 export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]): string[] {
+  const languages = identifyOTelLanguages(logs);
+  if (!languages.length) {
+    return [];
+  }
   const fields = getSuggestedOTelDisplayFormat();
 
   return fields.filter(
