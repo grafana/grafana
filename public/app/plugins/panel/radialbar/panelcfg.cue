@@ -35,6 +35,7 @@ composableKinds: PanelCfg: {
 				Options: {
 					common.SingleStatBaseOptions		
 					showThresholdMarkers: bool | *true
+					showThresholdLabels: bool | *false
 					segmentCount: number | *1
 					segmentSpacing: number | *0.3
 					sparkline?: bool | *false
