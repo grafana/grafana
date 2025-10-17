@@ -92,7 +92,7 @@ func TestTransformTraceResponse(t *testing.T) {
 					OperationName: "HTTP GET - api_traces_traceid",
 					StartTime:     1605873894680409,
 					Duration:      1049141,
-					Tags: []types.TraceKeyValuePair{
+					Tags: []types.KeyValueType{
 						{Key: "sampler.type", Type: "string", Value: "probabilistic"},
 						{Key: "sampler.param", Type: "float64", Value: 1},
 					},
@@ -114,7 +114,7 @@ func TestTransformTraceResponse(t *testing.T) {
 					},
 					StartTime: 1605873894680587,
 					Duration:  1847,
-					Tags: []types.TraceKeyValuePair{
+					Tags: []types.KeyValueType{
 						{Key: "component", Type: "string", Value: "gRPC"},
 						{Key: "span.kind", Type: "string", Value: "client"},
 					},
@@ -127,7 +127,7 @@ func TestTransformTraceResponse(t *testing.T) {
 			Processes: map[string]types.TraceProcess{
 				"p1": {
 					ServiceName: "tempo-querier",
-					Tags: []types.TraceKeyValuePair{
+					Tags: []types.KeyValueType{
 						{Key: "cluster", Type: "string", Value: "ops-tools1"},
 						{Key: "container", Type: "string", Value: "tempo-query"},
 					},
@@ -151,7 +151,7 @@ func TestTransformTraceResponse(t *testing.T) {
 					References:    []types.TraceSpanReference{},
 					StartTime:     1605873894680409,
 					Duration:      1049141,
-					Tags: []types.TraceKeyValuePair{
+					Tags: []types.KeyValueType{
 						{Key: "sampler.type", Type: "string", Value: "probabilistic"},
 						{Key: "sampler.param", Type: "float64", Value: 1},
 						{Key: "error", Type: "bool", Value: true},
@@ -160,7 +160,7 @@ func TestTransformTraceResponse(t *testing.T) {
 					Logs: []types.TraceLog{
 						{
 							Timestamp: 1605873894681000,
-							Fields: []types.TraceKeyValuePair{
+							Fields: []types.KeyValueType{
 								{Key: "event", Type: "string", Value: "error"},
 								{Key: "message", Type: "string", Value: "Internal server error"},
 							},
@@ -183,7 +183,7 @@ func TestTransformTraceResponse(t *testing.T) {
 					},
 					StartTime: 1605873894680587,
 					Duration:  1847,
-					Tags: []types.TraceKeyValuePair{
+					Tags: []types.KeyValueType{
 						{Key: "component", Type: "string", Value: "gRPC"},
 						{Key: "span.kind", Type: "string", Value: "client"},
 						{Key: "error", Type: "bool", Value: true},
@@ -192,7 +192,7 @@ func TestTransformTraceResponse(t *testing.T) {
 					Logs: []types.TraceLog{
 						{
 							Timestamp: 1605873894680700,
-							Fields: []types.TraceKeyValuePair{
+							Fields: []types.KeyValueType{
 								{Key: "event", Type: "string", Value: "error"},
 								{Key: "message", Type: "string", Value: "gRPC error: INTERNAL"},
 							},
@@ -215,7 +215,7 @@ func TestTransformTraceResponse(t *testing.T) {
 					},
 					StartTime: 1605873894680800,
 					Duration:  500,
-					Tags: []types.TraceKeyValuePair{
+					Tags: []types.KeyValueType{
 						{Key: "db.type", Type: "string", Value: "postgresql"},
 						{Key: "db.statement", Type: "string", Value: "SELECT * FROM traces WHERE id = $1"},
 						{Key: "error", Type: "bool", Value: true},
@@ -223,7 +223,7 @@ func TestTransformTraceResponse(t *testing.T) {
 					Logs: []types.TraceLog{
 						{
 							Timestamp: 1605873894680850,
-							Fields: []types.TraceKeyValuePair{
+							Fields: []types.KeyValueType{
 								{Key: "event", Type: "string", Value: "error"},
 								{Key: "message", Type: "string", Value: "Database connection timeout"},
 							},
@@ -237,7 +237,7 @@ func TestTransformTraceResponse(t *testing.T) {
 			Processes: map[string]types.TraceProcess{
 				"p1": {
 					ServiceName: "tempo-querier",
-					Tags: []types.TraceKeyValuePair{
+					Tags: []types.KeyValueType{
 						{Key: "cluster", Type: "string", Value: "ops-tools1"},
 						{Key: "container", Type: "string", Value: "tempo-query"},
 						{Key: "version", Type: "string", Value: "1.2.3"},
@@ -245,7 +245,7 @@ func TestTransformTraceResponse(t *testing.T) {
 				},
 				"p2": {
 					ServiceName: "tempo-storage",
-					Tags: []types.TraceKeyValuePair{
+					Tags: []types.KeyValueType{
 						{Key: "cluster", Type: "string", Value: "ops-tools1"},
 						{Key: "container", Type: "string", Value: "tempo-storage"},
 						{Key: "version", Type: "string", Value: "2.0.1"},
