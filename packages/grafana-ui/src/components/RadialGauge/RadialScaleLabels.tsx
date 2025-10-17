@@ -1,4 +1,5 @@
 import { FieldDisplay, GrafanaTheme2, Threshold } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { measureText } from '../../utils/measureText';
 
@@ -75,7 +76,7 @@ export function RadialScaleLabels({
             fontSize={fontSize}
             fill={theme.colors.text.primary}
             transform={labelPos.transform}
-            aria-label={`threshold ${threshold.value}`}
+            aria-label={t(`gauge.threshold`, 'Threshold {{value}}', { value: threshold.value })}
           >
             {threshold.value}
           </text>
