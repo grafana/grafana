@@ -1218,4 +1218,9 @@ export interface FeatureToggles {
   * @default true
   */
   preventPanelChromeOverflow?: boolean;
+  /**
+  * Load plugins during store service startup instead of wire provider
+  * @default false
+  */
+  pluginStoreServiceLoading?: boolean;
 }
