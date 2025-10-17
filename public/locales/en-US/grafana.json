@@ -4535,7 +4535,8 @@
       "paste-row": "Paste row",
       "paste-tab": "Paste tab",
       "un-group-panels": "Ungroup",
-      "ungroup-rows": "Ungroup rows"
+      "ungroup-rows": "Ungroup rows",
+      "ungroup-tabs": "Ungroup tabs"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5046,6 +5047,7 @@
       }
     },
     "layout": {
+      "cancel": "Cancel",
       "common": {
         "copy": "Copy",
         "copy-or-duplicate": "Copy or Duplicate",
@@ -5055,7 +5057,10 @@
         "group-layout-disabled": "No groups exists on this level",
         "panel-layout": "Panel layout",
         "panel-layout-disabled": "Select a row or tab to change panel layout options"
-      }
+      },
+      "continue": "Continue",
+      "ungroup-nested-text": "This will ungroup all nested groups.",
+      "ungroup-nested-title": "Ungroup nested groups?"
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5205,7 +5210,6 @@
     },
     "rows-layout": {
       "cancel": "Cancel",
-      "continue": "Continue",
       "convert-to": "Convert to {{name}}",
       "delete-row-text": "Deleting this row will also remove all panels. Are you sure you want to continue?",
       "delete-row-title": "Delete row?",
@@ -5245,9 +5249,7 @@
         "title-not-unique": "This title is not unique"
       },
       "ungroup-convert-text": "All grids must be converted to the same type and positions will be lost.",
-      "ungroup-convert-title": "Convert mixed grids?",
-      "ungroup-nested-text": "This will ungroup all nested groups.",
-      "ungroup-nested-title": "Ungroup nested groups?"
+      "ungroup-convert-title": "Convert mixed grids?"
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
@@ -5337,6 +5339,9 @@
       "delete-tab-title": "Delete tab?",
       "delete-tab-yes": "Delete",
       "description": "Organize panels into horizontal tabs",
+      "edit": {
+        "ungroup-tabs": "Ungroup tabs"
+      },
       "name": "Tabs",
       "tab": {
         "new": "New tab",
@@ -7694,7 +7699,8 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Show threshold labels",
     "name-show-threshold-markers": "Show threshold markers",
-    "placeholder-neutral": "auto"
+    "placeholder-neutral": "auto",
+    "threshold": "Threshold {{value}}"
   },
   "gen-ai": {
     "apply-suggestion": "Apply",
@@ -12071,6 +12077,7 @@
       "shape-circle": "Circle",
       "shape-gauge": "Gauge",
       "sparkline": "Show sparkline",
+      "threshold-labels": "Show threshold labels",
       "threshold-markers": "Show thresholds"
     }
   },

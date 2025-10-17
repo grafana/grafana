@@ -43,6 +43,7 @@ export function RadialBarPanel({
         segmentCount={options.segmentCount}
         segmentSpacing={options.segmentSpacing}
         thresholdsBar={options.showThresholdMarkers}
+        showScaleLabels={options.showThresholdLabels}
         alignmentFactors={valueProps.alignmentFactors}
         valueManualFontSize={options.text?.valueSize}
         nameManualFontSize={options.text?.titleSize}

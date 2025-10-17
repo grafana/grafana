@@ -498,6 +498,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesLogsDrilldown",
+			Description:     "Adds support for Kubernetes logs drilldown",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaObservabilityLogsSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -2095,6 +2102,14 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
+		},
+		{
+			Name:         "preventPanelChromeOverflow",
+			Description:  "Restrict PanelChrome contents with overflow: hidden;",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "true",
 		},
 	}
 )

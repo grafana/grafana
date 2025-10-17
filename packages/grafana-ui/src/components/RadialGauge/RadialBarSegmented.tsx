@@ -40,7 +40,7 @@ export function RadialBarSegmented({
     const angleValue = ((max - min) / segmentCountAdjusted) * i;
     const angleColor = colorDefs.getSegmentColor(angleValue);
     const segmentAngle = startAngle + (angleRange / segmentCountAdjusted) * i + 0.01;
-    const segmentColor = angleValue > value ? theme.colors.action.hover : angleColor;
+    const segmentColor = angleValue >= value ? theme.colors.action.hover : angleColor;
 
     segments.push(
       <RadialArcPath
@@ -65,7 +65,7 @@ export function RadialBarSegmented({
 export function getAngleBetweenSegments(segmentSpacing: number, segmentCount: number, range: number) {
   // Max spacing is 8 degrees between segments
   // Changing this constant could be considered a breaking change
-  const maxAngleBetweenSegments = Math.max(range / 4 / segmentCount, 2);
+  const maxAngleBetweenSegments = Math.max(range / 1.5 / segmentCount, 2);
   return segmentSpacing * maxAngleBetweenSegments;
 }
 
