@@ -38,7 +38,7 @@ func TestJaegerGrpcClient_Services(t *testing.T) {
 			mockStatus:     "Internal Server Error",
 			expectedResult: []string{},
 			expectError:    true,
-			expectedError:  errors.New("Internal Server Error"),
+			expectedError:  backend.DownstreamError(errors.New("Internal Server Error")),
 		},
 		{
 			name:           "Invalid JSON response",
@@ -118,7 +118,7 @@ func TestJaegerGrpcClient_Operations(t *testing.T) {
 			mockStatus:     "Internal Server Error",
 			expectedResult: []string{},
 			expectError:    true,
-			expectedError:  errors.New("Internal Server Error"),
+			expectedError:  backend.DownstreamError(errors.New("Internal Server Error")),
 		},
 		{
 			name:           "Invalid JSON response",
