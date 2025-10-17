@@ -7156,9 +7156,6 @@
       "title-failed-sample-query": "Failed to load logs sample for this query",
       "tooltip": "Show log lines that contributed to visualized metrics"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} appears in {{percentage}}% of log lines"
-    },
     "logs-table-empty-fields": {
       "no-fields": "No fields"
     },
@@ -9541,6 +9538,11 @@
     "description-enable-logs-highlighting": "Use a predefined coloring scheme to highlight relevant parts of the log lines",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
     "description-show-log-attributes": "Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.",
+    "field-selector": {
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar",
+      "label-title": "{{fieldName}} appears in {{percentage}}% of log lines"
+    },
     "fields": {
       "type": {
         "loki": {
