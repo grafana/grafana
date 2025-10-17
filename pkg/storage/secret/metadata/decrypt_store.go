@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 
@@ -66,6 +68,15 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	start := time.Now()
 	// TEMPORARY: While we evaluate all of our auditing needs, provide one for decrypt operations.
 	defer func() {
+		// If at this point the identity is still empty, try to get it from the auth info in context.
+		if decrypterIdentity == "" {
+			if authInfo, ok := claims.AuthInfoFrom(ctx); authInfo != nil && ok {
+				if serviceIdentityList, ok := authInfo.GetExtra()[authn.ServiceIdentityKey]; ok && len(serviceIdentityList) > 0 {
+					decrypterIdentity = strings.TrimSpace(serviceIdentityList[0])
+				}
+			}
+		}
+
 		span.SetAttributes(attribute.String("decrypter.identity", decrypterIdentity))
 
 		args := []any{
