@@ -28,7 +28,7 @@ export const AnnotationEditor = (props: QueryEditorProps<OpenTsDatasource, OpenT
   return (
     <Stack gap={1} direction="column">
       <Stack gap={0}>
-        <InlineFormLabel width={12}>OpenTSDB metrics quer</InlineFormLabel>
+        <InlineFormLabel width={12}>OpenTSDB metrics query</InlineFormLabel>
         <Input
           value={target}
           onChange={(e) => setTarget(e.currentTarget.value ?? '')}
