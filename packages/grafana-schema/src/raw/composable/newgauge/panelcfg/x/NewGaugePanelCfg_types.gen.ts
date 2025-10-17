@@ -41,11 +41,11 @@ export interface Options extends common.SingleStatBaseOptions {
 export const defaultOptions: Partial<Options> = {
   barWidthFactor: 0.4,
   effects: {},
-  gradient: 'none',
+  gradient: 'auto',
   segmentCount: 1,
   segmentSpacing: 0.3,
   shape: 'gauge',
   showThresholdLabels: false,
   showThresholdMarkers: true,
-  sparkline: false,
+  sparkline: true,
 };

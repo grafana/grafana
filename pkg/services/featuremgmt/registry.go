@@ -2103,6 +2103,14 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},
+		{
+			Name:         "newGauge",
+			Description:  "Enable new gauge visualization",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
 	}
 )
 

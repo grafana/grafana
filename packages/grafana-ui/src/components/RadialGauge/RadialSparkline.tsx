@@ -25,11 +25,13 @@ export function RadialSparkline({ sparkline, dimensions, theme, color, shape }: 
   const height = radius / 4;
   const widthFactor = shape === 'gauge' ? 1.6 : 1.4;
   const width = radius * widthFactor - barWidth;
-  const topPos = shape === 'gauge' ? `calc(50% + ${radius / 1.75}px)` : `calc(50% + ${radius / 2.8}px)`;
+  const topPos = shape === 'gauge' ? undefined : `calc(50% + ${radius / 2.8}px)`;
+  const bottomPos = shape === 'gauge' ? `0px` : undefined;
 
   const styles = css({
     position: 'absolute',
     top: topPos,
+    bottom: bottomPos,
   });
 
   const config: FieldConfig<GraphFieldConfig> = {

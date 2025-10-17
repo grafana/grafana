@@ -9,6 +9,8 @@ export function getValueAngleForValue(fieldDisplay: FieldDisplay, startAngle: nu
 
   if (angle > angleRange) {
     angle = angleRange;
+  } else if (angle < 0) {
+    angle = 0;
   }
 
   return { angleRange, angle };

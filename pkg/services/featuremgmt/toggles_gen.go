@@ -1089,4 +1089,8 @@ const (
 	// FlagCdnPluginsUrls
 	// Enable loading plugins via declarative URLs
 	FlagCdnPluginsUrls = "cdnPluginsUrls"
+
+	// FlagNewGauge
+	// Enable new gauge visualization
+	FlagNewGauge = "newGauge"
 )
