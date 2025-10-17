@@ -50,7 +50,7 @@ export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
 export function trackDashboardSceneCreatedOrSaved(
   isNew: boolean,
   dashboard: DashboardScene,
-  initialProperties: { name: string; url: string; expression_types?: string }
+  initialProperties: { name: string; url: string; expression_types?: string[] }
 ) {
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
