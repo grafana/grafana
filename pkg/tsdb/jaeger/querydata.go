@@ -46,12 +46,11 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 			continue
 		}
 
+		cfg := backend.GrafanaConfigFromContext(ctx)
+		useGrpc := cfg.FeatureToggles().IsEnabled("jaegerEnableGrpcEndpoint")
 		// Handle "Search" query type
-		// TODO: migrate this to use gRPC feature toggle
-		useGrpc := true
 		if query.QueryType == "search" {
 			// TODO: enable routing to gRPC when ready, currently pending on: https://github.com/jaegertracing/jaeger/issues/7594
-
 			frames, err := dsInfo.JaegerClient.Search(&query, q.TimeRange.From.UnixMicro(), q.TimeRange.To.UnixMicro())
 			if err != nil {
 				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
@@ -81,6 +80,7 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 		}
 
 		if query.QueryType == "dependencyGraph" {
+			// TODO: enable routing to gRPC when ready, currently pending on: https://github.com/jaegertracing/jaeger/issues/7595
 			dependencies, err := dsInfo.JaegerClient.Dependencies(ctx, q.TimeRange.From.UnixMilli(), q.TimeRange.To.UnixMilli())
 			if err != nil {
 				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
