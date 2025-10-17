@@ -163,18 +163,16 @@ LIMIT
   };
 
   const executeQuery = useCallback(() => {
-    if (query.expression && onRunQuery) {
+    if (onRunQuery) {
       reportInteraction('dashboards_expression_interaction', {
         action: 'execute_expression',
         expression_type: 'sql',
-        expressionRef: query.refId,
         context: 'expression_editor',
-        content: query.expression,
       });
 
       onRunQuery();
     }
-  }, [query.expression, query.refId, onRunQuery]);
+  }, [onRunQuery]);
 
   // Set up resize observer to handle container resizing
   useEffect(() => {

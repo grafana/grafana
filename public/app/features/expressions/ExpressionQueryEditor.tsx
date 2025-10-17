@@ -89,13 +89,12 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
   const hasTrackedAddExpression = useRef(false);
 
   useEffect(() => {
-    // Only track if 1) we haven't tracked yet for this component instance, 2) query has a type, or
+    // Only track if 1) query has a type, and 2) we haven't tracked yet for this component instance, and
     // 3) initial expression was empty (indicating a new expression, not editing existing)
     if (query.type && !hasTrackedAddExpression.current && !initialExpressionRef.current) {
       reportInteraction('dashboards_expression_interaction', {
         action: 'add_expression',
         expression_type: query.type,
-        expressionRef: query.refId,
         context: 'panel_query_section',
       });
       hasTrackedAddExpression.current = true;
