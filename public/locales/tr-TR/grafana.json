@@ -4535,7 +4535,8 @@
       "paste-row": "Satırı yapıştır",
       "paste-tab": "Sekmeyi yapıştır",
       "un-group-panels": "Gruplandırmayı çöz",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4829,7 +4830,11 @@
       "add-visualization-header": "Bir görselleştirme ekleyerek yeni panonuzu başlatın",
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Bir panoyu içe aktar",
-      "import-dashboard-button": "Panoyu içe aktar"
+      "import-dashboard-button": "Panoyu içe aktar",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Pano yüklenemedi"
@@ -5042,6 +5047,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Kopyala",
         "copy-or-duplicate": "Kopyala veya Çoğalt",
@@ -5051,7 +5057,10 @@
         "group-layout-disabled": "Bu seviyede hiçbir grup yok",
         "panel-layout": "Panel yazı tipi",
         "panel-layout-disabled": "Panel düzeni seçeneklerini değiştirmek için bir satır veya sekme seçin"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5201,7 +5210,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "Bu satır silindiğinde tüm paneller de kaldırılacak. Devam etmek istediğinizden emin misiniz?",
       "delete-row-title": "Satır silinsin mi?",
@@ -5241,9 +5249,7 @@
         "title-not-unique": "Bu başlık benzersiz değil"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Pano kaydedildi"
@@ -5333,6 +5339,9 @@
       "delete-tab-title": "Sekme silinsin mi?",
       "delete-tab-yes": "Sil",
       "description": "Panelleri yatay sekmeler hâlinde düzenle",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Sekmeler",
       "tab": {
         "new": "Yeni sekme",
@@ -7674,6 +7683,7 @@
   },
   "gauge": {
     "category-gauge": "Ölçü",
+    "category-radial-bar": "",
     "description-min-height": "Minimum satır yüksekliği (yatay hizalama)",
     "description-min-width": "Minimum sütun genişliği (dikey hizalama)",
     "description-neutral": "Nötr nokta olarak Min. değerini kullanmak için boş bırakın",
@@ -9093,6 +9103,8 @@
       "make-time-range-permanent": "Zaman aralığını mutlak/kalıcı yap",
       "move-time-range-back": "Zaman aralığını geri al",
       "move-time-range-forward": "Zaman aralığını ileri al",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Aramayı aç",
       "open-share-embed-drawer": "Eklenen paneli paylaş",
       "open-share-link-drawer": "Panel bağlantısını paylaş",
@@ -11821,7 +11833,8 @@
       "button-cancelling": "İptal ediliyor...",
       "button-previous": "Önceki",
       "button-submitting": "Gönderiliyor...",
-      "error-instance-repository-exists": "Örnek deposu zaten var"
+      "error-instance-repository-exists": "Örnek deposu zaten var",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12044,6 +12057,27 @@
       "show-response": "Yanıtı göster"
     },
     "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor."
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {

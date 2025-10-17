@@ -1,6 +1,9 @@
 {
   extends: ["config:recommended"],
   enabledManagers: ["npm"],
+  ignorePresets: [
+    "github>grafana/grafana-renovate-config//presets/labels",
+  ],
   ignoreDeps: [
     // ignoring these until we can upgrade to react 19
     // see epic here: https://github.com/grafana/grafana/issues/98813

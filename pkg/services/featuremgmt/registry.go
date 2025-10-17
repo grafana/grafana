@@ -498,6 +498,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesLogsDrilldown",
+			Description:     "Adds support for Kubernetes logs drilldown",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaObservabilityLogsSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -2079,14 +2086,6 @@ var (
 			Owner:           grafanaOSSBigTent,
 			Expression:      "false",
 			RequiresRestart: true,
-		},
-		{
-			Name:         "filterOutBotsFromFrontendLogs",
-			Description:  "Filter out bots from collecting data for Frontend Observability",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
-			Expression:   "false",
 		},
 		{
 			Name:         "cdnPluginsLoadFirst",

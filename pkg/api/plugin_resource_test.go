@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/caching"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -166,7 +166,7 @@ func TestIntegrationCallResource(t *testing.T) {
 		}
 	})
 
-	pluginRegistry := fakes.NewFakePluginRegistry()
+	pluginRegistry := pluginfakes.NewFakePluginRegistry()
 	require.NoError(t, pluginRegistry.Add(context.Background(), &plugins.Plugin{
 		JSONData: plugins.JSONData{
 			ID:      "grafana-testdata-datasource",
@@ -174,7 +174,7 @@ func TestIntegrationCallResource(t *testing.T) {
 		},
 	}))
 	middlewares := pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, tracing.InitializeTracerForTest(), caching.ProvideCachingServiceClient(&caching.OSSCachingService{}, nil), featuremgmt.WithFeatures(), prometheus.DefaultRegisterer, pluginRegistry)
-	pc, err := backend.HandlerFromMiddlewares(&fakes.FakePluginClient{
+	pc, err := backend.HandlerFromMiddlewares(&pluginfakes.FakePluginClient{
 		CallResourceHandlerFunc: backend.CallResourceHandlerFunc(func(ctx context.Context,
 			req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 			return errors.New("something went wrong")
