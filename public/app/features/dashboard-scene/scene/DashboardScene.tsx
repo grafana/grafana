@@ -750,8 +750,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         }
 
         for (const target of panel.targets) {
+          // Only count if it's actually an expression query
+          const datasourceUid =
+            target?.datasource && typeof target.datasource === 'object' && 'uid' in target.datasource
+              ? target.datasource.uid
+              : undefined;
+
           const targetType = target?.type;
-          if (typeof targetType === 'string' && targetType) {
+          if (datasourceUid === '__expr__' && typeof targetType === 'string' && targetType) {
             expressionTypes.add(targetType);
           }
         }
@@ -772,8 +778,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         }
 
         for (const query of queries) {
+          // Only count if it's actually an expression query
+          const datasource = query?.spec?.query?.spec?.datasource;
+          const datasourceUid =
+            datasource && typeof datasource === 'object' && 'uid' in datasource ? datasource.uid : undefined;
           const queryType = query?.spec?.query?.spec?.type;
-          if (typeof queryType === 'string' && queryType) {
+          if (datasourceUid === '__expr__' && typeof queryType === 'string' && queryType) {
             expressionTypes.add(queryType);
           }
         }
