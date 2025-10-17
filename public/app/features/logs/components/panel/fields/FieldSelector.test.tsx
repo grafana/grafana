@@ -30,7 +30,14 @@ beforeEach(() => {
       fields: [
         { name: 'timestamp', type: FieldType.time, values: [1, 2] },
         { name: 'body', type: FieldType.string, values: ['log 1', 'log 2'] },
-        { name: 'labels', type: FieldType.other, values: [{ service: 'frontend', level: 'info' }, { service: 'backend', level: 'error' }] },
+        {
+          name: 'labels',
+          type: FieldType.other,
+          values: [
+            { service: 'frontend', level: 'info' },
+            { service: 'backend', level: 'error' },
+          ],
+        },
       ],
     }),
   ];
@@ -111,7 +118,7 @@ describe('LogListFieldSelector', () => {
 
   test('should not render the selected fields without selected fields', () => {
     render(
-      <LogListContext.Provider value={{...defaultContextValue, displayedFields: []}}>
+      <LogListContext.Provider value={{ ...defaultContextValue, displayedFields: [] }}>
         <LogListFieldSelector containerElement={containerElement} logs={logs} dataFrames={dataFrames} />
       </LogListContext.Provider>
     );
@@ -289,4 +296,3 @@ describe('LogsTableFieldSelector', () => {
     expect(storeSpy).toHaveBeenCalled();
   });
 });
-
