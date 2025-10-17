@@ -292,7 +292,7 @@ func TestTransformGrpcTraceResponse(t *testing.T) {
 			},
 		}
 		frame := TransformGrpcTraceResponse(trace, "test")
-		experimental.CheckGoldenJSONFrame(t, "../testdata", "simple_trace_grpc.golden", frame, true)
+		experimental.CheckGoldenJSONFrame(t, "../testdata", "simple_trace_grpc.golden", frame, false)
 	})
 
 	t.Run("complex_trace", func(t *testing.T) {
@@ -535,7 +535,7 @@ func TestTransformGrpcTraceResponse(t *testing.T) {
 		}
 
 		frame := TransformGrpcTraceResponse(trace, "test")
-		experimental.CheckGoldenJSONFrame(t, "../testdata", "complex_trace_grpc.golden", frame, true)
+		experimental.CheckGoldenJSONFrame(t, "../testdata", "complex_trace_grpc.golden", frame, false)
 	})
 }
 
