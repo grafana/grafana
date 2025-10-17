@@ -19,6 +19,10 @@ interface StackProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTM
   children?: React.ReactNode;
 }
 
+/**
+ * The Stack component is a simple wrapper around the flexbox layout model that allows to easily create responsive and flexible layouts. It provides a simple and intuitive way to align and distribute items within a container either horizontally or vertically.
+ * Storybook: https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-stack--docs
+ */
 export const Stack = React.forwardRef<HTMLDivElement, StackProps>((props, ref) => {
   const {
     gap = 1,
