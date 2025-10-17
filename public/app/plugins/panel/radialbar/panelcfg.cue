@@ -38,10 +38,10 @@ composableKinds: PanelCfg: {
 					showThresholdLabels: bool | *false
 					segmentCount: number | *1
 					segmentSpacing: number | *0.3
-					sparkline?: bool | *false
+					sparkline?: bool | *true
 					shape: "circle" | *"gauge"	
 					barWidthFactor: number | *0.4
-					gradient: *"none" | "auto" 
+					gradient: "none" | *"auto" 
 					effects: GaugePanelEffects | *{}
 				} @cuetsy(kind="interface")
 			}
