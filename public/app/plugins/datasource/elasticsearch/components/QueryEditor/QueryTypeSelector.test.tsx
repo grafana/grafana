@@ -2,7 +2,6 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { ElasticsearchDataQuery } from '../../dataquery.gen';
-import { ElasticDatasource } from '../../datasource';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { renderWithESProvider } from '../../test-helpers/render';
 
@@ -31,62 +30,12 @@ describe('QueryTypeSelector', () => {
       bucketAggs: [{ type: 'date_histogram', id: '2' }],
     };
 
-    const datasource = { defaultQueryMode: 'metrics' } as ElasticDatasource;
-
-    renderWithESProvider(<QueryTypeSelector />, { providerProps: { query, datasource } });
+    renderWithESProvider(<QueryTypeSelector />, { providerProps: { query } });
 
     expect(screen.getByRole('radio', { name: 'Metrics' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Logs' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Raw Data' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Raw Document' })).toBeInTheDocument();
-  });
-
-  it('should select the correct radio button based on defaultQueryMode', () => {
-    const query: ElasticsearchDataQuery = {
-      refId: 'A',
-      query: '',
-      metrics: [{ id: '1', type: 'count' }],
-      bucketAggs: [{ type: 'date_histogram', id: '2' }],
-    };
-
-    const datasource = { defaultQueryMode: 'logs' } as ElasticDatasource;
-
-    renderWithESProvider(<QueryTypeSelector />, { providerProps: { query, datasource } });
-
-    const logsRadio = screen.getByRole('radio', { name: 'Logs' });
-    expect(logsRadio).toBeChecked();
-  });
-
-  it('should fallback to impliedQueryType when defaultQueryMode is undefined', () => {
-    const query: ElasticsearchDataQuery = {
-      refId: 'A',
-      query: '',
-      metrics: [{ id: '1', type: 'count' }],
-      bucketAggs: [{ type: 'date_histogram', id: '2' }],
-    };
-
-    const datasource = {} as ElasticDatasource;
-
-    renderWithESProvider(<QueryTypeSelector />, { providerProps: { query, datasource } });
-
-    const metricsRadio = screen.getByRole('radio', { name: 'Metrics' });
-    expect(metricsRadio).toBeChecked();
-  });
-
-  it('should fallback to impliedQueryType when defaultQueryMode is explicitly undefined', () => {
-    const query: ElasticsearchDataQuery = {
-      refId: 'A',
-      query: '',
-      metrics: [{ id: '1', type: 'logs' }],
-      bucketAggs: [{ type: 'date_histogram', id: '2' }],
-    };
-
-    const datasource = { defaultQueryMode: undefined } as ElasticDatasource;
-
-    renderWithESProvider(<QueryTypeSelector />, { providerProps: { query, datasource } });
-
-    const logsRadio = screen.getByRole('radio', { name: 'Logs' });
-    expect(logsRadio).toBeChecked();
   });
 
   it('should dispatch changeMetricType action when radio button is changed', async () => {
@@ -97,9 +46,7 @@ describe('QueryTypeSelector', () => {
       bucketAggs: [{ type: 'date_histogram', id: '2' }],
     };
 
-    const datasource = { defaultQueryMode: 'metrics' } as ElasticDatasource;
-
-    renderWithESProvider(<QueryTypeSelector />, { providerProps: { query, datasource } });
+    renderWithESProvider(<QueryTypeSelector />, { providerProps: { query } });
 
     const logsRadio = screen.getByRole('radio', { name: 'Logs' });
     await userEvent.click(logsRadio);
@@ -115,9 +62,7 @@ describe('QueryTypeSelector', () => {
       bucketAggs: [{ type: 'date_histogram', id: '2' }],
     };
 
-    const datasource = { defaultQueryMode: 'metrics' } as ElasticDatasource;
-
-    renderWithESProvider(<QueryTypeSelector />, { providerProps: { query, datasource } });
+    renderWithESProvider(<QueryTypeSelector />, { providerProps: { query } });
 
     const rawDataRadio = screen.getByRole('radio', { name: 'Raw Data' });
     await userEvent.click(rawDataRadio);
@@ -133,9 +78,7 @@ describe('QueryTypeSelector', () => {
       bucketAggs: [{ type: 'date_histogram', id: '2' }],
     };
 
-    const datasource = { defaultQueryMode: 'metrics' } as ElasticDatasource;
-
-    renderWithESProvider(<QueryTypeSelector />, { providerProps: { query, datasource } });
+    renderWithESProvider(<QueryTypeSelector />, { providerProps: { query } });
 
     const rawDocumentRadio = screen.getByRole('radio', { name: 'Raw Document' });
     await userEvent.click(rawDocumentRadio);
@@ -151,9 +94,7 @@ describe('QueryTypeSelector', () => {
       bucketAggs: [{ type: 'date_histogram', id: '2' }],
     };
 
-    const datasource = { defaultQueryMode: 'logs' } as ElasticDatasource;
-
-    renderWithESProvider(<QueryTypeSelector />, { providerProps: { query, datasource } });
+    renderWithESProvider(<QueryTypeSelector />, { providerProps: { query } });
 
     const metricsRadio = screen.getByRole('radio', { name: 'Metrics' });
     await userEvent.click(metricsRadio);
@@ -169,9 +110,7 @@ describe('QueryTypeSelector', () => {
       bucketAggs: [{ type: 'date_histogram', id: '2' }],
     };
 
-    const datasource = { defaultQueryMode: 'metrics' } as ElasticDatasource;
-
-    const { container } = renderWithESProvider(<QueryTypeSelector />, { providerProps: { query, datasource } });
+    const { container } = renderWithESProvider(<QueryTypeSelector />, { providerProps: { query } });
 
     expect(container.firstChild).toBeNull();
   });
