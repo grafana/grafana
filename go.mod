@@ -653,6 +653,8 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
+require github.com/grafana/grafana/apps/logsdrilldown v0.0.0-20251017070335-1a372e2dec65
+
 require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.43.0 // indirect
