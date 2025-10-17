@@ -153,6 +153,11 @@ type UnifiedAlertingSettings struct {
 
 	// DeletedRuleRetention defines the maximum duration to retain deleted alerting rules before permanent removal.
 	DeletedRuleRetention time.Duration
+
+	// AlertRuleCacheType determines which cache implementation to use for alert rules.
+	// Valid values: "local" (in-memory), "remote" (Redis), "database" (use remote cache backend)
+	// Default: "local"
+	AlertRuleCacheType string
 }
 
 type RecordingRuleSettings struct {
@@ -581,6 +586,12 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(30 * 24 * time.Hour)
 	if uaCfg.DeletedRuleRetention < 0 {
 		return fmt.Errorf("setting 'deleted_rule_retention' is invalid, only 0 or a positive duration are allowed")
+	}
+
+	// Alert rule cache type: local (in-memory) or remote (Redis)
+	uaCfg.AlertRuleCacheType = ua.Key("alert_rule_cache_type").MustString("local")
+	if uaCfg.AlertRuleCacheType != "local" && uaCfg.AlertRuleCacheType != "remote" {
+		return fmt.Errorf("setting 'alert_rule_cache_type' is invalid, must be 'local' or 'remote' (got: %s)", uaCfg.AlertRuleCacheType)
 	}
 
 	cfg.UnifiedAlerting = uaCfg

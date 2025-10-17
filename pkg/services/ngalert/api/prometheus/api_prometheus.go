@@ -11,7 +11,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
+	gojson "github.com/goccy/go-json"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
@@ -66,6 +68,42 @@ func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, status
 }
 
 const queryIncludeInternalLabels = "includeInternalLabels"
+
+// GoJsonResponse is a custom response type that uses goccy/go-json for faster JSON encoding.
+// This is specifically designed for the Prometheus rules API endpoint which can return large payloads.
+type GoJsonResponse struct {
+	status int
+	body   any
+}
+
+// Status returns the HTTP status code.
+func (r GoJsonResponse) Status() int {
+	return r.status
+}
+
+// Body returns nil as this is a streaming response.
+func (r GoJsonResponse) Body() []byte {
+	return nil
+}
+
+// WriteTo writes the JSON response using goccy/go-json encoder.
+func (r GoJsonResponse) WriteTo(ctx *contextmodel.ReqContext) {
+	ctx.Resp.Header().Set("Content-Type", "application/json; charset=utf-8")
+	ctx.Resp.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	ctx.Resp.WriteHeader(r.status)
+	enc := gojson.NewEncoder(ctx.Resp)
+	if err := enc.Encode(r.body); err != nil {
+		ctx.Logger.Error("Error encoding JSON with goccy/go-json", "err", err)
+	}
+}
+
+// newGoJsonResponse creates a new GoJsonResponse.
+func newGoJsonResponse(status int, body any) response.Response {
+	return &GoJsonResponse{
+		status: status,
+		body:   body,
+	}
+}
 
 func getBoolWithDefault(vals url.Values, field string, d bool) bool {
 	f := vals.Get(field)
@@ -252,6 +290,13 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	// As we are using req.Form directly, this triggers a call to ParseForm() if needed.
 	c.Query("")
 
+	// Initialize Server-Timing collector
+	timingCollector := NewServerTimingCollector()
+	timingCollector.Start("total")
+
+	// Attach timing collector to context for propagation to lower layers
+	ctx := ContextWithTimingCollector(c.Req.Context(), timingCollector)
+
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -261,42 +306,52 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		},
 	}
 
-	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.GetOrgID(), c.SignedInUser)
+	timingCollector.Start("namespaces")
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(ctx, c.GetOrgID(), c.SignedInUser)
+	timingCollector.End("namespaces", "Get user visible namespaces")
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
 		ruleResponse.ErrorType = apiv1.ErrServer
-		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+		timingCollector.End("total", "Total request time")
+		return NewGoJsonResponseWithTiming(ruleResponse.HTTPStatusCode(), ruleResponse, timingCollector.GetTimings())
 	}
 
+	timingCollector.Start("authz")
 	allowedNamespaces := map[string]string{}
 	for namespaceUID, folder := range namespaceMap {
 		// only add namespaces that the user has access to rules in
-		hasAccess, err := srv.authz.HasAccessInFolder(c.Req.Context(), c.SignedInUser, ngmodels.Namespace(*folder.ToFolderReference()))
+		hasAccess, err := srv.authz.HasAccessInFolder(ctx, c.SignedInUser, ngmodels.Namespace(*folder.ToFolderReference()))
 		if err != nil {
 			ruleResponse.Status = "error"
 			ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
 			ruleResponse.ErrorType = apiv1.ErrServer
-			return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+			timingCollector.End("total", "Total request time")
+			return NewGoJsonResponseWithTiming(ruleResponse.HTTPStatusCode(), ruleResponse, timingCollector.GetTimings())
 		}
 		if hasAccess {
 			allowedNamespaces[namespaceUID] = folder.Fullpath
 		}
 	}
+	timingCollector.End("authz", "Authorization checks")
 
-	provenanceRecords, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.GetOrgID(), (&ngmodels.AlertRule{}).ResourceType())
+	timingCollector.Start("provenance")
+	provenanceRecords, err := srv.provenanceStore.GetProvenances(ctx, c.GetOrgID(), (&ngmodels.AlertRule{}).ResourceType())
+	timingCollector.End("provenance", "Get provenance records")
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = fmt.Sprintf("failed to get provenances visible to the user: %s", err.Error())
 		ruleResponse.ErrorType = apiv1.ErrServer
-		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+		timingCollector.End("total", "Total request time")
+		return NewGoJsonResponseWithTiming(ruleResponse.HTTPStatusCode(), ruleResponse, timingCollector.GetTimings())
 	}
 
+	timingCollector.Start("prepare")
 	ruleResponse = PrepareRuleGroupStatusesV2(
 		srv.log,
 		srv.store,
 		RuleGroupStatusesOptions{
-			Ctx:               c.Req.Context(),
+			Ctx:               ctx, // Pass context with timing collector
 			OrgID:             c.OrgID,
 			Query:             c.Req.Form,
 			AllowedNamespaces: allowedNamespaces,
@@ -305,8 +360,24 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		RuleAlertStateMutatorGenerator(srv.manager),
 		provenanceRecords,
 	)
+	timingCollector.End("prepare", "Prepare rule group statuses")
 
-	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+	// Measure JSON encoding time by pre-encoding the response
+	// This gives us accurate timing AND avoids double-encoding
+	timingCollector.Start("json_encode")
+	preencodedJSON, encodeErr := gojson.Marshal(ruleResponse)
+	timingCollector.End("json_encode", "JSON response encoding")
+
+	timingCollector.End("total", "Total request time")
+
+	// Return response with pre-encoded JSON (or nil if encoding failed)
+	if encodeErr != nil {
+		srv.log.Error("Failed to encode response", "error", encodeErr)
+		// Return without pre-encoding, will encode on-the-fly
+		return NewGoJsonResponseWithTiming(ruleResponse.HTTPStatusCode(), ruleResponse, timingCollector.GetTimings())
+	}
+
+	return NewGoJsonResponseWithTimingAndPreencoded(ruleResponse.HTTPStatusCode(), ruleResponse, preencodedJSON, timingCollector.GetTimings())
 }
 
 // mutator function used to attach status to the rule
@@ -334,6 +405,8 @@ func RuleStatusMutatorGenerator(statusReader StatusReader) RuleStatusMutator {
 
 func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAlertStateMutator {
 	return func(source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (map[string]int64, map[string]int64) {
+		// Time state manager query if collector present in context
+		// Note: We can't easily pass context here, so we'll track this in process_groups timing
 		states := manager.GetStatesForRuleUID(source.OrgID, source.UID)
 		totals := make(map[string]int64)
 		totalsFiltered := make(map[string]int64)
@@ -405,6 +478,13 @@ func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAler
 }
 
 func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
+	// Extract timing collector from context if present
+	collector := TimingCollectorFromContext(opts.Ctx)
+
+	if collector != nil {
+		collector.Start("parse_query")
+	}
+
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -476,8 +556,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		}
 	}
 
-	ruleGroups := opts.Query["rule_group"]
-
+	// Note: rule_group is extracted for substring filtering later, not passed to store for exact matching
 	receiverName := opts.Query.Get("receiver_name")
 
 	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
@@ -487,19 +566,98 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		return ruleResponse
 	}
 
+	// Extract rule type filter (alerting/recording)
+	ruleType := ngmodels.RuleTypeFilterAll
+	if typeParam := opts.Query.Get("type"); typeParam != "" {
+		switch typeParam {
+		case "alerting":
+			ruleType = ngmodels.RuleTypeFilterAlerting
+		case "recording":
+			ruleType = ngmodels.RuleTypeFilterRecording
+		}
+	}
+
+	// Extract label filters for backend filtering
+	labelFilters := make([]string, 0)
+	if len(matchers) > 0 {
+		for _, matcher := range matchers {
+			// Convert Prometheus matcher to string format for backend
+			// Prometheus MatchType: MatchEqual=0, MatchNotEqual=1, MatchRegexp=2, MatchNotRegexp=3
+			var op string
+			switch matcher.Type {
+			case 0: // MatchEqual
+				op = "="
+			case 1: // MatchNotEqual
+				op = "!="
+			case 2: // MatchRegexp
+				op = "=~"
+			case 3: // MatchNotRegexp
+				op = "!~"
+			default:
+				op = "="
+			}
+			labelFilters = append(labelFilters, fmt.Sprintf("%s%s%s", matcher.Name, op, matcher.Value))
+		}
+	}
+
+	// Extract hide_plugins filter
+	hidePlugins := getBoolWithDefault(opts.Query, "hide_plugins", false)
+
+	// Extract datasource_uid filter (can be multiple)
+	datasourceUIDs := opts.Query["datasource_uid"]
+
+	// Check if we have filters that will be applied after grouping
+	namespaceFilter := opts.Query.Get("namespace")
+	ruleGroupFilter := opts.Query.Get("rule_group")
+	ruleNameFilter := opts.Query.Get("rule_name")
+	hasPostGroupFilters := namespaceFilter != "" || ruleGroupFilter != ""
+
+	// If we have post-group filters, don't paginate at store level - we need all groups to filter properly
+	storeLevelLimit := maxGroups
+	storeLevelToken := nextToken
+	if hasPostGroupFilters {
+		storeLevelLimit = 0  // 0 means no limit
+		storeLevelToken = "" // No pagination at store level
+	}
+
+	if collector != nil {
+		collector.End("parse_query", "Parse and validate query parameters")
+		collector.Start("db_query")
+	}
+
 	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
 			OrgID:         opts.OrgID,
 			NamespaceUIDs: namespaceUIDs,
 			DashboardUID:  dashboardUID,
 			PanelID:       panelID,
-			RuleGroups:    ruleGroups,
-			ReceiverName:  receiverName,
+			// Don't pass RuleGroups - we'll do substring filtering after grouping
+			ReceiverName: receiverName,
 		},
-		Limit:         maxGroups,
-		ContinueToken: nextToken,
+		RuleType:        ruleType,
+		Labels:          labelFilters,
+		RuleName:        ruleNameFilter,
+		HidePluginRules: hidePlugins,
+		DatasourceUIDs:  datasourceUIDs,
+		Limit:           storeLevelLimit,
+		ContinueToken:   storeLevelToken,
+		DisableCache:    false,
 	}
 	ruleList, continueToken, err := store.ListAlertRulesByGroup(opts.Ctx, &byGroupQuery)
+	if collector != nil {
+		// Add cache status to description
+		cacheDesc := "Fetch rules"
+		if collector.HasCacheHits() {
+			cacheDesc = "Fetch rules (from cache)"
+			log.Info("Cache status", "hits", true)
+		} else if collector.HasCacheMisses() || collector.HasDBQueries() {
+			cacheDesc = "Fetch rules (from database)"
+			log.Info("Cache status", "miss_or_db", true, "has_misses", collector.HasCacheMisses(), "has_db", collector.HasDBQueries())
+		} else {
+			log.Info("Cache status", "none", true)
+		}
+		collector.End("db_query", cacheDesc)
+	}
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
@@ -507,35 +665,142 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		return ruleResponse
 	}
 
-	ruleNames := opts.Query["rule_name"]
-	ruleNamesSet := make(map[string]struct{}, len(ruleNames))
-	for _, rn := range ruleNames {
-		ruleNamesSet[rn] = struct{}{}
+	if collector != nil {
+		collector.Start("filter_group")
+	}
+	// Don't pass ruleNamesSet for exact matching - we're doing substring filtering at store level
+	groupedRules := getGroupedRules(log, ruleList, nil, opts.AllowedNamespaces)
+
+	// Filter by namespace (folder name) if provided - case-insensitive substring match
+	if namespaceFilter != "" {
+		filteredGroups := make([]*ruleGroup, 0, len(groupedRules))
+		lowerFilter := strings.ToLower(namespaceFilter)
+		for _, rg := range groupedRules {
+			if strings.Contains(strings.ToLower(rg.Folder), lowerFilter) {
+				filteredGroups = append(filteredGroups, rg)
+			}
+		}
+		groupedRules = filteredGroups
 	}
 
-	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.AllowedNamespaces)
-	rulesTotals := make(map[string]int64, len(groupedRules))
-	for _, rg := range groupedRules {
-		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)
-		ruleGroup.Totals = totals
-		for k, v := range totals {
+	// Filter by rule_group (group name) if provided - case-insensitive substring match
+	if ruleGroupFilter != "" {
+		filteredGroups := make([]*ruleGroup, 0, len(groupedRules))
+		lowerFilter := strings.ToLower(ruleGroupFilter)
+		for _, rg := range groupedRules {
+			if strings.Contains(strings.ToLower(rg.GroupKey.RuleGroup), lowerFilter) {
+				filteredGroups = append(filteredGroups, rg)
+			}
+		}
+		groupedRules = filteredGroups
+	}
+
+	// Apply pagination at API level if we did post-group filtering
+	if hasPostGroupFilters && maxGroups > 0 {
+		// Handle pagination token
+		startIdx := 0
+		if nextToken != "" {
+			// Find the starting position based on token
+			for i, rg := range groupedRules {
+				groupToken := getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup)
+				if tokenGreaterThanOrEqual(groupToken, nextToken) {
+					startIdx = i
+					break
+				}
+			}
+		}
+
+		// Apply limit and generate next token
+		endIdx := startIdx + int(maxGroups)
+		if endIdx > len(groupedRules) {
+			endIdx = len(groupedRules)
+			continueToken = "" // No more groups
+		} else {
+			// Generate next token from the group after the last one we're returning
+			nextGroup := groupedRules[endIdx]
+			continueToken = getRuleGroupNextToken(nextGroup.Folder, nextGroup.GroupKey.RuleGroup)
+		}
+
+		groupedRules = groupedRules[startIdx:endIdx]
+	}
+
+	if collector != nil {
+		collector.End("filter_group", "Filter and paginate rule groups")
+		collector.Start("process_groups")
+	}
+
+	// PERFORMANCE OPTIMIZATION: Process rule groups in parallel to overlap state manager I/O
+	// Use worker pool to limit concurrency
+	type groupResult struct {
+		ruleGroup *apimodels.RuleGroup
+		totals    map[string]int64
+		index     int
+	}
+
+	workerCount := 8 // Tune based on CPU cores and state manager capacity
+	resultsChan := make(chan groupResult, len(groupedRules))
+	semaphore := make(chan struct{}, workerCount)
+	var wg sync.WaitGroup
+
+	for i, rg := range groupedRules {
+		wg.Add(1)
+		semaphore <- struct{}{} // Acquire
+		go func(idx int, rg *ruleGroup) {
+			defer wg.Done()
+			defer func() { <-semaphore }() // Release
+
+			ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)
+			ruleGroup.Totals = totals
+
+			if len(stateFilterSet) > 0 {
+				filterRulesByState(ruleGroup, stateFilterSet)
+			}
+
+			if len(healthFilterSet) > 0 {
+				filterRulesByHealth(ruleGroup, healthFilterSet)
+			}
+
+			if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
+				ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
+			}
+
+			if len(ruleGroup.Rules) > 0 {
+				resultsChan <- groupResult{
+					ruleGroup: ruleGroup,
+					totals:    totals,
+					index:     idx,
+				}
+			}
+		}(i, rg)
+	}
+
+	go func() {
+		wg.Wait()
+		close(resultsChan)
+	}()
+
+	// Collect results in order
+	results := make([]groupResult, 0, len(groupedRules))
+	for result := range resultsChan {
+		results = append(results, result)
+	}
+
+	// Sort by original index to maintain order
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].index < results[j].index
+	})
+
+	if collector != nil {
+		collector.End("process_groups", fmt.Sprintf("Process %d rule groups (parallel)", len(groupedRules)))
+		collector.Start("serialize")
+	}
+
+	// Build final response
+	rulesTotals := make(map[string]int64)
+	for _, result := range results {
+		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *result.ruleGroup)
+		for k, v := range result.totals {
 			rulesTotals[k] += v
-		}
-
-		if len(stateFilterSet) > 0 {
-			filterRulesByState(ruleGroup, stateFilterSet)
-		}
-
-		if len(healthFilterSet) > 0 {
-			filterRulesByHealth(ruleGroup, healthFilterSet)
-		}
-
-		if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
-			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
-		}
-
-		if len(ruleGroup.Rules) > 0 {
-			ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
 		}
 	}
 
@@ -544,6 +809,10 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	// Only return Totals if there is no pagination
 	if maxGroups == -1 {
 		ruleResponse.Data.Totals = rulesTotals
+	}
+
+	if collector != nil {
+		collector.End("serialize", "Build final response structure")
 	}
 
 	return ruleResponse

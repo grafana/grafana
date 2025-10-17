@@ -80,11 +80,34 @@ export function useFilteredRulesIteratorProvider() {
     const normalizedFilterState = normalizeFilterState(filterState);
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
+    // Map datasource names to UIDs for backend filtering
+    const datasourceUids: string[] = [];
+    for (const dsName of filterState.dataSourceNames) {
+      try {
+        const uid = getDatasourceAPIUid(dsName);
+        // Skip grafana datasource (it's for external datasources only)
+        if (uid !== 'grafana') {
+          datasourceUids.push(uid);
+        }
+      } catch {
+        // Ignore datasources that don't exist
+      }
+    }
+
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
       grafanaGroupsGenerator(groupLimit, {
         contactPoint: filterState.contactPoint ?? undefined,
         health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
         state: filterState.ruleState ? [filterState.ruleState] : [],
+        type: filterState.ruleType,
+        labels: filterState.labels,
+        hidePlugins: filterState.plugins === 'hide',
+        namespace: filterState.namespace, // Backend does case-insensitive substring match on folder name
+        groupName: filterState.groupName, // Backend does case-insensitive substring match on group name
+        ruleName: filterState.ruleName, // Backend does case-insensitive substring match on rule name
+        dashboardUid: filterState.dashboardUid,
+        datasourceUids: datasourceUids.length > 0 ? datasourceUids : undefined,
+        // Backend caching + backend substring filtering + frontend fuzzy filtering gives best performance
       })
     ).pipe(
       withAbort(abortController.signal),

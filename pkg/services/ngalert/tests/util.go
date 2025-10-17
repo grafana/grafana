@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -84,7 +85,8 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 	bus := bus.ProvideBus(tracer)
 	folderService := foldertest.NewFakeService()
 	dashboardService := dashboards.NewFakeDashboardService(tb)
-	ruleStore, err := store.ProvideDBStore(cfg, options.featureToggles, sqlStore, folderService, &dashboards.FakeDashboardService{}, ac, bus)
+	cacheService := localcache.ProvideService()
+	ruleStore, err := store.ProvideDBStore(cfg, options.featureToggles, sqlStore, folderService, &dashboards.FakeDashboardService{}, ac, bus, cacheService)
 	require.NoError(tb, err)
 	ng, err := ngalert.ProvideService(
 		cfg, options.featureToggles, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, quotatest.New(false, nil),

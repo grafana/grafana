@@ -1,13 +1,15 @@
 package store
 
 import (
-	"encoding/json"
 	"fmt"
 
+	json "github.com/goccy/go-json"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
+
+// Note: Using goccy/go-json imported as 'json' for better performance than encoding/json
 
 const (
 	grafanaCloudProm  = "grafanacloud-prom"

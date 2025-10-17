@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -43,6 +44,10 @@ type DBstore struct {
 	DashboardService dashboards.DashboardService
 	AccessControl    accesscontrol.AccessControl
 	Bus              bus.Bus
+	// Deprecated: Use AlertRuleCache instead
+	CacheService *localcache.CacheService
+	// AlertRuleCache is the cache implementation for alert rules (can be local or remote)
+	AlertRuleCache AlertRuleCache
 }
 
 func ProvideDBStore(
@@ -53,16 +58,21 @@ func ProvideDBStore(
 	dashboards dashboards.DashboardService,
 	ac accesscontrol.AccessControl,
 	bus bus.Bus,
+	cacheService *localcache.CacheService,
+	alertRuleCache AlertRuleCache,
 ) (*DBstore, error) {
+	logger := log.New("ngalert.dbstore")
 	store := DBstore{
 		Cfg:              cfg.UnifiedAlerting,
 		FeatureToggles:   featureToggles,
 		SQLStore:         sqlstore,
-		Logger:           log.New("ngalert.dbstore"),
+		Logger:           logger,
 		FolderService:    folderService,
 		DashboardService: dashboards,
 		AccessControl:    ac,
 		Bus:              bus,
+		CacheService:     cacheService, // Kept for backward compatibility
+		AlertRuleCache:   alertRuleCache,
 	}
 	if err := folderService.RegisterService(store); err != nil {
 		return nil, err
