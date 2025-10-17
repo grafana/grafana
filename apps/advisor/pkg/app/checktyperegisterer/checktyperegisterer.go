@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -16,6 +18,7 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/services/org"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -26,7 +29,8 @@ import (
 type Runner struct {
 	checkRegistry checkregistry.CheckService
 	client        resource.Client
-	namespace     string
+	orgService    org.Service
+	stackID       string
 	log           logging.Logger
 	retryAttempts int
 	retryDelay    time.Duration
@@ -40,10 +44,7 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 		return nil, fmt.Errorf("invalid config type")
 	}
 	checkRegistry := specificConfig.CheckRegistry
-	namespace, err := checks.GetNamespace(specificConfig.StackID)
-	if err != nil {
-		return nil, err
-	}
+	orgService := specificConfig.OrgService
 
 	// Prepare storage client
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
@@ -55,7 +56,8 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 	return &Runner{
 		checkRegistry: checkRegistry,
 		client:        client,
-		namespace:     namespace,
+		orgService:    orgService,
+		stackID:       specificConfig.StackID,
 		log:           log.With("runner", "advisor.checktyperegisterer"),
 		retryAttempts: 5,
 		retryDelay:    time.Second * 10,
@@ -64,36 +66,62 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 
 func (r *Runner) Run(ctx context.Context) error {
 	logger := r.log.WithContext(ctx)
-	for _, t := range r.checkRegistry.Checks() {
-		steps := t.Steps()
-		stepTypes := make([]advisorv0alpha1.CheckTypeStep, len(steps))
-		for i, s := range steps {
-			stepTypes[i] = advisorv0alpha1.CheckTypeStep{
-				Title:       s.Title(),
-				Description: s.Description(),
-				StepID:      s.ID(),
-				Resolution:  s.Resolution(),
-			}
-		}
-		obj := &advisorv0alpha1.CheckType{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      t.ID(),
-				Namespace: r.namespace,
-				Annotations: map[string]string{
-					checks.NameAnnotation: t.Name(),
-					// Flag to indicate feature availability
-					checks.RetryAnnotation:       "1",
-					checks.IgnoreStepsAnnotation: "1",
-				},
-			},
-			Spec: advisorv0alpha1.CheckTypeSpec{
-				Name:  t.ID(),
-				Steps: stepTypes,
-			},
-		}
-		err := r.registerCheckType(ctx, logger, t.ID(), obj)
+
+	// Determine namespaces based on StackID
+	var namespaces []string
+	if r.stackID != "" {
+		// Single namespace for cloud stack
+		stackId, err := strconv.ParseInt(r.stackID, 10, 64)
 		if err != nil {
-			return err
+			return fmt.Errorf("invalid stack id: %s", r.stackID)
+		}
+		namespaces = []string{types.CloudNamespaceFormatter(stackId)}
+	} else {
+		// Multiple namespaces for each org
+		orgs, err := r.orgService.Search(ctx, &org.SearchOrgsQuery{})
+		if err != nil {
+			return fmt.Errorf("failed to fetch orgs: %w", err)
+		}
+		for _, o := range orgs {
+			namespaces = append(namespaces, types.OrgNamespaceFormatter(o.ID))
+		}
+	}
+
+	logger.Debug("Registering check types", "namespaces", len(namespaces))
+
+	// Register check types in each namespace
+	for _, namespace := range namespaces {
+		for _, t := range r.checkRegistry.Checks() {
+			steps := t.Steps()
+			stepTypes := make([]advisorv0alpha1.CheckTypeStep, len(steps))
+			for i, s := range steps {
+				stepTypes[i] = advisorv0alpha1.CheckTypeStep{
+					Title:       s.Title(),
+					Description: s.Description(),
+					StepID:      s.ID(),
+					Resolution:  s.Resolution(),
+				}
+			}
+			obj := &advisorv0alpha1.CheckType{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      t.ID(),
+					Namespace: namespace,
+					Annotations: map[string]string{
+						checks.NameAnnotation: t.Name(),
+						// Flag to indicate feature availability
+						checks.RetryAnnotation:       "1",
+						checks.IgnoreStepsAnnotation: "1",
+					},
+				},
+				Spec: advisorv0alpha1.CheckTypeSpec{
+					Name:  t.ID(),
+					Steps: stepTypes,
+				},
+			}
+			err := r.registerCheckType(ctx, logger, t.ID(), obj)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
