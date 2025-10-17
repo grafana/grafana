@@ -1089,4 +1089,8 @@ const (
 	// FlagCdnPluginsUrls
 	// Enable loading plugins via declarative URLs
 	FlagCdnPluginsUrls = "cdnPluginsUrls"
+
+	// FlagPreventPanelChromeOverflow
+	// Restrict PanelChrome contents with overflow: hidden;
+	FlagPreventPanelChromeOverflow = "preventPanelChromeOverflow"
 )
