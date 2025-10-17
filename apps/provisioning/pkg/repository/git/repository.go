@@ -774,14 +774,8 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 		author.Time = time.Now()
 	}
 
-	// Author and committer are always the same
-	committer := nanogit.Committer{
-		Name:  author.Name,
-		Email: author.Email,
-		Time:  author.Time,
-	}
-
-	return author, committer
+	// Author and committer are always the same (for now)
+	return author, nanogit.Committer(author)
 }
 
 func (r *gitRepository) commit(ctx context.Context, writer nanogit.StagedWriter, comment string) error {
