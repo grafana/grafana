@@ -1,5 +1,5 @@
 import { logMeasurement, reportInteraction, config } from '@grafana/runtime';
-import { SceneRenderProfiler, type SceneObject } from '@grafana/scenes';
+import { performanceUtils, type SceneObject } from '@grafana/scenes';
 
 interface SceneInteractionProfileEvent {
   origin: string;
@@ -9,7 +9,7 @@ interface SceneInteractionProfileEvent {
   endTs: number;
 }
 
-let dashboardSceneProfiler: SceneRenderProfiler | undefined;
+let dashboardSceneProfiler: performanceUtils.SceneRenderProfiler | undefined;
 
 export function getDashboardSceneProfiler() {
   if (!dashboardSceneProfiler) {
@@ -18,7 +18,7 @@ export function getDashboardSceneProfiler() {
       watchStateKey: 'body', // Watch dashboard body changes for panel structure changes
     };
 
-    dashboardSceneProfiler = new SceneRenderProfiler(panelProfilingConfig);
+    dashboardSceneProfiler = new performanceUtils.SceneRenderProfiler(panelProfilingConfig);
   }
   return dashboardSceneProfiler;
 }

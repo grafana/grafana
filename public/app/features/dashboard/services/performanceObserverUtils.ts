@@ -1,11 +1,14 @@
-import { getScenePerformanceTracker, writePerformanceLog, type ScenePerformanceObserver } from '@grafana/scenes';
+import { performanceUtils, writePerformanceLog } from '@grafana/scenes';
 
 /**
  * Utility function to register a performance observer with the global tracker
  * Reduces duplication between ScenePerformanceLogger and DashboardAnalyticsAggregator
  */
-export function registerPerformanceObserver(observer: ScenePerformanceObserver, loggerName: string): void {
-  const tracker = getScenePerformanceTracker();
+export function registerPerformanceObserver(
+  observer: performanceUtils.ScenePerformanceObserver,
+  loggerName: string
+): void {
+  const tracker = performanceUtils.getScenePerformanceTracker();
   tracker.addObserver(observer);
 
   writePerformanceLog(loggerName, 'Initialized globally and registered as performance observer');

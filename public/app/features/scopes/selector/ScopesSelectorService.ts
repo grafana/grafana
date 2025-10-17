@@ -1,6 +1,6 @@
 import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneRenderProfiler } from '@grafana/scenes';
+import { performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
 import { ScopesApiClient } from '../ScopesApiClient';
@@ -54,7 +54,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     private apiClient: ScopesApiClient,
     private dashboardsService: ScopesDashboardsService,
     private store = storeImpl,
-    private interactionProfiler: SceneRenderProfiler | undefined = config.dashboardPerformanceMetrics.length
+    private interactionProfiler: performanceUtils.SceneRenderProfiler | undefined = config.dashboardPerformanceMetrics
+      .length
       ? getDashboardSceneProfiler()
       : undefined
   ) {
