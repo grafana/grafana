@@ -36,7 +36,17 @@ Using Git Sync, you can:
 
 ## How it works
 
-Git Sync is bidirectional and works both with changes done directly in GitHub as well as in the Grafana UI.
+{{< admonition type="caution" >}}
+
+Git Sync only works with specific folders for the moment. Full-instance sync is not currently supported.
+
+{{< /admonition >}}
+
+Git Sync is bidirectional and works both with changes done directly in GitHub as well as in the Grafana UI. 
+
+### Provisioning folder
+
+Git Sync creates a folder for all the synchronized resources to live under. You can continue to have unprovisioned resources outside that folder.
 
 ### Make changes in Grafana
 
@@ -49,16 +59,14 @@ Grafana periodically polls GitHub at a regular internal to synchronize any chang
 
 ### Make changes in your GitHub repositories
 
-With Git Sync, you can make changes in your provisioned files in GitHub and see them in Grafana. Automated workflows ensure those changes are automatically represented in the Grafana database by updating Git. The Grafana UI reads the database and updates the UI to reflect these changes.
+With Git Sync, you can make changes to the files in the provisioned folder in GitHub and see them in Grafana. Automated workflows ensure those changes are automatically represented in the Grafana database by updating Git. The Grafana UI reads the database and updates the UI to reflect these changes.
 
 ## Known limitations
 
 Git Sync is under development and the following limitations apply:
 
-- You can only sync dashboards and folders.
+- You can only sync dashboards and folders. Refer to [Supported resources](#supported-resources) for more information.
   - If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and can't be synced.
-  - If you're using Git Sync in Grafana Cloud, Git Sync only works with specific folders for the moment. Full-instance sync is not currently supported.
-  - Refer to [Supported resources](#supported-resources) for more information.
 - You can only authenticate in GitHub using your Personal Access Token token.
 - Support for native Git, Git app, and other providers, such as GitLab or Bitbucket, is on the roadmap.
 - Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
