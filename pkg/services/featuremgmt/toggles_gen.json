@@ -2855,6 +2855,19 @@
     },
     {
       "metadata": {
+        "name": "pluginStoreServiceLoading",
+        "resourceVersion": "1760712768362",
+        "creationTimestamp": "2025-10-17T14:52:48Z"
+      },
+      "spec": {
+        "description": "Load plugins during store service startup instead of wire provider",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsAutoUpdate",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-04-16T11:44:39Z"
