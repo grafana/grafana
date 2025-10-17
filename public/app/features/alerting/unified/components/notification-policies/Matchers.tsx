@@ -4,6 +4,7 @@ import { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack, getTagColorsFromName, useStyles2 } from '@grafana/ui';
+
 import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { MatcherFormatter, matcherFormatter } from '../../utils/matchers';

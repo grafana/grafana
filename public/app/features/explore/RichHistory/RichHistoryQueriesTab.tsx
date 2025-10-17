@@ -6,6 +6,7 @@ import { DataSourceApi, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
+
 import {
   mapNumbertoTimeInSlider,
   mapQueriesToHeadings,

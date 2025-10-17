@@ -2,6 +2,7 @@ import { find } from 'lodash';
 
 import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariableModel } from '@grafana/data';
 import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
+
 import config from 'app/core/config';
 
 import { LibraryElementKind } from '../../../library-panels/types';

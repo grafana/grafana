@@ -6,6 +6,7 @@ import { produce } from 'immer';
 import { omit } from 'lodash';
 
 import { arrayUtils } from '@grafana/data';
+
 import { ROUTES_META_SYMBOL, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import {

@@ -11,6 +11,7 @@ import {
   SynchronousDataTransformerInfo,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { findField } from 'app/features/dimensions/utils';
 
 import { fieldExtractors } from './fieldExtractors';

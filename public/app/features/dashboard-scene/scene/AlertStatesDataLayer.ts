@@ -9,6 +9,7 @@ import {
   sceneGraph,
   SceneTimeRangeLike,
 } from '@grafana/scenes';
+
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';

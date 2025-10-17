@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { setBackendSrv } from '@grafana/runtime';
+
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { registerMockAPI } from '../../../fixtures/mswAPI';

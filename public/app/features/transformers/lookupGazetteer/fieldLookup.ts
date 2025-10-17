@@ -9,6 +9,7 @@ import {
   fieldMatchers,
   DataTransformerInfo,
 } from '@grafana/data';
+
 import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from 'app/features/geo/gazetteer/gazetteer';
 
 export interface FieldLookupOptions {

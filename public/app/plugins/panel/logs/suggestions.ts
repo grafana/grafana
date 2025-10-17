@@ -1,4 +1,5 @@
 import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '@grafana/data';
+
 import { SuggestionName } from 'app/types/suggestions';
 
 import { Options } from './panelcfg.gen';

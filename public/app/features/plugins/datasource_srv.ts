@@ -21,6 +21,7 @@ import {
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef, UserStorage } from '@grafana/runtime/internal';
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import {

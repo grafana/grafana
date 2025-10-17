@@ -7,6 +7,7 @@ import { AlertLabel } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
+
 import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { AlertStateTag } from '../AlertStateTag';

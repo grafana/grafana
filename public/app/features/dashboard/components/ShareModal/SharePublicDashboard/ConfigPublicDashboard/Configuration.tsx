@@ -4,6 +4,7 @@ import { TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Trans, t } from '@grafana/i18n';
 import { FieldSet, Label, Switch, TimeRangeInput, Stack } from '@grafana/ui';
+
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ConfigPublicDashboardForm } from './ConfigPublicDashboard';

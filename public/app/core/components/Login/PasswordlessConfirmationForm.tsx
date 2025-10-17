@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Input, Field, useStyles2 } from '@grafana/ui';
+
 import { Branding } from 'app/core/components/Branding/Branding';
 
 import { PasswordlessConfirmationFormModel } from './LoginCtrl';

@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
+
 import { useSelector } from 'app/types/store';
 
 type SettingsSectionUrl = `/alerting/admin/${string}`;

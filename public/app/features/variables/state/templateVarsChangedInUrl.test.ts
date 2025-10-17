@@ -1,4 +1,5 @@
 import { TypedVariableModel } from '@grafana/data';
+
 import { DashboardState } from 'app/types/dashboard';
 import { StoreState } from 'app/types/store';
 

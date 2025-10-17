@@ -2,6 +2,7 @@ import { createContext, ReactNode, useContext } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+
 import { SavedQuery } from 'app/features/explore/QueryLibrary/types';
 
 import { OnSelectQueryType, QueryLibraryEventsPropertyMap } from './types';

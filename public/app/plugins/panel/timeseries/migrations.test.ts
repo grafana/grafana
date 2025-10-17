@@ -2,6 +2,7 @@ import { cloneDeep } from 'lodash';
 
 import { PanelModel, FieldConfigSource, FieldMatcherID, ReducerID } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
+
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel as PanelModelState } from 'app/features/dashboard/state/PanelModel';

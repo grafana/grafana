@@ -13,6 +13,7 @@ import {
   VizPanel,
   behaviors,
 } from '@grafana/scenes';
+
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
 import { ConditionalRenderingData } from '../conditional-rendering/conditions/ConditionalRenderingData';

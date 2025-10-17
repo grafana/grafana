@@ -13,6 +13,7 @@ import {
   TestVariable,
 } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
+
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';

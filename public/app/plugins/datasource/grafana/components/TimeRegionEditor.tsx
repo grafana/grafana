@@ -17,6 +17,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { TimeZoneOffset, TimeZoneTitle } from '@grafana/ui/internal';
+
 import { TimeRegionConfig, TimeRegionMode } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 

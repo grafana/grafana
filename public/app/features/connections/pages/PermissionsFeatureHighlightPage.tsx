@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+
 import permissionsScreenshot from 'img/permissions-screenshot.png';
 
 import { FeatureHighlightsTabPage } from '../components/FeatureHighlightsTabPage';

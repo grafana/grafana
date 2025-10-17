@@ -2,6 +2,7 @@ import { isEqual, uniqWith } from 'lodash';
 
 import { matchLabelsSet } from '@grafana/alerting/unstable';
 import { SelectableValue } from '@grafana/data';
+
 import {
   AlertManagerCortexConfig,
   Matcher,

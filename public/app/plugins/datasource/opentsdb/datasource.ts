@@ -27,6 +27,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
+
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { AnnotationEditor } from './components/AnnotationEditor';

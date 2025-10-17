@@ -21,6 +21,7 @@ import {
   Stack,
   Text,
 } from '@grafana/ui';
+
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 

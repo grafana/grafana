@@ -2,6 +2,7 @@ import { render } from 'test/test-utils';
 
 import { locationUtil, type GrafanaConfig } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { SignInLink } from './SignInLink';

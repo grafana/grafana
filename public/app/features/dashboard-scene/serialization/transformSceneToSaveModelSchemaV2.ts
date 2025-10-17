@@ -14,6 +14,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { DataSourceRef, VariableRefresh } from '@grafana/schema';
+
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import {

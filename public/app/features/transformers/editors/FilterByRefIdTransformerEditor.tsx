@@ -8,6 +8,7 @@ import {
 } from '@grafana/data';
 import { FilterFramesByRefIdTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
+
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 import { getTransformationContent } from '../docs/getTransformationContent';

@@ -13,6 +13,7 @@ import {
   throwIfAngular,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
 

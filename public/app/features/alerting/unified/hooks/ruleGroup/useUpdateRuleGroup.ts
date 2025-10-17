@@ -1,6 +1,7 @@
 import { Action } from '@reduxjs/toolkit';
 
 import { t } from '@grafana/i18n';
+
 import {
   DataSourceRuleGroupIdentifier,
   GrafanaRuleGroupIdentifier,

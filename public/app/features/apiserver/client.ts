@@ -2,6 +2,7 @@ import { Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs
 
 import { isLiveChannelMessageEvent, LiveChannelScope } from '@grafana/data';
 import { config, getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
+
 import { contextSrv } from 'app/core/core';
 
 import { getAPINamespace } from '../../api/utils';

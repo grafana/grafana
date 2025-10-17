@@ -13,6 +13,7 @@ import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
 // eslint-disable-next-line no-restricted-imports
 import * as grafanaUIraw from '@grafana/ui';
+
 import TableModel from 'app/core/TableModel';
 import config from 'app/core/config';
 import { appEvents, contextSrv } from 'app/core/core';

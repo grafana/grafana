@@ -16,6 +16,7 @@ import {
 import { t } from '@grafana/i18n';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { ConfirmModal, VariablesInputModal } from '@grafana/ui';
+
 import { LayerElement } from 'app/core/components/Layers/types';
 import { config } from 'app/core/config';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';

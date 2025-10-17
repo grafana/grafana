@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
+
 import { config } from 'app/core/config';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';

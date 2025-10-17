@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { locationService } from '@grafana/runtime';
+
 import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';

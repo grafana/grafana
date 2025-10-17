@@ -1,4 +1,5 @@
 import { dateTime } from '@grafana/data';
+
 import {
   AlertRuleDTO,
   AlertRulesState,

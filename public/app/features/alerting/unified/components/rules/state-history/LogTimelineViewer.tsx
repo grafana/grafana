@@ -5,6 +5,7 @@ import { DataFrame, InterpolateFunction, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { VisibilityMode } from '@grafana/schema';
 import { LegendDisplayMode, useTheme2 } from '@grafana/ui';
+
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import { TimelineMode } from 'app/core/components/TimelineChart/utils';
 

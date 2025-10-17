@@ -2,6 +2,7 @@ import { render, screen } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { locationService } from '@grafana/runtime';
+
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import * as analytics from '../../Analytics';

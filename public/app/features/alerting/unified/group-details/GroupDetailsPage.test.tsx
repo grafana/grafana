@@ -6,6 +6,7 @@ import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
+
 import { AccessControlAction } from 'app/types/accessControl';
 import { GrafanaPromRuleGroupDTO, GrafanaPromRulesResponse } from 'app/types/unified-alerting-dto';
 

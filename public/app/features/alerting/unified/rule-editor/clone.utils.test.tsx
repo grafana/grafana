@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   RulerAlertingRuleDTO,

@@ -2,6 +2,7 @@ import { type DefaultBodyType, HttpResponse, HttpResponseResolver, PathParams, h
 
 import { config } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
+
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
   getAlertmanagerConfigHandler,

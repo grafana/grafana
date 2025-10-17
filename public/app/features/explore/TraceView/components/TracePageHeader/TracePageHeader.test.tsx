@@ -23,6 +23,7 @@ import {
   PluginExtensionTypes,
 } from '@grafana/data';
 import { usePluginLinks, usePluginComponents } from '@grafana/runtime';
+
 import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
 import { TraceViewPluginExtensionContext } from '../types/trace';

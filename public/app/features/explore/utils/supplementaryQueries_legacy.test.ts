@@ -22,6 +22,7 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+
 import { ExplorePanelData } from 'app/types/explore';
 
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';

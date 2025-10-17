@@ -6,6 +6,7 @@ import { Subject } from 'rxjs';
 
 import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
+
 import { LayerElement } from 'app/core/components/Layers/types';
 
 import { ControlsOptions as ControlsOptionsBase } from './panelcfg.gen';

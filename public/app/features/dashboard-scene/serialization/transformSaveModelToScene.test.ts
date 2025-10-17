@@ -20,6 +20,7 @@ import {
   RowPanel,
   VariableType,
 } from '@grafana/schema';
+
 import { contextSrv } from 'app/core/core';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';

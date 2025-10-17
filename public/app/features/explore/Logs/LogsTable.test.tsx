@@ -4,6 +4,7 @@ import { ComponentProps } from 'react';
 import { DataFrame, FieldType, LogsSortOrder, toUtc } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
+
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { parseLogsFrame } from '../../logs/logsFrame';

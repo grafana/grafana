@@ -23,6 +23,7 @@ import {
   getTagColorsFromName,
   useStyles2,
 } from '@grafana/ui';
+
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';

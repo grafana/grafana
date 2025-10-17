@@ -5,6 +5,7 @@ import { DocsId, GrafanaTheme2, LocalStorageValueProvider, TransformerRegistryIt
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Card, Container, Input, Stack, useStyles2 } from '@grafana/ui';
+
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 

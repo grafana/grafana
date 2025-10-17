@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { ScopesService } from '../ScopesService';

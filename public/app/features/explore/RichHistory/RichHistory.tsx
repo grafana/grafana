@@ -5,6 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
+
 import {
   SortOrder,
   RichHistorySearchFilters,

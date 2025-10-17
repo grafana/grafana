@@ -1,6 +1,7 @@
 import { OrgRole } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Label } from '@grafana/ui';
+
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
 import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';

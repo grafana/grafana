@@ -18,6 +18,7 @@ import {
   Stack,
   Switch,
 } from '@grafana/ui';
+
 import {
   Repository,
   useGetFrontendSettingsQuery,

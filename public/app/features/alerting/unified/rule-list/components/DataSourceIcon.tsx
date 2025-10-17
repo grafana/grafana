@@ -1,4 +1,5 @@
 import { Icon } from '@grafana/ui';
+
 import lokiIconSvg from 'app/plugins/datasource/loki/img/loki_icon.svg';
 import mimirLogoSvg from 'app/plugins/datasource/prometheus/img/mimir_logo.svg';
 import prometheusLogoSvg from 'app/plugins/datasource/prometheus/img/prometheus_logo.svg';

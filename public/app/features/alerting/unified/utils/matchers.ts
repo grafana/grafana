@@ -8,6 +8,7 @@
 import { chain, compact } from 'lodash';
 
 import { type LabelMatcher } from '@grafana/alerting/unstable';
+
 import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { Labels } from '../../../../types/unified-alerting-dto';

@@ -5,6 +5,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
+
 // Types
 import { StoreState } from 'app/types/store';
 

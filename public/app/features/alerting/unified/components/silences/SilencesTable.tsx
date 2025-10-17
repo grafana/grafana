@@ -14,6 +14,7 @@ import {
   Stack,
   useStyles2,
 } from '@grafana/ui';
+
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { featureDiscoveryApi } from 'app/features/alerting/unified/api/featureDiscoveryApi';

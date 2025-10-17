@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
+
 import { Page } from 'app/core/components/Page/Page';
 
 function getStyles(theme: GrafanaTheme2) {

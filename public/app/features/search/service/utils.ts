@@ -1,4 +1,5 @@
 import { DataFrameView, IconName, fuzzySearch } from '@grafana/data';
+
 import { isSharedWithMe } from 'app/features/browse-dashboards/components/utils';
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';

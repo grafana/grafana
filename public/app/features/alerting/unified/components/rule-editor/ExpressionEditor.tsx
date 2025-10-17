@@ -9,6 +9,7 @@ import { PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
+
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 
 import { isSupportedExternalRulesSourceType } from '../../utils/datasource';

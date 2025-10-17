@@ -22,6 +22,7 @@ import {
   WeekStart,
   isWeekStart,
 } from '@grafana/ui';
+
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { LANGUAGES } from 'app/core/internationalization/constants';
 import { LOCALES } from 'app/core/internationalization/locales';

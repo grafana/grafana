@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
+
 import { useGetContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 

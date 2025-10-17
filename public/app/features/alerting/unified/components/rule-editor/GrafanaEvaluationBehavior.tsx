@@ -22,6 +22,7 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
+
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { evaluateEveryValidationOptions } from '../../group-details/validation';

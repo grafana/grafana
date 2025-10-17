@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { DismissableButton } from './DismissableButton';

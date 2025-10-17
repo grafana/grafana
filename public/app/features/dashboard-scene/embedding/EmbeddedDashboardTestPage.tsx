@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { PageLayoutType } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box } from '@grafana/ui';
+
 import { Page } from 'app/core/components/Page/Page';
 
 import { EmbeddedDashboard } from './EmbeddedDashboard';

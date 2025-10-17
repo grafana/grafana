@@ -2,6 +2,7 @@ import { produce } from 'immer';
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
+
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleGroup, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';

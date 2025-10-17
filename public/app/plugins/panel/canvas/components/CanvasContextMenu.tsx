@@ -6,6 +6,7 @@ import { first } from 'rxjs/operators';
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
+
 import { config } from 'app/core/config';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';

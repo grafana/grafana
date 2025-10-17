@@ -3,6 +3,7 @@ import { BaseStateReport } from 'crashme/dist/types';
 import { nanoid } from 'nanoid';
 
 import { config, createMonitoringLogger } from '@grafana/runtime';
+
 import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
 
 import { contextSrv } from '../services/context_srv';

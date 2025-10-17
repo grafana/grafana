@@ -1,5 +1,6 @@
 import { DataQuery } from '@grafana/data';
 import { Dashboard, DataSourceRef } from '@grafana/schema';
+
 import { ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { ProvisioningPreview } from 'app/features/provisioning/types';

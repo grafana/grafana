@@ -14,6 +14,7 @@ import {
   ToolbarButtonRow,
   ConfirmModal,
 } from '@grafana/ui';
+
 import { updateNavIndex } from 'app/core/actions';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';

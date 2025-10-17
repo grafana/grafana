@@ -1,4 +1,5 @@
 import { getDataSourceSrv } from '@grafana/runtime';
+
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';

@@ -1,4 +1,5 @@
 import { urlUtil } from '@grafana/data';
+
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { ScopesDashboardsTreeFolderItem } from './ScopesDashboardsTreeFolderItem';

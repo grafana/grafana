@@ -3,6 +3,7 @@ import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
+
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';

@@ -9,6 +9,7 @@ import {
   SelectableValue,
   PluginState,
 } from '@grafana/data';
+
 import { config, hasAlphaPanels } from 'app/core/config';
 
 import { basemapLayers } from './basemaps';

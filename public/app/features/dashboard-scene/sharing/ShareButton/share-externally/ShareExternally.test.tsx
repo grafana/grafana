@@ -13,6 +13,7 @@ import {
   VizPanel,
   VizPanelState,
 } from '@grafana/scenes';
+
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
 

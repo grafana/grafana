@@ -2,6 +2,7 @@ import { isArray, reduce } from 'lodash';
 
 import { t } from '@grafana/i18n';
 import { IconName } from '@grafana/ui';
+
 import { QueryPart, QueryPartDef } from 'app/features/alerting/state/query_part';
 
 const alertQueryDef = new QueryPartDef({

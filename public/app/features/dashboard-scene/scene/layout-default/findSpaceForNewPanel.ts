@@ -1,4 +1,5 @@
 import { SceneGridItemLike, SceneGridLayout, SceneGridRow } from '@grafana/scenes';
+
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
 export interface GridCell {

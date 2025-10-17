@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 
 import { PluginExtensionTypes, IconName } from '@grafana/data';
 import { setPluginLinksHook, config, getDataSourceSrv } from '@grafana/runtime';
+
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getMockDataSource } from '../mocks/dataSourcesMocks';

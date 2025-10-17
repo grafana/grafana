@@ -9,6 +9,7 @@ import {
   QueryVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
+
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { createAdHocVariableAdapter } from 'app/features/variables/adhoc/adapter';

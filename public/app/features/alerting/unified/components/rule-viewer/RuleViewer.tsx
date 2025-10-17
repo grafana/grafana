@@ -17,6 +17,7 @@ import {
   useStyles2,
   withErrorBoundary,
 } from '@grafana/ui';
+
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';

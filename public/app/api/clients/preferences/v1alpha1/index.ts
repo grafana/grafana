@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification, createErrorNotification } from 'app/core/copy/appNotification';
 

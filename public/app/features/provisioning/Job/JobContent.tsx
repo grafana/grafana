@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { ControlledCollapse, Spinner, Stack, Text } from '@grafana/ui';
+
 import { Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { PullRequestButtons } from '../Repository/PullRequestButtons';

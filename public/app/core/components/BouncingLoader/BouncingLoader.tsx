@@ -3,6 +3,7 @@ import { css, keyframes } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
+
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
 export function BouncingLoader() {

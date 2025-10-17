@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { userEvent } from 'test/test-utils';
 
 import { CustomVariable, SceneVariable, SceneVariableSet } from '@grafana/scenes';
+
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 

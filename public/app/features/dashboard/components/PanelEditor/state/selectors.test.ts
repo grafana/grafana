@@ -1,4 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
+
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { updateConfig } from '../../../../../core/config';

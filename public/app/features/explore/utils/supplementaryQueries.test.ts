@@ -17,6 +17,7 @@ import {
   DataQueryResponse,
 } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+
 import { ExplorePanelData } from 'app/types/explore';
 
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';

@@ -12,6 +12,7 @@ import {
   QueryVariableModel,
   ScopedVars,
 } from '@grafana/data';
+
 import { StoreState, ThunkDispatch } from 'app/types/store';
 
 import { dispatch, getState } from '../../../store/store';

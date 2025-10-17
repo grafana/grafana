@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, ConfirmModal, Stack, Text } from '@grafana/ui';
+
 import { useRuleWithLocation } from 'app/features/alerting/unified/hooks/useCombinedRule';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { rulerRuleToFormValues } from 'app/features/alerting/unified/utils/rule-form';

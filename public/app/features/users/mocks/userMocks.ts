@@ -1,4 +1,5 @@
 import { OrgRole } from '@grafana/data';
+
 import { OrgUser } from 'app/types/user';
 
 import { UsersFetchResult, initialState } from '../state/reducers';

@@ -1,6 +1,7 @@
 import memoizeOne from 'memoize-one';
 
 import { TypedVariableModel } from '@grafana/data';
+
 import { StoreState } from 'app/types/store';
 
 import { getState } from '../../../store/store';

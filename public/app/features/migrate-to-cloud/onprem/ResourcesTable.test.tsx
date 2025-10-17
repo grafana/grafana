@@ -2,6 +2,7 @@ import { render as rtlRender, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { setBackendSrv, config } from '@grafana/runtime';
+
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import {

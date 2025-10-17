@@ -1,6 +1,7 @@
 import { render, screen, userEvent, within } from 'test/test-utils';
 
 import { base64UrlEncode } from '@grafana/alerting';
+
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   setMuteTimingsListError,

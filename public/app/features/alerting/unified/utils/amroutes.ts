@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+
 import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../types/amroutes';

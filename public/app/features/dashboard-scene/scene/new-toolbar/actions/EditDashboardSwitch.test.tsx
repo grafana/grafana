@@ -5,6 +5,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
+
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';

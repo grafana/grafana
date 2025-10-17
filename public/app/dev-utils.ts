@@ -1,4 +1,5 @@
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from '@grafana/i18n';
+
 import store from 'app/core/store';
 
 import { sendAppNotification } from './core/copy/appNotification';

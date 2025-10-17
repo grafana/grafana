@@ -4,6 +4,7 @@ import { SetupServer } from 'msw/node';
 import { getWrapper } from 'test/test-utils';
 
 import { DataSourceSettings } from '@grafana/data';
+
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 

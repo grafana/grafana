@@ -3,6 +3,7 @@ import { uniqueId } from 'lodash';
 
 import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { GrafanaManagedContactPoint, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types/folders';
 import {

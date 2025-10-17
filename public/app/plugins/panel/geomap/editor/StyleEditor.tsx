@@ -13,6 +13,7 @@ import {
   ScalarDimensionConfig,
 } from '@grafana/schema';
 import { ColorPicker, Field, Stack, InlineField, InlineFieldRow, InlineLabel, RadioButtonGroup } from '@grafana/ui';
+
 import { NumberValueEditor } from 'app/core/components/OptionsUI/number';
 import { SliderValueEditor } from 'app/core/components/OptionsUI/slider';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { Card, EmptyState, Spinner, Stack, Text, TextLink, UserIcon } from '@grafana/ui';
+
 import {
   useGetRepositoryHistoryWithPathQuery,
   useGetRepositoryStatusQuery,

@@ -1,4 +1,5 @@
 import { NavModelItem } from '@grafana/data';
+
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
 import { enrichHelpItem, getActiveItem, findByUrl } from './utils';

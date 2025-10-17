@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { config, reportInteraction } from '@grafana/runtime';
+
 import { contextSrv } from 'app/core/core';
 import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 

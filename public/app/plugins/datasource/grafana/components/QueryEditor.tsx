@@ -31,6 +31,7 @@ import {
   withTheme2,
   Stack,
 } from '@grafana/ui';
+
 import { hasAlphaPanels } from 'app/core/config';
 import { acceptedFiles, maxFileSize } from 'app/features/dataframe-import/constants';
 import { filesToDataframes } from 'app/features/dataframe-import/utils';

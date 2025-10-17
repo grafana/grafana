@@ -11,6 +11,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { ModalRoot, ModalsProvider } from '@grafana/ui';
+
 import config from 'app/core/config';
 import { defaultFileUploadQuery } from 'app/plugins/datasource/grafana/types';
 

@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+
 import { Page } from 'app/core/components/Page/Page';
 import { NewDataSource } from 'app/features/datasources/components/NewDataSource';
 

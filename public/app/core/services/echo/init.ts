@@ -1,4 +1,5 @@
 import { config, registerEchoBackend, setEchoSrv } from '@grafana/runtime';
+
 import { reportMetricPerformanceMark } from 'app/core/utils/metrics';
 
 import { contextSrv } from '../context_srv';

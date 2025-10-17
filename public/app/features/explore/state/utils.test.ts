@@ -1,4 +1,5 @@
 import { dateTime } from '@grafana/data';
+
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
 import * as exploreUtils from 'app/core/utils/explore';
 

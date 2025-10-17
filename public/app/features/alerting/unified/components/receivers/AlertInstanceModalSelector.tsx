@@ -16,6 +16,7 @@ import {
   clearButtonStyles,
   useStyles2,
 } from '@grafana/ui';
+
 import { AlertmanagerAlert, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';

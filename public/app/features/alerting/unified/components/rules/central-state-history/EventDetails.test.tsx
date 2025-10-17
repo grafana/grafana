@@ -1,6 +1,7 @@
 import { render, screen } from 'test/test-utils';
 
 import { TimeRange, dateTime } from '@grafana/data';
+
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
 import { EventDetails } from './EventDetails';

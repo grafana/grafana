@@ -1,5 +1,6 @@
 import { FeatureToggles } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 
 export const requiredFeatureToggles: Array<keyof FeatureToggles> = ['provisioning', 'kubernetesDashboards'];

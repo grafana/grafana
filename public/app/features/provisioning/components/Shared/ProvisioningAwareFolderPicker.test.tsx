@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { config } from '@grafana/runtime';
+
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useIsProvisionedInstance } from '../../hooks/useIsProvisionedInstance';

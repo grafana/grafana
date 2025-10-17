@@ -5,6 +5,7 @@ import { Fragment, useDeferredValue, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
+
 import {
   AlertGroupTotals,
   AlertInstanceTotalState,

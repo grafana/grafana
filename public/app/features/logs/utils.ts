@@ -31,6 +31,7 @@ import {
   LogsMetaItem,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+
 import { getConfig } from 'app/core/config';
 
 import { getLogsExtractFields } from '../explore/Logs/LogsTable';

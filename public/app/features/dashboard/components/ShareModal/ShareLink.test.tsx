@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { BootData, getDefaultTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setEchoSrv, setTemplateSrv } from '@grafana/runtime';
+
 import config from 'app/core/config';
 
 import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';

@@ -1,4 +1,5 @@
 import { GrafanaBootConfig, LocationService } from '@grafana/runtime';
+
 import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 import { GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { NewFrontendAssetsChecker } from 'app/core/services/NewFrontendAssetsChecker';

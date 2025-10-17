@@ -12,6 +12,7 @@ import {
 import { GrafanaEdition } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getBackendSrv, setBackendSrv } from '@grafana/runtime';
+
 import { configureStore } from 'app/store/configureStore';
 
 import * as api from '../api';

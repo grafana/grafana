@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
+
 import { CloudEnterpriseBadge } from 'app/core/components/Branding/CloudEnterpriseBadge';
 import { Page } from 'app/core/components/Page/Page';
 import { DataSourceTitle } from 'app/features/datasources/components/DataSourceTitle';

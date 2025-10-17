@@ -3,6 +3,7 @@ import { thunk } from 'redux-thunk';
 import { Subject } from 'rxjs';
 
 import { BackendSrv, FetchError, locationService, setEchoSrv } from '@grafana/runtime';
+
 import appEvents from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';

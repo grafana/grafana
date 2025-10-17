@@ -2,6 +2,7 @@ import { Factory } from 'fishery';
 
 import { RouteFactory } from '@grafana/alerting/testing';
 import { RouteWithID as AlertingRouteWithID } from '@grafana/alerting/unstable';
+
 import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { routeAdapter } from './routeAdapter';

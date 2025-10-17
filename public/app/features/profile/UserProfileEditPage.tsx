@@ -4,6 +4,7 @@ import { useMount } from 'react-use';
 import { PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
+
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { StoreState } from 'app/types/store';

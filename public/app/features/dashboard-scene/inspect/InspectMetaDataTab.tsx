@@ -8,6 +8,7 @@ import {
   SceneObjectRef,
   VizPanel,
 } from '@grafana/scenes';
+
 import { InspectTab } from 'app/features/inspector/types';
 
 export interface InspectMetaDataTabState extends SceneObjectState {

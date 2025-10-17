@@ -18,6 +18,7 @@ import {
   DataFrame,
 } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
+
 import { findField } from 'app/features/dimensions/utils';
 
 import { StyleEditor } from '../../editor/StyleEditor';

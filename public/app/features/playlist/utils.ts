@@ -2,6 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { DataQueryRequest, DataFrameView } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 

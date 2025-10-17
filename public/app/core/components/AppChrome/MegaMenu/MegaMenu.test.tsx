@@ -4,6 +4,7 @@ import { render } from 'test/test-utils';
 
 import { NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
 import { configureStore } from 'app/store/configureStore';
 
 import { MegaMenu } from './MegaMenu';

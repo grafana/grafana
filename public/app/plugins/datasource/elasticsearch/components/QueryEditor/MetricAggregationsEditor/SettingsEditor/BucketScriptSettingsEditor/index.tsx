@@ -3,6 +3,7 @@ import { uniqueId } from 'lodash';
 import { Fragment, useEffect } from 'react';
 
 import { Input, InlineLabel } from '@grafana/ui';
+
 import { BucketScript, MetricAggregation } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
 
 import { useStatelessReducer, useDispatch } from '../../../../../hooks/useStatelessReducer';

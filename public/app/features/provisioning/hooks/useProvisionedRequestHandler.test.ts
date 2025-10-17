@@ -3,6 +3,7 @@ import { renderHook } from '@testing-library/react';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
+
 import { ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useProvisionedRequestHandler, RequestHandlers } from './useProvisionedRequestHandler';

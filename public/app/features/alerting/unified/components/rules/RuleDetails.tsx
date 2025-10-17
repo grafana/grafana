@@ -4,6 +4,7 @@ import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Tooltip, useStyles2 } from '@grafana/ui';
+
 import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
 

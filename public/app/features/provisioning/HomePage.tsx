@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, ConfirmModal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
+
 import {
   useDeletecollectionRepositoryMutation,
   useGetFrontendSettingsQuery,

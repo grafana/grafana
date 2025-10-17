@@ -2,6 +2,7 @@ import { of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceRef, TimeRange } from '@grafana/data';
 import { BackendSrvRequest, BackendSrv, config } from '@grafana/runtime';
+
 import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 

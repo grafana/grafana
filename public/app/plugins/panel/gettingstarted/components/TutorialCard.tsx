@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+
 import store from 'app/core/store';
 
 import { TutorialCardType } from '../types';

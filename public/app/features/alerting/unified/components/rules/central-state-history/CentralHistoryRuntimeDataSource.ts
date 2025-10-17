@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RuntimeDataSource, sceneUtils } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
+
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { dispatch } from 'app/store/store';
 

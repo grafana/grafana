@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
+
 import { useAppNotification } from 'app/core/copy/appNotification';
 import {
   useDeleteFolderMutation as useDeleteFolderMutationLegacy,

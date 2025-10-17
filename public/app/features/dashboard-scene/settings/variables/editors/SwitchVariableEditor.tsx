@@ -1,4 +1,5 @@
 import { SceneVariable, SwitchVariable } from '@grafana/scenes';
+
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { SwitchVariableForm } from '../components/SwitchVariableForm';

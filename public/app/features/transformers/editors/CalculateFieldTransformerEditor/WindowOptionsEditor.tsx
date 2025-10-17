@@ -8,6 +8,7 @@ import {
 } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineField, RadioButtonGroup, Select, StatsPicker } from '@grafana/ui';
+
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { LABEL_WIDTH } from './constants';

@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+
 import { CommonBannerProps } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
 import { PreviewBannerViewPR } from 'app/features/provisioning/components/Shared/PreviewBannerViewPR';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';

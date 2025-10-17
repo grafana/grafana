@@ -2,6 +2,7 @@ import { PureComponent } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { LoadingPlaceholder, ScrollContainer } from '@grafana/ui';
+
 import { Team } from 'app/types/teams';
 
 export interface Props {

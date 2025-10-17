@@ -4,6 +4,7 @@ import { PureComponent } from 'react';
 import { AppEvents, PluginMeta, DataSourceApi } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
+
 import { appEvents } from 'app/core/core';
 import DashboardsTable from 'app/features/datasources/components/DashboardsTable';
 import { PluginDashboard } from 'app/types/plugins';

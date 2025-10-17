@@ -22,6 +22,7 @@ import {
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+
 import {
   buildQueryTransaction,
   ensureQueries,

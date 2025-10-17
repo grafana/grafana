@@ -3,6 +3,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginSignatureStatus } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { configureStore } from 'app/store/configureStore';
 
 import { getPluginsStateMock } from '../../mocks/mockHelpers';

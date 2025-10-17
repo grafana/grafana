@@ -1,5 +1,6 @@
 import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data';
 import { IconName, ButtonVariant } from '@grafana/ui';
+
 import { HistoryEntryView } from 'app/core/components/AppChrome/types';
 
 /**

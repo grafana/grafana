@@ -1,5 +1,6 @@
 import { VariableModel } from '@grafana/schema/dist/esm/index';
 import { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DashboardModel } from '../state/DashboardModel';

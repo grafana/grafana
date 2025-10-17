@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { Randomize, randomizeData } from 'app/features/dashboard-scene/inspect/HelpWizard/randomizer';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';

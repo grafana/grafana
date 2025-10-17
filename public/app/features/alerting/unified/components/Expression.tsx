@@ -6,6 +6,7 @@ import { Editor } from 'slate-react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { promqlGrammar } from '@grafana/prometheus';
 import { SlatePrism, makeValue, useStyles2 } from '@grafana/ui';
+
 import LogqlSyntax from 'app/plugins/datasource/loki/syntax';
 import { RulesSource } from 'app/types/unified-alerting';
 

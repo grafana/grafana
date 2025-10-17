@@ -3,6 +3,7 @@ import { fireEvent, queryByLabelText, render, screen, waitFor } from '@testing-l
 import type { DataSourceApi } from '@grafana/data';
 import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
 import { DataSourceRef, type DataQuery } from '@grafana/schema';
+
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import createMockPanelData from 'app/plugins/datasource/azuremonitor/mocks/panelData';

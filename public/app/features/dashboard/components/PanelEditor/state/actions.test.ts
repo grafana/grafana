@@ -1,6 +1,7 @@
 import { PanelPlugin } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { LibraryElementDTOMeta } from '@grafana/schema';
+
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { panelModelAndPluginReady, removePanel } from 'app/features/panel/state/reducers';
 

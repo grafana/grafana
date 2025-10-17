@@ -1,4 +1,5 @@
 import { SceneObjectUrlSyncHandler, SceneObjectUrlValues, VizPanel } from '@grafana/scenes';
+
 import { contextSrv } from 'app/core/core';
 import { KioskMode } from 'app/types/dashboard';
 

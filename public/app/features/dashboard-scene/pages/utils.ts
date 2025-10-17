@@ -1,5 +1,6 @@
 import { UrlQueryMap, getTimeZone, getDefaultTimeRange, dateMath } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+
 import { updateNavIndex } from 'app/core/actions';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { buildNavModel } from 'app/features/folders/state/navModel';

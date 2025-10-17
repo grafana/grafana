@@ -2,6 +2,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
+
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 

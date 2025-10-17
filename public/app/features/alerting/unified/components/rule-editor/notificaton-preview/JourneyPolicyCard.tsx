@@ -4,6 +4,7 @@ import { RouteWithID } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+
 import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { labelMatcherToObjectMatcher } from '../../../utils/routeAdapter';

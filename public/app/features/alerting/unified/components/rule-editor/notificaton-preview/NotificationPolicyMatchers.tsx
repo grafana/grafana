@@ -1,5 +1,6 @@
 import { Trans } from '@grafana/i18n';
 import { Text } from '@grafana/ui';
+
 import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { MatcherFormatter } from '../../../utils/matchers';

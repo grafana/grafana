@@ -7,6 +7,7 @@ import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardSearchItemType } from 'app/features/search/types';

@@ -1,6 +1,7 @@
 import { Location } from 'history';
 
 import { locationService, setBackendSrv, BackendSrv } from '@grafana/runtime';
+
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { NewFrontendAssetsChecker } from './NewFrontendAssetsChecker';

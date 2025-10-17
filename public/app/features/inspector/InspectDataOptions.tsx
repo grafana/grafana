@@ -3,6 +3,7 @@ import * as React from 'react';
 import { DataFrame, DataTransformerID, getFrameDisplayName, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, Select, Stack, Switch, useStyles2 } from '@grafana/ui';
+
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { DetailText } from 'app/features/inspector/DetailText';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';

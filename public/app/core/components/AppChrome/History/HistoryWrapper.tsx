@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { FieldType, GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, Button, Card, Icon, IconButton, Space, Sparkline, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
+
 import { formatDate } from 'app/core/internationalization/dates';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';

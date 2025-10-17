@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+
 import { Rule } from 'app/types/unified-alerting';
 
 import { isErrorHealth } from '../rule-viewer/RuleViewer';

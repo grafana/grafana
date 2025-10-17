@@ -2,6 +2,7 @@ import { ComponentProps, ReactNode } from 'react';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import { CodeEditor } from '@grafana/ui';
+
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';

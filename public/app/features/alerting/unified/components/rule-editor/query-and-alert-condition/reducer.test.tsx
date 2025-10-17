@@ -1,4 +1,5 @@
 import { RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
+
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import {
   ExpressionDatasourceUID,

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
+
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { AlertState, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 

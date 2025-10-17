@@ -3,6 +3,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { RawTimeRange, TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ClipboardButton, Field, Label, Stack, Switch, TextArea } from '@grafana/ui';
+
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ThemePicker } from './ThemePicker';

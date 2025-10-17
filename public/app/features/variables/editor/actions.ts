@@ -2,6 +2,7 @@ import { cloneDeep } from 'lodash';
 
 import { TypedVariableModel, VariableType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+
 import { ThunkResult } from 'app/types/store';
 
 import { variableAdapters } from '../adapters';

@@ -1,4 +1,5 @@
 import { reportInteraction, config } from '@grafana/runtime';
+
 import { contextSrv } from 'app/core/core';
 import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 import { AccessControlAction } from 'app/types/accessControl';

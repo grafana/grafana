@@ -2,6 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { isObject } from '@grafana/data';
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
+
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 

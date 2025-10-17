@@ -24,6 +24,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
+
 import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { getCategoriesLabels } from 'app/features/transformers/utils';

@@ -52,6 +52,7 @@ import {
   setPluginPage,
 } from '@grafana/runtime/internal';
 import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
+
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 

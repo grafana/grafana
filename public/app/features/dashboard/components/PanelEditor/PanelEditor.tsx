@@ -20,6 +20,7 @@ import {
   withTheme2,
   Stack,
 } from '@grafana/ui';
+
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';

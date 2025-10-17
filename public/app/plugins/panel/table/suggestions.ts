@@ -1,5 +1,6 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { TableFieldOptions } from '@grafana/schema';
+
 import icnTablePanelSvg from 'app/plugins/panel/table/img/icn-table-panel.svg';
 import { SuggestionName } from 'app/types/suggestions';
 

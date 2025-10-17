@@ -21,6 +21,7 @@ import {
   PluginState,
 } from '@grafana/data';
 import { TextDimensionMode } from '@grafana/schema';
+
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 import { GraphFrame } from 'app/plugins/panel/nodeGraph/types';

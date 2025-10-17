@@ -1,5 +1,6 @@
 import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
+
 import { CorsWorker } from 'app/core/utils/CorsWorker';
 import * as createDetectChangesWorker from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 

@@ -1,5 +1,6 @@
 import { PluginExtensionPoints } from '@grafana/data';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 export function AppChromeExtensionPoint(): JSX.Element | null {

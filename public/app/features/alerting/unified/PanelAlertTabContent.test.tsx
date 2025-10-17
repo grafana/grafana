@@ -3,6 +3,7 @@ import { byTestId, byText } from 'testing-library-selector';
 
 import { PromOptions } from '@grafana/prometheus';
 import { setPluginLinksHook } from '@grafana/runtime';
+
 import config from 'app/core/config';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';

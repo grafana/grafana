@@ -9,6 +9,7 @@ import {
   rangeUtil,
 } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';

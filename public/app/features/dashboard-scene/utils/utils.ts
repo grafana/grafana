@@ -15,6 +15,7 @@ import {
 } from '@grafana/scenes';
 import { Dashboard, Panel, RowPanel } from '@grafana/schema';
 import { createLogger } from '@grafana/ui';
+
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { CustomTimeRangeCompare } from '../scene/CustomTimeRangeCompare';

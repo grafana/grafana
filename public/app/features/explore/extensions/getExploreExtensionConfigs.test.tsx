@@ -1,4 +1,5 @@
 import { PluginExtensionPoints } from '@grafana/data';
+
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getExploreExtensionConfigs } from './getExploreExtensionConfigs';

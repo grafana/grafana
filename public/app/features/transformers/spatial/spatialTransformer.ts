@@ -2,6 +2,7 @@ import { mergeMap, from } from 'rxjs';
 
 import { DataFrame, DataTransformerID, DataTransformerInfo, FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
+
 import { createGeometryCollection, createLineBetween } from 'app/features/geo/format/utils';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 

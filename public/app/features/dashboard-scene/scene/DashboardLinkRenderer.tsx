@@ -2,6 +2,7 @@ import { sanitizeUrl } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { DashboardLink } from '@grafana/schema';
 import { MenuItem, Tooltip } from '@grafana/ui';
+
 import {
   DashboardLinkButton,
   DashboardLinksDashboard,

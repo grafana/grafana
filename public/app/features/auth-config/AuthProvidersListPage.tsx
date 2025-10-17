@@ -5,6 +5,7 @@ import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Grid, TextLink, ToolbarButton } from '@grafana/ui';
+
 import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
 import { StoreState } from 'app/types/store';

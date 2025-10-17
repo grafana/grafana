@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { EventBusSrv, store } from '@grafana/data';
 import { setAppEvents, usePluginLinks } from '@grafana/runtime';
+
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';

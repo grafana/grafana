@@ -21,6 +21,7 @@ import {
   TabsLayoutTabKind,
   DataQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';

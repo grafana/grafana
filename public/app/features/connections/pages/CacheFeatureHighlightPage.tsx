@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+
 import cacheScreenshot from 'img/cache-screenshot.png';
 
 import { FeatureHighlightsTabPage } from '../components/FeatureHighlightsTabPage';

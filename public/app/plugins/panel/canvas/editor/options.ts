@@ -2,6 +2,7 @@ import { FieldType } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { ConnectionDirection, DirectionDimensionMode } from '@grafana/schema';
+
 import { SVGElements } from 'app/features/canvas/runtime/element';
 import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';

@@ -9,6 +9,7 @@ import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+
 import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import store from 'app/core/store';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';

@@ -7,6 +7,7 @@ import {
 } from '@grafana/data';
 import { DataLinksContextMenu, Stack, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
+
 import { config } from 'app/core/config';
 
 import { Options } from './panelcfg.gen';

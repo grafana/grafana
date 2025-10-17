@@ -15,6 +15,7 @@ import {
   IconButton,
   Icon,
 } from '@grafana/ui';
+
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
 import { Role, AccessControlAction } from 'app/types/accessControl';

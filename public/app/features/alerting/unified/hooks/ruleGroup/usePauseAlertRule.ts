@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';

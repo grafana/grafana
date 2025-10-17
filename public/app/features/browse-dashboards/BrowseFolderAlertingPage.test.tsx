@@ -1,6 +1,7 @@
 import { render, screen } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+
 import { contextSrv } from 'app/core/core';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 

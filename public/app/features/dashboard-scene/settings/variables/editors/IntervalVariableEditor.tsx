@@ -3,6 +3,7 @@ import { ChangeEvent, FormEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { IntervalVariable, SceneVariable } from '@grafana/scenes';
+
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import {
   getIntervalsFromQueryString,

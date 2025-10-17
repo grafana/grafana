@@ -1,4 +1,5 @@
 import { Trans } from '@grafana/i18n';
+
 import { Page } from 'app/core/components/Page/Page';
 
 export default function FeatureTogglePage() {

@@ -1,4 +1,5 @@
 import { UrlQueryValue } from '@grafana/data';
+
 import { ThunkResult } from 'app/types/store';
 
 import { variableAdapters } from '../adapters';

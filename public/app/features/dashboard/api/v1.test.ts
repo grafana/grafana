@@ -1,4 +1,5 @@
 import { GrafanaConfig, locationUtil } from '@grafana/data';
+
 import { backendSrv } from 'app/core/services/backend_srv';
 import { AnnoKeyFolder, AnnoKeyMessage, AnnoReloadOnParamsChange } from 'app/features/apiserver/types';
 import { DashboardDataDTO } from 'app/types/dashboard';

@@ -1,5 +1,6 @@
 import { Trans, t } from '@grafana/i18n';
 import { Tooltip, Button, Stack } from '@grafana/ui';
+
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 type VersionsButtonsType = {

@@ -1,6 +1,7 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { DataQuery } from '@grafana/schema';
+
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { AlertQuery } from 'app/types/unified-alerting-dto';

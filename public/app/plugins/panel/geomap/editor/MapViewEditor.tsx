@@ -4,6 +4,7 @@ import { useMemo, useCallback, useId } from 'react';
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
+
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { Options, MapViewConfig, GeomapInstanceState } from '../types';

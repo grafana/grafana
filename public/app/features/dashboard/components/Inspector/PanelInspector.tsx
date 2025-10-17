@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { PanelPlugin } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { InspectTab } from 'app/features/inspector/types';

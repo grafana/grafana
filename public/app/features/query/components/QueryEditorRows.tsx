@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
+
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 

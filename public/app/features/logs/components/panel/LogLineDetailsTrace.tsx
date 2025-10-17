@@ -6,6 +6,7 @@ import { DataFrame, DataQueryRequest, DataSourceApi, GrafanaTheme2, TimeRange } 
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 import { SearchTableType, TempoQuery } from 'app/plugins/datasource/tempo/dataquery.gen';

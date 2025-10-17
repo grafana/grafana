@@ -1,5 +1,6 @@
 import { PluginLoadingStrategy } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import {

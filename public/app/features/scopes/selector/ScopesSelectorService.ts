@@ -1,6 +1,7 @@
 import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SceneRenderProfiler } from '@grafana/scenes';
+
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
 import { ScopesApiClient } from '../ScopesApiClient';

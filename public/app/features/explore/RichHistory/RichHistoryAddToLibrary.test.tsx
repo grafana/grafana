@@ -2,6 +2,7 @@ import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { OrgRole } from '@grafana/data';
+
 import { contextSrv } from 'app/core/core';
 
 import { QueryLibraryContextProviderMock } from '../QueryLibrary/mocks';

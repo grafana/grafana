@@ -3,6 +3,7 @@ import { ComponentProps } from 'react';
 
 import { StateIcon } from '@grafana/alerting/unstable';
 import { dateTime, dateTimeFormat, isValidDate } from '@grafana/data';
+
 import { RuleHealth } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 

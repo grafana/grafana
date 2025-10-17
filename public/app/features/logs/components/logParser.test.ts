@@ -1,5 +1,6 @@
 import { DataFrameType, Field, FieldType, LogRowModel, MutableDataFrame } from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui';
+
 import { ExploreFieldLinkModel, getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 

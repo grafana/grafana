@@ -4,6 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
+
 import { contextSrv } from 'app/core/core';
 
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';

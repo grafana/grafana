@@ -7,6 +7,7 @@ import { SceneComponentProps, SceneObjectBase, sceneUtils } from '@grafana/scene
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Alert, Box, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
+
 import { Page } from 'app/core/components/Page/Page';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';

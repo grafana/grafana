@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 
 import { llm } from '@grafana/llm';
 import { createMonitoringLogger } from '@grafana/runtime';
+
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { DEFAULT_LLM_MODEL, isLLMPluginEnabled } from './utils';

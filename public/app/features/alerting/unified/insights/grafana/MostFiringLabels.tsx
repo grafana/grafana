@@ -12,6 +12,7 @@ import {
   sceneUtils,
 } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
+
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import { PANEL_STYLES } from '../../home/Insights';

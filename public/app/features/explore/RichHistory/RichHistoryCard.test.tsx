@@ -4,6 +4,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
+
 import { MixedDatasource } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
 import { ShowConfirmModalEvent } from 'app/types/events';

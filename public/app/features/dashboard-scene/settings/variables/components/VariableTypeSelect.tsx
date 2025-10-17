@@ -3,6 +3,7 @@ import { PropsWithChildren, useMemo } from 'react';
 import { SelectableValue, VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+
 import { VariableSelectField } from 'app/features/dashboard-scene/settings/variables/components/VariableSelectField';
 
 import { EditableVariableType, getVariableTypeSelectOptions } from '../utils';

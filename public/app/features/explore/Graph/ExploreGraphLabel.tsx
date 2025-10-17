@@ -1,5 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonGroup } from '@grafana/ui';
+
 import { EXPLORE_GRAPH_STYLES, ExploreGraphStyle } from 'app/types/explore';
 
 const ALL_GRAPH_STYLE_OPTIONS: Array<SelectableValue<ExploreGraphStyle>> = EXPLORE_GRAPH_STYLES.map((style) => ({

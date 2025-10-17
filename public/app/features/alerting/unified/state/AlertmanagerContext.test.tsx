@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Provider } from 'react-redux';
 
 import { locationService } from '@grafana/runtime';
+
 import store from 'app/core/store';
 import { AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';

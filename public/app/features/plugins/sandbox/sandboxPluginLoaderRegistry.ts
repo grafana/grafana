@@ -1,5 +1,6 @@
 import { PluginSignatureType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { contextSrv } from 'app/core/core';
 
 import { getPluginDetails } from '../admin/api';

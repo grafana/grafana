@@ -10,6 +10,7 @@ import {
   VariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
+
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,

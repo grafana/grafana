@@ -2,6 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { flatten, uniqBy } from 'lodash';
 
 import { DataSourceRef } from '@grafana/schema';
+
 import { ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types/store';
 

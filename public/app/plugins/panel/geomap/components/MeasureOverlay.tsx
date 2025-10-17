@@ -6,6 +6,7 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, IconButton, RadioButtonGroup, Select } from '@grafana/ui';
+
 import { config } from 'app/core/config';
 
 import { MapMeasure, MapMeasureOptions, measures } from '../utils/measure';

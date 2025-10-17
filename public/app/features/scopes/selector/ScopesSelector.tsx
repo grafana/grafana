@@ -7,6 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
 import { Button, Drawer, ErrorBoundary, ErrorWithStack, IconButton, Spinner, Text, useStyles2 } from '@grafana/ui';
+
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getModKey } from 'app/core/utils/browser';
 

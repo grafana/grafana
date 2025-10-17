@@ -5,6 +5,7 @@ import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel, useQueryRunner, useTimeRange } from '@grafana/scenes-react';
 import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
 import { Box } from '@grafana/ui';
+
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { getThresholdsForQueries } from '../../components/rule-editor/util';

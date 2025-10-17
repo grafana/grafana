@@ -3,6 +3,7 @@ import { ComponentType } from 'react';
 import { DataLink, RegistryItem, Action } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/internal';
 import { ColorDimensionConfig, ScaleDimensionConfig, DirectionDimensionConfig } from '@grafana/schema';
+
 import { config } from 'app/core/config';
 import { BackgroundConfig, Constraint, LineConfig, Placement } from 'app/plugins/panel/canvas/panelcfg.gen';
 

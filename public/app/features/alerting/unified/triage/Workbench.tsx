@@ -7,6 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneQueryRunner } from '@grafana/scenes';
 import { ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
+
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import { EditorColumnHeader } from '../components/EditorColumnHeader';

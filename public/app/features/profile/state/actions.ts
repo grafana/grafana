@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+
 import { ThunkResult } from 'app/types/store';
 import { UserOrg } from 'app/types/user';
 

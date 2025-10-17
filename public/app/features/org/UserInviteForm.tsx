@@ -17,6 +17,7 @@ import {
   Label,
   Stack,
 } from '@grafana/ui';
+
 import { getConfig } from 'app/core/config';
 import { useDispatch } from 'app/types/store';
 

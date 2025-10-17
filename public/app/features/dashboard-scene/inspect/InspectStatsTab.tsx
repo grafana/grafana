@@ -7,6 +7,7 @@ import {
   SceneObjectRef,
   VizPanel,
 } from '@grafana/scenes';
+
 import { InspectTab } from 'app/features/inspector/types';
 
 import { InspectStatsTab as OldInspectStatsTab } from '../../inspector/InspectStatsTab';

@@ -1,4 +1,5 @@
 import { Stack } from '@grafana/ui';
+
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 

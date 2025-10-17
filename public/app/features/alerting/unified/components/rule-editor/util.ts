@@ -9,6 +9,7 @@ import {
   isTimeSeriesFrames,
 } from '@grafana/data';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
+
 import { config } from 'app/core/config';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';

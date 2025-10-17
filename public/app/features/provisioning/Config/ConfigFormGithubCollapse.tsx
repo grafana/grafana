@@ -2,6 +2,7 @@ import { UseFormRegister } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Checkbox, ControlledCollapse, Field, Text, TextLink } from '@grafana/ui';
+
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { checkImageRenderer, checkPublicAccess, checkImageRenderingAllowed } from '../GettingStarted/features';

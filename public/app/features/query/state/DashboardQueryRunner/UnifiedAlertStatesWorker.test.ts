@@ -2,6 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { AlertState, getDefaultTimeRange, TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   grantUserPermissions,

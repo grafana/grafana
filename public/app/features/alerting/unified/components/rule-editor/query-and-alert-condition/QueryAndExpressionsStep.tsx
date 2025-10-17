@@ -22,6 +22,7 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
+
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import {
   ExpressionDatasourceUID,

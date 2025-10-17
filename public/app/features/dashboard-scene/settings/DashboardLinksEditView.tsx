@@ -2,6 +2,7 @@ import { NavModel, NavModelItem, PageLayoutType, arrayUtils } from '@grafana/dat
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
+
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from '../scene/DashboardScene';

@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 
 import { FieldType, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { PanelDataErrorViewProps } from '@grafana/runtime';
+
 import { configureStore } from 'app/store/configureStore';
 
 import { PanelDataErrorView } from './PanelDataErrorView';

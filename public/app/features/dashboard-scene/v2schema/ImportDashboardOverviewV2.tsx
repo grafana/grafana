@@ -7,6 +7,7 @@ import {
   Spec as DashboardV2Spec,
   defaultDataQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+
 import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';

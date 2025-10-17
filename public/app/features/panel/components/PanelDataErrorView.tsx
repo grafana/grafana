@@ -12,6 +12,7 @@ import { t, Trans } from '@grafana/i18n';
 import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
+
 import { CardButton } from 'app/core/components/CardButton';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import store from 'app/core/store';

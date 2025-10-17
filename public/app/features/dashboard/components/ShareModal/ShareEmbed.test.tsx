@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { BootData } from '@grafana/data';
 import { setEchoSrv } from '@grafana/runtime';
+
 import config from 'app/core/config';
 
 import { contextSrv, User } from '../../../../core/services/context_srv';

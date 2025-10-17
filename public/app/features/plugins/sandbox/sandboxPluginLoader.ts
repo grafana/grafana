@@ -3,6 +3,7 @@ import { ProxyTarget } from '@locker/near-membrane-shared';
 
 import { BootData } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { defaultTrustedTypesPolicy } from 'app/core/trustedTypePolicies';
 
 import { getPluginCode, getPluginLoadData, patchSandboxEnvironmentPrototype } from './codeLoader';

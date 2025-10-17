@@ -17,6 +17,7 @@ import {
   DirectionDimensionConfig,
 } from '@grafana/schema';
 import { Portal } from '@grafana/ui';
+
 import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import {

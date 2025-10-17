@@ -1,6 +1,7 @@
 import { isEqual, uniqBy } from 'lodash';
 
 import { DataFrameJSON } from '@grafana/data';
+
 import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
 export interface Line {

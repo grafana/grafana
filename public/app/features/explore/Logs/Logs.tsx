@@ -47,6 +47,7 @@ import {
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
+
 import store from 'app/core/store';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Box, Drawer, LinkButton, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
+
 import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import { Spacer } from '../../components/Spacer';

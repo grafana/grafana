@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import { RefreshPicker } from '@grafana/ui';
+
 import { useDispatch } from 'app/types/store';
 
 import { setPausedStateAction, runQueries, clearLogs } from './state/query';

@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+
 import { Alert } from 'app/types/unified-alerting';
 
 import { useAnnotationLinks, useCleanAnnotations } from '../../utils/annotations';

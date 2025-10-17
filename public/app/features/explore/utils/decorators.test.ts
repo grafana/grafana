@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { CorrelationData } from '@grafana/runtime';
 import { DataSourceJsonData, DataQuery } from '@grafana/schema';
+
 import TableModel from 'app/core/TableModel';
 import { ExplorePanelData } from 'app/types/explore';
 

@@ -1,4 +1,5 @@
 import { FetchError } from '@grafana/runtime';
+
 import { getMessageFromError } from 'app/core/utils/errors';
 import { LoadError } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 

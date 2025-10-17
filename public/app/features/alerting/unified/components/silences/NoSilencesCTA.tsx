@@ -1,5 +1,6 @@
 import { Trans, t } from '@grafana/i18n';
 import { CallToActionCard, EmptyState, LinkButton } from '@grafana/ui';
+
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getInstancesPermissions } from '../../utils/access-control';

@@ -15,6 +15,7 @@ import {
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
+
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
 import { AutoRefreshInterval, contextSrv, ContextSrv } from 'app/core/services/context_srv';

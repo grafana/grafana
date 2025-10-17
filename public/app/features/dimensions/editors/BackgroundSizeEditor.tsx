@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
+
 import { BackgroundImageSize } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 export const BackgroundSizeEditor = ({ value, onChange }: StandardEditorProps<string, undefined, undefined>) => {

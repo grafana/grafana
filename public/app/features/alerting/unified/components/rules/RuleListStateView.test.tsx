@@ -1,6 +1,7 @@
 import { render, screen } from 'test/test-utils';
 
 import { setPluginLinksHook } from '@grafana/runtime';
+
 import { RuleListStateView } from 'app/features/alerting/unified/components/rules/RuleListStateView';
 import {
   mockCombinedRule,

@@ -9,6 +9,7 @@ import {
   AppPlugin,
 } from '@grafana/data';
 import type { AppPluginConfig } from '@grafana/runtime';
+
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
 import { importAppPlugin } from './pluginLoader';

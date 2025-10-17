@@ -17,6 +17,7 @@ import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
+
 import { getConfig } from 'app/core/config';
 
 import { getActions } from '../../../features/actions/utils';

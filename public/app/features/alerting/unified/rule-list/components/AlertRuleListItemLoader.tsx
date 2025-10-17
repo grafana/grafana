@@ -2,6 +2,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { StateIcon } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
+
 import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import { stringifyErrorLike } from '../../utils/misc';

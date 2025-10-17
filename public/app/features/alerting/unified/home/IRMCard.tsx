@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+
 import irmSvg from 'img/irm_logo.svg';
 
 import AdCard from './AdCard';

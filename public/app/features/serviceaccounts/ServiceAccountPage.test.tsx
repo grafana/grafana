@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { OrgRole } from '@grafana/data';
+
 import { ApiKey } from 'app/types/apiKeys';
 import { ServiceAccountDTO } from 'app/types/serviceaccount';
 

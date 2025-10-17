@@ -3,6 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Field, Label, Stack } from '@grafana/ui';
+
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 
 import { Folder, RuleFormValues } from '../../types/rule-form';

@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Badge, Card, Grid, Stack, useStyles2 } from '@grafana/ui';
+
 import { PluginDeprecatedBadge } from 'app/features/plugins/admin/components/Badges/PluginDeprecatedBadge';
 import { PluginDisabledBadge } from 'app/features/plugins/admin/components/Badges/PluginDisabledBadge';
 import { PluginInstalledBadge } from 'app/features/plugins/admin/components/Badges/PluginInstallBadge';

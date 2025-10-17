@@ -6,6 +6,7 @@ import { DataSourceApi, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { useStyles2, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
+
 import {
   createDatasourcesList,
   SortOrder,

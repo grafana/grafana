@@ -4,6 +4,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { NavModelItem, PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { Page } from './Page';

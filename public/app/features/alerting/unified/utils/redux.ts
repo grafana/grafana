@@ -2,6 +2,7 @@ import { AsyncThunk, Draft, PayloadAction, SerializedError, createSlice, isAsync
 
 import { AppEvents } from '@grafana/data';
 import { FetchError, isFetchError } from '@grafana/runtime';
+
 import { appEvents } from 'app/core/core';
 
 import { LogMessages, logInfo } from '../Analytics';
