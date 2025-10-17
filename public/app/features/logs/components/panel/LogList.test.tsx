@@ -3,18 +3,20 @@ import userEvent from '@testing-library/user-event';
 
 import {
   CoreApp,
+  FieldType,
   getDefaultTimeRange,
   LogLevel,
   LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
   store,
+  toDataFrame,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { createLogRow } from '../mocks/logRow';
+import { createLogLine, createLogRow } from '../mocks/logRow';
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, OTEL_PROBE_FIELD } from '../otel/formats';
 
 import { LogList, Props } from './LogList';
@@ -479,6 +481,71 @@ describe('LogList', () => {
       render(<LogList {...defaultProps} noInteractions={true} />);
       await screen.findByText('log message 1');
       expect(reportInteraction).not.toHaveBeenCalled();
+    });
+  });
+  describe('Field selector', () => {
+    const logs = [
+      createLogLine({ uid: '1', entry: 'log 1', labels: { service: 'frontend', level: 'info' } }),
+      createLogLine({ uid: '2', entry: 'log 2', labels: { service: 'backend', level: 'error' } }),
+    ];
+
+    const dataFrames = [
+      toDataFrame({
+        fields: [
+          { name: 'timestamp', type: FieldType.time, values: [1, 2] },
+          { name: 'body', type: FieldType.string, values: ['log 1', 'log 2'] },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              { service: 'frontend', level: 'info' },
+              { service: 'backend', level: 'error' },
+            ],
+          },
+        ],
+      }),
+    ];
+
+    const extraProps = {
+      onClickShowField: jest.fn(),
+      onClickHideField: jest.fn(),
+      setDisplayedFields: jest.fn(),
+      logs,
+      dataFrames,
+    };
+
+    test('Does not display the field selector if not enabled', async () => {
+      render(<LogList {...defaultProps} {...extraProps} showFieldSelector={false} />);
+
+      expect(screen.queryByPlaceholderText('Search fields by name')).not.toBeInTheDocument();
+      expect(screen.queryByText('Fields')).not.toBeInTheDocument();
+    });
+
+    test('Displays the field selector if enabled', async () => {
+      render(<LogList {...defaultProps} {...extraProps} showFieldSelector />);
+
+      expect(screen.getByPlaceholderText('Search fields by name')).toBeInTheDocument();
+      expect(screen.getByText('Fields')).toBeInTheDocument();
+    });
+
+    test('Toggles displayed fields on and off', async () => {
+      const { rerender } = render(<LogList {...defaultProps} {...extraProps} showFieldSelector />);
+
+      await screen.findByText('log 1');
+      await screen.findByText('log 2');
+
+      await userEvent.click(screen.getByText('service'));
+
+      expect(extraProps.onClickShowField).toHaveBeenCalledWith('service');
+
+      rerender(<LogList {...defaultProps} displayedFields={['service']} {...extraProps} showFieldSelector />);
+
+      expect(screen.getByText('frontend')).toBeInTheDocument();
+      expect(screen.getByText('backend')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('service'));
+
+      expect(extraProps.onClickHideField).toHaveBeenCalledWith('service');
     });
   });
 });
