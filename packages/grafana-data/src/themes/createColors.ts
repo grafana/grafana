@@ -106,7 +106,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   text = {
     primary: `rgb(${this.whiteBase})`,
-    secondary: `rgba(${this.whiteBase}, 0.65)`,
+    secondary: `rgba(${this.whiteBase}, 0.66)`,
     disabled: `rgba(${this.whiteBase}, 0.61)`,
     link: palette.blueDarkText,
     maxContrast: palette.white,
@@ -119,7 +119,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: '#2e2f30',
+    main: '#2e3136',
     shade: '#37393e',
     transparent: `rgba(${this.whiteBase}, 0.08)`,
     text: this.text.primary,
