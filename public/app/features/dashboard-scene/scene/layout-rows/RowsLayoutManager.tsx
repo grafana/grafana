@@ -22,6 +22,7 @@ import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
 import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
+import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -132,7 +133,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return outlineChildren;
   }
 
-  public convertAllRowsLayouts(gridLayoutType: GridLayoutType) {
+  public convertAllGridLayouts(gridLayoutType: GridLayoutType) {
     for (const row of this.state.rows) {
       switch (gridLayoutType) {
         case GridLayoutType.AutoGridLayout:
@@ -187,7 +188,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       description: t('dashboard.rows-layout.edit.ungroup-rows', 'Ungroup rows'),
       source: scene,
       perform: () => {
-        this._ungroupRows(gridLayoutType);
+        this.ungroup(gridLayoutType);
       },
       undo: () => {
         parent.switchLayout(previousLayout);
@@ -195,15 +196,15 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     });
   }
 
-  private _ungroupRows(gridLayoutType: GridLayoutType) {
+  public ungroup(gridLayoutType: GridLayoutType) {
     const hasNonGridLayout = this.state.rows.some((row) => !row.getLayout().descriptor.isGridLayout);
 
     if (hasNonGridLayout) {
       for (const row of this.state.rows) {
         const layout = row.getLayout();
         if (!layout.descriptor.isGridLayout) {
-          if (layout instanceof RowsLayoutManager) {
-            layout._ungroupRows(gridLayoutType);
+          if (layout instanceof RowsLayoutManager || layout instanceof TabsLayoutManager) {
+            layout.ungroup(gridLayoutType);
           } else {
             throw new Error(`Ungrouping not supported for layout type: ${layout.descriptor.name}`);
           }
@@ -211,7 +212,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       }
     }
 
-    this.convertAllRowsLayouts(gridLayoutType);
+    this.convertAllGridLayouts(gridLayoutType);
 
     const firstRow = this.state.rows[0];
     const firstRowLayout = firstRow.getLayout();
@@ -219,8 +220,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
     for (const row of otherRows) {
       const layout = row.getLayout();
-      if (firstRowLayout.merge) {
-        firstRowLayout.merge(layout);
+      if (isDashboardLayoutGrid(firstRowLayout) && isDashboardLayoutGrid(layout)) {
+        firstRowLayout.mergeGrid(layout);
       } else {
         throw new Error(`Layout type ${firstRowLayout.descriptor.name} does not support merging`);
       }
