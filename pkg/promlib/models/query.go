@@ -161,7 +161,7 @@ type internalQueryModel struct {
 	Interval     string `json:"interval,omitempty"`
 }
 
-func Parse(ctx context.Context, log glog.Logger, span trace.Span, query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool, enableScope bool) (*Query, error) {
+func Parse(ctx context.Context, log glog.Logger, span trace.Span, query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool) (*Query, error) {
 	model := &internalQueryModel{}
 	if err := json.Unmarshal(query.JSON, model); err != nil {
 		return nil, err
@@ -185,38 +185,36 @@ func Parse(ctx context.Context, log glog.Logger, span trace.Span, query backend.
 		timeRange,
 	)
 
-	if enableScope {
-		var scopeFilters []scope.ScopeFilter
-		for _, scope := range model.Scopes {
-			scopeFilters = append(scopeFilters, scope.Filters...)
-		}
+	var scopeFilters []scope.ScopeFilter
+	for _, scope := range model.Scopes {
+		scopeFilters = append(scopeFilters, scope.Filters...)
+	}
 
-		if len(scopeFilters) > 0 {
-			span.SetAttributes(attribute.StringSlice("scopeFilters", func() []string {
-				var filters []string
-				for _, f := range scopeFilters {
-					filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
-				}
-				return filters
-			}()))
-		}
-
-		if len(model.AdhocFilters) > 0 {
-			span.SetAttributes(attribute.StringSlice("adhocFilters", func() []string {
-				var filters []string
-				for _, f := range model.AdhocFilters {
-					filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
-				}
-				return filters
-			}()))
-		}
-
-		if len(scopeFilters) > 0 || len(model.AdhocFilters) > 0 || len(model.GroupByKeys) > 0 {
-			log.Info("Applying scope filters", "scopeFiltersCount", len(scopeFilters), "adhocFiltersCount", len(model.AdhocFilters), "groupByKeysCount", len(model.GroupByKeys))
-			expr, err = ApplyFiltersAndGroupBy(expr, scopeFilters, model.AdhocFilters, model.GroupByKeys)
-			if err != nil {
-				return nil, err
+	if len(scopeFilters) > 0 {
+		span.SetAttributes(attribute.StringSlice("scopeFilters", func() []string {
+			var filters []string
+			for _, f := range scopeFilters {
+				filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
 			}
+			return filters
+		}()))
+	}
+
+	if len(model.AdhocFilters) > 0 {
+		span.SetAttributes(attribute.StringSlice("adhocFilters", func() []string {
+			var filters []string
+			for _, f := range model.AdhocFilters {
+				filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
+			}
+			return filters
+		}()))
+	}
+
+	if len(scopeFilters) > 0 || len(model.AdhocFilters) > 0 || len(model.GroupByKeys) > 0 {
+		log.Info("Applying scope filters", "scopeFiltersCount", len(scopeFilters), "adhocFiltersCount", len(model.AdhocFilters), "groupByKeysCount", len(model.GroupByKeys))
+		expr, err = ApplyFiltersAndGroupBy(expr, scopeFilters, model.AdhocFilters, model.GroupByKeys)
+		if err != nil {
+			return nil, err
 		}
 	}
 

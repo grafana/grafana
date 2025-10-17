@@ -1655,6 +1655,15 @@
     "inspector-yaml-tab": {
       "apply": "Apply"
     },
+    "instance-details": {
+      "history-error": "Failed to load state history",
+      "history-error-desc": "Unable to fetch state transition history for this instance.",
+      "no-history": "No recent state changes",
+      "state-history": "Recent State Changes"
+    },
+    "instance-details-drawer": {
+      "title-instance-details": "Instance Details"
+    },
     "instance-match": {
       "non-matching-labels": "Non-matching labels",
       "notification-policy": "View route"
@@ -2314,6 +2323,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Data source"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": "View alert rule"
+    },
     "rule-details-expression": {
       "label-expression": "Expression"
     },
@@ -2559,6 +2571,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Alert rule has been added or updated. Changes may take up to a minute to appear on the Alert rules list view.",
         "alert-title": "Update in progress"
+      },
+      "tab": {
+        "details": "Details",
+        "query-conditions": "Query and conditions"
       },
       "title-something-wrong-evaluating-alert": "Something went wrong when evaluating this alert rule"
     },
@@ -2930,10 +2946,22 @@
     },
     "triage": {
       "alert-instances": "Alert instances",
+      "error-loading-rule": "Error loading rule",
       "firing-instances-count": "{{firingCount}} firing instances",
+      "instance-details": "Instance Details",
       "no-instances-found": "No alert instances found for rule: {ruleUID}",
       "no-labels": "No labels",
-      "pending-instances-count": "{{pendingCount}} pending instances"
+      "open-in-sidebar": "Open in sidebar",
+      "open-rule-details": "Open rule details",
+      "pending-instances-count": "{{pendingCount}} pending instances",
+      "rule-details": {
+        "subtitle": "Rule details and conditions",
+        "title": "Rule Details"
+      },
+      "rule-not-found": {
+        "description": "The requested rule could not be found.",
+        "title": "Rule not found"
+      }
     },
     "type-selector-button": {
       "add-expression": "Add expression"
@@ -4496,6 +4524,8 @@
     },
     "canvas-actions": {
       "add-panel": "Add panel",
+      "disabled-nested-grouping": "Grouping is limited to 2 levels",
+      "disabled-nested-tabs": "Tabs cannot be nested inside other tabs",
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
       "group-panels": "Group panels",
@@ -4505,7 +4535,8 @@
       "paste-row": "Paste row",
       "paste-tab": "Paste tab",
       "un-group-panels": "Ungroup",
-      "ungroup-rows": "Ungroup rows"
+      "ungroup-rows": "Ungroup rows",
+      "ungroup-tabs": "Ungroup tabs"
     },
     "conditional-rendering": {
       "conditions": {
@@ -4605,7 +4636,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "{{dashboardName}} dashboard"
+      "aria-label-dashboard-name": "{{dashboardName}} dashboard",
+      "label-no-dashboards-found": "No dashboards found"
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Cancel loading dashboard"
@@ -4747,8 +4779,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Values separated by comma",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "Close",
+          "modal-title": "Custom Variable",
+          "values": "Values separated by comma"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -4797,7 +4830,11 @@
       "add-visualization-header": "Start your new dashboard by adding a visualization",
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
-      "import-dashboard-button": "Import dashboard"
+      "import-dashboard-button": "Import dashboard",
+      "show-less-dashboards": "Show less",
+      "show-more-dashboards": "Show more",
+      "start-with-suggested-dashboards": "Start with a pre-made dashboard from your data source",
+      "use-template-button": "Use this dashboard"
     },
     "errors": {
       "failed-to-load": "Failed to load dashboard"
@@ -5010,6 +5047,7 @@
       }
     },
     "layout": {
+      "cancel": "Cancel",
       "common": {
         "copy": "Copy",
         "copy-or-duplicate": "Copy or Duplicate",
@@ -5019,7 +5057,10 @@
         "group-layout-disabled": "No groups exists on this level",
         "panel-layout": "Panel layout",
         "panel-layout-disabled": "Select a row or tab to change panel layout options"
-      }
+      },
+      "continue": "Continue",
+      "ungroup-nested-text": "This will ungroup all nested groups.",
+      "ungroup-nested-title": "Ungroup nested groups?"
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5169,7 +5210,6 @@
     },
     "rows-layout": {
       "cancel": "Cancel",
-      "continue": "Continue",
       "convert-to": "Convert to {{name}}",
       "delete-row-text": "Deleting this row will also remove all panels. Are you sure you want to continue?",
       "delete-row-title": "Delete row?",
@@ -5209,9 +5249,7 @@
         "title-not-unique": "This title is not unique"
       },
       "ungroup-convert-text": "All grids must be converted to the same type and positions will be lost.",
-      "ungroup-convert-title": "Convert mixed grids?",
-      "ungroup-nested-text": "This will ungroup all nested groups.",
-      "ungroup-nested-title": "Ungroup nested groups?"
+      "ungroup-convert-title": "Convert mixed grids?"
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
@@ -5301,6 +5339,9 @@
       "delete-tab-title": "Delete tab?",
       "delete-tab-yes": "Delete",
       "description": "Organize panels into horizontal tabs",
+      "edit": {
+        "ungroup-tabs": "Ungroup tabs"
+      },
       "name": "Tabs",
       "tab": {
         "new": "New tab",
@@ -7642,6 +7683,7 @@
   },
   "gauge": {
     "category-gauge": "Gauge",
+    "category-radial-bar": "Gauge",
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
     "description-neutral": "Leave empty to use Min as neutral point",
@@ -9061,6 +9103,8 @@
       "make-time-range-permanent": "Make time range absolute/permanent",
       "move-time-range-back": "Move time range back",
       "move-time-range-forward": "Move time range forward",
+      "open-alerting": "Go to Alerting",
+      "open-assistant": "Open Assistant",
       "open-search": "Open search",
       "open-share-embed-drawer": "Share panel embed",
       "open-share-link-drawer": "Share panel link",
@@ -11789,7 +11833,8 @@
       "button-cancelling": "Cancelling...",
       "button-previous": "Previous",
       "button-submitting": "Submitting...",
-      "error-instance-repository-exists": "Instance repository already exists"
+      "error-instance-repository-exists": "Instance repository already exists",
+      "error-save-repository-setting": "Failed to save repository setting"
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "Push to a new branch",
@@ -12012,6 +12057,27 @@
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "Bar width",
+      "effects": {
+        "bar-glow": "Bar glow",
+        "center-glow": "Center glow",
+        "rounded-bars": "Rounded bars",
+        "spotlight": "Spotlight"
+      },
+      "gradient": "Gradient",
+      "gradient-auto": "Auto",
+      "gradient-none": "None",
+      "segment-count": "Segments",
+      "segment-spacing": "Segment spacing",
+      "shape": "Shape",
+      "shape-circle": "Circle",
+      "shape-gauge": "Gauge",
+      "sparkline": "Show sparkline",
+      "threshold-markers": "Show thresholds"
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -14137,14 +14203,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Add option",
-      "description": "Add custom options in addition to query results",
-      "label-placeholder": "display label",
-      "remove-option-button-label": "Remove option",
-      "value-placeholder": "value, default empty string"
+      "description": "Add custom options in addition to query results"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "How to sort static options with query results"
+    },
+    "static-options": {
+      "add-option-button-label": "Add new option",
+      "drag-and-drop": "Drag and drop to reorder",
+      "label-header": "Display text",
+      "label-placeholder": "Defaults to value",
+      "remove-option-button-label": "Remove option",
+      "value-header": "Value",
+      "value-placeholder": "Value"
     },
     "text-box-variable-editor": {
       "name-default-value": "Default value",
