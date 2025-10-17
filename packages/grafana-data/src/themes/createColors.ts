@@ -120,11 +120,11 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   secondary = {
     main: '#2e2f30',
-    shade: '#37393E',
+    shade: '#37393e',
     transparent: `rgba(${this.whiteBase}, 0.08)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
-    border: '#3D4045',
+    border: '#3d4045',
   };
 
   info = this.primary;
@@ -152,10 +152,10 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   action = {
-    hover: '#3A3D43',
-    selected: '#32353B',
+    hover: '#3a3d43',
+    selected: '#32353b',
     selectedBorder: palette.orangeDarkMain,
-    focus: '#3A3D43',
+    focus: '#3a3d43',
     hoverOpacity: 0.08,
     disabledText: this.text.disabled,
     disabledBackground: '#212427',
@@ -198,8 +198,8 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: '#F0F0F0',
-    shade: '#E2E2E3',
+    main: '#f0f0f0',
+    shade: '#e2e2e3',
     transparent: `rgba(${this.blackBase}, 0.08)`,
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
@@ -235,12 +235,12 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   action = {
-    hover: '#E7E7E8',
-    selected: '#F0F0F0',
+    hover: '#e7e7e8',
+    selected: '#f0f0f0',
     selectedBorder: palette.orangeLightMain,
     hoverOpacity: 0.08,
-    focus: '#E7E7E8',
-    disabledBackground: '#F7F7F8',
+    focus: '#e7e7e8',
+    disabledBackground: '#f7f7f8',
     disabledText: this.text.disabled,
     disabledOpacity: 0.38,
   };
