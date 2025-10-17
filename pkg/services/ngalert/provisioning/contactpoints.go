@@ -151,7 +151,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	contactPoint apimodels.EmbeddedContactPoint,
 	provenance models.Provenance,
 ) (apimodels.EmbeddedContactPoint, error) {
-	if err := ValidateContactPoint(ctx, contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
+	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -243,13 +243,19 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if contactPoint.Settings == nil {
 		return fmt.Errorf("%w: %s", ErrValidation, "settings should not be empty")
 	}
+	iType, err := alertingNotify.IntegrationTypeFromString(contactPoint.Type)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+	}
+	typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(iType, schema.V1)
+	if !ok {
+		return fmt.Errorf("%w: failed to get secret keys for contact point type %s", ErrValidation, contactPoint.Type)
+	}
+
+	// patch integration with the secrets from the existing version
 	rawContactPoint, err := ecp.getContactPointDecrypted(ctx, orgID, contactPoint.UID)
 	if err != nil {
 		return err
-	}
-	typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(schema.IntegrationType(contactPoint.Type), schema.V1)
-	if !ok {
-		return fmt.Errorf("%w: failed to get secret keys for contact point type %s", ErrValidation, contactPoint.Type)
 	}
 	for _, secretPath := range typeSchema.GetSecretFieldsPaths() {
 		secretKey := secretPath.String()
@@ -260,7 +266,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	// validate merged values
-	if err := ValidateContactPoint(ctx, contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
+	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -512,7 +518,12 @@ groupLoop:
 	return oldReceiverName, fullRemoval, newReceiverCreated
 }
 
-func ValidateContactPoint(ctx context.Context, e apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn) error {
+func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn) error {
+	iType, err := alertingNotify.IntegrationTypeFromString(e.Type)
+	if err != nil {
+		return err
+	}
+	e.Type = string(iType)
 	integration, err := EmbeddedContactPointToGrafanaIntegrationConfig(e)
 	if err != nil {
 		return err
