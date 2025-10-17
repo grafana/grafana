@@ -48,25 +48,34 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
     return () => observer.disconnect();
   }, [containerElement]);
 
+  const setSidebarWidthWrapper = useCallback(
+    (width: number) => {
+      setSidebarWidth(width);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.fieldSelector.width`, width);
+      }
+    },
+    [logOptionsStorageKey]
+  );
+
   const clearFields = useCallback(() => {
     setDisplayedFields?.([]);
   }, [setDisplayedFields]);
 
   const collapse = useCallback(() => {
-    setSidebarWidth(MIN_WIDTH);
-  }, []);
+    setSidebarWidthWrapper(MIN_WIDTH);
+  }, [setSidebarWidthWrapper]);
 
   const expand = useCallback(() => {
     const width = getSidebarWidth(logOptionsStorageKey);
-    setSidebarWidth(width < 2 * MIN_WIDTH ? DEFAULT_WIDTH : width);
-  }, [logOptionsStorageKey]);
+    setSidebarWidthWrapper(width < 2 * MIN_WIDTH ? DEFAULT_WIDTH : width);
+  }, [logOptionsStorageKey, setSidebarWidthWrapper]);
 
   const handleResize: ResizeCallback = useCallback(
     (event, direction, ref) => {
-      setSidebarWidth(ref.clientWidth);
-      store.set(`${logOptionsStorageKey}.fieldSelector.width`, ref.clientWidth);
+      setSidebarWidthWrapper(ref.clientWidth);
     },
-    [logOptionsStorageKey]
+    [setSidebarWidthWrapper]
   );
 
   const toggleField = useCallback(
@@ -165,14 +174,22 @@ export const LogsTableFieldSelector = ({
   sidebarWidth,
   toggle,
 }: LogsTableFieldSelectorProps) => {
+  const setSidebarWidthWrapper = useCallback(
+    (width: number) => {
+      setSidebarWidth(width);
+      store.set(`${SETTING_KEY_ROOT}.fieldSelector.width`, width);
+    },
+    [setSidebarWidth]
+  );
+
   const collapse = useCallback(() => {
-    setSidebarWidth(MIN_WIDTH);
-  }, [setSidebarWidth]);
+    setSidebarWidthWrapper(MIN_WIDTH);
+  }, [setSidebarWidthWrapper]);
 
   const expand = useCallback(() => {
     const width = getSidebarWidth(SETTING_KEY_ROOT);
-    setSidebarWidth(width < 2 * MIN_WIDTH ? DEFAULT_WIDTH : width);
-  }, [setSidebarWidth]);
+    setSidebarWidthWrapper(width < 2 * MIN_WIDTH ? DEFAULT_WIDTH : width);
+  }, [setSidebarWidthWrapper]);
 
   const displayedColumns = useMemo(
     () =>
