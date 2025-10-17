@@ -547,5 +547,35 @@ describe('LogList', () => {
 
       expect(extraProps.onClickHideField).toHaveBeenCalledWith('service');
     });
+
+    test('Applies OTel default displayed fields and suggested fields', () => {
+      const originalState = config.featureToggles.otelLogsFormatting;
+      config.featureToggles.otelLogsFormatting = true;
+
+      const logs = [
+        createLogRow({
+          uid: '1',
+          entry: 'log message 1',
+          labels: { service: 'frontend', level: 'info', [OTEL_PROBE_FIELD]: '1', scope_name: 'test' },
+        }),
+      ];
+
+      render(<LogList {...defaultProps} {...extraProps} showFieldSelector logs={logs} />);
+
+      // Log line message
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+
+      // Label
+      expect(screen.getByText('service')).toBeInTheDocument();
+
+      // Default displayed fields
+      expect(screen.getByText('Log line')).toBeInTheDocument();
+      expect(screen.getByText('OTel attributes')).toBeInTheDocument();
+
+      // Suggested field
+      expect(screen.getByText('scope_name')).toBeInTheDocument();
+
+      config.featureToggles.otelLogsFormatting = originalState;
+    });
   });
 });
