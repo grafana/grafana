@@ -175,7 +175,9 @@ export const LogsTableFieldSelector = ({
       Object.keys(columnsWithMeta)
         .filter((column) => columnsWithMeta[column].active)
         .sort((a, b) =>
-          columnsWithMeta[a].index !== undefined && columnsWithMeta[b].index !== undefined ? columnsWithMeta[a].index - columnsWithMeta[b].index : 0
+          columnsWithMeta[a].index !== undefined && columnsWithMeta[b].index !== undefined
+            ? columnsWithMeta[a].index - columnsWithMeta[b].index
+            : 0
         ),
     [columnsWithMeta]
   );
@@ -184,7 +186,9 @@ export const LogsTableFieldSelector = ({
     () =>
       Object.keys(columnsWithMeta)
         .sort((a, b) =>
-          columnsWithMeta[a].index !== undefined && columnsWithMeta[b].index !== undefined ? columnsWithMeta[a].index - columnsWithMeta[b].index : 0
+          columnsWithMeta[a].index !== undefined && columnsWithMeta[b].index !== undefined
+            ? columnsWithMeta[a].index - columnsWithMeta[b].index
+            : 0
         )
         .filter(
           (column) => columnsWithMeta[column].type === 'TIME_FIELD' || columnsWithMeta[column].type === 'BODY_FIELD'
