@@ -2265,6 +2265,22 @@
     },
     {
       "metadata": {
+        "name": "kubernetesLogsDrilldown",
+        "resourceVersion": "1760632282014",
+        "creationTimestamp": "2025-10-07T19:26:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-16 16:31:22.014483 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes logs drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesShortURLs",
         "resourceVersion": "1756914263808",
         "creationTimestamp": "2025-08-04T12:12:12Z",
@@ -3020,6 +3036,20 @@
         "codeowner": "@grafana/dashboards-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "preventPanelChromeOverflow",
+        "resourceVersion": "1760704390127",
+        "creationTimestamp": "2025-10-17T12:33:10Z"
+      },
+      "spec": {
+        "description": "Restrict PanelChrome contents with overflow: hidden;",
+        "stage": "preview",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "true"
       }
     },
     {

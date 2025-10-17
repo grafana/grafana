@@ -94,6 +94,13 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       defaultValue: defaultOptions.showThresholdMarkers,
     });
 
+    builder.addBooleanSwitch({
+      path: 'showThresholdLabels',
+      name: t('radialbar.config.threshold-labels', 'Show threshold labels'),
+      category,
+      defaultValue: defaultOptions.showThresholdLabels,
+    });
+
     builder.addCustomEditor({
       id: 'radialbar-effects',
       path: 'effects',
