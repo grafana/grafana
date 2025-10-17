@@ -294,13 +294,16 @@ export function LogsTableWrap(props: Props) {
 
   const clearSelection = () => {
     const pendingLabelState = { ...columnsWithMeta };
-    let index = 0;
     Object.keys(pendingLabelState).forEach((key) => {
       const isDefaultField = !!pendingLabelState[key].type;
       // after reset the only active fields are the special time and body fields
-      pendingLabelState[key].active = isDefaultField;
+      pendingLabelState[key].active = isDefaultField ? true : false;
       // reset the index
-      pendingLabelState[key].index = isDefaultField ? index++ : undefined;
+      if (pendingLabelState[key].type === 'TIME_FIELD') {
+        pendingLabelState[key].index = 0;
+      } else {
+        pendingLabelState[key].index = pendingLabelState[key].type === 'BODY_FIELD' ? 1 : undefined;
+      }
     });
     setColumnsWithMeta(pendingLabelState);
   };
