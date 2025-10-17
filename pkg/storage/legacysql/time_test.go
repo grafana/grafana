@@ -82,7 +82,7 @@ func TestDBTime_Scan_VariousInputs(t *testing.T) {
 				t.Fatalf("expected non-zero time, got zero")
 			}
 			// Compare times using Equal to ignore monotonic clock bits
-			if !dt.Time.Equal(tc.wantTime) {
+			if !dt.Equal(tc.wantTime) {
 				t.Fatalf("scanned time = %v, want %v", dt.Time, tc.wantTime)
 			}
 		})
