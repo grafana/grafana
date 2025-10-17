@@ -50,6 +50,7 @@ interface UPlotConfigOptions {
   colWidth?: number;
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
+  seriesNameAlignment?: 'left' | 'right';
   mergeValues?: boolean;
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
@@ -90,6 +91,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   colWidth,
   showValue,
   alignValue,
+  seriesNameAlignment,
   mergeValues,
   getValueColor,
   hoverMulti,
@@ -181,11 +183,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   const yCustomConfig = frame.fields[1].config.custom;
   const yAxisWidth = yCustomConfig.axisWidth;
   const yAxisHidden = yCustomConfig.axisPlacement === AxisPlacement.Hidden;
+  const yAxisPlacement = seriesNameAlignment === 'right' ? AxisPlacement.Right : AxisPlacement.Left;
 
   builder.addAxis({
     scaleKey: FIXED_UNIT, // y
     isTime: false,
-    placement: AxisPlacement.Left,
+    placement: yAxisPlacement,
     splits: coreConfig.ySplits,
     values: yAxisHidden ? (u, splits) => splits.map((v) => null) : coreConfig.yValues,
     grid: { show: false },
