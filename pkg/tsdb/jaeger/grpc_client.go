@@ -166,11 +166,21 @@ func (j *JaegerClient) GrpcSearch(query *JaegerQuery, start, end time.Time) (*da
 		}
 	}()
 
+	if resp != nil && resp.StatusCode != http.StatusOK {
+		err := backend.DownstreamError(fmt.Errorf("request failed: %s", resp.Status))
+		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
+			return nil, backend.DownstreamError(err)
+		}
+		return nil, err
+	}
+
 	var response types.GrpcTracesResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("failed to decode Jaeger response: %w", err)
 	}
 
+	// for search call, an unsuccessful response is exposed through the error attribute
+	// see https://github.com/jaegertracing/jaeger-idl/blob/7c7460fc400325ae69435c0aa65697f4cc1ab581/swagger/api_v3/query_service.swagger.json#L77C17-L79C18
 	if response.Error.HttpCode != 0 && response.Error.HttpCode != http.StatusOK {
 		err := backend.DownstreamError(fmt.Errorf("request failed %s", response.Error.Message))
 		if backend.ErrorSourceFromHTTPStatus(response.Error.HttpCode) == backend.ErrorSourceDownstream {
@@ -228,7 +238,7 @@ func (j *JaegerClient) GrpcTrace(ctx context.Context, traceID string, start, end
 		}
 	}()
 
-	if res != nil && res.StatusCode/100 != 2 {
+	if res != nil && res.StatusCode != http.StatusOK {
 		err := backend.DownstreamError(fmt.Errorf("request failed: %s", res.Status))
 		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
 			return nil, backend.DownstreamError(err)
@@ -240,6 +250,8 @@ func (j *JaegerClient) GrpcTrace(ctx context.Context, traceID string, start, end
 		return nil, err
 	}
 
+	// for trace search call, an unsuccessful response is exposed through the error attribute
+	// see https://github.com/jaegertracing/jaeger-idl/blob/7c7460fc400325ae69435c0aa65697f4cc1ab581/swagger/api_v3/query_service.swagger.json#L77C17-L79C18
 	if response.Error.HttpCode != 0 && response.Error.HttpCode != http.StatusOK {
 		err := backend.DownstreamError(fmt.Errorf("request failed %s", response.Error.Message))
 		if backend.ErrorSourceFromHTTPStatus(response.Error.HttpCode) == backend.ErrorSourceDownstream {
@@ -249,5 +261,5 @@ func (j *JaegerClient) GrpcTrace(ctx context.Context, traceID string, start, end
 	}
 
 	frame := utils.TransformGrpcTraceResponse(response.Result.ResourceSpans, refID)
-	return frame, err
+	return frame, nil
 }
