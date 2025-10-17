@@ -736,7 +736,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return dashboardSceneGraph.getVizPanels(this);
   }
 
-  public getExpressionTypes(saveModel?: Dashboard | DashboardV2Spec): string | undefined {
+  public getExpressionTypes(saveModel?: Dashboard | DashboardV2Spec): string[] | undefined {
     const model = saveModel ?? this.getSaveModel();
 
     const expressionTypes = new Set<string>();
@@ -778,20 +778,27 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         }
 
         for (const query of queries) {
-          // Only count if it's actually an expression query
-          const datasource = query?.spec?.query?.spec?.datasource;
-          const datasourceUid =
-            datasource && typeof datasource === 'object' && 'uid' in datasource ? datasource.uid : undefined;
-          const queryType = query?.spec?.query?.spec?.type;
-          if (datasourceUid === '__expr__' && typeof queryType === 'string' && queryType) {
+          const querySpec = query?.spec?.query;
+          if (!querySpec || typeof querySpec !== 'object') {
+            continue;
+          }
+
+          const datasource = querySpec.datasource;
+          const datasourceName =
+            datasource && typeof datasource === 'object' && 'name' in datasource ? datasource.name : undefined;
+
+          const spec = querySpec.spec;
+          const queryType = spec && typeof spec === 'object' && 'type' in spec ? spec.type : undefined;
+
+          if (datasourceName === '__expr__' && typeof queryType === 'string' && queryType) {
             expressionTypes.add(queryType);
           }
         }
       }
     }
 
-    // Return comma-separated string or undefined if no expressions
-    return expressionTypes.size > 0 ? Array.from(expressionTypes).join(',') : undefined;
+    // Return array of expression types or undefined if no expressions
+    return expressionTypes.size > 0 ? Array.from(expressionTypes) : undefined;
   }
 
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {
