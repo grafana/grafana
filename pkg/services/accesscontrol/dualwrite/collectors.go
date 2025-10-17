@@ -202,12 +202,9 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 	}
 }
 
+// tupleStringWithoutCondition is deprecated, use zanzana.TupleStringWithoutCondition instead
 func tupleStringWithoutCondition(tuple *openfgav1.TupleKey) string {
-	c := tuple.Condition
-	tuple.Condition = nil
-	s := tuple.String()
-	tuple.Condition = c
-	return s
+	return zanzana.TupleStringWithoutCondition(tuple)
 }
 
 // basicRoleBindingsCollector collects role bindings for basic roles
@@ -371,36 +368,41 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 			return nil, err
 		}
 
+		// Group permissions by role UID
+		rolePermissionsMap := make(map[string][]zanzana.RolePermission)
+		for _, p := range permissions {
+			rolePermissionsMap[p.RoleUID] = append(rolePermissionsMap[p.RoleUID], zanzana.RolePermission{
+				Action:     p.Action,
+				Kind:       p.Kind,
+				Identifier: p.Identifier,
+			})
+		}
+
 		tuples := make(map[string]map[string]*openfgav1.TupleKey)
 
-		for _, p := range permissions {
-			tuple, ok := zanzana.TranslateToResourceTuple(
-				zanzana.NewTupleEntry(zanzana.TypeRole, p.RoleUID, zanzana.RelationAssignee),
-				p.Action,
-				p.Kind,
-				p.Identifier,
-			)
-			if !ok {
+		// Convert permissions for each role using the shared utility
+		for roleUID, perms := range rolePermissionsMap {
+			roleTuples, err := zanzana.ConvertRolePermissionsToTuples(roleUID, perms)
+			if err != nil {
+				reconcilerLogger.Warn("Failed to convert role permissions to tuples", "roleUID", roleUID, "err", err)
 				continue
 			}
 
-			if tuples[tuple.Object] == nil {
-				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
-			}
-
-			// For resource actions on folders we need to merge the tuples into one with combined subresources.
-			if zanzana.IsFolderResourceTuple(tuple) {
-				key := tupleStringWithoutCondition(tuple)
-				if t, ok := tuples[tuple.Object][key]; ok {
-					zanzana.MergeFolderResourceTuples(t, tuple)
-				} else {
-					tuples[tuple.Object][key] = tuple
+			// Add tuples to the result map
+			for _, tuple := range roleTuples {
+				if tuples[tuple.Object] == nil {
+					tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
 				}
 
-				continue
+				// Use the appropriate key based on whether it's a folder resource tuple
+				var key string
+				if zanzana.IsFolderResourceTuple(tuple) {
+					key = tupleStringWithoutCondition(tuple)
+				} else {
+					key = tuple.String()
+				}
+				tuples[tuple.Object][key] = tuple
 			}
-
-			tuples[tuple.Object][tuple.String()] = tuple
 		}
 
 		return tuples, nil

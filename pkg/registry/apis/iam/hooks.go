@@ -7,11 +7,13 @@ import (
 	"strings"
 	"time"
 
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
@@ -167,4 +169,158 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 			)
 		}
 	}(rp.DeepCopy()) // Pass a copy of the object
+}
+
+// convertRolePermissionsToTuples converts role permissions (action/scope) to Zanzana tuples
+// using the shared zanzana.ConvertRolePermissionsToTuples utility
+func convertRolePermissionsToTuples(roleUID string, permissions []iamv0.CoreRolespecPermission) ([]*openfgav1.TupleKey, error) {
+	// Convert IAM permissions to zanzana.RolePermission format
+	rolePerms := make([]zanzana.RolePermission, 0, len(permissions))
+	for _, perm := range permissions {
+		// Split the scope to get kind, attribute, identifier
+		kind, _, identifier := accesscontrol.SplitScope(perm.Scope)
+		rolePerms = append(rolePerms, zanzana.RolePermission{
+			Action:     perm.Action,
+			Kind:       kind,
+			Identifier: identifier,
+		})
+	}
+
+	return zanzana.ConvertRolePermissionsToTuples(roleUID, rolePerms)
+}
+
+// AfterCoreRoleCreate is a post-create hook that writes the core role permissions to Zanzana (openFGA)
+func (b *IdentityAccessManagementAPIBuilder) AfterCoreRoleCreate(obj runtime.Object, _ *metav1.CreateOptions) {
+	if b.zClient == nil {
+		return
+	}
+
+	role, ok := obj.(*iamv0.CoreRole)
+	if !ok {
+		return
+	}
+
+	roleUID := role.Name
+	permissions := role.Spec.Permissions
+
+	tuples, err := convertRolePermissionsToTuples(roleUID, permissions)
+	if err != nil {
+		b.logger.Error("failed to convert core role permissions to tuples",
+			"namespace", role.Namespace,
+			"roleUID", roleUID,
+			"err", err,
+		)
+		return
+	}
+
+	// Avoid writing if there are no valid tuples
+	if len(tuples) == 0 {
+		b.logger.Debug("no valid tuples to write for core role", "namespace", role.Namespace, "roleUID", roleUID)
+		return
+	}
+
+	b.logger.Debug("writing core role permissions to zanzana",
+		"namespace", role.Namespace,
+		"roleUID", roleUID,
+		"tuplesCnt", len(tuples),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+	defer cancel()
+
+	err = b.zClient.Write(ctx, &v1.WriteRequest{
+		Namespace: role.Namespace,
+		Writes: &v1.WriteRequestWrites{
+			TupleKeys: convertOpenfgaTuplesToV1(tuples),
+		},
+	})
+	if err != nil {
+		b.logger.Error("failed to write core role permissions to zanzana",
+			"err", err,
+			"namespace", role.Namespace,
+			"roleUID", roleUID,
+			"tuplesCnt", len(tuples),
+		)
+	}
+}
+
+// AfterRoleCreate is a post-create hook that writes the role permissions to Zanzana (openFGA)
+func (b *IdentityAccessManagementAPIBuilder) AfterRoleCreate(obj runtime.Object, _ *metav1.CreateOptions) {
+	if b.zClient == nil {
+		return
+	}
+
+	role, ok := obj.(*iamv0.Role)
+	if !ok {
+		return
+	}
+
+	roleUID := role.Name
+	// Convert RolespecPermission to CoreRolespecPermission for the helper function
+	corePermissions := make([]iamv0.CoreRolespecPermission, len(role.Spec.Permissions))
+	for i, p := range role.Spec.Permissions {
+		corePermissions[i] = iamv0.CoreRolespecPermission{
+			Action: p.Action,
+			Scope:  p.Scope,
+		}
+	}
+
+	tuples, err := convertRolePermissionsToTuples(roleUID, corePermissions)
+	if err != nil {
+		b.logger.Error("failed to convert role permissions to tuples",
+			"namespace", role.Namespace,
+			"roleUID", roleUID,
+			"err", err,
+		)
+		return
+	}
+
+	// Avoid writing if there are no valid tuples
+	if len(tuples) == 0 {
+		b.logger.Debug("no valid tuples to write for role", "namespace", role.Namespace, "roleUID", roleUID)
+		return
+	}
+
+	b.logger.Debug("writing role permissions to zanzana",
+		"namespace", role.Namespace,
+		"roleUID", roleUID,
+		"tuplesCnt", len(tuples),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+	defer cancel()
+
+	err = b.zClient.Write(ctx, &v1.WriteRequest{
+		Namespace: role.Namespace,
+		Writes: &v1.WriteRequestWrites{
+			TupleKeys: convertOpenfgaTuplesToV1(tuples),
+		},
+	})
+	if err != nil {
+		b.logger.Error("failed to write role permissions to zanzana",
+			"err", err,
+			"namespace", role.Namespace,
+			"roleUID", roleUID,
+			"tuplesCnt", len(tuples),
+		)
+	}
+}
+
+// convertOpenfgaTuplesToV1 converts openfga tuples to v1 proto tuples
+func convertOpenfgaTuplesToV1(tuples []*openfgav1.TupleKey) []*v1.TupleKey {
+	v1Tuples := make([]*v1.TupleKey, len(tuples))
+	for i, t := range tuples {
+		v1Tuples[i] = &v1.TupleKey{
+			User:     t.User,
+			Relation: t.Relation,
+			Object:   t.Object,
+		}
+		if t.Condition != nil {
+			v1Tuples[i].Condition = &v1.RelationshipCondition{
+				Name:    t.Condition.Name,
+				Context: t.Condition.Context,
+			}
+		}
+	}
+	return v1Tuples
 }
