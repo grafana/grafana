@@ -130,7 +130,7 @@ To connect your GitHub repository, follow these steps:
 
 {{< admonition type="caution" >}}
 
-If you're using Git Sync in Grafana Cloud you can only sync specific folders for the moment. Git Sync will be available for your full instance soon.
+Git Sync only works with specific folders for the moment. Full-instance sync is not currently supported. Refer to [Supported resources](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#supported-resources) for more details about which resources you can sync.
 
 {{< /admonition >}}
 

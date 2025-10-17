@@ -1,5 +1,5 @@
 ---
-description: Learn about how to provision resource using Git Sync and local file provisioning administration.
+description: Learn about how to provision resources using Git Sync and local file provisioning administration.
 keywords:
   - observability
   - configuration
@@ -12,6 +12,7 @@ labels:
     - enterprise
     - oss
 title: Provision resources and sync dashboards
+menuTitle: Provision resources
 weight: 300
 ---
 
