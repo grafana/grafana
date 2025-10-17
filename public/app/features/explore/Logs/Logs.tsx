@@ -1164,6 +1164,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   pinnedLogs={pinnedLogs}
                   setDisplayedFields={setDisplayedFields}
                   showControls
+                  showFieldSelector
                   showTime={showTime}
                   sortOrder={logsSortOrder}
                   timeRange={props.range}

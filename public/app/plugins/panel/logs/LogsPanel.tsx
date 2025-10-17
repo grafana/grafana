@@ -149,6 +149,7 @@ export const LogsPanel = ({
   fieldConfig,
   options: {
     showControls,
+    showFieldSelector,
     controlsStorageKey,
     showLabels,
     showTime,
@@ -618,6 +619,7 @@ export const LogsPanel = ({
               prettifyJSON={prettifyLogMessage}
               setDisplayedFields={setDisplayedFieldsFn}
               showControls={Boolean(showControls)}
+              showFieldSelector={showFieldSelector}
               showLogAttributes={showLogAttributes}
               showTime={showTime}
               showUniqueLabels={showLabels}
