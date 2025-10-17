@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, Job } from 'app/api/clients/provisioning/v0alpha1';
@@ -86,6 +86,13 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
       setHasSubmitted(false);
       return;
     }
+
+    reportInteraction('grafana_provisioning_bulk_move_submitted', {
+      workflow: data.workflow,
+      repositoryName: repository.name ?? 'unknown',
+      repositoryType: repository.type ?? 'unknown',
+      resourceCount: resources.length,
+    });
 
     // Create the move job spec
     const jobSpec: MoveJobSpec = {
