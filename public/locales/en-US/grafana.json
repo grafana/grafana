@@ -10754,11 +10754,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "No dashboard groups configured",
-      "mark-as-starred": "Mark \"{{title}}\" as favorite",
       "recently-viewed-dashboards": "Recently viewed dashboards",
       "search": "Search",
-      "starred-dashboards": "Starred dashboards",
-      "unmark-as-starred": "Unmark \"{{title}}\" as favorite"
+      "starred-dashboards": "Starred dashboards"
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -12711,6 +12709,10 @@
     "sql-suggestion-history": "SQL Suggestion History",
     "suggestions": "Suggestions",
     "view-explanation": "View explanation"
+  },
+  "stars": {
+    "mark-as-starred": "Mark \"{{title}}\" as favorite",
+    "unmark-as-starred": "Unmark \"{{title}}\" as favorite"
   },
   "stat": {
     "add-orientation-option": {
