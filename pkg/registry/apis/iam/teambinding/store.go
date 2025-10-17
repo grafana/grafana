@@ -218,7 +218,7 @@ func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alph
 
 	return iamv0alpha1.TeamBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              tm.Name,
+			Name:              tm.UID,
 			Namespace:         ns.Value,
 			ResourceVersion:   strconv.FormatInt(rv.UnixMilli(), 10),
 			CreationTimestamp: metav1.NewTime(ct),
