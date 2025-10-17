@@ -116,6 +116,7 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
       ) : (
         <div className={logsFieldSelectorWrapperStyles.collapsedButtonContainer}>
           <IconButton
+            className={logsFieldSelectorWrapperStyles.collapsedButton}
             onClick={expand}
             name="arrow-from-right"
             tooltip={t('logs.field-selector.expand', 'Expand sidebar')}
@@ -134,6 +135,9 @@ const logsFieldSelectorWrapperStyles = {
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingTop: 2,
+  }),
+  collapsedButton: css({
+    margin: 0,
   }),
 };
 
@@ -215,6 +219,7 @@ export const LogsTableFieldSelector = ({
   ) : (
     <div className={logsFieldSelectorWrapperStyles.collapsedButtonContainer}>
       <IconButton
+        className={logsFieldSelectorWrapperStyles.collapsedButton}
         onClick={expand}
         name="arrow-from-right"
         tooltip={t('logs.field-selector.expand', 'Expand sidebar')}
