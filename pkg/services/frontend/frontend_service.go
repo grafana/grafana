@@ -164,7 +164,9 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 	})
 
 	// Frontend boot error reporting endpoint
-	s.routePost(m, "/-/fe-boot-error", s.handleBootError)
+	// GET because all POST requests are passed to the backend, even though POST is more correct. The frontend
+	// uses cache busting to ensure requests aren't cached.
+	s.routeGet(m, "/-/fe-boot-error", s.handleBootError)
 
 	// All other requests return index.html
 	s.routeGet(m, "/*", s.index.HandleRequest)
