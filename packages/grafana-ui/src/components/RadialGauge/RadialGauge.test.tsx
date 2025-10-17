@@ -13,6 +13,6 @@ describe('RadialGauge', () => {
     render(<RadialGaugeExample showScaleLabels={true} />);
 
     expect(screen.getByRole('img')).toBeInTheDocument();
-    expect(screen.getByLabelText('threshold 85')).toBeInTheDocument();
+    expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
   });
 });
