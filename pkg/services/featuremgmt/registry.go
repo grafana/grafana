@@ -2103,6 +2103,16 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},
+		{
+			Name:              "dashboardDropAndPaste",
+			Description:       "Enables the drop and paste handlers on dashboards",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			FrontendOnly:      true,
+			HideFromAdminPage: false,
+			HideFromDocs:      false,
+			Expression:        "false",
+		},
 	}
 )
 

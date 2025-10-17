@@ -1089,4 +1089,8 @@ const (
 	// FlagCdnPluginsUrls
 	// Enable loading plugins via declarative URLs
 	FlagCdnPluginsUrls = "cdnPluginsUrls"
+
+	// FlagDashboardDropAndPaste
+	// Enables the drop and paste handlers on dashboards
+	FlagDashboardDropAndPaste = "dashboardDropAndPaste"
 )
