@@ -145,6 +145,13 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		return defaultSignature, nil
 	}
 
+	if src.PluginClass(ctx) == plugins.ClassCore {
+		s.log.Debug("Skipping signature verification for core plugin", "id", plugin.JSONData.ID)
+		return plugins.Signature{
+			Status: plugins.SignatureStatusValid,
+		}, nil
+	}
+
 	manifest, err := s.ReadPluginManifestFromFS(ctx, plugin.FS)
 	switch {
 	case errors.Is(err, ErrSignatureTypeUnsigned):
@@ -269,7 +276,8 @@ func verifyHash(mlog log.Logger, plugin plugins.FoundPlugin, path, hash string) 
 	}()
 
 	h := sha256.New()
-	if _, err := io.Copy(h, f); err != nil {
+	buf := make([]byte, 64*1024)
+	if _, err := io.CopyBuffer(h, f, buf); err != nil {
 		return fmt.Errorf("could not calculate plugin file checksum. Path: %s. Error: %w", path, err)
 	}
 	sum := hex.EncodeToString(h.Sum(nil))
