@@ -119,7 +119,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: '#2e3136',
+    main: '#2e2f30',
     shade: '#37393E',
     transparent: `rgba(${this.whiteBase}, 0.08)`,
     text: this.text.primary,

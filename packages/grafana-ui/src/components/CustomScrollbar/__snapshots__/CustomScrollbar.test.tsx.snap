@@ -3,7 +3,7 @@
 exports[`CustomScrollbar renders correctly 1`] = `
 <div>
   <div
-    class="css-1bz6b2c"
+    class="css-5m48th"
     style="position: relative; overflow: hidden; width: 100%; height: auto; min-height: 0; max-height: 100%;"
   >
     <div
