@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -33,11 +34,36 @@ type Service struct {
 	pluginRegistry registry.Service
 	pluginLoader   loader.Service
 	pluginSources  sources.Registry
+	loadOnStartup  bool
 }
 
 func ProvideService(pluginRegistry registry.Service, pluginSources sources.Registry,
-	pluginLoader loader.Service) *Service {
-	return New(pluginRegistry, pluginLoader, pluginSources)
+	pluginLoader loader.Service, features featuremgmt.FeatureToggles) (*Service, error) {
+	if features.IsEnabledGlobally(featuremgmt.FlagPluginStoreServiceLoading) {
+		s := New(pluginRegistry, pluginLoader, pluginSources)
+		s.loadOnStartup = true
+		return s, nil
+	}
+
+	ctx := context.Background()
+	start := time.Now()
+	totalPlugins := 0
+	logger := log.New("plugin.store")
+	logger.Info("Loading plugins...")
+
+	for _, ps := range pluginSources.List(ctx) {
+		loadedPlugins, err := pluginLoader.Load(ctx, ps)
+		if err != nil {
+			logger.Error("Loading plugin source failed", "source", ps.PluginClass(ctx), "error", err)
+			return nil, err
+		}
+
+		totalPlugins += len(loadedPlugins)
+	}
+
+	logger.Info("Plugins loaded", "count", totalPlugins, "duration", time.Since(start))
+
+	return New(pluginRegistry, pluginLoader, pluginSources), nil
 }
 
 func (s *Service) Run(ctx context.Context) error {
@@ -50,6 +76,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 func NewPluginStoreForTest(pluginRegistry registry.Service, pluginLoader loader.Service, pluginSources sources.Registry) (*Service, error) {
 	s := New(pluginRegistry, pluginLoader, pluginSources)
+	s.loadOnStartup = true
 	if err := s.StartAsync(context.Background()); err != nil {
 		return nil, err
 	}
@@ -70,6 +97,9 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginSou
 }
 
 func (s *Service) starting(ctx context.Context) error {
+	if !s.loadOnStartup {
+		return nil
+	}
 	start := time.Now()
 	totalPlugins := 0
 	logger := log.New(ServiceName)
@@ -85,7 +115,6 @@ func (s *Service) starting(ctx context.Context) error {
 	}
 
 	logger.Info("Plugins loaded", "count", totalPlugins, "duration", time.Since(start))
-
 	return nil
 }
 

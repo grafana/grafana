@@ -2111,6 +2111,14 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			Expression:   "true",
 		},
+		{
+			Name:         "pluginStoreServiceLoading",
+			Description:  "Load plugins during store service startup instead of wire provider",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
 	}
 )
 
