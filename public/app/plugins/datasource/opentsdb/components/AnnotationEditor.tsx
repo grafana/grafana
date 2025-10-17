@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
-import { InlineFormLabel, Input, InlineSwitch } from '@grafana/ui';
+import { InlineFormLabel, Input, InlineSwitch, Stack } from '@grafana/ui';
 
 import OpenTsDatasource from '../datasource';
 import { OpenTsdbQuery, OpenTsdbOptions } from '../types';
@@ -26,20 +26,20 @@ export const AnnotationEditor = (props: QueryEditorProps<OpenTsDatasource, OpenT
   };
 
   return (
-    <div className="gf-form-group">
-      <div className="gf-form">
-        <InlineFormLabel width={12}>OpenTSDB metrics query</InlineFormLabel>
+    <Stack gap={1} direction="column">
+      <Stack gap={0}>
+        <InlineFormLabel width={12}>OpenTSDB metrics quer</InlineFormLabel>
         <Input
           value={target}
           onChange={(e) => setTarget(e.currentTarget.value ?? '')}
           onBlur={() => updateValue('target', target)}
           placeholder="events.eventname"
         />
-      </div>
-      <div className="gf-form">
+      </Stack>
+      <Stack gap={0}>
         <InlineFormLabel width={12}>Show Global Annotations?</InlineFormLabel>
         <InlineSwitch value={isGlobal} onChange={(e) => updateIsGlobal(isGlobal)} />
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   );
 };
