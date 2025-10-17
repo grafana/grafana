@@ -576,82 +576,6 @@ func TestProcessSpanKind(t *testing.T) {
 	})
 }
 
-func TestIsEmptyAttribute(t *testing.T) {
-	t.Run("returns true for empty attribute", func(t *testing.T) {
-		actual := isEmptyAttribute(types.GrpcAnyValue{})
-		assert.Equal(t, true, actual)
-
-		actual = isEmptyAttribute(types.GrpcAnyValue{
-			ArrayValue:  types.GrpcArrayValue{},
-			KvListValue: types.KeyValueList{},
-		})
-		assert.Equal(t, true, actual)
-	})
-
-	t.Run("returns false for non empty string attribute", func(t *testing.T) {
-		actual := isEmptyAttribute(types.GrpcAnyValue{
-			StringValue: "some non empty value",
-		})
-		assert.Equal(t, false, actual)
-	})
-
-	t.Run("returns false for non empty bool attribute", func(t *testing.T) {
-		actual := isEmptyAttribute(types.GrpcAnyValue{
-			BoolValue: "false",
-		})
-		assert.Equal(t, false, actual)
-	})
-
-	t.Run("returns false for non empty int attribute", func(t *testing.T) {
-		actual := isEmptyAttribute(types.GrpcAnyValue{
-			IntValue: "100",
-		})
-		assert.Equal(t, false, actual)
-	})
-
-	t.Run("returns false for non empty double attribute", func(t *testing.T) {
-		actual := isEmptyAttribute(types.GrpcAnyValue{
-			DoubleValue: "100.50",
-		})
-		assert.Equal(t, false, actual)
-	})
-	t.Run("returns false for non empty arrayvalue attribute", func(t *testing.T) {
-		actual := isEmptyAttribute(types.GrpcAnyValue{
-			ArrayValue: types.GrpcArrayValue{
-				Values: []types.GrpcAnyValue{
-					{
-						StringValue: "some non empty value",
-					},
-				},
-			},
-		})
-		assert.Equal(t, false, actual)
-	})
-
-	t.Run("returns false for non empty KvListValue attribute", func(t *testing.T) {
-		actual := isEmptyAttribute(types.GrpcAnyValue{
-			KvListValue: types.KeyValueList{
-				Values: []types.GrpcKeyValue{
-					{
-						Key: "some-key",
-						Value: types.GrpcAnyValue{
-							IntValue: "10",
-						},
-					},
-				},
-			},
-		})
-		assert.Equal(t, false, actual)
-	})
-
-	t.Run("returns false for non empty bytesvalue attribute", func(t *testing.T) {
-		actual := isEmptyAttribute(types.GrpcAnyValue{
-			BytesValue: "somebytesvalue",
-		})
-		assert.Equal(t, false, actual)
-	})
-}
-
 func TestProcessAttributes(t *testing.T) {
 
 	t.Run("processes empty attributes", func(t *testing.T) {
@@ -820,5 +744,84 @@ func TestProcessAttributes(t *testing.T) {
 		}
 		actual := processAttributes(attributes)
 		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestConvertGrpcEventsToLogs(t *testing.T) {
+	t.Run("converts events with timestamp and attributes", func(t *testing.T) {
+		events := []types.GrpcSpanEvent{
+			{
+				TimeUnixNano: "2000",
+				Name:         "error",
+				Attributes: []types.GrpcKeyValue{
+					{
+						Key: "event",
+						Value: types.GrpcAnyValue{
+							StringValue: "error",
+						},
+					},
+				},
+			},
+		}
+
+		logs := convertGrpcEventsToLogs(events)
+
+		expected := []types.TraceLog{
+			{
+				Name:      "error",
+				Timestamp: int64(2),
+				Fields: []types.KeyValueType{
+					{
+						Key:   "event",
+						Value: "error",
+						Type:  "string",
+					},
+				},
+			},
+		}
+
+		assert.Equal(t, expected, logs)
+	})
+
+	t.Run("returns zero timestamp when parsing fails", func(t *testing.T) {
+		events := []types.GrpcSpanEvent{
+			{
+				TimeUnixNano: "invalid",
+				Name:         "log-without-timestamp",
+			},
+		}
+
+		logs := convertGrpcEventsToLogs(events)
+		assert.Len(t, logs, 1)
+		assert.Equal(t, int64(0), logs[0].Timestamp)
+		assert.Equal(t, "log-without-timestamp", logs[0].Name)
+		assert.Empty(t, logs[0].Fields)
+	})
+}
+
+func TestConvertGrpcLinkToReference(t *testing.T) {
+	t.Run("converts links to references", func(t *testing.T) {
+		links := []types.GrpcSpanLink{
+			{
+				TraceID: "trace-id",
+				SpanID:  "span-id",
+			},
+		}
+
+		references := convertGrpcLinkToReference(links)
+
+		expected := []types.TraceSpanReference{
+			{
+				TraceID: "trace-id",
+				SpanID:  "span-id",
+			},
+		}
+
+		assert.Equal(t, expected, references)
+	})
+
+	t.Run("returns empty slice for no links", func(t *testing.T) {
+		references := convertGrpcLinkToReference(nil)
+		assert.Empty(t, references)
 	})
 }

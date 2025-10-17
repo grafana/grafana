@@ -346,37 +346,6 @@ func processSpanKind(kind int64) string {
 	}
 }
 
-func isEmptyAttribute(attribute types.GrpcAnyValue) bool {
-	if attribute.StringValue != "" {
-		return false
-	}
-
-	if attribute.BoolValue != "" {
-		return false
-	}
-
-	if attribute.IntValue != "" {
-		return false
-	}
-
-	if attribute.DoubleValue != "" {
-		return false
-	}
-
-	if len(attribute.ArrayValue.Values) > 0 {
-		return false
-	}
-
-	if len(attribute.KvListValue.Values) > 0 {
-		return false
-	}
-
-	if attribute.BytesValue != "" {
-		return false
-	}
-	return true
-}
-
 // This is to help ensure backwards compatibility with the current non OTLP based Jager trace format
 // a few fields are different between TraceLogs and GrpcSpanEvents
 func convertGrpcEventsToLogs(events []types.GrpcSpanEvent) []types.TraceLog {
