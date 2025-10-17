@@ -130,7 +130,7 @@ To connect your GitHub repository, follow these steps:
 
 {{< admonition type="caution" >}}
 
-Git Sync only works with specific folders for the moment. Full-instance sync is not currently supported. Refer to [Supported resources](./intro-git-sync.md#supported-resources) for more details about which resources you can sync.
+Git Sync only works with specific folders for the moment. Full-instance sync is not currently supported. Refer to [Supported resources](./intro-git-sync#supported-resources) for more details about which resources you can sync.
 
 {{< /admonition >}}
 
