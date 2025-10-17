@@ -151,7 +151,7 @@ const logsFieldSelectorWrapperStyles = {
 };
 
 /**
- * FieldSelector wrapper for the LogList visualization.
+ * FieldSelector wrapper for the LogsTable visualization.
  */
 interface LogsTableFieldSelectorProps {
   columnsWithMeta: FieldNameMetaStore;
