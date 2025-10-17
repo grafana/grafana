@@ -11,7 +11,7 @@ import (
 )
 
 type promDepAuthStep struct {
-	IsPluginInstalledOrAvailableFunc func(ctx context.Context, pluginType string) (bool, error)
+	canBeInstalled func(ctx context.Context, pluginType string) (bool, error)
 }
 
 func (s *promDepAuthStep) Title() string {
@@ -132,11 +132,11 @@ func checkReadOnly(dataSource *datasources.DataSource) *advisor.CheckErrorLink {
 }
 
 func (s *promDepAuthStep) linkDataSource(ctx context.Context, pluginType string, pluginName string) *advisor.CheckErrorLink {
-	isPluginAvailable, err := s.IsPluginInstalledOrAvailableFunc(ctx, pluginType)
+	canBeInstalled, err := s.canBeInstalled(ctx, pluginType)
 	if err != nil {
 		return nil
 	}
-	if !isPluginAvailable {
+	if canBeInstalled {
 		// Plugin is available in the repo
 		return &advisor.CheckErrorLink{
 			Message: fmt.Sprintf("Install %s", pluginName),
