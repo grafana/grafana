@@ -127,11 +127,6 @@ func (s *frontendService) routeGet(m *web.Mux, pattern string, h ...web.Handler)
 	m.Get(pattern, handlers...)
 }
 
-func (s *frontendService) routePost(m *web.Mux, pattern string, h ...web.Handler) {
-	handlers := append([]web.Handler{middleware.ProvideRouteOperationName(pattern)}, h...)
-	m.Post(pattern, handlers...)
-}
-
 // Apply the same middleware patterns as the main HTTP server
 func (s *frontendService) addMiddlewares(m *web.Mux) {
 	loggermiddleware := loggermw.Provide(s.cfg, s.features)
