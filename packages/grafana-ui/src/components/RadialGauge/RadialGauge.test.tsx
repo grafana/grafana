@@ -8,4 +8,11 @@ describe('RadialGauge', () => {
 
     expect(screen.getByRole('img')).toBeInTheDocument();
   });
+
+  it('should render threshold labels', () => {
+    render(<RadialGaugeExample showScaleLabels={true} />);
+
+    expect(screen.getByRole('img')).toBeInTheDocument();
+    expect(screen.getByLabelText('threshold 85')).toBeInTheDocument();
+  });
 });

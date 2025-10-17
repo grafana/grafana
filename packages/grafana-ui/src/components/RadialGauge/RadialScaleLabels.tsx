@@ -75,6 +75,7 @@ export function RadialScaleLabels({
             fontSize={fontSize}
             fill={theme.colors.text.primary}
             transform={labelPos.transform}
+            aria-label={`threshold ${threshold.value}`}
           >
             {threshold.value}
           </text>
