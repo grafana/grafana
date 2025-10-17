@@ -1,8 +1,9 @@
 package definitions
 
 import (
+	"embed"
 	"encoding/json"
-	"os"
+	"path"
 	"strings"
 	"testing"
 
@@ -14,6 +15,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
+
+//go:embed test-data/*.*
+var testData embed.FS
 
 func Test_GettableUserConfigUnmarshaling(t *testing.T) {
 	for _, tc := range []struct {
@@ -140,10 +144,10 @@ alertmanager_config: |
 func Test_GettableUserConfigRoundtrip(t *testing.T) {
 	// raw contains secret fields. We'll unmarshal, re-marshal, and ensure
 	// the fields are not redacted.
-	yamlEncoded, err := os.ReadFile("alertmanager_test_artifact.yaml")
+	yamlEncoded, err := testData.ReadFile(path.Join("test-data", "alertmanager_test_artifact.yaml"))
 	require.Nil(t, err)
 
-	jsonEncoded, err := os.ReadFile("alertmanager_test_artifact.json")
+	jsonEncoded, err := testData.ReadFile(path.Join("test-data", "alertmanager_test_artifact.json"))
 	require.Nil(t, err)
 
 	// test GettableUserConfig (yamlDecode -> jsonEncode)
@@ -162,7 +166,7 @@ func Test_GettableUserConfigRoundtrip(t *testing.T) {
 }
 
 func Test_Marshaling_Validation(t *testing.T) {
-	jsonEncoded, err := os.ReadFile("alertmanager_test_artifact.json")
+	jsonEncoded, err := testData.ReadFile(path.Join("test-data", "alertmanager_test_artifact.json"))
 	require.Nil(t, err)
 
 	var tmp GettableUserConfig
