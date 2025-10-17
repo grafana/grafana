@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/endpoints/metrics"
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
@@ -18,7 +19,7 @@ type CustomRouteMetrics struct {
 // NewCustomRouteMetrics creates a new CustomRouteMetrics.
 // Note: This doesn't register any new metrics, it reuses the existing
 // `apiserver_request_total` metric that's already registered by Kubernetes.
-func NewCustomRouteMetrics(_ interface{}) *CustomRouteMetrics {
+func NewCustomRouteMetrics(_ prometheus.Registerer) *CustomRouteMetrics {
 	// No need to register anything - we'll use the existing k8s metrics
 	return &CustomRouteMetrics{}
 }
