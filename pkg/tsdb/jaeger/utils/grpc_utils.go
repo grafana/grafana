@@ -116,7 +116,7 @@ func TransformGrpcTraceResponse(trace []types.GrpcResourceSpans, refID string) *
 	frame := data.NewFrame(refID,
 		data.NewField("traceID", nil, []string{}),
 		data.NewField("spanID", nil, []string{}),
-		data.NewField("parentSpanID", nil, []*string{}),
+		data.NewField("parentSpanID", nil, []string{}),
 		data.NewField("statusCode", nil, []int64{}),
 		data.NewField("statusMessage", nil, []string{}),
 		data.NewField("kind", nil, []string{}),
@@ -215,7 +215,7 @@ func TransformGrpcTraceResponse(trace []types.GrpcResourceSpans, refID string) *
 				frame.AppendRow(
 					span.TraceID,
 					span.SpanID,
-					&parentSpanID,
+					parentSpanID,
 					span.Status.Code,
 					span.Status.Message,
 					processSpanKind(span.Kind),
@@ -403,7 +403,7 @@ func convertGrpcEventsToLogs(events []types.GrpcSpanEvent) []types.TraceLog {
 func convertGrpcLinkToReference(links []types.GrpcSpanLink) []types.TraceSpanReference {
 	var references []types.TraceSpanReference
 
-	for _, ref := range references {
+	for _, ref := range links {
 		references = append(references, types.TraceSpanReference{
 			TraceID: ref.TraceID,
 			SpanID:  ref.SpanID,

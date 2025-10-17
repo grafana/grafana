@@ -292,7 +292,7 @@ func TestTransformGrpcTraceResponse(t *testing.T) {
 			},
 		}
 		frame := TransformGrpcTraceResponse(trace, "test")
-		experimental.CheckGoldenJSONFrame(t, "../testdata", "simple_trace_grpc.golden", frame, false)
+		experimental.CheckGoldenJSONFrame(t, "../testdata", "simple_trace_grpc.golden", frame, true)
 	})
 
 	t.Run("complex_trace", func(t *testing.T) {
@@ -364,7 +364,7 @@ func TestTransformGrpcTraceResponse(t *testing.T) {
 								},
 								Events: []types.GrpcSpanEvent{
 									{
-										TimeUnixNano: 1605873894681000000,
+										TimeUnixNano: "1605873894681000000",
 										Attributes: []types.GrpcKeyValue{
 											{
 												Key: "event",
@@ -422,7 +422,7 @@ func TestTransformGrpcTraceResponse(t *testing.T) {
 								},
 								Events: []types.GrpcSpanEvent{
 									{
-										TimeUnixNano: 1605873894680700000,
+										TimeUnixNano: "1605873894680700000",
 										Attributes: []types.GrpcKeyValue{
 											{
 												Key: "event",
@@ -510,7 +510,7 @@ func TestTransformGrpcTraceResponse(t *testing.T) {
 								},
 								Events: []types.GrpcSpanEvent{
 									{
-										TimeUnixNano: 1605873894681000000,
+										TimeUnixNano: "1605873894681000000",
 										Attributes: []types.GrpcKeyValue{
 											{
 												Key: "event",
@@ -535,7 +535,7 @@ func TestTransformGrpcTraceResponse(t *testing.T) {
 		}
 
 		frame := TransformGrpcTraceResponse(trace, "test")
-		experimental.CheckGoldenJSONFrame(t, "../testdata", "complex_trace_grpc.golden", frame, false)
+		experimental.CheckGoldenJSONFrame(t, "../testdata", "complex_trace_grpc.golden", frame, true)
 	})
 }
 
@@ -652,10 +652,10 @@ func TestIsEmptyAttribute(t *testing.T) {
 	})
 }
 
-func TestProcessAttributesIntoTags(t *testing.T) {
+func TestProcessAttributes(t *testing.T) {
 
 	t.Run("processes empty attributes", func(t *testing.T) {
-		actual := processAttributesIntoTags([]types.GrpcKeyValue{})
+		actual := processAttributes([]types.GrpcKeyValue{})
 		assert.Equal(t, []types.KeyValueType{}, actual)
 	})
 	t.Run("processes string attribute types", func(t *testing.T) {
@@ -674,7 +674,7 @@ func TestProcessAttributesIntoTags(t *testing.T) {
 				Type:  "string",
 			},
 		}
-		actual := processAttributesIntoTags(attributes)
+		actual := processAttributes(attributes)
 		assert.Equal(t, expected, actual)
 	})
 
@@ -694,7 +694,7 @@ func TestProcessAttributesIntoTags(t *testing.T) {
 				Type:  "boolean",
 			},
 		}
-		actual := processAttributesIntoTags(attributes)
+		actual := processAttributes(attributes)
 		assert.Equal(t, expected, actual)
 	})
 
@@ -714,7 +714,7 @@ func TestProcessAttributesIntoTags(t *testing.T) {
 				Type:  "int64",
 			},
 		}
-		actual := processAttributesIntoTags(attributes)
+		actual := processAttributes(attributes)
 		assert.Equal(t, expected, actual)
 	})
 
@@ -734,7 +734,7 @@ func TestProcessAttributesIntoTags(t *testing.T) {
 				Type:  "float64",
 			},
 		}
-		actual := processAttributesIntoTags(attributes)
+		actual := processAttributes(attributes)
 		assert.Equal(t, expected, actual)
 	})
 
@@ -763,7 +763,7 @@ func TestProcessAttributesIntoTags(t *testing.T) {
 				},
 			},
 		}
-		actual := processAttributesIntoTags(attributes)
+		actual := processAttributes(attributes)
 		assert.Equal(t, expected, actual)
 	})
 
@@ -798,7 +798,7 @@ func TestProcessAttributesIntoTags(t *testing.T) {
 				},
 			},
 		}
-		actual := processAttributesIntoTags(attributes)
+		actual := processAttributes(attributes)
 		assert.Equal(t, expected, actual)
 	})
 
@@ -818,7 +818,7 @@ func TestProcessAttributesIntoTags(t *testing.T) {
 				Type:  "bytes",
 			},
 		}
-		actual := processAttributesIntoTags(attributes)
+		actual := processAttributes(attributes)
 		assert.Equal(t, expected, actual)
 	})
 }
