@@ -195,7 +195,7 @@ export class BarGauge extends PureComponent<Props> {
       const currentValue = minValue + (valueRange / cellCount) * i;
       const cellColor = getCellColor(currentValue, value, display);
       const cellStyles: CSSProperties = {
-        borderRadius: theme.shape.radius.default,
+        borderRadius: '2px',
       };
 
       if (cellColor.isLit) {
@@ -525,7 +525,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   };
 
   const barStyles: CSSProperties = {
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.sm,
     position: 'relative',
   };
 
@@ -533,7 +533,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     background: theme.colors.background.secondary,
     flexGrow: 1,
     display: 'flex',
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.sm,
     position: 'relative',
   };
 
