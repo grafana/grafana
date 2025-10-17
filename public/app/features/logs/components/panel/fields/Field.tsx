@@ -48,8 +48,8 @@ export function Field({
       </div>
       {draggable && (
         <Icon
-          aria-label={t('explore.logs-table-nav-field.aria-label-drag-and-drop-icon', 'Drag and drop icon')}
-          title={t('explore.logs-table-nav-field.title-drag-and-drop-to-reorder', 'Drag and drop to reorder')}
+          aria-label={t('logs.field-selector.aria-label-drag-and-drop-icon', 'Drag and drop icon')}
+          title={t('logs.field-selector.title-drag-and-drop-to-reorder', 'Drag and drop to reorder')}
           name="draggabledots"
           size="lg"
           className={styles.dragIcon}

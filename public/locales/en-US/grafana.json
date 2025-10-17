@@ -7164,10 +7164,6 @@
       "reset": "Reset",
       "selected-fields": "Selected fields"
     },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "Drag and drop icon",
-      "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
-    },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Select query by name",
       "label-select-query": "Select query",
@@ -9539,9 +9535,12 @@
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
     "description-show-log-attributes": "Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.",
     "field-selector": {
+      "aria-label-drag-and-drop-icon": "Drag and drop icon",
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
-      "label-title": "{{fieldName}} appears in {{percentage}}% of log lines"
+      "label-title": "{{fieldName}} appears in {{percentage}}% of log lines",
+      "placeholder-search-fields-by-name": "Search fields by name",
+      "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
     },
     "fields": {
       "type": {

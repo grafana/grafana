@@ -26,7 +26,7 @@ export function FieldSearch({ collapse, onChange, value }: Props) {
         <Input
           value={value}
           type="text"
-          placeholder={t('explore.logs-column-search.placeholder-search-fields-by-name', 'Search fields by name')}
+          placeholder={t('logs.field-selector.placeholder-search-fields-by-name', 'Search fields by name')}
           onChange={onChange}
         />
       </Field>
