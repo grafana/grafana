@@ -9,6 +9,7 @@ import { Panel } from '@grafana/schema';
 import { Alert, Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
+import { DrilldownOptions } from 'app/features/explore/extensions/AddToDashboard/DrilldownAppToDashboardPanel';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { addToDashboard, SubmissionError } from './addToDashboard';
@@ -41,7 +42,7 @@ export interface Props<TOptions = undefined> {
   children?: React.ReactNode;
 }
 
-export function AddToDashboardForm<TOptions = undefined>({
+export function AddToDashboardForm<TOptions extends DrilldownOptions | undefined = undefined>({
   onClose,
   buildPanel,
   timeRange,
@@ -91,7 +92,7 @@ export function AddToDashboardForm<TOptions = undefined>({
       queries: panel.targets,
     });
 
-    const error = addToDashboard({ dashboardUid, panel, openInNewTab, timeRange });
+    const error = addToDashboard({ dashboardUid, panel, openInNewTab, timeRange, options });
     if (error) {
       setSubmissionError(error);
       return;

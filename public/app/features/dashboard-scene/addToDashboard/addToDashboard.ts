@@ -26,6 +26,9 @@ interface AddPanelToDashboardOptions {
   dashboardUid?: string;
   openInNewTab?: boolean;
   timeRange?: TimeRange;
+  options?: {
+    isExternalApp?: boolean;
+  };
 }
 
 export function addToDashboard({
@@ -33,6 +36,7 @@ export function addToDashboard({
   dashboardUid,
   openInNewTab,
   timeRange,
+  options,
 }: AddPanelToDashboardOptions): SubmissionError | undefined {
   let dto: DashboardDTO = {
     meta: {},
@@ -83,7 +87,14 @@ export function addToDashboard({
     return;
   }
 
-  locationService.push(locationUtil.stripBaseFromUrl(dashboardURL));
+  let navigateToDashboardUrl = locationUtil.stripBaseFromUrl(dashboardURL);
+
+  if (options?.isExternalApp) {
+    navigateToDashboardUrl = '/' + navigateToDashboardUrl;
+  }
+
+  locationService.push(navigateToDashboardUrl);
+
   return;
 }
 
