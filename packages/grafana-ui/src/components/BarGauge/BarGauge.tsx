@@ -147,7 +147,6 @@ export class BarGauge extends PureComponent<Props> {
       lcdCellWidth,
       text,
       valueDisplayMode,
-      theme,
       isOverflow,
     } = this.props;
     const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
