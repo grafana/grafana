@@ -345,7 +345,7 @@ function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
     const labels =
       labelValues?.flatMap((labels) => {
         const keys = Object.keys(labels);
-        keys.map((key) => cardinality.set(key, (cardinality.get(key) ?? 0) + 1));
+        keys.forEach((key) => cardinality.set(key, (cardinality.get(key) ?? 0) + 1));
         return keys;
       }) ?? [];
 
