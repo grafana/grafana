@@ -8,10 +8,8 @@ import { createAddedLinkConfig } from '../../plugins/extensions/utils';
 import { changeCorrelationEditorDetails } from '../state/main';
 import { runQueries } from '../state/query';
 
-import {
-  DrilldownAppToDashboardPanel,
-  PluginExtensionDrilldownContext,
-} from './AddToDashboard/DrilldownAppToDashboardPanel';
+import { DrilldownAppToDashboardPanel } from './AddToDashboard/DrilldownApp/DrilldownAppToDashboardPanel';
+import { PluginExtensionDrilldownContext } from './AddToDashboard/DrilldownApp/types';
 import { ExploreToDashboardPanel } from './AddToDashboard/ExploreToDashboardPanel';
 import { getAddToDashboardTitle } from './AddToDashboard/getAddToDashboardTitle';
 import { type PluginExtensionExploreContext } from './ToolbarExtensionPoint';
@@ -84,7 +82,7 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
   }
 }
 
-const configureAddToDashboard = () => {
+export const configureAddToDashboard = () => {
   const canAddPanelToDashboard =
     contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
     contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
