@@ -18,12 +18,12 @@ import {
 } from './dataquery.gen';
 import {
   defaultBucketAgg,
-  defaultMetricAgg,
   findMetricById,
   highlightTags,
   defaultGeoHashPrecisionString,
+  queryTypeToMetricType,
 } from './queryDef';
-import { TermsQuery } from './types';
+import { QueryType, TermsQuery } from './types';
 import { convertOrderByToMetricId, getScriptValue } from './utils';
 
 // Omitting 1m, 1h, 1d for now, as these cover the main use cases for calendar_interval
@@ -31,9 +31,11 @@ export const calendarIntervals: string[] = ['1w', '1M', '1q', '1y'];
 
 export class ElasticQueryBuilder {
   timeField: string;
+  defaultQueryMode?: QueryType;
 
-  constructor(options: { timeField: string }) {
+  constructor(options: { timeField: string; defaultQueryMode?: QueryType }) {
     this.timeField = options.timeField;
+    this.defaultQueryMode = options.defaultQueryMode;
   }
 
   getRangeFilter() {
@@ -174,7 +176,10 @@ export class ElasticQueryBuilder {
 
   build(target: ElasticsearchDataQuery) {
     // make sure query has defaults;
-    target.metrics = target.metrics || [defaultMetricAgg()];
+    if (!target.metrics || target.metrics.length === 0) {
+      const metricType = queryTypeToMetricType(this.defaultQueryMode);
+      target.metrics = [{ type: metricType, id: '1' } as MetricAggregation];
+    }
     target.bucketAggs = target.bucketAggs || [defaultBucketAgg()];
     target.timeField = this.timeField;
     let metric: MetricAggregation;

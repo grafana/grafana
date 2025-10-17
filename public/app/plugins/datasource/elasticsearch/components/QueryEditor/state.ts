@@ -1,12 +1,13 @@
 import { Action, createAction } from '@reduxjs/toolkit';
 
 import { ElasticsearchDataQuery } from '../../dataquery.gen';
+import { QueryType } from '../../types';
 
 /**
  * When the `initQuery` Action is dispatched, the query gets populated with default values where values are not present.
  * This means it won't override any existing value in place, but just ensure the query is in a "runnable" state.
  */
-export const initQuery = createAction('init');
+export const initQuery = createAction<QueryType | undefined>('init');
 
 export const changeQuery = createAction<ElasticsearchDataQuery['query']>('change_query');
 

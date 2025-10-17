@@ -2,7 +2,7 @@ import { Action } from '@reduxjs/toolkit';
 
 import { ElasticsearchDataQuery, MetricAggregation } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
 
-import { defaultMetricAgg } from '../../../../queryDef';
+import { defaultMetricAgg, queryTypeToMetricType } from '../../../../queryDef';
 import { removeEmpty } from '../../../../utils';
 import { initQuery } from '../../state';
 import { isMetricAggregationWithMeta, isMetricAggregationWithSettings, isPipelineAggregation } from '../aggregations';
@@ -162,7 +162,8 @@ export const reducer = (
     if (state && state.length > 0) {
       return state;
     }
-    return [defaultMetricAgg('1')];
+    const metricType = queryTypeToMetricType(action.payload);
+    return [{ type: metricType, id: '1' } as MetricAggregation];
   }
 
   return state;
