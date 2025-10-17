@@ -15,6 +15,7 @@ export interface RadialColorDefsOptions {
   displayProcessor: DisplayProcessor;
 }
 
+// eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
 export class RadialColorDefs {
   private colorToIds: Record<string, string> = {};
   private defs: React.ReactNode[] = [];

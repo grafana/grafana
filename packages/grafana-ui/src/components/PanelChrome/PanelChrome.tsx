@@ -484,6 +484,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
+      overflow: 'hidden',
 
       '.always-show': {
         background: 'none',

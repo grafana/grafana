@@ -31,6 +31,7 @@ export interface Options extends common.SingleStatBaseOptions {
   segmentCount: number;
   segmentSpacing: number;
   shape: ('circle' | 'gauge');
+  showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
   sparkline?: boolean;
 }
@@ -42,6 +43,7 @@ export const defaultOptions: Partial<Options> = {
   segmentCount: 1,
   segmentSpacing: 0.3,
   shape: 'gauge',
+  showThresholdLabels: false,
   showThresholdMarkers: true,
   sparkline: false,
 };

@@ -6,10 +6,12 @@ import { DisplayValueAlignmentFactors, FieldDisplay, getDisplayProcessor, Grafan
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { getFormattedThresholds } from '../Gauge/utils';
 
 import { RadialBar } from './RadialBar';
 import { RadialBarSegmented } from './RadialBarSegmented';
 import { RadialColorDefs } from './RadialColorDefs';
+import { RadialScaleLabels } from './RadialScaleLabels';
 import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
@@ -61,6 +63,7 @@ export interface RadialGaugeProps {
   nameManualFontSize?: number;
   /** Specify which text should be visible  */
   textMode?: RadialTextMode;
+  showScaleLabels?: boolean;
 }
 
 export type RadialGradientMode = 'none' | 'auto';
@@ -83,6 +86,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     segmentSpacing = 0.1,
     roundedBars = true,
     thresholdsBar = false,
+    showScaleLabels = false,
     values,
   } = props;
   const theme = useTheme2();
@@ -108,7 +112,8 @@ export function RadialGauge(props: RadialGaugeProps) {
       roundedBars,
       barWidthFactor,
       barIndex,
-      thresholdsBar
+      thresholdsBar,
+      showScaleLabels
     );
 
     const displayProcessor = getFieldDisplayProcessor(displayValue);
@@ -177,22 +182,6 @@ export function RadialGauge(props: RadialGaugeProps) {
         graphics.push(<MiddleCircleGlow key="center-glow" gaugeId={gaugeId} color={color} dimensions={dimensions} />);
       }
 
-      if (thresholdsBar) {
-        graphics.push(
-          <ThresholdsBar
-            key="thresholds-bar"
-            dimensions={dimensions}
-            fieldDisplay={displayValue}
-            startAngle={startAngle}
-            endAngle={endAngle}
-            angleRange={angleRange}
-            roundedBars={roundedBars}
-            glowFilter={`url(#${glowFilterId})`}
-            colorDefs={colorDefs}
-          />
-        );
-      }
-
       graphics.push(
         <RadialText
           key="radial-text"
@@ -206,6 +195,43 @@ export function RadialGauge(props: RadialGaugeProps) {
           shape={shape}
         />
       );
+
+      if (showScaleLabels || thresholdsBar) {
+        const decimals = displayValue.field.decimals ?? 2;
+        const thresholds = getFormattedThresholds(decimals, displayValue.field, theme);
+
+        if (showScaleLabels) {
+          graphics.push(
+            <RadialScaleLabels
+              key="radial-scale-labels"
+              thresholds={thresholds}
+              fieldDisplay={displayValue}
+              angleRange={angleRange}
+              theme={theme}
+              dimensions={dimensions}
+              startAngle={startAngle}
+              endAngle={endAngle}
+            />
+          );
+        }
+
+        if (thresholdsBar) {
+          graphics.push(
+            <ThresholdsBar
+              key="thresholds-bar"
+              thresholds={thresholds}
+              dimensions={dimensions}
+              fieldDisplay={displayValue}
+              startAngle={startAngle}
+              endAngle={endAngle}
+              angleRange={angleRange}
+              roundedBars={roundedBars}
+              glowFilter={`url(#${glowFilterId})`}
+              colorDefs={colorDefs}
+            />
+          );
+        }
+      }
 
       if (displayValue.sparkline) {
         sparklineElement = (
