@@ -101,6 +101,8 @@ func (j *JaegerClient) GrpcOperations(s string) ([]string, error) {
 	return operations, nil
 }
 
+// Note that this and all functionality around search is not yet being used. Once Jaeger adds support for attributes and limit parameters
+// we will be able to start using this and routing traffic to the new API based on the feature flag.
 func (j *JaegerClient) GrpcSearch(query *JaegerQuery, start, end time.Time) (*data.Frame, error) {
 	u, err := url.JoinPath(j.url, "/api/v3/traces")
 	if err != nil {
