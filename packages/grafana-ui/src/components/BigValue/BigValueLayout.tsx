@@ -171,7 +171,7 @@ export abstract class BigValueLayout {
 
     return {
       containerStyles,
-      iconSize: iconSize,
+      iconSize,
     };
   }
 
@@ -295,11 +295,16 @@ export class WideNoChartLayout extends BigValueLayout {
     const valueWidthPercent = this.titleToAlignTo?.length ? 0.3 : 1.0;
 
     if (this.valueToAlignTo.length) {
+      let valueHeight = this.maxTextHeight;
+      if (props.value.percentChange != null) {
+        // percent change uses 40% of value height, so we want to scale the value font size accordingly
+        valueHeight = valueHeight * 0.75;
+      }
       // initial value size
       this.valueFontSize = calculateFontSize(
         this.valueToAlignTo,
         this.maxTextWidth * valueWidthPercent,
-        this.maxTextHeight,
+        valueHeight,
         LINE_HEIGHT,
         undefined,
         VALUE_FONT_WEIGHT
@@ -480,10 +485,15 @@ export class StackedWithNoChartLayout extends BigValueLayout {
     }
 
     if (this.valueToAlignTo.length) {
+      let valueHeight = this.maxTextHeight - titleHeight;
+      if (props.value.percentChange != null) {
+        // percent change uses 40% of value height, so we want to scale the value font size accordingly
+        valueHeight = valueHeight * 0.75;
+      }
       this.valueFontSize = calculateFontSize(
         this.valueToAlignTo,
         this.maxTextWidth,
-        this.maxTextHeight - titleHeight,
+        valueHeight,
         LINE_HEIGHT,
         undefined,
         VALUE_FONT_WEIGHT
