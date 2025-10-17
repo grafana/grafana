@@ -4,6 +4,7 @@ import (
 	"embed"
 	"encoding/json"
 	"path"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -18,6 +19,29 @@ import (
 
 //go:embed test-data/*.*
 var testData embed.FS
+
+func Test_GettableStatusUnmarshalJSON(t *testing.T) {
+	incoming, err := testData.ReadFile(path.Join("test-data", "gettable-status.json"))
+	require.Nil(t, err)
+
+	var actual GettableStatus
+	require.NoError(t, json.Unmarshal(incoming, &actual))
+
+	actualJson, err := json.Marshal(actual)
+	require.NoError(t, err)
+
+	expected, err := testData.ReadFile(path.Join("test-data", "gettable-status-expected.json"))
+	require.NoError(t, err)
+	assert.JSONEq(t, string(expected), string(actualJson))
+
+	v := reflect.ValueOf(actual.Config.Config)
+	ty := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldName := ty.Field(i).Name
+		assert.False(t, field.IsZero(), "Field %s should not be zero value", fieldName)
+	}
+}
 
 func Test_GettableUserConfigUnmarshaling(t *testing.T) {
 	for _, tc := range []struct {
