@@ -117,6 +117,9 @@ func TransformGrpcTraceResponse(trace []types.GrpcResourceSpans, refID string) *
 		data.NewField("traceID", nil, []string{}),
 		data.NewField("spanID", nil, []string{}),
 		data.NewField("parentSpanID", nil, []*string{}),
+		data.NewField("statusCode", nil, []int64{}),
+		data.NewField("statusMessage", nil, []string{}),
+		data.NewField("kind", nil, []string{}),
 		data.NewField("operationName", nil, []string{}),
 		data.NewField("serviceName", nil, []string{}),
 		data.NewField("serviceTags", nil, []json.RawMessage{}),
@@ -143,7 +146,7 @@ func TransformGrpcTraceResponse(trace []types.GrpcResourceSpans, refID string) *
 				// Get service name and tags
 				serviceName := getAttribute(resource.Resource.Attributes, "service.name").StringValue
 				serviceTags := json.RawMessage{}
-				processedResAttributes := processAttributesIntoTags(resource.Resource.Attributes)
+				processedResAttributes := processAttributes(resource.Resource.Attributes)
 				tagsMarshaled, err := json.Marshal(processedResAttributes)
 				if err == nil {
 					serviceTags = json.RawMessage(tagsMarshaled)
@@ -151,7 +154,7 @@ func TransformGrpcTraceResponse(trace []types.GrpcResourceSpans, refID string) *
 
 				// Convert tags
 				tags := json.RawMessage{}
-				processedSpanAttributes := processAttributesIntoTags(span.Attributes)
+				processedSpanAttributes := processAttributes(span.Attributes)
 				// add otel attributes scope name, scope version and span kind
 				if scopeSpan.Scope.Name != "" {
 					processedSpanAttributes = append(processedSpanAttributes, types.KeyValueType{
@@ -169,15 +172,6 @@ func TransformGrpcTraceResponse(trace []types.GrpcResourceSpans, refID string) *
 					})
 				}
 
-				spanKindAtt := getAttribute(span.Attributes, "span.kind")
-				if isEmptyAttribute(spanKindAtt) {
-					// it may be the case that the span already contains a span.kind att, in that case, honor that attribute
-					processedSpanAttributes = append(processedSpanAttributes, types.KeyValueType{
-						Key:   "span.kind",
-						Value: processSpanKind(span.Kind),
-						Type:  "string",
-					})
-				}
 				tagsMarshaled, err = json.Marshal(processedSpanAttributes)
 				if err == nil {
 					tags = json.RawMessage(tagsMarshaled)
@@ -222,6 +216,9 @@ func TransformGrpcTraceResponse(trace []types.GrpcResourceSpans, refID string) *
 					span.TraceID,
 					span.SpanID,
 					&parentSpanID,
+					span.Status.Code,
+					span.Status.Message,
+					processSpanKind(span.Kind),
 					span.Name,
 					serviceName,
 					serviceTags,
@@ -238,7 +235,7 @@ func TransformGrpcTraceResponse(trace []types.GrpcResourceSpans, refID string) *
 	return frame
 }
 
-func processAttributesIntoTags(attributes []types.GrpcKeyValue) []types.KeyValueType {
+func processAttributes(attributes []types.GrpcKeyValue) []types.KeyValueType {
 	tags := []types.KeyValueType{}
 
 	for _, att := range attributes {
