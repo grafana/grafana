@@ -25,16 +25,24 @@ import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimi
 interface LoaderProps {
   groupFilter?: string;
   namespaceFilter?: string;
+  freeFormWordsFilter?: string[];
 }
 
-export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter }: LoaderProps) {
+export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter, freeFormWordsFilter }: LoaderProps) {
   const key = `${groupFilter}-${namespaceFilter}`;
 
   // Key is crucial. It resets the generator when filters change.
-  return <PaginatedGroupsLoader key={key} groupFilter={groupFilter} namespaceFilter={namespaceFilter} />;
+  return (
+    <PaginatedGroupsLoader
+      key={key}
+      groupFilter={groupFilter}
+      namespaceFilter={namespaceFilter}
+      freeFormWordsFilter={freeFormWordsFilter}
+    />
+  );
 }
 
-function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
+function PaginatedGroupsLoader({ groupFilter, namespaceFilter, freeFormWordsFilter }: LoaderProps) {
   // If there are filters, we don't want to populate the cache to avoid performance issues
   // Filtering may trigger multiple HTTP requests, which would populate the cache with a lot of groups hurting performance
   const hasFilters = Boolean(groupFilter || namespaceFilter);
@@ -62,8 +70,9 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
       groupFilterFn(group, {
         namespace: namespaceFilter,
         groupName: groupFilter,
-      }),
-    [namespaceFilter, groupFilter]
+        freeFormWords: freeFormWordsFilter ?? [],
+      }).matches,
+    [namespaceFilter, groupFilter, freeFormWordsFilter]
   );
 
   const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(

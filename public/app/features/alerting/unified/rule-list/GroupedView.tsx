@@ -49,13 +49,19 @@ interface DataSourceLoaderProps {
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
   groupFilter?: string;
   namespaceFilter?: string;
+  freeFormWordsFilter?: string[];
 }
 
 export function GrafanaDataSourceLoader() {
   return <DataSourceSection name="Grafana" application="grafana" uid="grafana" isLoading={true} />;
 }
 
-function DataSourceLoader({ rulesSourceIdentifier, groupFilter, namespaceFilter }: DataSourceLoaderProps) {
+function DataSourceLoader({
+  rulesSourceIdentifier,
+  groupFilter,
+  namespaceFilter,
+  freeFormWordsFilter,
+}: DataSourceLoaderProps) {
   const { data: dataSourceInfo, isLoading, error } = useDiscoverDsFeaturesQuery({ uid: rulesSourceIdentifier.uid });
 
   const { uid, name } = rulesSourceIdentifier;
@@ -77,6 +83,7 @@ function DataSourceLoader({ rulesSourceIdentifier, groupFilter, namespaceFilter 
           application={dataSourceInfo.application}
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
+          freeFormWordsFilter={freeFormWordsFilter}
         />
       </DataSourceErrorBoundary>
     );
