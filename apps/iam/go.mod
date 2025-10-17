@@ -24,6 +24,8 @@ replace github.com/grafana/grafana/apps/correlations => ../correlations
 
 replace github.com/grafana/grafana/apps/investigations => ../investigations
 
+replace github.com/grafana/grafana/apps/logsdrilldown => ../logsdrilldown
+
 replace github.com/grafana/grafana/apps/playlist => ../playlist
 
 replace github.com/grafana/grafana/apps/plugins => ../plugins
