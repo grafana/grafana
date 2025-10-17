@@ -34,7 +34,11 @@ func ValidateOnCreate(ctx context.Context, userSearchClient resourcepb.ResourceI
 		return err
 	}
 
-	if err := validateEmailLogin(ctx, userSearchClient, requester.GetNamespace(), obj.Spec.Login, obj.Spec.Email); err != nil {
+	if err := validateEmail(ctx, userSearchClient, requester.GetNamespace(), obj.Spec.Email); err != nil {
+		return err
+	}
+
+	if err := validateLogin(ctx, userSearchClient, requester.GetNamespace(), obj.Spec.Login); err != nil {
 		return err
 	}
 
@@ -90,9 +94,16 @@ func ValidateOnUpdate(ctx context.Context, userSearchClient resourcepb.ResourceI
 		return err
 	}
 
-	// TODO: Finish this to only check if login/email changed
-	if err := validateEmailLogin(ctx, userSearchClient, requester.GetNamespace(), newObj.Spec.Login, newObj.Spec.Email); err != nil {
-		return err
+	if newObj.Spec.Email != oldObj.Spec.Email {
+		if err := validateEmail(ctx, userSearchClient, requester.GetNamespace(), newObj.Spec.Email); err != nil {
+			return err
+		}
+	}
+
+	if newObj.Spec.Login != oldObj.Spec.Login {
+		if err := validateLogin(ctx, userSearchClient, requester.GetNamespace(), newObj.Spec.Login); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -110,32 +121,15 @@ func validateRole(obj *iamv0alpha1.User) error {
 	return nil
 }
 
-func validateEmailLogin(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, login, email string) error {
-	userGvr := iamv0alpha1.UserResourceInfo.GroupResource()
-	req := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{
-			Key: &resourcepb.ResourceKey{
-				Group:     userGvr.Group,
-				Resource:  userGvr.Resource,
-				Namespace: namespace,
-			},
-			Fields: []*resourcepb.Requirement{
-				// TODO: commented out to test with just login uniqueness
-				{
-					Key:      "fields.email",
-					Operator: string(selection.Equals),
-					Values:   []string{email},
-				},
-				// {
-				// 	Key:      "login",
-				// 	Operator: string(selection.Equals),
-				// 	Values:   []string{login},
-				// }},
-			},
+func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, email string) error {
+	req := createUserSearchRequest(namespace, []*resourcepb.Requirement{
+		{
+			Key:      "fields.email",
+			Operator: string(selection.Equals),
+			Values:   []string{email},
 		},
-		// Fields:  []string{"login", "email", "name"},
-		Explain: true,
-	}
+	})
+
 	resp, err := searchClient.Search(ctx, req)
 	if err != nil {
 		return err
@@ -143,9 +137,45 @@ func validateEmailLogin(ctx context.Context, searchClient resourcepb.ResourceInd
 
 	if resp.TotalHits > 0 {
 		return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
-			fmt.Sprintf("%s/%s", namespace, login),
-			fmt.Errorf("login '%s' and/or email '%s' is already taken", login, email))
+			fmt.Sprintf("%s", namespace),
+			fmt.Errorf("email '%s' is already taken", email))
 	}
 
 	return nil
+}
+
+func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, login string) error {
+	req := createUserSearchRequest(namespace, []*resourcepb.Requirement{
+		{
+			Key:      "login",
+			Operator: string(selection.Equals),
+			Values:   []string{login},
+		},
+	})
+	resp, err := searchClient.Search(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	if resp.TotalHits > 0 {
+		return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
+			fmt.Sprintf("%s", namespace, login),
+			fmt.Errorf("login '%s' is already taken", login))
+	}
+
+	return nil
+}
+
+func createUserSearchRequest(namespace string, requirements []*resourcepb.Requirement) *resourcepb.ResourceSearchRequest {
+	userGvr := iamv0alpha1.UserResourceInfo.GroupResource()
+	return &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     userGvr.Group,
+				Resource:  userGvr.Resource,
+				Namespace: namespace,
+			},
+			Fields: requirements,
+		},
+	}
 }
