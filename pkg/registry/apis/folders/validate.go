@@ -121,7 +121,7 @@ func validateOnUpdate(ctx context.Context,
 	}
 
 	// if by moving a folder we exceed the max depth, return an error
-	if len(info.Items)+1 >= maxDepth {
+	if len(info.Items) > maxDepth+1 {
 		return folder.ErrMaximumDepthReached.Errorf("maximum folder depth reached")
 	}
 	return nil
