@@ -417,6 +417,7 @@ export interface FeatureToggles {
   canvasPanelPanZoom?: boolean;
   /**
   * Enables time comparison option in supported panels
+  * @default true
   */
   timeComparison?: boolean;
   /**
