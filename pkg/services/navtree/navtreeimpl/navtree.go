@@ -201,6 +201,8 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
+	testFlag, err := openfeature.GetApiInstance().GetClient().StringValueDetails(ctx, "hgapi.mt-feature-flag", "someValue", openfeature.TransactionContext(ctx))
+	s.log.Info("flag evaluation result", "err", err, "details", testFlag)
 	return treeRoot, nil
 }
 
