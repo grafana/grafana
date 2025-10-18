@@ -2,7 +2,7 @@ import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
 import { wellFormedTree } from '../../../fixtures/folders';
-import { mockStarredDashboards } from '../user/handlers';
+import { mockStarredDashboardsMap } from '../../../fixtures/starred';
 
 import { SORT_OPTIONS } from './constants';
 
@@ -42,7 +42,7 @@ const getLegacySearchHandler = () =>
         }
 
         if (starredFilter) {
-          filters.push(({ item }) => mockStarredDashboards.includes(item.uid));
+          filters.push(({ item }) => mockStarredDashboardsMap.has(item.uid));
         }
 
         if (folderFilter && folderFilter !== 'general') {
