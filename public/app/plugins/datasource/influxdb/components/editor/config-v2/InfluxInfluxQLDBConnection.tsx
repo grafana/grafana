@@ -4,9 +4,8 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
+import { Input, SecretInput, Field, Box } from '@grafana/ui';
 
-import { DB_SETTINGS_LABEL_WIDTH } from './constants';
 import {
   trackInfluxDBConfigV2InfluxQLDBDetailsDatabaseInputField,
   trackInfluxDBConfigV2InfluxQLDBDetailsPasswordInputField,
@@ -19,8 +18,8 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
 
   return (
     <>
-      <InlineFieldRow>
-        <InlineField label="Database" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow required>
+      <Box marginBottom={2}>
+        <Field label="Database" required noMargin>
           <Input
             id="database"
             placeholder="mydb"
@@ -28,10 +27,10 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
             onChange={onUpdateDatasourceJsonDataOption(props, 'dbName')}
             onBlur={trackInfluxDBConfigV2InfluxQLDBDetailsDatabaseInputField}
           />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label="User" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow required>
+        </Field>
+      </Box>
+      <Box marginBottom={2}>
+        <Field label="User" required noMargin>
           <Input
             id="user"
             placeholder="myuser"
@@ -39,15 +38,14 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
             onChange={onUpdateDatasourceOption(props, 'user')}
             onBlur={trackInfluxDBConfigV2InfluxQLDBDetailsUserInputField}
           />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField
+        </Field>
+      </Box>
+      <Box marginBottom={2}>
+        <Field
           label="Password"
-          labelWidth={DB_SETTINGS_LABEL_WIDTH}
-          tooltip="Enter the token used to query the database. You can find this on the Tokens page in the InfluxDB UI."
-          grow
+          description="Enter the token used to query the database. You can find this on the Tokens page in the InfluxDB UI."
           required
+          noMargin
         >
           <SecretInput
             id="password"
@@ -57,8 +55,8 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
             onChange={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
             onBlur={trackInfluxDBConfigV2InfluxQLDBDetailsPasswordInputField}
           />
-        </InlineField>
-      </InlineFieldRow>
+        </Field>
+      </Box>
     </>
   );
 };

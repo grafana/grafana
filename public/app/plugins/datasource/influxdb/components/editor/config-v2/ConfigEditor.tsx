@@ -6,6 +6,7 @@ import { Alert, Box, Stack, TextLink, Text, useStyles2 } from '@grafana/ui';
 
 import { DatabaseConnectionSection } from './DatabaseConnectionSection';
 import { LeftSideBar } from './LeftSideBar';
+import { TLSSSLSettingsSection } from './TLSSSLSettingsSection';
 import { UrlAndAuthenticationSection } from './UrlAndAuthenticationSection';
 import { CONTAINER_MIN_WIDTH } from './constants';
 import { trackInfluxDBConfigV2FeedbackButtonClicked } from './tracking';
@@ -15,7 +16,7 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
   const styles = useStyles2(getStyles);
   return (
     <Stack justifyContent="space-between">
-      <div className={styles.hideOnSmallScreen}>
+      <div className={`${styles.hideOnSmallScreen} ${styles.leftSticky}`}>
         <Box width="100%" flex="1 1 auto">
           <LeftSideBar pdcInjected={options?.jsonData?.pdcInjected!!} />
         </Box>
@@ -38,11 +39,12 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
               to help us make it even better.
             </>
           </Alert>
-          <Text color="secondary" element="p" italic>
+          <Text variant="bodySmall" color="secondary">
             Fields marked with * are required
           </Text>
           <UrlAndAuthenticationSection options={options} onOptionsChange={onOptionsChange} />
           <DatabaseConnectionSection options={options} onOptionsChange={onOptionsChange} />
+          <TLSSSLSettingsSection options={options} onOptionsChange={onOptionsChange} />
         </Stack>
       </Box>
       <Box width="20%" flex="0 0 20%">
@@ -60,6 +62,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       [theme.breakpoints.down('sm')]: {
         display: 'none',
       },
+    }),
+    leftSticky: css({
+      position: 'sticky',
+      top: '100px',
+      alignSelf: 'flex-start',
+      maxHeight: 'calc(100vh - 100px)',
+      overflowY: 'auto',
     }),
     alertHeight: css({
       height: '100px',
