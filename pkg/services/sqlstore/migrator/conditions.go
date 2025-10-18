@@ -56,3 +56,18 @@ type IfColumnExistsCondition struct {
 func (c *IfColumnExistsCondition) SQL(dialect Dialect) (string, []interface{}) {
 	return dialect.ColumnCheckSQL(c.TableName, c.ColumnName)
 }
+
+type IfPrimaryKeyNotExistsCondition struct {
+	NotExistsMigrationCondition
+	TableName  string
+	ColumnName string
+}
+
+func (c *IfPrimaryKeyNotExistsCondition) SQL(dialect Dialect) (string, []interface{}) {
+	// only use it with mysql
+	if dialect.DriverName() == "mysql" {
+		return "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=? AND COLUMN_KEY='PRI'", []interface{}{c.TableName, c.ColumnName}
+	}
+
+	return "", nil
+}
