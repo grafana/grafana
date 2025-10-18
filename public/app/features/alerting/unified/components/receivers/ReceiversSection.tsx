@@ -16,7 +16,6 @@ interface Props {
   addButtonTo: string;
   className?: string;
   showButton?: boolean;
-  canReadSecrets?: boolean;
   showExport?: boolean;
 }
 
@@ -28,7 +27,6 @@ export const ReceiversSection = ({
   addButtonTo,
   children,
   showButton = true,
-  canReadSecrets = false,
   showExport = false,
 }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
@@ -72,7 +70,7 @@ export const ReceiversSection = ({
         </Stack>
       </div>
       {children}
-      {showExportDrawer && <GrafanaReceiversExporter decrypt={canReadSecrets} onClose={toggleShowExportDrawer} />}
+      {showExportDrawer && <GrafanaReceiversExporter onClose={toggleShowExportDrawer} />}
     </Stack>
   );
 };
