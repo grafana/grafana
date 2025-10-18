@@ -25,11 +25,13 @@ func EmbeddedContactPointToGrafanaIntegrationConfig(e definitions.EmbeddedContac
 	}, nil
 }
 
-func PostableGrafanaReceiverToEmbeddedContactPoint(contactPoint *definitions.PostableGrafanaReceiver, provenance models.Provenance, decryptValue func(string) string) (definitions.EmbeddedContactPoint, error) {
+// PostableGrafanaReceiverToEmbeddedContactPoint converts a PostableGrafanaReceiver to an EmbeddedContactPoint, also returns the raw settings json
+func PostableGrafanaReceiverToEmbeddedContactPoint(contactPoint *definitions.PostableGrafanaReceiver, provenance models.Provenance, decryptValue func(string) string) (definitions.EmbeddedContactPoint, *simplejson.Json, error) {
 	simpleJson, err := simplejson.NewJson(contactPoint.Settings)
 	if err != nil {
-		return definitions.EmbeddedContactPoint{}, err
+		return definitions.EmbeddedContactPoint{}, nil, err
 	}
+	raw := simpleJson.DeepCopy()
 	embeddedContactPoint := definitions.EmbeddedContactPoint{
 		UID:                   contactPoint.UID,
 		Type:                  contactPoint.Type,
@@ -39,13 +41,15 @@ func PostableGrafanaReceiverToEmbeddedContactPoint(contactPoint *definitions.Pos
 		Provenance:            string(provenance),
 	}
 	for k, v := range contactPoint.SecureSettings {
+		branch := strings.Split(k, ".")
+		raw.SetPath(branch, v)
 		decryptedValue := decryptValue(v)
 		if decryptedValue == "" {
 			continue
 		}
-		embeddedContactPoint.Settings.SetPath(strings.Split(k, "."), decryptedValue)
+		embeddedContactPoint.Settings.SetPath(branch, decryptedValue)
 	}
-	return embeddedContactPoint, nil
+	return embeddedContactPoint, raw, nil
 }
 
 func GrafanaIntegrationConfigToEmbeddedContactPoint(r *models.Integration, provenance models.Provenance) definitions.EmbeddedContactPoint {
