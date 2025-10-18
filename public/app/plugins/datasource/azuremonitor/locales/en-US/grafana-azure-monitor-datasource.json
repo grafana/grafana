@@ -13,11 +13,11 @@
       "label-resource-group": "Resource Group",
       "label-resource-name": "Resource Name",
       "label-resource-number": "Resource {{resourceNum}}",
-      "label-resource-uri": "Resource URI(s) ",
+      "label-resource-uri": "Resource URI(s)",
       "label-subscription": "Subscription",
       "placeholder-resource-name": "name",
       "tooltip-region": "The code region of the resource. Optional for one resource but mandatory when selecting multiple ones.",
-      "tooltip-resource-uri": "Manually edit the <2>resource uri</2>. Supports the use of multiple template variables (ex: /subscriptions/$subId/resourceGroups/$rg)"
+      "tooltip-resource-uri": "Manually edit the <1> resource uri </1> . Supports the use of multiple template variables (ex: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Aggregate function",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Basic Logs",
-      "description-basic-logs": "Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for <2>Basic Logs</2>.",
+      "description-basic-logs": "Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for <1> Basic Logs </1> .",
       "label-enable-basic-logs": "Enable Basic Logs"
     },
     "config-editor": {
@@ -76,7 +76,7 @@
       "title-additional-settings": "Additional settings"
     },
     "current-user-fallback-credentials": {
-      "alert-fallback-credentials-disabled": "Fallback credentials have been disabled. As user-based authentication only inherently supports requests with a user in scope, features such as alerting, recorded queries, or reporting will not function as expected. Please review the <2>documentation</2> for more details.",
+      "alert-fallback-credentials-disabled": "Fallback credentials have been disabled. As user-based authentication only inherently supports requests with a user in scope, features such as alerting, recorded queries, or reporting will not function as expected. Please review the <1> documentation </1> for more details.",
       "body-service-credentials": "User-based authentication does not inherently support Grafana features that make requests to the data source without a users details available to the request. An example of this is alerting. If you wish to ensure that features that do not have a user in the context of the request still function, please provide fallback credentials below.",
       "description-authentication": "Choose the type of authentication to Azure services",
       "description-service-credentials": "Choose if fallback service credentials are enabled or disabled for this data source",
@@ -101,7 +101,7 @@
       "placeholder-select-values": "Select value(s)"
     },
     "editor-for-query-type": {
-      "body-unknown-query-type": "{{type}} was deprecated in Grafana 9. See the <3>deprecation notice</3> to get more information about how to migrate your queries. This is the current query definition:",
+      "body-unknown-query-type": "{{type}} was deprecated in Grafana 9. See the <2> deprecation notice </2> to get more information about how to migrate your queries. This is the current query definition:",
       "title-unknown-query-type": "Unknown query type"
     },
     "filter": {
@@ -274,8 +274,8 @@
     "time-management": {
       "label-time-column": "Time Column",
       "label-time-range": "Time-range",
-      "tooltip-time-column": "<0>Specifies the time column used for filtering. Defaults to the first tables <1>timeSpan</1> column, the first <3>datetime</3> column found or <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": "<0>Specifies the time-range used to query. The <1>Query</1> option will only use time-ranges specified in the query. <3>Dashboard</3> will only use the Grafana time-range. In Logs Builder mode, only Dashboard time will be used.</0>"
+      "tooltip-time-column": "<0> Specifies the time column used for filtering. Defaults to the first tables <1>timeSpan</1> column, the first <3>datetime</3> column found or <5>TimeGenerated</5>. </0>",
+      "tooltip-time-range": "<0> Specifies the time-range used to query. The <1>Query</1> option will only use time-ranges specified in the query. <3>Dashboard</3> will only use the Grafana time-range. In Logs Builder mode, only Dashboard time will be used. </0>"
     },
     "top-field": {
       "label-top": "Top"
@@ -288,11 +288,11 @@
       "label-operation-id": "Operation ID"
     },
     "user-auth-alert": {
-      "body-unsupported-auth": "Usage of this data source requires you to be authenticated via Azure Entra (formerly Azure Active Directory). Please review the <2>documentation</2> for more information.",
+      "body-unsupported-auth": "Usage of this data source requires you to be authenticated via Azure Entra (formerly Azure Active Directory). Please review the <1> documentation </1> for more information.",
       "title-unsupported-auth": "Unsupported authentication provider"
     },
     "user-auth-fallback-alert": {
-      "body-no-fallback-credentials": "Data source backend features (such as alerting) require service credentials to function. This data source is configured without service credential fallback, or the fallback functionality is disabled. Please review the <2>documentation</2> for more information.",
+      "body-no-fallback-credentials": "Data source backend features (such as alerting) require service credentials to function. This data source is configured without service credential fallback, or the fallback functionality is disabled. Please review the <1> documentation </1> for more information.",
       "title-no-fallback-credentials": "No fallback credentials available"
     },
     "variable-editor": {

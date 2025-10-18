@@ -12,7 +12,7 @@
   "main": "src/index.ts",
   "scripts": {
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "i18n-extract": "i18next --config src/locales/i18next-parser.config.cjs"
+    "i18n-extract": "i18next-cli extract --sync-primary"
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
@@ -48,7 +48,6 @@
     "@types/react-virtualized-auto-sizer": "1.0.8",
     "@types/systemjs": "6.15.3",
     "@types/uuid": "10.0.0",
-    "i18next-parser": "9.3.0",
     "jest": "^29.6.4",
     "ts-jest": "29.4.0",
     "ts-node": "10.9.2",

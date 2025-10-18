@@ -59,7 +59,7 @@
     "codegen": "rtk-query-codegen-openapi ./scripts/codegen.ts",
     "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=testing,unstable node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json && rimraf ./unstable ./testing",
-    "i18n-extract": "i18next --config src/locales/i18next-parser.config.cjs"
+    "i18n-extract": "i18next-cli extract --sync-primary"
   },
   "devDependencies": {
     "@grafana/test-utils": "workspace:*",
