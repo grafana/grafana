@@ -251,7 +251,7 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 	s.write(w, sortable)
 }
 
-const rootFolder = "general"
+const rootFolder = foldermodel.GeneralFolderUID
 
 // nolint:gocyclo
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
