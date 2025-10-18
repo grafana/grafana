@@ -18,3 +18,16 @@ about: Suggest an enhancement or new feature for the Grafana project
 **Who is this feature for?**
 
 [Add information on what kind of user the feature is for.]
+
+**User impact** *(Help us understand the value)*:
+
+**Current user experience:**
+- [ ] Users spend significant time on workarounds (estimate: ___ minutes/hours per task)
+- [ ] Users frequently encounter errors/frustrations in this workflow
+- [ ] Users abandon tasks due to complexity/limitations
+- [ ] Other - [_Describe a specific user journey_]
+
+**Supporting evidence** *(Optional but helpful)*:
+- Community discussions: [paste links]
+- Similar requests/issues: [link to related issues]  
+- User feedback: [forum posts, slack discussions, etc.]
