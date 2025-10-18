@@ -2675,7 +2675,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:12.3.0-pre"
     "@grafana/e2e-selectors": "npm:12.3.0-pre"
-    "@grafana/lezer-logql": "npm:0.2.8"
+    "@grafana/lezer-logql": "npm:0.2.9"
     "@grafana/llm": "npm:0.22.1"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/plugin-configs": "npm:12.3.0-pre"
@@ -3262,12 +3262,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/lezer-logql@npm:0.2.8":
-  version: 0.2.8
-  resolution: "@grafana/lezer-logql@npm:0.2.8"
+"@grafana/lezer-logql@npm:0.2.9":
+  version: 0.2.9
+  resolution: "@grafana/lezer-logql@npm:0.2.9"
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: 10/56b31f9479037201b07d27602c023a2c2373758f232b02a4e5c501dbfabe6f708ddd2a4f8d059b5aad576297137bc2836ed3f520eceee6ffcd3001ad53c73f5c
+  checksum: 10/2ebc769f6e665b2a960416fc8416330f41aad183e185ce3f14fd4bfff24ed8ee6555c5e6731f3c6557a115c6514b1b87ed794d7962decee83ea68811dd44465b
   languageName: node
   linkType: hard
 
@@ -18290,7 +18290,7 @@ __metadata:
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.3.5"
     "@grafana/i18n": "workspace:*"
-    "@grafana/lezer-logql": "npm:0.2.8"
+    "@grafana/lezer-logql": "npm:0.2.9"
     "@grafana/llm": "npm:0.22.1"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
