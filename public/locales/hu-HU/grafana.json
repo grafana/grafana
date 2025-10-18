@@ -7699,7 +7699,8 @@
     "name-neutral": "Semleges",
     "name-show-threshold-labels": "Küszöbértékcímkék megjelenítése",
     "name-show-threshold-markers": "Küszöbértékjelölők megjelenítése",
-    "placeholder-neutral": "automatikus"
+    "placeholder-neutral": "automatikus",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Alkalmaz",
@@ -12076,6 +12077,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },
