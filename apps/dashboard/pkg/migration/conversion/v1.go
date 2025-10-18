@@ -10,7 +10,7 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 )
 
-func Convert_V1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope conversion.Scope) error {
+func Convert_V1beta1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
 	out.Spec.Object = in.Spec.Object
@@ -24,15 +24,14 @@ func Convert_V1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope convers
 	return nil
 }
 
-func Convert_V1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-
-	// TODO (@radiohead): implement V1 to V2 conversion
-	// This is the bare minimum conversion that is needed to make the dashboard servable.
-
-	if v, ok := in.Spec.Object["title"]; ok {
-		if title, ok := v.(string); ok {
-			out.Spec.Title = title
+func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope) error {
+	if err := ConvertDashboard_V1beta1_to_V2alpha1(in, out, scope); err != nil {
+		out.Status = dashv2alpha1.DashboardStatus{
+			Conversion: &dashv2alpha1.DashboardConversionStatus{
+				StoredVersion: ptr.To(dashv1.VERSION),
+				Failed:        true,
+				Error:         ptr.To(err.Error()),
+			},
 		}
 	}
 
@@ -44,30 +43,31 @@ func Convert_V1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, s
 		},
 	}
 
-	out.Status = dashv2alpha1.DashboardStatus{
-		Conversion: &dashv2alpha1.DashboardConversionStatus{
-			StoredVersion: ptr.To(dashv1.VERSION),
-			Failed:        true,
-			Error:         ptr.To("backend conversion not yet implemented"),
-			Source:        in,
-		},
-	}
-
 	return nil
 }
 
-func Convert_V1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
+func Convert_V1beta1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope) error {
+	v2alpha1 := &dashv2alpha1.Dashboard{}
+	if err := ConvertDashboard_V1beta1_to_V2alpha1(in, v2alpha1, scope); err != nil {
+		out.Status = dashv2beta1.DashboardStatus{
+			Conversion: &dashv2beta1.DashboardConversionStatus{
+				StoredVersion: ptr.To(dashv1.VERSION),
+				Failed:        true,
+				Error:         ptr.To(err.Error()),
+			},
+		}
+		return err
+	}
 
-	// TODO: implement V1 to v2beta1 conversion
-
-	out.Status = dashv2beta1.DashboardStatus{
-		Conversion: &dashv2beta1.DashboardConversionStatus{
-			StoredVersion: ptr.To(dashv1.VERSION),
-			Failed:        true,
-			Error:         ptr.To("backend conversion not yet implemented"),
-			Source:        in,
-		},
+	if err := ConvertDashboard_V2alpha1_to_V2beta1(v2alpha1, out, scope); err != nil {
+		out.Status = dashv2beta1.DashboardStatus{
+			Conversion: &dashv2beta1.DashboardConversionStatus{
+				StoredVersion: ptr.To(dashv1.VERSION),
+				Failed:        true,
+				Error:         ptr.To(err.Error()),
+			},
+		}
+		return err
 	}
 
 	return nil

@@ -437,7 +437,7 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
 
     let layerDs = layer.state.query.datasource;
 
-    if (!layerDs) {
+    if (!layerDs || !layerDs.type) {
       // This can happen only if we are transforming a scene that was created
       // from a v1 spec. In v1 annotation layer can contain no datasource ref, which is guaranteed
       // for layers created for v2 schema. See transform transformSaveModelSchemaV2ToScene.ts.
@@ -496,7 +496,16 @@ export function getDefaultDataSourceRef(): DataSourceRef {
   const dsList = config.datasources;
   const ds = dsList[defaultDatasource];
 
-  return { type: ds.meta.id, uid: ds.name }; // in the datasource list from bootData "id" is the type
+  // If we can't find the default datasource, fall back to grafana
+  if (!ds) {
+    return { type: 'grafana', uid: '-- Grafana --' };
+  }
+
+  // Try to get the type from different possible locations
+  const dsType = ds.type || ds.meta?.id || 'grafana';
+  const dsUid = ds.uid || ds.name || '-- Grafana --';
+
+  return { type: dsType, uid: dsUid };
 }
 
 export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: DashboardV2Spec, panel?: VizPanel) {

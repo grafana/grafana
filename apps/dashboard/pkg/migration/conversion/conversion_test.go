@@ -30,8 +30,11 @@ import (
 )
 
 func TestConversionMatrixExist(t *testing.T) {
+
 	// Initialize the migrator with a test data source provider
-	migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
+	SetDataSourceProvider(dsProvider)
 
 	versions := []metav1.Object{
 		&dashv0.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
@@ -82,7 +85,9 @@ func TestDeepCopyValid(t *testing.T) {
 
 func TestDashboardConversionToAllVersions(t *testing.T) {
 	// Initialize the migrator with a test data source provider
-	migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
+	SetDataSourceProvider(dsProvider)
 
 	// Set up conversion scheme
 	scheme := runtime.NewScheme()
@@ -119,6 +124,17 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 			gv, err := schema.ParseGroupVersion(apiVersion)
 			require.NoError(t, err)
 			require.Equal(t, dashv0.GROUP, gv.Group)
+
+			// Validate that the input file starts with the apiVersion declared in the object
+			expectedPrefix := fmt.Sprintf("%s.", gv.Version)
+			if !strings.HasPrefix(file.Name(), expectedPrefix) {
+				t.Fatalf(
+					"Input file %s does not match its declared apiVersion %s. "+
+						"Expected filename to start with \"%s\". "+
+						"Example: if apiVersion is \"dashboard.grafana.app/v1beta1\", "+
+						"filename should start with \"v1beta1.<descriptive-name>.json\"",
+					file.Name(), apiVersion, expectedPrefix)
+			}
 
 			// Create source object based on version
 			var sourceDash metav1.Object
@@ -234,7 +250,9 @@ func testConversion(t *testing.T, convertedDash metav1.Object, filename, outputD
 // TestConversionMetrics tests that conversion-level metrics are recorded correctly
 func TestConversionMetrics(t *testing.T) {
 	// Initialize migration with test providers
-	migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
+	SetDataSourceProvider(dsProvider)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -353,7 +371,9 @@ func TestConversionMetrics(t *testing.T) {
 
 // TestConversionMetricsWrapper tests the withConversionMetrics wrapper function
 func TestConversionMetricsWrapper(t *testing.T) {
-	migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
+	SetDataSourceProvider(dsProvider)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -512,7 +532,9 @@ func TestSchemaVersionExtraction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test the schema version extraction logic by creating a wrapper and checking the metrics labels
-			migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+			dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+			migration.Initialize(dsProvider)
+			SetDataSourceProvider(dsProvider)
 
 			// Create a test registry for metrics
 			registry := prometheus.NewRegistry()
@@ -555,7 +577,9 @@ func TestSchemaVersionExtraction(t *testing.T) {
 
 // TestConversionLogging tests that conversion-level logging works correctly
 func TestConversionLogging(t *testing.T) {
-	migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
+	SetDataSourceProvider(dsProvider)
 
 	// Create a test registry for metrics
 	registry := prometheus.NewRegistry()
@@ -645,7 +669,9 @@ func TestConversionLogging(t *testing.T) {
 
 // TestConversionLogLevels tests that appropriate log levels are used
 func TestConversionLogLevels(t *testing.T) {
-	migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
+	SetDataSourceProvider(dsProvider)
 
 	t.Run("log levels and structured fields verification", func(t *testing.T) {
 		// Create test wrapper to verify logging behavior
@@ -714,7 +740,9 @@ func TestConversionLogLevels(t *testing.T) {
 
 // TestConversionLoggingFields tests that all expected fields are included in log messages
 func TestConversionLoggingFields(t *testing.T) {
-	migration.Initialize(migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig))
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
+	SetDataSourceProvider(dsProvider)
 
 	t.Run("verify all log fields are present", func(t *testing.T) {
 		// Test that the conversion wrapper includes all expected structured fields
