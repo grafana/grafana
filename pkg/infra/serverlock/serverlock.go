@@ -307,7 +307,13 @@ func (sl *ServerLockService) releaseLock(ctx context.Context, actionName string)
 	ctx, span := sl.tracer.Start(ctx, "ServerLockService.releaseLock")
 	defer span.End()
 
-	err := sl.SQLStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+	// ensure clean up happens even if the context is cancelled
+	dbCtx := ctx
+	if ctx.Err() != nil {
+		dbCtx = context.Background()
+	}
+
+	err := sl.SQLStore.WithDbSession(dbCtx, func(dbSession *db.Session) error {
 		sql := `DELETE FROM server_lock WHERE operation_uid=? `
 
 		res, err := dbSession.Exec(sql, actionName)
