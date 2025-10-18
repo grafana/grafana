@@ -7676,7 +7676,8 @@
     "name-neutral": "中性",
     "name-show-threshold-labels": "顯示閾值標籤",
     "name-show-threshold-markers": "顯示閾值標記",
-    "placeholder-neutral": "自動"
+    "placeholder-neutral": "自動",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "套用",
@@ -12035,6 +12036,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },

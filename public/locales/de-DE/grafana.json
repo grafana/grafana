@@ -7699,7 +7699,8 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Schwellenwert-Labels anzeigen",
     "name-show-threshold-markers": "Schwellenwert-Markierungen anzeigen",
-    "placeholder-neutral": "auto"
+    "placeholder-neutral": "auto",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Anwenden",
@@ -12076,6 +12077,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },

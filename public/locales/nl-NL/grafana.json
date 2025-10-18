@@ -7699,7 +7699,8 @@
     "name-neutral": "Neutraal",
     "name-show-threshold-labels": "Drempellabels weergeven",
     "name-show-threshold-markers": "Drempelmarkeringen weergeven",
-    "placeholder-neutral": "automatisch"
+    "placeholder-neutral": "automatisch",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Toepassen",
@@ -12076,6 +12077,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },

@@ -7676,7 +7676,8 @@
     "name-neutral": "中立",
     "name-show-threshold-labels": "しきい値ラベルを表示",
     "name-show-threshold-markers": "しきい値マーカーを表示",
-    "placeholder-neutral": "自動"
+    "placeholder-neutral": "自動",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "適用",
@@ -12035,6 +12036,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },

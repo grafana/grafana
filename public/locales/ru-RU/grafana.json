@@ -7745,7 +7745,8 @@
     "name-neutral": "Нейтральный",
     "name-show-threshold-labels": "Показывать метки пороговых значений",
     "name-show-threshold-markers": "Показывать маркеры пороговых значений",
-    "placeholder-neutral": "авто"
+    "placeholder-neutral": "авто",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Применить",
@@ -12158,6 +12159,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },

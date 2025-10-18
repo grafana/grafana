@@ -7745,7 +7745,8 @@
     "name-neutral": "Neutrální",
     "name-show-threshold-labels": "Zobrazit štítky prahových hodnot",
     "name-show-threshold-markers": "Zobrazit značky prahových hodnot",
-    "placeholder-neutral": "auto."
+    "placeholder-neutral": "auto.",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Použít",
@@ -12158,6 +12159,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },

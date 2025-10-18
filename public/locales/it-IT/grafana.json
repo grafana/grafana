@@ -7699,7 +7699,8 @@
     "name-neutral": "Normale",
     "name-show-threshold-labels": "Mostra etichette di soglia",
     "name-show-threshold-markers": "Mostra indicatori di soglia",
-    "placeholder-neutral": "automatico"
+    "placeholder-neutral": "automatico",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Applica",
@@ -12076,6 +12077,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },

@@ -7699,7 +7699,8 @@
     "name-neutral": "Nötr",
     "name-show-threshold-labels": "Eşik etiketlerini göster",
     "name-show-threshold-markers": "Eşik işaretçilerini göster",
-    "placeholder-neutral": "otomatik"
+    "placeholder-neutral": "otomatik",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Uygula",
@@ -12076,6 +12077,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },

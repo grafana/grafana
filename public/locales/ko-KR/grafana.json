@@ -7676,7 +7676,8 @@
     "name-neutral": "중간임",
     "name-show-threshold-labels": "임계값 레이블 표시",
     "name-show-threshold-markers": "임계값 마커 표시",
-    "placeholder-neutral": "자동"
+    "placeholder-neutral": "자동",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "적용",
@@ -12035,6 +12036,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },
