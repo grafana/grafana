@@ -21,8 +21,6 @@ export const flushMicrotasks = async () => {
  * Enables feature toggles `beforeEach` test, and sets back to original settings `afterEach` test
  */
 export const testWithFeatureToggles = (featureToggles: Array<keyof FeatureToggles>) => {
-  const originalToggles = { ...config.featureToggles };
-
   beforeEach(() => {
     featureToggles.forEach((featureToggle) => {
       config.featureToggles[featureToggle] = true;
@@ -30,7 +28,7 @@ export const testWithFeatureToggles = (featureToggles: Array<keyof FeatureToggle
   });
 
   afterEach(() => {
-    config.featureToggles = originalToggles;
+    config.featureToggles = {};
   });
 };
 

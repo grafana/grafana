@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { noop } from 'lodash';
-import { CSSProperties, useCallback, useMemo, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useMemo, useState } from 'react';
 import { useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
@@ -18,9 +18,10 @@ import {
   clearButtonStyles,
   useStyles2,
 } from '@grafana/ui';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { DashboardQueryResult, LocationInfo } from 'app/features/search/service/types';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
-import { dashboardApi } from '../../api/dashboardApi';
 
 import { useDashboardQuery } from './useDashboardQuery';
 
@@ -31,9 +32,11 @@ export interface PanelDTO {
   collapsed?: boolean;
 }
 
+const collator = new Intl.Collator();
+
 function panelSort(a: PanelDTO, b: PanelDTO) {
   if (a.title && b.title) {
-    return a.title.localeCompare(b.title);
+    return collator.compare(a.title, b.title);
   }
   if (a.title && !b.title) {
     return 1;
@@ -52,6 +55,34 @@ interface DashboardPickerProps {
   onDismiss: () => void;
 }
 
+const useFilteredDashboards = (dashboardFilter: string) => {
+  const [isDashSearchFetching, setIsDashSearchFetching] = useState(false);
+  const [dashboards, setDashboards] = useState<DashboardQueryResult[]>([]);
+  const [locationInfo, setLocationInfo] = useState<Record<string, LocationInfo>>({});
+
+  useEffect(() => {
+    setIsDashSearchFetching(true);
+    const search = getGrafanaSearcher().search({
+      query: dashboardFilter,
+      kind: ['dashboard'],
+    });
+
+    search
+      .then((result) => {
+        setDashboards(result.view.toArray());
+        return getGrafanaSearcher().getLocationInfo();
+      })
+      .then((locationInfo) => {
+        setLocationInfo(locationInfo);
+      })
+      .finally(() => {
+        setIsDashSearchFetching(false);
+      });
+  }, [dashboardFilter]);
+
+  return { dashboards, locationInfo, isFetching: isDashSearchFetching };
+};
+
 export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDismiss }: DashboardPickerProps) => {
   const styles = useStyles2(getPickerStyles);
 
@@ -62,11 +93,13 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   const [debouncedDashboardFilter, setDebouncedDashboardFilter] = useState('');
 
   const [panelFilter, setPanelFilter] = useState('');
-  const { useSearchQuery } = dashboardApi;
 
-  const { currentData: filteredDashboards = [], isFetching: isDashSearchFetching } = useSearchQuery({
-    query: debouncedDashboardFilter,
-  });
+  const {
+    dashboards: filteredDashboards = [],
+    locationInfo,
+    isFetching: isDashSearchFetching,
+  } = useFilteredDashboards(debouncedDashboardFilter);
+
   const { dashboardModel, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
 
   const handleDashboardChange = useCallback((dashboardUid: string) => {
@@ -114,18 +147,19 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   const DashboardRow = ({ index, style }: { index: number; style?: CSSProperties }) => {
     const dashboard = filteredDashboards[index];
     const isSelected = selectedDashboardUid === dashboard.uid;
+    const folderTitle = locationInfo?.[dashboard.location]?.name ?? 'Dashboards';
 
     return (
       <button
         type="button"
-        title={dashboard.title}
+        title={dashboard.name}
         style={style}
         className={cx(styles.rowButton, { [styles.rowOdd]: index % 2 === 1, [styles.rowSelected]: isSelected })}
         onClick={() => handleDashboardChange(dashboard.uid)}
       >
-        <div className={cx(styles.dashboardTitle, styles.rowButtonTitle)}>{dashboard.title}</div>
+        <div className={cx(styles.dashboardTitle, styles.rowButtonTitle)}>{dashboard.name}</div>
         <div className={styles.dashboardFolder}>
-          <Icon name="folder" /> {dashboard.folderTitle ?? 'Dashboards'}
+          <Icon name="folder" /> {folderTitle}
         </div>
       </button>
     );
