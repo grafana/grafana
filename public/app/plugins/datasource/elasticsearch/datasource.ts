@@ -81,6 +81,7 @@ import {
   isElasticsearchResponseWithAggregations,
   isElasticsearchResponseWithHits,
   ElasticsearchHits,
+  QueryType,
 } from './types';
 import { getScriptValue, isTimeSeriesQuery } from './utils';
 
@@ -127,6 +128,7 @@ export class ElasticDatasource
   includeFrozen: boolean;
   isProxyAccess: boolean;
   databaseVersion: SemVer | null;
+  defaultQueryMode?: QueryType;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -146,9 +148,6 @@ export class ElasticDatasource
     this.intervalPattern = settingsData.interval;
     this.interval = settingsData.timeInterval;
     this.maxConcurrentShardRequests = settingsData.maxConcurrentShardRequests;
-    this.queryBuilder = new ElasticQueryBuilder({
-      timeField: this.timeField,
-    });
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
     this.includeFrozen = settingsData.includeFrozen ?? false;
@@ -157,7 +156,11 @@ export class ElasticDatasource
     this.annotations = {
       QueryEditor: ElasticsearchAnnotationsQueryEditor,
     };
-
+    this.defaultQueryMode = settingsData.defaultQueryMode;
+    this.queryBuilder = new ElasticQueryBuilder({
+      timeField: this.timeField,
+      defaultQueryMode: this.defaultQueryMode,
+    });
     if (this.logLevelField === '') {
       this.logLevelField = undefined;
     }
