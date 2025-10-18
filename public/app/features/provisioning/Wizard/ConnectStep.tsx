@@ -71,6 +71,7 @@ export const ConnectStep = memo(function ConnectStep() {
                   id="token"
                   placeholder={gitFields.tokenConfig.placeholder}
                   isConfigured={tokenConfigured}
+                  invalid={!!errors?.repository?.token?.message}
                   onReset={() => {
                     setValue('repository.token', '');
                     setTokenConfigured(false);
