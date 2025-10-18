@@ -22,10 +22,9 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/authlib/types"
-
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	authnGrpcUtils "github.com/grafana/grafana/pkg/services/authn/grpcutils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -51,9 +50,10 @@ type resourceClient struct {
 	resourcepb.DiagnosticsClient
 }
 
-func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
-		return NewLegacyResourceClient(conn, indexConn), nil
+func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, tracer trace.Tracer) (ResourceClient, error) {
+	if cfg == nil {
+		logging.DefaultLogger.Info("using direct channel client for testing")
+		return NewChannelInterceptResourceClient(conn, indexConn), nil
 	}
 
 	clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
@@ -82,7 +82,8 @@ func NewAuthlessResourceClient(cc grpc.ClientConnInterface) ResourceClient {
 	return newResourceClient(cc, cc)
 }
 
-func NewLegacyResourceClient(channel grpc.ClientConnInterface, indexChannel grpc.ClientConnInterface) ResourceClient {
+// Connects GRPC over local channel
+func NewChannelInterceptResourceClient(channel grpc.ClientConnInterface, indexChannel grpc.ClientConnInterface) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	cci := grpchan.InterceptClientConn(indexChannel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return newResourceClient(cc, cci)

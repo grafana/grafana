@@ -708,7 +708,8 @@
       "metadata": {
         "name": "appPlatformGrpcClientAuth",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-10-14T10:47:18Z"
+        "creationTimestamp": "2024-10-14T10:47:18Z",
+        "deletionTimestamp": "2025-09-29T08:21:31Z"
       },
       "spec": {
         "description": "Enables the gRPC client to authenticate with the App Platform by using ID \u0026 access tokens",
