@@ -24,16 +24,19 @@ func ProvideInlineSecureValueService(
 			cfg.SecretsManagement.GrpcServerAddress,
 			readTLSFromConfig(cfg),
 			tracer,
+			cfg.SecretsManagement.GrpcClientLoadBalancing,
 		)
 	}
 
 	return NewLocalInlineSecureValueService(tracer, secureValueService, accessClient), nil
 }
 
-func NewGRPCSecureValueService(tokenCfg *grpcutils.GrpcClientConfig,
+func NewGRPCSecureValueService(
+	tokenCfg *grpcutils.GrpcClientConfig,
 	address string,
 	tlsCfg TLSConfig,
 	tracer trace.Tracer,
+	clientLoadBalancingEnabled bool,
 ) (contracts.InlineSecureValueSupport, error) {
 	if address == "" {
 		return nil, fmt.Errorf("grpc_server_address is required when grpc client is enabled")
@@ -51,7 +54,7 @@ func NewGRPCSecureValueService(tokenCfg *grpcutils.GrpcClientConfig,
 		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 
-	client, err := NewGRPCInlineClient(tokenExchangeClient, tracer, address, tlsCfg)
+	client, err := NewGRPCInlineClient(tokenExchangeClient, tracer, address, tlsCfg, clientLoadBalancingEnabled)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create grpc inline secure value client: %w", err)
 	}
