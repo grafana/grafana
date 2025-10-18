@@ -8,6 +8,8 @@ import { createAddedLinkConfig } from '../../plugins/extensions/utils';
 import { changeCorrelationEditorDetails } from '../state/main';
 import { runQueries } from '../state/query';
 
+import { DrilldownAppToDashboardPanel } from './AddToDashboard/DrilldownApp/DrilldownAppToDashboardPanel';
+import { PluginExtensionDrilldownContext } from './AddToDashboard/DrilldownApp/types';
 import { ExploreToDashboardPanel } from './AddToDashboard/ExploreToDashboardPanel';
 import { getAddToDashboardTitle } from './AddToDashboard/getAddToDashboardTitle';
 import { type PluginExtensionExploreContext } from './ToolbarExtensionPoint';
@@ -23,18 +25,7 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
         targets: [PluginExtensionPoints.ExploreToolbarAction],
         icon: 'apps',
         category: 'Dashboards',
-        configure: () => {
-          const canAddPanelToDashboard =
-            contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
-            contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
-
-          // hide option if user has insufficient permissions
-          if (!canAddPanelToDashboard) {
-            return undefined;
-          }
-
-          return {};
-        },
+        configure: configureAddToDashboard,
         onClick: (_, { context, openModal }) => {
           openModal({
             title: getAddToDashboardTitle(),
@@ -58,9 +49,48 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
           dispatch(runQueries({ exploreId: context!.exploreId }));
         },
       }),
+      createAddedLinkConfig<PluginExtensionDrilldownContext>({
+        // grafana-metricsdrilldown-app/add-to-dashboard/v1
+        // This is called at the top level, so will break if we add a translation here 😱
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        title: 'Add metrics drilldown panel to dashboard',
+        description: 'Use the panel from metrics drilldown and create/add it to a dashboard',
+        targets: ['grafana-metricsdrilldown-app/add-to-dashboard/v1'],
+        icon: 'apps',
+        category: 'Dashboards',
+        configure: configureAddToDashboard,
+        onClick: (_, { context, openModal }) => {
+          const panelData = context?.panelData;
+
+          if (!panelData) {
+            return;
+          }
+
+          openModal({
+            title: getAddToDashboardTitle(),
+            body: ({ onDismiss }) => (
+              //ADD
+              <DrilldownAppToDashboardPanel onClose={onDismiss!} panelData={panelData} />
+            ),
+          });
+        },
+      }),
     ];
   } catch (error) {
     log.warning(`Could not configure extensions for Explore due to: "${error}"`);
     return [];
   }
 }
+
+export const configureAddToDashboard = () => {
+  const canAddPanelToDashboard =
+    contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
+    contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
+
+  // hide option if user has insufficient permissions
+  if (!canAddPanelToDashboard) {
+    return undefined;
+  }
+
+  return {};
+};
