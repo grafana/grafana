@@ -9,7 +9,7 @@ labels:
     - cloud
     - enterprise
 title: Configure Team Sync
-weight: 1000
+weight: 600
 ---
 
 # Configure Team Sync
