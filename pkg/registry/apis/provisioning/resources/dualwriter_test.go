@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 )
 
 func TestGetPathType(t *testing.T) {

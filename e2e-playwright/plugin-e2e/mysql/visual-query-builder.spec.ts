@@ -48,7 +48,7 @@ test.describe(
       await expect(
         explorePage.getByGrafanaSelector(selectors.components.CodeEditor.container).getByRole('textbox')
       ).toHaveValue(
-        `SELECT\n  $__timeGroupAlias(createdAt, $__interval),\n  AVG(\`bigint\`)\nFROM\n  DataMaker.normalTable\nLIMIT\n  50`
+        `SELECT\n  $__timeGroupAlias(createdAt, $__interval),\n  AVG(\`bigint\`)\nFROM\n  grafana.normalTable\nLIMIT\n  50`
       );
     });
 
@@ -83,9 +83,7 @@ test.describe(
       // Validate that the timeFilter macro was added
       await expect(
         explorePage.getByGrafanaSelector(selectors.components.CodeEditor.container).getByRole('textbox')
-      ).toHaveValue(
-        `SELECT\n  createdAt\nFROM\n  DataMaker.normalTable\nWHERE\n  $__timeFilter(createdAt)\nLIMIT\n  50`
-      );
+      ).toHaveValue(`SELECT\n  createdAt\nFROM\n  grafana.normalTable\nWHERE\n  $__timeFilter(createdAt)\nLIMIT\n  50`);
 
       // Validate that the timeFilter macro was removed when changed to equals operator
       await explorePage.getByGrafanaSelector(selectors.components.SQLQueryEditor.filterOperator).click();
@@ -96,7 +94,7 @@ test.describe(
 
       await expect(
         explorePage.getByGrafanaSelector(selectors.components.CodeEditor.container).getByRole('textbox')
-      ).not.toHaveValue(`SELECT\n  createdAt\nFROM\n  DataMaker.normalTable\nWHERE\n  createdAt = NULL\nLIMIT\n  50`);
+      ).not.toHaveValue(`SELECT\n  createdAt\nFROM\n  grafana.normalTable\nWHERE\n  createdAt = NULL\nLIMIT\n  50`);
     });
 
     test('visual query builder should not crash when filter is set to select_any_in', async ({ explorePage, page }) => {
@@ -114,7 +112,7 @@ test.describe(
                 uid: 'P4FDCC188E688367F',
               },
               format: 'table',
-              rawSql: "SELECT * FROM DataMaker.normalTable WHERE name IN ('a') LIMIT 50 ",
+              rawSql: "SELECT * FROM grafana.normalTable WHERE name IN ('a') LIMIT 50 ",
               editorMode: 'builder',
               sql: {
                 columns: [
@@ -157,7 +155,7 @@ test.describe(
                 },
                 whereString: "name IN ('a')",
               },
-              dataset: 'DataMaker',
+              dataset: 'grafana',
               table: 'normalTable',
             },
           ],
@@ -170,7 +168,7 @@ test.describe(
       // Validate the query
       await expect(
         explorePage.getByGrafanaSelector(selectors.components.CodeEditor.container).getByRole('textbox')
-      ).toHaveValue(`SELECT\n  *\nFROM\n  DataMaker.normalTable\nWHERE\n  name IN ('a')\nLIMIT\n  50`);
+      ).toHaveValue(`SELECT\n  *\nFROM\n  grafana.normalTable\nWHERE\n  name IN ('a')\nLIMIT\n  50`);
     });
   }
 );

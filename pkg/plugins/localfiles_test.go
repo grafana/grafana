@@ -270,11 +270,26 @@ func TestStaticFS(t *testing.T) {
 			require.Equal(t, []string{allowedFn, deniedFn}, files)
 		})
 
-		t.Run("staticfs filters underelying fs's files", func(t *testing.T) {
+		t.Run("staticfs filters underlying fs's files", func(t *testing.T) {
 			files, err := staticFS.Files()
 			require.NoError(t, err)
 			require.Equal(t, []string{allowedFn}, files)
 		})
+	})
+
+	t.Run("FSRemover interface implementation verification", func(t *testing.T) {
+		tmpDir := t.TempDir()
+
+		lfs := NewLocalFS(tmpDir)
+		var localFSInterface FS = lfs
+		_, isRemover := localFSInterface.(FSRemover)
+		require.True(t, isRemover)
+
+		sfs, err := NewStaticFS(localFS)
+		require.NoError(t, err)
+		var staticFSInterface FS = sfs
+		_, isRemover = staticFSInterface.(FSRemover)
+		require.True(t, isRemover)
 	})
 }
 

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { historySrv } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
 import { useSelector } from 'app/types/store';
@@ -18,11 +18,7 @@ const restoreDashboard = async (version: number, dashboard: DashboardModel) => {
 
 export const useDashboardRestore = (id: number, version: number) => {
   const dashboard = useSelector((state) => state.dashboard.getModel());
-  const [state, onRestoreDashboard] = useAsyncFn(
-    async () =>
-      await restoreDashboard(config.featureToggles.kubernetesClientDashboardsFolders ? id : version, dashboard!),
-    []
-  );
+  const [state, onRestoreDashboard] = useAsyncFn(async () => await restoreDashboard(id, dashboard!), []);
   const notifyApp = useAppNotification();
 
   useEffect(() => {

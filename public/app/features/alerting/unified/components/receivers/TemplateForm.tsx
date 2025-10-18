@@ -32,9 +32,9 @@ import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
+import { EditorColumnHeader } from '../EditorColumnHeader';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { Spacer } from '../Spacer';
-import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 import {
   NotificationTemplate,
   useCreateNotificationTemplate,
@@ -511,10 +511,15 @@ const defaultPayload: TestTemplateAlert[] = [
     status: 'firing',
     annotations: {
       summary: 'Instance instance1 has been down for more than 5 minutes',
+      description:
+        'The instance instance1 has been unreachable for more than 5 minutes, indicating a potential service outage.',
     },
     labels: {
       alertname: 'InstanceDown',
       instance: 'instance1',
+      severity: 'critical',
+      service: 'service1',
+      environment: 'production',
     },
     startsAt: subDays(new Date(), 1).toISOString(),
     endsAt: addMinutes(new Date(), 5).toISOString(),
@@ -525,10 +530,15 @@ const defaultPayload: TestTemplateAlert[] = [
     status: 'resolved',
     annotations: {
       summary: 'CPU usage above 90%',
+      description:
+        'The CPU usage on instance1 has exceeded 90% for an extended period, which may indicate performance issues or resource constraints.',
     },
     labels: {
       alertname: 'CpuUsage',
       instance: 'instance1',
+      severity: 'warning',
+      service: 'service1',
+      environment: 'dev',
     },
     startsAt: subHours(new Date(), 4).toISOString(),
     endsAt: new Date().toISOString(),

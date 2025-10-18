@@ -18,12 +18,10 @@ const meta: Meta<typeof ColorPicker> = {
     controls: {
       exclude: ['onChange', 'onColorChange'],
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
   args: {
     enableNamedColors: false,
-    color: '#00ff00',
+    color: '#ee0000',
   },
 };
 
@@ -62,7 +60,7 @@ export const CustomTrigger: StoryFn<typeof ColorPicker> = ({ color, enableNamedC
           ref={ref}
           onMouseLeave={hideColorPicker}
           onClick={showColorPicker}
-          style={{ color }}
+          style={{ color: 'white', backgroundColor: color, padding: '8px' }}
           className={clearButton}
         >
           Open color picker

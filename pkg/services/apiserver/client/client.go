@@ -23,6 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// K8sHandlerProvider is a provider for K8sHandler instances.
+// It is used to get a K8sHandler instance for a given namespace.
+type K8sHandlerProvider interface {
+	GetOrCreateHandler(namespace string) K8sHandler
+}
+
 type K8sHandler interface {
 	GetNamespace(orgID int64) string
 	Get(ctx context.Context, name string, orgID int64, options v1.GetOptions, subresource ...string) (*unstructured.Unstructured, error)

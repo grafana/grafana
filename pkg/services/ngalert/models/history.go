@@ -13,6 +13,8 @@ type HistoryQuery struct {
 	DashboardUID string
 	PanelID      int64
 	Labels       map[string]string
+	Previous     string
+	Current      string
 	From         time.Time
 	To           time.Time
 	Limit        int

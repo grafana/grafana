@@ -33,6 +33,12 @@ const mockCatalogDataSourcePlugin = getCatalogPluginMock({
   id: 'sample-data-source',
 });
 
+const mockCatalogAppPlugin = getCatalogPluginMock({
+  type: PluginType.app,
+  name: 'Sample app',
+  id: 'sample-app',
+});
+
 describe('Badges', () => {
   test('shows enterprise and deprecated badges for plugins', async () => {
     renderPage([
@@ -64,8 +70,8 @@ describe('Add new connection', () => {
     expect(screen.queryByText('No results matching your query were found')).toBeInTheDocument();
   });
 
-  test('renders no results if there is no data source plugin in the list', async () => {
-    renderPage([getCatalogPluginMock()]);
+  test('renders no results if there are no datasource or app plugins in the list', async () => {
+    renderPage([getCatalogPluginMock({ type: PluginType.panel })]);
 
     expect(screen.queryByText('No results matching your query were found')).toBeInTheDocument();
   });
@@ -75,6 +81,20 @@ describe('Add new connection', () => {
 
     expect(await screen.findByText('Sample data source')).toBeVisible();
   });
+
+  test('renders app plugins when list is populated', async () => {
+    renderPage([getCatalogPluginMock(), mockCatalogAppPlugin]);
+
+    expect(await screen.findByText('Sample app')).toBeVisible();
+  });
+
+  test('renders app plugin and datasource plugin when list is populated', async () => {
+    renderPage([getCatalogPluginMock(), mockCatalogAppPlugin, mockCatalogDataSourcePlugin]);
+
+    expect(await screen.findByText('Sample app')).toBeVisible();
+    expect(await screen.findByText('Sample data source')).toBeVisible();
+  });
+
   test('should list plugins with update when filtering by update', async () => {
     const { queryByText } = renderPage(
       [
@@ -146,12 +166,5 @@ describe('Add new connection', () => {
     // Should show the modal if the user has no permissions
     await userEvent.click(await screen.findByText('Sample data source'));
     expect(screen.queryByText(new RegExp(exampleSentenceInModal))).toBeInTheDocument();
-  });
-
-  test('Show request data source and roadmap links', async () => {
-    renderPage([getCatalogPluginMock(), mockCatalogDataSourcePlugin]);
-
-    expect(await screen.findByText('Request a new data source')).toBeInTheDocument();
-    expect(await screen.findByText('View roadmap')).toBeInTheDocument();
   });
 });

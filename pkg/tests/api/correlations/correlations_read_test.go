@@ -15,12 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationReadCorrelation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := NewTestEnv(t)
 
 	adminUser := ctx.createUser(user.CreateUserCommand{
@@ -109,7 +109,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 	var created int64 = 0
 	err := ctx.env.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		var innerError error
-		created, innerError = sess.InsertMulti(&[]correlations.Correlation{
+		created, innerError = sess.Omit("source_type", "target_type").InsertMulti(&[]correlations.Correlation{
 			{
 				UID:       "uid-1",
 				SourceUID: dsWithoutCorrelations.UID,

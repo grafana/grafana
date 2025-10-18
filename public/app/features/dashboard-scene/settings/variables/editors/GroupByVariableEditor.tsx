@@ -67,6 +67,7 @@ export function getGroupByVariableOptions(variable: SceneVariable): OptionsPaneI
 
   return [
     new OptionsPaneItemDescriptor({
+      id: `variable-${variable.state.name}-value`,
       render: () => <GroupByVariableEditor variable={variable} onRunQuery={noop} inline={true} />,
     }),
   ];

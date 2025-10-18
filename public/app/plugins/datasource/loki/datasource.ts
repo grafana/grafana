@@ -162,7 +162,11 @@ export class LokiDatasource
     };
     this.variables = new LokiVariableSupport(this);
     this.logContextProvider = new LogContextProvider(this);
+    this.supportsAdjustableWindow = true;
   }
+
+  // Flag marking datasource as supporting adjusting the time range window in the logs context window: https://github.com/grafana/grafana/pull/109901
+  public supportsAdjustableWindow;
 
   /**
    * Implemented for DataSourceWithSupplementaryQueriesSupport.
@@ -739,14 +743,28 @@ export class LokiDatasource
    * Currently, it works for logs data only.
    * @returns A Promise that resolves to an array of DataFrames containing data samples.
    */
-  async getDataSamples(query: LokiQuery, timeRange: TimeRange): Promise<DataFrame[]> {
-    // Currently works only for logs sample
-    if (!isLogsQuery(query.expr) || isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
+  async getDataSamples(
+    query: LokiQuery,
+    timeRange: TimeRange,
+    options?: { convertMetricQueryToLogQuery?: boolean }
+  ): Promise<DataFrame[]> {
+    let queryExpr = query.expr;
+    if (isQueryWithError(this.interpolateString(queryExpr, placeHolderScopedVars))) {
       return [];
     }
 
+    if (!isLogsQuery(queryExpr)) {
+      // If it is not a logs query, we need to check if we need to convert it to a logs query
+      if (options?.convertMetricQueryToLogQuery) {
+        queryExpr = getLogQueryFromMetricsQuery(queryExpr);
+      } else {
+        // Otherwise, we return an empty array, as data samples are only supported for logs queries
+        return [];
+      }
+    }
+
     const lokiLogsQuery: LokiQuery = {
-      expr: query.expr,
+      expr: queryExpr,
       queryType: LokiQueryType.Range,
       refId: REF_ID_DATA_SAMPLES,
       maxLines: query.maxLines || DEFAULT_MAX_LINES_SAMPLE,

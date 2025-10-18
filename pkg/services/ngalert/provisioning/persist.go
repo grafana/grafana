@@ -32,6 +32,7 @@ type TransactionManager interface {
 type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *models.GetAlertRuleByUIDQuery) (*models.AlertRule, error)
 	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
+	ListAlertRulesPaginated(ctx context.Context, query *models.ListAlertRulesExtendedQuery) (models.RulesGroup, string, error)
 	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
 	InsertAlertRules(ctx context.Context, user *models.UserUID, rule []models.AlertRule) ([]models.AlertRuleKeyWithId, error)
 	UpdateAlertRules(ctx context.Context, user *models.UserUID, rule []models.UpdateRule) error

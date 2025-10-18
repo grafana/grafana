@@ -12,15 +12,16 @@ interface Props {
   label: string;
   hasCert: boolean;
   placeholder: string;
+  useGrow?: boolean;
 
   onChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
   onClick: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
-export const CertificationKey = ({ hasCert, label, onChange, onClick, placeholder }: Props) => {
+export const CertificationKey = ({ hasCert, label, onChange, onClick, placeholder, useGrow }: Props) => {
   return (
     <InlineFieldRow>
-      <InlineField label={label} labelWidth={14} disabled={hasCert}>
+      <InlineField label={label} labelWidth={14} disabled={hasCert} grow={useGrow}>
         {hasCert ? (
           <Input type="text" value="configured" width={24} />
         ) : (

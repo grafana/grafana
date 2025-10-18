@@ -21,13 +21,13 @@ jobs:
 
     steps:
       - name: "Checkout Grafana repo"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v5"
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: "Setup Go"
-        uses: "actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639"
+        uses: "actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5"
         with:
           go-version-file: go.mod
 

@@ -1,0 +1,129 @@
+{
+  "title": "V23 Multi Variables Migration Test Dashboard",
+  "schemaVersion": 22,
+  "templating": {
+    "list": [
+      {
+        "name": "multi_single_value",
+        "type": "query",
+        "datasource": "prometheus",
+        "multi": true,
+        "current": {
+          "value": "A",
+          "text": "A",
+          "selected": true
+        }
+      },
+      {
+        "name": "multi_array_value",
+        "type": "query",
+        "datasource": "prometheus",
+        "multi": true,
+        "current": {
+          "value": ["B", "C"],
+          "text": ["B", "C"],
+          "selected": true
+        }
+      },
+      {
+        "name": "non_multi_array_value",
+        "type": "query",
+        "datasource": "prometheus",
+        "multi": false,
+        "current": {
+          "value": ["D"],
+          "text": ["D"],
+          "selected": true
+        }
+      },
+      {
+        "name": "non_multi_single_value",
+        "type": "query",
+        "datasource": "prometheus",
+        "multi": false,
+        "current": {
+          "value": "E",
+          "text": "E",
+          "selected": true
+        }
+      },
+      {
+        "name": "no_multi_property",
+        "type": "query",
+        "datasource": "prometheus",
+        "current": {
+          "value": "F",
+          "text": "F",
+          "selected": true
+        }
+      },
+      {
+        "name": "empty_current",
+        "type": "query",
+        "datasource": "prometheus",
+        "multi": true,
+        "current": {}
+      },
+      {
+        "name": "nil_current",
+        "type": "query",
+        "datasource": "prometheus",
+        "multi": true,
+        "current": null
+      },
+      {
+        "name": "custom_variable",
+        "type": "custom",
+        "multi": true,
+        "current": {
+          "value": "G",
+          "text": "G",
+          "selected": true
+        }
+      },
+      {
+        "name": "textbox_variable",
+        "type": "textbox",
+        "multi": false,
+        "current": {
+          "value": "H",
+          "text": "H",
+          "selected": true
+        }
+      },
+      {
+        "name": "datasource_variable",
+        "type": "datasource",
+        "multi": true,
+        "current": {
+          "value": ["prometheus", "influxdb"],
+          "text": ["Prometheus", "InfluxDB"],
+          "selected": true
+        }
+      },
+      {
+        "name": "interval_variable",
+        "type": "interval",
+        "multi": false,
+        "current": {
+          "value": ["1m"],
+          "text": ["1m"],
+          "selected": true
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Test Panel",
+      "type": "stat",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up"
+        }
+      ]
+    }
+  ]
+} 

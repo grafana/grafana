@@ -18,7 +18,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
     commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
     commonOptionsBuilder.addLegendOptions(builder);
 
-    if (config.featureToggles.timeComparison) {
+    if (config.featureToggles.timeComparison && config.featureToggles.dashboardScene) {
       commonOptionsBuilder.addTimeCompareOption(builder);
     }
 

@@ -5,7 +5,7 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	iamalpha1 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
@@ -21,18 +21,18 @@ var typedResources = map[string]typeInfo{
 		"",
 	): {Type: "folder", Relations: RelationsTyped},
 	FormatGroupResource(
-		iamalpha1.TeamResourceInfo.GroupResource().Group,
-		iamalpha1.TeamResourceInfo.GroupResource().Resource,
+		iamv0alpha1.TeamResourceInfo.GroupResource().Group,
+		iamv0alpha1.TeamResourceInfo.GroupResource().Resource,
 		"",
 	): {Type: "team", Relations: RelationsTyped},
 	FormatGroupResource(
-		iamalpha1.UserResourceInfo.GroupResource().Group,
-		iamalpha1.UserResourceInfo.GroupResource().Resource,
+		iamv0alpha1.UserResourceInfo.GroupResource().Group,
+		iamv0alpha1.UserResourceInfo.GroupResource().Resource,
 		"",
 	): {Type: "user", Relations: RelationsTyped},
 	FormatGroupResource(
-		iamalpha1.ServiceAccountResourceInfo.GroupResource().Group,
-		iamalpha1.ServiceAccountResourceInfo.GroupResource().Resource,
+		iamv0alpha1.ServiceAccountResourceInfo.GroupResource().Group,
+		iamv0alpha1.ServiceAccountResourceInfo.GroupResource().Resource,
 		"",
 	): {Type: "service-account", Relations: RelationsTyped},
 }

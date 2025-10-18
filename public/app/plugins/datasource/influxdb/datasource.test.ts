@@ -273,11 +273,32 @@ describe('interpolateQueryExpr', () => {
     replace: jest.fn().mockImplementation((...rest: unknown[]) => 'templateVarReplaced'),
   } as unknown as TemplateSrv;
   let ds = getMockInfluxDS(getMockDSInstanceSettings(), templateSrvStub);
+
+  // Mock console.warn as we expect tests to use it
+  beforeEach(() => {
+    jest.spyOn(console, 'warn').mockImplementation();
+  });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should return the value as it is', () => {
     const value = 'normalValue';
     const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
     const result = ds.interpolateQueryExpr(value, variableMock, 'my query $tempVar');
     const expectation = 'normalValue';
+    expect(result).toBe(expectation);
+  });
+
+  it('should return the escaped value if the value wrapped in regex without !~ or =~', () => {
+    const value = '/special/path';
+    const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
+    const result = ds.interpolateQueryExpr(
+      value,
+      variableMock,
+      'select atan(z/sqrt(3.14)), that where path /$tempVar/'
+    );
+    const expectation = `\\/special\\/path`;
     expect(result).toBe(expectation);
   });
 
@@ -417,5 +438,159 @@ describe('interpolateQueryExpr', () => {
     const result = ds.applyTemplateVariables(mockInfluxQueryRequest() as unknown as InfluxQuery, {}, adhocFilter);
     expect(result.tags![0].value).toBe(templateVarValue);
     expect(result.adhocFilters![0].value).toBe(templateVarValue);
+  });
+});
+
+describe('interpolateVariablesInQueries', () => {
+  const templateSrvStub = {
+    replace: jest.fn().mockImplementation((target: string) => {
+      if (target === '$database') {
+        return 'test_db';
+      }
+      if (target === '$measurement') {
+        return 'cpu_usage';
+      }
+      if (target === 'SELECT * FROM $measurement WHERE database = "$database"') {
+        return 'SELECT * FROM cpu_usage WHERE database = "test_db"';
+      }
+      if (target === 'SELECT * FROM $measurement') {
+        return 'SELECT * FROM cpu_usage';
+      }
+      if (target === '$server') {
+        return 'prod-server';
+      }
+      return target;
+    }),
+  } as unknown as TemplateSrv;
+  let dsInfluxQL = getMockInfluxDS(getMockDSInstanceSettings(), templateSrvStub);
+  let dsFlux = getMockInfluxDS(getMockDSInstanceSettings({ version: InfluxVersion.Flux }), templateSrvStub);
+  let dsSQL = getMockInfluxDS(getMockDSInstanceSettings({ version: InfluxVersion.SQL }), templateSrvStub);
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return an empty array if there are no queries', () => {
+    const result = dsInfluxQL.interpolateVariablesInQueries([], {}, []);
+    expect(result).toEqual([]);
+  });
+
+  it('should interpolate template variables in query rawQuery (Flux)', () => {
+    const queries: InfluxQuery[] = [
+      {
+        refId: 'A',
+        rawQuery: true,
+        query: 'SELECT * FROM $measurement WHERE database = "$database"',
+      } as InfluxQuery,
+    ];
+
+    const result = dsFlux.interpolateVariablesInQueries(queries, {}, []);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].query).toBe('SELECT * FROM cpu_usage WHERE database = "test_db"');
+  });
+
+  it('should apply adhoc filters to queries (InfluxQL)', () => {
+    const queries: InfluxQuery[] = [
+      {
+        refId: 'A',
+        rawQuery: false,
+        measurement: 'cpu',
+        tags: [],
+      } as InfluxQuery,
+    ];
+
+    const adhocFilters: AdHocVariableFilter[] = [
+      { key: 'host', value: 'server1', operator: '=' },
+      { key: 'region', value: 'us-east', operator: '=' },
+    ];
+
+    const result = dsInfluxQL.interpolateVariablesInQueries(queries, {}, adhocFilters);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].adhocFilters).toEqual(adhocFilters);
+  });
+
+  it('should apply adhoc filters to queries (SQL)', () => {
+    const queries: InfluxQuery[] = [
+      {
+        refId: 'A',
+        rawQuery: false,
+        measurement: 'cpu',
+        tags: [],
+      } as InfluxQuery,
+    ];
+
+    const adhocFilters: AdHocVariableFilter[] = [
+      { key: 'host', value: 'server1', operator: '=' },
+      { key: 'region', value: 'us-east', operator: '=' },
+    ];
+
+    const result = dsSQL.interpolateVariablesInQueries(queries, {}, adhocFilters);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].adhocFilters).toEqual(adhocFilters);
+  });
+
+  it('should interpolate template variables in adhoc filter values (InfluxQL)', () => {
+    const templateSrvWithAdhoc = {
+      replace: jest.fn().mockImplementation((target: string) => {
+        if (target === '$server') {
+          return 'prod-server';
+        }
+        return target;
+      }),
+    } as unknown as TemplateSrv;
+
+    const ds = getMockInfluxDS(getMockDSInstanceSettings({ version: InfluxVersion.InfluxQL }), templateSrvWithAdhoc);
+    const queries: InfluxQuery[] = [
+      {
+        refId: 'A',
+        rawQuery: false,
+        measurement: 'cpu',
+        tags: [],
+      } as InfluxQuery,
+    ];
+
+    const adhocFilters: AdHocVariableFilter[] = [{ key: 'host', value: '$server', operator: '=' }];
+
+    const result = ds.interpolateVariablesInQueries(queries, {}, adhocFilters);
+
+    expect(result[0].adhocFilters![0].value).toBe('prod-server');
+  });
+
+  it('should preserve existing tags when applying adhoc filters', () => {
+    const queries: InfluxQuery[] = [
+      {
+        refId: 'A',
+        rawQuery: false,
+        measurement: 'cpu',
+        tags: [{ key: 'datacenter', value: 'dc1', operator: '=' }],
+      } as InfluxQuery,
+    ];
+
+    const adhocFilters: AdHocVariableFilter[] = [{ key: 'host', value: 'server1', operator: '=' }];
+
+    const result = dsInfluxQL.interpolateVariablesInQueries(queries, {}, adhocFilters);
+
+    expect(result[0].tags?.length).toEqual(2);
+    expect(result[0].tags![0]).toEqual({ key: 'datacenter', value: 'dc1', operator: '=' });
+    expect(result[0].tags![1]).toEqual({ key: 'host', value: 'server1', operator: '=' });
+    expect(result[0].adhocFilters).toEqual(adhocFilters);
+  });
+
+  it('should handle empty adhoc filters array', () => {
+    const queries: InfluxQuery[] = [
+      {
+        refId: 'A',
+        rawQuery: true,
+        query: 'SELECT * FROM cpu',
+      } as InfluxQuery,
+    ];
+
+    const result = dsInfluxQL.interpolateVariablesInQueries(queries, {}, []);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].adhocFilters).toEqual([]);
   });
 });

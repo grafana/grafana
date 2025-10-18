@@ -207,6 +207,10 @@ func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo 
 		resources = []string{fmt.Sprintf("/subscriptions/%s", subscription)}
 	}
 
+	if len(resources) == 0 {
+		return nil, fmt.Errorf("no resources specified for Azure traces query")
+	}
+
 	resourceOrWorkspace := resources[0]
 	appInsightsQuery := appInsightsRegExp.Match([]byte(resourceOrWorkspace))
 	resourcesMap := make(map[string]bool, 0)
@@ -236,6 +240,9 @@ func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo 
 
 	if query.QueryType == string(dataquery.AzureQueryTypeTraceExemplar) {
 		resources = queryResources
+		if len(resources) == 0 {
+			return nil, fmt.Errorf("no correlation resources found for trace exemplar query with operation ID: %s", operationId)
+		}
 		resourceOrWorkspace = resources[0]
 	}
 

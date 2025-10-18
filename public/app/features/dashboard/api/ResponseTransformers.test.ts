@@ -1,14 +1,15 @@
 import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } from '@grafana/schema';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   Spec as DashboardV2Spec,
+  defaultDataQueryKind,
   GridLayoutItemKind,
   GridLayoutKind,
   PanelKind,
   RowsLayoutKind,
   RowsLayoutRowKind,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -38,39 +39,33 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    bootData: {
-      ...jest.requireActual('@grafana/runtime').config.bootData,
-      settings: {
-        ...jest.requireActual('@grafana/runtime').config.bootData.settings,
-        datasources: {
-          PromTest: {
-            uid: 'xyz-abc',
-            name: 'PromTest',
-            id: 'prometheus',
-            meta: {
-              id: 'prometheus',
-              name: 'PromTest',
-              type: 'datasource',
-            },
-            isDefault: true,
-            apiVersion: 'v2',
-          },
-          '-- Grafana --': {
-            uid: 'grafana',
-            name: '-- Grafana --',
-            id: 'grafana',
-            meta: {
-              id: 'grafana',
-              name: '-- Grafana --',
-              type: 'datasource',
-            },
-            isDefault: false,
-          },
+    datasources: {
+      PromTest: {
+        uid: 'xyz-abc',
+        name: 'PromTest',
+        id: 'prometheus',
+        meta: {
+          id: 'prometheus',
+          name: 'PromTest',
+          type: 'datasource',
         },
-
-        defaultDatasource: 'PromTest',
+        isDefault: true,
+        apiVersion: 'v2',
+      },
+      '-- Grafana --': {
+        uid: 'grafana',
+        name: '-- Grafana --',
+        id: 'grafana',
+        meta: {
+          id: 'grafana',
+          name: '-- Grafana --',
+          type: 'datasource',
+        },
+        isDefault: false,
       },
     },
+
+    defaultDatasource: 'PromTest',
   },
 }));
 
@@ -393,7 +388,7 @@ describe('ResponseTransformers', () => {
       const transformed = ResponseTransformers.ensureV2Response(dto);
 
       // Metadata
-      expect(transformed.apiVersion).toBe('v2alpha1');
+      expect(transformed.apiVersion).toBe('v2beta1');
       expect(transformed.kind).toBe('DashboardWithAccessInfo');
       expect(transformed.metadata.annotations?.[AnnoKeyCreatedBy]).toEqual('user1');
       expect(transformed.metadata.annotations?.[AnnoKeyUpdatedBy]).toEqual('user2');
@@ -449,14 +444,15 @@ describe('ResponseTransformers', () => {
           id: 1,
           links: [],
           vizConfig: {
-            kind: 'timeseries',
+            kind: 'VizConfig',
+            group: 'timeseries',
+            version: undefined,
             spec: {
               fieldConfig: {
                 defaults: {},
                 overrides: [],
               },
               options: {},
-              pluginVersion: undefined,
             },
           },
           data: {
@@ -466,10 +462,14 @@ describe('ResponseTransformers', () => {
                 {
                   kind: 'PanelQuery',
                   spec: {
-                    datasource: 'datasource1',
                     hidden: false,
                     query: {
-                      kind: 'prometheus',
+                      kind: 'DataQuery',
+                      version: defaultDataQueryKind().version,
+                      group: 'prometheus',
+                      datasource: {
+                        name: 'datasource1',
+                      },
                       spec: {
                         expr: 'test-query',
                       },
@@ -793,7 +793,7 @@ describe('ResponseTransformers', () => {
 
     it('should transform DashboardWithAccessInfo<DashboardV2Spec> to DashboardDTO', () => {
       const dashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
-        apiVersion: 'v2alpha1',
+        apiVersion: 'v2beta1',
         kind: 'DashboardWithAccessInfo',
         metadata: {
           creationTimestamp: '2023-01-01T00:00:00Z',
@@ -973,11 +973,9 @@ describe('ResponseTransformers', () => {
 
         result.forEach((query) => {
           expect(query.kind).toBe('PanelQuery');
-          expect(query.spec.datasource).toEqual({
-            type: 'theoretical-ds',
-            uid: 'theoretical-uid',
-          });
-          expect(query.spec.query.kind).toBe('theoretical-ds');
+          expect(query.spec.query.group).toEqual('theoretical-ds');
+          expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
+          expect(query.spec.query.kind).toBe('DataQuery');
         });
       });
 
@@ -1003,11 +1001,9 @@ describe('ResponseTransformers', () => {
 
         result.forEach((query) => {
           expect(query.kind).toBe('PanelQuery');
-          expect(query.spec.datasource).toEqual({
-            type: 'theoretical-ds',
-            uid: 'theoretical-uid',
-          });
-          expect(query.spec.query.kind).toBe('theoretical-ds');
+          expect(query.spec.query.group).toEqual('theoretical-ds');
+          expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
+          expect(query.spec.query.kind).toBe('DataQuery');
         });
       });
     });
@@ -1015,14 +1011,14 @@ describe('ResponseTransformers', () => {
 
   function validateAnnotation(v1: AnnotationQuery, v2: DashboardV2Spec['annotations'][0]) {
     const { spec: v2Spec } = v2;
-
     expect(v1.name).toBe(v2Spec.name);
-    expect(v1.datasource).toBe(v2Spec.datasource);
+    expect(v1.datasource?.type).toBe(v2Spec.query.group);
+    expect(v1.datasource?.uid).toBe(v2Spec.query.datasource?.name);
     expect(v1.enable).toBe(v2Spec.enable);
     expect(v1.hide).toBe(v2Spec.hide);
     expect(v1.iconColor).toBe(v2Spec.iconColor);
-    expect(v1.builtIn).toBe(v2Spec.builtIn ? 1 : 0);
-    expect(v1.target).toBe(v2Spec.query?.spec);
+    expect(v1.builtIn).toBe(v2Spec.builtIn ? 1 : undefined);
+    expect(v1.target).toEqual(v2Spec.query.spec);
     expect(v1.filter).toEqual(v2Spec.filter);
   }
 
@@ -1031,19 +1027,22 @@ describe('ResponseTransformers', () => {
 
     expect(v1.id).toBe(v2Spec.id);
     expect(v1.id).toBe(v2Spec.id);
-    expect(v1.type).toBe(v2Spec.vizConfig.kind);
+    expect(v1.type).toBe(v2Spec.vizConfig.group);
     expect(v1.title).toBe(v2Spec.title);
     expect(v1.description).toBe(v2Spec.description);
     expect(v1.fieldConfig).toEqual(transformMappingsToV1(v2Spec.vizConfig.spec.fieldConfig));
     expect(v1.options).toBe(v2Spec.vizConfig.spec.options);
-    expect(v1.pluginVersion).toBe(v2Spec.vizConfig.spec.pluginVersion);
+    expect(v1.pluginVersion).toBe(v2Spec.vizConfig.version);
     expect(v1.links).toEqual(v2Spec.links);
     expect(v1.targets).toEqual(
       v2Spec.data.spec.queries.map((q) => {
         return {
           refId: q.spec.refId,
           hide: q.spec.hidden,
-          datasource: q.spec.datasource,
+          datasource: {
+            type: q.spec.query.spec.group,
+            uid: q.spec.query.spec.datasource?.uid,
+          },
           ...q.spec.query.spec,
         };
       })
@@ -1093,18 +1092,24 @@ describe('ResponseTransformers', () => {
     };
 
     expect(v2Common).toEqual(v1Common);
-
     if (v2.kind === 'QueryVariable') {
-      expect(v2.spec.datasource).toEqual(v1.datasource);
-
-      if (typeof v1.query === 'string') {
-        expect(v2.spec.query.spec[LEGACY_STRING_VALUE_KEY]).toEqual(v1.query);
-      } else {
-        expect(v2.spec.query).toEqual({
-          kind: v1.datasource?.type,
-          spec: {
-            ...(typeof v1.query === 'object' ? v1.query : {}),
+      expect(v2.spec.query).toMatchObject({
+        kind: 'DataQuery',
+        version: defaultDataQueryKind().version,
+        group: (v1.datasource?.type || getDefaultDataSourceRef()?.type) ?? 'grafana',
+        ...(v1.datasource?.uid && {
+          datasource: {
+            name: v1.datasource?.uid,
           },
+        }),
+      });
+      if (typeof v1.query === 'string') {
+        expect(v2.spec.query.spec).toEqual({
+          [LEGACY_STRING_VALUE_KEY]: v1.query,
+        });
+      } else {
+        expect(v2.spec.query.spec).toEqual({
+          ...(typeof v1.query === 'object' ? v1.query : {}),
         });
       }
     }
@@ -1120,7 +1125,8 @@ describe('ResponseTransformers', () => {
     }
 
     if (v2.kind === 'AdhocVariable') {
-      expect(v2.spec.datasource).toEqual(v1.datasource);
+      expect(v2.datasource?.name).toEqual(v1.datasource?.uid);
+      expect(v2.group).toEqual(v1.datasource?.type);
       // @ts-expect-error
       expect(v2.spec.filters).toEqual(v1.filters);
       // @ts-expect-error
@@ -1149,7 +1155,8 @@ describe('ResponseTransformers', () => {
     }
 
     if (v2.kind === 'GroupByVariable') {
-      expect(v2.spec.datasource).toEqual(v1.datasource);
+      expect(v2.datasource?.name).toEqual(v1.datasource?.uid);
+      expect(v2.group).toEqual(v1.datasource?.type);
       expect(v2.spec.options).toEqual(v1.options);
     }
   }

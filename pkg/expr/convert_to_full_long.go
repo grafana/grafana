@@ -14,8 +14,8 @@ const (
 	SQLDisplayFieldName = "__display_name__"
 
 	// These are not types in the SDK or dataplane contract yet.
-	numericFullLongType    = "numeric_full_long"
-	timeseriesFullLongType = "time_series_full_long"
+	numericFullLongType    = "numeric-full-long"
+	timeseriesFullLongType = "timeseries-full-long"
 )
 
 func ConvertToFullLong(frames data.Frames) (data.Frames, error) {
@@ -27,6 +27,7 @@ func ConvertToFullLong(frames data.Frames) (data.Frames, error) {
 	if frames[0].Meta != nil && frames[0].Meta.Type != "" {
 		inputType = frames[0].Meta.Type
 	} else {
+		// shouldn't hit this when calling from handleSqlInput as supportedToLongConversion is called first
 		return nil, fmt.Errorf("input frame missing FrameMeta.Type")
 	}
 
@@ -40,6 +41,7 @@ func ConvertToFullLong(frames data.Frames) (data.Frames, error) {
 	case data.FrameTypeTimeSeriesWide:
 		return convertTimeSeriesWideToFullLong(frames)
 	default:
+		// Shouldn't hit this when calling from handleSqlInput as supportedToLongConversion is called first
 		return nil, fmt.Errorf("unsupported input type %s for full long conversion", inputType)
 	}
 }

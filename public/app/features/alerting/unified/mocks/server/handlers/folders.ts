@@ -52,6 +52,7 @@ const listFoldersHandler = (folders = DEFAULT_FOLDERS) =>
     return HttpResponse.json(strippedFolders);
   });
 
+/** @deprecated Move to or use inbuilt handlers from `@grafana/test-utils` instead */
 const handlers = [listFoldersHandler(), getFolderHandler()];
 
 export default handlers;

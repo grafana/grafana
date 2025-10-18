@@ -11,9 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	_ "github.com/grafana/pyroscope-go/godeltaprof/http/pprof"
-
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -21,8 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/process"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -111,7 +111,13 @@ func RunServer(opts standalone.BuildInfo, cli *cli.Context) error {
 		return err
 	}
 
+	// Initialize tracing early to ensure it's always available for other services
+	if err := tracing.InitTracing(cfg); err != nil {
+		return err
+	}
+
 	s, err := server.Initialize(
+		cli.Context,
 		cfg,
 		server.Options{
 			PidFile:     PidFile,
@@ -125,8 +131,7 @@ func RunServer(opts standalone.BuildInfo, cli *cli.Context) error {
 		return err
 	}
 
-	ctx := context.Background()
-	go listenToSystemSignals(ctx, s)
+	go listenToSystemSignals(cli.Context, s)
 	return s.Run()
 }
 

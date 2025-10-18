@@ -10,6 +10,10 @@ const get = jest.fn(() => {
 });
 
 jest.mock('@grafana/runtime', () => ({
+  config: {
+    namespace: 'default',
+    featureToggles: {},
+  },
   getBackendSrv: () => ({
     get,
   }),

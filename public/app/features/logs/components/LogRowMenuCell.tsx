@@ -194,7 +194,6 @@ function addClickListenersToNode(nodes: ReactNode[], row: LogRowModel) {
         return node;
       }
       return cloneElement(node, {
-        // @ts-expect-error
         onClick: (event: MouseEvent<HTMLElement>) => {
           onClick(event, row);
         },

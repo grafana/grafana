@@ -109,7 +109,7 @@ class DashboardWatcher {
           return; // skip internal messages
         }
 
-        const { action } = event.message;
+        const { action, message } = event.message;
         switch (action) {
           case DashboardEventAction.EditingStarted:
           case DashboardEventAction.Saved: {
@@ -124,7 +124,13 @@ class DashboardWatcher {
               return;
             }
 
-            const showPopup = this.editing || dash.hasUnsavedChanges();
+            let showPopup = this.editing || dash.hasUnsavedChanges();
+
+            // Dashboard could have unsaved changes but if user has already restored from a version
+            // the reloadPage should be called below
+            if (message?.includes('Restored from version')) {
+              showPopup = false;
+            }
 
             if (action === DashboardEventAction.Saved) {
               if (showPopup) {

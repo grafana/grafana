@@ -21,7 +21,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	featuretoggleapi "github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	featuretoggleapi "github.com/grafana/grafana/pkg/services/featuremgmt/feature_toggle_api"
 	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 )
 

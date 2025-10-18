@@ -18,6 +18,7 @@ import {
   AdHocFiltersVariable,
   SceneVariableState,
   SceneVariableSet,
+  SwitchVariable,
 } from '@grafana/scenes';
 import { VariableHide, VariableType } from '@grafana/schema';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -26,17 +27,19 @@ import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';
-import { CustomVariableEditor, getCustomVariableOptions } from './editors/CustomVariableEditor';
+import { CustomVariableEditor } from './editors/CustomVariableEditor/CustomVariableEditor';
+import { getCustomVariableOptions } from './editors/CustomVariableEditor/getCustomVariableOptions';
 import { DataSourceVariableEditor, getDataSourceVariableOptions } from './editors/DataSourceVariableEditor';
 import { getGroupByVariableOptions, GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { getIntervalVariableOptions, IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { getQueryVariableOptions, QueryVariableEditor } from './editors/QueryVariableEditor';
+import { getSwitchVariableOptions, SwitchVariableEditor } from './editors/SwitchVariableEditor';
 import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
 
 interface EditableVariableConfig {
   name: string;
   description: string;
-  editor: React.ComponentType<any>;
+  editor: React.ComponentType<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   getOptions?: (variable: SceneVariable) => OptionsPaneItemDescriptor[];
 }
 
@@ -117,10 +120,20 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
     editor: TextBoxVariableEditor,
     getOptions: getTextBoxVariableOptions,
   },
+  switch: {
+    name: t('dashboard-scene.get-editable-variables.name.switch', 'Switch'),
+    description: t(
+      'dashboard-scene.get-editable-variables.description.users-enter-arbitrary-strings-switch',
+      'A variable that can be toggled on and off'
+    ),
+    editor: SwitchVariableEditor,
+    getOptions: getSwitchVariableOptions,
+  },
 });
 
 export function getEditableVariableDefinition(type: string): EditableVariableConfig {
   const editableVariables = getEditableVariables();
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const editableVariable = editableVariables[type as EditableVariableType];
   if (!editableVariable) {
     throw new Error(`Variable type ${type} not found`);
@@ -137,6 +150,7 @@ export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'datasource',
   'interval',
   'adhoc',
+  'switch',
   'groupby',
 ];
 
@@ -187,6 +201,8 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
       return new GroupByVariable(initialState);
     case 'textbox':
       return new TextBoxVariable(initialState);
+    case 'switch':
+      return new SwitchVariable(initialState);
   }
 }
 
@@ -262,7 +278,8 @@ export function isSceneVariableInstance(sceneObject: SceneObject): sceneObject i
     sceneUtils.isIntervalVariable(sceneObject) ||
     sceneUtils.isQueryVariable(sceneObject) ||
     sceneUtils.isTextBoxVariable(sceneObject) ||
-    sceneUtils.isGroupByVariable(sceneObject)
+    sceneUtils.isGroupByVariable(sceneObject) ||
+    sceneUtils.isSwitchVariable(sceneObject)
   );
 }
 

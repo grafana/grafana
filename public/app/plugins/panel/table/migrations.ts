@@ -1,4 +1,4 @@
-import { omitBy, isNil, isNumber, defaultTo, groupBy } from 'lodash';
+import { omitBy, isNil, isNumber, defaultTo, groupBy, omit } from 'lodash';
 
 import {
   PanelModel,
@@ -9,6 +9,7 @@ import {
   FieldConfig,
   DataFrame,
   FieldType,
+  ByNamesMatcherMode,
 } from '@grafana/data';
 import { ReduceTransformerOptions } from '@grafana/data/internal';
 
@@ -24,6 +25,10 @@ export const tableMigrationHandler = (panel: PanelModel<Options>): Partial<Optio
   if (!panel.pluginVersion && 'columns' in panel) {
     console.log('Was angular table', panel);
   }
+
+  migrateTextWrapToFieldLevel(panel);
+  migrateHiddenFields(panel);
+  migrateFooterV2(panel);
 
   // Nothing changed
   return panel.options;
@@ -136,7 +141,7 @@ const migrateTableStyleToOverride = (style: Style) => {
     });
   }
 
-  if (style.decimals) {
+  if (style.decimals !== undefined) {
     override.properties.push({
       id: 'decimals',
       value: style.decimals,
@@ -186,7 +191,7 @@ const migrateTableStyleToOverride = (style: Style) => {
     });
   }
 
-  if (style.thresholds?.length) {
+  if (style.thresholds?.length && style.colors?.length) {
     override.properties.push({
       id: 'thresholds',
       value: {
@@ -216,7 +221,7 @@ const migrateDefaults = (prevDefaults: Style) => {
       isNil
     );
 
-    if (prevDefaults.thresholds.length) {
+    if (prevDefaults.thresholds && prevDefaults.thresholds.length) {
       const thresholds: ThresholdsConfig = {
         mode: ThresholdsMode.Absolute,
         steps: generateThresholds(prevDefaults.thresholds, prevDefaults.colors),
@@ -296,4 +301,113 @@ export const migrateFromParentRowIndexToNestedFrames = (frames: DataFrame[] | nu
 
 export const hasDeprecatedParentRowIndex = (frames: DataFrame[] | null) => {
   return frames?.some((df) => df.meta?.custom?.parentRowIndex !== undefined);
+};
+
+export const migrateTextWrapToFieldLevel = (panel: PanelModel<Partial<Options>>) => {
+  if (panel.fieldConfig?.defaults.custom?.wrapText !== undefined) {
+    // already migrated
+    return;
+  }
+
+  const legacyDefaultWrapText: boolean | undefined = panel.fieldConfig?.defaults.custom?.cellOptions?.wrapText;
+
+  panel.fieldConfig.overrides = panel.fieldConfig.overrides.map((override) => {
+    if (override.properties) {
+      override.properties = override.properties.flatMap((property) => {
+        if (property.id === 'custom.cellOptions' && property.value && property.value.wrapText !== undefined) {
+          return [
+            { ...property, value: { ...omit(property.value, 'wrapText') } },
+            { id: 'custom.wrapText', value: property.value.wrapText },
+          ];
+        }
+        return [property];
+      });
+    }
+    return override;
+  });
+
+  panel.fieldConfig.defaults.custom = panel.fieldConfig.defaults.custom ?? {};
+  panel.fieldConfig.defaults.custom.wrapText = legacyDefaultWrapText;
+  delete panel.fieldConfig.defaults.custom.cellOptions?.wrapText;
+
+  return panel;
+};
+
+export const migrateHiddenFields = (panel: PanelModel<Partial<Options>>) => {
+  panel.fieldConfig.overrides = panel.fieldConfig.overrides.map((override) => {
+    if (override.properties) {
+      override.properties = override.properties.map((property) => {
+        if (property.id === 'custom.hidden') {
+          return { ...property, id: 'custom.hideFrom.viz' };
+        }
+        return property;
+      });
+    }
+    return override;
+  });
+
+  return panel;
+};
+
+interface LegacyTableFooterOptions {
+  show: boolean;
+  reducer: string[];
+  fields?: string[];
+  countRows?: boolean;
+  enablePagination?: boolean;
+}
+
+export const migrateFooterV2 = (panel: PanelModel<Options>) => {
+  if (panel.options && 'footer' in panel.options) {
+    // we need to cast the footer to the old type to work with it here.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const oldFooter = panel.options.footer as LegacyTableFooterOptions;
+
+    if (oldFooter.show) {
+      const reducers = oldFooter.reducer;
+
+      panel.fieldConfig.defaults.custom = {
+        ...panel.fieldConfig.defaults.custom,
+        footer: {
+          reducers: reducers,
+        },
+      };
+
+      if (oldFooter.countRows && reducers[0] === 'count') {
+        panel.fieldConfig.defaults.custom.footer.reducers = ['countAll'];
+      } else if (oldFooter.fields && oldFooter.fields.length > 1) {
+        delete panel.fieldConfig.defaults.custom.footer;
+
+        // Fields is an array of field names, so push a byNames matcher
+        // on with the matched reducer.
+        panel.fieldConfig.overrides.push({
+          matcher: {
+            id: FieldMatcherID.byNames,
+            options: {
+              mode: ByNamesMatcherMode.include,
+              names: oldFooter.fields,
+            },
+          },
+          properties: [{ id: 'custom.footer.reducers', value: reducers }],
+        });
+      } else if (oldFooter.fields && oldFooter.fields.length === 1) {
+        delete panel.fieldConfig.defaults.custom.footer;
+
+        // Single field, so we can use a byName matcher
+        panel.fieldConfig.overrides.push({
+          matcher: {
+            id: FieldMatcherID.byName,
+            options: oldFooter.fields[0],
+          },
+          properties: [{ id: 'custom.footer.reducers', value: reducers }],
+        });
+      }
+    }
+
+    if (oldFooter.enablePagination != null) {
+      panel.options.enablePagination = oldFooter.enablePagination;
+    }
+
+    delete panel.options.footer;
+  }
 };

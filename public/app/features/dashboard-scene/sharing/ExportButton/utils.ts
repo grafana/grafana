@@ -3,6 +3,7 @@ import { lastValueFrom } from 'rxjs';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 
+import { contextSrv } from '../../../../core/services/context_srv';
 import { DashboardScene } from '../../scene/DashboardScene';
 
 /**
@@ -28,7 +29,7 @@ export interface ImageGenerationResult {
  */
 export async function generateDashboardImage({
   dashboard,
-  scale = config.rendererDefaultImageScale || 1,
+  scale = config.rendererDefaultImageScale || 2,
 }: ImageGenerationOptions): Promise<ImageGenerationResult> {
   try {
     // Check if renderer plugin is available
@@ -46,11 +47,11 @@ export async function generateDashboardImage({
       absolute: true,
       updateQuery: {
         height: -1, // image renderer will scroll through the dashboard and set the appropriate height
-        width: config.rendererDefaultImageWidth || 1000,
+        width: window.innerWidth || config.rendererDefaultImageWidth || 1000,
         scale,
         kiosk: true,
         hideNav: true,
-        orgId: String(config.bootData.user.orgId),
+        orgId: String(contextSrv.user.orgId),
         fullPageImage: true,
       },
     });

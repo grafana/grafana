@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
@@ -23,6 +24,9 @@ func newTestDatasource(opts ...func(*DataSource)) *DataSource {
 		AWSConfigProvider: awsauth.NewFakeConfigProvider(false),
 		logger:            log.NewNullLogger(),
 		tagValueCache:     cache.New(0, 0),
+		Settings: models.CloudWatchSettings{
+			AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-1"},
+		},
 	}
 	ds.resourceHandler = httpadapter.New(ds.newResourceMux())
 	for _, opt := range opts {

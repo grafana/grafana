@@ -19,7 +19,7 @@ To learn more about Grafana Enterprise, refer to [our product page](/enterprise)
 
 ## Enterprise features in Grafana Cloud
 
-Many Grafana Enterprise features are also available in [Grafana Cloud](/docs/grafana-cloud) Free, Pro, and Advanced accounts. For details, refer to [Grafana Cloud pricing](/pricing/#featuresTable).
+Many Grafana Enterprise features are also available in paid [Grafana Cloud](/docs/grafana-cloud) accounts. For details, refer to [Grafana Cloud features](/docs/grafana-cloud/introduction/understand-grafana-cloud-features/). For pricing and plans, refer to [Grafana Cloud pricing](https://grafana.com/pricing/).
 
 To migrate to Grafana Cloud, refer to [Migrate from Grafana Enterprise to Grafana Cloud](/docs/grafana/<GRAFANA_VERSION>/administration/migration-guide/)
 
@@ -107,6 +107,7 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [SAP HANA®](/grafana/plugins/grafana-saphana-datasource)
 - [ServiceNow](/grafana/plugins/grafana-servicenow-datasource)
 - [Snowflake](/grafana/plugins/grafana-snowflake-datasource)
+- [SolarWinds](/grafana/plugins/grafana-solarwinds-datasource)
 - [Splunk](/grafana/plugins/grafana-splunk-datasource)
 - [Splunk Infrastructure monitoring (SignalFx)](/grafana/plugins/grafana-splunk-monitoring-datasource)
 - [Sqlyze Datasource](/grafana/plugins/grafana-odbc-datasource)

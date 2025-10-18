@@ -21,7 +21,7 @@ weight: 320
 # Configure SCIM with Azure AD
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
 {{< admonition type="warning" >}}
@@ -49,7 +49,7 @@ Refer to the [SAML authentication with Azure AD documentation](../../configure-a
 
 Before configuring SCIM with Azure AD, ensure you have:
 
-- Grafana Enterprise or Grafana Cloud Advanced
+- Grafana Enterprise or a paid Grafana Cloud account with SCIM provisioning enabled.
 - Admin access to both Grafana and Azure AD
 - SCIM feature enabled in Grafana
 
@@ -61,8 +61,22 @@ To enable SCIM provisioning in Grafana, create a service account and generate a 
 
 1. Navigate to **Administration > Users and access > Service accounts**
 2. Click **Add service account**
-3. Create a new service account with Admin role
-4. Create a new token for the newly created service account and save it securely
+3. Create a new service account with **Role: "None"**
+4. In the service account **Permissions** tab, add these permissions:
+
+   **Allow the service account to sync users:**
+   - `org.users:read`
+   - `org.users:write`
+   - `org.users:add`
+   - `org.users:remove`
+
+   **Allow the service account to sync groups:**
+   - `teams:read`
+   - `teams:create`
+   - `teams:write`
+   - `teams:delete`
+
+5. Create a new token for the newly created service account and save it securely
    - This token will be used in the Azure AD configuration
 
 ## Configure SCIM in Azure AD
@@ -84,6 +98,10 @@ Configure the enterprise application in Azure AD to enable automated user and te
 3. Configure the following settings:
 
 - **Tenant URL:**
+
+  You can copy the tenant URL directly from the SCIM UI at **Administration > Authentication > SCIM**. Your stack domain and stack ID can also be found in the SCIM UI.
+
+  Alternatively, you can construct the URL manually:
   - For Grafana Cloud instances:
     ```
     https://{stack-name}.grafana.net/apis/scim.grafana.app/v0alpha1/namespaces/stacks-{stack-id}
@@ -94,6 +112,7 @@ Configure the enterprise application in Azure AD to enable automated user and te
     https://{your-grafana-domain}/apis/scim.grafana.app/v0alpha1/namespaces/default
     ```
     Replace `{your-grafana-domain}` with your Grafana instance's domain (e.g., `grafana.yourcompany.com`).
+
 - **Secret Token:** Enter the service account token from Grafana
 
 4. Click **Test connection** to verify the configuration
@@ -119,6 +138,10 @@ Configure the following required attributes:
 | `displayName`                                                 | `displayName`                  |
 | `objectId`                                                    | `externalId`                   |
 | `Switch([IsSoftDeleted], , "False", "True", "True", "False")` | `active`                       |
+
+{{< admonition type="note" >}}
+During provisioning, if the identity provider sends user attributes that has no use in Grafana, those attributes will be gracefully ignored.
+{{< /admonition >}}
 
 ### Enable provisioning
 

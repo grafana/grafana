@@ -3,7 +3,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 
-import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
+import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 import { dashboardEditActions } from '../../edit-pane/shared';
 
 import { AutoGridItem } from './AutoGridItem';
@@ -16,7 +16,7 @@ export function getOptions(model: AutoGridItem): OptionsPaneCategoryDescriptor[]
   }).addItem(
     new OptionsPaneItemDescriptor({
       title: t('dashboard.auto-grid.item-options.repeat.variable.title', 'Repeat by variable'),
-      id: 'repeat-by-variable-select',
+      id: 'auto-grid-repeat-by-variable',
       description: t(
         'dashboard.auto-grid.item-options.repeat.variable.description',
         'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'

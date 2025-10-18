@@ -48,9 +48,6 @@ const synthwaveTheme: NewThemeOptions = {
     hoverFactor: 0.03,
     tonalOffset: 0.15,
   },
-  shape: {
-    borderRadius: 6,
-  },
 };
 
 export default synthwaveTheme;

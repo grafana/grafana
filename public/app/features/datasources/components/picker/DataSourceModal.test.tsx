@@ -163,6 +163,7 @@ describe('DataSourceDropdown', () => {
         onDismiss: () => {},
         current: mockDS1.name,
         ...filters,
+        dataSources: mockDSList,
       };
 
       getListMock.mockClear();

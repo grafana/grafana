@@ -13,14 +13,14 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/tests/alertmanager"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationRemoteAlertmanagerConfigUpload tests that when we post an alertmanager
 // configuration to Grafana with remote alertmanager enabled, it gets uploaded to the remote Mimir.
 func TestIntegrationRemoteAlertmanagerConfigUpload(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	s, err := alertmanager.NewAlertmanagerScenario()
@@ -136,9 +136,8 @@ receivers:
 // a historical alertmanager configuration with extra configs, it gets properly decrypted
 // and uploaded to the remote Mimir.
 func TestIntegrationRemoteAlertmanagerHistoricalConfigActivation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	s, err := alertmanager.NewAlertmanagerScenario()

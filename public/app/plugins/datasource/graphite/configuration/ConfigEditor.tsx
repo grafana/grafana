@@ -5,10 +5,10 @@ import {
   updateDatasourcePluginJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOptionChecked,
+  store,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert, DataSourceHttpSettings, Field, FieldSet, Select, Switch } from '@grafana/ui';
-import { config } from 'app/core/config';
-import store from 'app/core/store';
 
 import { GraphiteOptions, GraphiteType } from '../types';
 import { DEFAULT_GRAPHITE_VERSION, GRAPHITE_VERSIONS } from '../versions';

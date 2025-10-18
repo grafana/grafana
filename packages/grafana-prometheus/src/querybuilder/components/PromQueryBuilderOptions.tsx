@@ -112,7 +112,7 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
                 type="text"
                 aria-label={t(
                   'grafana-prometheus.querybuilder.prom-query-builder-options.aria-label-lower-limit-parameter',
-                  'Set lower limit for the step parameter'
+                  'Min step text box, set lower limit for the step parameter'
                 )}
                 placeholder={t('grafana-prometheus.querybuilder.prom-query-builder-options.placeholder-auto', 'auto')}
                 minWidth={10}
@@ -128,13 +128,25 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
                 allowCustomValue
                 onChange={onChangeFormat}
                 options={FORMAT_OPTIONS}
+                aria-label={t(
+                  'grafana-prometheus.querybuilder.prom-query-builder-options.aria-label-format',
+                  'Format combobox'
+                )}
               />
             </EditorField>
             <EditorField
               label={t('grafana-prometheus.querybuilder.prom-query-builder-options.label-type', 'Type')}
               data-testid={selectors.components.DataSource.Prometheus.queryEditor.type}
             >
-              <RadioButtonGroup options={queryTypeOptions} value={queryTypeValue} onChange={onQueryTypeChange} />
+              <RadioButtonGroup
+                options={queryTypeOptions}
+                value={queryTypeValue}
+                onChange={onQueryTypeChange}
+                aria-label={t(
+                  'grafana-prometheus.querybuilder.prom-query-builder-options.aria-label-type',
+                  'Type radio button group'
+                )}
+              />
             </EditorField>
             {shouldShowExemplarSwitch(query, app) && (
               <EditorField
@@ -144,6 +156,10 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
                   value={query.exemplar || false}
                   onChange={onExemplarChange}
                   data-testid={selectors.components.DataSource.Prometheus.queryEditor.exemplars}
+                  aria-label={t(
+                    'grafana-prometheus.querybuilder.prom-query-builder-options.aria-label-exemplars',
+                    'Exemplars switch.'
+                  )}
                 />
               </EditorField>
             )}

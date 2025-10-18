@@ -34,6 +34,9 @@ func GoLDFlags(flags []LDFlag) string {
 // GoBuildCommand returns the arguments for go build to be used in 'WithExec'.
 func GoBuildCommand(output string, ldflags []LDFlag, tags []string, main string) []string {
 	args := []string{"go", "build",
+		// We should not publish Grafana as a Go module, disabling vcs changes the version to (devel)
+		// and works better with SBOM and Vulnerability Scanners.
+		"-buildvcs=false",
 		fmt.Sprintf("-ldflags=\"%s\"", GoLDFlags(ldflags)),
 		fmt.Sprintf("-o=%s", output),
 		"-trimpath",

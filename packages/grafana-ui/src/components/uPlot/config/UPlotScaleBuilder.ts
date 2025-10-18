@@ -22,6 +22,8 @@ export interface ScaleProps {
   centeredZero?: boolean;
   decimals?: DecimalCount;
   stackingMode?: StackingMode;
+  padMinBy?: number;
+  padMaxBy?: number;
 }
 
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
@@ -45,6 +47,8 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       centeredZero,
       decimals,
       stackingMode,
+      padMinBy = 0.1,
+      padMaxBy = 0.1,
     } = this.props;
 
     if (stackingMode === StackingMode.Percent) {
@@ -144,13 +148,13 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
 
     const rangeConfig: Range.Config = {
       min: {
-        pad: 0.1,
+        pad: padMinBy,
         hard: hardMin ?? -Infinity,
         soft: softMin || 0,
         mode: softMinMode,
       },
       max: {
-        pad: 0.1,
+        pad: padMaxBy,
         hard: hardMax ?? Infinity,
         soft: softMax || 0,
         mode: softMaxMode,

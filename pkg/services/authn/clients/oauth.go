@@ -297,7 +297,9 @@ func (c *OAuth) Logout(ctx context.Context, user identity.Requester, sessionToke
 
 	ctxLogger := c.log.FromContext(ctx).New("userID", userID)
 
-	if err := c.oauthService.InvalidateOAuthTokens(ctx, user, sessionToken); err != nil {
+	if err := c.oauthService.InvalidateOAuthTokens(ctx, user, &oauthtoken.TokenRefreshMetadata{
+		ExternalSessionID: sessionToken.ExternalSessionId,
+		AuthModule:        user.GetAuthenticatedBy()}); err != nil {
 		ctxLogger.Error("Failed to invalidate tokens", "error", err)
 	}
 

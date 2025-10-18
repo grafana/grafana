@@ -95,9 +95,24 @@ export function formatDuration(duration: number): string {
     return `${_round(duration / primaryUnit.microseconds, 2)}${primaryUnit.unit}`;
   }
 
-  const primaryValue = Math.floor(duration / primaryUnit.microseconds);
+  let primaryValue = Math.floor(duration / primaryUnit.microseconds);
+  let secondaryValue = (duration / secondaryUnit.microseconds) % primaryUnit.ofPrevious;
+  const secondaryValueRounded = Math.round(secondaryValue);
+
+  // Handle rollover case before rounding (e.g., 60s should become 1m, not 0m 60s)
+  if (secondaryValueRounded === primaryUnit.ofPrevious) {
+    primaryValue += 1;
+    secondaryValue = 0;
+  } else {
+    secondaryValue = secondaryValueRounded;
+  }
+
   const primaryUnitString = `${primaryValue}${primaryUnit.unit}`;
-  const secondaryValue = Math.round((duration / secondaryUnit.microseconds) % primaryUnit.ofPrevious);
+
+  if (secondaryValue === 0) {
+    return primaryUnitString;
+  }
+
   const secondaryUnitString = `${secondaryValue}${secondaryUnit.unit}`;
-  return secondaryValue === 0 ? primaryUnitString : `${primaryUnitString} ${secondaryUnitString}`;
+  return `${primaryUnitString} ${secondaryUnitString}`;
 }

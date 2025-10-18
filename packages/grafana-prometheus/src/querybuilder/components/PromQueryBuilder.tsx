@@ -6,7 +6,8 @@ import { PanelData } from '@grafana/data';
 import { PrometheusDatasource } from '../../datasource';
 import { PromVisualQuery } from '../types';
 
-import { BaseQueryBuilder } from './shared/BaseQueryBuilder';
+import { NestedQueryList } from './NestedQueryList';
+import { QueryBuilderContent } from './QueryBuilderContent';
 
 interface PromQueryBuilderProps {
   query: PromVisualQuery;
@@ -18,7 +19,22 @@ interface PromQueryBuilderProps {
 }
 
 export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
-  return <BaseQueryBuilder {...props} />;
+  const { query, datasource, onChange, onRunQuery, showExplain } = props;
+
+  return (
+    <>
+      <QueryBuilderContent {...props} />
+      {query.binaryQueries && query.binaryQueries.length > 0 && (
+        <NestedQueryList
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          onRunQuery={onRunQuery}
+          showExplain={showExplain}
+        />
+      )}
+    </>
+  );
 });
 
 PromQueryBuilder.displayName = 'PromQueryBuilder';

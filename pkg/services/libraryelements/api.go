@@ -8,13 +8,18 @@ import (
 	"net/http"
 	"strings"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -28,11 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 )
 
 func (l *LibraryElementService) registerAPIEndpoints() {
@@ -340,7 +340,7 @@ func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext
 			ConnectionID:  dashboard.ID, // nolint:staticcheck
 			ConnectionUID: dashboard.UID,
 			// returns the creation information of the library element, not the connection
-			CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+			CreatedBy: model.LibraryElementDTOMetaUser{
 				Id:        element.Meta.CreatedBy.Id,
 				Name:      element.Meta.CreatedBy.Name,
 				AvatarUrl: element.Meta.CreatedBy.AvatarUrl,
@@ -382,7 +382,10 @@ func (l *LibraryElementService) filterLibraryPanelsByPermission(c *contextmodel.
 	for _, p := range elements {
 		allowed, err := l.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ac.EvalPermission(ActionLibraryPanelsRead, ScopeLibraryPanelsProvider.GetResourceScopeUID(p.UID)))
 		if err != nil {
-			return nil, err
+			// This could fail because the folder that contains the library panel does not exist or the user doesn't have permissions to read it.
+			// We skip it instead of breaking the library panel list rendering flow and log the error.
+			l.log.Warn("Failed to evaluate permissions", "error", err)
+			continue
 		}
 		if allowed {
 			filteredPanels = append(filteredPanels, p)
@@ -710,7 +713,7 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 	}
 	for _, user := range users {
 		if user.UID == createdBy {
-			dto.Meta.CreatedBy = librarypanel.LibraryElementDTOMetaUser{
+			dto.Meta.CreatedBy = model.LibraryElementDTOMetaUser{
 				Id:        user.ID,
 				Name:      user.Login,
 				AvatarUrl: dtos.GetGravatarUrl(lk8s.cfg, user.Email),
@@ -718,7 +721,7 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 		}
 		// not else because /api returns the same user for updated if it was never updated
 		if user.UID == updatedBy {
-			dto.Meta.UpdatedBy = librarypanel.LibraryElementDTOMetaUser{
+			dto.Meta.UpdatedBy = model.LibraryElementDTOMetaUser{
 				Id:        user.ID,
 				Name:      user.Login,
 				AvatarUrl: dtos.GetGravatarUrl(lk8s.cfg, user.Email),

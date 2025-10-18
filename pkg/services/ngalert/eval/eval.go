@@ -45,7 +45,7 @@ type expressionExecutor interface {
 
 type expressionBuilder interface {
 	expressionExecutor
-	BuildPipeline(req *expr.Request) (expr.DataPipeline, error)
+	BuildPipeline(ctx context.Context, req *expr.Request) (expr.DataPipeline, error)
 }
 
 type conditionEvaluator struct {
@@ -849,11 +849,11 @@ func (e *evaluatorImpl) Create(ctx EvaluationContext, condition models.Condition
 	if err != nil {
 		return nil, err
 	}
-	return e.create(condition, req)
+	return e.create(ctx.Ctx, condition, req)
 }
 
-func (e *evaluatorImpl) create(condition models.Condition, req *expr.Request) (ConditionEvaluator, error) {
-	pipeline, err := e.expressionService.BuildPipeline(req)
+func (e *evaluatorImpl) create(ctx context.Context, condition models.Condition, req *expr.Request) (ConditionEvaluator, error) {
+	pipeline, err := e.expressionService.BuildPipeline(ctx, req)
 	if err != nil {
 		return nil, err
 	}

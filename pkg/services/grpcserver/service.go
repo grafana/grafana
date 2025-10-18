@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
@@ -104,12 +105,43 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		opts = append(opts, grpc.MaxSendMsgSize(s.cfg.MaxSendMsgSize))
 	}
 
+	// Apply connection management settings
+	keepaliveParams := keepalive.ServerParameters{
+		MaxConnectionAge:      s.cfg.MaxConnectionAge,
+		MaxConnectionAgeGrace: s.cfg.MaxConnectionAgeGrace,
+		MaxConnectionIdle:     s.cfg.MaxConnectionIdle,
+		Time:                  s.cfg.KeepaliveTime,
+		Timeout:               s.cfg.KeepaliveTimeout,
+	}
+	keepalivePolicy := keepalive.EnforcementPolicy{
+		MinTime: s.cfg.KeepaliveMinTime,
+	}
+
+	// Only add keepalive options if any values are configured
+	if s.cfg.MaxConnectionAge > 0 || s.cfg.MaxConnectionAgeGrace > 0 || s.cfg.MaxConnectionIdle > 0 ||
+		s.cfg.KeepaliveTime > 0 || s.cfg.KeepaliveTimeout > 0 {
+		opts = append(opts, grpc.KeepaliveParams(keepaliveParams))
+	}
+	if s.cfg.KeepaliveMinTime > 0 {
+		opts = append(opts, grpc.KeepaliveEnforcementPolicy(keepalivePolicy))
+	}
+
 	s.server = grpc.NewServer(opts...)
 	return s, nil
 }
 
 func (s *gPRCServerService) Run(ctx context.Context) error {
-	s.logger.Info("Running GRPC server", "address", s.cfg.Address, "network", s.cfg.Network, "tls", s.cfg.TLSConfig != nil, "max_recv_msg_size", s.cfg.MaxRecvMsgSize, "max_send_msg_size", s.cfg.MaxSendMsgSize)
+	s.logger.Info("Running GRPC server",
+		"address", s.cfg.Address,
+		"network", s.cfg.Network,
+		"tls", s.cfg.TLSConfig != nil,
+		"max_recv_msg_size", s.cfg.MaxRecvMsgSize,
+		"max_send_msg_size", s.cfg.MaxSendMsgSize,
+		"max_connection_age", s.cfg.MaxConnectionAge,
+		"max_connection_idle", s.cfg.MaxConnectionIdle,
+		"keepalive_time", s.cfg.KeepaliveTime,
+		"keepalive_timeout", s.cfg.KeepaliveTimeout,
+		"keepalive_min_time", s.cfg.KeepaliveMinTime)
 
 	listener, err := net.Listen(s.cfg.Network, s.cfg.Address)
 	if err != nil {

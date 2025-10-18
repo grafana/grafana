@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -20,9 +20,9 @@ interface Props {
 
 const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete }: Props) => {
   return (
-    <Card>
+    <Card noMargin>
       <Card.Heading>
-        {playlist.spec.title}
+        {playlist.spec?.title}
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
             <DashNavButton
@@ -31,7 +31,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
               iconSize="lg"
               onClick={() => {
                 showModal(ShareModal, {
-                  playlistUid: playlist.metadata.name ?? '',
+                  playlistUid: playlist.metadata?.name ?? '',
                   onDismiss: hideModal,
                 });
               }}
@@ -45,7 +45,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
         </Button>
         {contextSrv.isEditor && (
           <>
-            <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.metadata.name}`} icon="cog">
+            <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.metadata?.name}`} icon="cog">
               <Trans i18nKey="playlist-page.card.edit">Edit playlist</Trans>
             </LinkButton>
             <Button
@@ -66,7 +66,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
 const PlaylistCardSkeleton: SkeletonComponent = ({ rootProps }) => {
   const skeletonStyles = useStyles2(getSkeletonStyles);
   return (
-    <Card {...rootProps}>
+    <Card noMargin {...rootProps}>
       <Card.Heading>
         <Skeleton width={140} />
       </Card.Heading>

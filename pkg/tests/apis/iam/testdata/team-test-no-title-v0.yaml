@@ -1,0 +1,10 @@
+apiVersion: iam.grafana.app/v0alpha1
+kind: Team
+metadata:
+  name: no-title-team
+spec:
+  title: ""
+  email: notitle@example.com
+  provisioned: false
+
+

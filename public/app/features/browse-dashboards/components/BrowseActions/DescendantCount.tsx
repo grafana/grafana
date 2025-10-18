@@ -2,8 +2,8 @@ import Skeleton from 'react-loading-skeleton';
 
 import { t } from '@grafana/i18n';
 import { Alert, Text } from '@grafana/ui';
+import { useGetAffectedItems } from 'app/api/clients/folder/v1beta1/hooks';
 
-import { useGetAffectedItemsQuery } from '../../api/browseDashboardsAPI';
 import { DashboardTreeSelection } from '../../types';
 
 import { buildBreakdownString } from './utils';
@@ -13,7 +13,7 @@ export interface Props {
 }
 
 export const DescendantCount = ({ selectedItems }: Props) => {
-  const { data, isFetching, isLoading, error } = useGetAffectedItemsQuery(selectedItems);
+  const { data, isFetching, isLoading, error } = useGetAffectedItems(selectedItems);
 
   return error ? (
     <Alert
@@ -25,7 +25,7 @@ export const DescendantCount = ({ selectedItems }: Props) => {
     />
   ) : (
     <Text element="p" color="secondary">
-      {data && buildBreakdownString(data.folder, data.dashboard, data.libraryPanel, data.alertRule)}
+      {data && buildBreakdownString(data.folders, data.dashboards, data.library_elements, data.alertrules)}
       {(isFetching || isLoading) && <Skeleton width={200} />}
     </Text>
   );

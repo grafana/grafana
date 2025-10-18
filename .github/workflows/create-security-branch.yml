@@ -61,7 +61,7 @@ jobs:
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ steps.generate_token.outputs.token }}
           repository: ${{ inputs.repository }}

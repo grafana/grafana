@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { FC, useEffect } from 'react';
+import { FC } from 'react';
 import { Controller, DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -14,7 +14,11 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types/alerting';
+import {
+  NotificationChannelOption,
+  NotificationChannelSecureFields,
+  OptionMeta,
+} from 'app/features/alerting/unified/types/alerting';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
 import { StringArrayInput } from './StringArrayInput';
@@ -112,7 +116,7 @@ const OptionInput: FC<Props & { id: string }> = ({
   getOptionMeta,
 }) => {
   const styles = useStyles2(getStyles);
-  const { control, register, unregister, setValue } = useFormContext();
+  const { control, register, setValue } = useFormContext();
 
   const optionMeta = getOptionMeta?.(option);
 
@@ -120,14 +124,6 @@ const OptionInput: FC<Props & { id: string }> = ({
 
   const secureFieldKey = option.secure && option.secureFieldKey ? option.secureFieldKey : '';
   const isEncryptedInput = secureFieldKey && secureFields?.[secureFieldKey];
-
-  // workaround for https://github.com/react-hook-form/react-hook-form/issues/4993#issuecomment-829012506
-  useEffect(
-    () => () => {
-      unregister(name, { keepValue: false });
-    },
-    [unregister, name]
-  );
 
   const useTemplates = option.placeholder.includes('{{ template');
 

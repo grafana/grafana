@@ -27,3 +27,5 @@ export {
 } from '../services/pluginExtensions/getObservablePluginLinks';
 
 export { UserStorage } from '../utils/userStorage';
+
+export { initOpenFeature, evaluateBooleanFlag } from './openFeature';

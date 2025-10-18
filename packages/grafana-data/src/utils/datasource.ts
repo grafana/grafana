@@ -29,8 +29,14 @@ export function getDataSourceRef(ds: DataSourceInstanceSettings): DataSourceRef 
  *
  * @public
  */
-export function isDataSourceRef(ref: DataSourceRef | string | null | undefined): ref is DataSourceRef {
-  return typeof ref === 'object' && typeof ref?.uid === 'string';
+export function isDataSourceRef(ref: unknown): ref is DataSourceRef {
+  if (typeof ref !== 'object' || ref === null) {
+    return false;
+  }
+
+  const hasUid = 'uid' in ref && typeof ref.uid === 'string';
+  const hasType = 'type' in ref && typeof ref.type === 'string';
+  return hasUid || hasType;
 }
 
 /**

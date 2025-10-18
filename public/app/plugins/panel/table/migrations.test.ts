@@ -1,6 +1,13 @@
-import { createDataFrame, FieldType, PanelModel } from '@grafana/data';
+import { ByNamesMatcherMode, createDataFrame, FieldMatcherID, FieldType, PanelModel } from '@grafana/data';
+import { TableCellDisplayMode } from '@grafana/ui';
 
-import { migrateFromParentRowIndexToNestedFrames, tablePanelChangedHandler } from './migrations';
+import {
+  migrateFooterV2,
+  migrateFromParentRowIndexToNestedFrames,
+  migrateHiddenFields,
+  migrateTextWrapToFieldLevel,
+  tablePanelChangedHandler,
+} from './migrations';
 
 describe('Table Migrations', () => {
   it('migrates transform out to core transforms', () => {
@@ -360,5 +367,302 @@ describe('Table Migrations', () => {
     expect(newFormat[1].fields[1].values[1][0].fields[0].name).toBe('field_1');
     expect(newFormat[1].fields[1].values[0][0].fields[0].values[0]).toBe('0_subA');
     expect(newFormat[1].fields[1].values[1][0].fields[0].values[0]).toBe('1_subA');
+  });
+
+  describe('migrateTextWrapToFieldLevel', () => {
+    it('migrates a top-level config.custom.cellOptions.wrapText to a config.custom.wrapText', () => {
+      const panel = {
+        fieldConfig: {
+          defaults: {
+            custom: {
+              cellOptions: {
+                wrapText: true,
+              },
+            },
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateTextWrapToFieldLevel(panel);
+      expect(panel.fieldConfig.defaults.custom.wrapText).toBe(true);
+      expect(panel.fieldConfig.defaults.custom.cellOptions.wrapText).toBeUndefined();
+    });
+
+    it('migrates field override config.custom.cellOptions.wrapTexts to a field override config.custom.wrapTexts', () => {
+      const panel = {
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'field1' },
+              properties: [
+                {
+                  id: 'custom.cellOptions',
+                  value: { wrapText: true, type: TableCellDisplayMode.Pill },
+                },
+              ],
+            },
+          ],
+        },
+      } as unknown as PanelModel;
+
+      migrateTextWrapToFieldLevel(panel);
+      expect(panel.fieldConfig.overrides[0].properties).toEqual(
+        expect.arrayContaining([
+          { id: 'custom.wrapText', value: true },
+          { id: 'custom.cellOptions', value: { type: TableCellDisplayMode.Pill } },
+        ])
+      );
+    });
+
+    it('does not overwrite field overrides for cellOptions which do not have wrapText set', () => {
+      const panel = {
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'field1' },
+              properties: [
+                {
+                  id: 'custom.cellOptions',
+                  value: { type: TableCellDisplayMode.Pill },
+                },
+              ],
+            },
+          ],
+        },
+      } as unknown as PanelModel;
+
+      migrateTextWrapToFieldLevel(panel);
+      // passes the override through with no changes
+      expect(panel.fieldConfig.overrides[0]).toBe(panel.fieldConfig.overrides[0]);
+    });
+  });
+
+  describe('migrateHiddenFields', () => {
+    it('migrates fields with config.custom.hidden=true to config.custom.hideFrom.viz=true', () => {
+      const panel = {
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'field1' },
+              properties: [
+                {
+                  id: 'custom.hidden',
+                  value: true,
+                },
+              ],
+            },
+          ],
+        },
+      } as unknown as PanelModel;
+
+      migrateHiddenFields(panel);
+
+      expect(panel.fieldConfig.overrides[0].properties).toEqual(
+        expect.arrayContaining([{ id: 'custom.hideFrom.viz', value: true }])
+      );
+      expect(panel.fieldConfig.overrides[0].properties).not.toEqual(
+        expect.arrayContaining([{ id: 'custom.hidden', value: true }])
+      );
+    });
+  });
+
+  describe('migrateFooterV2', () => {
+    it('is a no-op for panels without footer v1 settings', () => {
+      const panel = {
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      // create a clone pre-migration to compare
+      const origPanel = JSON.parse(JSON.stringify(panel));
+
+      migrateFooterV2(panel);
+
+      // panel should be unchanged
+      expect(origPanel).toEqual(panel);
+    });
+
+    it('migrates a global footer', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: true,
+            reducer: ['sum'],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.footer).toBeUndefined();
+      expect(panel.fieldConfig.defaults.custom.footer).toEqual({
+        reducers: ['sum'],
+      });
+    });
+
+    it('migrates a field-specific footer', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: true,
+            reducer: ['sum'],
+            fields: ['field1', 'field2'],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.footer).toBeUndefined();
+      expect(panel.fieldConfig.defaults.custom.footer).toBeUndefined();
+      expect(panel.fieldConfig.overrides).toEqual(
+        expect.arrayContaining([
+          {
+            matcher: {
+              id: FieldMatcherID.byNames,
+              options: {
+                mode: ByNamesMatcherMode.include,
+                names: ['field1', 'field2'],
+              },
+            },
+            properties: [{ id: 'custom.footer.reducers', value: ['sum'] }],
+          },
+        ])
+      );
+    });
+
+    it('migrates a single-field footer', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: true,
+            reducer: ['sum'],
+            fields: ['field1'],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.footer).toBeUndefined();
+      expect(panel.fieldConfig.defaults.custom.footer).toBeUndefined();
+      expect(panel.fieldConfig.overrides).toEqual(
+        expect.arrayContaining([
+          {
+            matcher: {
+              id: FieldMatcherID.byName,
+              options: 'field1',
+            },
+            properties: [{ id: 'custom.footer.reducers', value: ['sum'] }],
+          },
+        ])
+      );
+    });
+
+    it('handles the countAll case', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: true,
+            countRows: true,
+            reducer: ['count'],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.footer).toBeUndefined();
+      expect(panel.fieldConfig.defaults.custom.footer).toEqual({
+        reducers: ['countAll'],
+      });
+    });
+
+    it('destroys an existing footer if it was hidden', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: false,
+            reducer: ['sum'],
+            fields: ['field1'],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.footer).toBeUndefined();
+      expect(panel.fieldConfig.defaults.custom.footer).toBeUndefined();
+      expect(panel.fieldConfig.overrides).toEqual([]);
+    });
+
+    it('retains the enablePagination setting if it exists', () => {
+      const panel = {
+        options: {
+          footer: {
+            show: false,
+            reducer: ['sum'],
+            fields: ['field1'],
+            enablePagination: true,
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
+
+      migrateFooterV2(panel);
+
+      expect(panel.options.enablePagination).toBe(true);
+      expect(panel.fieldConfig.defaults.custom.footer).toBeUndefined();
+      expect(panel.fieldConfig.overrides).toEqual([]);
+    });
   });
 });

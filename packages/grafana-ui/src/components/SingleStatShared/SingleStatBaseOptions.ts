@@ -39,7 +39,7 @@ export function sharedSingleStatPanelChangedHandler(
   };
 
   // Migrating from angular singlestat
-  if (prevPluginId === 'singlestat' && prevOptions.angular) {
+  if ((prevPluginId === 'singlestat' || prevPluginId === 'grafana-singlestat-panel') && prevOptions.angular) {
     return migrateFromAngularSinglestat(panel, prevOptions);
   } else if (prevPluginId === 'graph') {
     // Migrating from Graph panel

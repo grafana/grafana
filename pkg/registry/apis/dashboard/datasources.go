@@ -11,7 +11,7 @@ type datasourceInfoProvider struct {
 	datasourceService datasources.DataSourceService
 }
 
-func (d *datasourceInfoProvider) GetDataSourceInfo() []schemaversion.DataSourceInfo {
+func (d *datasourceInfoProvider) GetDataSourceInfo(_ context.Context) []schemaversion.DataSourceInfo {
 	query := datasources.GetAllDataSourcesQuery{}
 	dataSources, err := d.datasourceService.GetAllDataSources(context.Background(), &query)
 

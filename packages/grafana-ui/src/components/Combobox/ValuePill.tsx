@@ -38,11 +38,12 @@ export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
     );
   }
 );
+ValuePill.displayName = 'ValuePill';
 
 const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
   wrapper: css({
     display: 'inline-flex',
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.sm,
     color: theme.colors.text.primary,
     background: theme.colors.background.secondary,
     padding: theme.spacing(0.25),
@@ -66,7 +67,7 @@ const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
 
   separator: css({
     background: theme.colors.border.weak,
-    width: '2px',
+    width: '1px',
     height: '100%',
     marginRight: theme.spacing(0.5),
   }),

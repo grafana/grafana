@@ -1,12 +1,10 @@
 package migrator
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/mattn/go-sqlite3"
-
+	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
@@ -89,6 +87,17 @@ func (db *SQLite3) IndexCheckSQL(tableName, indexName string) (string, []any) {
 	return sql, args
 }
 
+func (db *SQLite3) ColumnCheckSQL(tableName, columnName string) (string, []any) {
+	// Use PRAGMA table_info to check if a column exists on a table. In SQLite, quoting with backticks inside
+	// pragma_table_info(<expr>) can be interpreted as an identifier/column. Instead, pass the table name as a
+	// string literal to avoid ambiguity. We cannot parameterize identifiers, but pragma_table_info accepts string
+	// literals, so we embed a single-quoted literal safely by replacing single quotes if any.
+	// Note: tableName is expected to be a trusted identifier from migrations.
+	safeTable := strings.ReplaceAll(tableName, "'", "''")
+	sql := "SELECT 1 FROM pragma_table_info('" + safeTable + "') WHERE name = ?"
+	return sql, []any{columnName}
+}
+
 func (db *SQLite3) DropIndexSQL(tableName string, index *Index) string {
 	quote := db.Quote
 	// var unique string
@@ -139,27 +148,12 @@ func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
 	return nil
 }
 
-func (db *SQLite3) isThisError(err error, errcode int) bool {
-	var driverErr sqlite3.Error
-	if errors.As(err, &driverErr) {
-		if int(driverErr.ExtendedCode) == errcode {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (db *SQLite3) ErrorMessage(err error) string {
-	var driverErr sqlite3.Error
-	if errors.As(err, &driverErr) {
-		return driverErr.Error()
-	}
-	return ""
+	return sqlite.ErrorMessage(err)
 }
 
 func (db *SQLite3) IsUniqueConstraintViolation(err error) bool {
-	return db.isThisError(err, int(sqlite3.ErrConstraintUnique)) || db.isThisError(err, int(sqlite3.ErrConstraintPrimaryKey))
+	return sqlite.IsUniqueConstraintViolation(err)
 }
 
 func (db *SQLite3) IsDeadlock(err error) bool {

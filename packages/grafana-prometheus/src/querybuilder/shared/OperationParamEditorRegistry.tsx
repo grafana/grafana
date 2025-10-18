@@ -165,7 +165,7 @@ function SelectInputParamEditor({
           fill="text"
           icon="times"
           variant="secondary"
-          title={t('grafana-prometheus.querybuilder.operation-param-editor.title-remove', 'Remove {{name}}', {
+          aria-label={t('grafana-prometheus.querybuilder.operation-param-editor.title-remove', 'Remove {{name}}', {
             name: paramDef.name,
           })}
           onClick={() => onChange(index, '')}

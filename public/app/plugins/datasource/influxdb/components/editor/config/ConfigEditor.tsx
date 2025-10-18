@@ -60,11 +60,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.htmlPrefix = uniqueId('influxdb-config');
   }
 
-  versionNotice = {
-    Flux: 'Support for Flux in Grafana is currently in beta',
-    SQL: 'Support for SQL in Grafana is currently in alpha',
-  };
-
   onVersionChanged = (selected: SelectableValue<InfluxVersion>) => {
     const { options, onOptionsChange } = this.props;
 
@@ -125,17 +120,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
             />
           </Field>
         </FieldSet>
-
-        {options.jsonData.version !== InfluxVersion.InfluxQL && (
-          <Alert severity="info" title={this.versionNotice[options.jsonData.version!]}>
-            <p>
-              Please report any issues to: <br />
-              <a href="https://github.com/grafana/grafana/issues/new/choose">
-                https://github.com/grafana/grafana/issues
-              </a>
-            </p>
-          </Alert>
-        )}
 
         {isDirectAccess && (
           <Alert title="Error" severity="error">

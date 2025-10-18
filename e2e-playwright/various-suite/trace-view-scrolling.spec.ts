@@ -1,27 +1,16 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
-
 import { test, expect } from '@grafana/plugin-e2e';
 
-// this test requires a larger viewport
-test.use({
-  viewport: { width: 1280, height: 1080 },
-});
+import longTraceResponse from '../fixtures/long-trace-response.json';
 
-// TODO for some reason, this test gives "connection refused" errors in CI
-test.describe.skip(
+test.describe(
   'Trace view',
   {
     tag: ['@various'],
   },
   () => {
     test('Can lazy load big traces', async ({ page, selectors }) => {
-      // Load the fixture data
-      const fixturePath = join(__dirname, '../fixtures/long-trace-response.json');
-      const longTraceResponse = JSON.parse(readFileSync(fixturePath, 'utf8'));
-
       // Mock the API response
-      await page.route('*/**/api/traces/trace', async (route) => {
+      await page.route('**/api/ds/query?ds_type=jaeger*', async (route) => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -39,7 +28,7 @@ test.describe.skip(
       await datasourceList.getByText('gdev-jaeger').click();
 
       // Check that gdev-jaeger is visible in the query editor
-      await expect(page.getByText('gdev-jaeger')).toBeVisible();
+      await expect(page.getByTestId('query-editor-row').getByText('(gdev-jaeger)')).toBeVisible();
 
       // Type the query
       const queryField = page
@@ -50,14 +39,22 @@ test.describe.skip(
       // Use Shift+Enter to execute the query
       await queryField.press('Shift+Enter');
 
-      // Get the initial count of span bars
-      const initialSpanBars = page.getByTestId(selectors.components.TraceViewer.spanBar);
-      const initialSpanBarCount = await initialSpanBars.count();
+      // Wait for the trace viewer to be ready
+      await expect(page.getByRole('switch', { name: /api\-gateway GET/ })).toBeVisible();
 
-      await initialSpanBars.last().scrollIntoViewIfNeeded();
-      await expect
-        .poll(async () => await page.getByTestId(selectors.components.TraceViewer.spanBar).count())
-        .toBeGreaterThan(initialSpanBarCount);
+      // Note the scrolling element is actually the first child of the scroll view, but we can use the scroll wheel on this anyway
+      const scrollEl = page.getByTestId(selectors.pages.Explore.General.scrollView);
+
+      // Assert that the last span is not visible in th page - it should be lazily rendered as the user scrolls
+      const lastSpan = page.getByRole('switch', { name: /metrics\-collector\-last\-span GET/ });
+      await expect(lastSpan).not.toBeVisible();
+
+      // Scroll until the "metrics-collector-last-span GET" switch is visible
+      await expect(async () => {
+        await scrollEl.hover();
+        await page.mouse.wheel(0, 1000);
+        await expect(lastSpan).toBeVisible({ timeout: 1 });
+      }).toPass();
     });
   }
 );

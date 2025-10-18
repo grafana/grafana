@@ -104,6 +104,9 @@ export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQu
 export interface ChangeQueriesPayload {
   exploreId: string;
   queries: DataQuery[];
+  options?: {
+    skipAutoImport?: boolean;
+  };
 }
 export const changeQueriesAction = createAction<ChangeQueriesPayload>('explore/changeQueries');
 
@@ -322,7 +325,7 @@ const getImportableQueries = async (
 
 export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
   'explore/changeQueries',
-  async ({ queries, exploreId }, { getState, dispatch }) => {
+  async ({ queries, exploreId, options }, { getState, dispatch }) => {
     let queriesImported = false;
     const oldQueries = getState().explore.panes[exploreId]!.queries;
     const rootUID = getState().explore.panes[exploreId]!.datasourceInstance?.uid;
@@ -337,10 +340,13 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
     for (const newQuery of queries) {
       for (const oldQuery of oldQueries) {
         if (newQuery.refId === oldQuery.refId && newQuery.datasource?.type !== oldQuery.datasource?.type) {
-          const queryDatasource = await getDataSourceSrv().get(oldQuery.datasource);
-          const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
-          await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
-          queriesImported = true;
+          // Skip automatic import if explicitly requested (e.g., query library replacement)
+          if (!options?.skipAutoImport) {
+            const queryDatasource = await getDataSourceSrv().get(oldQuery.datasource);
+            const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
+            await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
+            queriesImported = true;
+          }
         }
 
         if (

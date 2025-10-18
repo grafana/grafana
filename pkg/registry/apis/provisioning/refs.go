@@ -9,8 +9,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 type refsConnector struct {
@@ -46,7 +46,7 @@ func (*refsConnector) NewConnectOptions() (runtime.Object, bool, string) {
 func (c *refsConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "refs-connector", "repository_name", name)
 	ctx = logging.Context(ctx, logger)
-	repo, err := c.getter.GetHealthyRepository(ctx, name)
+	repo, err := c.getter.GetRepository(ctx, name)
 	if err != nil {
 		logger.Debug("failed to find repository", "error", err)
 		return nil, err

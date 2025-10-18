@@ -53,9 +53,7 @@
       },
       "id": 2,
       "options": {
-        "displayLabels": [
-          "name"
-        ],
+        "displayLabels": ["name"],
         "legend": {
           "values": [],
           "displayMode": "list",
@@ -63,9 +61,7 @@
         },
         "pieType": "donut",
         "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "fields": "",
           "values": false
         },
@@ -122,22 +118,15 @@
       },
       "id": 11,
       "options": {
-        "displayLabels": [
-          "name",
-          "percent"
-        ],
+        "displayLabels": ["name", "percent"],
         "legend": {
-          "values": [
-            "percent"
-          ],
+          "values": ["percent"],
           "displayMode": "list",
           "placement": "right"
         },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "fields": "",
           "values": false
         },
@@ -192,9 +181,7 @@
       },
       "id": 8,
       "options": {
-        "displayLabels": [
-          "name"
-        ],
+        "displayLabels": ["name"],
         "legend": {
           "values": [],
           "displayMode": "hidden",
@@ -202,9 +189,7 @@
         },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "fields": "",
           "values": false
         },
@@ -259,21 +244,15 @@
       },
       "id": 3,
       "options": {
-        "displayLabels": [
-          "percent"
-        ],
+        "displayLabels": ["percent"],
         "legend": {
-          "values": [
-            "percent"
-          ],
+          "values": ["percent"],
           "displayMode": "table",
           "placement": "bottom"
         },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "fields": "",
           "values": false
         },
@@ -328,21 +307,15 @@
       },
       "id": 9,
       "options": {
-        "displayLabels": [
-          "value"
-        ],
+        "displayLabels": ["value"],
         "legend": {
-          "values": [
-            "value"
-          ],
+          "values": ["value"],
           "displayMode": "table",
           "placement": "bottom"
         },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "fields": "",
           "values": false
         },
@@ -397,9 +370,7 @@
       },
       "id": 6,
       "options": {
-        "displayLabels": [
-          "name"
-        ],
+        "displayLabels": ["name"],
         "legend": {
           "values": [],
           "displayMode": "list",
@@ -407,9 +378,7 @@
         },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "fields": "",
           "values": false
         },
@@ -472,9 +441,7 @@
         },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "fields": "",
           "values": false
         },
@@ -498,10 +465,7 @@
     }
   ],
   "schemaVersion": 27,
-  "tags": [
-    "gdev",
-    "panel-tests"
-  ],
+  "tags": ["gdev", "panel-tests"],
   "templating": {
     "list": []
   },

@@ -47,9 +47,8 @@ func ProvideFolderPermissions(
 	}
 
 	fStore := folderimpl.ProvideStore(sqlStore)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fService := folderimpl.ProvideService(
-		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
 		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	acSvc := acimpl.ProvideOSSService(

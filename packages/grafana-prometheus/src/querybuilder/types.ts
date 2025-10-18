@@ -14,11 +14,6 @@ export interface PromVisualQuery {
   labels: QueryBuilderLabelFilter[];
   operations: QueryBuilderOperation[];
   binaryQueries?: PromVisualQueryBinary[];
-  // metrics explorer additional settings
-  useBackend?: boolean;
-  disableTextWrap?: boolean;
-  includeNullMetadata?: boolean;
-  fullMetaSearch?: boolean;
 }
 
 export interface PromQueryModellerInterface {
@@ -105,6 +100,8 @@ export enum PromOperationId {
   LabelReplace = 'label_replace',
   Last = 'last',
   LastOverTime = 'last_over_time',
+  LimitK = 'limitk',
+  LimitRatio = 'limit_ratio',
   Ln = 'ln',
   Log10 = 'log10',
   Log2 = 'log2',
@@ -133,6 +130,7 @@ export enum PromOperationId {
   Sqrt = 'sqrt',
   Stddev = 'stddev',
   StddevOverTime = 'stddev_over_time',
+  Stdvar = 'stdvar',
   Sum = 'sum',
   SumOverTime = 'sum_over_time',
   Tan = 'tan',

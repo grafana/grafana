@@ -12,6 +12,7 @@ import { getFiltersFromUrlParams } from '../../utils/misc';
 import { AlertStateFilter } from './AlertStateFilter';
 import { GroupBy } from './GroupBy';
 import { MatcherFilter } from './MatcherFilter';
+import { ReceiverFilter } from './ReceiverFilter';
 
 interface Props {
   groups: AlertmanagerGroup[];
@@ -20,7 +21,7 @@ interface Props {
 export const AlertGroupFilter = ({ groups }: Props) => {
   const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
   const [queryParams, setQueryParams] = useQueryParams();
-  const { groupBy = [], queryString, alertState } = getFiltersFromUrlParams(queryParams);
+  const { groupBy = [], queryString, alertState, receivers = [] } = getFiltersFromUrlParams(queryParams);
   const matcherFilterKey = `matcher-${filterKey}`;
 
   const styles = useStyles2(getStyles);
@@ -31,11 +32,12 @@ export const AlertGroupFilter = ({ groups }: Props) => {
       queryString: null,
       alertState: null,
       contactPoint: null,
+      receivers: null,
     });
     setTimeout(() => setFilterKey(filterKey + 1), 100);
   };
 
-  const showClearButton = !!(groupBy.length > 0 || queryString || alertState);
+  const showClearButton = !!(groupBy.length > 0 || queryString || alertState || receivers.length > 0);
 
   return (
     <div className={styles.wrapper}>
@@ -49,6 +51,13 @@ export const AlertGroupFilter = ({ groups }: Props) => {
           groups={groups}
           groupBy={groupBy}
           onGroupingChange={(keys) => setQueryParams({ groupBy: keys.length ? keys.join(',') : null })}
+        />
+        <ReceiverFilter
+          groups={groups}
+          receivers={receivers}
+          onReceiversChange={(receivers) =>
+            setQueryParams({ receivers: receivers.length ? receivers.join(',') : null })
+          }
         />
         <AlertStateFilter
           stateFilter={alertState as AlertState}

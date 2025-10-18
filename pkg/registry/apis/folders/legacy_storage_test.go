@@ -2,6 +2,7 @@ package folders
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"testing"
 
@@ -9,8 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/labels"
-
-	"encoding/base64"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -119,6 +118,31 @@ func TestLegacyStorage_List_Pagination(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "2|2", string(token))
 		require.Equal(t, int64(2), folderService.LastQuery.Limit)
+		require.Equal(t, int64(1), folderService.LastQuery.Page)
+	})
+
+	t.Run("should set page limit to default when no limit is specified in options", func(t *testing.T) {
+		options := &metainternalversion.ListOptions{}
+		folders := make([]*folder.Folder, defaultPageLimit)
+		for i := range folders {
+			folders[i] = &folder.Folder{
+				UID:   fmt.Sprintf("folder-%d", i),
+				Title: fmt.Sprintf("Folder %d", i),
+			}
+		}
+		folderService.ExpectedFolders = folders
+
+		result, err := storage.List(ctx, options)
+		require.NoError(t, err)
+
+		list, ok := result.(*folderv1.FolderList)
+		require.True(t, ok)
+
+		// assert returned continue token is correct and previous paging was correct
+		token, err := base64.StdEncoding.DecodeString(list.Continue)
+		require.NoError(t, err)
+		require.Equal(t, "100|2", string(token))
+		require.Equal(t, int64(defaultPageLimit), folderService.LastQuery.Limit)
 		require.Equal(t, int64(1), folderService.LastQuery.Page)
 	})
 }

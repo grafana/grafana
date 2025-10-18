@@ -1,0 +1,119 @@
+{
+  "title": "V16 Grid Layout Migration Test Dashboard",
+  "schemaVersion": 15,
+  "rows": [
+    {
+      "collapse": false,
+      "height": 250,
+      "panels": [
+        {
+          "id": 1,
+          "type": "graph",
+          "title": "CPU Usage",
+          "span": 6
+        },
+        {
+          "id": 2,
+          "type": "singlestat",
+          "title": "Memory Usage",
+          "span": 6
+        }
+      ]
+    },
+    {
+      "collapse": true,
+      "height": 300,
+      "title": "Collapsed Row",
+      "panels": [
+        {
+          "id": 3,
+          "type": "table",
+          "title": "Process List",
+          "span": 12
+        },
+        {
+          "id": 4,
+          "type": "graph",
+          "title": "Network I/O",
+          "span": 6,
+          "height": 200
+        },
+        {
+          "id": 5,
+          "type": "graph",
+          "title": "Disk I/O",
+          "span": 6,
+          "height": 200
+        }
+      ]
+    },
+    {
+      "showTitle": true,
+      "title": "Visible Row Title",
+      "height": 200,
+      "panels": [
+        {
+          "id": 6,
+          "type": "gauge",
+          "title": "Temperature",
+          "span": 4,
+          "minSpan": 2
+        },
+        {
+          "id": 7,
+          "type": "stat",
+          "title": "Uptime",
+          "span": 4
+        },
+        {
+          "id": 8,
+          "type": "bargauge",
+          "title": "Load Average",
+          "span": 4
+        }
+      ]
+    },
+    {
+      "height": 150,
+      "panels": [
+        {
+          "id": 9,
+          "type": "text",
+          "title": "Description Panel",
+          "span": 8
+        },
+        {
+          "id": 10,
+          "type": "logs",
+          "title": "System Logs",
+          "span": 4,
+          "height": 100
+        }
+      ]
+    },
+    {
+      "repeat": "server",
+      "height": 250,
+      "panels": [
+        {
+          "id": 11,
+          "type": "graph",
+          "title": "Server Metrics",
+          "span": 12
+        }
+      ]
+    },
+    {
+      "repeatIteration": true,
+      "height": 250,
+      "panels": [
+        {
+          "id": 12,
+          "type": "graph",
+          "title": "Should be skipped",
+          "span": 12
+        }
+      ]
+    }
+  ]
+}

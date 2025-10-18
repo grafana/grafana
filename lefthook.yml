@@ -10,16 +10,11 @@ rc: ./lefthook.rc
 pre-commit:
   parallel: true
   commands:
-    frontend-betterer:
-      glob: '*.{ts,tsx}'
-      run: |
-        yarn betterer precommit {staged_files} && git add ./.betterer.results
-      stage_fixed: true
-
     frontend-lint:
       glob: '*.{js,ts,tsx}'
       run: |
-        yarn eslint --ext .js,.tsx,.ts --cache --fix {staged_files}
+        yarn eslint --ext .js,.tsx,.ts --cache --prune-suppressions --fix {staged_files} &&
+        git add eslint-suppressions.json &&
         yarn prettier --write {staged_files}
       stage_fixed: true
 

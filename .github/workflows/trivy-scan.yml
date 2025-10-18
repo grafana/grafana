@@ -16,11 +16,11 @@ jobs:
   trivy-scan:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
     - name: Install Trivy
-      uses: aquasecurity/setup-trivy@9ea583eb67910444b1f64abf338bd2e105a0a93d
+      uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1
       with:
         version: v0.56.2
         cache: true
@@ -64,7 +64,7 @@ jobs:
           .
       if: always() && github.repository == 'grafana/grafana'
     - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: 'trivy-results.sarif'
       if: always() && github.repository == 'grafana/grafana'

@@ -24,13 +24,8 @@ func RegisterDependencies(
 		return nil, fmt.Errorf("registering access control roles: %w", err)
 	}
 
-	// TODO: Remove once the DB schema is more stable.
-	if !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		return nil, nil
-	}
-
 	// We shouldn't need to create the DB in HG, as that will use the MT api server.
-	if cfg.StackID == "" {
+	if cfg.StackID == "" || cfg.SecretsManagement.IsDeveloperMode {
 		// Some DBs that claim to be MySQL/Postgres-compatible might not support table locking.
 		lockDatabase := cfg.Raw.Section("database").Key("migration_locking").MustBool(true)
 

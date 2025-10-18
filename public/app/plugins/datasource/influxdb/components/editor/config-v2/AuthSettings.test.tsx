@@ -127,5 +127,22 @@ describe('AuthSettings', () => {
         expect(skipSwitch).not.toBeChecked();
       });
     });
+
+    describe('With Credentials toggle', () => {
+      it('toggles checked state of the switch', () => {
+        const withCredentialsSwitch = screen.getByTestId('influxdb-v2-config-auth-settings-with-credentials');
+
+        // Default unchecked
+        expect(withCredentialsSwitch).not.toBeChecked();
+
+        // Enable
+        fireEvent.click(withCredentialsSwitch);
+        expect(withCredentialsSwitch).toBeChecked();
+
+        // Disable
+        fireEvent.click(withCredentialsSwitch);
+        expect(withCredentialsSwitch).not.toBeChecked();
+      });
+    });
   });
 });

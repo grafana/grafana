@@ -1,0 +1,152 @@
+{
+  "title": "V20 Variable Syntax Migration Test Dashboard",
+  "schemaVersion": 19,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Panel with data links using legacy variable syntax",
+      "id": 1,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "dataLinks": [
+          {
+            "title": "Link with series name",
+            "url": "http://example.com?series=$__series_name&timestamp=__value_time",
+            "targetBlank": true
+          },
+          {
+            "title": "Link with field name",
+            "url": "http://grafana.com/dashboard?field=__field_name&series=$__series_name",
+            "targetBlank": false
+          }
+        ]
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Panel with field options using legacy variable syntax",
+      "id": 2,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "options": {
+        "fieldOptions": {
+          "defaults": {
+            "title": "Series: __series_name, Field: $__field_name, Time: __value_time",
+            "links": [
+              {
+                "title": "Field link",
+                "url": "http://monitoring.com?field=$__field_name&series=__series_name",
+                "targetBlank": true
+              },
+              {
+                "title": "Time-based link",
+                "url": "http://logs.com?time=__value_time&field=__field_name",
+                "targetBlank": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "gauge",
+      "title": "Panel with both data links and field options",
+      "id": 3,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "options": {
+        "dataLinks": [
+          {
+            "title": "Combined link",
+            "url": "http://combined.com?series=$__series_name&field=$__field_name&time=__value_time",
+            "targetBlank": true
+          }
+        ],
+        "fieldOptions": {
+          "defaults": {
+            "title": "Complete: __series_name / __field_name / __value_time",
+            "links": [
+              {
+                "title": "Comprehensive link",
+                "url": "http://comprehensive.com?s=$__series_name&f=__field_name&t=__value_time",
+                "targetBlank": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "table",
+      "title": "Panel with no legacy variables (should remain unchanged)",
+      "id": 4,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "options": {
+        "dataLinks": [
+          {
+            "title": "Modern link",
+            "url": "http://modern.com?series=${__series.name}&field=${__field.name}&time=${__value.time}",
+            "targetBlank": true
+          }
+        ],
+        "fieldOptions": {
+          "defaults": {
+            "title": "Modern: ${__series.name} / ${__field.name} / ${__value.time}",
+            "links": [
+              {
+                "title": "Modern field link",
+                "url": "http://modern-field.com?s=${__series.name}&f=${__field.name}",
+                "targetBlank": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "title": "Panel with no data links or field options",
+      "id": 5,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "options": {
+        "content": "This panel has no data links or field options to migrate."
+      }
+    }
+  ],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "tags": [
+    "migration-test"
+  ],
+  "style": "dark",
+  "refresh": "5s",
+  "version": 0,
+  "uid": "v20-migration-test"
+}

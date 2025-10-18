@@ -36,7 +36,7 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 		Name:        attr.GetName(),
 		Subresource: attr.GetSubresource(),
 		Path:        attr.GetPath(),
-	})
+	}, "") // NOTE: we do not know the folder in this context
 
 	if err != nil {
 		return authorizer.DecisionDeny, "", err

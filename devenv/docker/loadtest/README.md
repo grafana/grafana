@@ -59,7 +59,6 @@ Run API key test (option `-k` must be a valid `admin` API key)
 $ ./run.sh -c auth_token_test -k "<api key here>"
 ```
 
-
 Example output:
 
 ```bash

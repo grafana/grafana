@@ -10,10 +10,10 @@ import { StarButton } from './actions/StarButton';
 import { getDynamicActions, renderActionElements } from './utils';
 
 export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
-  const { editview, editPanel, isEditing, uid, meta, viewPanelScene } = dashboard.useState();
+  const { editview, editPanel, isEditing, uid, meta, viewPanel } = dashboard.useState();
 
   const hasEditView = Boolean(editview);
-  const isViewingPanel = Boolean(viewPanelScene);
+  const isViewingPanel = Boolean(viewPanel);
   const isEditingDashboard = Boolean(isEditing);
   const isEditingPanel = Boolean(editPanel);
   const hasUid = Boolean(uid);

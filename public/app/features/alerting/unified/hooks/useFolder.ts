@@ -1,6 +1,4 @@
-import { skipToken } from '@reduxjs/toolkit/query/react';
-
-import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { FolderDTO } from 'app/types/folders';
 
 interface ReturnBag {
@@ -13,7 +11,7 @@ interface ReturnBag {
  * @TODO propagate error state
  */
 export function useFolder(uid?: string): ReturnBag {
-  const fetchFolderState = useGetFolderQuery(uid || skipToken);
+  const fetchFolderState = useGetFolderQueryFacade(uid);
 
   return {
     loading: fetchFolderState.isLoading,

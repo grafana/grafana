@@ -161,7 +161,7 @@ export function exitPanelEditor(): ThunkResult<void> {
 }
 
 function hasPanelChangedInPanelEdit(panel: PanelModel) {
-  return panel.hasChanged || panel.hasSavedPanelEditChange || panel.isAngularPlugin();
+  return panel.hasChanged || panel.hasSavedPanelEditChange;
 }
 
 export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {

@@ -12,8 +12,9 @@
 package dataquery
 
 import (
+	bytes "bytes"
 	json "encoding/json"
-	fmt "fmt"
+	errors "errors"
 )
 
 type AzureMonitorQuery struct {
@@ -53,13 +54,14 @@ type AzureMonitorQuery struct {
 	CustomNamespace *string `json:"customNamespace,omitempty"`
 	// Used only for exemplar queries from Prometheus
 	Query *string `json:"query,omitempty"`
+	// Used to configure the HTTP request timeout
+	Timeout *float64 `json:"timeout,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource any `json:"datasource,omitempty"`
-	// Used to configure the HTTP request timeout
-	Timeout *float64 `json:"timeout,omitempty"`
+	Datasource  any      `json:"datasource,omitempty"`
+	KeepCookies []string `json:"keepCookies,omitempty"`
 }
 
 // NewAzureMonitorQuery creates a new AzureMonitorQuery object.
@@ -855,39 +857,55 @@ func (resource StringOrBoolOrFloat64OrSelectableValue) MarshalJSON() ([]byte, er
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode StringOrBoolOrFloat64OrSelectableValue from JSON.
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrBoolOrFloat64OrSelectableValue` from JSON.
 func (resource *StringOrBoolOrFloat64OrSelectableValue) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
-	fields := make(map[string]json.RawMessage)
-	if err := json.Unmarshal(raw, &fields); err != nil {
-		return err
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
 	}
 
-	if fields["String"] != nil {
-		if err := json.Unmarshal(fields["String"], &resource.String); err != nil {
-			return fmt.Errorf("error decoding field 'String': %w", err)
-		}
+	// Bool
+	var Bool bool
+	if err := json.Unmarshal(raw, &Bool); err != nil {
+		errList = append(errList, err)
+		resource.Bool = nil
+	} else {
+		resource.Bool = &Bool
+		return nil
 	}
 
-	if fields["Bool"] != nil {
-		if err := json.Unmarshal(fields["Bool"], &resource.Bool); err != nil {
-			return fmt.Errorf("error decoding field 'Bool': %w", err)
-		}
+	// Float64
+	var Float64 float64
+	if err := json.Unmarshal(raw, &Float64); err != nil {
+		errList = append(errList, err)
+		resource.Float64 = nil
+	} else {
+		resource.Float64 = &Float64
+		return nil
 	}
 
-	if fields["Float64"] != nil {
-		if err := json.Unmarshal(fields["Float64"], &resource.Float64); err != nil {
-			return fmt.Errorf("error decoding field 'Float64': %w", err)
-		}
+	// SelectableValue
+	var SelectableValue SelectableValue
+	selectableValuedec := json.NewDecoder(bytes.NewReader(raw))
+	selectableValuedec.DisallowUnknownFields()
+	if err := selectableValuedec.Decode(&SelectableValue); err != nil {
+		errList = append(errList, err)
+		resource.SelectableValue = nil
+	} else {
+		resource.SelectableValue = &SelectableValue
+		return nil
 	}
 
-	if fields["SelectableValue"] != nil {
-		if err := json.Unmarshal(fields["SelectableValue"], &resource.SelectableValue); err != nil {
-			return fmt.Errorf("error decoding field 'SelectableValue': %w", err)
-		}
-	}
-
-	return nil
+	return errors.Join(errList...)
 }

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -105,4 +105,20 @@ func (r *screenshotRenderer) RenderScreenshot(ctx context.Context, repo provisio
 	}
 	return fmt.Sprintf("apis/%s/namespaces/%s/repositories/%s/render/%s",
 		provisioning.APIVERSION, repo.Namespace, repo.Name, rsp.Uid), nil
+}
+
+type NoOpRenderer struct{}
+
+func NewNoOpRenderer() ScreenshotRenderer {
+	return &NoOpRenderer{}
+}
+
+func (r *NoOpRenderer) IsAvailable(_ context.Context) bool {
+	return false
+}
+
+func (r *NoOpRenderer) RenderScreenshot(
+	_ context.Context, _ provisioning.ResourceRepositoryInfo, _ string, _ url.Values,
+) (string, error) {
+	return "", nil
 }

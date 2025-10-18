@@ -26,10 +26,12 @@ export const applyLayerFilter = (
     let panelData = panelDataProps;
     if (options.filterData) {
       const matcherFunc = getFrameMatchers(options.filterData);
-      panelData = {
-        ...panelData,
-        series: panelData.series.filter(matcherFunc),
-      };
+      if (panelData.series.some(matcherFunc)) {
+        panelData = {
+          ...panelData,
+          series: panelData.series.filter(matcherFunc),
+        };
+      }
     }
     handler.update(panelData);
   }

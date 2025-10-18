@@ -16,6 +16,7 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
+    ...jest.requireActual('app/core/services/context_srv').contextSrv,
     isEditor: true,
   },
 }));

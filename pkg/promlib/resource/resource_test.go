@@ -11,10 +11,10 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/promlib/resource"
 )
 
@@ -151,11 +151,11 @@ func TestResource_GetSuggestionsWithEmptyQueriesButFilters(t *testing.T) {
 	// Create a request with empty queries but with filters
 	suggestionReq := resource.SuggestionRequest{
 		Queries: []string{}, // Empty queries
-		Scopes: []models.ScopeFilter{
-			{Key: "job", Operator: models.FilterOperatorEquals, Value: "testjob"},
+		Scopes: []scope.ScopeFilter{
+			{Key: "job", Operator: scope.FilterOperatorEquals, Value: "testjob"},
 		},
-		AdhocFilters: []models.ScopeFilter{
-			{Key: "instance", Operator: models.FilterOperatorEquals, Value: "localhost:9090"},
+		AdhocFilters: []scope.ScopeFilter{
+			{Key: "instance", Operator: scope.FilterOperatorEquals, Value: "localhost:9090"},
 		},
 	}
 

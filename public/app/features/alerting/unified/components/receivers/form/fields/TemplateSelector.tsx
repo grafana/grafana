@@ -28,7 +28,7 @@ import {
   useNotificationTemplates,
 } from 'app/features/alerting/unified/components/contact-points/useNotificationTemplates';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { NotificationChannelOption } from 'app/types/alerting';
+import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 
 import { defaultPayloadString } from '../../TemplateForm';
 
@@ -303,7 +303,19 @@ function OptionCustomfield({
       <TextArea
         id={id}
         label={t('alerting.option-customfield.label-custom-template', 'Custom template')}
-        placeholder={option.placeholder}
+        placeholder={
+          option.placeholder
+            ? t(
+                'alerting.option-customfield.placeholder-with-template',
+                'Enter plain text or reference a template, e.g. {{- currentTemplate}}',
+                { currentTemplate: option.placeholder }
+              )
+            : // if "option.placeholder" is not set, the placeholder displays the "default.message" template
+              t(
+                'alerting.option-customfield.placeholder',
+                'Enter plain text or reference a template, e.g. {{template "default.message" .}}'
+              )
+        }
         onChange={(e) => onCustomTemplateChange(e.currentTarget.value)}
         defaultValue={initialValue}
       />

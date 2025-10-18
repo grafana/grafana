@@ -1,0 +1,12 @@
+
+* unit where name is
+* dynamic font size based on text length
+* text alignment factors 
+* segment hue gradient 
+* Rethink gradient / color options
+* threshold & min/max labels
+
+
+Gauge => new gauge migration notes
+
+Old gauge "Show threshold markers" does nothing when color scheme != From thresholds 

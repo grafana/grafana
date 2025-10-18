@@ -2,9 +2,7 @@ import { css } from '@emotion/css';
 import {
   FloatingFocusManager,
   autoUpdate,
-  flip,
   offset as floatingUIOffset,
-  shift,
   useClick,
   useDismiss,
   useFloating,
@@ -17,6 +15,7 @@ import { CSSTransition } from 'react-transition-group';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getPositioningMiddleware } from '../../utils/floating';
 import { renderOrCallToRender } from '../../utils/reactUtils';
 import { getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
@@ -26,14 +25,16 @@ export interface Props {
   overlay: React.ReactElement | (() => React.ReactElement);
   placement?: TooltipPlacement;
   children: React.ReactElement;
+  root?: HTMLElement;
   /** Amount in pixels to nudge the dropdown vertically and horizontally, respectively. */
   offset?: [number, number];
   onVisibleChange?: (state: boolean) => void;
 }
 
-export const Dropdown = React.memo(({ children, overlay, placement, offset, onVisibleChange }: Props) => {
+export const Dropdown = React.memo(({ children, overlay, placement, offset, root, onVisibleChange }: Props) => {
   const [show, setShow] = useState(false);
   const transitionRef = useRef(null);
+  const floatingUIPlacement = getPlacement(placement);
 
   const handleOpenChange = useCallback(
     (newState: boolean) => {
@@ -49,18 +50,12 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
       mainAxis: offset?.[0] ?? 8,
       crossAxis: offset?.[1] ?? 0,
     }),
-    flip({
-      fallbackAxisSideDirection: 'end',
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
-      boundary: document.body,
-    }),
-    shift(),
+    ...getPositioningMiddleware(floatingUIPlacement),
   ];
 
   const { context, refs, floatingStyles } = useFloating({
     open: show,
-    placement: getPlacement(placement),
+    placement: floatingUIPlacement,
     onOpenChange: handleOpenChange,
     middleware,
     whileElementsMounted: autoUpdate,
@@ -90,7 +85,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
         ...getReferenceProps(),
       })}
       {show && (
-        <Portal>
+        <Portal root={root}>
           <FloatingFocusManager context={context}>
             {/*
               this is handling bubbled events from the inner overlay

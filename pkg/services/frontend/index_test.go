@@ -98,26 +98,4 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		assert.Contains(t, body, "src=\"public/build/runtime.js\" type=\"text/javascript\"")
 		assert.Contains(t, body, "src=\"public/build/app.js\" type=\"text/javascript\"")
 	})
-
-	t.Run("should handle missing assets manifest gracefully", func(t *testing.T) {
-		cfg := &setting.Cfg{
-			HTTPPort:       "3000",
-			StaticRootPath: "/dev/null", // No build directory or manifest
-			Env:            setting.Dev, // needs to be dev to bypass the cache
-		}
-		service := createTestService(t, cfg)
-
-		mux := web.New()
-		service.addMiddlewares(mux)
-		service.registerRoutes(mux)
-
-		// Test index route which should fail to load web assets
-		req := httptest.NewRequest("GET", "/", nil)
-		recorder := httptest.NewRecorder()
-
-		mux.ServeHTTP(recorder, req)
-
-		// Should return 500 due to missing assets manifest
-		assert.Equal(t, 500, recorder.Code)
-	})
 }

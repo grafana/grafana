@@ -15,45 +15,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/setting"
+	sqlengpgx "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/pgx"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 )
-
-func ProvideService(cfg *setting.Cfg) *Service {
-	logger := backend.NewLoggerWith("logger", "tsdb.postgres")
-	s := &Service{
-		tlsManager: newTLSManager(logger, cfg.DataPath),
-		logger:     logger,
-	}
-	s.im = datasource.NewInstanceManager(s.newInstanceSettings())
-	return s
-}
-
-type Service struct {
-	tlsManager tlsSettingsProvider
-	im         instancemgmt.InstanceManager
-	logger     log.Logger
-}
-
-func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
-	i, err := s.im.Get(ctx, pluginCtx)
-	if err != nil {
-		return nil, err
-	}
-	instance := i.(*sqleng.DataSourceHandler)
-	return instance, nil
-}
-
-func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	if err != nil {
-		return nil, err
-	}
-	return dsInfo.QueryData(ctx, req)
-}
 
 func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit int64, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger, settings backend.DataSourceInstanceSettings) (*sql.DB, *sqleng.DataSourceHandler, error) {
 	connector, err := pq.NewConnector(cnnstr)
@@ -104,8 +72,63 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 	return db, handler, nil
 }
 
-func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
-	logger := s.logger
+func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit int64, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger, settings backend.DataSourceInstanceSettings) (*pgxpool.Pool, *sqlengpgx.DataSourceHandler, error) {
+	pgxConf, err := pgxpool.ParseConfig(cnnstr)
+	if err != nil {
+		logger.Error("postgres config creation failed", "error", err)
+		return nil, nil, fmt.Errorf("postgres config creation failed")
+	}
+
+	proxyClient, err := settings.ProxyClient(ctx)
+	if err != nil {
+		logger.Error("postgres proxy creation failed", "error", err)
+		return nil, nil, fmt.Errorf("postgres proxy creation failed")
+	}
+
+	if proxyClient.SecureSocksProxyEnabled() {
+		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
+		if err != nil {
+			logger.Error("postgres proxy creation failed", "error", err)
+			return nil, nil, fmt.Errorf("postgres proxy creation failed")
+		}
+
+		pgxConf.ConnConfig.DialFunc = newPgxDialFunc(dialer)
+	}
+
+	// by default pgx resolves hostnames to ip addresses. we must avoid this.
+	// (certain socks-proxy related functionality relies on the hostname being preserved)
+	pgxConf.ConnConfig.LookupFunc = func(_ context.Context, host string) ([]string, error) {
+		return []string{host}, nil
+	}
+
+	config := sqlengpgx.DataPluginConfiguration{
+		DSInfo:            dsInfo,
+		MetricColumnTypes: []string{"unknown", "text", "varchar", "char", "bpchar"},
+		RowLimit:          rowLimit,
+	}
+
+	queryResultTransformer := postgresQueryResultTransformer{}
+	pgxConf.MaxConnLifetime = time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second
+	pgxConf.MaxConns = int32(config.DSInfo.JsonData.MaxOpenConns)
+
+	p, err := pgxpool.NewWithConfig(ctx, pgxConf)
+	if err != nil {
+		logger.Error("Failed connecting to Postgres", "err", err)
+		return nil, nil, err
+	}
+
+	handler, err := sqlengpgx.NewQueryDataHandler(userFacingDefaultError, p, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
+		logger)
+	if err != nil {
+		logger.Error("Failed connecting to Postgres", "err", err)
+		return nil, nil, err
+	}
+
+	logger.Debug("Successfully connected to Postgres")
+	return p, handler, nil
+}
+
+func NewInstanceSettings(logger log.Logger, dataPath string) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		cfg := backend.GrafanaConfigFromContext(ctx)
 		sqlCfg, err := cfg.SQL()
@@ -143,25 +166,53 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}
 
-		cnnstr, err := s.generateConnectionString(dsInfo)
-		if err != nil {
-			return nil, err
-		}
-
 		userFacingDefaultError, err := cfg.UserFacingDefaultError()
 		if err != nil {
 			return nil, err
 		}
 
-		_, handler, err := newPostgres(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
+		usePGX := cfg.FeatureToggles().IsEnabled("postgresDSUsePGX")
 
-		if err != nil {
-			logger.Error("Failed connecting to Postgres", "err", err)
-			return nil, err
+		if usePGX {
+			pgxlogger := logger.FromContext(ctx).With("driver", "pgx")
+			pgxTlsManager := newPgxTlsManager(pgxlogger)
+			pgxTlsSettings, err := pgxTlsManager.getTLSSettings(dsInfo)
+			if err != nil {
+				return "", err
+			}
+
+			// Ensure cleanupCertFiles is called after the connection is opened
+			defer pgxTlsManager.cleanupCertFiles(pgxTlsSettings)
+			cnnstr, err := generateConnectionString(dsInfo, pgxTlsSettings, usePGX, pgxlogger)
+			if err != nil {
+				return "", err
+			}
+			_, handler, err := newPostgresPGX(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, pgxlogger, settings)
+			if err != nil {
+				pgxlogger.Error("Failed connecting to Postgres", "err", err)
+				return nil, err
+			}
+			pgxlogger.Debug("Successfully connected to Postgres")
+			return handler, nil
+		} else {
+			pqlogger := logger.FromContext(ctx).With("driver", "libpq")
+			tlsManager := newTLSManager(pqlogger, dataPath)
+			tlsSettings, err := tlsManager.getTLSSettings(dsInfo)
+			if err != nil {
+				return "", err
+			}
+			cnnstr, err := generateConnectionString(dsInfo, tlsSettings, usePGX, pqlogger)
+			if err != nil {
+				return nil, err
+			}
+			_, handler, err := newPostgres(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, pqlogger, settings)
+			if err != nil {
+				pqlogger.Error("Failed connecting to Postgres", "err", err)
+				return nil, err
+			}
+			pqlogger.Debug("Successfully connected to Postgres")
+			return handler, nil
 		}
-
-		logger.Debug("Successfully connected to Postgres")
-		return handler, nil
 	}
 }
 
@@ -170,57 +221,94 @@ func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
 }
 
-func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
-	logger := s.logger
-	var host string
-	var port int
+type connectionParams struct {
+	host     string
+	port     int
+	user     string
+	password string
+	database string
+}
+
+func parseConnectionParams(dsInfo sqleng.DataSourceInfo, logger log.Logger) (connectionParams, error) {
+	var params connectionParams
+	var err error
+
 	if strings.HasPrefix(dsInfo.URL, "/") {
-		host = dsInfo.URL
+		params.host = dsInfo.URL
 		logger.Debug("Generating connection string with Unix socket specifier", "address", dsInfo.URL)
 	} else {
-		index := strings.LastIndex(dsInfo.URL, ":")
-		v6Index := strings.Index(dsInfo.URL, "]")
-		sp := strings.SplitN(dsInfo.URL, ":", 2)
-		host = sp[0]
-		if v6Index == -1 {
-			if len(sp) > 1 {
-				var err error
-				port, err = strconv.Atoi(sp[1])
-				if err != nil {
-					logger.Debug("Error parsing the IPv4 address", "address", dsInfo.URL)
-					return "", sqleng.ErrParsingPostgresURL
-				}
-				logger.Debug("Generating IPv4 connection string with network host/port pair", "host", host, "port", port, "address", dsInfo.URL)
-			} else {
-				logger.Debug("Generating IPv4 connection string with network host", "host", host, "address", dsInfo.URL)
-			}
-		} else {
-			if index == v6Index+1 {
-				host = dsInfo.URL[1 : index-1]
-				var err error
-				port, err = strconv.Atoi(dsInfo.URL[index+1:])
-				if err != nil {
-					logger.Debug("Error parsing the IPv6 address", "address", dsInfo.URL)
-					return "", sqleng.ErrParsingPostgresURL
-				}
-				logger.Debug("Generating IPv6 connection string with network host/port pair", "host", host, "port", port, "address", dsInfo.URL)
-			} else {
-				host = dsInfo.URL[1 : len(dsInfo.URL)-1]
-				logger.Debug("Generating IPv6 connection string with network host", "host", host, "address", dsInfo.URL)
-			}
+		params.host, params.port, err = parseNetworkAddress(dsInfo.URL, logger)
+		if err != nil {
+			return connectionParams{}, err
 		}
 	}
 
-	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s'",
-		escape(dsInfo.User), escape(dsInfo.DecryptedSecureJSONData["password"]), escape(host), escape(dsInfo.Database))
-	if port > 0 {
-		connStr += fmt.Sprintf(" port=%d", port)
+	params.user = dsInfo.User
+	params.password = dsInfo.DecryptedSecureJSONData["password"]
+	params.database = dsInfo.Database
+
+	return params, nil
+}
+
+func parseNetworkAddress(url string, logger log.Logger) (string, int, error) {
+	index := strings.LastIndex(url, ":")
+	v6Index := strings.Index(url, "]")
+	sp := strings.SplitN(url, ":", 2)
+	host := sp[0]
+	port := 0
+
+	if v6Index == -1 {
+		if len(sp) > 1 {
+			var err error
+			port, err = strconv.Atoi(sp[1])
+			if err != nil {
+				logger.Debug("Error parsing the IPv4 address", "address", url)
+				return "", 0, sqleng.ErrParsingPostgresURL
+			}
+			logger.Debug("Generating IPv4 connection string with network host/port pair", "host", host, "port", port, "address", url)
+		} else {
+			logger.Debug("Generating IPv4 connection string with network host", "host", host, "address", url)
+		}
+	} else {
+		if index == v6Index+1 {
+			host = url[1 : index-1]
+			var err error
+			port, err = strconv.Atoi(url[index+1:])
+			if err != nil {
+				logger.Debug("Error parsing the IPv6 address", "address", url)
+				return "", 0, sqleng.ErrParsingPostgresURL
+			}
+			logger.Debug("Generating IPv6 connection string with network host/port pair", "host", host, "port", port, "address", url)
+		} else {
+			host = url[1 : len(url)-1]
+			logger.Debug("Generating IPv6 connection string with network host", "host", host, "address", url)
+		}
 	}
 
-	tlsSettings, err := s.tlsManager.getTLSSettings(dsInfo)
+	return host, port, nil
+}
+
+func buildBaseConnectionString(params connectionParams) string {
+	connStr := fmt.Sprintf("user='%s' host='%s' dbname='%s'",
+		escape(params.user), escape(params.host), escape(params.database))
+
+	if params.password != "" {
+		connStr += fmt.Sprintf(" password='%s'", escape(params.password))
+	}
+
+	if params.port > 0 {
+		connStr += fmt.Sprintf(" port=%d", params.port)
+	}
+	return connStr
+}
+
+func generateConnectionString(dsInfo sqleng.DataSourceInfo, tlsSettings tlsSettings, isPGX bool, logger log.Logger) (string, error) {
+	params, err := parseConnectionParams(dsInfo, logger)
 	if err != nil {
 		return "", err
 	}
+
+	connStr := buildBaseConnectionString(params)
 
 	connStr += fmt.Sprintf(" sslmode='%s'", escape(tlsSettings.Mode))
 
@@ -228,7 +316,8 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 	// does not work correctly. ( see https://github.com/lib/pq/issues/1106 )
 	// to workaround the problem, if the `verify-ca` mode is chosen,
 	// we disable sslsni.
-	if tlsSettings.Mode == "verify-ca" {
+	if tlsSettings.Mode == "verify-ca" && !isPGX {
+		logger.Debug("Disabling sslsni for verify-ca mode")
 		connStr += " sslsni=0"
 	}
 
@@ -254,15 +343,6 @@ type postgresQueryResultTransformer struct{}
 
 func (t *postgresQueryResultTransformer) TransformQueryError(_ log.Logger, err error) error {
 	return err
-}
-
-// CheckHealth pings the connected SQL database
-func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	dsHandler, err := s.getDSInfo(ctx, req.PluginContext)
-	if err != nil {
-		return sqleng.ErrToHealthCheckResult(err)
-	}
-	return dsHandler.CheckHealth(ctx, req)
 }
 
 func (t *postgresQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {

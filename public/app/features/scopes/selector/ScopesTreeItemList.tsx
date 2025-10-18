@@ -15,9 +15,12 @@ type Props = {
   maxHeight: string;
   selectedScopes: SelectedScope[];
   scopeNodes: NodesMap;
-  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
+  filterNode: (scopeNodeId: string, query: string) => void;
   selectScope: (scopeNodeId: string) => void;
   deselectScope: (scopeNodeId: string) => void;
+  highlightedId: string | undefined;
+  id: string;
+  toggleExpandedNode: (scopeNodeId: string) => void;
 };
 
 export function ScopesTreeItemList({
@@ -28,9 +31,12 @@ export function ScopesTreeItemList({
   selectedScopes,
   scopeNodes,
   loadingNodeName,
-  onNodeUpdate,
+  filterNode,
   selectScope,
   deselectScope,
+  highlightedId,
+  id,
+  toggleExpandedNode,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -39,7 +45,7 @@ export function ScopesTreeItemList({
   }
 
   const children = (
-    <div role="tree" className={anyChildExpanded ? styles.expandedContainer : undefined}>
+    <div role="tree" id={id} className={anyChildExpanded ? styles.expandedContainer : undefined}>
       {items.map((childNode) => {
         const selected =
           isNodeSelectable(scopeNodes[childNode.scopeNodeId]) &&
@@ -61,9 +67,11 @@ export function ScopesTreeItemList({
             scopeNodes={scopeNodes}
             loadingNodeName={loadingNodeName}
             anyChildExpanded={anyChildExpanded}
-            onNodeUpdate={onNodeUpdate}
+            filterNode={filterNode}
             selectScope={selectScope}
             deselectScope={deselectScope}
+            highlighted={childNode.scopeNodeId === highlightedId}
+            toggleExpandedNode={toggleExpandedNode}
           />
         );
       })}

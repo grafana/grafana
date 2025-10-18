@@ -1,10 +1,10 @@
 import { Meta } from '@storybook/react';
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import ReactSelect, { createFilter } from 'react-select';
 
 import { SelectableValue } from '@grafana/data';
 
-import { Label } from '../Forms/Label';
+import { Field } from '../Forms/Field';
 
 import { Select, VirtualizedSelect } from './Select';
 
@@ -15,10 +15,6 @@ const meta: Meta = {
       defaultValue: 10_000,
       control: { type: 'number' },
     },
-  },
-  parameters: {
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
 };
 
@@ -37,6 +33,10 @@ function customFilter(opt: SelectableValue, searchQuery: string) {
 }
 
 export function PerformanceScenarios({ numberOfOptions }: { numberOfOptions: number }) {
+  const virtualId = useId();
+  const virtualIgnoreAccentsId = useId();
+  const normalId = useId();
+  const standardId = useId();
   const options = useMemo(() => {
     const opts: SelectableValue[] = [];
     const ALPHABET = 'qwertyuiopasdfghjklzxcvbnm'.split('');
@@ -51,20 +51,29 @@ export function PerformanceScenarios({ numberOfOptions }: { numberOfOptions: num
 
   return (
     <div>
-      <Label>Virtual:</Label>
-      <VirtualizedSelect options={options} onChange={() => {}} />
+      <Field label="Virtual:">
+        <VirtualizedSelect inputId={virtualId} options={options} onChange={() => {}} />
+      </Field>
       <br />
 
-      <Label>Virtual with ignoreAccents false:</Label>
-      <VirtualizedSelect filterOption={customFilter} options={options} onChange={() => {}} />
+      <Field label="Virtual with ignoreAccents false:">
+        <VirtualizedSelect
+          inputId={virtualIgnoreAccentsId}
+          filterOption={customFilter}
+          options={options}
+          onChange={() => {}}
+        />
+      </Field>
       <br />
 
-      <Label>Normal:</Label>
-      <Select options={options} onChange={() => {}} />
+      <Field label="Normal:">
+        <Select inputId={normalId} options={options} onChange={() => {}} />
+      </Field>
       <br />
 
-      <Label>Standard react-select</Label>
-      <ReactSelect options={options} onChange={() => {}} />
+      <Field label="Standard react-select">
+        <ReactSelect inputId={standardId} options={options} onChange={() => {}} />
+      </Field>
       <br />
 
       <p>Rendered with {options.length.toLocaleString()} options</p>

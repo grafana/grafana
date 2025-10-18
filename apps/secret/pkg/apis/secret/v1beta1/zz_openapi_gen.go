@@ -633,9 +633,10 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 				Properties: map[string]spec.Schema{
 					"version": {
 						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
+							Description: "Version of the secure value. Cannot be set.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
 						},
 					},
 					"operatorStates": {
@@ -655,9 +656,10 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 					},
 					"externalID": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "External ID where the secret is stored. Cannot be set.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"additionalFields": {
@@ -676,7 +678,6 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 						},
 					},
 				},
-				Required: []string{"version"},
 			},
 		},
 		Dependencies: []string{

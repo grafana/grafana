@@ -1,13 +1,10 @@
+import { InstanceMatchResult, matchInstancesToRoute } from '@grafana/alerting/unstable';
+
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../types/unified-alerting-dto';
 
-import {
-  AlertInstanceMatch,
-  findMatchingAlertGroups,
-  findMatchingRoutes,
-  normalizeRoute,
-  unquoteRouteMatchers,
-} from './utils/notification-policies';
+import { findMatchingAlertGroups, normalizeRoute, unquoteRouteMatchers } from './utils/notification-policies';
+import { routeAdapter } from './utils/routeAdapter';
 
 export interface MatchOptions {
   unquoteMatchers?: boolean;
@@ -19,7 +16,7 @@ export const routeGroupsMatcher = {
     groups: AlertmanagerGroup[],
     options?: MatchOptions
   ): Map<string, AlertmanagerGroup[]> {
-    const normalizedRootRoute = getNormalizedRoute(rootRoute, options);
+    const normalizedRootRoute: RouteWithID = getNormalizedRoute(rootRoute, options);
 
     function addRouteGroups(route: RouteWithID, acc: Map<string, AlertmanagerGroup[]>) {
       const routeGroups = findMatchingAlertGroups(normalizedRootRoute, route, groups);
@@ -34,29 +31,39 @@ export const routeGroupsMatcher = {
     return routeGroupsMap;
   },
 
-  matchInstancesToRoute(
-    routeTree: RouteWithID,
-    instancesToMatch: Labels[],
-    options?: MatchOptions
-  ): Map<string, AlertInstanceMatch[]> {
-    const result = new Map<string, AlertInstanceMatch[]>();
+  matchInstancesToRoutes(routeTree: RouteWithID, instances: Labels[], options?: MatchOptions): InstanceMatchResult[] {
+    const normalizedRouteTree = getNormalizedRoute(routeTree, options);
 
-    const normalizedRootRoute = getNormalizedRoute(routeTree, options);
+    // Convert all instances to labels format and match them all at once
+    const allLabels = instances.map((instance) => Object.entries(instance));
 
-    instancesToMatch.forEach((instance) => {
-      const matchingRoutes = findMatchingRoutes(normalizedRootRoute, Object.entries(instance));
-      matchingRoutes.forEach(({ route, labelsMatch }) => {
-        const currentRoute = result.get(route.id);
+    // Convert the RouteWithID to the alerting package format to ensure compatibility
+    const convertedRoute = routeAdapter.toPackage(normalizedRouteTree);
+    const { expandedTree, matchedPolicies } = matchInstancesToRoute(convertedRoute, allLabels);
 
-        if (currentRoute) {
-          currentRoute.push({ instance, labelsMatch });
-        } else {
-          result.set(route.id, [{ instance, labelsMatch }]);
-        }
-      });
+    // Group results by instance
+    return instances.map<InstanceMatchResult>((instance, index) => {
+      const labels = allLabels[index];
+
+      // Collect matches for this specific instance
+      const allMatchedRoutes = Array.from(matchedPolicies.entries()).flatMap(([route, results]) =>
+        results
+          .filter((matchDetails) => matchDetails.labels === labels)
+          .map((matchDetails) => ({
+            route,
+            routeTree: {
+              metadata: { name: 'user-defined' },
+              expandedSpec: expandedTree,
+            },
+            matchDetails,
+          }))
+      );
+
+      return {
+        labels,
+        matchedRoutes: allMatchedRoutes,
+      };
     });
-
-    return result;
   },
 };
 

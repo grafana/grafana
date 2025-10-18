@@ -132,7 +132,7 @@ export const DerivedField = (props: Props) => {
         <Field label="">
           <Button
             variant="destructive"
-            title="Remove field"
+            aria-label="Remove field"
             icon="times"
             onClick={(event) => {
               event.preventDefault();

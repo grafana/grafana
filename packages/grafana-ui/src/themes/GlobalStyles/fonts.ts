@@ -57,5 +57,23 @@ export function getFontStyles(theme: GrafanaTheme2) {
         src: `url('${fontRoot}inter/Inter-Medium.woff2') format('woff2')`,
       },
     },
+    {
+      '@font-face': {
+        fontFamily: 'Inter',
+        fontStyle: 'italic',
+        fontWeight: 400,
+        fontDisplay: 'swap',
+        src: `url('${fontRoot}inter/Inter-Italic.woff2') format('woff2')`,
+      },
+    },
+    {
+      '@font-face': {
+        fontFamily: 'Inter',
+        fontStyle: 'italic',
+        fontWeight: 500,
+        fontDisplay: 'swap',
+        src: `url('${fontRoot}inter/Inter-MediumItalic.woff2') format('woff2')`,
+      },
+    },
   ]);
 }

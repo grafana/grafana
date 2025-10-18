@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -37,7 +38,7 @@ func TestSignerFactory_New(t *testing.T) {
 			setupMocks: func(t *testing.T, clients *resources.MockClientFactory) {
 				mockResourceClients := resources.NewMockResourceClients(t)
 				clients.On("Clients", context.Background(), "test-ns").Return(mockResourceClients, nil)
-				mockResourceClients.On("User").Return(nil, nil)
+				mockResourceClients.On("User", mock.Anything).Return(nil, nil)
 			},
 			expectedType: &loadUsersOnceSigner{},
 		},
@@ -61,7 +62,7 @@ func TestSignerFactory_New(t *testing.T) {
 			setupMocks: func(t *testing.T, clients *resources.MockClientFactory) {
 				mockResourceClients := resources.NewMockResourceClients(t)
 				clients.On("Clients", context.Background(), "test-ns").Return(mockResourceClients, nil)
-				mockResourceClients.On("User").Return(nil, fmt.Errorf("user client error"))
+				mockResourceClients.On("User", mock.Anything).Return(nil, fmt.Errorf("user client error"))
 			},
 			expectedError: "get user client: user client error",
 		},

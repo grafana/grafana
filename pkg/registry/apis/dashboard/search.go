@@ -87,11 +87,38 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "type",
+										In:          "query",
+										Description: "search dashboards or folders.  When empty, this will search both",
+										Required:    false,
+										Schema:      spec.StringProperty().WithEnum("folder", "dashboard"),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "folder",
 										In:          "query",
 										Description: "search/list within a folder (not recursive)",
 										Required:    false,
 										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "facet",
+										In:          "query",
+										Description: "count distinct terms for selected fields",
+										Required:    false,
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "tags",
+										In:          "query",
+										Description: "tag query filter",
+										Required:    false,
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
 									},
 								},
 								{
@@ -122,6 +149,24 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										},
 										Required: false,
 										Schema:   spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "limit",
+										In:          "query",
+										Description: "number of results to return",
+										Required:    false,
+										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "explain",
+										In:          "query",
+										Description: "add debugging info that may help explain why the result matched",
+										Required:    false,
+										Schema:      spec.BoolProperty(),
 									},
 								},
 							},
@@ -234,8 +279,12 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	if queryParams.Has("offset") {
 		offset, _ = strconv.Atoi(queryParams.Get("offset"))
+		if offset > 0 {
+			page = (offset / limit) + 1
+		}
 	} else if queryParams.Has("page") {
 		page, _ = strconv.Atoi(queryParams.Get("page"))
+		offset = (page - 1) * limit
 	}
 
 	searchRequest := &resourcepb.ResourceSearchRequest{
@@ -246,7 +295,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Page:    int64(page), // for modes 0-2 (legacy)
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 	}
-	fields := []string{"title", "folder", "tags"}
+	fields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id"}
 	if queryParams.Has("field") {
 		// add fields to search and exclude duplicates
 		for _, f := range queryParams["field"] {
@@ -257,32 +306,26 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	searchRequest.Fields = fields
 
+	// A search request can include multiple types, we need to acces the slice directly.
 	types := queryParams["type"]
-	var federate *resourcepb.ResourceKey
-	switch len(types) {
-	case 0:
-		// When no type specified, search for dashboards
+	hasDash := len(types) == 0 || slices.Contains(types, "dashboard")
+	hasFolder := len(types) == 0 || slices.Contains(types, "folder")
+	// If both types are present, we need to search both dashboards and folders, by default is nothing is set we also search both.
+	if (hasDash && hasFolder) || (!hasDash && !hasFolder) {
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
-		// Currently a search query is across folders and dashboards
 		if err == nil {
-			federate, err = asResourceKey(user.GetNamespace(), folders.RESOURCE)
+			if federate, _ := asResourceKey(user.GetNamespace(), folders.RESOURCE); federate != nil {
+				searchRequest.Federated = []*resourcepb.ResourceKey{federate}
+			}
 		}
-	case 1:
-		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
-	case 2:
-		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
-		if err == nil {
-			federate, err = asResourceKey(user.GetNamespace(), types[1])
-		}
-	default:
-		err = apierrors.NewBadRequest("too many type requests")
+	} else if hasFolder {
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), folders.RESOURCE)
+	} else if hasDash {
+		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 	}
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
-	}
-	if federate != nil {
-		searchRequest.Federated = []*resourcepb.ResourceKey{federate}
 	}
 
 	// Add sorting
@@ -406,11 +449,6 @@ func asResourceKey(ns string, k string) (*resourcepb.ResourceKey, error) {
 }
 
 func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester) ([]string, error) {
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering) {
-		s.log.Warn("Tried to search for 'sharedwithme' dashboards with ", featuremgmt.FlagUnifiedStorageSearchPermissionFiltering, " disabled")
-		return []string{}, nil
-	}
-
 	// gets dashboards that the user was granted read access to
 	permissions := user.GetPermissions()
 	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]

@@ -18,9 +18,11 @@ import (
 )
 
 var (
-	// DefBuckets are histogram buckets for the response time (in seconds)
-	// of a network service, including one that is responding very slowly.
-	defBuckets = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25}
+	// Histogram buckets for the response time, in seconds
+	durationDefBuckets = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25}
+
+	// Histogram buckets for response sizes, in bytes
+	sizeDefBuckets = prometheus.ExponentialBuckets(128, 2, 16) // 128 bytes ... 4 MB
 )
 
 // RequestMetrics is a middleware handler that instruments the request.
@@ -41,11 +43,18 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 		histogramLabels = append(histogramLabels, "grafana_team")
 	}
 
-	histogramOptions := prometheus.HistogramOpts{
+	reqDurationOptions := prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "http_request_duration_seconds",
 		Help:      "Histogram of latencies for HTTP requests.",
-		Buckets:   defBuckets,
+		Buckets:   durationDefBuckets,
+	}
+
+	reqSizeOptions := prometheus.HistogramOpts{
+		Namespace: "grafana",
+		Name:      "http_response_size_bytes",
+		Help:      "Histogram of request sizes for HTTP requests.",
+		Buckets:   sizeDefBuckets, // 100B ... ~1MB
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagEnableNativeHTTPHistogram) {
@@ -53,25 +62,34 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 		// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
 		// Giving this variable a value means the client will expose a native
 		// histogram.
-		histogramOptions.NativeHistogramBucketFactor = 1.1
+		reqDurationOptions.NativeHistogramBucketFactor = 1.1
+		reqSizeOptions.NativeHistogramBucketFactor = 1.1
 		// The default value in OTel. It probably good enough for us as well.
-		histogramOptions.NativeHistogramMaxBucketNumber = 160
-		histogramOptions.NativeHistogramMinResetDuration = time.Hour
+		reqDurationOptions.NativeHistogramMaxBucketNumber = 160
+		reqSizeOptions.NativeHistogramMaxBucketNumber = 160
+		reqDurationOptions.NativeHistogramMinResetDuration = time.Hour
+		reqSizeOptions.NativeHistogramMinResetDuration = time.Hour
 
 		if features.IsEnabledGlobally(featuremgmt.FlagDisableClassicHTTPHistogram) {
 			// setting Buckets to nil with native options set means the classic
 			// histogram will no longer be exposed - this can be a good way to
 			// reduce cardinality in the exposed metrics
-			histogramOptions.Buckets = nil
+			reqDurationOptions.Buckets = nil
+			reqSizeOptions.Buckets = nil
 		}
 	}
 
 	httpRequestDurationHistogram := prometheus.NewHistogramVec(
-		histogramOptions,
+		reqDurationOptions,
 		histogramLabels,
 	)
 
-	promRegister.MustRegister(httpRequestsInFlight, httpRequestDurationHistogram)
+	httpRequestSizeHistogram := prometheus.NewHistogramVec(
+		reqSizeOptions,
+		histogramLabels,
+	)
+
+	promRegister.MustRegister(httpRequestsInFlight, httpRequestDurationHistogram, httpRequestSizeHistogram)
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -111,20 +129,27 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 
 			// avoiding the sanitize functions for in the new instrumentation
 			// since they dont make much sense. We should remove them later.
-			histogram := httpRequestDurationHistogram.
+			durationHistogram := httpRequestDurationHistogram.
+				WithLabelValues(labelValues...)
+			sizeHistogram := httpRequestSizeHistogram.
 				WithLabelValues(labelValues...)
 
 			elapsedTime := time.Since(now).Seconds()
+			responseSize := float64(rw.Size())
 
 			if traceID := tracing.TraceIDFromContext(r.Context(), true); traceID != "" {
 				// Need to type-convert the Observer to an
 				// ExemplarObserver. This will always work for a
 				// HistogramVec.
-				histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
+				durationHistogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
 					elapsedTime, prometheus.Labels{"traceID": traceID},
 				)
+				sizeHistogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
+					responseSize, prometheus.Labels{"traceID": traceID},
+				)
 			} else {
-				histogram.Observe(elapsedTime)
+				durationHistogram.Observe(elapsedTime)
+				sizeHistogram.Observe(responseSize)
 			}
 
 			switch {

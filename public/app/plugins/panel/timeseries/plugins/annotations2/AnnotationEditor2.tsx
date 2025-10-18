@@ -8,7 +8,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Stack, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
-import { getAnnotationTags } from 'app/features/annotations/api';
+import { annotationServer } from 'app/features/annotations/api';
 
 interface Props {
   annoVals: Record<string, any[]>;
@@ -109,7 +109,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
                           allowCustomValue
                           placeholder={t('timeseries.annotation-editor2.placeholder-add-tags', 'Add tags')}
                           onChange={onChange}
-                          tagOptions={getAnnotationTags}
+                          tagOptions={annotationServer().tags}
                           tags={field.value}
                         />
                       );

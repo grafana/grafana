@@ -1,13 +1,14 @@
 // @ts-ignore
 
-import type { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
+import type { AdHocVariableModel, TextBoxVariableModel, TypedVariableModel } from '@grafana/data';
 import { Dashboard, Panel, VariableOption } from '@grafana/schema';
 import {
   AdHocFilterWithLabels,
   AdhocVariableSpec,
   Spec as DashboardV2Spec,
+  TextVariableSpec,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
@@ -217,7 +218,11 @@ export function applyVariableChangesV2(
     if (!saveVariables) {
       if (variable.kind === 'AdhocVariable') {
         variable.spec.filters = (original.spec as AdhocVariableSpec).filters;
-      } else {
+      } else if (variable.kind === 'TextVariable') {
+        variable.spec.query = (original.spec as TextVariableSpec).query;
+      }
+
+      if (variable.kind !== 'AdhocVariable') {
         if (hasCurrentValueToSave(variable) && hasCurrentValueToSave(original)) {
           variable.spec.current = original.spec.current;
         }
@@ -262,9 +267,14 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
 
     if (!saveVariables) {
       const typed = variable as TypedVariableModel;
+
       if (typed.type === 'adhoc') {
         typed.filters = (original as AdHocVariableModel).filters;
-      } else {
+      } else if (typed.type === 'textbox') {
+        typed.query = (original as TextBoxVariableModel).query;
+      }
+
+      if (typed.type !== 'adhoc') {
         variable.current = original.current;
         variable.options = original.options;
       }

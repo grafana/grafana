@@ -6,12 +6,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationCreateQueryInQueryHistory(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testScenario(t, "When users tries to create query in query history it should succeed", true, true,
 		func(t *testing.T, sc scenarioContext) {
 			command := CreateQueryInQueryHistoryCommand{

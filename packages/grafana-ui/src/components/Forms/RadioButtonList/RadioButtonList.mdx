@@ -5,23 +5,27 @@ import { RadioButtonList } from './RadioButtonList';
 
 # RadioButtonList
 
-`RadioButtonList` is used to select a single value from multiple mutually exclusive options usually in a vertical manner.
+`RadioButtonList` is used to select a single value from a set of mutually-exclusive options, arranged in a _vertical_ list.
 
 ## When to use
 
-Use `RadioButtonList` for mutually exclusive selections.
-Contrary to the [RadioButtonGroup](?path=/docs/forms-radiobuttongroup--radio-buttons) component, `RadioButtonList` can contain more than four options because by default it lays out the items vertically.
+- When you have four or more _mutually-exclusive_ options
+- When the user needs to see all the available options without first interacting to expand the list
+- When you have a smaller number of options, _but_ their individual label length is too long for a [RadioButtonGroup](?path=/docs/forms-radiobuttongroup--radio-buttons)
 
-This component should be used instead of [Select](?path=/docs/forms-select--basic) when there is a need for the user to see all of the options available without clicking and scrolling the dropdown.
+## When not to use
+
+- When you have too many options to show without causing excessive scrolling; consider using a [Combobox](?path=/docs/inputs-combobox--docs)
+- When you have _mutually-inclusive_ options; consider using a stacked list of [Checkboxes](https://developers.grafana.com/ui/latest/index.html?path=/story/inputs-checkbox--stacked-list)
 
 ## Usage
 
-### Basic radio group
+### Basic radio list
 
 ```jsx
 import { RadioButtonList } from '@grafana/ui';
 
-<RadioButtonGroup options={...} value={...} onChange={...} />
+<RadioButtonList options={...} value={...} onChange={...} />
 
 ```
 
@@ -43,7 +47,7 @@ const options = [
 const disabledOptions = ['prometheus', 'elastic'];
 
 
-<RadioButtonGroup
+<RadioButtonList
   options={options}
   disabledOptions={disabledOptions}
   value={...}
@@ -67,7 +71,7 @@ const options = [
 const disabledOptions = ['prometheus', 'elastic'];
 
 
-<RadioButtonGroup
+<RadioButtonList
   options={options}
   disabledOptions={disabledOptions}
   value={...}
@@ -82,7 +86,7 @@ The `RadioButtonList` layout uses CSS Grid, so it is effortless to split the lis
 ```jsx
 import { RadioButtonList } from '@grafana/ui';
 
-<RadioButtonGroup
+<RadioButtonList
   options={...}
   value={...}
   onChange={...}

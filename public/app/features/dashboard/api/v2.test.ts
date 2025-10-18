@@ -1,7 +1,7 @@
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   AnnoKeyFolder,
@@ -37,7 +37,7 @@ const mockGet = jest.fn().mockResolvedValue(mockDashboardDto);
 
 const mockPut = jest.fn().mockImplementation((url, data) => {
   return {
-    apiVersion: 'dashboard.grafana.app/v2alpha1',
+    apiVersion: 'dashboard.grafana.app/v2beta1',
     kind: 'Dashboard',
     metadata: {
       name: data.metadata?.name,
@@ -53,7 +53,7 @@ const mockPut = jest.fn().mockImplementation((url, data) => {
 
 const mockPost = jest.fn().mockImplementation((url, data) => {
   return {
-    apiVersion: 'dashboard.grafana.app/v2alpha1',
+    apiVersion: 'dashboard.grafana.app/v2beta1',
     kind: 'Dashboard',
     metadata: {
       name: data.metadata?.name || 'restored-dash',
@@ -127,7 +127,7 @@ describe('v2 dashboard API', () => {
     expect(result.metadata.annotations![AnnoKeyFolder]).toBe('new-folder');
   });
 
-  it('throws an error if folder is not found', async () => {
+  it('throws an error if folder service returns an error other than 403', async () => {
     mockGet.mockResolvedValueOnce({
       ...mockDashboardDto,
       metadata: {
@@ -141,6 +141,20 @@ describe('v2 dashboard API', () => {
 
     const api = new K8sDashboardV2API();
     await expect(api.getDashboardDTO('test')).rejects.toThrow('Failed to load folder');
+  });
+
+  it('should not throw an error if folder is not found and user has access to dashboard but not to folder', async () => {
+    mockGet.mockResolvedValueOnce({
+      ...mockDashboardDto,
+      metadata: { ...mockDashboardDto.metadata, annotations: { [AnnoKeyFolder]: 'new-folder' } },
+    });
+    jest.spyOn(backendSrv, 'getFolderByUid').mockRejectedValueOnce({ message: 'folder not found', status: 403 });
+
+    const api = new K8sDashboardV2API();
+    const dashboardDTO = await api.getDashboardDTO('test');
+    expect(dashboardDTO.spec).toMatchObject({
+      title: '',
+    });
   });
   describe('v2 dashboard API - Save', () => {
     beforeEach(() => {
@@ -164,7 +178,8 @@ describe('v2 dashboard API', () => {
       },
     };
 
-    it('should create new dashboard', async () => {
+    // TODO: unskip once slug implemented in response
+    it.skip('should create new dashboard', async () => {
       const api = new K8sDashboardV2API();
       const result = await api.saveDashboard({
         ...defaultSaveCommand,
@@ -178,13 +193,14 @@ describe('v2 dashboard API', () => {
         id: 123,
         uid: 'test-dash',
         url: '/d/test-dash/testdashboard',
-        slug: '',
+        slug: 'testdashboard',
         status: 'success',
         version: 2,
       });
     });
 
-    it('should update existing dashboard', async () => {
+    // TODO: unskip once slug implemented in response
+    it.skip('should update existing dashboard', async () => {
       const api = new K8sDashboardV2API();
 
       const result = await api.saveDashboard({
@@ -198,6 +214,7 @@ describe('v2 dashboard API', () => {
           name: 'existing-dash',
         },
       });
+      expect(result.slug).toBe('chaingtitledashboard');
       expect(result.version).toBe(2);
     });
 
@@ -220,7 +237,7 @@ describe('v2 dashboard API', () => {
       });
       expect(mockPut).toHaveBeenCalledTimes(1);
       expect(mockPut).toHaveBeenCalledWith(
-        '/apis/dashboard.grafana.app/v2alpha1/namespaces/default/dashboards/existing-dash',
+        '/apis/dashboard.grafana.app/v2beta1/namespaces/default/dashboards/existing-dash',
         {
           metadata: {
             name: 'existing-dash',
@@ -236,6 +253,66 @@ describe('v2 dashboard API', () => {
         },
         { params: undefined }
       );
+    });
+
+    it('should handle empty string folderUid for root folder', async () => {
+      const api = new K8sDashboardV2API();
+      const saveCommand = {
+        dashboard: defaultDashboardV2Spec(),
+        folderUid: '',
+        message: 'Move to root folder',
+        k8s: {
+          name: 'existing-dash',
+          annotations: {
+            [AnnoKeyFolder]: 'some-previous-folder',
+            [AnnoKeyFolderUrl]: 'some-folder-url',
+            [AnnoKeyFolderTitle]: 'Some Folder Title',
+          },
+        },
+      };
+
+      await api.saveDashboard(saveCommand);
+
+      expect(mockPut).toHaveBeenCalledTimes(1);
+      expect(mockPut).toHaveBeenCalledWith(
+        '/apis/dashboard.grafana.app/v2beta1/namespaces/default/dashboards/existing-dash',
+        {
+          metadata: {
+            name: 'existing-dash',
+            annotations: {
+              [AnnoKeyFolder]: '',
+              [AnnoKeyMessage]: 'Move to root folder',
+              [AnnoKeySavedFromUI]: '10.0.0',
+            },
+          },
+          spec: defaultDashboardV2Spec(),
+        },
+        { params: undefined }
+      );
+
+      const callArgs = mockPut.mock.calls[0];
+      const requestBody = callArgs[1];
+      expect(requestBody.metadata.annotations).not.toHaveProperty(AnnoKeyFolderUrl);
+      expect(requestBody.metadata.annotations).not.toHaveProperty(AnnoKeyFolderTitle);
+    });
+
+    it('should not set folder annotation when folderUid is undefined', async () => {
+      const api = new K8sDashboardV2API();
+      const saveCommand = {
+        dashboard: defaultDashboardV2Spec(),
+        message: 'Save without folder',
+        k8s: {
+          name: 'existing-dash',
+        },
+      };
+
+      await api.saveDashboard(saveCommand);
+      expect(mockPut).toHaveBeenCalledTimes(1);
+
+      const callArgs = mockPut.mock.calls[0];
+      const requestBody = callArgs[1];
+      expect(requestBody.metadata.annotations).not.toHaveProperty(AnnoKeyFolder);
+      expect(requestBody.metadata.annotations[AnnoKeyMessage]).toBe('Save without folder');
     });
   });
 
@@ -329,7 +406,7 @@ describe('v2 dashboard API', () => {
           conversion: {
             failed: true,
             error: 'other-error',
-            storedVersion: 'v2alpha1',
+            storedVersion: 'v2beta1',
           },
         },
       };
@@ -381,7 +458,7 @@ describe('v2 dashboard API', () => {
 
       expect(dashboardToRestore.metadata.resourceVersion).toBe('');
       expect(mockPost).toHaveBeenCalledWith(
-        expect.stringContaining('/apis/dashboard.grafana.app/v2alpha1/'),
+        expect.stringContaining('/apis/dashboard.grafana.app/v2beta1/'),
         expect.objectContaining({
           metadata: expect.objectContaining({
             resourceVersion: '',

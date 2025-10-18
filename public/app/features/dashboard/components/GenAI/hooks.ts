@@ -20,17 +20,19 @@ export enum StreamStatus {
   COMPLETED = 'completed',
 }
 
-export const TIMEOUT = 10000;
+export const TIMEOUT = 10000; // 10 seconds
 
 interface Options {
   model: string;
   temperature: number;
   onResponse?: (response: string) => void;
+  timeout?: number;
 }
 
 const defaultOptions = {
   model: DEFAULT_LLM_MODEL,
   temperature: 1,
+  timeout: TIMEOUT,
 };
 
 interface UseLLMStreamResponse {
@@ -47,7 +49,8 @@ interface UseLLMStreamResponse {
 }
 
 // TODO: Add tests
-export function useLLMStream({ model, temperature, onResponse }: Options = defaultOptions): UseLLMStreamResponse {
+export function useLLMStream(options: Options = defaultOptions): UseLLMStreamResponse {
+  const { model, temperature, onResponse, timeout } = { ...defaultOptions, ...options };
   // The messages array to send to the LLM, updated when the button is clicked.
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -145,17 +148,17 @@ export function useLLMStream({ model, temperature, onResponse }: Options = defau
 
   // If the stream is generating and we haven't received a reply, it times out.
   useEffect(() => {
-    let timeout: NodeJS.Timeout | undefined;
+    let timeoutId: NodeJS.Timeout | undefined;
     if (streamStatus === StreamStatus.GENERATING && reply === '') {
-      timeout = setTimeout(() => {
-        onError(new Error(`LLM stream timed out after ${TIMEOUT}ms`));
-      }, TIMEOUT);
+      timeoutId = setTimeout(() => {
+        onError(new Error(`LLM stream timed out after ${timeout}ms`));
+      }, timeout);
     }
 
     return () => {
-      clearTimeout(timeout);
+      clearTimeout(timeoutId);
     };
-  }, [streamStatus, reply, onError]);
+  }, [streamStatus, reply, onError, timeout]);
 
   if (asyncError || enabledError) {
     setError(asyncError || enabledError);

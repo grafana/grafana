@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Button, ModalsController, ButtonProps } from '@grafana/ui';
 import { useDeletePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -42,9 +41,7 @@ export const DeletePublicDashboardButton = ({
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
-        const translatedRevocationButtonText = config.featureToggles.newDashboardSharingComponent
-          ? t('shared-dashboard-list.button.revoke-button-text', 'Revoke access')
-          : t('public-dashboard-list.button.revoke-button-text', 'Revoke public URL');
+        const translatedRevocationButtonText = t('shared-dashboard-list.button.revoke-button-text', 'Revoke access');
         return (
           <Button
             aria-label={translatedRevocationButtonText}

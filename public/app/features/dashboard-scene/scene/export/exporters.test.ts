@@ -2,13 +2,13 @@ import { find } from 'lodash';
 
 import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariableModel } from '@grafana/data';
 import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   DatasourceVariableKind,
   LibraryPanelKind,
   PanelKind,
   QueryVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { createAdHocVariableAdapter } from 'app/features/variables/adhoc/adapter';
@@ -144,7 +144,7 @@ describe('dashboard exporter v1', () => {
     expect(exported.templating.list[0].datasource.uid).toBe('${DS_GFDB}');
   });
 
-  it('do not expose datasource name and id in a in a template variable of type datasource', async () => {
+  it('templateize datasource uid in a datasource variable that is used in a panel', async () => {
     const dashboard: Dashboard = {
       title: 'My dashboard',
       revision: 1,
@@ -159,6 +159,10 @@ describe('dashboard exporter v1', () => {
           type: 'timeseries',
           title: 'My panel title',
           gridPos: { x: 0, y: 0, w: 1, h: 1 },
+          datasource: {
+            type: 'prometheus',
+            uid: '${ds_var}',
+          },
         },
       ],
       templating: {
@@ -172,7 +176,7 @@ describe('dashboard exporter v1', () => {
             hide: 0,
             includeAll: false,
             multi: false,
-            name: 'query1',
+            name: 'ds_var',
             options: [],
             query: 'prometheus',
             refresh: 1,
@@ -188,7 +192,11 @@ describe('dashboard exporter v1', () => {
     });
     const exported = (await makeExportableV1(dashboardModel)) as DashboardJson;
     const value = exported?.templating?.list ? exported?.templating?.list[0].current : '';
-    expect(value).toEqual({});
+    expect(value).toEqual({
+      selected: true,
+      text: '',
+      value: '${DS_GFDB}',
+    });
   });
 
   it('replaces datasource ref in library panel', async () => {
@@ -600,13 +608,12 @@ describe('dashboard exporter v2', () => {
               {
                 kind: 'PanelQuery',
                 spec: {
-                  datasource: {
-                    type: 'prometheus',
-                    uid: '${datasourceVar}',
-                  },
                   hidden: false,
                   query: {
-                    kind: 'prometheus',
+                    datasource: {
+                      name: '${datasourceVar}',
+                    },
+                    group: 'prometheus',
                     spec: {
                       editorMode: 'builder',
                       expr: 'go_goroutines{job="prometheus"}',
@@ -634,7 +641,7 @@ describe('dashboard exporter v2', () => {
   it('should replace datasource in a query variable', async () => {
     const { dashboard } = await setup();
     const variable = dashboard.variables[0] as QueryVariableKind;
-    expect(variable.spec.datasource?.uid).toBeUndefined();
+    expect(variable.spec.query.datasource?.name).toBeUndefined();
   });
 
   it('do not expose datasource name and id in datasource variable', async () => {
@@ -648,7 +655,7 @@ describe('dashboard exporter v2', () => {
     const { dashboard } = await setup();
     const annotationQuery = dashboard.annotations[0];
 
-    expect(annotationQuery.spec.datasource?.uid).toBeUndefined();
+    expect(annotationQuery.spec.query?.datasource?.name).toBeUndefined();
   });
 
   it('should not remove datasource ref from panel that uses a datasource variable', async () => {
@@ -658,11 +665,8 @@ describe('dashboard exporter v2', () => {
     if (panel.kind !== 'Panel') {
       throw new Error('Panel should be a Panel');
     }
-
-    expect(panel.spec.data.spec.queries[0].spec.datasource).toEqual({
-      type: 'prometheus',
-      uid: '${datasourceVar}',
-    });
+    expect(panel.spec.data.spec.queries[0].spec.query.datasource?.name).toBe('${datasourceVar}');
+    expect(panel.spec.data.spec.queries[0].spec.query.group).toBe('prometheus');
   });
 
   it('should convert library panels to inline panels when sharing externally', async () => {
@@ -698,7 +702,7 @@ describe('dashboard exporter v2', () => {
     expect(convertedPanel.spec.id).toBe(123);
 
     // Check that the panel was properly converted
-    expect(convertedPanel.spec.data.spec.queries[0].spec.query.kind).toBe('testdb');
+    expect(convertedPanel.spec.data.spec.queries[0].spec.query.kind).toBe('DataQuery');
     expect(convertedPanel.spec.data.spec.queries[0].spec.refId).toBe('A');
   });
 
@@ -771,7 +775,8 @@ describe('dashboard exporter v2', () => {
     expect(placeholderPanel.kind).toBe('Panel');
     expect((placeholderPanel as PanelKind).spec.id).toBe(125);
     expect((placeholderPanel as PanelKind).spec.title).toBe('Invalid Library Panel');
-    expect((placeholderPanel as PanelKind).spec.vizConfig.kind).toBe('text');
+    expect((placeholderPanel as PanelKind).spec.vizConfig.kind).toBe('VizConfig');
+    expect((placeholderPanel as PanelKind).spec.vizConfig.group).toBe('text');
 
     // Verify console.error was called
     expect(consoleSpy).toHaveBeenCalledWith('Failed to load library panel invalid-uid:', expect.any(Error));

@@ -34,17 +34,9 @@ func afterCreatePermissionCreator(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	if val.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
-		return nil, fmt.Errorf("managed resource may not grant permissions")
-	}
 	auth, ok := authtypes.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, errors.New("missing auth info")
-	}
-
-	idtype := auth.GetIdentityType()
-	if idtype != authtypes.TypeUser && idtype != authtypes.TypeServiceAccount {
-		return nil, fmt.Errorf("only users or service accounts may grant themselves permissions using an annotation")
 	}
 
 	return func(ctx context.Context) error {

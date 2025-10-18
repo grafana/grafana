@@ -166,6 +166,7 @@ func TestHTTPServer_RotateUserAuthTokenRedirect(t *testing.T) {
 
 		// Invalid redirects should be converted to root
 		{"backslash domain", `/\grafana.com`, "/"},
+		{"backslash domain at the start of the path", `/\grafana.com/../a`, "/"},
 		{"traversal backslash domain", `/a/../\grafana.com`, "/"},
 		{"double slash", "//grafana", "/"},
 		{"missing initial slash", "missingInitialSlash", "/"},
@@ -232,7 +233,7 @@ func TestHTTPServer_RotateUserAuthTokenRedirect(t *testing.T) {
 					res, err := server.Send(req)
 					require.NoError(t, err)
 					assert.Equal(t, 302, redirectStatusCode)
-					assert.Equal(t, redirectCase.expectedUrl, redirectLocation)
+					assert.Equal(t, redirectCase.expectedUrl, redirectLocation, "redirectTo=%s", redirectCase.redirectUrl)
 
 					require.NoError(t, res.Body.Close())
 				})

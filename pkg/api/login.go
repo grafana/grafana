@@ -41,7 +41,7 @@ var getViewIndex = func() string {
 	return viewIndex
 }
 
-// Only allow redirects that start with an alphanumerical character, a dash or an underscore.
+// Only allow redirects that start with a slash followed by an alphanumerical character, a dash or an underscore.
 var redirectRe = regexp.MustCompile(`^/[a-zA-Z0-9-_].*`)
 
 var (
@@ -73,12 +73,17 @@ func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 		return errForbiddenRedirectTo
 	}
 
+	if to.Path != "/" && !redirectRe.MatchString(to.Path) {
+		return errForbiddenRedirectTo
+	}
+
 	cleanPath := path.Clean(to.Path)
 	// "." is what path.Clean returns for empty paths
 	if cleanPath == "." {
 		return errForbiddenRedirectTo
 	}
-	if to.Path != "/" && !redirectRe.MatchString(cleanPath) {
+
+	if cleanPath != "/" && !redirectRe.MatchString(cleanPath) {
 		return errForbiddenRedirectTo
 	}
 

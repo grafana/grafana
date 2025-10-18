@@ -1,5 +1,7 @@
-import { DataLinksCellProps } from '../types';
-import { getCellLinks } from '../utils';
+import { css } from '@emotion/css';
+
+import { DataLinksCellProps, TableCellStyles } from '../types';
+import { getCellLinks, getJustifyContent } from '../utils';
 
 export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
   const links = getCellLinks(field, rowIdx);
@@ -14,3 +16,26 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
     </a>
   ));
 };
+
+export const getStyles: TableCellStyles = (theme, { textWrap, textAlign }) =>
+  css({
+    ...(textWrap && {
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: `${getJustifyContent(textAlign)} !important`, // we can't guarantee order, and alignItems is set on a sibling class.
+    }),
+    '> a': {
+      flexWrap: 'nowrap',
+      ...(!textWrap && {
+        paddingInline: theme.spacing(0.5),
+        borderRight: `2px solid ${theme.colors.border.medium}`,
+        '&:first-child': {
+          paddingInlineStart: 0,
+        },
+        '&:last-child': {
+          paddingInlineEnd: 0,
+          borderRight: 'none',
+        },
+      }),
+    },
+  });

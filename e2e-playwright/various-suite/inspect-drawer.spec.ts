@@ -61,8 +61,7 @@ test.describe(
       await expect(queryTab).toBeVisible();
 
       // Query should be the active tab
-      const activeTab = page.locator('a[class*="-activeTabStyle"]');
-      await expect(activeTab).toHaveText('Query');
+      await expect(queryTab).toHaveClass(/.*-activeTabStyle/);
 
       const queryContent = dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Query.content);
       await expect(queryContent).toBeVisible();

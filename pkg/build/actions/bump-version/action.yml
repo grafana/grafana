@@ -16,6 +16,7 @@ runs:
         GO_MOD_DIR: ${{ inputs.go-mod-dir }}
         VERSION: ${{ inputs.version }}
       with:
+        version: 0.18.8
         verb: run
         args: go run ./pkg/build/actions/bump-version -version=${VERSION}
     - name: make gen-cue

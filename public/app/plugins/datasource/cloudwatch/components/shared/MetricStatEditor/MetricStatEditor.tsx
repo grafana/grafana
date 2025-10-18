@@ -4,7 +4,7 @@ import * as React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { Select } from '@grafana/ui';
+import { Select, TextLink } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
 import { useAccountOptions, useMetrics, useNamespaces } from '../../../hooks';
@@ -152,13 +152,12 @@ export const MetricStatEditor = ({
                 {
                   'Only show metrics that contain exactly the dimensions defined in the query and match the specified values. If this is enabled, all dimensions of the metric being queried must be specified so that the '
                 }
-                <a
+                <TextLink
                   href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html"
-                  target="_blank"
-                  rel="noreferrer"
+                  external
                 >
                   metric schema
-                </a>
+                </TextLink>
                 {
                   ' matches exactly. If this is disabled, metrics that match the schema and have additional dimensions will also be returned.'
                 }

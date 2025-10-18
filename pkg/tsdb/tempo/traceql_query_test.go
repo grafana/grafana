@@ -14,7 +14,7 @@ func TestCreateMetricsQuery_Success(t *testing.T) {
 	service := &Service{
 		logger: logger,
 	}
-	dsInfo := &Datasource{
+	dsInfo := &DatasourceInfo{
 		URL: "http://tempo:3100",
 	}
 	queryVal := "{attribute=\"value\"}"
@@ -40,7 +40,7 @@ func TestCreateMetricsQuery_OnlyQuery(t *testing.T) {
 	service := &Service{
 		logger: logger,
 	}
-	dsInfo := &Datasource{
+	dsInfo := &DatasourceInfo{
 		URL: "http://tempo:3100",
 	}
 	queryVal := "{attribute=\"value\"}"
@@ -60,7 +60,7 @@ func TestCreateMetricsQuery_URLParseError(t *testing.T) {
 	service := &Service{
 		logger: logger,
 	}
-	dsInfo := &Datasource{
+	dsInfo := &DatasourceInfo{
 		URL: "http://[::1]:namedport",
 	}
 	queryVal := "{attribute=\"value\"}"

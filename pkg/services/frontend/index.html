@@ -3,7 +3,7 @@
   <head>
     [[ if and .CSPEnabled .IsDevelopmentEnv ]]
     <!-- Cypress overwrites CSP headers in HTTP requests, so this is required for e2e tests-->
-    <meta  http-equiv="Content-Security-Policy" content="[[.CSPContent]]"/>
+    <meta http-equiv="Content-Security-Policy" content="[[.CSPContent]]"/>
     [[ end ]]
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
@@ -14,7 +14,9 @@
 
     <base href="[[.AppSubUrl]]/" />
 
-    <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
+    <link rel="icon" type="image/png" href="[[.Assets.ContentDeliveryURL]]public/build/img/fav32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="[[.Assets.ContentDeliveryURL]]public/build/img/apple-touch-icon.png" />
+    <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/build/img/grafana_mask_icon.svg" color="#F05A28" />
 
     [[range $asset := .Assets.CSSFiles]]
       <link rel="stylesheet" href="[[$asset.FilePath]]" />
@@ -86,7 +88,7 @@
         .fs-hidden {
           display: none;
         }
- 
+
         .fs-spinner {
           animation: spin 1500ms linear infinite;
           width: 32px;
@@ -100,7 +102,7 @@
         .fs-spinner-arc {
           stroke: #F55F3E;
         }
-        
+
         .fs-loader-text {
           opacity: 0;
           font-size: 16px;
@@ -167,10 +169,23 @@
       // Wrap in an IIFE to avoid polluting the global scope. Intentionally global-scope properties
       // are explicitly assigned to the `window` object.
       (() => {
-        window.__grafana_load_failed = function(...args) {
-          console.error('Failed to load Grafana', ...args);
+        window.__grafana_load_failed = function(err) {
+          console.error('Failed to load Grafana', err);
           document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
           document.querySelector('.fs-variant-error').classList.remove('fs-hidden');
+
+          // Report the error to the backend
+          const errorMessage = err ? err.message : 'Unknown error';
+
+          fetch('/-/fe-boot-error', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: errorMessage,
+          }).catch(err => {
+            console.error('Failed to report boot error to backend: ', err);
+          });
         };
 
         window.onload = function() {
@@ -197,9 +212,18 @@
          * Will return a rejected promise on unrecoverable errors.
          **/
         async function fetchBootData() {
-          const resp = await fetch("/bootdata");
+          const queryParams = new URLSearchParams(window.location.search);
+
+          // pass the search params through to the bootdata request
+          // this allows for overriding the theme/language etc
+          const bootDataUrl = new URL('/bootdata', window.location.origin);
+          for (const [key, value] of queryParams.entries()) {
+            bootDataUrl.searchParams.append(key, value);
+          }
+
+          const resp = await fetch(bootDataUrl);
           const textResponse = await resp.text();
-          
+
           let rawBootData;
           try {
             rawBootData = JSON.parse(textResponse);
@@ -211,7 +235,7 @@
           if (resp.status === 503 && rawBootData.code === 'Loading') {
             return;
           }
-          
+
           if (!resp.ok) {
             throw new Error("Unexpected response body: " + textResponse);
           }
@@ -247,34 +271,42 @@
         }
 
         async function initGrafana() {
-          const rawBootData = await loadBootData();
-
+          // global config
           window.grafanaBootData = {
-            _femt: true,
-            ...rawBootData,
+            _femt: true, // isFrontendService() needs this
+            assets: [[.Assets]],
+            navTree: [],
+            settings: [[.Settings]],
+            user: [[.DefaultUser]],
           }
+
+          // tenant-specific config
+          // TODO split this into separate API calls
+          const { navTree, settings, user } = await loadBootData();
+
+          window.grafanaBootData.settings = {
+            ...settings,
+            ...window.grafanaBootData.settings, // preserve frontend-service settings
+          }
+          window.grafanaBootData.navTree = navTree;
+          window.grafanaBootData.user = user;
 
           // The per-theme CSS still contains some global styles needed
           // to render the page correctly.
           const cssLink = document.createElement("link");
           cssLink.rel = 'stylesheet';
 
-          let theme = window.grafanaBootData.user.theme;
+          const theme = window.grafanaBootData.user.theme;
           if (theme === "system") {
             const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
-            theme = darkQuery.matches ? 'dark' : 'light';
+            window.grafanaBootData.user.lightTheme = !darkQuery.matches;
           }
 
-          if (theme === "light") {
-            document.body.classList.add("theme-light");
-            cssLink.href = window.grafanaBootData.assets.light;
-            window.grafanaBootData.user.lightTheme = true;
-          } else if (theme === "dark") {
-            document.body.classList.add("theme-dark");
-            cssLink.href = window.grafanaBootData.assets.dark;
-            window.grafanaBootData.user.lightTheme = false;
-          }
+          const isLightTheme = window.grafanaBootData.user.lightTheme;
 
+          document.body.classList.add(isLightTheme ? "theme-light" : "theme-dark");
+
+          cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
           document.head.appendChild(cssLink);
         }
 

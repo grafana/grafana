@@ -117,6 +117,7 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *contextmodel.ReqContext) response
 	}
 	result := user.UserProfileDTO{
 		ID:             usr.ID,
+		UID:            usr.UID,
 		Name:           usr.Name,
 		Email:          usr.Email,
 		Login:          usr.Login,

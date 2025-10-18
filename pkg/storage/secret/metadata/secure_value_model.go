@@ -10,22 +10,26 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 )
 
 type secureValueDB struct {
 	// Kubernetes Metadata
-	GUID        string
-	Name        string
-	Namespace   string
-	Annotations string // map[string]string
-	Labels      string // map[string]string
-	Created     int64
-	CreatedBy   string
-	Updated     int64
-	UpdatedBy   string
+	GUID                     string
+	Name                     string
+	Namespace                string
+	Annotations              string // map[string]string
+	Labels                   string // map[string]string
+	Created                  int64
+	CreatedBy                string
+	Updated                  int64
+	UpdatedBy                string
+	OwnerReferenceAPIGroup   sql.NullString
+	OwnerReferenceAPIVersion sql.NullString
+	OwnerReferenceKind       sql.NullString
+	OwnerReferenceName       sql.NullString
 
 	// Kubernetes Status
 	Active  bool
@@ -37,10 +41,6 @@ type secureValueDB struct {
 	Decrypters  sql.NullString
 	Ref         sql.NullString
 	ExternalID  string
-}
-
-func (*secureValueDB) TableName() string {
-	return migrator.TableNameSecureValue
 }
 
 // toKubernetes maps a DB row into a Kubernetes resource (metadata + spec).
@@ -85,8 +85,6 @@ func (sv *secureValueDB) toKubernetes() (*secretv1beta1.SecureValue, error) {
 		resource.Spec.Ref = &sv.Ref.String
 	}
 
-	resource.Status.ExternalID = sv.ExternalID
-
 	// Set all meta fields here for consistency.
 	meta, err := utils.MetaAccessor(resource)
 	if err != nil {
@@ -106,22 +104,36 @@ func (sv *secureValueDB) toKubernetes() (*secretv1beta1.SecureValue, error) {
 	meta.SetUpdatedTimestamp(&updated)
 	meta.SetResourceVersionInt64(sv.Updated)
 
+	hasOwnerReference := sv.OwnerReferenceAPIGroup.Valid && sv.OwnerReferenceAPIGroup.String != "" &&
+		sv.OwnerReferenceAPIVersion.Valid && sv.OwnerReferenceAPIVersion.String != "" &&
+		sv.OwnerReferenceKind.Valid && sv.OwnerReferenceKind.String != "" &&
+		sv.OwnerReferenceName.Valid && sv.OwnerReferenceName.String != ""
+	if hasOwnerReference {
+		meta.SetOwnerReferences([]metav1.OwnerReference{
+			{
+				APIVersion: schema.GroupVersion{Group: sv.OwnerReferenceAPIGroup.String, Version: sv.OwnerReferenceAPIVersion.String}.String(),
+				Kind:       sv.OwnerReferenceKind.String,
+				Name:       sv.OwnerReferenceName.String,
+			},
+		})
+	}
+
 	return resource, nil
 }
 
 // toCreateRow maps a Kubernetes resource into a DB row for new resources being created/inserted.
-func toCreateRow(sv *secretv1beta1.SecureValue, actorUID string) (*secureValueDB, error) {
+func toCreateRow(now time.Time, sv *secretv1beta1.SecureValue, actorUID string) (*secureValueDB, error) {
 	row, err := toRow(sv, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert SecureValue to secureValueDB: %w", err)
 	}
 
-	now := time.Now().UTC().Unix()
+	timestamp := now.UTC().Unix()
 
 	row.GUID = uuid.New().String()
-	row.Created = now
+	row.Created = timestamp
 	row.CreatedBy = actorUID
-	row.Updated = now
+	row.Updated = timestamp
 	row.UpdatedBy = actorUID
 
 	return row, nil
@@ -179,16 +191,48 @@ func toRow(sv *secretv1beta1.SecureValue, externalID string) (*secureValueDB, er
 		return nil, fmt.Errorf("failed to get resource version: %w", err)
 	}
 
+	var (
+		ownerReferenceAPIGroup   sql.NullString
+		ownerReferenceAPIVersion sql.NullString
+		ownerReferenceKind       sql.NullString
+		ownerReferenceName       sql.NullString
+	)
+
+	ownerReferences := meta.GetOwnerReferences()
+	if len(ownerReferences) > 1 {
+		return nil, fmt.Errorf("only one owner reference is supported, found %d", len(ownerReferences))
+	}
+	if len(ownerReferences) == 1 {
+		ownerReference := ownerReferences[0]
+
+		gv, err := schema.ParseGroupVersion(ownerReference.APIVersion)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse owner reference API version %s: %w", ownerReference.APIVersion, err)
+		}
+		if gv.Group == "" {
+			return nil, fmt.Errorf("malformed api version %s requires <group>/<version> format", ownerReference.APIVersion)
+		}
+
+		ownerReferenceAPIGroup = toNullString(&gv.Group)
+		ownerReferenceAPIVersion = toNullString(&gv.Version)
+		ownerReferenceKind = toNullString(&ownerReference.Kind)
+		ownerReferenceName = toNullString(&ownerReference.Name)
+	}
+
 	return &secureValueDB{
-		GUID:        string(sv.UID),
-		Name:        sv.Name,
-		Namespace:   sv.Namespace,
-		Annotations: annotations,
-		Labels:      labels,
-		Created:     meta.GetCreationTimestamp().UnixMilli(),
-		CreatedBy:   meta.GetCreatedBy(),
-		Updated:     updatedTimestamp,
-		UpdatedBy:   meta.GetUpdatedBy(),
+		GUID:                     string(sv.UID),
+		Name:                     sv.Name,
+		Namespace:                sv.Namespace,
+		Annotations:              annotations,
+		Labels:                   labels,
+		Created:                  meta.GetCreationTimestamp().UnixMilli(),
+		CreatedBy:                meta.GetCreatedBy(),
+		Updated:                  updatedTimestamp,
+		UpdatedBy:                meta.GetUpdatedBy(),
+		OwnerReferenceAPIGroup:   ownerReferenceAPIGroup,
+		OwnerReferenceAPIVersion: ownerReferenceAPIVersion,
+		OwnerReferenceKind:       ownerReferenceKind,
+		OwnerReferenceName:       ownerReferenceName,
 
 		Version: sv.Status.Version,
 

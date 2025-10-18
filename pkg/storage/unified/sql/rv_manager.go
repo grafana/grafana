@@ -263,7 +263,7 @@ func (m *resourceVersionManager) execBatch(ctx context.Context, group, resource 
 					attribute.Int("operation_index", i),
 					attribute.String("error", err.Error()),
 				))
-				return fmt.Errorf("failed to execute function: %w", err)
+				return err
 			}
 			guids[i] = guid
 		}

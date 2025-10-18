@@ -2,7 +2,11 @@ import * as React from 'react';
 import { DeepMap, FieldError, FieldErrors, useFormContext } from 'react-hook-form';
 
 import { Field, SecretInput } from '@grafana/ui';
-import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types/alerting';
+import {
+  NotificationChannelOption,
+  NotificationChannelSecureFields,
+  OptionMeta,
+} from 'app/features/alerting/unified/types/alerting';
 
 import {
   ChannelValues,

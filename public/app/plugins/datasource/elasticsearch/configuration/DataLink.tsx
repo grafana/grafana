@@ -57,7 +57,7 @@ export const DataLink = (props: Props) => {
         </InlineField>
         <Button
           variant={'destructive'}
-          title="Remove field"
+          aria-label="Remove field"
           icon="times"
           onClick={(event) => {
             event.preventDefault();

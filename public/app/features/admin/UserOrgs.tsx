@@ -15,6 +15,7 @@ import {
   useStyles2,
   withTheme2,
   Stack,
+  TextLink,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
@@ -446,14 +447,9 @@ export function ChangeOrgButton({
                 <Trans i18nKey="admin.user-orgs.role-not-editable">
                   This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
                   the&nbsp;
-                  <a
-                    className={styles.tooltipItemLink}
-                    href={'https://grafana.com/docs/grafana/latest/auth'}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
+                  <TextLink href={'https://grafana.com/docs/grafana/latest/auth'} external>
                     Grafana authentication docs
-                  </a>
+                  </TextLink>
                   &nbsp;for details.
                 </Trans>
               </div>
@@ -496,14 +492,9 @@ export const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) =
             <Trans i18nKey="admin.user-orgs.external-user-tooltip">
               This user&apos;s built-in role is not editable because it is synchronized from your auth provider. Refer
               to the&nbsp;
-              <a
-                className={styles.tooltipItemLink}
-                href={'https://grafana.com/docs/grafana/latest/auth'}
-                rel="noreferrer noopener"
-                target="_blank"
-              >
+              <TextLink href={'https://grafana.com/docs/grafana/latest/auth'} external>
                 Grafana authentication docs
-              </a>
+              </TextLink>
               &nbsp;for details.
             </Trans>
           </div>
@@ -518,9 +509,6 @@ export const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) =
 const getTooltipStyles = (theme: GrafanaTheme2) => ({
   disabledTooltip: css({
     display: 'flex',
-  }),
-  tooltipItemLink: css({
-    color: theme.v1.palette.blue95,
   }),
   lockMessageClass: css({
     fontStyle: 'italic',

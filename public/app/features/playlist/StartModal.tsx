@@ -45,7 +45,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
       params['_dash.hideLinks'] = true;
     }
 
-    locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.metadata.name}`, params));
+    locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.metadata?.name}`, params));
     reportInteraction('grafana_kiosk_mode', {
       action: 'start_playlist',
       mode: mode,
@@ -110,7 +110,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
       </FieldSet>
       <Modal.ButtonRow>
         <Button variant="primary" onClick={onStart}>
-          <Trans i18nKey="playlist.start-modal.button-start" values={{ title: playlist.spec.title }}>
+          <Trans i18nKey="playlist.start-modal.button-start" values={{ title: playlist.spec?.title }}>
             Start {'{{title}}'}
           </Trans>
         </Button>

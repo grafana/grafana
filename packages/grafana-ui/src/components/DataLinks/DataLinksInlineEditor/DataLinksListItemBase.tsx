@@ -31,9 +31,7 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
   const styles = useStyles2(getDataLinkListItemStyles);
   const { title = '', oneClick = false } = item;
 
-  // @ts-ignore - https://github.com/microsoft/TypeScript/issues/27808
-  const url = item.url ?? item.fetch?.url ?? '';
-
+  const url = ('type' in item ? item[item.type]?.url : item.url) ?? '';
   const hasTitle = title.trim() !== '';
   const hasUrl = url.trim() !== '';
 

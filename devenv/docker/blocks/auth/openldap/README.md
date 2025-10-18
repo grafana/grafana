@@ -1,6 +1,6 @@
 # OpenLDAP for MacOS Docker Block
 
-This Docker block is an updated version from [OpenLDAP](../openldap/) block. This Docker block uses `osixia/openldap` image. The original Docker block was based of `debian:jessie` which is not available for Apple's ARM chip. 
+This Docker block is an updated version from [OpenLDAP](../openldap/) block. This Docker block uses `osixia/openldap` image. The original Docker block was based of `debian:jessie` which is not available for Apple's ARM chip.
 
 ## Deployment
 
@@ -58,6 +58,7 @@ The default configuration between Grafana and the OpenLDAP container is configur
 ## Configure LDAP with TLS
 
 After the `openldap` container has been deployed, you have to copy the CA from the docker container:
+
 ```bash
 # get the container ID
 docker ps
@@ -85,7 +86,8 @@ port = 636
 use_ssl = true
 start_tls = false
 ```
-- To connect with STARTTLS use this config: 
+
+- To connect with STARTTLS use this config:
 
 ```ini
 port = 389

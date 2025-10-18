@@ -19,10 +19,10 @@ const meta: Meta = {
   },
 };
 
-interface StoryProps extends Partial<Props> {
+type StoryProps = Partial<Props> & {
   inputText: string;
   buttonText: string;
-}
+};
 
 export const ClipboardButton: StoryFn<StoryProps> = (args) => {
   const shareUrl = 'https://grafana.com/d/abcDEF-34t';

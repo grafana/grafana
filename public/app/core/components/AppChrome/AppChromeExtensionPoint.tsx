@@ -1,25 +1,16 @@
-import { useLocation } from 'react-router-dom';
-
 import { PluginExtensionPoints } from '@grafana/data';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-
-const excludedRoutes: Record<string, boolean> = {
-  '/login': true,
-  '/signup': true,
-  '/verify': true,
-  '/user/password/send-reset-email': true,
-  '/user/password/reset': true,
-  '/sandbox/benchmarks': true,
-};
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
 export function AppChromeExtensionPoint(): JSX.Element | null {
-  const location = useLocation();
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
 
   if (config.featureToggles.enableAppChromeExtensions !== true) {
     return null;
   }
 
-  if (excludedRoutes[location.pathname]) {
+  if (state.chromeless) {
     return null;
   }
 

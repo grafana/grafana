@@ -6,6 +6,7 @@ import {
   IntervalVariableModel,
   LoadingState,
   QueryVariableModel,
+  SwitchVariableModel,
   TextBoxVariableModel,
   TypedVariableModel,
 } from '@grafana/data';
@@ -17,6 +18,7 @@ import {
   GroupByVariable,
   QueryVariable,
   SceneVariableSet,
+  SwitchVariable,
 } from '@grafana/scenes';
 import { defaultDashboard, defaultTimePickerConfig, VariableType } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -654,6 +656,166 @@ describe('when creating variables objects', () => {
       };
 
       expect(() => createSceneVariableFromVariableModel(variable)).toThrow('Scenes: Unsupported variable type');
+    });
+  });
+
+  describe('when migrating a "switch" variable', () => {
+    const baseVariable: SwitchVariableModel = {
+      id: 'switch1',
+      global: false,
+      index: 0,
+      state: LoadingState.Done,
+      error: null,
+      name: 'switchVar',
+      label: 'Switch Label',
+      description: 'Switch Description',
+      type: 'switch',
+      rootStateKey: 'N4XLmH5Vz',
+      current: {
+        selected: true,
+        text: ['true'],
+        value: ['true'],
+      },
+      hide: 0,
+      skipUrlSync: false,
+      options: [
+        {
+          selected: false,
+          text: 'true',
+          value: 'true',
+        },
+        {
+          selected: true,
+          text: 'false',
+          value: 'false',
+        },
+      ],
+      query: '',
+    };
+    const baseExpectedState = {
+      description: 'Switch Description',
+      enabledValue: 'true',
+      disabledValue: 'false',
+      hide: 0,
+      label: 'Switch Label',
+      name: 'switchVar',
+      skipUrlSync: false,
+      type: 'switch',
+      value: 'true',
+    };
+
+    it('should migrate a "switch" variable with "true" value', () => {
+      const variable: SwitchVariableModel = {
+        ...baseVariable,
+        current: {
+          selected: true,
+          text: 'true',
+          value: 'true',
+        },
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable);
+      const { key, ...rest } = migrated.state;
+
+      expect(migrated).toBeInstanceOf(SwitchVariable);
+      expect(rest).toEqual({
+        ...baseExpectedState,
+        value: 'true',
+      });
+    });
+
+    it('should migrate a "switch" variable with "false" value', () => {
+      const variable: SwitchVariableModel = {
+        ...baseVariable,
+        current: {
+          selected: true,
+          text: 'false',
+          value: 'false',
+        },
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable);
+      const { key, ...rest } = migrated.state;
+
+      expect(migrated).toBeInstanceOf(SwitchVariable);
+      expect(rest).toEqual({
+        ...baseExpectedState,
+        value: 'false',
+      });
+    });
+
+    it('should migrate a switch variable with array "true" value', () => {
+      const variable: SwitchVariableModel = {
+        ...baseVariable,
+        current: {
+          selected: true,
+          text: ['true'],
+          value: ['true'],
+        },
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable);
+      const { key, ...rest } = migrated.state;
+
+      expect(migrated).toBeInstanceOf(SwitchVariable);
+      expect(rest).toEqual({
+        ...baseExpectedState,
+        value: 'true',
+      });
+    });
+
+    it('should migrate a switch variable with array "false" value', () => {
+      const variable: SwitchVariableModel = {
+        ...baseVariable,
+        current: {
+          selected: true,
+          text: ['false'],
+          value: ['false'],
+        },
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable);
+      const { key, ...rest } = migrated.state;
+
+      expect(migrated).toBeInstanceOf(SwitchVariable);
+      expect(rest).toEqual({
+        ...baseExpectedState,
+        value: 'false',
+      });
+    });
+
+    it('should migrate a "switch" variable with a custom value', () => {
+      const variable: SwitchVariableModel = {
+        ...baseVariable,
+        current: {
+          selected: true,
+          text: 'on',
+          value: 'on',
+        },
+        options: [
+          {
+            selected: true,
+            text: 'on',
+            value: 'on',
+          },
+          {
+            selected: false,
+            text: 'off',
+            value: 'off',
+          },
+        ],
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable);
+      const { key, ...rest } = migrated.state;
+
+      expect(migrated).toBeInstanceOf(SwitchVariable);
+      expect(rest).toEqual({
+        ...baseExpectedState,
+        disabledValue: 'off',
+        enabledValue: 'on',
+        value: 'on',
+      });
     });
   });
 

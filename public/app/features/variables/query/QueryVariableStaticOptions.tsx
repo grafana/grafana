@@ -5,8 +5,8 @@ import { t, Trans } from '@grafana/i18n';
 import { QueryVariable } from '@grafana/scenes';
 import { Field, Stack, Switch } from '@grafana/ui';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
-import { VariableOptionsInput } from 'app/features/dashboard-scene/settings/variables/components/VariableOptionsInput';
 import { VariableSelectField } from 'app/features/dashboard-scene/settings/variables/components/VariableSelectField';
+import { VariableStaticOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/VariableStaticOptionsForm';
 
 export type StaticOptionsType = QueryVariable['state']['staticOptions'];
 export type StaticOptionsOrderType = QueryVariable['state']['staticOptionsOrder'];
@@ -65,7 +65,11 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
               />
 
               {areStaticOptionsEnabled && (
-                <VariableOptionsInput width={60} options={staticOptions ?? []} onChange={onStaticOptionsChange} />
+                <VariableStaticOptionsForm
+                  allowEmptyValue
+                  options={staticOptions ?? []}
+                  onChange={onStaticOptionsChange}
+                />
               )}
             </Stack>
           </>

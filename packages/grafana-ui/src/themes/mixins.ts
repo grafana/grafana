@@ -72,6 +72,13 @@ export function getFocusStyles(theme: GrafanaTheme2) {
   };
 }
 
+export function getButtonFocusStyles(theme: GrafanaTheme2) {
+  return {
+    ...getFocusStyles(theme),
+    transitionProperty: undefined,
+  };
+}
+
 // max-width is set up based on .grafana-tooltip class that's used in dashboard
 export const getTooltipContainerStyles = (theme: GrafanaTheme2) => ({
   overflow: 'hidden',

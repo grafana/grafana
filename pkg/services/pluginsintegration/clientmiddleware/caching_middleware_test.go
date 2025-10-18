@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
@@ -321,4 +324,87 @@ func TestCachingMiddleware(t *testing.T) {
 			cs.AssertCalls(t, "HandleResourceRequest", 0)
 		})
 	})
+}
+
+func TestRequestDeduplicationMiddleware(t *testing.T) {
+	t.Parallel()
+
+	t.Run("deduplicates requests issuing the same query", func(t *testing.T) {
+		t.Parallel()
+
+		handler := newMockMiddlewareHandler()
+		middleware := newRequestDeduplicationMiddleware(nil, handler)
+
+		req := backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					UID: "uid",
+				},
+			},
+		}
+
+		wg := &sync.WaitGroup{}
+		wg.Add(2)
+
+		for range 2 {
+			go func() {
+				defer wg.Done()
+				resp, err := middleware.QueryData(t.Context(), &req)
+				require.NoError(t, err)
+				require.Equal(t, &backend.QueryDataResponse{}, resp)
+			}()
+		}
+
+		wg.Wait()
+
+		require.EqualValues(t, 1, handler.QueryDataCalls)
+	})
+
+	t.Run("requests where DataSourceInstanceSettings is nil bypass request deduplication", func(t *testing.T) {
+		t.Parallel()
+
+		handler := newMockMiddlewareHandler()
+		middleware := newRequestDeduplicationMiddleware(nil, handler)
+
+		{
+			req := backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: nil,
+				},
+			}
+
+			resp, err := middleware.QueryData(t.Context(), &req)
+			require.NoError(t, err)
+			require.Empty(t, resp)
+		}
+
+		{
+			req := backend.CallResourceRequest{
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: nil,
+				},
+			}
+
+			require.NoError(t, middleware.CallResource(t.Context(), &req, nil))
+		}
+	})
+}
+
+type mockMiddlewareHandler struct {
+	backend.BaseHandler
+	QueryDataCalls int32
+}
+
+func newMockMiddlewareHandler() *mockMiddlewareHandler {
+	return &mockMiddlewareHandler{}
+}
+
+func (m *mockMiddlewareHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	atomic.AddInt32(&m.QueryDataCalls, 1)
+	time.Sleep(10 * time.Millisecond)
+	return &backend.QueryDataResponse{}, nil
+}
+
+func (m *mockMiddlewareHandler) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return nil
 }

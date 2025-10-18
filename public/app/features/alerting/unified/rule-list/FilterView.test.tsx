@@ -57,36 +57,44 @@ describe('RuleList - FilterView', () => {
   it('should filter results by group and rule name ', async () => {
     render(
       <FilterView
-        filterState={getFilter({ dataSourceNames: ['Mimir'], groupName: 'test-group-4501', ruleName: 'test-rule-2' })}
+        filterState={getFilter({
+          dataSourceNames: ['Mimir'],
+          groupName: 'test-group-4501',
+          ruleName: 'mimir-test-rule-1',
+        })}
       />
     );
 
     await loadMoreResults();
 
     const matchingRule = await screen.findByRole('treeitem', {
-      name: /mimir-test-rule-2/,
+      name: /mimir-test-rule-1/,
     });
 
-    expect(matchingRule).toHaveTextContent('mimir-test-rule-2');
+    expect(matchingRule).toHaveTextContent('mimir-test-rule-1');
     expect(matchingRule).toHaveTextContent('test-mimir-namespace');
     expect(matchingRule).toHaveTextContent('test-group-4501');
     expect(await screen.findByText(/No more results/)).toBeInTheDocument();
   });
 
   it('should display rules from multiple datasources', async () => {
-    render(<FilterView filterState={getFilter({ groupName: 'test-group-181', ruleName: 'test-rule-2' })} />);
+    render(<FilterView filterState={getFilter({ groupName: 'test-group-123', ruleName: 'test-rule-3' })} />);
 
     await loadMoreResults();
 
-    // Mimir has 11 matching rules, 181, 1810, 1811 ... 1819
+    // Fuzzy search for 'test-group-123' matches:
+    // Mimir: 15 groups (123, 1123, 1230-1239, 2123, 3123, 4123)
+    // Prometheus: 1 group (123)
     const matchingMimirRules = await screen.findAllByRole('treeitem', {
-      name: /mimir-test-rule-2/,
+      name: /mimir-test-rule-3/,
     });
     const matchingPrometheusRule = await screen.findByRole('treeitem', {
-      name: /prometheus-test-rule-2/,
+      name: /prometheus-test-rule-3/,
     });
 
-    expect(matchingMimirRules).toHaveLength(11);
+    // Mimir: 15 groups × 1 rule each = 15 rules
+    // Prometheus: 1 group × 1 rule = 1 rule
+    expect(matchingMimirRules).toHaveLength(15);
     expect(matchingPrometheusRule).toBeInTheDocument();
 
     expect(await screen.findByText(/No more results/)).toBeInTheDocument();
@@ -98,6 +106,30 @@ describe('RuleList - FilterView', () => {
     await loadMoreResults();
 
     expect(await screen.findByText(/No matching rules found/)).toBeInTheDocument();
+  });
+
+  it('should render group names as clickable links', async () => {
+    render(
+      <FilterView
+        filterState={getFilter({
+          dataSourceNames: ['Mimir'],
+          groupName: 'test-group-4501',
+          ruleName: 'mimir-test-rule-1',
+        })}
+      />
+    );
+
+    await loadMoreResults();
+
+    const groupLink = await screen.findByRole('link', {
+      name: 'test-group-4501',
+    });
+
+    expect(groupLink).toBeInTheDocument();
+    expect(groupLink).toHaveAttribute(
+      'href',
+      '/alerting/mimir/namespaces/test-mimir-namespace/groups/test-group-4501/view'
+    );
   });
 });
 

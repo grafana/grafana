@@ -152,4 +152,52 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		Cols: []string{"namespace", "label", "active"},
 		Type: migrator.IndexType,
 	}))
+
+	// Owner Reference columns
+	mg.AddMigration("add owner_reference_api_group column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_api_group",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add owner_reference_api_version column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_api_version",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add owner_reference_kind column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_kind",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add owner_reference_name column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_name",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add lease_token column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "lease_token",
+		Type:     migrator.DB_NVarchar,
+		Length:   36,
+		Nullable: true,
+	}))
+	mg.AddMigration("add lease_token index to "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
+		Cols: []string{"lease_token"},
+	}))
+	mg.AddMigration("add lease_created column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "lease_created",
+		Type:     migrator.DB_BigInt,
+		Nullable: false,
+		Default:  "0",
+	}))
+	mg.AddMigration("add lease_created index to "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
+		Cols: []string{"lease_created"},
+	}))
 }

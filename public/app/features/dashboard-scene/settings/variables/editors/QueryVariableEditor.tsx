@@ -14,7 +14,11 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
 import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
-import { StaticOptionsOrderType, StaticOptionsType } from 'app/features/variables/query/QueryVariableStaticOptions';
+import {
+  QueryVariableStaticOptions,
+  StaticOptionsOrderType,
+  StaticOptionsType,
+} from 'app/features/variables/query/QueryVariableStaticOptions';
 
 import { QueryVariableEditorForm } from '../components/QueryVariableForm';
 import { VariableTextAreaField } from '../components/VariableTextAreaField';
@@ -127,6 +131,7 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
 
   return [
     new OptionsPaneItemDescriptor({
+      id: `variable-${variable.state.name}-value`,
       render: () => <ModalEditor variable={variable} />,
     }),
   ];
@@ -185,7 +190,15 @@ export function ModalEditor({ variable }: { variable: QueryVariable }) {
 }
 
 export function Editor({ variable }: { variable: QueryVariable }) {
-  const { datasource: datasourceRef, sort, refresh, query, regex } = variable.useState();
+  const {
+    datasource: datasourceRef,
+    sort,
+    refresh,
+    query,
+    regex,
+    staticOptions,
+    staticOptionsOrder,
+  } = variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
   const { value: dsConfig } = useAsync(async () => {
     const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
@@ -228,6 +241,12 @@ export function Editor({ variable }: { variable: QueryVariable }) {
   const onRefreshChange = (refresh: VariableRefresh) => {
     variable.setState({ refresh: refresh });
   };
+  const onStaticOptionsChange = (staticOptions: StaticOptionsType) => {
+    variable.setState({ staticOptions });
+  };
+  const onStaticOptionsOrderChange = (staticOptionsOrder: StaticOptionsOrderType) => {
+    variable.setState({ staticOptionsOrder });
+  };
 
   const isHasVariableOptions = hasVariableOptions(variable);
 
@@ -236,6 +255,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
       <Field
         label={t('dashboard-scene.query-variable-editor-form.label-target-data-source', 'Target data source')}
         htmlFor="data-source-picker"
+        noMargin
       >
         <DataSourcePicker current={selectedDatasource} onChange={onDataSourceChange} variables={true} width={30} />
       </Field>
@@ -290,6 +310,15 @@ export function Editor({ variable }: { variable: QueryVariable }) {
         onChange={onRefreshChange}
         refresh={refresh}
       />
+
+      {onStaticOptionsChange && onStaticOptionsOrderChange && (
+        <QueryVariableStaticOptions
+          staticOptions={staticOptions}
+          staticOptionsOrder={staticOptionsOrder}
+          onStaticOptionsChange={onStaticOptionsChange}
+          onStaticOptionsOrderChange={onStaticOptionsOrderChange}
+        />
+      )}
 
       {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect(false)} />}
     </div>

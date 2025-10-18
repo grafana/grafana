@@ -18,7 +18,7 @@ weight: 900
 # Export logs of usage insights
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
 By exporting usage logs to Loki, you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries. This configuration is done for you in Grafana Cloud, with provisioned dashboards. Read about them in the [Grafana Cloud documentation](/docs/grafana-cloud/usage-insights/).
@@ -94,6 +94,14 @@ tls = true
 # Set the tenant ID for Loki communication, which is disabled by default.
 # The tenant ID is required to interact with Loki running in multi-tenant mode.
 tenant_id =
+# How long to wait before sending a request to Loki with the batch of events. Uses duration format: e.g. 5s, 1m
+# Whatever happens first between `batch_wait_duration` and `batch_size_bytes` will trigger the batch to be sent to Loki.
+# If the wait duration is very long and the `batch_size_bytes` is very high, events may take a long time to be sent.
+batch_wait_duration = 5s
+# How many events (in bytes) to accumulate in a single batch before sending it to Loki.
+# Whatever happens first between `batch_wait_duration` and `batch_size_bytes` will trigger the batch to be sent to Loki.
+# If you wish to always wait for the `batch_wait_duration`, set this to a very high number.
+batch_size_bytes = 102400 # 100KiB
 ```
 
 Using `logger` will print usage insights to your [Grafana server log](../../configure-grafana/#log).

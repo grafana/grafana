@@ -6,12 +6,17 @@ import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { ModeOption } from '../types';
 
 /**
- * Filters available mode options based on system state
+ * Filters available mode options based on system state and allowed targets
  */
 function filterModeOptions(modeOptions: ModeOption[], repoName: string, settings?: RepositoryViewList): ModeOption[] {
   const folderConnected = settings?.items?.some((item) => item.target === 'folder' && item.name !== repoName);
+  const allowedTargets = settings?.allowedTargets || ['instance', 'folder'];
 
   return modeOptions.filter((option) => {
+    if (!allowedTargets.includes(option.target)) {
+      return false;
+    }
+
     if (settings?.legacyStorage) {
       return option.target === 'instance';
     }

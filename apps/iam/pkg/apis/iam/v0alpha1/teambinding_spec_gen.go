@@ -6,22 +6,12 @@ package v0alpha1
 type TeamBindingspecSubject struct {
 	// uid of the identity
 	Name string `json:"name"`
-	// permission of the identity in the team
-	Permission TeamBindingTeamPermission `json:"permission"`
 }
 
 // NewTeamBindingspecSubject creates a new TeamBindingspecSubject object.
 func NewTeamBindingspecSubject() *TeamBindingspecSubject {
 	return &TeamBindingspecSubject{}
 }
-
-// +k8s:openapi-gen=true
-type TeamBindingTeamPermission string
-
-const (
-	TeamBindingTeamPermissionAdmin  TeamBindingTeamPermission = "admin"
-	TeamBindingTeamPermissionMember TeamBindingTeamPermission = "member"
-)
 
 // +k8s:openapi-gen=true
 type TeamBindingTeamRef struct {
@@ -35,15 +25,26 @@ func NewTeamBindingTeamRef() *TeamBindingTeamRef {
 }
 
 // +k8s:openapi-gen=true
+type TeamBindingTeamPermission string
+
+const (
+	TeamBindingTeamPermissionAdmin  TeamBindingTeamPermission = "admin"
+	TeamBindingTeamPermissionMember TeamBindingTeamPermission = "member"
+)
+
+// +k8s:openapi-gen=true
 type TeamBindingSpec struct {
-	Subjects []TeamBindingspecSubject `json:"subjects"`
-	TeamRef  TeamBindingTeamRef       `json:"teamRef"`
+	Subject TeamBindingspecSubject `json:"subject"`
+	TeamRef TeamBindingTeamRef     `json:"teamRef"`
+	// permission of the identity in the team
+	Permission TeamBindingTeamPermission `json:"permission"`
+	External   bool                      `json:"external"`
 }
 
 // NewTeamBindingSpec creates a new TeamBindingSpec object.
 func NewTeamBindingSpec() *TeamBindingSpec {
 	return &TeamBindingSpec{
-		Subjects: []TeamBindingspecSubject{},
-		TeamRef:  *NewTeamBindingTeamRef(),
+		Subject: *NewTeamBindingspecSubject(),
+		TeamRef: *NewTeamBindingTeamRef(),
 	}
 }

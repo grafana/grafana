@@ -270,20 +270,52 @@ When you set `X-Grafana-Alerting-Notification-Settings`, the header value must b
 
 ### Compatible endpoints
 
-The API endpoints listed in this section are supported in Grafana and are used by mimirtool and cortextool, as shown earlier.
+The API endpoints listed in this section are supported in Grafana and are used by `mimirtool` and `cortextool`, as shown earlier. These endpoints are compatible with [Mimir HTTP API](/docs/mimir/latest/references/http-api/).
 
-The `POST` endpoints can be used to import data source–managed alert rules.
+In these endpoints, a "namespace" corresponds to a folder title in Grafana.
 
-| Endpoint | Method                                              | Summary                                                                                                                                               |
-| -------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| POST     | /convert/prometheus/config/v1/rules                 | Create or update multiple rule groups across multiple namespaces. Requires [`X-Grafana-Alerting-Datasource-UID`](#x-grafana-alerting-datasource-uid). |
-| POST     | /convert/prometheus/config/v1/rules/:namespaceTitle | Create or update a single rule group in a namespace. Requires [`X-Grafana-Alerting-Datasource-UID`](#x-grafana-alerting-datasource-uid).              |
+The `POST` endpoints can be used to import data source–managed alert rules. They accept requests in both YAML and JSON. If no media type is specified, YAML is assumed.
 
-The `GET` and `DELETE` endpoints work only with provisioned and imported alert rules.
+| Endpoint | Method                                                | Summary                                                                                                                                                                                         | Mimir equivalent                                                         |
+| -------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| POST     | `/convert/prometheus/config/v1/rules`                 | [Create or update multiple rule groups](#create-or-update-multiple-rule-groups) across multiple namespaces. Requires [`X-Grafana-Alerting-Datasource-UID`](#x-grafana-alerting-datasource-uid). | None                                                                     |
+| POST     | `/convert/prometheus/config/v1/rules/:namespaceTitle` | Create or update a single rule group in a namespace. Requires [`X-Grafana-Alerting-Datasource-UID`](#x-grafana-alerting-datasource-uid).                                                        | [Set rule group](/docs/mimir/latest/references/http-api/#set-rule-group) |
 
-| Endpoint | Method                                                     | Summary                                             |
-| -------- | ---------------------------------------------------------- | --------------------------------------------------- |
-| GET      | /convert/prometheus/config/v1/rules                        | Get all imported rule groups across all namespaces. |
-| GET      | /convert/prometheus/config/v1/rules/:namespaceTitle        | Get imported rule groups in a specific namespace.   |
-| DELETE   | /convert/prometheus/config/v1/rules/:namespaceTitle        | Delete all imported alert rules in a namespace.     |
-| DELETE   | /convert/prometheus/config/v1/rules/:namespaceTitle/:group | Delete a specific imported rule group.              |
+The `GET` and `DELETE` endpoints work only with provisioned and imported alert rules. All `GET` endpoints support both JSON and YAML response formats based on the `Accept` header: use `application/json` for JSON responses, or `application/yaml` for YAML responses. YAML is the default format when no `Accept` header is specified.
+
+| Endpoint | Method                                                       | Summary                                             | Mimir equivalent                                                                                     |
+| -------- | ------------------------------------------------------------ | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| GET      | `/convert/prometheus/config/v1/rules`                        | Get all imported rule groups across all namespaces. | [List rule groups](/docs/mimir/latest/references/http-api/#list-rule-groups)                         |
+| GET      | `/convert/prometheus/config/v1/rules/:namespaceTitle`        | Get imported rule groups in a specific namespace.   | [Get rule groups by namespace](/docs/mimir/latest/references/http-api/#get-rule-groups-by-namespace) |
+| GET      | `/convert/prometheus/config/v1/rules/:namespaceTitle/:group` | Get imported rule group in a specific namespace.    | [Get rule group](/docs/mimir/latest/references/http-api/#get-rule-group)                             |
+| DELETE   | `/convert/prometheus/config/v1/rules/:namespaceTitle`        | Delete all imported alert rules in a namespace.     | [Delete namespace](/docs/mimir/latest/references/http-api/#delete-namespace)                         |
+| DELETE   | `/convert/prometheus/config/v1/rules/:namespaceTitle/:group` | Delete a specific imported rule group.              | [Delete rule group](/docs/mimir/latest/references/http-api/#delete-rule-group)                       |
+
+#### Create or update multiple rule groups
+
+```
+POST /convert/prometheus/config/v1/rules
+```
+
+Creates or updates multiple rule groups across multiple namespaces. This endpoint expects a request with a map of namespace titles to arrays of rule groups, and returns `202` on success.
+
+This endpoint has no Mimir equivalent and is Grafana-specific for bulk operations.
+
+##### Example request body
+
+```yaml
+namespace1:
+  - name: MyGroupName1
+    rules:
+      - alert: MyAlertName1
+        expr: up == 0
+        labels:
+          severity: warning
+namespace2:
+  - name: MyGroupName2
+    rules:
+      - alert: MyAlertName2
+        expr: rate(http_requests_total[5m]) > 0.1
+        labels:
+          severity: critical
+```

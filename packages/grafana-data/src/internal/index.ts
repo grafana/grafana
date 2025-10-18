@@ -26,6 +26,7 @@ export {
   type ConvertFieldTypeTransformerOptions,
   convertFieldType,
 } from '../transformations/transformers/convertFieldType';
+export { type ConvertFrameTypeTransformerOptions, FrameType } from '../transformations/transformers/convertFrameType';
 export { type FilterFieldsByNameTransformerOptions } from '../transformations/transformers/filterByName';
 export { type FilterFramesByRefIdTransformerOptions } from '../transformations/transformers/filterByRefId';
 export { FormatStringOutput, type FormatStringTransformerOptions } from '../transformations/transformers/formatString';
@@ -92,6 +93,7 @@ export { DataTransformerID } from '../transformations/transformers/ids';
 
 export { mergeTransformer } from '../transformations/transformers/merge';
 export { getThemeById } from '../themes/registry';
+export * as experimentalThemeDefinitions from '../themes/themeDefinitions';
 export { GrafanaEdition } from '../types/config';
 export { SIPrefix } from '../valueFormats/symbolFormatters';
 

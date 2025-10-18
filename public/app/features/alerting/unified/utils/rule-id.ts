@@ -307,6 +307,13 @@ export function getPromRuleFingerprint(rule: Rule, includeQuery: boolean) {
 
 // there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
 export function hashQuery(query: string) {
+  // remove comments
+  query = query
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#'))
+    .join('\n');
+
   // one of them might be wrapped in parens
   if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
     query = query.slice(1, -1);

@@ -96,7 +96,7 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
           placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
         />
         <Button
-          title={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
+          aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
           variant="secondary"
           icon="angle-up"
           className={styles.closeButton}

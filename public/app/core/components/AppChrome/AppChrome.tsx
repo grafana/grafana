@@ -6,7 +6,7 @@ import { PropsWithChildren, useEffect } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
-import { ErrorBoundaryAlert, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import store from 'app/core/store';
@@ -33,7 +33,6 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const {
     isOpen: isExtensionSidebarOpen,
-    isEnabled: isExtensionSidebarEnabled,
     extensionSidebarWidth,
     setExtensionSidebarWidth,
   } = useExtensionSidebarContext();
@@ -88,6 +87,7 @@ export function AppChrome({ children }: Props) {
   // doesn't get re-mounted when chromeless goes from true to false.
   return (
     <div
+      id={floatingUtils.BOUNDARY_ELEMENT_ID}
       className={classNames('main-view', {
         'main-view--chrome-hidden': state.chromeless,
       })}
@@ -122,7 +122,7 @@ export function AppChrome({ children }: Props) {
                 [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
               })}
             >
-              <ErrorBoundaryAlert>
+              <ErrorBoundaryAlert boundaryName="scopes-dashboards">
                 <ScopesDashboards />
               </ErrorBoundaryAlert>
             </div>
@@ -138,7 +138,7 @@ export function AppChrome({ children }: Props) {
           >
             {children}
           </main>
-          {!state.chromeless && isExtensionSidebarEnabled && isExtensionSidebarOpen && (
+          {!state.chromeless && isExtensionSidebarOpen && (
             <Resizable
               className={styles.sidebarContainer}
               defaultSize={{ width: extensionSidebarWidth }}

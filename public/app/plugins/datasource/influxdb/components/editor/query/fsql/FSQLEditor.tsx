@@ -1,9 +1,7 @@
-import { css, cx } from '@emotion/css';
 import { PureComponent } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { SQLQuery, SqlQueryEditorLazy, applyQueryDefaults } from '@grafana/sql';
-import { InlineFormLabel, LinkButton, Themeable2, withTheme2 } from '@grafana/ui';
+import { InlineFormLabel, LinkButton, Themeable2, withTheme2, Stack, Space } from '@grafana/ui';
 
 import InfluxDatasource from '../../../../datasource';
 import { FlightSQLDatasource } from '../../../../fsql/datasource.flightsql';
@@ -68,8 +66,7 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
   }
 
   render() {
-    const { query, theme, onRunQuery, onChange } = this.props;
-    const styles = getStyles(theme);
+    const { query, onRunQuery, onChange } = this.props;
 
     const onRunSQLQuery = () => {
       return onRunQuery();
@@ -96,7 +93,8 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
           onChange={onSQLChange}
           queryHeaderProps={{ dialect: 'influx' }}
         />
-        <div className={cx('gf-form-inline', styles.editorActions)}>
+        <Space v={0.5} />
+        <Stack flex={1} gap={4} justifyContent="space-between">
           <LinkButton
             icon="external-link-alt"
             variant="secondary"
@@ -105,30 +103,14 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
           >
             SQL language syntax
           </LinkButton>
-          <div className="gf-form gf-form--grow">
-            <div className="gf-form-label gf-form-label--grow"></div>
-          </div>
+
           <InlineFormLabel width={5} tooltip={helpTooltip}>
             Help
           </InlineFormLabel>
-        </div>
+        </Stack>
       </>
     );
   }
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  editorContainerStyles: css({
-    height: '200px',
-    maxWidth: '100%',
-    resize: 'vertical',
-    overflow: 'auto',
-    backgroundColor: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
-    paddingBottom: theme.spacing(1),
-  }),
-  editorActions: css({
-    marginTop: '6px',
-  }),
-});
 
 export const FSQLEditor = withTheme2(UnthemedSQLQueryEditor);

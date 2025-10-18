@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -47,9 +49,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationServer(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Create a test-specific config to avoid migration conflicts
 	cfg := setting.NewCfg()
@@ -92,7 +92,7 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	require.NoError(t, err)
 
-	srv, err := NewServer(cfg.ZanzanaServer, openfga, log.NewNopLogger(), tracing.NewNoopTracerService())
+	srv, err := NewServer(cfg.ZanzanaServer, openfga, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
 	require.NoError(t, err)
 
 	storeInf, err := srv.getStoreInfo(context.Background(), namespace)

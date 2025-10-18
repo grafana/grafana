@@ -119,14 +119,14 @@ describe('DataSourceGroupLoader', () => {
       render(<DataSourceGroupLoader groupIdentifier={groupIdentifier} />);
 
       const mimirOnlyItem = await ui.ruleItem(/mimir-only-rule/).find();
-      expect(within(mimirOnlyItem).getByTitle('Creating')).toBeInTheDocument();
+      expect(within(mimirOnlyItem).getByLabelText('Creating')).toBeInTheDocument();
     });
 
     it('should render deleting state if a rule is only present in prometheus', async () => {
       render(<DataSourceGroupLoader groupIdentifier={groupIdentifier} />);
 
       const promOnlyItem = await ui.ruleItem(/prom-only-rule/).find();
-      expect(within(promOnlyItem).getByTitle('Deleting')).toBeInTheDocument();
+      expect(within(promOnlyItem).getByLabelText('Deleting')).toBeInTheDocument();
     });
   });
 });

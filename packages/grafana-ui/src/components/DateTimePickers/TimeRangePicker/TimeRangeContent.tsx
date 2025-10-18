@@ -114,8 +114,9 @@ export const TimeRangeContent = (props: Props) => {
   };
 
   const onCopy = () => {
-    const raw: RawTimeRange = { from: from.value, to: to.value };
-    navigator.clipboard.writeText(JSON.stringify(raw));
+    const rawSource: RawTimeRange = value.raw;
+    const clipboardPayload = rangeUtil.formatRawTimeRange(rawSource);
+    navigator.clipboard.writeText(JSON.stringify(clipboardPayload));
   };
 
   const onPaste = async () => {

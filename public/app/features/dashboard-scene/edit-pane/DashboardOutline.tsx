@@ -7,7 +7,8 @@ import { Trans, t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { Box, Icon, Stack, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
-import { isInCloneChain } from '../utils/clone';
+import { isRepeatCloneOrChildOf } from '../utils/clone';
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditPane } from './DashboardEditPane';
@@ -23,7 +24,7 @@ export function DashboardOutline({ editPane }: Props) {
 
   return (
     <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
-      <DashboardOutlineNode sceneObject={dashboard} editPane={editPane} depth={0} />
+      <DashboardOutlineNode sceneObject={dashboard} editPane={editPane} depth={0} index={0} />
     </Box>
   );
 }
@@ -32,14 +33,15 @@ interface DashboardOutlineNodeProps {
   sceneObject: SceneObject;
   editPane: DashboardEditPane;
   depth: number;
+  index: number;
 }
 
-function DashboardOutlineNode({ sceneObject, editPane, depth }: DashboardOutlineNodeProps) {
+function DashboardOutlineNode({ sceneObject, editPane, depth, index }: DashboardOutlineNodeProps) {
   const styles = useStyles2(getStyles);
   const { key } = sceneObject.useState();
   const [isCollapsed, setIsCollapsed] = useState(depth > 0);
   const { isSelected, onSelect } = useElementSelection(key);
-  const isCloned = useMemo(() => isInCloneChain(key!), [key]);
+  const isCloned = useMemo(() => isRepeatCloneOrChildOf(sceneObject), [sceneObject]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
 
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
@@ -59,6 +61,7 @@ function DashboardOutlineNode({ sceneObject, editPane, depth }: DashboardOutline
     }
 
     editableElement.scrollIntoView?.();
+    DashboardInteractions.outlineItemClicked({ index, depth });
   };
 
   const onToggleCollapse = (evt: React.MouseEvent) => {
@@ -122,8 +125,14 @@ function DashboardOutlineNode({ sceneObject, editPane, depth }: DashboardOutline
       {isContainer && !isCollapsed && (
         <ul className={styles.nodeChildren} role="group">
           {children.length > 0 ? (
-            children.map((child) => (
-              <DashboardOutlineNode key={child.state.key} sceneObject={child} editPane={editPane} depth={depth + 1} />
+            children.map((child, i) => (
+              <DashboardOutlineNode
+                key={child.state.key}
+                sceneObject={child}
+                editPane={editPane}
+                depth={depth + 1}
+                index={i}
+              />
             ))
           ) : (
             <Text color="secondary" element="li">

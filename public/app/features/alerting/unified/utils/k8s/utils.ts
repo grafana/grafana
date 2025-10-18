@@ -49,3 +49,10 @@ export const canDeleteEntity = (k8sEntity: EntityToCheck) =>
 export const encodeFieldSelector = (value: string): string => {
   return value.replaceAll(/\\/g, '\\\\').replaceAll(/\=/g, '\\=').replaceAll(/,/g, '\\,');
 };
+
+type FieldSelector = [string, string] | [string, string, '=' | '!='];
+export const stringifyFieldSelector = (fieldSelectors: FieldSelector[]): string => {
+  return fieldSelectors
+    .map(([key, value, operator = '=']) => `${key}${operator}${encodeFieldSelector(value)}`)
+    .join(',');
+};

@@ -8,13 +8,14 @@ test.use({
   featureToggles: {
     kubernetesDashboards: true,
     dashboardNewLayouts: true,
+    dashboardUndoRedo: true,
     groupByVariable: true,
   },
 });
 
 // these tests require a larger viewport
 test.use({
-  viewport: { width: 1280, height: 1080 },
+  viewport: { width: 1920, height: 1080 },
 });
 
 test.describe(
@@ -29,6 +30,8 @@ test.describe(
       await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(JSON.stringify(testV2Dashboard));
       await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
       await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
+      await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
+      await page.locator('div[data-testid="data-source-card"]').first().click();
       await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
     }
 
@@ -89,8 +92,8 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      // Ungroup
-      await ungroupPanels(dashboardPage, selectors);
+      // Ungroup using the new ungroup rows button
+      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.ungroupRows).click();
 
       // Verify Row title is gone
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))).toBeHidden();
@@ -109,7 +112,7 @@ test.describe(
       ).toHaveCount(3);
     });
 
-    test('can add and remove several rows', async ({ dashboardPage, selectors, page }) => {
+    test('can add multiple rows and ungroup them all at once', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(page, selectors, 'Add and remove rows');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
@@ -122,40 +125,53 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addPanel).last().click();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 2'))
-      ).toBeVisible();
+      const firstRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row'));
+      await expect(firstRow).toBeVisible();
 
+      await firstRow.scrollIntoViewIfNeeded();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(5);
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
+      ).toHaveCount(3);
+
+      const secondRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row 1'));
+      await expect(secondRow).toBeVisible();
+
+      await secondRow.scrollIntoViewIfNeeded();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
+      ).toHaveCount(1);
+
+      const thirdRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row 2'));
+      await expect(thirdRow).toBeVisible();
+
+      await thirdRow.scrollIntoViewIfNeeded();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: thirdRow })
+      ).toHaveCount(1);
 
       // Save dashboard and reload
       await saveDashboard(dashboardPage, selectors);
       await page.reload();
 
+      await expect(firstRow).toBeVisible();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 2'))
-      ).toBeVisible();
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
+      ).toHaveCount(3);
 
+      await expect(secondRow).toBeVisible();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(5);
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
+      ).toHaveCount(1);
+
+      thirdRow.scrollIntoViewIfNeeded();
+      await expect(thirdRow).toBeVisible();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: thirdRow })
+      ).toHaveCount(1);
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
+      // First test individual row deletion
       await dashboardPage
         .getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
         .locator('..')
@@ -163,41 +179,38 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.deleteButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.DashboardRow.title('New row 2'))
-        .locator('..')
-        .click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.deleteButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
-
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
-      ).toBeHidden();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 2'))
-      ).toBeHidden();
+      // Verify one row is deleted
+      await expect(firstRow).toBeVisible();
+      await expect(secondRow).toBeHidden();
+      await expect(thirdRow).toBeVisible();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(3);
+      ).toHaveCount(4); // 3 from first row + 1 from third row
+
+      // Now test ungrouping all remaining rows at once
+      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.ungroupRows).click();
+
+      // Handle the ConvertMixedGridsModal that appears when there are mixed grid types
+      // The modal asks which grid type to convert to - we'll choose "Custom" (GridLayout)
+      await page.getByRole('button', { name: 'Convert to Custom' }).click();
+
+      // Verify all remaining rows are gone and all panels are now in a single grid
+      await expect(firstRow).toBeHidden();
+      await expect(thirdRow).toBeHidden();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
+      ).toHaveCount(4); // All 4 panels should be visible in the single grid
 
       await saveDashboard(dashboardPage, selectors);
       await page.reload();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
-      ).toBeHidden();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 2'))
-      ).toBeHidden();
+      // Verify all rows are still gone after reload
+      await expect(firstRow).toBeHidden();
+      await expect(secondRow).toBeHidden();
+      await expect(thirdRow).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(3);
+      ).toHaveCount(4);
     });
 
     test('can paste a copied row', async ({ dashboardPage, selectors, page }) => {
@@ -222,15 +235,21 @@ test.describe(
         .getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow)
         .scrollIntoViewIfNeeded();
 
+      const firstRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row'));
+      await expect(firstRow).toBeVisible();
+
+      firstRow.scrollIntoViewIfNeeded();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
-      ).toBeVisible();
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
+      ).toHaveCount(3);
+
+      const secondRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row 1'));
+      await expect(secondRow).toBeVisible();
+
+      secondRow.scrollIntoViewIfNeeded();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(6);
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
+      ).toHaveCount(3);
 
       await saveDashboard(dashboardPage, selectors);
       await page.reload();
@@ -241,15 +260,18 @@ test.describe(
         .last()
         .scrollIntoViewIfNeeded();
 
+      await expect(firstRow).toBeVisible();
+      await expect(secondRow).toBeVisible();
+
+      firstRow.scrollIntoViewIfNeeded();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
-      ).toBeVisible();
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
+      ).toHaveCount(3);
+
+      secondRow.scrollIntoViewIfNeeded();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(6);
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
+      ).toHaveCount(3);
     });
 
     test('can duplicate a row', async ({ dashboardPage, selectors, page }) => {
@@ -272,15 +294,21 @@ test.describe(
         .getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow)
         .scrollIntoViewIfNeeded();
 
+      const firstRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row'));
+      await expect(firstRow).toBeVisible();
+
+      firstRow.scrollIntoViewIfNeeded();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
-      ).toBeVisible();
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
+      ).toHaveCount(3);
+
+      const secondRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row 1'));
+      await expect(secondRow).toBeVisible();
+
+      secondRow.scrollIntoViewIfNeeded();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(6);
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
+      ).toHaveCount(3);
 
       await saveDashboard(dashboardPage, selectors);
       await page.reload();
@@ -291,15 +319,18 @@ test.describe(
         .last()
         .scrollIntoViewIfNeeded();
 
+      await expect(firstRow).toBeVisible();
+      await expect(secondRow).toBeVisible();
+
+      firstRow.scrollIntoViewIfNeeded();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
-      ).toBeVisible();
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
+      ).toHaveCount(3);
+
+      secondRow.scrollIntoViewIfNeeded();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(6);
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
+      ).toHaveCount(3);
     });
 
     test('can collapse rows', async ({ dashboardPage, selectors, page }) => {
@@ -322,26 +353,29 @@ test.describe(
         .getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow)
         .scrollIntoViewIfNeeded();
 
+      const firstRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row'));
+      await expect(firstRow).toBeVisible();
+
+      firstRow.scrollIntoViewIfNeeded();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
-      ).toBeVisible();
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
+      ).toHaveCount(3);
+
+      const secondRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New row 1'));
+      await expect(secondRow).toBeVisible();
+
+      secondRow.scrollIntoViewIfNeeded();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(6);
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
+      ).toHaveCount(3);
 
       // Collapse rows by clicking on their titles
       await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row')).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1')).click();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
-      ).toBeVisible();
+      await expect(firstRow).toBeVisible();
+      await expect(secondRow).toBeVisible();
+
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(0);
@@ -349,12 +383,9 @@ test.describe(
       await saveDashboard(dashboardPage, selectors);
       await page.reload();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
-      ).toBeVisible();
+      await expect(firstRow).toBeVisible();
+      await expect(secondRow).toBeVisible();
+
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(0);
@@ -386,9 +417,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click({ force: true });
 
       // Expand layouts section
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.OptionsGroup.toggle('group-layout-category'))
-        .click();
+      await page.getByLabel('Expand Group layout category').click();
 
       // Select tabs layout
       await page.getByLabel('Tabs').click();
@@ -454,7 +483,7 @@ test.describe(
 
       // Ungroup
       await ungroupPanels(dashboardPage, selectors); // ungroup tabs
-      await ungroupPanels(dashboardPage, selectors); // ungroup rows
+      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.ungroupRows).click(); // ungroup rows
 
       // Verify tab and row titles is gone
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))).toBeHidden();
@@ -675,74 +704,80 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.backButton).click({ force: true });
 
       // Expand layouts section
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.OptionsGroup.toggle('group-layout-category'))
-        .click();
+      await page.getByLabel('Expand Group layout category').click();
 
       // Select rows layout
       await page.getByLabel('Rows').click();
 
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New tab 1'))
+        .scrollIntoViewIfNeeded();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New tab'))
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New tab 1'))
       ).toBeVisible();
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New tab 2'))
+        .scrollIntoViewIfNeeded();
+
+      const firstRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New tab'));
+      const secondRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New tab 1'));
+      const thirdRow = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper('New tab 2'));
+
+      firstRow.scrollIntoViewIfNeeded();
+      await expect(firstRow).toBeVisible();
       // Wait for panels to load
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first()
       ).toBeVisible();
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.DashboardRow.title('New tab 1'))
-        .scrollIntoViewIfNeeded();
+
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New tab 1'))
-      ).toBeVisible();
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.DashboardRow.title('New tab 2'))
-        .scrollIntoViewIfNeeded();
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
+      ).toHaveCount(3);
+
+      secondRow.scrollIntoViewIfNeeded();
+      await expect(secondRow).toBeVisible();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New tab 2'))
-      ).toBeVisible();
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
+      ).toHaveCount(3);
+
+      thirdRow.scrollIntoViewIfNeeded();
+      await expect(thirdRow).toBeVisible();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: thirdRow })
+      ).toHaveCount(3);
 
       // scroll `New row` into view - this is at the bottom of the dashboard body
       await dashboardPage
         .getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow)
         .scrollIntoViewIfNeeded();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(9);
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow)).toBeVisible();
 
       await saveDashboard(dashboardPage, selectors);
       await page.reload();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New tab'))
-      ).toBeVisible();
+      await expect(firstRow).toBeVisible();
+
       // Wait for panels to load
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first()
       ).toBeVisible();
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.DashboardRow.title('New tab 1'))
-        .scrollIntoViewIfNeeded();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New tab 1'))
-      ).toBeVisible();
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.DashboardRow.title('New tab 2'))
-        .scrollIntoViewIfNeeded();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New tab 2'))
-      ).toBeVisible();
-
-      // scroll last `New panel` into view - this is at the bottom of the dashboard body
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-        .last()
-        .scrollIntoViewIfNeeded();
 
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(9);
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: firstRow })
+      ).toHaveCount(3);
+
+      secondRow.scrollIntoViewIfNeeded();
+      await expect(secondRow).toBeVisible();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: secondRow })
+      ).toHaveCount(3);
+
+      thirdRow.scrollIntoViewIfNeeded();
+      await expect(thirdRow).toBeVisible();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'), { root: thirdRow })
+      ).toHaveCount(3);
     });
 
     test('can group and ungroup new panels into tab with row', async ({ dashboardPage, selectors, page }) => {
@@ -779,7 +814,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
       // Ungroup
-      await ungroupPanels(dashboardPage, selectors); // ungroup rows
+      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.ungroupRows).click(); // ungroup rows
       await ungroupPanels(dashboardPage, selectors); // ungroup tabs
 
       // Verify tab and row titles is gone

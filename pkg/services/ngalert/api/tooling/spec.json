@@ -1076,7 +1076,8 @@
           "application/yaml"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
         "operationId": "RouteConvertPrometheusCortexGetRules",
@@ -1110,7 +1111,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Converts the submitted rule groups into Grafana-Managed Rules.",
         "operationId": "RouteConvertPrometheusCortexPostRuleGroups",
@@ -1136,7 +1138,8 @@
           "application/yaml"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).",
         "operationId": "RouteConvertPrometheusCortexGetNamespace",
@@ -1178,7 +1181,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.",
         "operationId": "RouteConvertPrometheusCortexPostRuleGroup",
@@ -1248,7 +1252,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.",
         "operationId": "RouteConvertPrometheusCortexDeleteNamespace",
@@ -1282,7 +1287,8 @@
           "application/yaml"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.",
         "operationId": "RouteConvertPrometheusCortexGetRuleGroup",
@@ -1326,7 +1332,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Deletes a specific rule group if it was imported from a Prometheus-compatible source.",
         "operationId": "RouteConvertPrometheusCortexDeleteRuleGroup",
@@ -1483,7 +1490,8 @@
           "application/yaml"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
         "operationId": "RouteConvertPrometheusGetRules",
@@ -1517,7 +1525,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Converts the submitted rule groups into Grafana-Managed Rules.",
         "operationId": "RouteConvertPrometheusPostRuleGroups",
@@ -1543,7 +1552,8 @@
           "application/yaml"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).",
         "operationId": "RouteConvertPrometheusGetNamespace",
@@ -1585,7 +1595,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.",
         "operationId": "RouteConvertPrometheusPostRuleGroup",
@@ -1655,7 +1666,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.",
         "operationId": "RouteConvertPrometheusDeleteNamespace",
@@ -1689,7 +1701,8 @@
           "application/yaml"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.",
         "operationId": "RouteConvertPrometheusGetRuleGroup",
@@ -1733,7 +1746,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Deletes a specific rule group if it was imported from a Prometheus-compatible source.",
         "operationId": "RouteConvertPrometheusDeleteRuleGroup",

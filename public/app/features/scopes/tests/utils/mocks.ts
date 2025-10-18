@@ -7,9 +7,6 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'cloud' },
     spec: {
       title: 'Cloud',
-      type: 'indexHelper',
-      description: 'redundant label filter but makes queries faster',
-      category: 'indexHelpers',
       filters: [{ key: 'cloud', value: '.*', operator: 'regex-match' }],
     },
   },
@@ -17,9 +14,6 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'dev' },
     spec: {
       title: 'Dev',
-      type: 'cloud',
-      description: 'Dev',
-      category: 'cloud',
       filters: [{ key: 'cloud', value: 'dev', operator: 'equals' }],
     },
   },
@@ -27,9 +21,6 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'ops' },
     spec: {
       title: 'Ops',
-      type: 'cloud',
-      description: 'Ops',
-      category: 'cloud',
       filters: [{ key: 'cloud', value: 'ops', operator: 'equals' }],
     },
   },
@@ -37,9 +28,6 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'prod' },
     spec: {
       title: 'Prod',
-      type: 'cloud',
-      description: 'Prod',
-      category: 'cloud',
       filters: [{ key: 'cloud', value: 'prod', operator: 'equals' }],
     },
   },
@@ -47,9 +35,6 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'grafana' },
     spec: {
       title: 'Grafana',
-      type: 'app',
-      description: 'Grafana',
-      category: 'apps',
       filters: [{ key: 'app', value: 'grafana', operator: 'equals' }],
     },
   },
@@ -57,9 +42,6 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'mimir' },
     spec: {
       title: 'Mimir',
-      type: 'app',
-      description: 'Mimir',
-      category: 'apps',
       filters: [{ key: 'app', value: 'mimir', operator: 'equals' }],
     },
   },
@@ -67,9 +49,6 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'loki' },
     spec: {
       title: 'Loki',
-      type: 'app',
-      description: 'Loki',
-      category: 'apps',
       filters: [{ key: 'app', value: 'loki', operator: 'equals' }],
     },
   },
@@ -77,9 +56,6 @@ export const mocksScopes: Scope[] = [
     metadata: { name: 'tempo' },
     spec: {
       title: 'Tempo',
-      type: 'app',
-      description: 'Tempo',
-      category: 'apps',
       filters: [{ key: 'app', value: 'tempo', operator: 'equals' }],
     },
   },

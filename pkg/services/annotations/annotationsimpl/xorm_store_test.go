@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -31,9 +32,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAnnotations(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	sql := db.InitTestDB(t)
 
 	cfg := setting.NewCfg()

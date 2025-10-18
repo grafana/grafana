@@ -106,7 +106,7 @@ A Grafana-managed alert instance can be in any of the following states, dependin
 
 The **Error** state is triggered when the alert rule fails to evaluate its query or queries successfully.
 
-This can occur due to evaluation timeouts (default: `30s`) or three repeated failures when querying the data source. The [`evaluation_timeout`](ref:evaluation_timeout) and [`max_attempts`](ref:max_attempts) options control these settings.
+This can occur due to evaluation timeouts (default: `30s`) or repeated failures (default: `3`) when querying the data source. The [`evaluation_timeout`](ref:evaluation_timeout) and [`max_attempts`](ref:max_attempts) options control these settings.
 
 When an alert instance enters the **Error** state, Grafana, by default, triggers a new [`DatasourceError` alert](#no-data-and-error-alerts). You can control this behavior based on the desired outcome of your alert rule in [Modify the `No Data` or `Error` state](#modify-the-no-data-or-error-state).
 
@@ -157,9 +157,9 @@ To minimize the number of **No Data** or **Error** state alerts received, try th
 
    To minimize timeouts resulting in the **Error** state, reduce the time range to request less data every evaluation cycle.
 
-1. Change the default [evaluation time out](ref:evaluation_timeout). The default is set at 30 seconds. To increase the default evaluation timeout, open a support ticket from the [Cloud Portal](https://grafana.com/docs/grafana-cloud/account-management/support/#grafana-cloud-support-options). Note that this should be a last resort, because it may affect the performance of all alert rules and cause missed evaluations if the timeout is too long.
-
 1. To reduce multiple notifications from **Error** alerts, define a [notification policy](ref:notification-policies) to handle all related alerts with `alertname=DatasourceError`, and filter and group errors from the same data source using the `datasource_uid` label.
+
+1. Change the [evaluation timeout](ref:evaluation_timeout) (default: `30s`) or the [retry mechanism (`max_attempts`)](ref:max_attempts) settings. This should be a last resort, as it can affect the performance of all alert rules and may cause missed evaluations if the timeout is too long. For Grafana Cloud, open a support ticket from the [Cloud Portal](https://grafana.com/docs/grafana-cloud/account-management/support/#grafana-cloud-support-options).
 
    {{< admonition type="tip" >}}
    For common examples and practical guidance on handling **Error**, **No Data**, and **stale** alert scenarios, refer to the [Handle connectivity errors](ref:guide-connectivity-errors) and [Handle missing data](ref:guide-missing-data) guides.

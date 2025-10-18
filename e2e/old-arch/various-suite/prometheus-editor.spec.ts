@@ -138,12 +138,11 @@ describe('Prometheus query editor', () => {
 
     it('can select a metric and provide a hint', () => {
       navigateToEditor('Builder', 'prometheusBuilder');
-
       getResources();
-
-      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist').click().type('metric1');
+      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist').click();
+      cy.wait('@getMetadata');
+      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().type('metric1');
       selectOption('metric1');
-
       e2e.components.DataSource.Prometheus.queryEditor.builder.hints().contains('hint: add rate');
     });
 

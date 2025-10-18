@@ -71,6 +71,8 @@ export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistI
 
 export function getDefaultPlaylist(): Playlist {
   return {
+    apiVersion: 'playlist.grafana.app/v0alpha1',
+    kind: 'Playlist',
     spec: {
       items: [],
       interval: '5m',
@@ -88,5 +90,5 @@ export function searchPlaylists(playlists: Playlist[], query?: string): Playlist
     return playlists;
   }
   query = query.toLowerCase();
-  return playlists.filter((v) => v.spec.title.toLowerCase().includes(query!));
+  return playlists.filter((v) => v.spec?.title.toLowerCase().includes(query!));
 }

@@ -1,8 +1,9 @@
 import { Field, formattedValueToString, SelectableValue } from '@grafana/data';
 
+import { TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
-export function calculateUniqueFieldValues(rows: any[], field?: Field) {
+export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {
   if (!field || rows.length === 0) {
     return {};
   }
@@ -12,8 +13,7 @@ export function calculateUniqueFieldValues(rows: any[], field?: Field) {
   for (let index = 0; index < rows.length; index++) {
     const row = rows[index];
     const fieldValue = row[getDisplayName(field)];
-    const displayValue = field.display ? field.display(fieldValue) : fieldValue;
-    const value = field.display ? formattedValueToString(displayValue) : displayValue;
+    const value = field.display ? formattedValueToString(field.display(fieldValue)) : String(fieldValue);
 
     set[value || '(Blanks)'] = value;
   }

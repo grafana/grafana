@@ -49,10 +49,10 @@ export interface ScopeSpecFilter {
 
 export interface ScopeSpec {
   title: string;
-  type: string;
-  description: string;
-  category: string;
-  filters: ScopeSpecFilter[];
+  // Used to display the title next to the selected scope and expand the selector to the proper path.
+  // This will override whichever is selected from in the selector.
+  defaultPath?: string[];
+  filters?: ScopeSpecFilter[];
 }
 
 // TODO: Use Resource from apiserver when we export the types

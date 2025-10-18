@@ -51,7 +51,9 @@
       "colorBackground": false,
       "colorValue": false,
       "colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -345,7 +347,9 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -446,7 +450,9 @@
           "text": "A",
           "value": ["A"]
         },
-        "datasource": "gdev-testdata",
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
         "definition": "*",
         "hide": 0,
         "includeAll": true,
@@ -472,7 +478,9 @@
           "text": "AA",
           "value": ["AA"]
         },
-        "datasource": "gdev-testdata",
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
         "definition": "$datacenter.*",
         "hide": 0,
         "includeAll": true,
@@ -498,7 +506,9 @@
           "text": "All",
           "value": ["$__all"]
         },
-        "datasource": "gdev-testdata",
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
         "definition": "$datacenter.$server.*",
         "hide": 0,
         "includeAll": true,

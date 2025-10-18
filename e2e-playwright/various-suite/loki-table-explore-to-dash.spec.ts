@@ -190,7 +190,7 @@ test.describe(
       await expect(panel).toBeVisible();
 
       // Check the table cells in the panel
-      const panelCells = panel.locator('[role="table"] [role="cell"]');
+      const panelCells = panel.locator('[role="gridcell"]');
       // Should have 3 columns
       await expect(panelCells).toHaveCount(3);
 
@@ -198,7 +198,7 @@ test.describe(
       await expect(page.getByText('"wave":-0.5877852522916832')).toBeVisible();
 
       // Column has correct value of "targetLabelValue"
-      await expect(panel.locator('[role="table"] [role="cell"]').filter({ hasText: 'targetLabelValue' })).toBeVisible();
+      await expect(panel.locator('[role="gridcell"]').filter({ hasText: 'targetLabelValue' })).toBeVisible();
     });
   }
 );

@@ -4,7 +4,8 @@ const DASHBOARD_UID = 'ZqZnVvFZz';
 
 test.use({
   featureToggles: {
-    newDashboardSharingComponent: false, // Use legacy sharing component for this test
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+    dashboardScene: false, // this test is for the old sharing modal only used when scenes is turned off
   },
 });
 
@@ -28,7 +29,7 @@ test.describe(
       ];
 
       // Open the sharing modal
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.shareDashboard).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.shareButton).click();
 
       // Select the snapshot tab
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Snapshot')).click();
@@ -52,9 +53,6 @@ test.describe(
       // Extract the snapshot key from the URL and navigate to the snapshot
       const snapshotKey = getSnapshotKey(snapshotUrl);
       await page.goto(`/dashboard/snapshot/${snapshotKey}`);
-
-      // Validate the dashboard controls are rendered
-      await expect(dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Controls)).toBeVisible();
 
       // Validate the panels are rendered
       for (const title of panelsToCheck) {

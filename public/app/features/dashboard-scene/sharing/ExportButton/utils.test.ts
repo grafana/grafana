@@ -96,6 +96,13 @@ describe('Dashboard Export Image Utils', () => {
       const fetchMock = jest.fn().mockReturnValue(of({ ok: true, data: mockBlob }));
       (getBackendSrv as jest.Mock).mockReturnValue({ fetch: fetchMock });
 
+      // Mock window.innerWidth
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 1280,
+      });
+
       const dashboard = {
         state: {
           uid: 'test-uid',
@@ -119,8 +126,49 @@ describe('Dashboard Export Image Utils', () => {
         absolute: true,
         updateQuery: {
           height: -1,
-          width: 1000,
+          width: 1280,
           scale: 2,
+          kiosk: true,
+          hideNav: true,
+          orgId: '1',
+          fullPageImage: true,
+        },
+      });
+    });
+
+    it('should fallback to config width when window.innerWidth is not available', async () => {
+      config.rendererAvailable = true;
+      config.rendererDefaultImageWidth = 1500;
+      const mockBlob = new Blob(['test'], { type: 'image/png' });
+      const fetchMock = jest.fn().mockReturnValue(of({ ok: true, data: mockBlob }));
+      (getBackendSrv as jest.Mock).mockReturnValue({ fetch: fetchMock });
+
+      // Ensure window.innerWidth is undefined
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: undefined,
+      });
+
+      const dashboard = {
+        state: {
+          uid: 'test-uid',
+        },
+      } as DashboardScene;
+
+      const result = await generateDashboardImage({ dashboard, scale: 1 });
+
+      expect(result.error).toBeUndefined();
+      expect(result.blob).toBe(mockBlob);
+      expect(getDashboardUrl).toHaveBeenCalledWith({
+        uid: 'test-uid',
+        currentQueryParams: '',
+        render: true,
+        absolute: true,
+        updateQuery: {
+          height: -1,
+          width: 1500, // Should use config value
+          scale: 1,
           kiosk: true,
           hideNav: true,
           orgId: '1',

@@ -83,52 +83,52 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	var tsdbQuery OpenTsdbQuery
-
 	logger := logger.FromContext(ctx)
-
-	q := req.Queries[0]
-
-	refID := q.RefID
-
-	tsdbQuery.Start = q.TimeRange.From.UnixNano() / int64(time.Millisecond)
-	tsdbQuery.End = q.TimeRange.To.UnixNano() / int64(time.Millisecond)
-
-	for _, query := range req.Queries {
-		metric := s.buildMetric(query)
-		tsdbQuery.Queries = append(tsdbQuery.Queries, metric)
-	}
-
-	// TODO: Don't use global variable
-	if setting.Env == setting.Dev {
-		logger.Debug("OpenTsdb request", "params", tsdbQuery)
-	}
 
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
 
-	request, err := s.createRequest(ctx, logger, dsInfo, tsdbQuery)
-	if err != nil {
-		return &backend.QueryDataResponse{}, err
-	}
+	result := backend.NewQueryDataResponse()
 
-	res, err := dsInfo.HTTPClient.Do(request)
-	if err != nil {
-		return &backend.QueryDataResponse{}, err
-	}
-
-	defer func() {
-		err := res.Body.Close()
-		if err != nil {
-			logger.Warn("failed to close response body", "error", err)
+	for _, query := range req.Queries {
+		// Build OpenTsdbQuery with per-query time range
+		tsdbQuery := OpenTsdbQuery{
+			Start: query.TimeRange.From.Unix(),
+			End:   query.TimeRange.To.Unix(),
+			Queries: []map[string]any{
+				s.buildMetric(query),
+			},
 		}
-	}()
 
-	result, err := s.parseResponse(logger, res, refID, dsInfo.TSDBVersion)
-	if err != nil {
-		return &backend.QueryDataResponse{}, err
+		if setting.Env == setting.Dev {
+			logger.Debug("OpenTsdb request", "refId", query.RefID, "params", tsdbQuery)
+		}
+
+		httpReq, err := s.createRequest(ctx, logger, dsInfo, tsdbQuery)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err := dsInfo.HTTPClient.Do(httpReq)
+		if err != nil {
+			return nil, err
+		}
+
+		defer func() {
+			if cerr := httpRes.Body.Close(); cerr != nil {
+				logger.Warn("failed to close response body", "error", cerr)
+			}
+		}()
+
+		queryRes, err := s.parseResponse(logger, httpRes, query.RefID, dsInfo.TSDBVersion)
+		if err != nil {
+			return nil, err
+		}
+
+		// Attach parsed result for this query's RefID
+		result.Responses[query.RefID] = queryRes.Responses[query.RefID]
 	}
 
 	return result, nil
@@ -344,7 +344,7 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 
 	instance, ok := i.(*datasourceInfo)
 	if !ok {
-		return nil, fmt.Errorf("failed to cast datsource info")
+		return nil, fmt.Errorf("failed to cast datasource info")
 	}
 
 	return instance, nil

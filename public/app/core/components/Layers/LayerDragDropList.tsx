@@ -66,7 +66,13 @@ export const LayerDragDropList = <T extends LayerElement>({
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
-                        onMouseDown={() => onSelect(element)}
+                        onClick={() => onSelect(element)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onSelect(element);
+                          }
+                        }}
                         role="button"
                         tabIndex={0}
                       >

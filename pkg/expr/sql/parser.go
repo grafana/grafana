@@ -1,19 +1,19 @@
 package sql
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/dolthub/vitess/go/vt/sqlparser"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
-
-var logger = log.New("sql_expr")
 
 // TablesList returns a list of tables for the sql statement excluding
 // CTEs and the 'dual' table. The list is sorted alphabetically.
-func TablesList(rawSQL string) ([]string, error) {
+func TablesList(ctx context.Context, rawSQL string) ([]string, error) {
+	logger := backend.NewLoggerWith("logger", "expr.sql").FromContext(ctx)
 	stmt, err := sqlparser.Parse(rawSQL)
 	if err != nil {
 		logger.Error("error parsing sql", "error", err.Error(), "sql", rawSQL)

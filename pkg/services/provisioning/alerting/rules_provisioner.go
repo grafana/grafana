@@ -147,7 +147,7 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderByTitle(
 			createCmd.ParentUID = *parentUID
 		}
 
-		f, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, createCmd)
+		f, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, createCmd, "")
 		if err != nil {
 			return "", err
 		}

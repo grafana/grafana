@@ -1,5 +1,7 @@
 {
+  "extends": "../../scripts/tsconfig.base.json",
   "compilerOptions": {
+    "declaration": true,
     "jsx": "react-jsx",
     "declarationDir": "./dist/types",
     "emitDeclarationOnly": true,
@@ -8,7 +10,6 @@
     "moduleResolution": "bundler"
   },
   "exclude": ["dist/**/*"],
-  "extends": "@grafana/tsconfig",
   "include": ["typings/jest", "../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts", "src/**/*.ts*"],
   "ts-node": {
     "compilerOptions": {

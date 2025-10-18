@@ -22,7 +22,7 @@ const mockFallbackSearcher = {
 } as unknown as GrafanaSearcher;
 
 const getResponse = (uri: string) => {
-  if (uri.endsWith('?type=folders')) {
+  if (uri.includes('?type=folders')) {
     return Promise.resolve(mockFolders);
   }
   return Promise.resolve(mockResults);

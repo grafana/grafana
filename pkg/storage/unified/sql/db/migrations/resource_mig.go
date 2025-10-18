@@ -116,6 +116,17 @@ func initResourceTables(mg *migrator.Migrator) string {
 		},
 	})
 
+	tables = append(tables, migrator.Table{
+		Name: "resource_last_import_time",
+		Columns: []*migrator.Column{
+			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
+			{Name: "last_import_time", Type: migrator.DB_DateTime, Nullable: false},
+		},
+		PrimaryKeys: []string{"group", "resource", "namespace"},
+	})
+
 	// Initialize all tables
 	for t := range tables {
 		mg.AddMigration("drop table "+tables[t].Name, migrator.NewDropTableMigration(tables[t].Name))

@@ -15,6 +15,7 @@ import {
   SplitOpen,
   TimeRange,
   TraceSearchProps,
+  useDataLinksContext,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getTraceToLogsOptions, TraceToMetricsData, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
@@ -142,6 +143,8 @@ export function TraceView(props: Props) {
   const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
   const spanBarOptions: SpanBarOptionsData | undefined = instanceSettings?.jsonData;
 
+  const dataLinksContext = useDataLinksContext();
+
   const createSpanLink = useMemo(
     () =>
       createSpanLinkFromProps ??
@@ -153,6 +156,7 @@ export function TraceView(props: Props) {
         dataFrame: props.dataFrames[0],
         createFocusSpanLink,
         trace: traceProp,
+        dataLinkPostProcessor: dataLinksContext?.dataLinkPostProcessor,
       }),
     [
       props.splitOpenFn,
@@ -163,10 +167,12 @@ export function TraceView(props: Props) {
       createFocusSpanLink,
       traceProp,
       createSpanLinkFromProps,
+      dataLinksContext?.dataLinkPostProcessor,
     ]
   );
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
+  const datasourceName = datasource ? datasource?.name : 'unknown';
   const datasourceUid = datasource ? datasource?.uid : '';
   const scrollElement = props.scrollElement
     ? props.scrollElement
@@ -189,6 +195,8 @@ export function TraceView(props: Props) {
             setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
             spanFilterMatches={spanFilterMatches}
             datasourceType={datasourceType}
+            datasourceName={datasourceName}
+            datasourceUid={datasourceUid}
             setHeaderHeight={setHeaderHeight}
             app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
           />

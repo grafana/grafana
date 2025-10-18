@@ -56,8 +56,8 @@
       "query-header": {
         "content-invalid-query": "Je query is ongeldig. Kijk hieronder voor meer informatie. <1></1>Je kunt deze query echter nog steeds uitvoeren.",
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Bouwer",
+          "label-code": "Code"
         },
         "label-dataset": "Gegevensreeks",
         "label-filter": "Filter",

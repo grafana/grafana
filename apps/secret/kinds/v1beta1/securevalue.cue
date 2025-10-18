@@ -19,7 +19,7 @@ SecureValueSpec: {
 	// Minimum and maximum lengths in bytes.
 	// +k8s:validation:minLength=1
 	// +k8s:validation:maxLength=24576
-	// +optional 
+	// +optional
 	value?: #ExposedSecureValue
 
 	// When using a third-party keeper, the `ref` is used to reference a value inside the remote storage.
@@ -41,13 +41,16 @@ SecureValueSpec: {
 	// +k8s:validation:maxItems=64
 	// +k8s:validation:uniqueItems=true
 	// +listType=atomic
-	// +optional 
+	// +optional
 	decrypters?: [...string] & list.UniqueItems() & list.MaxItems(64)
 }
 
 SecureValueStatus: {
+	// Version of the secure value. Cannot be set.
+	// +optional
 	version: int64 & >=0
 
+	// External ID where the secret is stored. Cannot be set.
 	// +optional
 	externalID: string
 }

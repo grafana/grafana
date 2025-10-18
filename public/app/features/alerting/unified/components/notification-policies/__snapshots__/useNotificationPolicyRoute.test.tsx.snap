@@ -11,6 +11,8 @@ exports[`createKubernetesRoutingTreeSpec 1`] = `
       "group_by": [
         "alertname",
       ],
+      "group_interval": undefined,
+      "group_wait": undefined,
       "receiver": "default-receiver",
       "repeat_interval": "4h",
     },

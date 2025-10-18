@@ -94,7 +94,6 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			require.Greater(t, rv, int64(0))
 		}
 	})
-	ch := make(chan *resource.IndexEvent)
 
 	t.Run("Create a resource server with both backends", func(t *testing.T) {
 		// Create a resource server with both backends
@@ -108,7 +107,6 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 						"test.grafana.app": "testresources",
 					},
 				},
-				IndexEventsChan: ch,
 			},
 		})
 		require.NoError(t, err)
@@ -192,9 +190,6 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			require.NoError(t, err)
 			require.NotNil(t, createResp)
 			require.Nil(t, createResp.Error)
-
-			ev := <-ch
-			require.NotNil(t, ev)
 		}
 	})
 
@@ -231,6 +226,29 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
 		require.Nil(t, searchResp.Error)
+		// finding a document by its tag using the query field is not supported anymore, so should return nothing here
+		// https://github.com/grafana/grafana/pull/111842
+		require.Equal(t, int64(0), searchResp.TotalHits)
+
+		// this is the correct way of searching by tag
+		searchResp, err = server.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Group:     "test.grafana.app",
+					Resource:  "testresources",
+					Namespace: nsPrefix,
+				},
+				Fields: []*resourcepb.Requirement{{
+					Key:      "tags",
+					Operator: "=",
+					Values:   []string{"hello"},
+				}},
+			},
+			Limit: 10,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, searchResp)
+		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(3), searchResp.TotalHits)
 	})
 
@@ -244,6 +262,29 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 				},
 			},
 			Query: "tag1",
+			Limit: 10,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, searchResp)
+		require.Nil(t, searchResp.Error)
+		// finding a document by its tag using the query field is not supported anymore, so should return nothing here
+		// https://github.com/grafana/grafana/pull/111842
+		require.Equal(t, int64(0), searchResp.TotalHits)
+
+		// this is the correct way of searching by tag
+		searchResp, err = server.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Group:     "test.grafana.app",
+					Resource:  "testresources",
+					Namespace: nsPrefix,
+				},
+				Fields: []*resourcepb.Requirement{{
+					Key:      "tags",
+					Operator: "=",
+					Values:   []string{"tag1"},
+				}},
+			},
 			Limit: 10,
 		})
 		require.NoError(t, err)

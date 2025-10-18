@@ -12,28 +12,29 @@ labels:
     - enterprise
     - oss
 title: Manage provisioned repositories with Git Sync
-menuTitle: Manage repositories
+menuTitle: Manage repositories with Git Sync
 weight: 400
 ---
 
 # Manage provisioned repositories with Git Sync
 
 {{< admonition type="caution" >}}
-Git Sync is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature. This feature is not publicly available in Grafana Cloud yet. Only the cloud-hosted version of GitHub (GitHub.com) is supported at this time. GitHub Enterprise is not yet compatible.
 
-Sign up for Grafana Cloud Git Sync early access using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
+Git Sync is available in [private preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions.
+
+Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
+
+You can sign up to the private preview using the [Git Sync early access form](https://forms.gle/WKkR3EVMcbqsNnkD9).
 
 {{< /admonition >}}
 
-After you have set up Git Sync, you can synchronize dashboards and changes to existing dashboards to your configured GitHub repository.
-If you push a change in the repository, those changes are mirrored in your Grafana instance.
+After you have set up Git Sync, you can synchronize any changes you make in your existing provisioned folders in the UI with your configured GitHub repository. Similarly, if you push a change into your repository, those changes are mirrored in your Grafana instance.
 
 ## View current status of synchronization
 
-Each repository synchronized with Git Sync has a dashboard that provides a summary of resources, health, pull status, webhook, sync jobs, resources, and files.
-Use the detailed information accessed in **View** to help troubleshoot and understand the health of your repository's connection with Grafana.
+When you synchronize a repository, Git Sync also creates a dashboard that provides a summary of resources, health, pull status, webhook, sync jobs, resources, and files.
 
-To view the current status, follow these steps.
+Use the **View** section in **Provisioning** to see detailed information about the current status of your sync, understand the health of your repository's connection with Grafana, and [troubleshoot](#troubleshoot-synchronization) possible issues:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin or Editor flag set.
 1. Select **Administration** in the left-side menu and then **Provisioning**.
@@ -45,7 +46,7 @@ To view the current status, follow these steps.
 
 Synchronizing resources from provisioned repositories into your Grafana instance pulls the resources into the selected folder. Existing dashboards with the same `uid` are overwritten.
 
-To sync changes from your dashboards with your Git repository:
+To sync changes from your Grafana dashboards with your Git repository:
 
 1. From the left menu, select **Administration** > **Provisioning**.
 1. Select **Pull** under the repository you want to sync.
@@ -64,6 +65,12 @@ To delete a repository, follow these steps.
 Refer to [Work with provisioned dashboards](../provisioned-dashboards) for information on removing provisioned files.
 
 ## Troubleshoot synchronization
+
+{{< admonition type="caution" >}}
+
+Before you proceed to troubleshoot, understand the [known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#known-limitations/).
+
+{{< /admonition >}}
 
 Monitor the **View** status page for synchronization issues and status updates. Common events include:
 

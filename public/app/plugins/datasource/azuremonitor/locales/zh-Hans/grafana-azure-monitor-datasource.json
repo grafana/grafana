@@ -52,7 +52,7 @@
       "button-use-query": "使用此查询",
       "label-categories": "类别",
       "label-query-results": "查询结果：{{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "无法列出所有类别",
       "placeholder-all-categories": "所有类别",
       "placeholder-search-logs": "在日志查询中搜索",
       "text-loading": "加载中..."
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "启用基本日志"
     },
     "config-editor": {
-      "description-additional-settings": "附加设置是可选设置，可通过配置对数据源进行更多控制。其中包括安全 Socks 代理。",
-      "description-request-timeout": "以秒为单位设置请求超时。默认为 30 秒。",
-      "title-additional-settings": "附加设置",
-      "title-request-timeout": "请求超时"
+      "description-additional-settings": "附加设置是可选设置，通过配置，可对数据源进行更精细的控制。这包括安全 Socks 代理、请求超时和转发的 Cookie。",
+      "title-additional-settings": "附加设置"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "后备凭证已禁用。由于基于用户的身份验证本质上只支持用户范围内的请求，因此提醒、记录查询或报告等功能将无法按预期运行。请查看<2>文档</2>，了解更多详情。",
@@ -115,9 +113,12 @@
       "aria-label-column": "列",
       "aria-label-column-value": "列值",
       "aria-label-operator": "运算符",
+      "aria-label-remove-filter": "移除筛选条件",
       "label-or": "或"
     },
     "filter-section": {
+      "aria-label-add-filter": "添加筛选条件",
+      "aria-label-add-or-filter": "添加“或”筛选条件",
       "label-add-group": "添加组",
       "label-and": "和",
       "label-filters": "筛选条件",
@@ -130,6 +131,8 @@
       "label-format-as": "格式为"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "添加模糊搜索",
+      "aria-label-remove-fuzzy-search": "移除模糊搜索",
       "aria-label-select-column": "选择列",
       "label-fuzzy-search": "模糊搜索",
       "placeholder-search-team": "输入搜索词",
@@ -144,6 +147,7 @@
       "aria-label-remove": "删除"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "添加分组方式",
       "label-group-by": "分组依据",
       "tooltip-group-by": "根据指定的列将结果整理成不同类别。可以单独使用“按组排列”列出所选列中的唯一值，也可以与汇总函数结合使用，生成每个组的汇总统计数据。单独使用时，它会返回指定列的不同组合。"
     },
@@ -162,8 +166,8 @@
       "tooltip-limit": "限制返回的行数（默认为 1000）。"
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "您确定要切换到基本日志吗？",
+      "confirmText-confirm": "确认",
       "description-basic-logs-queries": "基本日志查询根据扫描的数据量产生费用。",
       "label-logs": "日志",
       "title-basic-logs-queries": "基本日志查询",
@@ -186,8 +190,10 @@
       "text-loading": "加载中..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "添加排序方式",
       "aria-label-order-by-column": "按列排序",
       "aria-label-order-direction": "排序方向",
+      "aria-label-remove-order-by": "移除排序方式",
       "label-by": "方式",
       "label-order-by": "排序根据",
       "tooltip-order-by": "根据一列或多列以升序或降序对结果进行排序。"
@@ -197,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure 日志启动查询按钮",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "切换到构建器将丢弃当前的 KQL 查询并清除 KQL 编辑器。您确定吗？",
+      "body-switching-to-kql": "切换到 KQL 将丢弃当前的构建器设置。您确定吗？",
       "button-kick-start-your-query": "启动您的查询",
       "button-run-query": "运行查询",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "切换到 {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "构建器",
+        "label-kql": "KQL"
       },
       "label-service": "服务",
       "placeholder-service": "服务...",
@@ -221,16 +227,26 @@
       "select-resource": "选择资源"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "应用",
       "button-cancel": "取消",
       "header-location": "位置",
+      "header-resource-group": "",
       "header-scope": "范围",
       "header-type": "类型",
       "heading-selection": "选择",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "显示最初 {{numResults}} 个结果",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "加载中...",
+      "text-no-recent-resources": "",
       "text-no-resources": "未找到资源",
-      "title-error-occurred": "从 Azure Monitor 请求资源时发生错误"
+      "title-error-occurred": "从 Azure Monitor 请求资源时发生错误",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "范围"
@@ -249,7 +265,8 @@
       "label-columns": "列",
       "label-table": "表格",
       "placeholder-select-columns": "选择列",
-      "placeholder-select-table": "选择表格"
+      "placeholder-select-table": "选择表格",
+      "tooltip-remove-all-columns": "移除所有列"
     },
     "time-grain-field": {
       "label-time-grain": "时间颗粒"

@@ -1,0 +1,67 @@
+import { FieldDisplay, Threshold } from '@grafana/data';
+
+import { RadialArcPath } from './RadialArcPath';
+import { RadialColorDefs } from './RadialColorDefs';
+import { GaugeDimensions } from './utils';
+
+export interface Props {
+  dimensions: GaugeDimensions;
+  angleRange: number;
+  startAngle: number;
+  endAngle: number;
+  fieldDisplay: FieldDisplay;
+  roundedBars?: boolean;
+  glowFilter?: string;
+  colorDefs: RadialColorDefs;
+  thresholds: Threshold[];
+}
+export function ThresholdsBar({
+  dimensions,
+  fieldDisplay,
+  startAngle,
+  angleRange,
+  roundedBars,
+  glowFilter,
+  colorDefs,
+  thresholds,
+}: Props) {
+  const fieldConfig = fieldDisplay.field;
+  const min = fieldConfig.min ?? 0;
+  const max = fieldConfig.max ?? 100;
+
+  const thresholdDimensions = {
+    ...dimensions,
+    barWidth: dimensions.thresholdsBarWidth,
+    radius: dimensions.thresholdsBarRadius,
+  };
+
+  let currentStart = startAngle;
+  let paths: React.ReactNode[] = [];
+
+  for (let i = 1; i < thresholds.length; i++) {
+    const threshold = thresholds[i];
+    const valueDeg = ((threshold.value - min) / (max - min)) * angleRange;
+    const lengthDeg = valueDeg - currentStart + startAngle;
+
+    paths.push(
+      <RadialArcPath
+        key={i}
+        startAngle={currentStart}
+        arcLengthDeg={lengthDeg}
+        dimensions={thresholdDimensions}
+        roundedBars={roundedBars}
+        glowFilter={glowFilter}
+        color={colorDefs.getColor(threshold.color, true)}
+      />
+    );
+
+    currentStart += lengthDeg;
+  }
+
+  return (
+    <>
+      <g>{paths}</g>
+      <defs>{colorDefs.getDefs()}</defs>
+    </>
+  );
+}

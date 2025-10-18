@@ -40,7 +40,11 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize OpenFeature: %w", err)
 	}
-	openfeature.SetEvaluationContext(openfeature.NewEvaluationContext(cfg.OpenFeature.TargetingKey, cfg.OpenFeature.ContextAttrs))
+	contextAttrs := make(map[string]any)
+	for k, v := range cfg.OpenFeature.ContextAttrs {
+		contextAttrs[k] = v
+	}
+	openfeature.SetEvaluationContext(openfeature.NewEvaluationContext(cfg.OpenFeature.TargetingKey, contextAttrs))
 
 	return nil
 }
@@ -73,7 +77,7 @@ func createProvider(
 		return newStaticProvider(staticFlags)
 	}
 
-	if u.String() == "" {
+	if u == nil || u.String() == "" {
 		return nil, fmt.Errorf("feature provider url is required for GOFFProviderType")
 	}
 

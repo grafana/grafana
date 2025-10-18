@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { createContactPointSearchLink } from '../../utils/misc';
-import { AlertLabels } from '../AlertLabels';
 import { CollapseToggle } from '../CollapseToggle';
 import { MetaText } from '../MetaText';
 
@@ -82,6 +82,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    borderRadius: theme.shape.radius.default,
     padding: theme.spacing(1),
     backgroundColor: theme.colors.background.secondary,
     width: '100%',

@@ -55,6 +55,10 @@ export interface TempoQuery extends common.DataQuery {
    */
   serviceMapQuery?: (string | Array<string>);
   /**
+   * Whether to use native histograms for service map queries
+   */
+  serviceMapUseNativeHistograms?: boolean;
+  /**
    * @deprecated Query traces by service name
    */
   serviceName?: string;

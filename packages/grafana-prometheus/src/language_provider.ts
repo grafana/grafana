@@ -488,7 +488,9 @@ export default class PromQlLanguageProvider extends LanguageProvider implements 
           })
         ),
         scopes: scopes?.reduce<ScopeSpecFilter[]>((acc, scope) => {
-          acc.push(...scope.spec.filters);
+          if (scope.spec.filters) {
+            acc.push(...scope.spec.filters);
+          }
 
           return acc;
         }, []),

@@ -41,7 +41,7 @@ jobs:
           app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         if: github.repository == 'grafana/grafana'
         with:
           github-token: ${{ steps.generate_token.outputs.token }}

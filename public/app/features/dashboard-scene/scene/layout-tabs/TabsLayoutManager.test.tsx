@@ -1,4 +1,7 @@
+import { VizPanel } from '@grafana/scenes';
+
 import { dashboardEditActions } from '../../edit-pane/shared';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 
@@ -32,6 +35,9 @@ describe('TabsLayoutManager', () => {
         tabs: [new TabItem({ title: 'Performance' })],
       });
 
+      // currentTabSlug is set during rendering so forcing here
+      tabsLayoutManager.setState({ currentTabSlug: tabsLayoutManager.getCurrentTab()?.getSlug() });
+
       const urlState = tabsLayoutManager.getUrlState();
       expect(urlState).toEqual({ dtab: 'performance' });
     });
@@ -40,6 +46,9 @@ describe('TabsLayoutManager', () => {
       const innerMostTabs = new TabsLayoutManager({
         tabs: [new TabItem({ title: 'Performance' })],
       });
+
+      // currentTabSlug is set during rendering so forcing here
+      innerMostTabs.setState({ currentTabSlug: innerMostTabs.getCurrentTab()?.getSlug() });
 
       new RowsLayoutManager({
         rows: [
@@ -129,35 +138,19 @@ describe('TabsLayoutManager', () => {
       lastUndo = undefined;
     });
 
-    it('should remove a non-current tab without using removeElement', () => {
-      const manager = new TabsLayoutManager({ tabs: [] });
-      const tab1 = manager.addNewTab(new TabItem({ title: 'Tab 1' }));
-      const tab2 = manager.addNewTab(new TabItem({ title: 'Tab 2' }));
-
-      expect(manager.state.tabs).toHaveLength(2);
-      expect(manager.state.currentTabIndex).toBe(1); // tab2 is current
-
-      manager.removeTab(tab1);
-
-      expect(manager.state.tabs).toHaveLength(1);
-      expect(manager.state.tabs[0]).toBe(tab2);
-      expect(manager.state.currentTabIndex).toBe(0);
-      expect(dashboardEditActions.removeElement).not.toHaveBeenCalled();
-    });
-
     it('should remove the current tab using removeElement', () => {
       const manager = new TabsLayoutManager({ tabs: [] });
       const tab1 = manager.addNewTab(new TabItem({ title: 'Tab 1' }));
       const tab2 = manager.addNewTab(new TabItem({ title: 'Tab 2' }));
 
       expect(manager.state.tabs).toHaveLength(2);
-      expect(manager.state.currentTabIndex).toBe(1); // tab2 is current
+      expect(manager.state.currentTabSlug).toBe(tab2.getSlug()); // tab2 is current
 
       manager.removeTab(tab2);
 
       expect(manager.state.tabs).toHaveLength(1);
       expect(manager.state.tabs[0]).toBe(tab1);
-      expect(manager.state.currentTabIndex).toBe(0);
+      expect(manager.state.currentTabSlug).toBe(tab1.getSlug());
       expect(dashboardEditActions.removeElement).toHaveBeenCalled();
     });
 
@@ -167,7 +160,7 @@ describe('TabsLayoutManager', () => {
       const tab2 = manager.addNewTab(new TabItem({ title: 'Tab 2' }));
 
       expect(manager.state.tabs).toHaveLength(2);
-      expect(manager.state.currentTabIndex).toBe(1); // tab2 is current
+      expect(manager.state.currentTabSlug).toBe(tab2.getSlug()); // tab2 is current
 
       manager.removeTab(tab2);
 
@@ -181,7 +174,7 @@ describe('TabsLayoutManager', () => {
       expect(manager.state.tabs).toHaveLength(2);
       expect(manager.state.tabs).toContain(tab1);
       expect(manager.state.tabs).toContain(tab2);
-      expect(manager.state.currentTabIndex).toBe(1); // tab2 should be current again
+      expect(manager.state.currentTabSlug).toBe(tab2.getSlug()); // tab2 should be current again
     });
   });
 
@@ -231,19 +224,42 @@ describe('TabsLayoutManager', () => {
       const tab3 = manager.addNewTab(new TabItem({ title: 'Tab 3' }));
 
       // Set tab2 as current
-      manager.setState({ currentTabIndex: 1 });
-      expect(manager.state.currentTabIndex).toBe(1);
+      manager.setState({ currentTabSlug: tab2.getSlug() });
 
       manager.moveTab(1, 0);
 
       expect(manager.state.tabs).toEqual([tab2, tab1, tab3]);
-      expect(manager.state.currentTabIndex).toBe(0);
+      expect(manager.state.currentTabSlug).toBe(tab2.getSlug());
 
       // Undo should restore the original state
       lastUndo && lastUndo();
 
       expect(manager.state.tabs).toEqual([tab1, tab2, tab3]);
-      expect(manager.state.currentTabIndex).toBe(1);
+      expect(manager.state.currentTabSlug).toBe(tab2.getSlug());
+    });
+  });
+
+  describe('getVizPanels', () => {
+    it('Should not included repeated tabs', () => {
+      const manager = new TabsLayoutManager({
+        tabs: [
+          new TabItem({
+            title: 'Tab 1',
+            layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1' })]),
+            repeatedTabs: [
+              new TabItem({
+                title: 'Tab 1 - Copy 1',
+                layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1' })]),
+              }),
+              new TabItem({
+                title: 'Tab 1 - Copy 2',
+                layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1' })]),
+              }),
+            ],
+          }),
+        ],
+      });
+      expect(manager.getVizPanels().length).toBe(1);
     });
   });
 });

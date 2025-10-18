@@ -17,17 +17,20 @@ export const playlistAPIv0alpha1 = generatedAPI.enhanceEndpoints({
     },
     createPlaylist: (endpointDefinition) => {
       const originalQuery = endpointDefinition.query;
-      if (originalQuery) {
-        endpointDefinition.query = (requestOptions) => {
-          if (!requestOptions.playlist.metadata.name && !requestOptions.playlist.metadata.generateName) {
-            const login = contextSrv.user.login;
-            // GenerateName lets the apiserver create a new uid for the name
-            // The passed in value is the suggested prefix
-            requestOptions.playlist.metadata.generateName = login ? login.slice(0, 2) : 'g';
-          }
-          return originalQuery(requestOptions);
-        };
+      if (!originalQuery) {
+        return;
       }
+
+      endpointDefinition.query = (requestOptions) => {
+        const metadata = requestOptions.playlist.metadata;
+        if (metadata && !metadata.name && !metadata.generateName) {
+          // GenerateName lets the apiserver create a new uid for the name
+          // The passed in value is the suggested prefix
+          metadata.generateName = contextSrv.user.login?.slice(0, 2) || 'g';
+        }
+        return originalQuery(requestOptions);
+      };
+
       endpointDefinition.onQueryStarted = async (_, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
@@ -61,7 +64,7 @@ export const playlistAPIv0alpha1 = generatedAPI.enhanceEndpoints({
 });
 
 /** @deprecated -- this migrates playlists saved with internal ids to uid  */
-async function migrateInternalIDs(playlist: PlaylistSpec) {
+async function migrateInternalIDs(playlist?: PlaylistSpec) {
   if (playlist?.items) {
     for (const item of playlist.items) {
       if (item.type === 'dashboard_by_id') {
@@ -84,4 +87,4 @@ export const {
 } = playlistAPIv0alpha1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export type { Playlist } from './endpoints.gen';
+export type { Playlist, PlaylistSpec } from './endpoints.gen';

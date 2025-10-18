@@ -49,6 +49,7 @@ export const SidebarItem = ({ step, index, currentStep, onStepClick, styles }: P
 
   return (
     <Card
+      noMargin
       className={`${styles.stepItem} ${isCurrent ? styles.activeStep : ''} ${styles.plainCard}`}
       onClick={handleClick}
     >

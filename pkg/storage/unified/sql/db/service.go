@@ -12,13 +12,6 @@ import (
 //go:generate mockery --with-expecter --name Rows
 //go:generate mockery --with-expecter --exported --name result
 
-const (
-	DriverPostgres = "postgres"
-	DriverMySQL    = "mysql"
-	DriverSQLite   = "sqlite"
-	DriverSQLite3  = "sqlite3"
-)
-
 // DBProvider provides access to a SQL Database.
 type DBProvider interface {
 	// Init initializes the SQL Database, running migrations if needed. It is

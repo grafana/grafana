@@ -11,7 +11,7 @@ import {
   QueryVariableKind,
   LibraryPanelRef,
   LibraryPanelKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { notifyApp } from 'app/core/actions';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -19,7 +19,7 @@ import { buildPanelKind } from 'app/features/dashboard/api/ResponseTransformers'
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel, GridPos } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
-import { variableRegex } from 'app/features/variables/utils';
+import { variableRegexExec } from 'app/features/variables/utils';
 import { dispatch } from 'app/store/store';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
@@ -110,6 +110,8 @@ export async function makeExportableV1(dashboard: DashboardModel) {
     variableLookup[variable.name] = variable;
   }
 
+  const datasourceVariableRefNameMap: { [key: string]: string } = {};
+
   const templateizeDatasourceUsage = (obj: any, fallback?: DataSourceRef) => {
     if (obj.datasource === undefined) {
       obj.datasource = fallback;
@@ -120,11 +122,11 @@ export async function makeExportableV1(dashboard: DashboardModel) {
     let datasourceVariable: any = null;
 
     const datasourceUid: string | undefined = datasource?.uid;
-    const match = datasourceUid && variableRegex.exec(datasourceUid);
+    const match = datasourceUid && variableRegexExec(datasourceUid);
+    let varName: string | undefined;
 
-    // ignore data source properties that contain a variable
     if (match) {
-      const varName = match[1] || match[2] || match[4];
+      varName = match[1] || match[2] || match[4];
       datasourceVariable = variableLookup[varName];
       if (datasourceVariable && datasourceVariable.current) {
         datasource = datasourceVariable.current.value;
@@ -146,14 +148,10 @@ export async function makeExportableV1(dashboard: DashboardModel) {
           version: ds.meta.info.version || '1.0.0',
         };
 
-        // if used via variable we can skip templatizing usage
-        if (datasourceVariable) {
-          return;
-        }
-
         const libraryPanel = obj.libraryPanel;
         const libraryPanelSuffix = !!libraryPanel ? '-for-library-panel' : '';
         let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
+        const templatedUid = '${' + refName + '}';
 
         datasources[refName] = {
           name: refName,
@@ -174,7 +172,14 @@ export async function makeExportableV1(dashboard: DashboardModel) {
           };
         }
 
-        obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
+        // if it panel or query is relying on a datasource variable
+        // skip templating datasource uid but save the reference so we can set datasource variable's current prop
+        if (datasourceVariable && varName) {
+          datasourceVariableRefNameMap[varName] = '${' + refName + '}';
+          return;
+        }
+
+        obj.datasource = { type: ds.meta.id, uid: templatedUid };
       });
   };
 
@@ -240,7 +245,16 @@ export async function makeExportableV1(dashboard: DashboardModel) {
         variable.refresh =
           variable.refresh !== VariableRefresh.never ? variable.refresh : VariableRefresh.onDashboardLoad;
       } else if (variable.type === 'datasource') {
-        variable.current = {};
+        const templateizedUID = datasourceVariableRefNameMap[variable.name];
+        if (templateizedUID) {
+          variable.current = {
+            text: '',
+            value: templateizedUID,
+            selected: true,
+          };
+        } else {
+          variable.current = {};
+        }
       } else if (variable.type === 'adhoc') {
         await templateizeDatasourceUsage(variable);
       }
@@ -378,9 +392,10 @@ async function convertLibraryPanelToInlinePanel(libraryPanelElement: LibraryPane
           },
         },
         vizConfig: {
-          kind: 'text',
+          kind: 'VizConfig',
+          group: 'text',
+          version: '',
           spec: {
-            pluginVersion: '',
             options: {
               content: `**Library Panel Load Error**\n\nUnable to load library panel: ${libraryPanel.name} (${libraryPanel.uid})\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}`,
               mode: 'markdown',
@@ -406,7 +421,8 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
   const removeDataSourceRefs = (
     obj: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
   ) => {
-    const datasourceUid = obj.datasource?.uid;
+    const datasourceUid = obj.query?.datasource?.name;
+
     if (datasourceUid?.startsWith('${') && datasourceUid?.endsWith('}')) {
       const varName = datasourceUid.slice(2, -1);
       // if there's a match we don't want to remove the datasource ref
@@ -416,7 +432,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
       }
     }
 
-    obj.datasource = undefined;
+    obj.query && (obj.query.datasource = undefined);
   };
 
   const processPanel = (panel: PanelKind) => {

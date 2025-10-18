@@ -36,12 +36,12 @@ export function getTransformerOptionPane<T = any>(
   const access: NestedValueAccess = {
     getValue: (path) => lodashGet(props.options, path),
     onChange: (path, value) => {
-      props.onChange(setOptionImmutably(props.options as any, path, value));
+      props.onChange(setOptionImmutably<any>(props.options, path, value));
     },
   };
 
   // Use the panel options loader
-  fillOptionsPaneItems(supplier, access, getOptionsPaneCategory, context);
+  fillOptionsPaneItems('spatial-transformer', supplier, access, getOptionsPaneCategory, context);
   return root;
 }
 

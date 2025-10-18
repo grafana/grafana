@@ -52,6 +52,7 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
 
     menuItems.push({
       shareId: shareDashboardType.image,
+      testId: newExportButtonSelector.exportAsImage,
       icon: 'camera',
       label: t('share-dashboard.menu.export-image-title', 'Export as image'),
       renderCondition: Boolean(config.featureToggles.sharingDashboardImage),

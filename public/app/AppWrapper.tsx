@@ -1,3 +1,4 @@
+import { UNSAFE_PortalProvider } from '@react-aria/overlays';
 import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType, Fragment, ReactNode } from 'react';
 import CacheProvider from 'react-inlinesvg/provider';
@@ -5,13 +6,12 @@ import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 
 import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
-import { ErrorBoundaryAlert, PortalContainer, TimeRangeProvider } from '@grafana/ui';
+import { ErrorBoundaryAlert, getPortalContainer, GlobalStyles, PortalContainer, TimeRangeProvider } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
 import { GrafanaApp } from './app';
 import { ExtensionSidebarContextProvider } from './core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
-import { GlobalStylesWrapper } from './core/components/AppChrome/ExtensionSidebar/GlobalStylesWrapper';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
@@ -104,13 +104,10 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
     };
 
     const MaybeTimeRangeProvider = config.featureToggles.timeRangeProvider ? TimeRangeProvider : Fragment;
-    const MaybeExtensionSidebarProvider = config.featureToggles.extensionSidebar
-      ? ExtensionSidebarContextProvider
-      : Fragment;
 
     return (
       <Provider store={store}>
-        <ErrorBoundaryAlert style="page">
+        <ErrorBoundaryAlert boundaryName="app-wrapper" style="page">
           <GrafanaContext.Provider value={app.context}>
             <ThemeProvider value={config.theme2}>
               <CacheProvider name={this.iconCacheID}>
@@ -121,14 +118,16 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   <MaybeTimeRangeProvider>
                     <ScopesContextProvider>
                       <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                        <MaybeExtensionSidebarProvider>
-                          <GlobalStylesWrapper />
-                          <div className="grafana-app">
-                            <RouterWrapper {...routerWrapperProps} />
-                            <LiveConnectionWarning />
-                            <PortalContainer />
-                          </div>
-                        </MaybeExtensionSidebarProvider>
+                        <ExtensionSidebarContextProvider>
+                          <UNSAFE_PortalProvider getContainer={getPortalContainer}>
+                            <GlobalStyles />
+                            <div className="grafana-app">
+                              <RouterWrapper {...routerWrapperProps} />
+                              <LiveConnectionWarning />
+                              <PortalContainer />
+                            </div>
+                          </UNSAFE_PortalProvider>
+                        </ExtensionSidebarContextProvider>
                       </ExtensionRegistriesProvider>
                     </ScopesContextProvider>
                   </MaybeTimeRangeProvider>

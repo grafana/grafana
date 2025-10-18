@@ -11,6 +11,7 @@ import 'vendor/flot/jquery.flot.gauge';
 
 import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
+// eslint-disable-next-line no-restricted-imports
 import * as grafanaUIraw from '@grafana/ui';
 import TableModel from 'app/core/TableModel';
 import config from 'app/core/config';
@@ -99,6 +100,10 @@ export const sharedDependenciesMap = {
   moment: () => import('moment').then((module) => ({ ...module, __useDefault: true })),
   prismjs: () => import('prismjs'),
   react: () => import('react'),
+  // Externalise react/jsx-runtime to align with runtime version of react.
+  // This should make major react update easier to manage in the future.
+  'react/jsx-runtime': () => import('react/jsx-runtime'),
+  'react/jsx-dev-runtime': () => import('react/jsx-dev-runtime'),
   'react-dom': () => import('react-dom'),
   // bundling grafana-ui in plugins requires sharing react-inlinesvg for the icon cache
   'react-inlinesvg': () => import('react-inlinesvg'),

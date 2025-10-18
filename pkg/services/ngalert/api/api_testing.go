@@ -113,7 +113,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		now,
 		rule,
 		results,
-		state.GetRuleExtraLabels(log.New("testing"), rule, folder.Fullpath, includeFolder),
+		state.GetRuleExtraLabels(log.New("testing"), rule, folder.Fullpath, includeFolder, srv.featureManager),
 		nil,
 	)
 

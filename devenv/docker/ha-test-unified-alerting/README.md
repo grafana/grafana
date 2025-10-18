@@ -52,15 +52,20 @@ $ docker-compose up -d
 ```
 
 Browse
+
 - http://grafana.loc/
 - http://prometheus.loc/
-
 
 ## Test alerting
 
 ### Create contact points
+
 TBD
+
 ### Create alerts
+
 TBD
+
 ### Create silences
+
 TBD

@@ -230,7 +230,7 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       maxWidth: theme.breakpoints.values.md,
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,

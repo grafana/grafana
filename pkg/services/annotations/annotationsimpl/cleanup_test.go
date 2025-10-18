@@ -14,12 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationAnnotationCleanUp(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	fakeSQL := db.InitTestDB(t)
 
@@ -150,9 +149,7 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 }
 
 func TestIntegrationOldAnnotationsAreDeletedFirst(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	fakeSQL := db.InitTestDB(t)
 

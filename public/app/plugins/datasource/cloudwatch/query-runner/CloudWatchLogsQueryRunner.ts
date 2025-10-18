@@ -415,12 +415,14 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     options?: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> {
     const range = options?.range || getDefaultTimeRange();
+    // append -logs to prevent requestId from matching metric queries from the same panel
+    const requestId = options?.requestId ? `${options?.requestId}-logs` : '';
 
     const requestParams: DataQueryRequest<CloudWatchLogsQuery> = {
       ...options,
       range,
       skipQueryCache: true,
-      requestId: options?.requestId || '', // dummy
+      requestId,
       interval: options?.interval || '', // dummy
       intervalMs: options?.intervalMs || 1, // dummy
       scopedVars: options?.scopedVars || {}, // dummy

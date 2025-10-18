@@ -35,6 +35,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   azureResourceGraphDatasource: AzureResourceGraphDatasource;
   currentUserAuth: boolean;
   currentUserAuthFallbackAvailable: boolean;
+  defaultSubscriptionId?: string;
 
   pseudoDatasource: {
     [key in AzureQueryType]?: AzureMonitorDatasource | AzureLogAnalyticsDatasource | AzureResourceGraphDatasource;
@@ -78,6 +79,8 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       this.currentUserAuth = instanceSettings.jsonData.azureAuthType === 'currentuser';
       this.currentUserAuthFallbackAvailable = false;
     }
+
+    this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
@@ -240,6 +243,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     });
   }
 
+  getLocations(subscriptions: string[]) {
+    return this.azureMonitorDatasource.getLocations(subscriptions);
+  }
+
   interpolateVariablesInQueries(queries: AzureMonitorQuery[], scopedVars: ScopedVars): AzureMonitorQuery[] {
     const mapped = queries.map((query) => {
       if (!query.queryType) {
@@ -284,6 +291,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       }
     }
     return { ...query, azureLogAnalytics: { ...query.azureLogAnalytics, query: expression } };
+  }
+
+  getDefaultSubscriptionId() {
+    return this.defaultSubscriptionId || '';
   }
 }
 

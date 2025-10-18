@@ -18,6 +18,7 @@ import (
 const (
 	GoOSWindows = "windows"
 	GoOSLinux   = "linux"
+	GoOSDarwin  = "darwin"
 
 	BackendBinary = "grafana"
 	ServerBinary  = "grafana-server"
@@ -203,6 +204,10 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 		args = append(args, "-race")
 	}
 
+	// We should not publish Grafana as a Go module, disabling vcs changes the version to (devel)
+	// and works better with SBOM and Vulnerability Scanners.
+	args = append(args, "-buildvcs=false")
+
 	args = append(args, "-o", binary)
 	args = append(args, pkg)
 
@@ -284,8 +289,9 @@ func setBuildEnv(opts BuildOpts) error {
 		}
 	}
 
-	if opts.goarch != "amd64" || opts.goos != GoOSLinux {
-		// needed for all other archs
+	if (opts.goos != GoOSLinux || opts.goarch != "amd64") &&
+		opts.goos != GoOSDarwin {
+		// needed for archs other than linux/amd64 and darwin/arm64 + darwin/amd64
 		opts.cgo = true
 	}
 
@@ -303,10 +309,12 @@ func setBuildEnv(opts BuildOpts) error {
 		}
 	}
 
+	cgoEnabled := "0"
 	if opts.cgo {
-		if err := os.Setenv("CGO_ENABLED", "1"); err != nil {
-			return err
-		}
+		cgoEnabled = "1"
+	}
+	if err := os.Setenv("CGO_ENABLED", cgoEnabled); err != nil {
+		return err
 	}
 
 	if opts.gocc == "" {

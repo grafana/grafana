@@ -118,5 +118,6 @@ function applyDefaults(input: unknown): ExploreUrlState {
       hasKey('to', input.range) &&
       typeof input.range.from === 'string' &&
       typeof input.range.to === 'string' && { range: { from: input.range.from, to: input.range.to } }),
+    ...(hasKey('compact', input) && typeof input.compact === 'boolean' && { compact: input.compact }),
   };
 }

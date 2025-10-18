@@ -7,7 +7,6 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -82,6 +81,21 @@ func NewTupleEntry(objectType, name, relation string) string {
 	return obj
 }
 
+func NewObjectEntry(objectType, group, resource, subresource, name string) string {
+	if objectType == TypeFolder {
+		return TypeFolder + ":" + name
+	}
+
+	obj := fmt.Sprintf("%s:%s/%s", objectType, group, resource)
+	if subresource != "" {
+		obj = fmt.Sprintf("%s/%s", obj, subresource)
+	}
+	if name != "" {
+		obj = fmt.Sprintf("%s/%s", obj, name)
+	}
+	return obj
+}
+
 func TranslateToResourceTuple(subject string, action, kind, name string) (*openfgav1.TupleKey, bool) {
 	translation, ok := resourceTranslations[kind]
 
@@ -123,7 +137,7 @@ func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {
 	va.GetListValue().Values = append(va.GetListValue().Values, vb.GetListValue().Values...)
 }
 
-func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*authlib.CheckRequest, bool) {
+func TranslateToCheckRequest(namespace, action, kind, name string) (*authlib.CheckRequest, bool) {
 	translation, ok := resourceTranslations[kind]
 
 	if !ok {
@@ -146,7 +160,6 @@ func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*aut
 		Group:     translation.group,
 		Resource:  translation.resource,
 		Name:      name,
-		Folder:    folder,
 	}
 
 	return req, true

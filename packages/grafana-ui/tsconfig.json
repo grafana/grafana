@@ -1,5 +1,7 @@
 {
+  "extends": "../../scripts/tsconfig.base.json",
   "compilerOptions": {
+    "declaration": true,
     "jsx": "react-jsx",
     "baseUrl": "./",
     "declarationDir": "./dist/types",
@@ -9,7 +11,6 @@
     "rootDirs": ["."]
   },
   "exclude": ["dist/**/*"],
-  "extends": "@grafana/tsconfig",
   "include": ["../../public/test/setupTests.ts", "../../public/app/types/*.d.ts", "src/**/*.ts*"],
   // override for storybook which uses ts-node to compile main.ts / preview.ts files.
   "ts-node": {

@@ -1,0 +1,11 @@
+apiVersion: iam.grafana.app/v0alpha1
+kind: Team
+metadata:
+  name: external-uid-no-provision
+spec:
+  title: "Team With External UID"
+  email: externaluid@example.com
+  provisioned: false
+  externalUID: "ext-uid-123"
+
+

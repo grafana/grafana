@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
@@ -14,6 +15,10 @@ import (
 func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*authzextv1.WriteResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.Write")
 	defer span.End()
+
+	defer func(t time.Time) {
+		s.metrics.requestDurationSeconds.WithLabelValues("server.Write", req.GetNamespace()).Observe(time.Since(t).Seconds())
+	}(time.Now())
 
 	res, err := s.write(ctx, req)
 	if err != nil {
@@ -50,12 +55,14 @@ func (s *Server) write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 	}
 	if len(writeTuples) > 0 {
 		writeReq.Writes = &openfgav1.WriteRequestWrites{
-			TupleKeys: writeTuples,
+			TupleKeys:   writeTuples,
+			OnDuplicate: "ignore",
 		}
 	}
 	if len(deleteTuples) > 0 {
 		writeReq.Deletes = &openfgav1.WriteRequestDeletes{
 			TupleKeys: deleteTuples,
+			OnMissing: "ignore",
 		}
 	}
 

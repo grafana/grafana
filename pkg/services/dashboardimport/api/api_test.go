@@ -15,6 +15,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -30,7 +31,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			},
 		}
 
-		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true})
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true}, featuremgmt.WithFeatures())
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
 		s := webtest.NewServer(t, routeRegister)
@@ -107,7 +108,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			},
 		}
 
-		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true})
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true}, featuremgmt.WithFeatures())
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
 		s := webtest.NewServer(t, routeRegister)
@@ -135,7 +136,7 @@ func TestImportDashboardAPI(t *testing.T) {
 
 	t.Run("Quota reached", func(t *testing.T) {
 		service := &serviceMock{}
-		importDashboardAPI := New(service, quotaServiceFunc(quotaReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true})
+		importDashboardAPI := New(service, quotaServiceFunc(quotaReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true}, featuremgmt.WithFeatures())
 
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
@@ -159,8 +160,74 @@ func TestImportDashboardAPI(t *testing.T) {
 	})
 }
 
+func TestInterpolateDashboardFeatureFlag(t *testing.T) {
+	t.Run("Feature flag disabled - interpolate endpoint should return 404", func(t *testing.T) {
+		service := &serviceMock{}
+		// Create features with dashboardLibrary disabled
+		features := featuremgmt.WithFeatures()
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true}, features)
+
+		routeRegister := routing.NewRouteRegister()
+		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
+		s := webtest.NewServer(t, routeRegister)
+
+		cmd := &dashboardimport.ImportDashboardRequest{
+			Dashboard: simplejson.New(),
+		}
+		jsonBytes, err := json.Marshal(cmd)
+		require.NoError(t, err)
+		req := s.NewPostRequest("/api/dashboards/interpolate", bytes.NewReader(jsonBytes))
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+			UserID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionDashboardsCreate: {}},
+			},
+		})
+		resp, err := s.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+	})
+
+	t.Run("Feature flag enabled - interpolate endpoint should work", func(t *testing.T) {
+		interpolateDashboardServiceCalled := false
+		service := &serviceMock{
+			interpolateDashboardFunc: func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*simplejson.Json, error) {
+				interpolateDashboardServiceCalled = true
+				return simplejson.New(), nil
+			},
+		}
+		// Create features with dashboardLibrary enabled
+		features := featuremgmt.WithFeatures(featuremgmt.FlagDashboardLibrary)
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true}, features)
+
+		routeRegister := routing.NewRouteRegister()
+		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
+		s := webtest.NewServer(t, routeRegister)
+
+		cmd := &dashboardimport.ImportDashboardRequest{
+			PluginId: "test-plugin",
+		}
+		jsonBytes, err := json.Marshal(cmd)
+		require.NoError(t, err)
+		req := s.NewPostRequest("/api/dashboards/interpolate", bytes.NewReader(jsonBytes))
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+			UserID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionDashboardsCreate: {}},
+			},
+		})
+		resp, err := s.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.True(t, interpolateDashboardServiceCalled)
+	})
+}
+
 type serviceMock struct {
-	importDashboardFunc func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error)
+	importDashboardFunc      func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error)
+	interpolateDashboardFunc func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*simplejson.Json, error)
 }
 
 func (s *serviceMock) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
@@ -169,6 +236,14 @@ func (s *serviceMock) ImportDashboard(ctx context.Context, req *dashboardimport.
 	}
 
 	return nil, nil
+}
+
+func (s *serviceMock) InterpolateDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*simplejson.Json, error) {
+	if s.interpolateDashboardFunc != nil {
+		return s.interpolateDashboardFunc(ctx, req)
+	}
+
+	return simplejson.New(), nil
 }
 
 func quotaReached(c *contextmodel.ReqContext, target quota.TargetSrv) (bool, error) {

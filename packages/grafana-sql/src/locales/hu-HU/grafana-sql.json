@@ -56,8 +56,8 @@
       "query-header": {
         "content-invalid-query": "A lekérdezés érvénytelen. A részleteket tekintse meg alább. <1></1>Ezt a lekérdezést azonban továbbra is futtathatja.",
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Építő",
+          "label-code": "Kód"
         },
         "label-dataset": "Adatkészlet",
         "label-filter": "Szűrő",

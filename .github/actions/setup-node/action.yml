@@ -1,0 +1,11 @@
+name: Setup Node.js
+description: Sets up a node.js environment with presets for the Grafana repository.
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'yarn'
+        cache-dependency-path: 'yarn.lock'

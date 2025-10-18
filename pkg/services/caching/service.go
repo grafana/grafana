@@ -1,7 +1,13 @@
 package caching
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"io"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
@@ -62,3 +68,68 @@ func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, req *back
 }
 
 var _ CachingService = &OSSCachingService{}
+
+// GetKey creates a prefixed cache key and uses the internal `encoder` to encode the query into a string
+func GetKey(prefix string, query interface{}) (string, error) {
+	keybuf := bytes.NewBuffer(nil)
+
+	encoder := &JSONEncoder{}
+
+	if err := encoder.Encode(keybuf, query); err != nil {
+		return "", err
+	}
+
+	key, err := SHA256KeyFunc(keybuf)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Join([]string{prefix, key}, ":"), nil
+}
+
+// SHA256KeyFunc copies the data from `r` into a sha256.Hash, and returns the encoded Sum.
+func SHA256KeyFunc(r io.Reader) (string, error) {
+	hash := sha256.New()
+
+	// Read all data from the provided reader
+	if _, err := io.Copy(hash, r); err != nil {
+		return "", err
+	}
+
+	// Encode the written values to SHA256
+	return hex.EncodeToString(hash.Sum(nil)), nil
+}
+
+// JSONEncoder encodes and decodes struct data to/from JSON
+type JSONEncoder struct{}
+
+// NewJSONEncoder creates a pointer to a new JSONEncoder, which implements the `Encoder` interface
+func NewJSONEncoder() *JSONEncoder {
+	return &JSONEncoder{}
+}
+
+func (e *JSONEncoder) EncodeBytes(w io.Writer, b []byte) error {
+	_, err := w.Write(b)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *JSONEncoder) DecodeBytes(r io.Reader) ([]byte, error) {
+	encBytes, err := io.ReadAll(r)
+	if err != nil {
+		return []byte{}, err
+	}
+	return encBytes, err
+}
+
+// Encode encodes the `v` interface into `w` using a json.Encoder
+func (e *JSONEncoder) Encode(w io.Writer, v interface{}) error {
+	return json.NewEncoder(w).Encode(v)
+}
+
+// Decode encodes the io.Reader `r` into the interface `v` using a json.Decoder
+func (e *JSONEncoder) Decode(r io.Reader, v interface{}) error {
+	return json.NewDecoder(r).Decode(v)
+}

@@ -43,22 +43,9 @@ func ProvideServiceAccountsStore(cfg *setting.Cfg, store db.DB, apiKeyService ap
 	}
 }
 
-// generateLogin makes a generated string to have a ID for the service account across orgs and it's name
-// this causes you to create a service account with the same name in different orgs
-// not the same name in the same org
-// -- WARNING:
-// -- if you change this function you need to change the ExtSvcLoginPrefix as well
-// -- to make sure they are not considered as regular service accounts
-func generateLogin(prefix string, orgId int64, name string) string {
-	generatedLogin := fmt.Sprintf("%v-%v-%v", prefix, orgId, strings.ToLower(name))
-	// in case the name has multiple spaces or dashes in the prefix or otherwise, replace them with a single dash
-	generatedLogin = strings.Replace(generatedLogin, "--", "-", 1)
-	return strings.ReplaceAll(generatedLogin, " ", "-")
-}
-
 // CreateServiceAccount creates service account
 func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
-	login := generateLogin(serviceaccounts.ServiceAccountPrefix, orgId, saForm.Name)
+	login := serviceaccounts.GenerateLogin(serviceaccounts.ServiceAccountPrefix, orgId, saForm.Name)
 	isDisabled := false
 	role := org.RoleViewer
 	if saForm.IsDisabled != nil {
@@ -483,7 +470,7 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.C
 func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *apikey.APIKey) error {
 	prefix := "sa-autogen"
 	cmd := user.CreateUserCommand{
-		Login:            generateLogin(prefix, key.OrgID, key.Name),
+		Login:            serviceaccounts.GenerateLogin(prefix, key.OrgID, key.Name),
 		Name:             fmt.Sprintf("%v-%v", prefix, key.Name),
 		OrgID:            key.OrgID,
 		DefaultOrgRole:   string(key.Role),
@@ -501,7 +488,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 				// a unique service account by adding suffixes to the initial login name (e.g. -001, -002, ... , -010).
 				for i := 1; errCreateSA != nil && i <= attempts; i++ {
 					serviceAccountName := fmt.Sprintf("%s-%03d", key.Name, i)
-					cmd.Login = generateLogin(prefix, key.OrgID, serviceAccountName)
+					cmd.Login = serviceaccounts.GenerateLogin(prefix, key.OrgID, serviceAccountName)
 					newSA, errCreateSA = s.userService.CreateServiceAccount(tctx, &cmd)
 					if errCreateSA != nil && !errors.Is(errCreateSA, serviceaccounts.ErrServiceAccountAlreadyExists) {
 						break

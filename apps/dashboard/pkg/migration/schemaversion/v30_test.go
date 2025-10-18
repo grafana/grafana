@@ -25,7 +25,7 @@ func TestV30(t *testing.T) {
 									"steps": []interface{}{
 										map[string]interface{}{
 											"color": "green",
-											"value": nil,
+											"value": (*float64)(nil),
 										},
 										map[string]interface{}{
 											"color": "red",
@@ -99,7 +99,7 @@ func TestV30(t *testing.T) {
 									"steps": []interface{}{
 										map[string]interface{}{
 											"color": "green",
-											"value": nil,
+											"value": (*float64)(nil),
 										},
 										map[string]interface{}{
 											"color": "red",
@@ -112,12 +112,10 @@ func TestV30(t *testing.T) {
 										"type": "value",
 										"options": map[string]interface{}{
 											"1": map[string]interface{}{
-												"text":  "Up",
-												"color": "green",
+												"text": "Up",
 											},
 											"0": map[string]interface{}{
-												"text":  "Down",
-												"color": "green",
+												"text": "Down",
 											},
 										},
 									},
@@ -127,8 +125,7 @@ func TestV30(t *testing.T) {
 											"from": float64(10),
 											"to":   float64(20),
 											"result": map[string]interface{}{
-												"text":  "Medium",
-												"color": "green",
+												"text": "Medium",
 											},
 										},
 									},
@@ -137,8 +134,7 @@ func TestV30(t *testing.T) {
 										"options": map[string]interface{}{
 											"match": "null",
 											"result": map[string]interface{}{
-												"text":  "Null Value",
-												"color": "green",
+												"text": "Null Value",
 											},
 										},
 									},
@@ -410,6 +406,97 @@ func TestV30(t *testing.T) {
 						"type":  "timeseries",
 						"title": "Already timeseries panel",
 						"id":    3,
+					},
+				},
+			},
+		},
+		{
+			name: "already migrated value mappings are preserved correctly",
+			input: map[string]interface{}{
+				"title":         "V30 Already Migrated Value Mappings Test Dashboard",
+				"schemaVersion": 29,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":  "timeseries",
+						"title": "Panel with already migrated value mappings",
+						"id":    1,
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"mappings": []interface{}{
+									map[string]interface{}{
+										"type": "value",
+										"options": map[string]interface{}{
+											"20": map[string]interface{}{
+												"color": nil,
+												"text":  "test",
+											},
+										},
+									},
+									map[string]interface{}{
+										"type": "value",
+										"options": map[string]interface{}{
+											"30": map[string]interface{}{
+												"color": nil,
+												"text":  "test1",
+											},
+										},
+									},
+									map[string]interface{}{
+										"type": "value",
+										"options": map[string]interface{}{
+											"40": map[string]interface{}{
+												"color": "orange",
+												"text":  "50",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V30 Already Migrated Value Mappings Test Dashboard",
+				"schemaVersion": 30,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":  "timeseries",
+						"title": "Panel with already migrated value mappings",
+						"id":    1,
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"mappings": []interface{}{
+									map[string]interface{}{
+										"type": "value",
+										"options": map[string]interface{}{
+											"20": map[string]interface{}{
+												"color": nil,
+												"text":  "test",
+											},
+										},
+									},
+									map[string]interface{}{
+										"type": "value",
+										"options": map[string]interface{}{
+											"30": map[string]interface{}{
+												"color": nil,
+												"text":  "test1",
+											},
+										},
+									},
+									map[string]interface{}{
+										"type": "value",
+										"options": map[string]interface{}{
+											"40": map[string]interface{}{
+												"color": "orange",
+												"text":  "50",
+											},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},

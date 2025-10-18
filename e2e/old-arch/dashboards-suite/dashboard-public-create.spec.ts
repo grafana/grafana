@@ -3,6 +3,7 @@ import { e2e } from '../utils';
 describe('Public dashboards', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+    cy.setLocalStorage('grafana.featureToggles', 'dashboardScene=false'); // this test is for the old sharing modal only used when scenes is turned off
   });
 
   it('Create a public dashboard', () => {

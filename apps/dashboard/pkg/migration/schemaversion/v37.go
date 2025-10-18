@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V37 normalizes legend configuration to use `showLegend` property consistently.
 //
 // This migration addresses inconsistencies in how legend visibility was handled.
@@ -71,7 +73,7 @@ package schemaversion
 //	    showLegend: true
 //	  }
 //	}
-func V37(dashboard map[string]interface{}) error {
+func V37(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(37)
 
 	panels, ok := dashboard["panels"].([]interface{})
@@ -113,10 +115,10 @@ func processPanelsV37(panels []interface{}) {
 			continue
 		}
 
-		displayMode, _ := legend["displayMode"].(string)
+		displayMode := GetStringValue(legend, "displayMode")
 		showLegend, hasShowLegend := legend["showLegend"].(bool)
 
-		// If displayMode is "hidden" OR showLegend is false, normalize to hidden legend
+		// If displayMode is "hidden" OR showLegend is explicitly false, normalize to hidden legend
 		if displayMode == "hidden" || (hasShowLegend && !showLegend) {
 			legend["displayMode"] = "list"
 			legend["showLegend"] = false

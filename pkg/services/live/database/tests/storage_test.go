@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/live/model"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -15,9 +16,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationLiveMessage(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	storage := SetupTestStorage(t)
 
 	getQuery := &model.GetLiveMessageQuery{

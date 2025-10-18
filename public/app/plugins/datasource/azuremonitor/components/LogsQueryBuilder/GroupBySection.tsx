@@ -106,6 +106,7 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
               />
             ) : (
               <Button
+                aria-label={t('components.group-by-section.aria-label-add-group-by', 'Add group by')}
                 variant="secondary"
                 icon="plus"
                 onClick={() =>
@@ -130,6 +131,7 @@ const makeRenderGroupBy = (
   onDeleteGroupBy: (propertyName: string) => void,
   templateVariableOptions: SelectableValue<string>
 ) => {
+  // eslint-disable-next-line react/display-name
   return (
     item: BuilderQueryEditorGroupByExpression,
     onChangeItem: (updatedItem: BuilderQueryEditorGroupByExpression) => void,

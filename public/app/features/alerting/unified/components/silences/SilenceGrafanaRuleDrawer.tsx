@@ -37,5 +37,6 @@ const SilenceGrafanaRuleDrawer = React.memo(
   ),
   (prevProps, nextProps) => prevProps.ruleUid === nextProps.ruleUid
 );
+SilenceGrafanaRuleDrawer.displayName = 'SilenceGrafanaRuleDrawer';
 
 export default SilenceGrafanaRuleDrawer;

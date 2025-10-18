@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
+import { autoUpdate, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
@@ -22,6 +22,7 @@ import { Components } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { getPositioningMiddleware } from '../../../utils/floating';
 import { Button } from '../../Button/Button';
 import { InlineField } from '../../Forms/InlineField';
 import { Icon } from '../../Icon/Icon';
@@ -92,22 +93,16 @@ export const DateTimePicker = ({
   const theme = useTheme2();
   const { modalBackdrop } = useStyles2(getModalStyles);
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
+  const placement = 'bottom-start';
   const styles = useStyles2(getStyles);
 
   // the order of middleware is important!
   // see https://floating-ui.com/docs/arrow#order
-  const middleware = [
-    flip({
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
-      boundary: document.body,
-    }),
-    shift(),
-  ];
+  const middleware = getPositioningMiddleware(placement);
 
   const { refs, floatingStyles } = useFloating({
     open: isOpen,
-    placement: 'bottom-start',
+    placement,
     onOpenChange: setOpen,
     middleware,
     whileElementsMounted: autoUpdate,

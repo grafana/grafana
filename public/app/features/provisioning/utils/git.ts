@@ -1,5 +1,7 @@
 import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
+import { InstructionAvailability, RepoType } from '../Wizard/types';
+
 /**
  * Validates a Git branch name according to the following rules:
  * 1. The branch name cannot start with `/`, end with `/`, `.`, or whitespace.
@@ -64,3 +66,44 @@ export const getRepoHrefForProvider = (spec?: RepositorySpec) => {
       return undefined;
   }
 };
+
+export function getHasTokenInstructions(type: RepoType): type is InstructionAvailability {
+  return type === 'github' || type === 'gitlab' || type === 'bitbucket';
+}
+
+export function getRepoCommitUrl(spec?: RepositorySpec, commit?: string) {
+  let url: string | undefined = undefined;
+  let hasUrl = false;
+
+  if (!spec || !spec.type || !commit) {
+    return { hasUrl, url };
+  }
+
+  const gitType = spec.type;
+
+  // local repositories don't have a URL
+  if (gitType !== 'local' && commit) {
+    switch (gitType) {
+      case 'github':
+        if (spec.github?.url) {
+          url = `${spec.github.url}/commit/${commit}`;
+          hasUrl = true;
+        }
+        break;
+      case 'gitlab':
+        if (spec.gitlab?.url) {
+          url = `${spec.gitlab.url}/-/commit/${commit}`;
+          hasUrl = true;
+        }
+        break;
+      case 'bitbucket':
+        if (spec.bitbucket?.url) {
+          url = `${spec.bitbucket.url}/commits/${commit}`;
+          hasUrl = true;
+        }
+        break;
+    }
+  }
+
+  return { hasUrl, url };
+}

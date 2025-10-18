@@ -235,6 +235,13 @@ func (n NoValidation) Validate(_ models.NotificationSettings) error {
 	return nil
 }
 
+type RejectingValidation struct {
+}
+
+func (n RejectingValidation) Validate(s models.NotificationSettings) error {
+	return ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: s.Receiver}}
+}
+
 var errInvalidState = fmt.Errorf("invalid state")
 
 // silenceState copied from state in prometheus-alertmanager/silence/silence.go.

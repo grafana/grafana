@@ -10,7 +10,7 @@ import { NotificationPoliciesList } from 'app/features/alerting/unified/componen
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
-import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
+import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarning';
 import { TimeIntervalsTable } from './components/mute-timings/MuteTimingsTable';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
@@ -48,7 +48,7 @@ const NotificationPoliciesTabs = () => {
 
   return (
     <>
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
+      <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
       <TabsBar>
         {policiesSupported && canSeePoliciesTab && (
           <Tab

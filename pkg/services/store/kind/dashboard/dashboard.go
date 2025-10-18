@@ -334,6 +334,9 @@ func filterOutSpecialDatasources(dash *DashboardSummaryInfo) {
 			case "-- Dashboard --":
 				// The `Dashboard` datasource refers to the results of the query used in another panel
 				continue
+			case "grafana":
+				// this is the uid for the -- Grafana -- datasource
+				continue
 			default:
 				dsRefs = append(dsRefs, ds)
 			}

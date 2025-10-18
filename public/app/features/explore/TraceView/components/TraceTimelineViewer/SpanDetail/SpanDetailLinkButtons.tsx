@@ -196,6 +196,7 @@ const createLinkModel = (
     className,
     type,
     linkModel: {
+      ...link.linkModel,
       ...link,
       title: title,
       target: '_blank',

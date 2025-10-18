@@ -1,5 +1,6 @@
 import { isEqual, uniqWith } from 'lodash';
 
+import { matchLabelsSet } from '@grafana/alerting/unstable';
 import { SelectableValue } from '@grafana/data';
 import {
   AlertManagerCortexConfig,
@@ -17,7 +18,12 @@ import { MatcherFieldValue } from '../types/silence-form';
 import { getAllDataSources } from './config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { objectLabelsToArray } from './labels';
-import { MatcherFormatter, matchLabelsSet, parsePromQLStyleMatcherLooseSafe, unquoteWithUnescape } from './matchers';
+import {
+  MatcherFormatter,
+  convertObjectMatcherToAlertingPackageMatcher,
+  parsePromQLStyleMatcherLooseSafe,
+  unquoteWithUnescape,
+} from './matchers';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -127,9 +133,9 @@ export function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
 
 export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolean {
   const labelsArray = objectLabelsToArray(labels);
-  const objectMatchers = matchers.map(matcherToObjectMatcher);
+  const labelMatchers = matchers.map(matcherToObjectMatcher).map(convertObjectMatcherToAlertingPackageMatcher);
 
-  return matchLabelsSet(objectMatchers, labelsArray);
+  return matchLabelsSet(labelMatchers, labelsArray);
 }
 
 export function combineMatcherStrings(...matcherStrings: string[]): string {

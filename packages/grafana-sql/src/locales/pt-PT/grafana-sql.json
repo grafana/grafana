@@ -2,26 +2,26 @@
   "grafana-sql": {
     "components": {
       "confirm-modal": {
-        "builder-mode": "",
+        "builder-mode": "O modo de construtor não exibe as alterações feitas no código. O construtor de consultas exibirá as últimas alterações que efetuou no modo de construtor.",
         "cancel": "Cancelar",
-        "clipboard": "",
-        "copy-code-and-switch": "",
-        "discard-code-and-switch": "",
+        "clipboard": "Pretende copiar o seu código para a área de transferência?",
+        "copy-code-and-switch": "Copiar código e mudar",
+        "discard-code-and-switch": "Descartar código e mudar",
         "warning": "Aviso"
       },
       "connection-limits": {
-        "auto-max-idle": "",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
-        "content-max-lifetime": "",
-        "content-max-open": "",
-        "max-idle": "",
-        "max-lifetime": "",
-        "max-open": "",
-        "title-connection-limits": ""
+        "auto-max-idle": "Ralenti máximo automático",
+        "content-auto-max-idle": "Se ativado, defina automaticamente o número de <1>Ligações de ralenti máximas</1> para o mesmo valor que<3> Ligações abertas máximas</3>. Se o número de ligações abertas máximas não estiver definido, será definido para a predefinição ({{defaultMaxIdle}}).",
+        "content-max-idle": "O número máximo de ligações no conjunto de ligações de ralenti. Se <1>Ligações abertas máximas</1> for maior que 0, mas menor que as <3>Ligações de ralenti máximas</3>, então as <5>Ligações de ralenti máximas</5> serão reduzidas para corresponder ao limite de <8>Ligações abertas máximas</8>. Se definido para 0, nenhuma ligação de ralenti será retida.",
+        "content-max-lifetime": "A quantidade máxima de tempo em segundos que uma ligação pode ser reutilizada. Se definido para 0, as ligações serão reutilizadas para sempre.",
+        "content-max-open": "O número máximo de ligações abertas à base de dados. Se <1>Ligações de ralenti máximas</1> for maior que 0 e as <3>Ligações abertas máximas</3> for menor que <5>Ligações de ralenti máximas</5>, então <7>Ligações de ralenti máximas</7> serão reduzidas para corresponder ao limite de <9>Ligações abertas máximas</9>. Se definido para 0, não há limite para o número de ligações abertas.",
+        "max-idle": "Ralenti máx.",
+        "max-lifetime": "Tempo de vida máximo",
+        "max-open": "Aberturas máx.",
+        "title-connection-limits": "Limites da ligação"
       },
       "dataset-selector": {
-        "aria-label-dataset-selector": ""
+        "aria-label-dataset-selector": "Seletor de conjunto de dados"
       },
       "error-boundary": {
         "fall-back": {
@@ -31,21 +31,21 @@
       "get-custom-operators": {
         "custom-operators": {
           "label": {
-            "macros": ""
+            "macros": "Macros"
           }
         }
       },
       "make-render-column": {
         "render-column": {
           "aria-label-group-by": "Agrupar por",
-          "title-remove-group-by-column": ""
+          "title-remove-group-by-column": "Remover grupo por coluna"
         }
       },
       "order-by-row": {
-        "aria-label-order-by": "",
+        "aria-label-order-by": "Ordenar por",
         "label-limit": "Limite",
-        "label-offset": "",
-        "label-order-by": ""
+        "label-offset": "Deslocamento",
+        "label-order-by": "Ordenar por"
       },
       "preview": {
         "label-element": {
@@ -54,100 +54,100 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "A sua consulta é inválida. Verifique abaixo para obter detalhes. <1></1>No entanto, ainda pode executar esta consulta.",
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Construtor",
+          "label-code": "Cód."
         },
-        "label-dataset": "",
+        "label-dataset": "Conjunto de dados",
         "label-filter": "Filtro",
         "label-format": "Formato",
         "label-group": "Grupo",
-        "label-order": "",
+        "label-order": "Encomenda",
         "label-preview": "Pré-visualizar",
         "label-table": "Tabela",
-        "placeholder-select-format": "",
+        "placeholder-select-format": "Selecionar formato",
         "run-query": "Executar consulta"
       },
       "query-toolbox": {
-        "content-hit-ctrlcmdreturn-to-run-query": "",
-        "tooltip-collapse": "",
-        "tooltip-expand": "",
-        "tooltip-format-query": ""
+        "content-hit-ctrlcmdreturn-to-run-query": "Pressione CTRL/CMD+Return para executar a consulta",
+        "tooltip-collapse": "Recolher editor",
+        "tooltip-expand": "Expandir editor",
+        "tooltip-format-query": "Formatar consulta"
       },
       "query-validator": {
-        "query-will-process": "",
-        "validating-query": ""
+        "query-will-process": "<0></0> Esta consulta processará <2>{{bytes}}</2> quando for executada.",
+        "validating-query": "A validar consulta..."
       },
       "raw-editor": {
         "render-placeholder": {
-          "editing-in-expanded-code-editor": ""
+          "editing-in-expanded-code-editor": "Editar no editor de código expandido"
         },
-        "title-query-num": ""
+        "title-query-num": "Consulta {{queryNum}}"
       },
       "select-column": {
         "label-column": "Coluna"
       },
       "select-custom-function-parameters": {
-        "aria-label-parameter": "",
+        "aria-label-parameter": "Parâmetro {{index}} para coluna {{columnIndex}}",
         "render-parameters": {
           "params": {
-            "title-remove-parameter": ""
+            "title-remove-parameter": "Remover parâmetro"
           }
         },
-        "title-add-parameter": ""
+        "title-add-parameter": "Adicionar parâmetro"
       },
       "select-row": {
         "aggregate-options": {
           "options": {
             "label": {
-              "aggregations": "",
-              "macros": ""
+              "aggregations": "Agregações",
+              "macros": "Macros"
             }
           }
         },
         "label": {
-          "time": "",
+          "time": "do fumo",
           "value": "valor"
         },
         "label-alias": "Nome alternativo",
-        "label-data-operations": "",
-        "title-add-column": "",
-        "title-remove-column": ""
+        "label-data-operations": "Operações de dados",
+        "title-add-column": "Adicionar coluna",
+        "title-remove-column": "Remover coluna"
       },
       "settings": {
-        "aria-label-conjunction": "",
+        "aria-label-conjunction": "Conjunção",
         "aria-label-field": "Campo",
         "aria-label-operator": "Operador",
-        "title-button-filter": ""
+        "title-button-filter": "Filtro {{ buttonLabel }}"
       },
       "sql-query-editor-lazy": {
         "text-loading-editor": "A carregar o editor..."
       },
       "table-selector": {
-        "aria-label-table-selector": "",
-        "placeholder-loading": "",
-        "placeholder-select-table": ""
+        "aria-label-table-selector": "Seletor de tabela",
+        "placeholder-loading": "A carregar tabelas",
+        "placeholder-select-table": "Selecionar tabela"
       },
       "tlssecrets-config": {
-        "content-tlsssl-client-certificate": "",
-        "content-tlsssl-client-key": "",
-        "content-tlsssl-root-certificate": "",
-        "tlsssl-client-certificate": "",
-        "tlsssl-client-key": "",
+        "content-tlsssl-client-certificate": "Para autenticar com um certificado de cliente TLS/SSL, forneça o certificado de cliente aqui.",
+        "content-tlsssl-client-key": "Para autenticar com um certificado TLS/SSL de cliente, forneça a chave aqui.",
+        "content-tlsssl-root-certificate": "Se o modo TLS/SSL selecionado exigir um certificado de raiz do servidor, forneça-o aqui",
+        "tlsssl-client-certificate": "Certificado de cliente TLS/SSL",
+        "tlsssl-client-key": "Chave de cliente TLS/SSL",
         "tlsssl-root-certificate": "Certificado de raiz TLS/SSL"
       },
       "visual-editor": {
-        "label-filter-by-column-value": "",
-        "label-group-by-column": ""
+        "label-filter-by-column-value": "Filtrar por valor de coluna",
+        "label-group-by-column": "Agrupar por coluna"
       },
       "widgets": {
-        "aria-label-macros-value-selector": ""
+        "aria-label-macros-value-selector": "Seletor de valor de macros"
       }
     },
     "utils": {
       "get-columns-width-indices": {
-        "label-selected-columns": ""
+        "label-selected-columns": "Colunas selecionadas"
       }
     }
   }

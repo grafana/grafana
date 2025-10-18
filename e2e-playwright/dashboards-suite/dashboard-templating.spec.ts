@@ -4,6 +4,9 @@ const DASHBOARD_UID = 'HYaGDGIMk';
 
 test.use({
   timezoneId: 'Pacific/Easter',
+  featureToggles: {
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+  },
 });
 
 test.describe(

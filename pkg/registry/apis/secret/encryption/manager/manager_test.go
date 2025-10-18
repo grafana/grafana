@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -437,9 +438,7 @@ func TestEncryptionService_Decrypt(t *testing.T) {
 }
 
 func TestIntegration_SecretsService(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	someData := []byte(`some-data`)

@@ -153,7 +153,7 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
               />
             </EditorField>
             <Button
-              title={t('grafana-sql.components.select-row.title-remove-column', 'Remove column')}
+              aria-label={t('grafana-sql.components.select-row.title-remove-column', 'Remove column')}
               type="button"
               icon="trash-alt"
               variant="secondary"
@@ -167,7 +167,7 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
         type="button"
         onClick={addColumn}
         variant="secondary"
-        title={t('grafana-sql.components.select-row.title-add-column', 'Add column')}
+        aria-label={t('grafana-sql.components.select-row.title-add-column', 'Add column')}
         size="md"
         icon="plus"
         className={styles.addButton}

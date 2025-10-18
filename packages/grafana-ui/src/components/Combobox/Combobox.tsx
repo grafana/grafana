@@ -32,6 +32,10 @@ interface ComboboxStaticProps<T extends string | number>
    * Allows the user to set a value which is not in the list of options.
    */
   createCustomValue?: boolean;
+  /**
+   * Custom container for rendering the dropdown menu via Portal
+   */
+  portalContainer?: HTMLElement;
 
   /**
    * An array of options, or a function that returns a promise resolving to an array of options.
@@ -131,6 +135,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     autoFocus,
     onBlur,
     disabled,
+    portalContainer,
     invalid,
   } = props;
 
@@ -383,10 +388,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           'data-testid': dataTestId,
         })}
       />
-      <Portal>
+      <Portal root={portalContainer}>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
-          style={floatStyles}
+          style={{
+            ...floatStyles,
+            pointerEvents: 'auto', // Override container's pointer-events: none
+          }}
           {...getMenuProps({
             ref: floatingRef,
             'aria-labelledby': ariaLabelledBy,

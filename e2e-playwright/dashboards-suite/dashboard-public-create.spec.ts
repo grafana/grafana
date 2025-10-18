@@ -2,7 +2,8 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 test.use({
   featureToggles: {
-    newDashboardSharingComponent: false,
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+    dashboardScene: false, // this test is for the old sharing modal only used when scenes is turned off
   },
 });
 
@@ -17,10 +18,10 @@ test.describe(
       let dashboardPage = await gotoDashboardPage({ uid: 'ZqZnVvFZz' });
 
       // Open sharing modal
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.shareDashboard).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.shareButton).click();
 
       // Select public dashboards tab
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Public Dashboard')).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Public dashboard')).click();
 
       // Create button should be disabled
       await expect(
@@ -119,10 +120,10 @@ test.describe(
       ).toBeVisible();
 
       // Open sharing modal
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.shareDashboard).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.shareButton).click();
 
       // Select public dashboards tab
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Public Dashboard')).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Public dashboard')).click();
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput)
@@ -170,10 +171,10 @@ test.describe(
       dashboardPage = await gotoDashboardPage({ uid: 'ZqZnVvFZz' });
 
       // Open sharing modal
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.shareDashboard).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.shareButton).click();
 
       // Select public dashboards tab
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Public Dashboard')).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Public dashboard')).click();
 
       // Save url before disabling public dashboard
       copyUrlInput = dashboardPage.getByGrafanaSelector(

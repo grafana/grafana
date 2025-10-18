@@ -12,6 +12,7 @@ type ExprMetrics struct {
 	SqlCommandDuration      *prometheus.HistogramVec
 	SqlCommandCount         *prometheus.CounterVec
 	SqlCommandCellCount     *prometheus.HistogramVec
+	SqlCommandInputCount    *prometheus.CounterVec
 }
 
 func newExprMetrics(subsystem string) *ExprMetrics {
@@ -46,8 +47,8 @@ func newExprMetrics(subsystem string) *ExprMetrics {
 			Namespace: "grafana",
 			Subsystem: subsystem,
 			Name:      "sql_command_count",
-			Help:      "Total number of SQL command executions with a status label",
-		}, []string{"status"}),
+			Help:      "Total number of SQL command executions with a status label and error_type for more detailed categorization of errors. When there is no error, error_type is 'none'. The two types of error_types that are unhandled are 'general_gms_error', and and 'unknown'",
+		}, []string{"status", "error_type"}),
 
 		SqlCommandCellCount: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -59,6 +60,13 @@ func newExprMetrics(subsystem string) *ExprMetrics {
 			},
 			[]string{"status"},
 		),
+
+		SqlCommandInputCount: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "grafana",
+			Subsystem: subsystem,
+			Name:      "sql_command_input_count",
+			Help:      "Total number of inputs to the SQL command. Errors here are also counted in the sql_command_count metric but without the datasource_type and input_frame_type. The attempted_conversion label indicates if the input was converted from another format (e.g. from labeled time series) or passed through as a table. Since a single SQL expression can have multiple inputs, this can count higher than sql_command_count.",
+		}, []string{"status", "attempted_conversion", "datasource_type", "input_frame_type"}),
 	}
 }
 
@@ -76,6 +84,8 @@ func NewSSEMetrics(reg prometheus.Registerer) *ExprMetrics {
 		SqlCommandCount: newExprMetrics(metricsSubSystem).SqlCommandCount,
 
 		SqlCommandCellCount: newExprMetrics(metricsSubSystem).SqlCommandCellCount,
+
+		SqlCommandInputCount: newExprMetrics(metricsSubSystem).SqlCommandInputCount,
 	}
 
 	if reg != nil {
@@ -85,6 +95,7 @@ func NewSSEMetrics(reg prometheus.Registerer) *ExprMetrics {
 			m.SqlCommandDuration,
 			m.SqlCommandCount,
 			m.SqlCommandCellCount,
+			m.SqlCommandInputCount,
 		)
 	}
 
@@ -105,6 +116,8 @@ func NewQueryServiceExpressionsMetrics(reg prometheus.Registerer) *ExprMetrics {
 		SqlCommandCount: newExprMetrics(metricsSubSystem).SqlCommandCount,
 
 		SqlCommandCellCount: newExprMetrics(metricsSubSystem).SqlCommandCellCount,
+
+		SqlCommandInputCount: newExprMetrics(metricsSubSystem).SqlCommandInputCount,
 	}
 
 	if reg != nil {
@@ -114,6 +127,7 @@ func NewQueryServiceExpressionsMetrics(reg prometheus.Registerer) *ExprMetrics {
 			m.SqlCommandDuration,
 			m.SqlCommandCount,
 			m.SqlCommandCellCount,
+			m.SqlCommandInputCount,
 		)
 	}
 

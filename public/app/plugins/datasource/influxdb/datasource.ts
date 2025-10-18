@@ -221,7 +221,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return this.templateSrv.containsTemplate(queryText);
   }
 
-  interpolateVariablesInQueries(queries: InfluxQuery[], scopedVars: ScopedVars): InfluxQuery[] {
+  interpolateVariablesInQueries(
+    queries: InfluxQuery[],
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): InfluxQuery[] {
     if (!queries || queries.length === 0) {
       return [];
     }
@@ -240,10 +244,19 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         };
       }
 
+      const queryWithVariables = this.applyVariables(query, scopedVars, filters);
+      if (queryWithVariables.adhocFilters?.length) {
+        queryWithVariables.adhocFilters = (queryWithVariables.adhocFilters ?? []).map((af) => {
+          const { condition, ...asTag } = af;
+          asTag.value = this.templateSrv.replace(asTag.value ?? '', scopedVars);
+          return asTag;
+        });
+        queryWithVariables.tags = [...(queryWithVariables.tags ?? []), ...queryWithVariables.adhocFilters];
+      }
+
       return {
-        ...query,
+        ...queryWithVariables,
         datasource: this.getRef(),
-        ...this.applyVariables(query, scopedVars),
       };
     });
   }
@@ -347,10 +360,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // we want to see how it's been used. If it is used in a regex expression
     // we escape it. Otherwise, we return it directly.
     // The regex below searches for regexes within the query string
-    const regexMatcher = new RegExp(
-      /(\s*(=|!)~\s*)\/((?![*+?])(?:[^\r\n\[/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+)\/((?:g(?:im?|mi?)?|i(?:gm?|mg?)?|m(?:gi?|ig?)?)?)/,
-      'gm'
-    );
+    const regexMatcher = new RegExp(/(?<=\/).+?(?=\/)/, 'gm');
     // If matches are found this regex is evaluated to check if the variable is contained in the regex /^...$/ (^ and $ is optional)
     // i.e. /^$myVar$/ or /$myVar/ or /^($myVar)$/
     const regex = new RegExp(`\\/(?:\\^)?(.*)(\\$${variable.name})(.*)(?:\\$)?\\/`, 'gm');
@@ -364,14 +374,22 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     if (!queryMatches) {
       return value;
     }
+    // Use the variable specific regex against the query
+    if (!query.match(regex)) {
+      return value;
+    }
     for (const match of queryMatches) {
-      if (!match.match(regex)) {
-        continue;
-      }
+      // It is expected that the RegExp should be valid. As our regex matcher matches any text between two '/'
+      // we also validate that the expression compiles before assuming it is a regular expression.
+      try {
+        new RegExp(match);
 
-      // If the value is a string array first escape them then join them with pipe
-      // then put inside parenthesis.
-      return typeof value === 'string' ? escapeRegex(value) : `(${value.map((v) => escapeRegex(v)).join('|')})`;
+        // If the value is a string array first escape them then join them with pipe
+        // then put inside parenthesis.
+        return typeof value === 'string' ? escapeRegex(value) : `(${value.map((v) => escapeRegex(v)).join('|')})`;
+      } catch (e) {
+        console.warn(`Supplied match is not valid regex: ${match}`);
+      }
     }
 
     return value;

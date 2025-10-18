@@ -123,7 +123,9 @@
           "text": "value.1584434137814",
           "value": "value.1584434137814"
         },
-        "datasource": "gdev-testdata",
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
         "definition": "value.$__from",
         "hide": 0,
         "includeAll": false,
@@ -149,7 +151,9 @@
           "text": "value.value.1584434072074",
           "value": "value.value.1584434072074"
         },
-        "datasource": "gdev-testdata",
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
         "definition": "value.$updatesOnTime",
         "hide": 0,
         "includeAll": false,

@@ -55,7 +55,7 @@ export const OperationHeader = memo<Props>(
                 onClick={onToggleSwitcher}
                 fill="text"
                 variant="secondary"
-                title={t(
+                aria-label={t(
                   'grafana-prometheus.querybuilder.operation-header.title-click-to-view-alternative-operations',
                   'Click to view alternative operations'
                 )}
@@ -67,7 +67,10 @@ export const OperationHeader = memo<Props>(
                 onClick={() => onRemove(index)}
                 fill="text"
                 variant="secondary"
-                title={t('grafana-prometheus.querybuilder.operation-header.title-remove-operation', 'Remove operation')}
+                aria-label={t(
+                  'grafana-prometheus.querybuilder.operation-header.title-remove-operation',
+                  'Remove operation'
+                )}
               />
             </div>
           </>

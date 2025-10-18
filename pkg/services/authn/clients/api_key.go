@@ -60,7 +60,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	defer span.End()
 	key, err := s.getAPIKey(ctx, getTokenFromRequest(r))
 	if err != nil {
-		if errors.Is(err, apikeygen.ErrInvalidApiKey) {
+		if errors.Is(err, satokengen.ErrInvalidApiKey) {
 			return nil, errAPIKeyInvalid.Errorf("API key is invalid")
 		}
 		return nil, err
@@ -141,7 +141,7 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 		return nil, err
 	}
 	if !isValid {
-		return nil, apikeygen.ErrInvalidApiKey
+		return nil, satokengen.ErrInvalidApiKey
 	}
 
 	return key, nil

@@ -15,7 +15,7 @@ import {
 
 const units: string[] = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'Q'] satisfies DurationUnit[];
 
-const isDurationUnit = (value: string): value is DurationUnit => {
+export const isDurationUnit = (value: string): value is DurationUnit => {
   return units.includes(value);
 };
 

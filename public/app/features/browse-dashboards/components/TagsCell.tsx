@@ -6,7 +6,11 @@ import { TagList, useStyles2 } from '@grafana/ui';
 
 import { DashboardsTreeItem } from '../types';
 
-export function TagsCell({ row: { original: data } }: CellProps<DashboardsTreeItem, unknown>) {
+interface TagsCellProps extends CellProps<DashboardsTreeItem, unknown> {
+  onTagClick?: (tag: string) => void;
+}
+
+export function TagsCell({ row: { original: data }, onTagClick }: TagsCellProps) {
   const styles = useStyles2(getStyles);
   const item = data.item;
 
@@ -22,7 +26,7 @@ export function TagsCell({ row: { original: data } }: CellProps<DashboardsTreeIt
     return null;
   }
 
-  return <TagList className={styles.tagList} tags={item.tags} />;
+  return <TagList className={styles.tagList} tags={item.tags} onClick={onTagClick} />;
 }
 
 function getStyles(theme: GrafanaTheme2) {

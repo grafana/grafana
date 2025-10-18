@@ -21,8 +21,6 @@ type TeamBinding struct {
 
 	// Spec is the spec of the TeamBinding
 	Spec TeamBindingSpec `json:"spec" yaml:"spec"`
-
-	Status TeamBindingStatus `json:"status" yaml:"status"`
 }
 
 func (o *TeamBinding) GetSpec() any {
@@ -39,15 +37,11 @@ func (o *TeamBinding) SetSpec(spec any) error {
 }
 
 func (o *TeamBinding) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *TeamBinding) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,13 +49,6 @@ func (o *TeamBinding) GetSubresource(name string) (any, bool) {
 
 func (o *TeamBinding) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(TeamBindingStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type TeamBindingStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -233,7 +220,6 @@ func (o *TeamBinding) DeepCopyInto(dst *TeamBinding) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check
@@ -303,17 +289,5 @@ func (s *TeamBindingSpec) DeepCopy() *TeamBindingSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *TeamBindingSpec) DeepCopyInto(dst *TeamBindingSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of TeamBindingStatus
-func (s *TeamBindingStatus) DeepCopy() *TeamBindingStatus {
-	cpy := &TeamBindingStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies TeamBindingStatus into another TeamBindingStatus object
-func (s *TeamBindingStatus) DeepCopyInto(dst *TeamBindingStatus) {
 	resource.CopyObjectInto(dst, s)
 }
