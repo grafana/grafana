@@ -20,7 +20,7 @@ import {
 import { config } from '@grafana/runtime';
 import { AdHocFilterItem, Table } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
-import { LogsFrame } from 'app/features/logs/logsFrame';
+import { DETECTED_LEVEL, LEVEL, LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
@@ -38,6 +38,8 @@ interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   logsFrame: LogsFrame | null;
+  sortBy?: Array<{ displayName: string; desc?: boolean }>;
+  onSortByChange?: (sortBy: Array<{ displayName: string; desc?: boolean }>) => void;
 }
 
 export function LogsTable(props: Props) {
@@ -174,9 +176,12 @@ export function LogsTable(props: Props) {
       onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
       height={props.height}
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
-      initialSortBy={[
-        { displayName: logsFrame?.timeField.name || '', desc: logsSortOrder === LogsSortOrder.Descending },
-      ]}
+      initialSortBy={
+        props.sortBy ?? [
+          { displayName: logsFrame?.timeField.name || '', desc: logsSortOrder === LogsSortOrder.Descending },
+        ]
+      }
+      onSortByChange={props.onSortByChange}
     />
   );
 }
@@ -262,8 +267,9 @@ function getLabelFiltersTransform(labelFilters: Record<string, number>) {
 }
 
 function getInitialFieldWidth(field: Field): number | undefined {
-  if (field.type === FieldType.time) {
+  if (field.type === FieldType.time || field.name === DETECTED_LEVEL || field.name === LEVEL) {
     return 200;
   }
+
   return undefined;
 }
