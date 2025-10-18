@@ -8,7 +8,7 @@ import { Button, Select } from '@grafana/ui';
 import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType } from '../../dataquery.gen';
 import { AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMetadata';
 import { AzureMonitorQuery } from '../../types/query';
-import { TablePlan } from '../../types/types';
+import { AzureMonitorOption, TablePlan } from '../../types/types';
 
 import { BuildAndUpdateOptions, inputFieldSize } from './utils';
 
@@ -17,22 +17,24 @@ interface TableSectionProps {
   tables: AzureLogAnalyticsMetadataTable[];
   query: AzureMonitorQuery;
   buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
-  templateVariableOptions?: SelectableValue<string>;
-  onQueryChange: (newQuery: AzureMonitorQuery) => void;
-  isLoadingSchema: boolean;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 }
 
 export const TableSection: React.FC<TableSectionProps> = (props) => {
-  const { allColumns, query, tables, buildAndUpdateQuery, templateVariableOptions, isLoadingSchema } = props;
-
+  const { allColumns, query, tables, buildAndUpdateQuery, variableOptionGroup } = props;
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns || [];
 
-  const tableOptions: Array<SelectableValue<string>> = tables.map((t) => ({
-    label: t.name,
-    value: t.name,
-    description: t.plan === TablePlan.Basic ? 'Selecting this table will switch the query mode to Basic Logs' : '',
-  }));
+  const tableOptions: Array<SelectableValue<string>> = [
+    ...tables.map((t) => ({
+      label: t.name,
+      value: t.name,
+    })),
+    ...variableOptionGroup.options.map((opt) => ({
+      label: opt.label,
+      value: opt.value,
+    })),
+  ];
 
   const columnOptions: Array<SelectableValue<string>> = allColumns.map((col) => ({
     label: col.name,
@@ -45,15 +47,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     value: '__all_columns__',
   };
 
-  const selectableOptions: Array<SelectableValue<string>> = [
-    selectAllOption,
-    ...columnOptions,
-    ...(templateVariableOptions
-      ? Array.isArray(templateVariableOptions)
-        ? templateVariableOptions
-        : [templateVariableOptions]
-      : []),
-  ];
+  const selectableOptions: Array<SelectableValue<string>> = [selectAllOption, ...columnOptions];
 
   const handleTableChange = (selected: SelectableValue<string>) => {
     const selectedTable = tables.find((t) => t.name === selected.value);
@@ -146,7 +140,6 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
             placeholder={t('components.table-section.placeholder-select-table', 'Select a table')}
             onChange={handleTableChange}
             width={inputFieldSize}
-            isLoading={isLoadingSchema}
           />
         </EditorField>
         <EditorField label={t('components.table-section.label-columns', 'Columns')}>
@@ -159,9 +152,11 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
               value={columnSelectValue}
               options={selectableOptions}
               placeholder={t('components.table-section.placeholder-select-columns', 'Select columns')}
-              onChange={handleColumnsChange}
               isDisabled={!builderQuery?.from?.property.name}
-              width={30}
+              onChange={(e) => {
+                handleColumnsChange(e);
+              }}
+              width={inputFieldSize}
             />
             <Button
               tooltip={t('components.table-section.tooltip-remove-all-columns', 'Remove all columns')}

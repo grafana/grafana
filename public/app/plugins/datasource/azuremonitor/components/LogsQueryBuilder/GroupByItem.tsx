@@ -10,6 +10,8 @@ import {
   BuilderQueryEditorPropertyType,
   BuilderQueryEditorExpressionType,
 } from '../../dataquery.gen';
+import { AzureMonitorOption } from '../../types/types';
+import { addValueToOptions } from '../../utils/common';
 
 import { inputFieldSize } from './utils';
 
@@ -18,7 +20,7 @@ interface GroupByItemProps {
   columns: Array<SelectableValue<string>>;
   onChange: (item: BuilderQueryEditorGroupByExpression) => void;
   onDelete: () => void;
-  templateVariableOptions: SelectableValue<string>;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 }
 
 export const GroupByItem: React.FC<GroupByItemProps> = ({
@@ -26,21 +28,14 @@ export const GroupByItem: React.FC<GroupByItemProps> = ({
   onChange,
   onDelete,
   columns,
-  templateVariableOptions,
+  variableOptionGroup,
 }) => {
   const columnOptions: Array<SelectableValue<string>> =
     columns.length > 0
       ? columns.map((c) => ({ label: c.label, value: c.value }))
       : [{ label: 'No columns available', value: '' }];
 
-  const selectableOptions: Array<SelectableValue<string>> = [
-    ...columnOptions,
-    ...(templateVariableOptions
-      ? Array.isArray(templateVariableOptions)
-        ? templateVariableOptions
-        : [templateVariableOptions]
-      : []),
-  ];
+  const selectableOptions = addValueToOptions(columnOptions, variableOptionGroup, groupBy.property?.name);
 
   const handleChange = (selectedValue: SelectableValue<string>) => {
     if (!selectedValue.value) {
