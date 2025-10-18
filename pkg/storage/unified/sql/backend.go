@@ -20,17 +20,16 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/sqlite"
-
 	"github.com/grafana/grafana-app-sdk/logging"
-
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util/debouncer"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 const tracePrefix = "sql.resource."
@@ -628,6 +627,13 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Request:     new(resourcepb.ListRequest),
 		}
+
+		for _, filter := range req.Options.Fields {
+			if filter.Key == utils.AnnoKeyFolder {
+				fmt.Printf("TODO somehow add folder cl: %v\n", filter)
+			}
+		}
+
 		listReq.Request = proto.Clone(req).(*resourcepb.ListRequest)
 
 		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceList, listReq)
