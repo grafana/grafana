@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/promlib/models"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource/hardcoded"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -49,6 +50,7 @@ type DataSourceAPIBuilder struct {
 	contextProvider      PluginContextWrapper
 	accessControl        accesscontrol.AccessControl
 	queryTypes           *queryV0.QueryTypeDefinitionList
+	schemaProvider       func() (*datasourceV0.DataSourceOpenAPIExtension, error)
 	configCrudUseNewApis bool
 }
 
@@ -65,8 +67,11 @@ func RegisterAPIService(
 	// We want to expose just a limited set of plugins
 	explicitPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
 
+	// Requires dev-mode
+	configCrudUseNewApis := features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)
+
 	// This requires devmode!
-	if !explicitPluginList && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !explicitPluginList && !configCrudUseNewApis {
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
@@ -80,6 +85,12 @@ func RegisterAPIService(
 	pluginJSONs, err := getCorePlugins(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	// This client can talk to any plugin
+	client, ok := pluginClient.(PluginClient)
+	if !ok {
+		return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
 	}
 
 	ids := []string{
@@ -101,21 +112,23 @@ func RegisterAPIService(
 			continue // skip non-datasource plugins
 		}
 
-		client, ok := pluginClient.(PluginClient)
-		if !ok {
-			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
-		}
-
 		builder, err = NewDataSourceAPIBuilder(pluginJSON,
 			client,
 			datasources.GetDatasourceProvider(pluginJSON),
 			contextProvider,
 			accessControl,
 			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-			false,
+			configCrudUseNewApis,
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		// Hardcoded schemas for testdata
+		// NOTE: this will be driven by the pluginJSON/manifest soon
+		if pluginJSON.ID == "grafana-testdata-datasource" &&
+			features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+			builder.schemaProvider = hardcoded.TestdataOpenAPIExtension
 		}
 
 		apiRegistrar.RegisterAPI(builder)
