@@ -3,58 +3,62 @@ import { toDataFrame, FieldType, DataFrame } from '@grafana/data';
 import { joinByLabels } from './joinByLabels';
 
 describe('Join by labels', () => {
-  it('Simple join', () => {
-    const input = [
-      toDataFrame({
-        fields: [
-          { name: 'Time', type: FieldType.time, values: [1, 2] },
-          {
-            name: 'Value',
-            type: FieldType.number,
-            config: {
-              displayNameFromDS: '111',
-            },
-            values: [10, 200],
-            labels: { what: 'Temp', cluster: 'A', job: 'J1' },
+  const input = [
+    toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2] },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          config: {
+            displayNameFromDS: '111',
           },
-        ],
-      }),
-      toDataFrame({
-        fields: [
-          { name: 'Time', type: FieldType.time, values: [1, 2] },
-          {
-            name: 'Value',
-            type: FieldType.number,
-            config: {
-              displayNameFromDS: '222',
-            },
-            values: [10, 200],
-            labels: { what: 'Temp', cluster: 'B', job: 'J1' },
+          values: [10, 200],
+          labels: { what: 'Temp', cluster: 'A', job: 'J1' },
+        },
+      ],
+    }),
+    toDataFrame({
+      refId: 'B',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2] },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          config: {
+            displayNameFromDS: '222',
           },
-        ],
-      }),
-      toDataFrame({
-        fields: [
-          { name: 'Time', type: FieldType.time, values: [22, 28] },
-          {
-            name: 'Value',
-            type: FieldType.number,
-            config: {
-              displayNameFromDS: '333',
-            },
-            values: [22, 77],
-            labels: { what: 'Speed', cluster: 'B', job: 'J1' },
+          values: [10, 200],
+          labels: { what: 'Temp', cluster: 'B', job: 'J1' },
+        },
+      ],
+    }),
+    toDataFrame({
+      refId: 'C',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [22, 28] },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          config: {
+            displayNameFromDS: '333',
           },
-        ],
-      }),
-    ];
+          values: [22, 77],
+          labels: { what: 'Speed', cluster: 'B', job: 'J1' },
+        },
+      ],
+    }),
+  ];
 
+  it('Simple join with dynamic refId', () => {
     const result = joinByLabels(
       {
         value: 'what',
       },
       input
     );
+    expect(result.refId).toBe('joinByLabels-A-B-C');
     expect(result.fields[result.fields.length - 1].config).toMatchInlineSnapshot(`{}`);
     expect(toRowsSnapshow(result)).toMatchInlineSnapshot(`
       {
@@ -92,6 +96,17 @@ describe('Join by labels', () => {
         ],
       }
     `);
+  });
+
+  it('Simple join with static refId', () => {
+    const result = joinByLabels(
+      {
+        value: 'what',
+        refId: 'test',
+      },
+      input
+    );
+    expect(result.refId).toBe('test');
   });
 
   it('Error handling (no labels)', () => {
