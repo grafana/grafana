@@ -226,7 +226,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <NavLandingPage navId="cfg/plugins" />,
     },
     {
-      path: '/admin/extensions',
+      path: '/admin/extensions/*',
       navId: 'extensions',
       roles: () =>
         contextSrv.evaluatePermission([AccessControlAction.PluginsInstall, AccessControlAction.PluginsWrite]),
@@ -234,7 +234,9 @@ export function getAppRoutes(): RouteDescriptor[] {
         isDevEnv || config.featureToggles.enableExtensionsAdminPage
           ? SafeDynamicImport(
               () =>
-                import(/* webpackChunkName: "PluginExtensionsLog" */ 'app/features/plugins/extensions/logs/LogViewer')
+                import(
+                  /* webpackChunkName: "PluginExtensionsTabbed" */ 'app/features/plugins/extensions/ExtensionsTabbedPage'
+                )
             )
           : () => <Navigate replace to="/admin" />,
     },
