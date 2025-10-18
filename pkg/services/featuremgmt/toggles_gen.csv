@@ -272,3 +272,4 @@ cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,f
 cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
 preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
+newPanelPadding,experimental,@grafana/dashboards-squad,false,false,false

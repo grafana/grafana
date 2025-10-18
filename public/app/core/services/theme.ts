@@ -10,7 +10,7 @@ import { PreferencesService } from './PreferencesService';
 export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
   const oldTheme = config.theme2;
 
-  const newTheme = getThemeById(themeId);
+  const newTheme = getThemeById(themeId, config.featureToggles);
 
   appEvents.publish(new ThemeChangedEvent(newTheme));
 

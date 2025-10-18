@@ -2119,6 +2119,14 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},
+		{
+			Name:         "newPanelPadding",
+			Description:  "Increases panel padding globally",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
 	}
 )
 

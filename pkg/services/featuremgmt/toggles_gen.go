@@ -1097,4 +1097,8 @@ const (
 	// FlagPluginStoreServiceLoading
 	// Load plugins during store service startup instead of wire provider
 	FlagPluginStoreServiceLoading = "pluginStoreServiceLoading"
+
+	// FlagNewPanelPadding
+	// Increases panel padding globally
+	FlagNewPanelPadding = "newPanelPadding"
 )

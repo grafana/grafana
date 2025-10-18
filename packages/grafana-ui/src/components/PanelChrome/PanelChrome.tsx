@@ -473,7 +473,9 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor, padding } = theme.components.panel;
+  const { background, borderColor, padding, headerHeight } = theme.components.panel;
+
+  let headerRightPadding = headerHeight === 4 ? 0 : 0.5;
 
   return {
     container: css({
@@ -548,6 +550,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
+      paddingRight: theme.spacing(headerRightPadding),
     }),
     pointer: css({
       cursor: 'pointer',
