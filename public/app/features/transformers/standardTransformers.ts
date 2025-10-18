@@ -32,6 +32,7 @@ import { getPartitionByValuesTransformRegistryItem } from './partitionByValues/P
 import { getPrepareTimeseriesTransformerRegistryItem } from './prepareTimeSeries/PrepareTimeSeriesEditor';
 import { getRegressionTransformerRegistryItem } from './regression/regressionEditor';
 import { getRowsToFieldsTransformRegistryItem } from './rowsToFields/RowsToFieldsTransformerEditor';
+import { getSmoothingTransformerRegistryItem } from './smoothing/smoothingEditor';
 import { getSpatialTransformRegistryItem } from './spatial/SpatialTransformerEditor';
 import { getTimeSeriesTableTransformRegistryItem } from './timeSeriesTable/TimeSeriesTableTransformEditor';
 
@@ -64,6 +65,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     getLimitTransformRegistryItem(),
     getJoinByLabelsTransformRegistryItem(),
     getRegressionTransformerRegistryItem(),
+    getSmoothingTransformerRegistryItem(),
     getPartitionByValuesTransformRegistryItem(),
     ...(config.featureToggles.formatString ? [getFormatStringTransformerRegistryItem()] : []),
     ...(config.featureToggles.groupToNestedTableTransformation ? [getGroupToNestedTableTransformRegistryItem()] : []),

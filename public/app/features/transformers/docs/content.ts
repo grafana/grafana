@@ -1612,6 +1612,52 @@ ${buildImageContent(
   `;
     },
   },
+  smoothing: {
+    name: 'Smoothing',
+    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
+      return `
+Use this transformation to reduce noise in time series data by applying downsampling. This transformation creates smoother, cleaner visualizations while preserving important trends and patterns in your data.
+
+The smoothing transformation uses the ASAP (Automatic Smoothing for Attention Prioritization) algorithm, which automatically determines the optimal points to preserve based on your data's characteristics. Unlike simple downsampling methods, ASAP selects which data points to keep, ensuring that important features like peaks, valleys, and trend changes are maintained.
+
+#### Available options
+
+- **Resolution** - Set the target number of output points (10-1000). Lower values create more aggressive smoothing with fewer points, while higher values preserve more detail. The ASAP algorithm may output fewer points than requested if the data doesn't require the full resolution for accurate representation.
+
+#### When to use smoothing
+
+This transformation is useful for:
+
+- Noisy time series data that obscures underlying trends
+- Clearer trend analysis and pattern recognition
+
+#### Example
+
+Consider noisy sensor data with thousands of points:
+
+**Before smoothing:**
+
+| Time                | Temperature |
+| ------------------- | ----------- |
+| 2020-07-07 10:00:00 | 23.1        |
+| 2020-07-07 10:00:01 | 23.3        |
+| 2020-07-07 10:00:02 | 22.9        |
+| 2020-07-07 10:00:03 | 23.2        |
+| ... (thousands more) | ...         |
+
+**After smoothing (Resolution: 100):**
+
+| Time                | Temperature (smoothed) |
+| ------------------- | ---------------------- |
+| 2020-07-07 10:00:00 | 23.1                   |
+| 2020-07-07 10:05:30 | 23.0                   |
+| 2020-07-07 10:15:45 | 22.8                   |
+| ... (≤100 points)   | ...                    |
+
+The transformation preserves the complete time range and important variations while significantly reducing the number of data points for cleaner visualization.
+  `;
+    },
+  },
 };
 
 function buildImageContent(source: string, imageRenderType: ImageRenderType, imageAltText: string) {
