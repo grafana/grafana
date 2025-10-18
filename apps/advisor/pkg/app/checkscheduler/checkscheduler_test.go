@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -38,6 +39,8 @@ func TestRunner_Run(t *testing.T) {
 			typesClient:        mockTypesClient,
 			log:                &logging.NoOpLogger{},
 			evaluationInterval: 1 * time.Hour,
+			orgService:         &mockOrgService{orgs: []*org.OrgDTO{}},
+			stackID:            "123",
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -59,7 +62,7 @@ func TestRunner_checkLastCreated_ErrorOnList(t *testing.T) {
 		log:    &logging.NoOpLogger{},
 	}
 
-	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{})
+	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{}, []string{"default"})
 	assert.Error(t, err)
 	assert.True(t, lastCreated.IsZero())
 }
@@ -92,7 +95,7 @@ func TestRunner_checkLastCreated_UnprocessedCheck(t *testing.T) {
 		log:    &logging.NoOpLogger{},
 	}
 
-	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{})
+	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{}, []string{"default"})
 	assert.NoError(t, err)
 	assert.True(t, lastCreated.IsZero())
 	assert.Equal(t, "check-1", identifier.Name)
@@ -161,7 +164,7 @@ func TestRunner_checkLastCreated_PaginatedResponse(t *testing.T) {
 		log:    &logging.NoOpLogger{},
 	}
 
-	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{})
+	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{}, []string{"default"})
 	assert.NoError(t, err)
 	assert.Equal(t, now.Truncate(time.Second), lastCreated.Truncate(time.Second))
 }
@@ -192,7 +195,7 @@ func TestRunner_createChecks_ErrorOnCreate(t *testing.T) {
 		log:           &logging.NoOpLogger{},
 	}
 
-	err := runner.createChecks(context.Background(), &logging.NoOpLogger{})
+	err := runner.createChecks(context.Background(), &logging.NoOpLogger{}, []string{"default"})
 	assert.Error(t, err)
 }
 
@@ -222,7 +225,7 @@ func TestRunner_createChecks_Success(t *testing.T) {
 		log:           &logging.NoOpLogger{},
 	}
 
-	err := runner.createChecks(context.Background(), &logging.NoOpLogger{})
+	err := runner.createChecks(context.Background(), &logging.NoOpLogger{}, []string{"default"})
 	assert.NoError(t, err)
 }
 
@@ -238,7 +241,7 @@ func TestRunner_cleanupChecks_ErrorOnList(t *testing.T) {
 		log:    &logging.NoOpLogger{},
 	}
 
-	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{})
+	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{}, []string{"default"})
 	assert.Error(t, err)
 }
 
@@ -259,7 +262,7 @@ func TestRunner_cleanupChecks_WithinMax(t *testing.T) {
 		log:    &logging.NoOpLogger{},
 	}
 
-	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{})
+	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{}, []string{"default"})
 	assert.NoError(t, err)
 }
 
@@ -288,7 +291,7 @@ func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
 		maxHistory: defaultMaxHistory,
 		log:        &logging.NoOpLogger{},
 	}
-	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{})
+	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{}, []string{"default"})
 	assert.ErrorContains(t, err, "delete error")
 }
 
@@ -324,7 +327,7 @@ func TestRunner_cleanupChecks_Success(t *testing.T) {
 		maxHistory: defaultMaxHistory,
 		log:        &logging.NoOpLogger{},
 	}
-	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{})
+	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{}, []string{"default"})
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"check-0"}, itemsDeleted)
 }
@@ -425,4 +428,13 @@ func (m *mockCheck) ID() string {
 
 func (m *mockCheck) Steps() []checks.Step {
 	return m.steps
+}
+
+type mockOrgService struct {
+	org.Service
+	orgs []*org.OrgDTO
+}
+
+func (m *mockOrgService) Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*org.OrgDTO, error) {
+	return m.orgs, nil
 }

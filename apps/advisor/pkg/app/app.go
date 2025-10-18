@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -69,12 +71,12 @@ func New(cfg app.Config) (app.App, error) {
 								go func() {
 									logger := log.WithContext(ctx).With("check", check.ID())
 									logger.Debug("Processing check", "namespace", req.Object.GetNamespace())
-									requester, err := identity.GetRequester(ctx)
+									orgID, err := getOrgIDFromNamespace(req.Object.GetNamespace())
 									if err != nil {
-										logger.Error("Error getting requester", "error", err)
+										logger.Error("Error getting org ID from namespace", "error", err)
 										return
 									}
-									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), requester.GetOrgID())
+									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), orgID)
 									err = processCheck(ctx, logger, client, typesClient, req.Object, check)
 									if err != nil {
 										logger.Error("Error processing check", "error", err)
@@ -85,12 +87,12 @@ func New(cfg app.Config) (app.App, error) {
 								go func() {
 									logger := log.WithContext(ctx).With("check", check.ID())
 									logger.Debug("Updating check", "namespace", req.Object.GetNamespace(), "name", req.Object.GetName())
-									requester, err := identity.GetRequester(ctx)
+									orgID, err := getOrgIDFromNamespace(req.Object.GetNamespace())
 									if err != nil {
-										logger.Error("Error getting requester", "error", err)
+										logger.Error("Error getting org ID from namespace", "error", err)
 										return
 									}
-									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), requester.GetOrgID())
+									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), orgID)
 									err = processCheckRetry(ctx, logger, client, typesClient, req.Object, check)
 									if err != nil {
 										logger.Error("Error processing check retry", "error", err)
@@ -147,4 +149,22 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 			advisorv0alpha1.CheckTypeKind(),
 		},
 	}
+}
+
+// getOrgIDFromNamespace extracts the org ID from a namespace.
+// - "default" or "stack-*" namespaces → org ID 1
+// - "org-X" namespaces → org ID X
+func getOrgIDFromNamespace(namespace string) (int64, error) {
+	if namespace == "default" || strings.HasPrefix(namespace, "stack-") {
+		return 1, nil
+	}
+	if strings.HasPrefix(namespace, "org-") {
+		orgIDStr := strings.TrimPrefix(namespace, "org-")
+		orgID, err := strconv.ParseInt(orgIDStr, 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("invalid org namespace %s: %w", namespace, err)
+		}
+		return orgID, nil
+	}
+	return 0, fmt.Errorf("unknown namespace format: %s", namespace)
 }

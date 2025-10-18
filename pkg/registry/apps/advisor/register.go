@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,6 +20,7 @@ type AdvisorAppProvider struct {
 func RegisterApp(
 	checkRegistry checkregistry.CheckService,
 	cfg *setting.Cfg,
+	orgService org.Service,
 ) *AdvisorAppProvider {
 	provider := &AdvisorAppProvider{}
 	pluginConfig := cfg.PluginSettings["grafana-advisor-app"]
@@ -26,6 +28,7 @@ func RegisterApp(
 		CheckRegistry: checkRegistry,
 		PluginConfig:  pluginConfig,
 		StackID:       cfg.StackID,
+		OrgService:    orgService,
 	}
 	appCfg := &runner.AppBuilderConfig{
 		OpenAPIDefGetter:         advisorv0alpha1.GetOpenAPIDefinitions,

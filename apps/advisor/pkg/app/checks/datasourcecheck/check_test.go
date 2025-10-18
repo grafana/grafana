@@ -251,7 +251,7 @@ type MockDatasourceSvc struct {
 	dss []*datasources.DataSource
 }
 
-func (m *MockDatasourceSvc) GetAllDataSources(context.Context, *datasources.GetAllDataSourcesQuery) ([]*datasources.DataSource, error) {
+func (m *MockDatasourceSvc) GetDataSources(context.Context, *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {
 	return m.dss, nil
 }
 
