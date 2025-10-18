@@ -1,5 +1,6 @@
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
+import { config } from '@grafana/runtime';
 import { InlineField, InlineSwitch } from '@grafana/ui';
 
 export function AlertingSettings({
@@ -24,7 +25,7 @@ export function AlertingSettings({
         tooltip="Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source."
       >
         <InlineSwitch
-          value={options.jsonData.manageAlerts !== false}
+          value={options.jsonData.manageAlerts ?? config.defaultDatasourceManageAlertsUiToggle}
           onChange={(event) =>
             onOptionsChange({
               ...options,
