@@ -233,6 +233,26 @@ func GetHealthFromQuery(v url.Values) (map[string]struct{}, error) {
 	return health, nil
 }
 
+func getRuleTypeFromQuery(v url.Values) ngmodels.RuleTypeFilter {
+	ruleType := strings.ToLower(v.Get("rule_type"))
+	switch ruleType {
+	case "alerting":
+		return ngmodels.RuleTypeFilterAlerting
+	case "recording":
+		return ngmodels.RuleTypeFilterRecording
+	default:
+		return ngmodels.RuleTypeFilterAll
+	}
+}
+
+func getLabelsFromQuery(v url.Values) []string {
+	return v["labels"]
+}
+
+func getDatasourceUIDsFromQuery(v url.Values) []string {
+	return v["datasource_uid"]
+}
+
 type RuleGroupStatusesOptions struct {
 	Ctx               context.Context
 	OrgID             int64
@@ -251,6 +271,13 @@ type ListAlertRulesStoreV2 interface {
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
 	// As we are using req.Form directly, this triggers a call to ParseForm() if needed.
 	c.Query("")
+
+	// Check if we should use the optimized v2 implementation
+	useV2 := getBoolWithDefault(c.Req.Form, "v2", false)
+	if useV2 {
+		srv.log.Debug("Using optimized v2 rule listing implementation")
+		return srv.routeGetRuleStatusesV2(c)
+	}
 
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
@@ -487,14 +514,32 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		return ruleResponse
 	}
 
+	// Parse new filter parameters
+	freeFormSearch := opts.Query.Get("free_form_search")
+	namespaceSearch := opts.Query.Get("namespace_search")
+	groupNameSearch := opts.Query.Get("group_name_search")
+	ruleNameSearch := opts.Query.Get("rule_name_search")
+	labels := getLabelsFromQuery(opts.Query)
+	ruleType := getRuleTypeFromQuery(opts.Query)
+	datasourceUIDs := getDatasourceUIDsFromQuery(opts.Query)
+	excludePlugins := getBoolWithDefault(opts.Query, "exclude_plugins", false)
+
 	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
-			OrgID:         opts.OrgID,
-			NamespaceUIDs: namespaceUIDs,
-			DashboardUID:  dashboardUID,
-			PanelID:       panelID,
-			RuleGroups:    ruleGroups,
-			ReceiverName:  receiverName,
+			OrgID:           opts.OrgID,
+			NamespaceUIDs:   namespaceUIDs,
+			DashboardUID:    dashboardUID,
+			PanelID:         panelID,
+			RuleGroups:      ruleGroups,
+			ReceiverName:    receiverName,
+			FreeFormSearch:  freeFormSearch,
+			NamespaceSearch: namespaceSearch,
+			GroupNameSearch: groupNameSearch,
+			RuleNameSearch:  ruleNameSearch,
+			Labels:          labels,
+			RuleType:        ruleType,
+			DatasourceUIDs:  datasourceUIDs,
+			ExcludePlugins:  excludePlugins,
 		},
 		Limit:         maxGroups,
 		ContinueToken: nextToken,
@@ -957,4 +1002,63 @@ func errorOrEmpty(err error) string {
 		return err.Error()
 	}
 	return ""
+}
+
+// routeGetRuleStatusesV2 is an optimized version that uses streaming to handle large datasets
+func (srv PrometheusSrv) routeGetRuleStatusesV2(c *contextmodel.ReqContext) response.Response {
+	ruleResponse := apimodels.RuleResponse{
+		DiscoveryBase: apimodels.DiscoveryBase{
+			Status: "success",
+		},
+		Data: apimodels.RuleDiscovery{
+			RuleGroups: []apimodels.RuleGroup{},
+		},
+	}
+
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.GetOrgID(), c.SignedInUser)
+	if err != nil {
+		ruleResponse.Status = "error"
+		ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
+		ruleResponse.ErrorType = apiv1.ErrServer
+		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+	}
+
+	allowedNamespaces := map[string]string{}
+	for namespaceUID, folder := range namespaceMap {
+		hasAccess, err := srv.authz.HasAccessInFolder(c.Req.Context(), c.SignedInUser, ngmodels.Namespace(*folder.ToFolderReference()))
+		if err != nil {
+			ruleResponse.Status = "error"
+			ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
+			ruleResponse.ErrorType = apiv1.ErrServer
+			return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+		}
+		if hasAccess {
+			allowedNamespaces[namespaceUID] = folder.Fullpath
+		}
+	}
+
+	provenanceRecords, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.GetOrgID(), (&ngmodels.AlertRule{}).ResourceType())
+	if err != nil {
+		ruleResponse.Status = "error"
+		ruleResponse.Error = fmt.Sprintf("failed to get provenances visible to the user: %s", err.Error())
+		ruleResponse.ErrorType = apiv1.ErrServer
+		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+	}
+
+	// Use the same options parsing as v1
+	ruleResponse = PrepareRuleGroupStatusesV2(
+		srv.log,
+		srv.store,
+		RuleGroupStatusesOptions{
+			Ctx:               c.Req.Context(),
+			OrgID:             c.OrgID,
+			Query:             c.Req.Form,
+			AllowedNamespaces: allowedNamespaces,
+		},
+		RuleStatusMutatorGenerator(srv.status),
+		RuleAlertStateMutatorGenerator(srv.manager),
+		provenanceRecords,
+	)
+
+	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
