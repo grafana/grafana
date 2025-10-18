@@ -91,6 +91,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, ssoSe
 func (s *LDAPImpl) Reload(ctx context.Context, settings models.SSOSettings) error {
 	cfg := &ldap.Config{}
 	cfg.Enabled = resolveBool(settings.Settings["enabled"], false)
+	cfg.ConfigFilePath = resolveString(settings.Settings["config_file"], "")
 	cfg.SkipOrgRoleSync = resolveBool(settings.Settings["skip_org_role_sync"], false)
 	cfg.AllowSignUp = resolveBool(settings.Settings["allow_sign_up"], true)
 
