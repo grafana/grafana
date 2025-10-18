@@ -756,28 +756,26 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 		Email: "noreply@grafana.com",
 		Time:  time.Now(),
 	}
-	committer := nanogit.Committer{
-		Name:  "Grafana",
-		Email: "noreply@grafana.com",
-		Time:  time.Now(),
-	}
 
 	// Use signature from context if available
-	if sig := repository.GetAuthorSignature(ctx); sig != nil && sig.Name != "" {
-		author.Name = sig.Name
-		author.Email = sig.Email
-		author.Time = sig.When
-		committer.Name = sig.Name
-		committer.Email = sig.Email
-		committer.Time = sig.When
+	if sig := repository.GetAuthorSignature(ctx); sig != nil {
+		if sig.Name != "" {
+			author.Name = sig.Name
+		}
+		if sig.Email != "" {
+			author.Email = sig.Email
+		}
+		if !sig.When.IsZero() {
+			author.Time = sig.When
+		}
 	}
 
 	if author.Time.IsZero() {
 		author.Time = time.Now()
-		committer.Time = time.Now()
 	}
 
-	return author, committer
+	// Author and committer are always the same (for now)
+	return author, nanogit.Committer(author)
 }
 
 func (r *gitRepository) commit(ctx context.Context, writer nanogit.StagedWriter, comment string) error {
