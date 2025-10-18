@@ -1,0 +1,21 @@
+{
+  "extends": "../../scripts/tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "declaration": true,
+    "jsx": "react-jsx",
+    "declarationDir": "./dist/types",
+    "emitDeclarationOnly": true,
+    "isolatedModules": true,
+    "rootDirs": ["."],
+    "allowImportingTsExtensions": true
+  },
+  "exclude": ["dist/**/*"],
+  "include": [
+    "../../public/app/types/window.d.ts",
+    "../../public/app/types/images.d.ts",
+    "../grafana-ui/src/types/*.d.ts",
+    "../grafana-i18n/src/types/*.d.ts",
+    "src/**/*.ts*"
+  ]
+}

@@ -2993,6 +2993,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/api-clients@workspace:*, @grafana/api-clients@workspace:packages/grafana-api-clients":
+  version: 0.0.0-use.local
+  resolution: "@grafana/api-clients@workspace:packages/grafana-api-clients"
+  dependencies:
+    "@rtk-query/codegen-openapi": "npm:^2.0.0"
+    openapi-types: "npm:^12.1.3"
+    plop: "npm:^4.0.1"
+    rollup: "npm:^4.22.4"
+    typescript: "npm:5.9.2"
+  peerDependencies:
+    "@grafana/runtime": ">=11.6 <= 12.x"
+    "@reduxjs/toolkit": ^2.8.0
+  languageName: unknown
+  linkType: soft
+
 "@grafana/assistant@npm:0.1.0":
   version: 0.1.0
   resolution: "@grafana/assistant@npm:0.1.0"
@@ -18277,6 +18292,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
+    "@grafana/api-clients": "workspace:*"
     "@grafana/assistant": "npm:0.1.0"
     "@grafana/aws-sdk": "npm:0.7.1"
     "@grafana/azure-sdk": "npm:0.0.7"
@@ -18521,10 +18537,8 @@ __metadata:
     nx: "npm:21.3.11"
     ol: "npm:10.6.1"
     ol-ext: "npm:4.0.35"
-    openapi-types: "npm:^12.1.3"
     pa11y-ci: "npm:^4.0.0"
     pdf-parse: "npm:^1.1.1"
-    plop: "npm:^4.0.1"
     pluralize: "npm:^8.0.0"
     postcss: "npm:8.5.6"
     postcss-loader: "npm:8.1.1"
