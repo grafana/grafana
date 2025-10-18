@@ -1,6 +1,9 @@
 package frontend
 
-import "github.com/grafana/grafana/pkg/setting"
+import (
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/setting"
+)
 
 // This is a copy of dtos.FrontendSettingsDTO with only the fields that the frontend-service
 // sends, to prevent default values from overriding what comes from the /bootdata call.
@@ -19,6 +22,8 @@ type FSFrontendSettings struct {
 	LoginHint          string `json:"loginHint,omitempty"`
 	PasswordHint       string `json:"passwordHint,omitempty"`
 	AnonymousEnabled   bool   `json:"anonymousEnabled,omitempty"`
+
+	BuildInfo dtos.FrontendSettingsBuildInfoDTO `json:"buildInfo"`
 
 	GoogleAnalyticsId                   string `json:"googleAnalyticsId,omitempty"`
 	GoogleAnalytics4Id                  string `json:"googleAnalytics4Id,omitempty"`
