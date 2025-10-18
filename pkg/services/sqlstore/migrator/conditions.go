@@ -46,3 +46,13 @@ type IfColumnNotExistsCondition struct {
 func (c *IfColumnNotExistsCondition) SQL(dialect Dialect) (string, []interface{}) {
 	return dialect.ColumnCheckSQL(c.TableName, c.ColumnName)
 }
+
+type IfColumnExistsCondition struct {
+	ExistsMigrationCondition
+	TableName  string
+	ColumnName string
+}
+
+func (c *IfColumnExistsCondition) SQL(dialect Dialect) (string, []interface{}) {
+	return dialect.ColumnCheckSQL(c.TableName, c.ColumnName)
+}
