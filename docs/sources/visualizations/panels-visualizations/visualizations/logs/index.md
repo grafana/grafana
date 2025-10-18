@@ -53,7 +53,7 @@ You can also build log-formatted data from other data sources as long as the fir
 
 The second field is used as the log record title regardless of whether it’s a time, numeric, or string field. Usually the second field is a text field containing multiple string elements, but if the message level (or `lvl`) is present, the visualization uses the values in it to add colors to the record, as described in [Log levels integration](ref:log-levels).
 
-Subsequent fields are collapsed inside of each log record and you can open them by clicking the expand (`>`) icon.
+Subsequent fields are collapsed inside of each log record and you can open them by clicking the expand (`⋮`) icon.
 
 To limit the number of log lines rendered in the visualization, you can use the **Max data points** setting in the panel **Query options**. If that option isn't set, then the data source typically enforces its own default limit.
 
@@ -85,14 +85,20 @@ Use these settings to refine your visualization:
 
 <!-- prettier-ignore-start -->
 
-| Option | Description |
-| ------ | ----------- |
+In the Panel options section of the panel editor pane, set basic options like panel title and description, as well as panel links.
+
+|      Option     |   Description   |
+| --------------- | --------------- |
 | Time   | Show or hide the time column. This is the timestamp associated with the log line as reported from the data source. |
 | Unique labels | Show or hide the unique labels column, which shows only non-common labels. |
-| Common labels | Show or hide the common labels. |
 | Wrap lines | Turn line wrapping on or off. |
-| Prettify JSON | Toggle the switch on to pretty print all JSON logs. This setting does not affect logs in any format other than JSON. |
+| Highlighting| Experimental. Use a predefined coloring scheme to highlight relevant parts of the log lines. **The new logs panel implements a predefined set of rules to apply subtle colors to the logs lines, to help with readability and help with identifying important information faster. This is an optional feature that can be disabled in the panel options or in the controls on the right.|
 | Enable log details | Toggle the switch on to see an extendable area with log details including labels and detected fields. Each field or label has a stats icon to display ad-hoc statistics in relation to all displayed logs. The default setting is on. |
+| Details panel mode |  Choose to display the log details in a sidebar panel or inline, below the log line.  Depending on the viewport size, the default mode it uses can be inline (small viewports) or sidebar (larger viewports). Independent of this default mode, you can also change mode dynamically in the panel by clicking the mode control. |
+|Infinite scrolling|  Request more results by scrolling to the bottom of the logs list.  **When you reach the bottom of the list of logs, if you continue scrolling and the displayed logs are within the selected time interval, you can request to load more logs. When the sort order is “newest first” you will receive older logs, and when the sort order is “oldest first” you will get newer logs. For logs in Dashboards, this is an option that needs to be enabled in the panel configuration. |
+| OTel log attributes | Experimental. When OTel logs are displayed, adds an extra displayed field with relevant key-value pairs from labels and metadata. |
+| Controls | Display controls to jump to the last or first log line, and filters by log level. |
+| Font | Select between the **Default** font size and **Small** font size.|
 | Deduplication | Hide log messages that are duplicates of others shown, according to your selected criteria. Choose from: <ul><li>**Exact** - Ignoring ISO datetimes.</li><li>**Numerical** - Ignoring only those that differ by numbers such as IPs or latencies.</li><li>**Signatures** - Removing successive lines with identical punctuation and white space.</li></ul> |
 | Order | Set whether to show results **Newest first** or **Oldest first**. |
 
