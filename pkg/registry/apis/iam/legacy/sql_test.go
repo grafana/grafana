@@ -235,11 +235,10 @@ func TestIdentityQueries(t *testing.T) {
 			},
 			sqlQueryTeamBindingsTemplate: {
 				{
-					Name: "team_bindings_id",
+					Name: "team_bindings_uid",
 					Data: listTeamBindings(&ListTeamBindingsQuery{
 						OrgID:      1,
-						TeamID:     1,
-						UserID:     1,
+						UID:        "tm-1",
 						Pagination: common.Pagination{Limit: 1},
 					}),
 				},
