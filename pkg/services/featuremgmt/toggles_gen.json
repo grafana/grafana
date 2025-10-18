@@ -706,6 +706,33 @@
     },
     {
       "metadata": {
+        "name": "annotationsAPIServer",
+        "resourceVersion": "1760446518121",
+        "creationTimestamp": "2025-10-14T12:55:18Z",
+        "deletionTimestamp": "2025-10-16T20:41:22Z"
+      },
+      "spec": {
+        "description": "Run the annotations apiserver",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "requiresDevMode": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "annotationsFromAPIServer",
+        "resourceVersion": "1758549960442",
+        "creationTimestamp": "2025-09-22T14:06:00Z"
+      },
+      "spec": {
+        "description": "read annotations from the APIServer",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "appPlatformGrpcClientAuth",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-10-14T10:47:18Z"
@@ -2113,6 +2140,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAnnotations",
+        "resourceVersion": "1760647282481",
+        "creationTimestamp": "2025-10-16T20:41:22Z"
+      },
+      "spec": {
+        "description": "Run the annotations API server",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "requiresDevMode": true
       }
     },
     {

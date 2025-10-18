@@ -620,6 +620,21 @@ var (
 			Owner:           identityAccessTeam,
 		},
 		{
+			Name:            "kubernetesAnnotations",
+			Description:     "Run the annotations API server",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			Owner:           grafanaBackendServicesSquad,
+		},
+		{
+			Name:            "annotationsFromAPIServer",
+			Description:     "read annotations from the APIServer",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    true,
+			RequiresDevMode: false,
+			Owner:           grafanaDashboardsSquad, // the frontend bits
+		},
+		{
 			Name:         "extractFieldsNameDeduplication",
 			Description:  "Make sure extracted field names are unique in the dataframe",
 			Stage:        FeatureStageExperimental,
