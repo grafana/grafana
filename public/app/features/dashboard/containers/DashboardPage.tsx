@@ -1,9 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { PureComponent } from 'react';
+import { PureComponent, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { useAsync } from 'react-use';
 
+import { createAssistantContextItem } from '@grafana/assistant';
 import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
@@ -42,6 +45,141 @@ import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './type
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
+interface DashboardModel {
+  id?: string;
+  uid?: string;
+  title?: string;
+  tags?: string[];
+  panels?: Panel[];
+  templating?: {
+    list?: unknown[];
+  };
+  meta?: {
+    folderTitle?: string;
+    custom?: {
+      assistantContext?: unknown[];
+    };
+  };
+}
+
+interface Panel {
+  id?: number;
+  meta?: {
+    custom?: {
+      assistantContext?: unknown[];
+    };
+  };
+}
+
+interface DashboardContextProviderProps {
+  dashboard: DashboardModel;
+  timeRange?: TimeRange;
+}
+
+// Functional component to provide dashboard context to assistant without UI
+const DashboardContextProvider = ({ dashboard, timeRange }: DashboardContextProviderProps) => {
+  // Dummy API call - replace this with your actual API endpoint
+  const { value: dashboardAnalysisData } = useAsync(async () => {
+    if (!dashboard?.uid) {
+      return null;
+    }
+
+    // Simulate API call with a delay
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Return dummy data structure - replace with your actual API response
+    return {
+      dashboardInfo: {
+        id: dashboard?.id,
+        uid: dashboard?.uid,
+        title: dashboard?.title,
+        tags: dashboard?.tags || [],
+        panelCount: dashboard?.panels?.length || 0,
+        variables: dashboard?.templating?.list?.length || 0,
+      },
+      analysisData: {
+        performanceMetrics: {
+          avgLoadTime: Math.random() * 5000 + 1000, // Random load time between 1-6 seconds
+          totalQueries: Math.floor(Math.random() * 50) + 10, // Random query count
+          errorRate: Math.random() * 0.1, // Random error rate 0-10%
+        },
+        insights: [
+          'Dashboard has optimal panel layout',
+          'Consider reducing query frequency for better performance',
+          'Some panels might benefit from caching',
+        ],
+        recommendations: [
+          'Add more descriptive panel titles',
+          'Group related panels together',
+          'Consider using dashboard variables for better filtering',
+        ],
+      },
+      timestamp: new Date().toISOString(),
+    };
+  }, [dashboard?.uid]); // Re-run when dashboard UID changes
+
+  // Attach context to dashboard meta for assistant access
+  useEffect(() => {
+    if (!dashboard || !dashboardAnalysisData) {
+      return;
+    }
+
+    // Create context items with dashboard and analysis data
+    const assistantContext = [
+      // Dashboard context
+      createAssistantContextItem('structured', {
+        title: t('Dashboard Information'),
+        data: {
+          dashboard: dashboardAnalysisData.dashboardInfo,
+          currentTimeRange: timeRange
+            ? {
+                from: timeRange.from.toISOString(),
+                to: timeRange.to.toISOString(),
+              }
+            : null,
+        },
+      }),
+
+      // Analysis data context
+      createAssistantContextItem('structured', {
+        title: t('Dashboard Analysis Data'),
+        data: {
+          analysis: dashboardAnalysisData.analysisData,
+          metadata: {
+            analyzedAt: dashboardAnalysisData.timestamp,
+            dataSource: 'dashboard-analysis-api',
+            suggestedPrompt: `Please analyze this Grafana dashboard "${dashboardAnalysisData.dashboardInfo.title}" which contains ${dashboardAnalysisData.dashboardInfo.panelCount} panels. What recommendations do you have for improving this dashboard based on the performance metrics and analysis data provided?`,
+          },
+        },
+      }),
+    ];
+
+    // Attach context to dashboard meta so assistant can access it
+    if (!dashboard.meta) {
+      dashboard.meta = {};
+    }
+    if (!dashboard.meta.custom) {
+      dashboard.meta.custom = {};
+    }
+    dashboard.meta.custom.assistantContext = assistantContext;
+
+    // Also attach to individual panels if they exist
+    if (dashboard.panels) {
+      dashboard.panels.forEach((panel: Panel) => {
+        if (!panel.meta) {
+          panel.meta = {};
+        }
+        if (!panel.meta.custom) {
+          panel.meta.custom = {};
+        }
+        panel.meta.custom.assistantContext = assistantContext;
+      });
+    }
+  }, [dashboard, dashboardAnalysisData, timeRange]);
+
+  // This component doesn't render anything, it just provides context
+  return null;
+};
 
 export const mapStateToProps = (state: StoreState) => ({
   initPhase: state.dashboard.initPhase,
@@ -393,6 +531,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
               />
             </header>
           )}
+          {/* Context provider for assistant - invisible component that provides context */}
+          <DashboardContextProvider dashboard={dashboard} timeRange={getTimeSrv().timeRange()} />
           <DashboardPrompt dashboard={dashboard} />
           {initError && <DashboardPageError error={initError.error} type={params.type} />}
           {showSubMenu && (
