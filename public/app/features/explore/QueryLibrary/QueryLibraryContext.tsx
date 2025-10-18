@@ -43,7 +43,8 @@ export type QueryLibraryContextType = {
     app?: CoreApp,
     onUpdateSuccess?: () => void,
     onSelectQuery?: (query: DataQuery) => void,
-    datasourceFilters?: string[]
+    datasourceFilters?: string[],
+    isLoading?: boolean
   ) => ReactNode;
 
   /**

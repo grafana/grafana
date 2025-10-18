@@ -381,13 +381,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderActions = (props: QueryOperationRowRenderProps) => {
     const { query, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef, app } = this.props;
-    const { datasource, showingHelp } = this.state;
+    const { datasource, showingHelp, data } = this.state;
     const isHidden = !!query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
     const isEditingQueryLibrary = queryLibraryRef !== undefined;
     const isUnifiedAlerting = app === CoreApp.UnifiedAlerting;
     const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
+
+    // Calculate loading state for animation timing
+    const isLoading = data?.state === LoadingState.Loading || data?.state === LoadingState.Streaming;
 
     return (
       <>
@@ -398,6 +401,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
             onSelectQuery={this.onSelectQueryFromLibrary}
             datasourceFilters={datasource?.name ? [datasource.name] : []}
+            isLoading={isLoading}
           />
         )}
 
@@ -590,9 +594,17 @@ function SavedQueryButtons(props: {
   onUpdateSuccess?: () => void;
   onSelectQuery: (query: DataQuery) => void;
   datasourceFilters: string[];
+  isLoading?: boolean;
 }) {
   const { renderSavedQueryButtons } = useQueryLibraryContext();
-  return renderSavedQueryButtons(props.query, props.app, props.onUpdateSuccess, props.onSelectQuery);
+  return renderSavedQueryButtons(
+    props.query,
+    props.app,
+    props.onUpdateSuccess,
+    props.onSelectQuery,
+    props.datasourceFilters,
+    props.isLoading
+  );
 }
 
 // Will render editing header only if query library is enabled

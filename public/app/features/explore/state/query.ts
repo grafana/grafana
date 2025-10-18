@@ -50,6 +50,7 @@ import { createAsyncThunk, StoreState, ThunkDispatch, ThunkResult } from 'app/ty
 
 import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
+import { trackQueryExecution } from '../../../core/utils/querySaveTracking';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData, decorateWithLogsResult } from '../utils/decorators';
 import {
@@ -572,6 +573,12 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       ...query,
       datasource: query.datasource || datasourceInstance?.getRef(),
     }));
+
+    if (config.featureToggles.queryLibrary) {
+      queries.forEach((query) => {
+        trackQueryExecution(query);
+      });
+    }
 
     if (datasourceInstance != null) {
       handleHistory(dispatch, getState().explore, datasourceInstance, queries);

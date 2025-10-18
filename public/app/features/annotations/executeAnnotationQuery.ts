@@ -2,7 +2,9 @@ import { Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import { AnnotationQuery, CoreApp, DataQueryRequest, DataSourceApi, rangeUtil, ScopedVars } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
+import { trackQueryExecution } from '../../core/utils/querySaveTracking';
 import { runRequest } from '../query/state/runRequest';
 
 import { standardAnnotationSupport } from './standardAnnotationSupport';
@@ -67,6 +69,25 @@ export function executeAnnotationQuery(
       },
     ],
   };
+
+  if (config.featureToggles.queryLibrary) {
+    let querySpec = savedJsonAnno.target;
+    if (savedJsonAnno.query && savedJsonAnno.query.spec) {
+      querySpec = savedJsonAnno.query.spec;
+    }
+
+    const baseQuery = {
+      ...datasource.annotations?.getDefaultQuery?.(),
+      ...(querySpec ?? { refId: 'Anno' }),
+    };
+
+    const queryToTrack = {
+      ...baseQuery,
+      datasource: savedJsonAnno.datasource,
+    };
+
+    trackQueryExecution(queryToTrack);
+  }
 
   return runRequest(datasource, queryRequest).pipe(
     mergeMap((panelData) => {
