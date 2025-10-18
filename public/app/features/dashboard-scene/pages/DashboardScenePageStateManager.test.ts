@@ -256,13 +256,13 @@ describe('DashboardScenePageStateManager v1', () => {
             expect.objectContaining({
               from: expectedFromISO,
               to: expectedToISO,
+              timezone: 'UTC',
             })
           );
 
-          // Verify that extra parameters were filtered out (including timezone)
+          // Verify that extra parameters were filtered out
           const callArgs = loadDashboardMock.mock.calls[0][3];
           expect(callArgs).not.toHaveProperty('extraParam');
-          expect(callArgs).not.toHaveProperty('timezone'); // timezone is filtered out by design
 
           cleanup();
         })

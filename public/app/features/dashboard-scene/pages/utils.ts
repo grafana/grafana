@@ -21,10 +21,11 @@ export function processQueryParamsForDashboardLoad(): UrlQueryMap {
   const queryParams = locationService.getSearch();
   const queryParamsObject = locationService.getSearchObject();
 
-  queryParamsObject.timezone = queryParams.get('timezone') ?? undefined;
+  // Preserve timezone from queryParamsObject, fallback to queryParams if not present
+  queryParamsObject.timezone = queryParamsObject.timezone ?? queryParams.get('timezone') ?? undefined;
   const now = Date.now();
   const timeZone = getTimeZone({
-    timeZone: queryParams.get('timezone') ?? undefined,
+    timeZone: queryParamsObject.timezone,
   });
   const defaultTimeRange = getDefaultTimeRange();
 
@@ -50,9 +51,16 @@ export function processQueryParamsForDashboardLoad(): UrlQueryMap {
   queryParamsObject.from = from?.toISOString() ?? defaultTimeRange.from.toISOString();
   queryParamsObject.to = to?.toISOString() ?? defaultTimeRange.to.toISOString();
 
-  // Remove all properties that are not from, to, scopes, version or start with var-
+  // Remove all properties that are not from, to, timezone, scopes, version or start with var-
   Object.keys(queryParamsObject).forEach((key) => {
-    if (key !== 'from' && key !== 'to' && key !== 'scopes' && key !== 'version' && !key.startsWith('var-')) {
+    if (
+      key !== 'from' &&
+      key !== 'to' &&
+      key !== 'timezone' &&
+      key !== 'scopes' &&
+      key !== 'version' &&
+      !key.startsWith('var-')
+    ) {
       delete queryParamsObject[key];
     }
   });
