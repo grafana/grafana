@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { DashboardCursorSync, PanelProps, useDataLinksContext } from '@grafana/data';
+import { DashboardCursorSync, LinkModel, PanelProps, ScopedVars, useDataLinksContext } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
   AxisPlacement,
@@ -24,7 +24,7 @@ import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip2 } from './StateTimelineTooltip2';
 import { Options } from './panelcfg.gen';
-import { containerStyles, usePagination } from './utils';
+import { containerStyles, getStateTimeRange, usePagination } from './utils';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
 
@@ -110,9 +110,61 @@ export const StateTimelinePanel = ({
                   queryZoom={onChangeTimeRange}
                   syncMode={cursorSync}
                   syncScope={eventsScope}
-                  getDataLinks={(seriesIdx, dataIdx) =>
-                    alignedFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
-                  }
+                  getDataLinks={(seriesIdx, dataIdx) => {
+                    const field = alignedFrame.fields[seriesIdx];
+                    if (!field.config.links?.length) {
+                      return [];
+                    }
+
+                    const stateTimeRange = getStateTimeRange(alignedFrame, field, dataIdx, timeRange);
+
+                    if (stateTimeRange) {
+                      const { startTime, endTime, duration } = stateTimeRange;
+                      const myScopedVars: ScopedVars = {
+                        __state: {
+                          text: 'State',
+                          value: {
+                            startTime: startTime,
+                            endTime: endTime,
+                            duration: duration,
+                          },
+                        },
+                      };
+
+                      const baseScopedVars: ScopedVars = {};
+                      const seriesName = alignedFrame.name ?? field.config.displayName ?? field.name;
+                      if (seriesName) {
+                        baseScopedVars['__series'] = { text: seriesName, value: { name: seriesName } };
+                      }
+                      baseScopedVars['__field'] = {
+                        text: field.name,
+                        value: { name: field.name, labels: field.labels },
+                      };
+
+                      const timeField = alignedFrame.fields.find((f) => f.type === 'time');
+                      if (timeField) {
+                        baseScopedVars['__value'] = {
+                          text: 'Value',
+                          value: { time: timeField.values[dataIdx] },
+                        };
+                      }
+
+                      const allScopedVars = { ...baseScopedVars, ...myScopedVars };
+
+                      const links: LinkModel[] = field.config.links.map((link) => {
+                        return {
+                          href: replaceVariables(link.url, allScopedVars),
+                          title: replaceVariables(link.title ?? '', allScopedVars),
+                          target: link.targetBlank ? '_blank' : '_self',
+                          origin: field.config.custom?.dataLinksOrigin ?? 'panel',
+                        };
+                      });
+
+                      return links;
+                    }
+
+                    return field.getLinks?.({ valueRowIndex: dataIdx }) ?? [];
+                  }}
                   render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
                     if (enableAnnotationCreation && timeRange2 != null) {
                       setNewAnnotationRange(timeRange2);
