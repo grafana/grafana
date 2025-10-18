@@ -17,12 +17,12 @@ import { getFieldActions } from '../status-history/utils';
 import { TimeSeriesTooltipProps } from '../timeseries/TimeSeriesTooltip';
 import { isTooltipScrollable } from '../timeseries/utils';
 
-interface StateTimelineTooltip2Props extends TimeSeriesTooltipProps {
+interface StateTimelineTooltipProps extends TimeSeriesTooltipProps {
   timeRange: TimeRange;
   withDuration: boolean;
 }
 
-export const StateTimelineTooltip2 = ({
+export const StateTimelineTooltip = ({
   series,
   dataIdxs,
   seriesIdx,
@@ -35,7 +35,7 @@ export const StateTimelineTooltip2 = ({
   maxHeight,
   replaceVariables,
   dataLinks,
-}: StateTimelineTooltip2Props) => {
+}: StateTimelineTooltipProps) => {
   const xField = series.fields[0];
 
   const dataIdx = seriesIdx != null ? dataIdxs[seriesIdx] : dataIdxs.find((idx) => idx != null);
