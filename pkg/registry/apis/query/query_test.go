@@ -54,6 +54,10 @@ func (mu mockUser) GetOrgID() int64 {
 	return -1
 }
 
+func (mu mockUser) GetNamespace() string {
+	return "ns"
+}
+
 func TestQueryAPI(t *testing.T) {
 	testCases := []struct {
 		name           string
