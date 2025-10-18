@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { DataSourceApi, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
@@ -30,9 +31,9 @@ const getExpressionHelpText = (type: ExpressionQueryType): PopoverContent | stri
     case ExpressionQueryType.sql:
       return (
         <Trans i18nKey="expressions.expression-query-editor.helper-text-sql">
-          Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie "A", "B")
-          are available as tables and referenced by query-name. Fields are available as columns, as returned from the
-          data source.
+          Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie
+          &quot;A&quot;, &quot;B&quot;) are available as tables and referenced by query-name. Fields are available as
+          columns, as returned from the data source.
         </Trans>
       );
     default:
@@ -83,6 +84,22 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
   const { getCachedExpression, setCachedExpression } = useExpressionsCache();
 
   const styles = useStyles2(getStyles);
+
+  const initialExpressionRef = useRef(query.expression);
+  const hasTrackedAddExpression = useRef(false);
+
+  useEffect(() => {
+    // Only track if 1) query has a type, and 2) we haven't tracked yet for this component instance, and
+    // 3) initial expression was empty (indicating a new expression, not editing existing)
+    if (query.type && !hasTrackedAddExpression.current && !initialExpressionRef.current) {
+      reportInteraction('dashboards_expression_interaction', {
+        action: 'add_expression',
+        expression_type: query.type,
+        context: 'panel_query_section',
+      });
+      hasTrackedAddExpression.current = true;
+    }
+  }, [query.type, query.refId]);
 
   useEffect(() => {
     setCachedExpression(query.type, query.expression);
