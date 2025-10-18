@@ -1432,6 +1432,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
 				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.userService = &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, IsProvisioned: true}}
 				userSyncService.authInfoService = &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, ExternalUID: ""}}
 				return userSyncService
@@ -1451,6 +1452,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
 				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.userService = &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, IsProvisioned: true}}
 				userSyncService.authInfoService = &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, ExternalUID: ""}}
 				return userSyncService
@@ -1470,6 +1472,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
 				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.rejectNonProvisionedUsers = true
 				userSyncService.userService = &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, IsProvisioned: true}}
 				userSyncService.authInfoService = &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, ExternalUID: "db-uid"}}
 				return userSyncService
@@ -1902,7 +1905,7 @@ func TestUserSync_GetUsageStats(t *testing.T) {
 
 func TestUserSync_SCIMLoginUsageStatSet(t *testing.T) {
 	userSync := initUserSyncService()
-	userSync.rejectNonProvisionedUsers = false
+	userSync.rejectNonProvisionedUsers = true
 	userSync.isUserProvisioningEnabled = true
 	userSync.userService = &usertest.FakeUserService{
 		ExpectedUser: &user.User{
