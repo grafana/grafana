@@ -13,6 +13,7 @@ import * as common from '@grafana/schema';
 export const pluginVersion = "12.3.0-pre";
 
 export interface Options extends common.OptionsWithTimezones {
+  annotations?: common.VizAnnotations;
   legend: common.VizLegendOptions;
   orientation?: common.VizOrientation;
   timeCompare?: common.TimeCompareOptions;

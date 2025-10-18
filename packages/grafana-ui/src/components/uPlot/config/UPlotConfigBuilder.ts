@@ -286,6 +286,7 @@ type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
   hoverProximity?: number;
   orientation?: VizOrientation;
+  xAxisConfig?: Pick<AxisProps, 'size' | 'gap' | 'ticks'>;
 } & T;
 
 /** @alpha */
