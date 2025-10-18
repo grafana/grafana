@@ -31,3 +31,7 @@ export async function initOpenFeature() {
 export function evaluateBooleanFlag(flagName: FeatureFlagName, defaultValue: boolean): boolean {
   return OpenFeature.getClient().getBooleanValue(flagName, defaultValue);
 }
+
+export function evaluateStringFlag(flagName: FeatureFlagName, defaultValue: string): string {
+  return OpenFeature.getClient().getStringValue(flagName,defaultValue)
+}
