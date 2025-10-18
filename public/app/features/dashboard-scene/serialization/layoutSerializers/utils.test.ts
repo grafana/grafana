@@ -92,7 +92,7 @@ describe('buildVizPanel', () => {
       expect(vizPanel.state.headerActions).toBeDefined();
       expect(vizPanel.state.headerActions).toHaveLength(1);
       expect(CustomTimeRangeCompare).toHaveBeenCalledWith({
-        key: 'time-compare',
+        key: `compareWith-${panel.spec.id}`,
         compareWith: undefined,
         compareOptions: [],
       });
