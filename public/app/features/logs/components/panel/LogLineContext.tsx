@@ -384,6 +384,7 @@ export const LogLineContext = memo(
               <LogList
                 app={CoreApp.Unknown}
                 containerElement={containerRef.current}
+                dataFrames={[]}
                 dedupStrategy={LogsDedupStrategy.none}
                 detailsMode="inline"
                 displayedFields={displayedFields}
@@ -397,6 +398,7 @@ export const LogLineContext = memo(
                 onClickHideField={onClickHideField}
                 onClickShowField={onClickShowField}
                 showControls
+                showFieldSelector={false}
                 showTime={logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.showTime`, true) : true}
                 sortOrder={sortOrder}
                 syntaxHighlighting={syntaxHighlighting}

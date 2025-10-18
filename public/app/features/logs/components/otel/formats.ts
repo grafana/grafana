@@ -49,16 +49,42 @@ function getDisplayedFieldsForLanguages(logs: LogListModel[] | LogRowModel[], la
   );
 }
 
+/***
+ * Given a list of logs, identify the OTel language for each, use the language to match displayed fields
+ * and return a list of fields to display based on the languages present in the logs.
+ */
 export function getDisplayedFieldsForLogs(logs: LogListModel[] | LogRowModel[]): string[] {
   return getDisplayedFieldsForLanguages(logs, identifyOTelLanguages(logs));
 }
 
 // Languages not implemented.
-export function getDisplayFormatForLanguage(language: string) {
+function getDisplayFormatForLanguage(language: string) {
   return undefined;
 }
 
-export function getDefaultOTelDisplayFormat() {
+/***
+ * Given a list of logs, return a list of suggested fields to display for the user.
+ */
+export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]): string[] {
+  const languages = identifyOTelLanguages(logs);
+  if (!languages.length) {
+    return [];
+  }
+  const fields = getSuggestedOTelDisplayFormat();
+
+  return fields.filter(
+    (field) =>
+      field === LOG_LINE_BODY_FIELD_NAME ||
+      field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME ||
+      logs.some((log) => log.labels[field] !== undefined)
+  );
+}
+
+function getSuggestedOTelDisplayFormat() {
+  return ['scope_name', ...getDefaultOTelDisplayFormat()];
+}
+
+function getDefaultOTelDisplayFormat() {
   return [
     'thread_name',
     'exception_type',

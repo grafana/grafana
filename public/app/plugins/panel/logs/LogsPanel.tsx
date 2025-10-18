@@ -149,6 +149,7 @@ export const LogsPanel = ({
   fieldConfig,
   options: {
     showControls,
+    showFieldSelector,
     controlsStorageKey,
     showLabels,
     showTime,
@@ -579,6 +580,7 @@ export const LogsPanel = ({
             <LogList
               app={isCoreApp(app) ? app : CoreApp.Dashboard}
               containerElement={scrollElement}
+              dataFrames={panelData.series}
               dedupStrategy={dedupStrategy}
               detailsMode={detailsMode}
               displayedFields={displayedFields}
@@ -615,6 +617,7 @@ export const LogsPanel = ({
               prettifyJSON={prettifyLogMessage}
               setDisplayedFields={setDisplayedFieldsFn}
               showControls={Boolean(showControls)}
+              showFieldSelector={showFieldSelector}
               showLogAttributes={showLogAttributes}
               showTime={showTime}
               showUniqueLabels={showLabels}
