@@ -14,6 +14,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
 import { getTimeSrv, TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { PanelQueryRunner } from '../../../query/state/PanelQueryRunner';

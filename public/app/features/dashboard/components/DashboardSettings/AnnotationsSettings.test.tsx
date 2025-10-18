@@ -1,6 +1,7 @@
 import { render, screen, within } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
+
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 

@@ -24,6 +24,7 @@ import {
   ColorIndicator,
   ColorPlacement,
 } from '@grafana/ui/internal';
+
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';

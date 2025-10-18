@@ -1,6 +1,7 @@
 import { isIconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Badge, Card, Icon, TextLink } from '@grafana/ui';
+
 import { CloudEnterpriseBadge } from 'app/core/components/Branding/CloudEnterpriseBadge';
 
 import { UIMap } from '../constants';

@@ -1,4 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
+
 import { contextSrv } from 'app/core/core';
 
 import { DatasourceAPIVersions, ScopedResourceClient } from './client';

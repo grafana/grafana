@@ -3,6 +3,7 @@ import { byRole } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
+
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';

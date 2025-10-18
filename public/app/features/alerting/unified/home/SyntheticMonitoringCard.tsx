@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+
 import syntheticMonitoringSvg from 'img/synthetic_monitoring_logo.svg';
 
 import AdCard from './AdCard';

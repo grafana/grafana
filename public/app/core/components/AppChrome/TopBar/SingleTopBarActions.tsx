@@ -4,6 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { ScopesContextValue } from '@grafana/runtime';
 import { Stack, useStyles2 } from '@grafana/ui';
+
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';

@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
+
 import { Variable } from 'app/types/templates';
 
 export interface Props {

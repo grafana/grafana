@@ -2,6 +2,7 @@ import { ReactElement, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Button, ButtonGroup, Dropdown } from '@grafana/ui';
+
 import appEvents from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 

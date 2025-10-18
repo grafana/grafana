@@ -3,6 +3,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { Trans, t } from '@grafana/i18n';
 import { ClipboardButton, CodeEditor, Modal } from '@grafana/ui';
+
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 export interface ViewJsonModalProps {

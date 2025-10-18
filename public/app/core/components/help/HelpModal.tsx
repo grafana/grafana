@@ -5,6 +5,7 @@ import { useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
+
 import { getModKey } from 'app/core/utils/browser';
 
 export interface HelpModalProps {

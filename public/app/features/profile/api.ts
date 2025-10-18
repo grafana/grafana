@@ -1,4 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
+
 import { Team } from 'app/types/teams';
 import { UserDTO, UserOrg, UserSession } from 'app/types/user';
 

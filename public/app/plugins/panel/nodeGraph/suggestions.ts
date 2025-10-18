@@ -1,4 +1,5 @@
 import { DataFrame, FieldType, VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '@grafana/data';
+
 import { SuggestionName } from 'app/types/suggestions';
 
 export class NodeGraphSuggestionsSupplier {

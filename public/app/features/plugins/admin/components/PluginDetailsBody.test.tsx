@@ -3,6 +3,7 @@ import { Provider } from 'react-redux';
 
 import { PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { configureStore } from 'app/store/configureStore';
 
 import { getCatalogPluginMock } from '../mocks/mockHelpers';

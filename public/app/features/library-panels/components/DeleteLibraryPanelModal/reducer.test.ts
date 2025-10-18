@@ -1,4 +1,5 @@
 import { LoadingState } from '@grafana/data';
+
 import { DashboardSearchItem } from 'app/features/search/types';
 
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';

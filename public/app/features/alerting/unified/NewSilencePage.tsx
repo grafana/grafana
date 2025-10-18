@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
+
 import {
   defaultsFromQuery,
   getDefaultSilenceFormValues,

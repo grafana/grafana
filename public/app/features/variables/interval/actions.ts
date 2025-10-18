@@ -1,4 +1,5 @@
 import { rangeUtil } from '@grafana/data';
+
 import { ThunkResult } from 'app/types/store';
 
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';

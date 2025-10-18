@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
+
 import {
   Repository,
   useDeleteRepositoryMutation,

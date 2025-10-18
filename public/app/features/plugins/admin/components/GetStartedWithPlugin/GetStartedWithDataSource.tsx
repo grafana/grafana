@@ -5,6 +5,7 @@ import { DataSourcePluginMeta } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
+
 import { ROUTES } from 'app/features/connections/constants';
 import { addDataSource } from 'app/features/datasources/state/actions';
 import { useDispatch } from 'app/types/store';

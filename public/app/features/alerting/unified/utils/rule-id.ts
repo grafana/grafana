@@ -1,6 +1,7 @@
 import { nth } from 'lodash';
 
 import { locationService } from '@grafana/runtime';
+
 import {
   CloudRuleIdentifier,
   CombinedRule,

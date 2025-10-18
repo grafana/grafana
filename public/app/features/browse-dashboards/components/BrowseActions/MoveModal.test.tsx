@@ -3,6 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
+
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { MoveModal, Props } from './MoveModal';

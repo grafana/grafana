@@ -13,6 +13,7 @@ import {
   MutableDataFrame,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+
 import { Labels } from 'app/types/unified-alerting-dto';
 
 import { partitionByValues } from '../partitionByValues/partitionByValues';

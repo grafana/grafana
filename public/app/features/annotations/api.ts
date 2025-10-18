@@ -1,5 +1,6 @@
 import { AnnotationEvent, DataFrame, toDataFrame } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+
 import { StateHistoryItem } from 'app/types/unified-alerting';
 
 import { AnnotationTagsResponse } from './types';

@@ -4,6 +4,7 @@ import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { NavModel } from '@grafana/data';
+
 import { Organization } from 'app/types/organization';
 
 import { backendSrv } from '../../core/services/backend_srv';

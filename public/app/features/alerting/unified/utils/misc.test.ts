@@ -1,4 +1,5 @@
 import { FetchError } from '@grafana/runtime';
+
 import {
   createExploreLink,
   makeDashboardLink,

@@ -20,6 +20,7 @@ import {
   HeatmapCellLayout,
   ScaleDistribution,
 } from '@grafana/schema';
+
 import {
   calculateHeatmapFromData,
   isHeatmapCellsDense,

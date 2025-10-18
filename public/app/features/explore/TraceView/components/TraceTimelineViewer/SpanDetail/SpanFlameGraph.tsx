@@ -17,6 +17,7 @@ import { Trans } from '@grafana/i18n';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 

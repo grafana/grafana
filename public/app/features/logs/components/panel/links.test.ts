@@ -1,4 +1,5 @@
 import { FieldType, getDefaultTimeRange, LogsSortOrder, toDataFrame } from '@grafana/data';
+
 import { contextSrv } from 'app/core/services/context_srv';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';

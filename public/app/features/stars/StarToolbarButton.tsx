@@ -5,6 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { Icon, ToolbarButton } from '@grafana/ui';
+
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/preferences/v1alpha1';
 import { contextSrv } from 'app/core/core';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';

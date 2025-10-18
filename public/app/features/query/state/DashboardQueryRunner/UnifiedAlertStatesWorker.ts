@@ -3,6 +3,7 @@ import { catchError, map } from 'rxjs/operators';
 
 import { AlertState, AlertStateInfo } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { ungroupRulesByFileName } from 'app/features/alerting/unified/api/prometheus';

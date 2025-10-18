@@ -3,6 +3,7 @@ import { render } from 'test/test-utils';
 
 import { DataSourceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { getMockDataSources } from 'app/features/datasources/mocks/dataSourcesMocks';
 import { AccessControlAction } from 'app/types/accessControl';

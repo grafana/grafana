@@ -1,5 +1,6 @@
 import { DataQueryRequest, DataQueryResponse, dateMath } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
+
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { CloudWatchQuery } from '../types';

@@ -6,6 +6,7 @@ import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, dateTime } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Icon, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
+
 import { MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
 import { matcherFieldToMatcher } from 'app/features/alerting/unified/utils/alertmanager';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';

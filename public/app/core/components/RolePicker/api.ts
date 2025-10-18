@@ -1,4 +1,5 @@
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
+
 import { Role } from 'app/types/accessControl';
 
 import { addDisplayNameForFixedRole, addFilteredDisplayName } from './utils';

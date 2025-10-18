@@ -18,6 +18,7 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+
 import { contextSrv } from 'app/core/services/context_srv';
 import { GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';

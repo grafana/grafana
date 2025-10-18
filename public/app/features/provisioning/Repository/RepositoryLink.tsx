@@ -2,6 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 
 import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack, Text, TextLink } from '@grafana/ui';
+
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { getRepoHref } from '../utils/git';

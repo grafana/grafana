@@ -18,6 +18,7 @@ import {
   Button,
   useStyles2,
 } from '@grafana/ui';
+
 import { formatDate } from 'app/core/internationalization/dates';
 
 import { CatalogPlugin } from '../types';

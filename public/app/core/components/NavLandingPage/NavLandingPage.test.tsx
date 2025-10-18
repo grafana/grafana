@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config, setPluginComponentsHook } from '@grafana/runtime';
+
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { NavLandingPage } from './NavLandingPage';

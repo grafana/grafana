@@ -3,6 +3,7 @@ import { delay, first } from 'rxjs/operators';
 
 import { AlertState } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+
 import {
   grantUserPermissions,
   mockPromAlertingRule,

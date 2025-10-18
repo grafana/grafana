@@ -3,6 +3,7 @@ import { Component } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { Dashboard } from '@grafana/schema';
+
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardMeta, DashboardRoutes } from 'app/types/dashboard';

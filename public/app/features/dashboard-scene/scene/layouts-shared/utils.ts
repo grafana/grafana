@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { SceneObject } from '@grafana/scenes';
+
 import { contextSrv } from 'app/core/core';
 
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';

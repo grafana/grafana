@@ -1,4 +1,5 @@
 import { SceneObject, VizPanel } from '@grafana/scenes';
+
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 /**
  * Abstraction to handle editing of different layout elements (wrappers for VizPanels and other objects)

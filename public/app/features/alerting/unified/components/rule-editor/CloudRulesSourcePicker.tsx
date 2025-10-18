@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
+
 import { DataSourcePicker, DataSourcePickerProps } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';

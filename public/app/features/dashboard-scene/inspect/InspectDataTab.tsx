@@ -10,6 +10,7 @@ import {
   SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
+
 import { InspectTab } from 'app/features/inspector/types';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 

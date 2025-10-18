@@ -12,6 +12,7 @@ import {
   Pagination,
   FetchDataFunc,
 } from '@grafana/ui';
+
 import { EmptyArea } from 'app/features/alerting/unified/components/EmptyArea';
 import { UserAnonymousDeviceDTO } from 'app/types/user';
 

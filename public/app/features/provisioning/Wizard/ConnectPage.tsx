@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
+
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 

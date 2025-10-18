@@ -2,6 +2,7 @@ import { capitalize } from 'lodash';
 
 import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Card, Stack, Text, TextLink } from '@grafana/ui';
+
 import alertmanagerLogo from 'app/plugins/datasource/alertmanager/img/logo.svg';
 
 import { ConnectionStatus } from '../../hooks/useExternalAmSelector';

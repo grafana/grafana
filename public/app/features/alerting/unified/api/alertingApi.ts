@@ -4,6 +4,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+
 import appEvents from 'app/core/app_events';
 
 import { logMeasurement } from '../Analytics';

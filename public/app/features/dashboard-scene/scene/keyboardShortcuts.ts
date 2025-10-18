@@ -1,6 +1,7 @@
 import { locationUtil, SetPanelAttentionEvent, LegacyGraphHoverClearEvent } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { behaviors, sceneGraph, VizPanel } from '@grafana/scenes';
+
 import appEvents from 'app/core/app_events';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';

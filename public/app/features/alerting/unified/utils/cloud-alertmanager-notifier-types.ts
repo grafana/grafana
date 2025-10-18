@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+
 import {
   CloudNotifierType,
   NotificationChannelOption,

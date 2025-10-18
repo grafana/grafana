@@ -1,5 +1,6 @@
 import { SceneVariable, LocalValueVariable } from '@grafana/scenes';
 import { Stack } from '@grafana/ui';
+
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 export function getSystemVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {

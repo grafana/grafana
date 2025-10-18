@@ -7,6 +7,7 @@ import {
   PluginLoadingStrategy,
   PluginMeta,
 } from '@grafana/data';
+
 import { GenericDataSourcePlugin } from 'app/features/datasources/types';
 
 export interface PluginImporter {

@@ -1,5 +1,6 @@
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
 import { DataSourceRef } from '@grafana/schema/dist/esm/common/common.gen';
+
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 
 export const mocksScopes: Scope[] = [

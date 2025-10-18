@@ -1,6 +1,7 @@
 import { defaults, cloneDeep } from 'lodash';
 
 import { PanelModel as PanelModelFromData, PanelPlugin } from '@grafana/data';
+
 import { autoMigrateAngular, PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 export function getAngularPanelMigrationHandler(oldModel: PanelModel) {

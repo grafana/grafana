@@ -3,6 +3,7 @@ import { ComponentClass } from 'react';
 
 import { dateTime, DateTime, PanelProps, TimeRange } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
 
 import { PanelModel } from '../state/PanelModel';

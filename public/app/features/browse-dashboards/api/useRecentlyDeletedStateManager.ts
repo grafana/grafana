@@ -1,5 +1,6 @@
 import { SelectableValue, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
+
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { SEARCH_SELECTED_SORT } from 'app/features/search/constants';
 import { SearchState } from 'app/features/search/types';

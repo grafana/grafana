@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
+
 import {
   useCreateRepositoryJobsMutation,
   useDeleteRepositoryFilesWithPathMutation,

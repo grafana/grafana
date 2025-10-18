@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { defaultTimeZone, TimeZone } from '@grafana/schema';
 import { TabbedContainer, TabConfig, useStyles2 } from '@grafana/ui';
+
 import { requestIdGenerator } from 'app/core/utils/explore';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';

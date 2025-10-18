@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
 import { Counter, LoadingBar, Pagination, Stack } from '@grafana/ui';
+
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { CombinedRule, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';

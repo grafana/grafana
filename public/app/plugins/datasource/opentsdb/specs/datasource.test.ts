@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 
 import { DataQueryRequest, dateTime } from '@grafana/data';
+
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
 

@@ -1,5 +1,6 @@
 import { UrlQueryMap, VariableRefresh } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
+
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 

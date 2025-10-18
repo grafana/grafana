@@ -5,6 +5,7 @@ import { FieldType, getDefaultTimeRange, LoadingState, toDataFrame } from '@graf
 import { getPanelPlugin } from '@grafana/data/test';
 import { config } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, VizPanel, VizPanelMenu } from '@grafana/scenes';
+
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { DashboardScene } from '../../scene/DashboardScene';

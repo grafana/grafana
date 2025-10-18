@@ -15,6 +15,7 @@ import {
   Icon,
   ScrollContainer,
 } from '@grafana/ui';
+
 import { acceptedFiles, maxFileSize } from 'app/features/dataframe-import/constants';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { getFileDropToQueryHandler } from 'app/plugins/datasource/grafana/utils';

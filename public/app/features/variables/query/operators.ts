@@ -10,6 +10,7 @@ import {
   PanelData,
   QueryVariableModel,
 } from '@grafana/data';
+
 import { ThunkDispatch } from 'app/types/store';
 
 import { validateVariableSelectionState } from '../state/actions';

@@ -6,6 +6,7 @@ import {
   VisualizationSuggestionScore,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 export const panelsToCheckFirst = [

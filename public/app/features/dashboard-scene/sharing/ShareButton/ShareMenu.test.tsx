@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
+
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 

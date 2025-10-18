@@ -17,6 +17,7 @@ import {
   ValueLinkConfig,
 } from '@grafana/data';
 import { BackendSrvRequest, config as grafanaConfig, getBackendSrv } from '@grafana/runtime';
+
 import { appEvents } from 'app/core/core';
 
 import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';

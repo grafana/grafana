@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { NavModelItem, getTimeZone } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
+
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types/accessControl';

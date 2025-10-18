@@ -2,6 +2,7 @@ import { get as lodashGet } from 'lodash';
 
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
+
 import { CanvasElementOptions } from 'app/features/canvas/element';
 import {
   canvasElementRegistry,

@@ -1,6 +1,7 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
 import { DataFrameView, SelectableValue } from '@grafana/data';
+
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from './types';

@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
+
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
 import { isNotFoundError } from '../../api/util';

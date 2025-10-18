@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
 import { floatingUtils, Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
 import { VizTooltipItem } from '@grafana/ui/internal';
+
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 

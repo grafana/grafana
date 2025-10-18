@@ -14,6 +14,7 @@ import {
   VariableValueSingle,
   SceneGridRow,
 } from '@grafana/scenes';
+
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 

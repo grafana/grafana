@@ -1,4 +1,5 @@
 import { DefaultTimeZone, addDurationToDate, dateTime, intervalToAbbreviatedDurationString } from '@grafana/data';
+
 import { SilenceFormFields } from 'app/features/alerting/unified/types/silence-form';
 import { matcherToMatcherField } from 'app/features/alerting/unified/utils/alertmanager';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';

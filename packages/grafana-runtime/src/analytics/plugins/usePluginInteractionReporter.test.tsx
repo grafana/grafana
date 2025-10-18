@@ -10,6 +10,7 @@ import {
   PluginSignatureStatus,
   PluginType,
 } from '@grafana/data';
+
 import iconGaugeSvg from 'app/plugins/panel/gauge/img/icon_gauge.svg';
 
 import { reportInteraction } from '../utils';

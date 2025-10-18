@@ -1,4 +1,5 @@
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+
 import { KioskMode } from 'app/types/dashboard';
 
 import { DashboardScene } from './DashboardScene';

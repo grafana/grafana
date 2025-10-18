@@ -3,6 +3,7 @@ import { useAsyncFn, useInterval } from 'react-use';
 
 import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
+
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types/store';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';

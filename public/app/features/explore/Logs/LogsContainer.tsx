@@ -25,6 +25,7 @@ import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
+
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { ExploreItemState } from 'app/types/explore';

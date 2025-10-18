@@ -17,6 +17,7 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
+
 import {
   trackEditInputWithTemplate,
   trackUseCustomInputInTemplate,

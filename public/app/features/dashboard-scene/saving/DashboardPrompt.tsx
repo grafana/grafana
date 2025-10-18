@@ -7,6 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { ModalsContext, Modal, Button, useStyles2 } from '@grafana/ui';
+
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ObjectMeta } from 'app/features/apiserver/types';

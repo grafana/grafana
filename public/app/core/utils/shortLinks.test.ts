@@ -1,5 +1,6 @@
 import { LogRowModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
 import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1alpha1/shorturl_object_gen';

@@ -12,6 +12,7 @@ import {
   LibraryPanelRef,
   LibraryPanelKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+
 import { notifyApp } from 'app/core/actions';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';

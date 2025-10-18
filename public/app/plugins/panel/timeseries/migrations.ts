@@ -34,6 +34,7 @@ import {
   AnnotationQuery,
   ComparisonOperation,
 } from '@grafana/schema';
+
 import { TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';

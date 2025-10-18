@@ -9,6 +9,7 @@ import {
   WithAccessControlMetadata,
 } from '@grafana/data';
 import { IconName } from '@grafana/ui';
+
 import { PluginsState } from 'app/types/plugins';
 import { StoreState } from 'app/types/store';
 

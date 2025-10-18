@@ -7,6 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, Grid } from '@grafana/ui';
+
 import { PluginDashboard } from 'app/types/plugins';
 import dashboardLibrary1 from 'img/dashboard-library/dashboard_library_1.jpg';
 import dashboardLibrary2 from 'img/dashboard-library/dashboard_library_2.jpg';

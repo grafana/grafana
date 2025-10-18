@@ -3,6 +3,7 @@ import { render } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { Button } from '@grafana/ui';
+
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';

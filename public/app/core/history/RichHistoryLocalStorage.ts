@@ -1,6 +1,7 @@
 import { find, isEqual, omit } from 'lodash';
 
 import { DataQuery, SelectableValue } from '@grafana/data';
+
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 import { RichHistoryQuery } from 'app/types/explore';
 

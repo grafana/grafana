@@ -6,6 +6,7 @@ import {
   defaultQueryGroupKind,
   defaultVizConfigSpec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+
 import * as ResponseTransformers from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { DashboardDataDTO } from 'app/types/dashboard';

@@ -10,6 +10,7 @@ import {
   VizGridLayout,
   VizPanel,
 } from '@grafana/scenes-react';
+
 import { Page } from 'app/core/components/Page/Page';
 
 import { LogFilter, LogViewFilters } from './LogViewFilters';

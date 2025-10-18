@@ -2,6 +2,7 @@ import { cloneDeep, merge } from 'lodash';
 import { useEffect, useMemo, useCallback, useState } from 'react';
 
 import { InterpolateFunction, TraceSearchProps } from '@grafana/data';
+
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { DEFAULT_SPAN_FILTERS, randomId } from '../state/constants';

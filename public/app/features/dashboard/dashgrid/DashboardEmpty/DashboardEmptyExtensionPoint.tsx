@@ -1,5 +1,6 @@
 import { PluginExtensionPoints } from '@grafana/data';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 
 interface DashboardEmptyExtensionPointProps {

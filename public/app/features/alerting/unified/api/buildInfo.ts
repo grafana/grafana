@@ -1,6 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
+
 import {
   AlertmanagerApiFeatures,
   PromApiFeatures,

@@ -4,6 +4,7 @@ import { GroupBase, OptionsOrGroups } from 'react-select';
 
 import { InternalTimeZones, SelectableValue } from '@grafana/data';
 import { InlineField, Input, Select, TimeZonePicker } from '@grafana/ui';
+
 import { DateHistogram } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
 
 import { calendarIntervals } from '../../../../QueryBuilder';

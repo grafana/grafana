@@ -1,4 +1,5 @@
 import { config, isFetchError } from '@grafana/runtime';
+
 import { ThunkDispatch } from 'app/types/store';
 
 import { notifyApp } from '../core/actions';

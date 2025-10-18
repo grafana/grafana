@@ -1,5 +1,6 @@
 import { t } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
+
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from 'app/features/logs/components/otel/formats';
 
 import { getLogsFieldsStyles } from './LogsTableActiveFields';

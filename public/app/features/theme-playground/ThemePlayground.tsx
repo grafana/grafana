@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
 import { CodeEditor, Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
 import { ThemeDemo } from '@grafana/ui/internal';
+
 import { Page } from 'app/core/components/Page/Page';
 
 import { notifyApp } from '../../core/actions';

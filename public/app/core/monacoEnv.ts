@@ -1,4 +1,5 @@
 import { monacoLanguageRegistry } from '@grafana/data';
+
 import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
 
 export function setMonacoEnv() {

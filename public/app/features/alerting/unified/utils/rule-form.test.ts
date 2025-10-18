@@ -1,4 +1,5 @@
 import { PromQuery } from '@grafana/prometheus';
+
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   AlertDataQuery,

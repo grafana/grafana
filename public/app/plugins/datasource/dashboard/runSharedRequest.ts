@@ -10,6 +10,7 @@ import {
   PanelData,
   DataTopic,
 } from '@grafana/data';
+
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';

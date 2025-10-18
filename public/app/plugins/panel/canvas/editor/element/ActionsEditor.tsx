@@ -1,4 +1,5 @@
 import { StandardEditorProps, Action, VariableSuggestionsScope } from '@grafana/data';
+
 import { ActionsInlineEditor } from 'app/features/actions/ActionsInlineEditor';
 import { CanvasElementOptions } from 'app/features/canvas/element';
 

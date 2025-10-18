@@ -1,4 +1,5 @@
 import { Trans } from '@grafana/i18n';
+
 import mimirLogoSvg from 'img/alerting/mimir_logo.svg';
 
 import { RuleFormType } from '../../../types/rule-form';

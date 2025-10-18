@@ -1,6 +1,7 @@
 import { memo, ChangeEvent, FormEvent } from 'react';
 
 import { IntervalVariableModel, SelectableValue } from '@grafana/data';
+
 import { IntervalVariableForm } from 'app/features/dashboard-scene/settings/variables/components/IntervalVariableForm';
 
 import { VariableEditorProps } from '../editor/types';

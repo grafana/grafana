@@ -23,6 +23,7 @@ import {
   MultiSelect,
   SecretInput,
 } from '@grafana/ui';
+
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';

@@ -3,6 +3,7 @@ import uPlot, { Series } from 'uplot';
 import { GrafanaTheme2, TimeRange, colorManipulator } from '@grafana/data';
 import { TimelineValueAlignment, VisibilityMode } from '@grafana/schema';
 import { FIXED_UNIT } from '@grafana/ui';
+
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
 import { FieldConfig as StateTimeLineFieldConfig } from 'app/plugins/panel/state-timeline/panelcfg.gen';

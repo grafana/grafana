@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin, mockStandardFieldConfigOptions } from '@grafana/data/test';
 import { setTemplateSrv } from '@grafana/runtime';
+
 import { queryBuilder } from 'app/features/variables/shared/testing/builders';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';

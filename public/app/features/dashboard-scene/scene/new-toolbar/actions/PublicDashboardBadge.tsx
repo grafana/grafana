@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Badge, useStyles2 } from '@grafana/ui';
+
 import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';
 
 import { ToolbarActionProps } from '../types';

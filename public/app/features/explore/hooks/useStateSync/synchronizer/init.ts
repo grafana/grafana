@@ -4,6 +4,7 @@ import { MutableRefObject } from 'react';
 import { EventBusSrv } from '@grafana/data';
 import { LocationService } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+
 import { initializeExplore } from 'app/features/explore/state/explorePane';
 import { clearPanes, syncTimesAction } from 'app/features/explore/state/main';
 import { fromURLRange } from 'app/features/explore/state/utils';

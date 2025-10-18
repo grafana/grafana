@@ -12,6 +12,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { SQLQuery } from '@grafana/sql';
+
 import { backendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 

@@ -18,6 +18,7 @@ import {
   useStyles2,
   withErrorBoundary,
 } from '@grafana/ui';
+
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useDispatch } from 'app/types/store';

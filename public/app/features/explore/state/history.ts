@@ -2,6 +2,7 @@ import { createAction } from '@reduxjs/toolkit';
 
 import { HistoryItem } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+
 import {
   addToRichHistory,
   deleteAllFromRichHistory,

@@ -5,6 +5,7 @@ import { dateMath, TimeRange, TimeZone } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { defaultIntervals, isWeekStart, RefreshPicker } from '@grafana/ui';
+
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { appEvents } from 'app/core/core';
 import { AutoRefreshInterval } from 'app/core/services/context_srv';

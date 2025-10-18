@@ -8,6 +8,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup, Select } from '@grafana/ui';
+
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { defaultApiConfig } from 'app/features/canvas/elements/button';
 

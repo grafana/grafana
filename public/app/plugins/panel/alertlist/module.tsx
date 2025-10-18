@@ -1,6 +1,7 @@
 import { DataSourceInstanceSettings, PanelPlugin } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
+
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 

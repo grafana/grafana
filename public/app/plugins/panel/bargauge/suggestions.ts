@@ -1,5 +1,6 @@
 import { VisualizationSuggestionsBuilder, VizOrientation } from '@grafana/data';
 import { BarGaugeDisplayMode } from '@grafana/ui';
+
 import { SuggestionName } from 'app/types/suggestions';
 
 import { Options } from './panelcfg.gen';

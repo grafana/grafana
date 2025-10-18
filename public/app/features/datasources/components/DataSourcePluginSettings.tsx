@@ -1,6 +1,7 @@
 import { createElement, PureComponent } from 'react';
 
 import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
+
 import { writableProxy } from 'app/features/plugins/extensions/utils';
 
 import { GenericDataSourcePlugin } from '../types';

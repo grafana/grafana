@@ -2,6 +2,7 @@ import { clamp } from 'lodash';
 import { z } from 'zod';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
+
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import { GrafanaAlertStateDecision, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 

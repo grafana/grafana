@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 class ValidationError extends Error {

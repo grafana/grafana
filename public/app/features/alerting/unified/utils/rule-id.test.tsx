@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config, locationService } from '@grafana/runtime';
+
 import { AlertingRule, RecordingRule, RuleIdentifier } from 'app/types/unified-alerting';
 import {
   GrafanaAlertStateDecision,

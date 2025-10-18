@@ -3,6 +3,7 @@ import saveAs from 'file-saver';
 import { dateTimeFormat, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
+
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';

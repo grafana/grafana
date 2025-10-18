@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+
 import { Page } from 'app/core/components/Page/Page';
 
 import { Page as CloudPage } from './cloud/Page';

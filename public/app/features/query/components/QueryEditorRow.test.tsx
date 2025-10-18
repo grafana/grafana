@@ -3,6 +3,7 @@ import { PropsWithChildren } from 'react';
 
 import { CoreApp, DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 

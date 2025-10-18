@@ -2,6 +2,7 @@ import { Store } from 'redux';
 import configureMockStore from 'redux-mock-store';
 
 import { locationService } from '@grafana/runtime';
+
 import { setStore } from 'app/store/store';
 
 import { Playlist } from '../../api/clients/playlist/v0alpha1';

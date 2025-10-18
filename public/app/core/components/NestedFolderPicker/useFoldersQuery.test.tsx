@@ -4,6 +4,7 @@ import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 import * as runtime from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
+
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 

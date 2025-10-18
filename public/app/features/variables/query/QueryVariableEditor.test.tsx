@@ -4,6 +4,7 @@ import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { QueryVariableModel, VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 

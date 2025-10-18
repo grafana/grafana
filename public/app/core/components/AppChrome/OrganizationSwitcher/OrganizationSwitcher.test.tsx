@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { OrgRole } from '@grafana/data';
+
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations } from 'app/features/org/state/actions';
 import { StoreState } from 'app/types/store';

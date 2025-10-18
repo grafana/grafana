@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack } from '@grafana/ui';
+
 import { getConfig } from 'app/core/config';
 
 export const UserSignup = () => {

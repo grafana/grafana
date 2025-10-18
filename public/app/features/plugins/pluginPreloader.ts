@@ -4,6 +4,7 @@ import type {
   PluginExtensionAddedComponentConfig,
 } from '@grafana/data';
 import type { AppPluginConfig } from '@grafana/runtime';
+
 import { contextSrv } from 'app/core/services/context_srv';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 

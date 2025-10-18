@@ -2,6 +2,7 @@ import { AppEvents, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FetchError, getBackendSrv } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
+
 import appEvents from 'app/core/app_events';
 import { Resource, ResourceList } from 'app/features/apiserver/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';

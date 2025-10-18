@@ -1,4 +1,5 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
+
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { ExpressionDatasourceApi } from './ExpressionDatasource';

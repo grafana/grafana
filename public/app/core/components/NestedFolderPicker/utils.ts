@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+
 import { ManagerKind } from 'app/features/apiserver/types';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 

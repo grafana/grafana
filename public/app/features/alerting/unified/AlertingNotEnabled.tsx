@@ -1,5 +1,6 @@
 import { NavModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
+
 import { Page } from 'app/core/components/Page/Page';
 
 import { withPageErrorBoundary } from './withPageErrorBoundary';

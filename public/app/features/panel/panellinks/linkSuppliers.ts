@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
+
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 

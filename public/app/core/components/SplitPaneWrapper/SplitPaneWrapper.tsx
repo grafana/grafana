@@ -5,6 +5,7 @@ import SplitPane, { Split } from 'react-split-pane';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getDragStyles } from '@grafana/ui';
+
 import { config } from 'app/core/config';
 
 interface Props {

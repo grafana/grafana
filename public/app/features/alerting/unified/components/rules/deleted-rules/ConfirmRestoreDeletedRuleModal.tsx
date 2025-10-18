@@ -4,6 +4,7 @@ import { ComponentProps } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
+
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { useAsync } from 'app/features/alerting/unified/hooks/useAsync';

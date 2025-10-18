@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
+
 import { DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
 import {
   PromRuleDTO,

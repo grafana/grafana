@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { ReducerID } from '@grafana/data';
+
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ExpressionQuery } from 'app/features/expressions/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';

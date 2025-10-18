@@ -11,6 +11,7 @@ import {
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { CustomScrollbar } from '@grafana/ui';
+
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
 interface Props {

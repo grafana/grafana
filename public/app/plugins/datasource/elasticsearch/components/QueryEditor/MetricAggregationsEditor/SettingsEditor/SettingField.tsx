@@ -2,6 +2,7 @@ import { uniqueId } from 'lodash';
 import { ComponentProps, useState } from 'react';
 
 import { InlineField, Input, TextArea } from '@grafana/ui';
+
 import {
   MetricAggregationWithSettings,
   MetricAggregationWithInlineScript,

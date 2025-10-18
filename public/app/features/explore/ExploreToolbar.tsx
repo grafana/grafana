@@ -17,6 +17,7 @@ import {
   useStyles2,
   Button,
 } from '@grafana/ui';
+
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';

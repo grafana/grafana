@@ -4,6 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+
 import { Page } from 'app/core/components/Page/Page';
 
 import { getCloudCardData, getOssCardData } from '../components/PageCard/CardData';

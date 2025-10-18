@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
 import { getDataSourceByIdOrUid } from './api';

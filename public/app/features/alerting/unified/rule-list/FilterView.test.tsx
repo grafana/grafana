@@ -2,6 +2,7 @@ import { mockIntersectionObserver } from 'jsdom-testing-mocks';
 import { act, render, screen, waitForElementToBeRemoved } from 'test/test-utils';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';

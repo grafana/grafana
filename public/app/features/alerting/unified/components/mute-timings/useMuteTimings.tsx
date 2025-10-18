@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import { base64UrlEncode } from '@grafana/alerting';
+
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { timeIntervalsApi } from 'app/features/alerting/unified/api/timeIntervalsApi';
 import { mergeTimeIntervals } from 'app/features/alerting/unified/components/mute-timings/util';

@@ -1,5 +1,6 @@
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 
 import { CommandPaletteAction } from '../types';

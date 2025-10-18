@@ -16,6 +16,7 @@ import {
 } from '@grafana/data';
 import { config, CorrelationData } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+
 import { ExplorePanelData } from 'app/types/explore';
 
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';

@@ -4,6 +4,7 @@ import { type ComponentTypeWithExtensionMeta, type UrlQueryValue } from '@grafan
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
+
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 const TAB_QUERY_PARAM = 'tab';

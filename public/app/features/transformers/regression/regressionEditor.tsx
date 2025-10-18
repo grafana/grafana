@@ -10,6 +10,7 @@ import {
 import { t } from '@grafana/i18n';
 import { Combobox, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
+
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { getTransformationContent } from '../docs/getTransformationContent';

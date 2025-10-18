@@ -3,6 +3,7 @@ import * as React from 'react';
 import { LinkModel, PanelData, PanelPlugin, renderMarkdown } from '@grafana/data';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
 import { PanelPadding } from '@grafana/ui';
+
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';

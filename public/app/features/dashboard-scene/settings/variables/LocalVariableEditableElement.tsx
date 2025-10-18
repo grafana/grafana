@@ -3,6 +3,7 @@ import { useId, useMemo } from 'react';
 import { t } from '@grafana/i18n';
 import { LocalValueVariable } from '@grafana/scenes';
 import { Box, Stack } from '@grafana/ui';
+
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 

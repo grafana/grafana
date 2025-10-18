@@ -16,6 +16,7 @@ import {
   TextLink,
   Tooltip,
 } from '@grafana/ui';
+
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { UserDTO } from 'app/types/user';
 

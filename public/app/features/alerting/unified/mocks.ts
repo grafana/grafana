@@ -10,6 +10,7 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { DataQuery, defaultDashboard } from '@grafana/schema';
+
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import { NotifiersState, ReceiversState } from 'app/features/alerting/unified/types/alerting';

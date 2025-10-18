@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Stack, ToolbarButton, useTheme2 } from '@grafana/ui';
+
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Branding } from '../../Branding/Branding';

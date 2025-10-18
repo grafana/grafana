@@ -1,5 +1,6 @@
 import { Trans, t } from '@grafana/i18n';
 import { Spinner, Stack, Text } from '@grafana/ui';
+
 import { Job, useListJobQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StepStatusInfo } from '../Wizard/types';

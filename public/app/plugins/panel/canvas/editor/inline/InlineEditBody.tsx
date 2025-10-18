@@ -7,6 +7,7 @@ import { DataFrame, GrafanaTheme2, PanelOptionsEditorBuilder, StandardEditorCont
 import { NestedValueAccess, PanelOptionsSupplier } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
+
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';

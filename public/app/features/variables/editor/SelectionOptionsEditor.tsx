@@ -1,6 +1,7 @@
 import { ChangeEvent, FormEvent, useCallback } from 'react';
 
 import { VariableWithMultiSupport } from '@grafana/data';
+
 import { SelectionOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm';
 
 import { KeyedVariableIdentifier } from '../state/types';

@@ -1,6 +1,7 @@
 import { isEmpty } from 'lodash';
 
 import { Labels } from '@grafana/data';
+
 import { labelsMatchMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from 'app/features/alerting/unified/utils/matchers';
 import { Alert, hasAlertState } from 'app/types/unified-alerting';

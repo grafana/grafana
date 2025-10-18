@@ -2,6 +2,7 @@ import { pick } from 'lodash';
 import memoize from 'micro-memoize';
 
 import { INHERITABLE_KEYS, type InheritableProperties } from '@grafana/alerting/internal';
+
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { MatcherOperator, ROUTES_META_SYMBOL, Route } from 'app/plugins/datasource/alertmanager/types';
 

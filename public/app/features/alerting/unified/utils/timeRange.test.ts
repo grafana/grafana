@@ -1,4 +1,5 @@
 import { ReducerID } from '@grafana/data';
+
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';

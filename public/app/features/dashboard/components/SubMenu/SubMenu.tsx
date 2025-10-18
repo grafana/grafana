@@ -7,6 +7,7 @@ import { AnnotationQuery, DataQuery, TypedVariableModel, GrafanaTheme2 } from '@
 import { t } from '@grafana/i18n';
 import { DashboardLink } from '@grafana/schema';
 import { stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
+
 import { StoreState } from 'app/types/store';
 
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';

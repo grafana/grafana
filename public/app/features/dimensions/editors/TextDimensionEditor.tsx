@@ -10,6 +10,7 @@ import { t } from '@grafana/i18n';
 import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 import { Button, InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
+
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 
 import { TextDimensionOptions } from '../types';

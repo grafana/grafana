@@ -2,6 +2,7 @@ import { capitalize } from 'lodash';
 
 import { AlertState } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import {
   Alert,
   AlertingRule,

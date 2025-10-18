@@ -8,6 +8,7 @@ import * as grafanaData from '@grafana/data';
 import { DataSourceApi, DataTransformerID, dateTime, TypedVariableModel } from '@grafana/data';
 import { FrameType, mockTransformationsRegistry } from '@grafana/data/internal';
 import { DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
+
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
 import { Echo } from '../../../core/services/echo/Echo';

@@ -1,6 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { config } from '@grafana/runtime';
+
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { findItem } from 'app/features/browse-dashboards/state/utils';
 import { DashboardTreeSelection } from 'app/features/browse-dashboards/types';

@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { t } from '@grafana/i18n';
+
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
 import { isCloudRulesSource } from '../../utils/datasource';

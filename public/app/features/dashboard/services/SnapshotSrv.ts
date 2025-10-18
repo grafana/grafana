@@ -1,6 +1,7 @@
 import { lastValueFrom, map } from 'rxjs';
 
 import { config, getBackendSrv, FetchResponse } from '@grafana/runtime';
+
 import { contextSrv } from 'app/core/core';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 

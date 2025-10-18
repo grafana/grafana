@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
+
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';

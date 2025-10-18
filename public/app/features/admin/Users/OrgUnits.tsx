@@ -2,6 +2,7 @@ import { forwardRef, PropsWithChildren } from 'react';
 
 import { IconName } from '@grafana/data';
 import { Icon, Tooltip, Box, Stack } from '@grafana/ui';
+
 import { Unit } from 'app/types/user';
 
 type OrgUnitProps = { units?: Unit[]; icon: IconName };

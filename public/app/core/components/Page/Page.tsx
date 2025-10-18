@@ -3,6 +3,7 @@ import { useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import NativeScrollbar from '../NativeScrollbar';

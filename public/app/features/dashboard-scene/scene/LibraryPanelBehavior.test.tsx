@@ -12,6 +12,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
+
 import * as libpanels from 'app/features/library-panels/state/api';
 
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';

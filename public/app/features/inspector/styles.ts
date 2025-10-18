@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
+
 import { config } from 'app/core/config';
 
 /** @deprecated */

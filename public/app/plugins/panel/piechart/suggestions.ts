@@ -1,5 +1,6 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
+
 import { SuggestionName } from 'app/types/suggestions';
 
 import { PieChartLabels, Options, PieChartType } from './panelcfg.gen';

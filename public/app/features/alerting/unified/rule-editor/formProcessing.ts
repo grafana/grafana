@@ -1,6 +1,7 @@
 import { isEmpty, omit } from 'lodash';
 
 import { config } from '@grafana/runtime';
+
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { isStrictReducer } from 'app/features/expressions/utils/expressionTypes';

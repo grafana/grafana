@@ -4,6 +4,7 @@ import { catchError, filter, finalize, map, mergeAll, mergeMap, reduce, takeUnti
 
 import { AnnotationQuery, DataSourceApi } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
+
 import { PublicAnnotationsDataSource } from 'app/features/query/state/DashboardQueryRunner/PublicAnnotationsDataSource';
 
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';

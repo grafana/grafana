@@ -5,6 +5,7 @@ import { useEffectOnce } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { AlertQuery, Labels } from 'app/types/unified-alerting-dto';
 

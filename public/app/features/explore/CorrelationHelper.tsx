@@ -19,6 +19,7 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
+
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { getTransformationVars } from '../correlations/transformations';

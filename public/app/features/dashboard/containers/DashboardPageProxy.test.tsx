@@ -5,6 +5,7 @@ import { render } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
+
 import {
   HOME_DASHBOARD_CACHE_KEY,
   getDashboardScenePageStateManager,

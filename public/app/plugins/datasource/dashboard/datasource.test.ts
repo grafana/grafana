@@ -22,6 +22,7 @@ import {
   SceneObject,
   VizPanel,
 } from '@grafana/scenes';
+
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 

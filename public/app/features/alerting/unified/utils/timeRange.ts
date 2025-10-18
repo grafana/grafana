@@ -1,4 +1,5 @@
 import { RelativeTimeRange } from '@grafana/data';
+
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { ExpressionQuery, ExpressionQueryType } from '../../../expressions/types';

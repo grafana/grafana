@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';
+
 import { NetworkGraphModal } from 'app/features/variables/inspect/NetworkGraphModal';
 
 import { UsagesToNetwork } from './utils';

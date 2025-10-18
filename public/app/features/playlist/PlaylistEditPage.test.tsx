@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
+
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { createFetchResponse } from '../../../test/helpers/createFetchResponse';

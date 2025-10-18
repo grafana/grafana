@@ -8,6 +8,7 @@ import {
   toDataFrame,
   VisualizationSuggestion,
 } from '@grafana/data';
+
 import { config } from 'app/core/config';
 import { SuggestionName } from 'app/types/suggestions';
 

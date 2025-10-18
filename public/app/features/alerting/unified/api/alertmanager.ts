@@ -2,6 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { isObject } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
+
 import {
   AlertManagerCortexConfig,
   AlertmanagerGroup,

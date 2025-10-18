@@ -24,6 +24,7 @@ import {
   MapLayerOptions,
 } from '@grafana/data';
 import { FrameGeometrySourceMode } from '@grafana/schema';
+
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 

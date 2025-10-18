@@ -3,6 +3,7 @@ import { ConnectedProps, connect } from 'react-redux';
 
 import { t } from '@grafana/i18n';
 import { Stack } from '@grafana/ui';
+
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { appEvents, contextSrv } from 'app/core/core';

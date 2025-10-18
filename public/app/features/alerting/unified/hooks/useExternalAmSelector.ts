@@ -1,4 +1,5 @@
 import { DataSourceSettings } from '@grafana/data';
+
 import {
   AlertManagerDataSourceJsonData,
   ExternalAlertmanagersConnectionStatus,

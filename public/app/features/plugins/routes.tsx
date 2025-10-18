@@ -1,4 +1,5 @@
 import { NavModelItem } from '@grafana/data';
+
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { getRootSectionForNode } from 'app/core/selectors/navModel';
 import AppRootPage from 'app/features/plugins/components/AppRootPage';

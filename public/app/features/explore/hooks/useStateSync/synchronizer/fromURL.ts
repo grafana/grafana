@@ -1,6 +1,7 @@
 import { isEqual } from 'lodash';
 
 import { EventBusSrv } from '@grafana/data';
+
 import { changeDatasource } from 'app/features/explore/state/datasource';
 import { changePanelsStateAction, initializeExplore } from 'app/features/explore/state/explorePane';
 import { splitClose, syncTimesAction } from 'app/features/explore/state/main';

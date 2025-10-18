@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { pluginMeta, pluginMetaToPluginConfig } from '../../testSetup/plugins';

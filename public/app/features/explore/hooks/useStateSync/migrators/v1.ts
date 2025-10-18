@@ -1,4 +1,5 @@
 import { ExploreUrlState } from '@grafana/data';
+
 import { ID_ALPHABET, generateExploreId } from 'app/core/utils/explore';
 import { DEFAULT_RANGE } from 'app/features/explore/state/constants';
 

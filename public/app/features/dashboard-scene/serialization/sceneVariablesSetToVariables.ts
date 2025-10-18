@@ -28,6 +28,7 @@ import {
   AdHocFilterWithLabels,
   SwitchVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+
 import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';

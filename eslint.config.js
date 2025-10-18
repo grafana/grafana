@@ -174,6 +174,11 @@ module.exports = [
               pattern: 'img/**',
               group: 'internal',
             },
+            {
+              pattern: '@grafana/**',
+              group: 'external',
+              position: 'after',
+            },
           ],
           groups: [['builtin', 'external'], 'internal', 'parent', 'sibling', 'index'],
           'newlines-between': 'always',

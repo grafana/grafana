@@ -1,5 +1,6 @@
 import { DataSourceApi, DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
+
 import { configureStore } from 'app/store/configureStore';
 import { StoreState, ThunkDispatch } from 'app/types/store';
 

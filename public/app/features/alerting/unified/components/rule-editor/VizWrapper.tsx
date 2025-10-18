@@ -5,6 +5,7 @@ import { GrafanaTheme2, PanelData, ThresholdsConfig, isTimeSeriesFrames } from '
 import { Trans } from '@grafana/i18n';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
+
 import appEvents from 'app/core/app_events';
 import { GraphContainer } from 'app/features/explore/Graph/GraphContainer';
 

@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+
 import appEvents from 'app/core/app_events';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 

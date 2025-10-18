@@ -16,6 +16,7 @@ import { FormatStringOutput, FormatStringTransformerOptions } from '@grafana/dat
 import { t } from '@grafana/i18n';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
+
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import darkImage from '../images/dark/formatString.svg';

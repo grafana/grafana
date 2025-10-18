@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { DataSourceApi } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+
 import { configureStore } from 'app/store/configureStore';
 import { ExploreState } from 'app/types/explore';
 

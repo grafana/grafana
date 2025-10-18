@@ -17,6 +17,7 @@ import VectorSource from 'ol/source/Vector';
 import { DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
+
 import { getColorDimension } from 'app/features/dimensions/color';
 import { getScalarDimension } from 'app/features/dimensions/scalar';
 import { getScaledDimension } from 'app/features/dimensions/scale';

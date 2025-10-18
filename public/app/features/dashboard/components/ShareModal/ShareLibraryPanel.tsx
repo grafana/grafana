@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+
 import { AddLibraryPanelContents } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 
 import { ShareModalTabProps } from './types';

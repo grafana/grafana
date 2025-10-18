@@ -5,6 +5,7 @@ import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
+
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';

@@ -2,6 +2,7 @@ import { debounce } from 'lodash';
 import { FormEvent } from 'react';
 
 import { locationService } from '@grafana/runtime';
+
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import store from 'app/core/store';

@@ -7,6 +7,7 @@ import { render } from 'test/test-utils';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Dashboard, DashboardCursorSync, FieldConfigSource, Panel, ThresholdsMode } from '@grafana/schema/src';
+
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
 import { StoreState } from 'app/types/store';

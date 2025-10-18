@@ -1,4 +1,5 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
+
 import { SuggestionName } from 'app/types/suggestions';
 
 import { FieldConfig, Options } from './panelcfg.gen';

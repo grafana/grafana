@@ -41,6 +41,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
+
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { config } from '../../../../../core/config';

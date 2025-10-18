@@ -1,4 +1,5 @@
 import { AnnotationQuery, DataSourceApi, getDefaultTimeRange } from '@grafana/data';
+
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';

@@ -1,6 +1,7 @@
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { behaviors, SceneQueryRunner, SceneTimeRange, VizPanel, SceneDataTransformer } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
+
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';

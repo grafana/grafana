@@ -13,6 +13,7 @@ import { forwardRef, useCallback, useMemo, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
+
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { SwapOperation, swapItems } from '../../reducers/ruler/ruleGroups';

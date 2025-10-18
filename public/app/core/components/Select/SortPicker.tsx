@@ -3,6 +3,7 @@ import { useAsync } from 'react-use';
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Select } from '@grafana/ui';
+
 import { DEFAULT_SORT } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 

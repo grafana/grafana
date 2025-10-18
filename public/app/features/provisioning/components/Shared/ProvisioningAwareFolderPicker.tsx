@@ -1,6 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { config } from '@grafana/runtime';
+
 import { RepositoryView, RepositoryViewList, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { NestedFolderPickerProps } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { getCustomRootFolderItem } from 'app/core/components/NestedFolderPicker/utils';

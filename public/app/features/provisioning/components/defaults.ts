@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 export function getDefaultWorkflow(config?: RepositoryView, loadedFromRef?: string) {

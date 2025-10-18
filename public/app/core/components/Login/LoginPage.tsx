@@ -6,6 +6,7 @@ import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+
 import { Branding } from 'app/core/components/Branding/Branding';
 
 import { ChangePassword } from '../ForgottenPassword/ChangePassword';

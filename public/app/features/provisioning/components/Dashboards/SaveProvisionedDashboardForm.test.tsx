@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { getAppEvents } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
+
 import { AnnoKeyFolder, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';

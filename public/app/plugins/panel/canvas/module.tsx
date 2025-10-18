@@ -2,6 +2,7 @@ import { FieldConfigProperty, PanelOptionsEditorBuilder, PanelPlugin } from '@gr
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
+
 import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';

@@ -11,6 +11,7 @@ import {
   TestVariable,
   VariableValueOption,
 } from '@grafana/scenes';
+
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { getCloneKey, isRepeatCloneOrChildOf } from '../../utils/clone';

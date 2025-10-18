@@ -7,6 +7,7 @@ import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafa
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
+
 import { layeredLayoutThreshold } from 'app/plugins/panel/nodeGraph/NodeGraph';
 import { StoreState } from 'app/types/store';
 

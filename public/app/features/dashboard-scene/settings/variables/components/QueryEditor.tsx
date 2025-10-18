@@ -3,6 +3,7 @@ import { Trans } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { QueryVariable } from '@grafana/scenes';
 import { Text, Box } from '@grafana/ui';
+
 import { isLegacyQueryEditor, isQueryEditor } from 'app/features/variables/guard';
 import { VariableQueryEditorType } from 'app/features/variables/types';
 

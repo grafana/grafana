@@ -3,6 +3,7 @@ import { ComponentProps } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
+
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { alertRuleApi } from '../../../api/alertRuleApi';

@@ -4,6 +4,7 @@ import { MutableRefObject } from 'react';
 
 import { UrlQueryMap } from '@grafana/data';
 import { LocationService } from '@grafana/runtime';
+
 import { changeDatasource } from 'app/features/explore/state/datasource';
 import { changeCompactModeAction, changePanelsStateAction } from 'app/features/explore/state/explorePane';
 import { splitClose, splitOpen } from 'app/features/explore/state/main';

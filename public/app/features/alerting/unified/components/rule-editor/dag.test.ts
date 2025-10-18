@@ -1,4 +1,5 @@
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+
 import { Graph } from 'app/core/utils/dag';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';

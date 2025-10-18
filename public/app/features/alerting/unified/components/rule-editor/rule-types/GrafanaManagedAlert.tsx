@@ -1,4 +1,5 @@
 import { Trans } from '@grafana/i18n';
+
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { RuleFormType } from '../../../types/rule-form';

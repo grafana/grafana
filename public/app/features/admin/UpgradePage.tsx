@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { GrafanaTheme2, NavModel } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, useStyles2 } from '@grafana/ui';
+
 import { Page } from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types/store';
 import checkmarkSvg from 'img/licensing/checkmark.svg';

@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+
 import { CombinedRuleGroup } from 'app/types/unified-alerting';
 
 import { DetailsField } from '../DetailsField';

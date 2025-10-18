@@ -4,6 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { QueryVariable } from '@grafana/scenes';
 import { Field, Stack, Switch } from '@grafana/ui';
+
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableSelectField } from 'app/features/dashboard-scene/settings/variables/components/VariableSelectField';
 import { VariableStaticOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/VariableStaticOptionsForm';

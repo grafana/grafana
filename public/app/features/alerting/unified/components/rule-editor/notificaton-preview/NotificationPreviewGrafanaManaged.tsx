@@ -2,6 +2,7 @@ import { groupBy } from 'lodash';
 
 import { t } from '@grafana/i18n';
 import { Alert, Box, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
+
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';

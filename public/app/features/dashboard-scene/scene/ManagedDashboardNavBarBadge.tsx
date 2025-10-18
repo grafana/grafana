@@ -1,4 +1,5 @@
 import { Badge } from '@grafana/ui';
+
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types/dashboard';
 

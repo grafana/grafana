@@ -1,5 +1,6 @@
 import { t } from '@grafana/i18n';
 import { ToolbarButton } from '@grafana/ui';
+
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';

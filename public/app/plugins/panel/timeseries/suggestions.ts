@@ -12,6 +12,7 @@ import {
   LineInterpolation,
   StackingMode,
 } from '@grafana/schema';
+
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { SuggestionName } from 'app/types/suggestions';
 

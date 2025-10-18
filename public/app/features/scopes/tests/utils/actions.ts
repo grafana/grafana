@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { DateTime, makeTimeRange, dateMath } from '@grafana/data';
 import { MultiValueVariable, sceneGraph, VariableValue } from '@grafana/scenes';
 import { defaultTimeZone, TimeZone } from '@grafana/schema';
+
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { ScopesService } from '../../ScopesService';

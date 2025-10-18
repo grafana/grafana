@@ -2,6 +2,7 @@ import { chain } from 'lodash';
 
 import { stringToJsRegex } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+
 import { ThunkResult } from 'app/types/store';
 
 import { getDatasourceSrv } from '../../plugins/datasource_srv';

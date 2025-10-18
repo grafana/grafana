@@ -4,6 +4,7 @@ import * as React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 

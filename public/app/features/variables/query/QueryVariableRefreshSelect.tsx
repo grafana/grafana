@@ -3,6 +3,7 @@ import { PropsWithChildren, useMemo } from 'react';
 import { VariableRefresh } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, RadioButtonGroup } from '@grafana/ui';
+
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
 interface Props {

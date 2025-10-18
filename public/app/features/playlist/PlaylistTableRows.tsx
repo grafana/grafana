@@ -7,6 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2, Spinner, IconName } from '@grafana/ui';
+
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
 import { PlaylistItemUI } from './types';

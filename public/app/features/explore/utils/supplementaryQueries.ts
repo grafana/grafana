@@ -15,6 +15,7 @@ import {
   LogsVolumeType,
   SupplementaryQueryType,
 } from '@grafana/data';
+
 import store from 'app/core/store';
 import { ExplorePanelData, SupplementaryQueries } from 'app/types/explore';
 

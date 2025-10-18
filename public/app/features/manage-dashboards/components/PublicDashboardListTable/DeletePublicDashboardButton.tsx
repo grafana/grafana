@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { t } from '@grafana/i18n';
 import { Button, ModalsController, ButtonProps } from '@grafana/ui';
+
 import { useDeletePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 

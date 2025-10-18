@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { render, screen } from 'test/test-utils';
 
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
+
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 
 import { useCreateFolder, useUpdateFolder } from './hooks';

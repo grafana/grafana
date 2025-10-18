@@ -15,6 +15,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
+
 import {
   QueryOperationAction,
   QueryOperationToggleAction,

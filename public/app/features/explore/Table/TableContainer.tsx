@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { Table, AdHocFilterItem, PanelChrome, withTheme2, Themeable2 } from '@grafana/ui';
+
 import { config } from 'app/core/config';
 import {
   hasDeprecatedParentRowIndex,

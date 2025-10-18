@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 

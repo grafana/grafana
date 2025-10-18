@@ -1,4 +1,5 @@
 import { Icon, Stack, TextLink, Tooltip } from '@grafana/ui';
+
 import { RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 

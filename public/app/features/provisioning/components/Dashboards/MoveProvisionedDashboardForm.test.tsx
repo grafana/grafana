@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getAppEvents } from '@grafana/runtime';
+
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
   useCreateRepositoryFilesWithPathMutation,

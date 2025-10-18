@@ -1,6 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { config, getBackendSrv } from '@grafana/runtime';
+
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 
 import { contextSrv } from '../../../../core/services/context_srv';

@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
+
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';

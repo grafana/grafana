@@ -2,6 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 
 import { OrgRole } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { RepositoryViewList, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/core';
 

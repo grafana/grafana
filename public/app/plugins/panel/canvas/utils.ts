@@ -2,6 +2,7 @@ import { isNumber, isString } from 'lodash';
 
 import { DataFrame, Field, AppEvents, getFieldDisplayName, PluginState, SelectableValue } from '@grafana/data';
 import { ConnectionDirection } from '@grafana/schema';
+
 import appEvents from 'app/core/app_events';
 import { hasAlphaPanels, config } from 'app/core/config';
 import { CanvasConnection, CanvasElementItem, CanvasElementOptions } from 'app/features/canvas/element';

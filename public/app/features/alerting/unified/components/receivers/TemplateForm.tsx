@@ -25,6 +25,7 @@ import {
   useSplitter,
   useStyles2,
 } from '@grafana/ui';
+
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
