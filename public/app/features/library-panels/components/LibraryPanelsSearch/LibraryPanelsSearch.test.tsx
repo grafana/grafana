@@ -120,6 +120,7 @@ describe('LibraryPanelsSearch', () => {
             page: 0,
             typeFilter: [],
             perPage: 40,
+            signal: expect.any(AbortSignal),
           })
         );
       });
@@ -148,6 +149,7 @@ describe('LibraryPanelsSearch', () => {
             page: 0,
             typeFilter: [],
             perPage: 40,
+            signal: expect.any(AbortSignal),
           })
         );
       });
@@ -176,6 +178,7 @@ describe('LibraryPanelsSearch', () => {
             page: 0,
             typeFilter: ['graph', 'timeseries'],
             perPage: 40,
+            signal: expect.any(AbortSignal),
           })
         );
       });
@@ -234,6 +237,7 @@ describe('LibraryPanelsSearch', () => {
             page: 0,
             typeFilter: [],
             perPage: 40,
+            signal: expect.any(AbortSignal),
           });
         });
       });
