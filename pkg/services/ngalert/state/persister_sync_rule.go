@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -11,22 +12,63 @@ import (
 )
 
 type SyncRuleStatePersister struct {
-	log   log.Logger
-	store InstanceStore
+	log    log.Logger
+	store  InstanceStore
+	ticker *clock.Ticker
 }
 
-func NewSyncRuleStatePersisiter(log log.Logger, cfg ManagerCfg) StatePersister {
+func NewSyncRuleStatePersisiter(log log.Logger, ticker *clock.Ticker, cfg ManagerCfg) StatePersister {
 	return &SyncRuleStatePersister{
-		log:   log,
-		store: cfg.InstanceStore,
+		log:    log,
+		store:  cfg.InstanceStore,
+		ticker: ticker,
 	}
 }
 
-func (a *SyncRuleStatePersister) Async(_ context.Context, _ AlertInstancesProvider) {
-	a.log.Debug("Async: No-Op")
+func (a *SyncRuleStatePersister) Async(ctx context.Context, instancesProvider AlertInstancesProvider) {
+	if a.ticker == nil {
+		return
+	}
+
+	for {
+		select {
+		case <-a.ticker.C:
+			if err := a.fullSync(ctx, instancesProvider); err != nil {
+				a.log.Error("Failed to do a full compressed state sync to database", "err", err)
+			}
+		case <-ctx.Done():
+			a.log.Info("Scheduler is shutting down, doing a final state sync.")
+			if err := a.fullSync(context.Background(), instancesProvider); err != nil {
+				a.log.Error("Failed to do a full compressed state sync to database", "err", err)
+			}
+			a.ticker.Stop()
+			a.log.Info("Compressed state async worker is shut down.")
+			return
+		}
+	}
+}
+
+func (a *SyncRuleStatePersister) fullSync(ctx context.Context, instancesProvider AlertInstancesProvider) error {
+	startTime := time.Now()
+	a.log.Debug("Full compressed state sync start")
+	instances := instancesProvider.GetAlertInstances()
+
+	// batchSize is set to 0 because compressed storage groups instances by ruleUID, not by batch size
+	err := a.store.FullSync(ctx, instances, 0, nil)
+	if err != nil {
+		a.log.Error("Full compressed state sync failed", "duration", time.Since(startTime), "instances", len(instances))
+		return err
+	}
+	a.log.Debug("Full compressed state sync done", "duration", time.Since(startTime), "instances", len(instances))
+	return nil
 }
 
 func (a *SyncRuleStatePersister) Sync(ctx context.Context, span trace.Span, ruleKey models.AlertRuleKeyWithGroup, states StateTransitions) {
+	if a.ticker != nil {
+		a.log.Debug("Skip immediate save, using periodic save instead")
+		return
+	}
+
 	if a.store == nil || len(states) == 0 {
 		return
 	}
