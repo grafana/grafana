@@ -102,12 +102,13 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		withPruner := opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageHistoryPruner)
 
 		backend, err := NewBackend(BackendOptions{
-			DBProvider:     eDB,
-			Tracer:         opts.Tracer,
-			Reg:            opts.Reg,
-			IsHA:           isHA,
-			withPruner:     withPruner,
-			storageMetrics: opts.StorageMetrics,
+			DBProvider:           eDB,
+			Tracer:               opts.Tracer,
+			Reg:                  opts.Reg,
+			IsHA:                 isHA,
+			withPruner:           withPruner,
+			storageMetrics:       opts.StorageMetrics,
+			LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
 		})
 		if err != nil {
 			return nil, err

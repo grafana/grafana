@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
+	"go.uber.org/atomic"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -67,6 +68,9 @@ type BackendOptions struct {
 
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
+
+	// If not zero, the backend will regularly remove times from resource_last_import_time table older than this.
+	LastImportTimeMaxAge time.Duration
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -98,6 +102,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 		withPruner:              opts.withPruner,
+		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 	}, nil
 }
 
@@ -137,6 +142,9 @@ type backend struct {
 
 	historyPruner resource.Pruner
 	withPruner    bool
+
+	lastImportTimeMaxAge       time.Duration
+	lastImportTimeDeletionTime atomic.Time
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -965,9 +973,35 @@ func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, 
 	return res.ResourceVersion, nil
 }
 
+// Don't run deletion of "last import times" more often than this duration.
+const limitLastImportTimesDeletion = 1 * time.Hour
+
 func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetLastImportTimes")
 	defer span.End()
+
+	// Delete old entries, if configured, and if enough time has passed since last deletion.
+	if b.lastImportTimeMaxAge > 0 && b.lastImportTimeDeletionTime.Load().Before(time.Now().Add(-limitLastImportTimesDeletion)) {
+		now := time.Now()
+
+		res, err := dbutil.Exec(ctx, b.db, sqlResourceLastImportTimeDelete, &sqlResourceLastImportTimeDeleteRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Threshold:   now.Add(-b.lastImportTimeMaxAge),
+		})
+
+		if err != nil {
+			return func(yield func(resource.ResourceLastImportTime, error) bool) {
+				yield(resource.ResourceLastImportTime{}, err)
+			}
+		}
+
+		aff, err := res.RowsAffected()
+		if err == nil && aff > 0 {
+			b.log.Info("Deleted old last import times", "rows", aff)
+		}
+
+		b.lastImportTimeDeletionTime.Store(now)
+	}
 
 	rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{SQLTemplate: sqltemplate.New(b.dialect)})
 	if err != nil {
