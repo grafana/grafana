@@ -23,11 +23,7 @@ export type TestScope = {
 
 type ScopeDashboardBinding = Resource<ScopeDashboardBindingSpec, ScopeDashboardBindingStatus, 'ScopeDashboardBinding'>;
 
-export async function scopeNodeChildrenRequest(
-  page: Page,
-  scopes: TestScope[],
-  parentName?: string
-): Promise<Response> {
+export async function setupScopeNodeChildrenRoute(page: Page, scopes: TestScope[], parentName?: string): Promise<void> {
   await page.route(`**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_node_children*`, async (route) => {
     await route.fulfill({
       status: 200,
@@ -60,7 +56,14 @@ export async function scopeNodeChildrenRequest(
       }),
     });
   });
+}
 
+export async function scopeNodeChildrenRequest(
+  page: Page,
+  scopes: TestScope[],
+  parentName?: string
+): Promise<Response> {
+  await setupScopeNodeChildrenRoute(page, scopes, parentName);
   return page.waitForResponse((response) => response.url().includes(`/find/scope_node_children`));
 }
 
@@ -92,7 +95,7 @@ export async function expandScopesSelection(page: Page, parentScope: string, sco
   await responsePromise;
 }
 
-export async function scopeSelectRequest(page: Page, selectedScope: TestScope): Promise<Response> {
+export async function setupScopeSelectRoute(page: Page, selectedScope: TestScope): Promise<void> {
   await page.route(
     `**/apis/scope.grafana.app/v0alpha1/namespaces/*/scopes/scope-${selectedScope.name}`,
     async (route) => {
@@ -117,7 +120,10 @@ export async function scopeSelectRequest(page: Page, selectedScope: TestScope): 
       });
     }
   );
+}
 
+export async function scopeSelectRequest(page: Page, selectedScope: TestScope): Promise<Response> {
+  await setupScopeSelectRoute(page, selectedScope);
   return page.waitForResponse((response) => response.url().includes(`/scopes/scope-${selectedScope.name}`));
 }
 
@@ -158,6 +164,7 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
 
   const groups: string[] = ['Most relevant', 'Dashboards', 'Something else', ''];
 
+  // Set up dashboard bindings route
   await page.route(url, async (route) => {
     await route.fulfill({
       status: 200,
@@ -211,14 +218,22 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     });
   });
 
-  const responsePromise = page.waitForResponse((response) => response.url().includes(`/find/scope_dashboard_bindings`));
-  const scopeRequestPromises: Array<Promise<Response>> = [];
-
+  // Set up ALL scope select routes BEFORE creating response waiters
   for (const scope of scopes) {
-    scopeRequestPromises.push(scopeSelectRequest(page, scope));
+    await setupScopeSelectRoute(page, scope);
   }
 
+  // NOW create the response waiters AFTER all routes are set up
+  const responsePromise = page.waitForResponse((response) => response.url().includes(`/find/scope_dashboard_bindings`));
+
+  const scopeRequestPromises: Array<Promise<Response>> = scopes.map((scope) =>
+    page.waitForResponse((response) => response.url().includes(`/scopes/scope-${scope.name}`))
+  );
+
+  // Perform the action
   await click();
+
+  // Wait for all responses
   await responsePromise;
   await Promise.all(scopeRequestPromises);
 }
