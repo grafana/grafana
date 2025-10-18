@@ -76,6 +76,7 @@ type StorageOptions struct {
 type Storage struct {
 	gr           schema.GroupResource
 	codec        runtime.Codec
+	scheme       *runtime.Scheme
 	keyFunc      func(obj runtime.Object) (string, error)
 	newFunc      func() runtime.Object
 	newListFunc  func() runtime.Object
@@ -107,6 +108,7 @@ type RestConfigProvider interface {
 // NewStorage instantiates a new Storage.
 func NewStorage(
 	config *storagebackend.ConfigForResource,
+	scheme *runtime.Scheme,
 	store resource.ResourceClient,
 	keyFunc func(obj runtime.Object) (string, error),
 	keyParser func(key string) (*resourcepb.ResourceKey, error),
@@ -122,6 +124,7 @@ func NewStorage(
 		store:          store,
 		gr:             config.GroupResource,
 		codec:          config.Codec,
+		scheme:         scheme,
 		keyFunc:        keyFunc,
 		newFunc:        newFunc,
 		newListFunc:    newListFunc,
@@ -201,8 +204,49 @@ func (s *Storage) Versioner() storage.Versioner {
 }
 
 func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Object, error) {
-	obj, _, err := s.codec.Decode(data, nil, obj)
-	return obj, err
+	// Get the expected GVK from the object before decoding.
+	// This represents the API version the client requested.
+	gvk := obj.GetObjectKind().GroupVersionKind()
+
+	// Decode the data, potentially converting between versions
+	obj, actualGVK, err := s.codec.Decode(data, &gvk, obj)
+	if err != nil {
+		return obj, err
+	}
+
+	// Check if TypeMeta is already set correctly after decode.
+	// The decoder/converter may have already set it during version conversion.
+	decodedGVK := obj.GetObjectKind().GroupVersionKind()
+
+	// Only set the GVK if it's empty. If the decoder/converter already set it
+	// (e.g., during version conversion), we should NOT overwrite it.
+	if decodedGVK.Empty() {
+		// Determine which GVK to use
+		targetGVK := gvk
+		if targetGVK.Empty() && actualGVK != nil && !actualGVK.Empty() {
+			targetGVK = *actualGVK
+		}
+
+		// SetGroupVersionKind to ensure TypeMeta fields are populated
+		if !targetGVK.Empty() {
+			obj.GetObjectKind().SetGroupVersionKind(targetGVK)
+
+			// Verify the GVK was actually set
+			checkGVK := obj.GetObjectKind().GroupVersionKind()
+			if checkGVK.Empty() {
+				// If still empty after setting, try to use the scheme to look up and set the GVK
+				if s.scheme != nil {
+					gvks, _, err := s.scheme.ObjectKinds(obj)
+					if err == nil && len(gvks) > 0 {
+						// Use the first registered GVK
+						obj.GetObjectKind().SetGroupVersionKind(gvks[0])
+					}
+				}
+			}
+		}
+	}
+
+	return obj, nil
 }
 
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live

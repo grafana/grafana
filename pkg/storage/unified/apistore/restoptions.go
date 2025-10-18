@@ -31,6 +31,7 @@ type RESTOptionsGetter struct {
 	client         resource.ResourceClient
 	secrets        secret.InlineSecureValueSupport
 	original       storagebackend.Config
+	scheme         *runtime.Scheme
 	configProvider RestConfigProvider
 
 	// Each group+resource may need custom options
@@ -41,18 +42,20 @@ func NewRESTOptionsGetterForClient(
 	client resource.ResourceClient,
 	secrets secret.InlineSecureValueSupport,
 	original storagebackend.Config,
+	scheme *runtime.Scheme,
 	configProvider RestConfigProvider,
 ) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
 		client:         client,
 		secrets:        secrets,
 		original:       original,
+		scheme:         scheme,
 		options:        make(map[string]StorageOptions),
 		configProvider: configProvider,
 	}
 }
 
-func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, secrets secret.InlineSecureValueSupport) (*RESTOptionsGetter, error) {
+func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, secrets secret.InlineSecureValueSupport, scheme *runtime.Scheme) (*RESTOptionsGetter, error) {
 	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
 		Bucket: memblob.OpenBucket(&memblob.Options{}),
 	})
@@ -69,6 +72,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, sec
 		resource.NewLocalResourceClient(server),
 		secrets,
 		originalStorageConfig,
+		scheme,
 		nil,
 	), nil
 }
@@ -78,6 +82,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, sec
 // won't be any write operations that initially bootstrap their directories
 func NewRESTOptionsGetterForFileXX(path string,
 	originalStorageConfig storagebackend.Config,
+	scheme *runtime.Scheme,
 	features map[string]any) (*RESTOptionsGetter, error) {
 	if path == "" {
 		path = filepath.Join(os.TempDir(), "grafana-apiserver")
@@ -106,6 +111,7 @@ func NewRESTOptionsGetterForFileXX(path string,
 		resource.NewLocalResourceClient(server),
 		nil, // secrets
 		originalStorageConfig,
+		scheme,
 		nil,
 	), nil
 }
@@ -149,7 +155,7 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 		) (storage.Interface, factory.DestroyFunc, error) {
 			opts := r.options[resource.String()]
 			opts.SecureValues = r.secrets
-			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
+			return NewStorage(config, r.scheme, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
 				trigger, indexers, r.configProvider, opts)
 		},
 		DeleteCollectionWorkers: 0,
