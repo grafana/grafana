@@ -2,6 +2,7 @@ package checks
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,4 +44,24 @@ func TestGetNamespace(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func Test_GetDefaultEvaluationInterval(t *testing.T) {
+	t.Run("default", func(t *testing.T) {
+		interval, err := GetDefaultEvaluationInterval(map[string]string{})
+		assert.NoError(t, err)
+		assert.Equal(t, 7*24*time.Hour, interval)
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		interval, err := GetDefaultEvaluationInterval(map[string]string{"evaluation_interval": "invalid"})
+		assert.Error(t, err)
+		assert.Zero(t, interval)
+	})
+
+	t.Run("custom", func(t *testing.T) {
+		interval, err := GetDefaultEvaluationInterval(map[string]string{"evaluation_interval": "1h"})
+		assert.NoError(t, err)
+		assert.Equal(t, time.Hour, interval)
+	})
 }
