@@ -1223,4 +1223,9 @@ export interface FeatureToggles {
   * @default false
   */
   pluginStoreServiceLoading?: boolean;
+  /**
+  * Increases panel padding globally
+  * @default false
+  */
+  newPanelPadding?: boolean;
 }

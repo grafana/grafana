@@ -1,3 +1,5 @@
+import { FeatureToggles } from '../types/featureToggles.gen';
+
 import { createBreakpoints } from './breakpoints';
 import { createColors, ThemeColorsInput } from './createColors';
 import { createComponents } from './createComponents';
@@ -19,6 +21,7 @@ export interface NewThemeOptions {
   shape?: ThemeShapeInput;
   typography?: ThemeTypographyInput;
   visualization?: ThemeVisualizationColorsInput;
+  featureToggles?: FeatureToggles;
 }
 
 /** @internal */
@@ -30,6 +33,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
     shape: shapeInput = {},
     typography: typographyInput = {},
     visualization: visualizationInput = {},
+    featureToggles = {},
   } = options;
 
   const colors = createColors(colorsInput);
@@ -39,7 +43,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
   const typography = createTypography(colors, typographyInput);
   const shadows = createShadows(colors);
   const transitions = createTransitions();
-  const components = createComponents(colors, shadows);
+  const components = createComponents(colors, shadows, featureToggles);
   const visualization = createVisualizationColors(colors, visualizationInput);
 
   const theme = {
