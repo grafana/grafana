@@ -1093,4 +1093,12 @@ const (
 	// FlagNewGauge
 	// Enable new gauge visualization
 	FlagNewGauge = "newGauge"
+
+	// FlagPreventPanelChromeOverflow
+	// Restrict PanelChrome contents with overflow: hidden;
+	FlagPreventPanelChromeOverflow = "preventPanelChromeOverflow"
+
+	// FlagPluginStoreServiceLoading
+	// Load plugins during store service startup instead of wire provider
+	FlagPluginStoreServiceLoading = "pluginStoreServiceLoading"
 )

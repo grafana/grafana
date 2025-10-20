@@ -270,4 +270,10 @@ pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,fal
 tempoSearchBackendMigration,GA,@grafana/oss-big-tent,false,true,false
 cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
 cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
+<<<<<<< HEAD
 newGauge,experimental,@grafana/dataviz-squad,false,false,true
+||||||| eb9c8e539cd
+=======
+preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
+pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
+>>>>>>> 93af167f9c8e4c37c5e02e6dcb2253751a7509bc

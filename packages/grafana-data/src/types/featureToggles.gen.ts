@@ -1218,4 +1218,14 @@ export interface FeatureToggles {
   * @default false
   */
   newGauge?: boolean;
+  /**
+  * Restrict PanelChrome contents with overflow: hidden;
+  * @default true
+  */
+  preventPanelChromeOverflow?: boolean;
+  /**
+  * Load plugins during store service startup instead of wire provider
+  * @default false
+  */
+  pluginStoreServiceLoading?: boolean;
 }
