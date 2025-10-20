@@ -180,7 +180,13 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 		var ok bool
 		fid, ok = r.folders.Tree().DirPath(folder, rootFolder)
 		if !ok {
-			return "", fmt.Errorf("folder %s NOT found in tree with root: %s", folder, rootFolder)
+			// return "", fmt.Errorf("folder %s NOT found in tree with root: %s", folder, rootFolder)
+		}
+
+		// TODO: should we build the tree in a different way?
+		fid, ok = r.folders.Tree().DirPath(folder, "")
+		if !ok {
+			return "", fmt.Errorf("folder %s NOT found in tree without root", folder)
 		}
 	}
 

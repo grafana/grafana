@@ -89,6 +89,7 @@ func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 	progress.SetMessage(ctx, "migrate resources from SQL")
 	for _, kind := range resources.SupportedProvisioningResources {
 		if kind == resources.FolderResource {
+			// TODO: create them unified storage
 			continue // folders have special handling
 		}
 
