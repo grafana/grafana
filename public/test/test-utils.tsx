@@ -124,7 +124,7 @@ const customRender = (
 };
 
 /**
- * Enables and disables feature toggles `beforeEach` test, and sets back to original settings `afterEach` test
+ * Enables and disables feature toggles `beforeEach` test, and sets back to empty object `afterEach` test
  */
 export const testWithFeatureToggles = ({
   enable,
@@ -133,8 +133,6 @@ export const testWithFeatureToggles = ({
   enable?: Array<keyof FeatureToggles>;
   disable?: Array<keyof FeatureToggles>;
 }) => {
-  const originalToggles = { ...config.featureToggles };
-
   beforeEach(() => {
     for (const featureToggle of enable || []) {
       config.featureToggles[featureToggle] = true;
@@ -145,15 +143,14 @@ export const testWithFeatureToggles = ({
   });
 
   afterEach(() => {
-    config.featureToggles = originalToggles;
+    config.featureToggles = {};
   });
 };
 
 /**
- * Enables license features `beforeEach` test, and sets back to original settings `afterEach` test
+ * Enables license features `beforeEach` test, and sets back to empty object `afterEach` test
  */
 export const testWithLicenseFeatures = ({ enable, disable }: { enable?: string[]; disable?: string[] }) => {
-  const originalFeatures = { ...config.licenseInfo.enabledFeatures };
   beforeEach(() => {
     config.licenseInfo.enabledFeatures = config.licenseInfo.enabledFeatures || {};
 
@@ -166,7 +163,7 @@ export const testWithLicenseFeatures = ({ enable, disable }: { enable?: string[]
   });
 
   afterEach(() => {
-    config.licenseInfo.enabledFeatures = originalFeatures;
+    config.licenseInfo.enabledFeatures = {};
   });
 };
 
