@@ -2,16 +2,11 @@ import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Stack, Text, TextLink } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 
 import GettingStarted from './GettingStarted';
 
-interface Props {
-  items: Repository[];
-}
-
-export default function GettingStartedPage({ items }: Props) {
+export default function GettingStartedPage() {
   return (
     <Page
       navId="provisioning"
@@ -26,7 +21,7 @@ export default function GettingStartedPage({ items }: Props) {
       <Page.Contents>
         <Stack direction="column" gap={3}>
           <Banner />
-          <GettingStarted items={items} />
+          <GettingStarted />
         </Stack>
       </Page.Contents>
     </Page>

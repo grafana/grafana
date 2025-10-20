@@ -45,7 +45,7 @@ export default function HomePage() {
 
   // Early return for onboarding
   if (!items?.length && !isLoading) {
-    return <GettingStartedPage items={items ?? []} />;
+    return <GettingStartedPage />;
   }
 
   const onConfirmDelete = () => {
@@ -58,7 +58,7 @@ export default function HomePage() {
       case TabSelection.Repositories:
         return <RepositoryList items={items ?? []} />;
       case TabSelection.GettingStarted:
-        return <GettingStarted items={items ?? []} />;
+        return <GettingStarted />;
       default:
         return null;
     }

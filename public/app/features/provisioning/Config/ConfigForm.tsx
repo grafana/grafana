@@ -162,7 +162,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
       <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
       <Stack direction="column" gap={2}>
         <Field noMargin label={t('provisioning.config-form.label-repository-type', 'Repository type')}>
-          <Input value={getRepositoryTypeConfig(type)?.label || type} disabled />
+          <Input id="repository-type" value={getRepositoryTypeConfig(type)?.label || type} disabled />
         </Field>
         <Field
           noMargin
@@ -274,7 +274,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
               />
             </Field>
             <Field noMargin label={gitFields.pathConfig.label} description={gitFields.pathConfig.description}>
-              <Input {...register('path')} />
+              <Input id="repo-path" {...register('path')} />
             </Field>
           </>
         )}
