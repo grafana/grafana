@@ -478,7 +478,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       label: 'panel-container',
+      backgroundColor: background,
+      border: `1px solid ${borderColor}`,
       position: 'relative',
+      borderRadius: theme.shape.radius.default,
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
@@ -540,9 +543,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-content',
       flexGrow: 1,
       contain: 'size layout',
-      backgroundColor: background,
-      border: `1px solid ${borderColor}`,
-      borderRadius: theme.shape.radius.default,
     }),
     headerContainer: css({
       label: 'panel-header',
@@ -556,7 +556,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-streaming',
       marginRight: 0,
       color: theme.colors.success.text,
-      border: `1px solid ${borderColor}`,
 
       '&:hover': {
         color: theme.colors.success.text,
