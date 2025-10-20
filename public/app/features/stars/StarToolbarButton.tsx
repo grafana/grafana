@@ -1,6 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
+import { locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -113,7 +114,7 @@ const useUpdateNavStarredItems = () => {
   const { starred: starredNavItem } = navIndex;
 
   return function ({ id, title }: { id: string; title: string }, isStarred: boolean) {
-    const url = '/d/' + id;
+    const url = locationUtil.assureBaseUrl(`/d/${id}`);
     dispatch(setStarred({ id, title, url, isStarred }));
 
     const navID = ID_PREFIX + id;
