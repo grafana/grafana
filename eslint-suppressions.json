@@ -3527,11 +3527,6 @@
       "count": 3
     }
   },
-  "public/app/features/profile/UserTeams.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/provisioning/Config/ConfigFormGithubCollapse.tsx": {
     "no-restricted-syntax": {
       "count": 2
