@@ -2718,11 +2718,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/containers/DashboardPage.test.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/containers/DashboardPage.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 1
@@ -2744,11 +2739,6 @@
   },
   "public/app/features/dashboard/containers/PublicDashboardPage.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/containers/SoloPanelPage.test.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
