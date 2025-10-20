@@ -2008,11 +2008,6 @@
       "count": 1
     }
   },
-  "public/app/features/canvas/elements/rectangle.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/canvas/runtime/element.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
