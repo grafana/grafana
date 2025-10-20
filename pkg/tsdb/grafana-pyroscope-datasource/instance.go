@@ -93,7 +93,7 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 	u, err := url.Parse(req.URL)
 	if err != nil {
 		ctxLogger.Error("Failed to parse URL", "error", err, "function", logEntrypoint())
-		return backend.DownstreamError(fmt.Errorf("URL could not be parsed: %w", err))
+		return backend.DownstreamErrorf("URL could not be parsed: %w", err)
 	}
 	query := u.Query()
 
