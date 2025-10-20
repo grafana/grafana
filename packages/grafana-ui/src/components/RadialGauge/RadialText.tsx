@@ -60,7 +60,7 @@ export function RadialText({
   // Not sure where this comes from but svg text is not using body line-height
   const lineHeight = 1.21;
   const valueWidthToRadiusFactor = 0.85;
-  const nameToHeightFactor = 0.3;
+  const nameToHeightFactor = 0.45;
   const largeRadiusScalingDecay = 0.86;
 
   // This pow 0.92 factor is to create a decay so the font size does not become rediculously large for very large panels
@@ -99,7 +99,8 @@ export function RadialText({
   const nameHeight = nameFontSize * lineHeight;
 
   const valueY = showName ? centerY - nameHeight / 2 : centerY;
-  const nameY = showValue ? valueY + valueHeight * 0.7 : centerY;
+  const valueNameSpacing = valueHeight / 3.5;
+  const nameY = showValue ? valueY + valueHeight / 2 + valueNameSpacing : centerY;
   const nameColor = showValue ? theme.colors.text.secondary : theme.colors.text.primary;
   const suffixShift = (valueFontSize - unitFontSize * 1.2) / 2;
 
