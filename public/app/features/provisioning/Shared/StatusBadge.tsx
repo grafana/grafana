@@ -7,9 +7,13 @@ import { PROVISIONING_URL } from '../constants';
 
 interface StatusBadgeProps {
   repo?: Repository;
+  displayOnly?: boolean;
 }
 
-export function StatusBadge({ repo }: StatusBadgeProps) {
+/**
+ * @description Displays a status badge for the given provisioned repository.
+ */
+export function StatusBadge({ repo, displayOnly }: StatusBadgeProps) {
   if (!repo) {
     return null;
   }
@@ -86,10 +90,12 @@ export function StatusBadge({ repo }: StatusBadgeProps) {
       color={color}
       icon={icon}
       text={text}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: displayOnly ? 'default' : 'pointer' }}
       tooltip={tooltip}
       onClick={() => {
-        locationService.push(`${PROVISIONING_URL}/${repo.metadata?.name}/?tab=overview`);
+        if (!displayOnly) {
+          locationService.push(`${PROVISIONING_URL}/${repo.metadata?.name}/?tab=overview`);
+        }
       }}
     />
   );
