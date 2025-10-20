@@ -2103,6 +2103,22 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},
+		{
+			Name:         "preventPanelChromeOverflow",
+			Description:  "Restrict PanelChrome contents with overflow: hidden;",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "true",
+		},
+		{
+			Name:         "pluginStoreServiceLoading",
+			Description:  "Load plugins during store service startup instead of wire provider",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
 	}
 )
 

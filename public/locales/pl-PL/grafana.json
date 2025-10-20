@@ -7745,7 +7745,8 @@
     "name-neutral": "Neutralne",
     "name-show-threshold-labels": "Pokaż etykiety progów",
     "name-show-threshold-markers": "Pokaż znaczniki progów",
-    "placeholder-neutral": "automatycznie"
+    "placeholder-neutral": "automatycznie",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Zastosuj",
@@ -12158,6 +12159,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },
