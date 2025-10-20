@@ -180,9 +180,6 @@
             // This "should" be a POST request, but we must use GET to interact with the correct service.
             // no-store and ?ts=_ are used to ensure the request isn't cached.
             method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
             cache: "no-store",
           }).catch(err => {
             console.error('Failed to report boot error to backend: ', err);
