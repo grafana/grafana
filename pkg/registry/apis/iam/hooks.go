@@ -277,16 +277,13 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleCreate(obj runtime.Object,
 	}
 
 	roleUID := role.Name
-	// Convert RolespecPermission to CoreRolespecPermission for the helper function
-	corePermissions := make([]iamv0.CoreRolespecPermission, len(role.Spec.Permissions))
+
+	interfacePermissions := make([]iamv0.CoreRolespecPermission, len(role.Spec.Permissions))
 	for i, p := range role.Spec.Permissions {
-		corePermissions[i] = iamv0.CoreRolespecPermission{
-			Action: p.Action,
-			Scope:  p.Scope,
-		}
+		interfacePermissions[i] = iamv0.CoreRolespecPermission(p)
 	}
 
-	tuples, err := convertRolePermissionsToTuples(roleUID, corePermissions)
+	tuples, err := convertRolePermissionsToTuples(roleUID, interfacePermissions)
 	if err != nil {
 		b.logger.Error("failed to convert role permissions to tuples",
 			"namespace", role.Namespace,

@@ -143,4 +143,3 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 		require.Equal(t, "folder:folder1", tuples[0].Object)
 	})
 }
-
