@@ -4173,6 +4173,20 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "zanzanaNoLegacyClient",
+        "resourceVersion": "1760953975541",
+        "creationTimestamp": "2025-10-20T09:52:55Z"
+      },
+      "spec": {
+        "description": "Use openFGA as main authorization engine and disable legacy RBAC clietn.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
     }
   ]
 }
