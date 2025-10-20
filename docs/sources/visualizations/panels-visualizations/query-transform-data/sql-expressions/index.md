@@ -60,72 +60,6 @@ A key capability of SQL expressions is the ability to JOIN data from multiple ta
 
 To work with SQL expressions, you must use data from a backend data source. In Grafana, a backend data source refers to a data source plugin or integration that communicates with a database, service, or API through the Grafana server, rather than directly from the browser (frontend).
 
-## Known limitations
-
-- Currently, only one SQL expression is supported per panel or alert.
-- Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
-- Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
-
-### Dynamic schemas (or Schema changes and missing data)
-
-SQL expressions currently have some limitations that may cause queries to fail or return unexpected results and these are known constraints of how the feature is implemented.
-
-There a few scenarios where SQL expressions have known limitations that users should understand.
-
-The following situations are affected:
-
-- Error responses – When a data source returns an error, SQL expressions cannot interpret the result.
-
-- No data responses – If a query returns no rows, the SQL expression engine cannot infer a schema.
-
-- Dynamic schema responses – If the set of columns or labels changes between query executions, SQL expressions may fail because it treats column changes as schema changes.
-
-#### Workarounds
-
-You can mitigate these issues in the following ways:
-
-- Avoid `SELECT *` – Explicitly select only the columns you expect to exist.
-
-- Ensure a consistent schema – If possible, configure your query to always return columns, even when no data is present.
-
-#### Example: Handling Prometheus No Data
-
-When joining results from the same Prometheus query across different data source instances, you can use this pattern:
-
-```sql
--- Prometheus query
-sum by (cluster) (up{job=~".*zruler.*"})
-or on (cluster) (
-  (0/0) *
-  (
-    label_replace(vector(1), "cluster", "fake", "", "")
-  )
-)
-
--- SQL expression
-SELECT
-    COALESCE(a.time, b.time) AS time,
-    COALESCE(a.cluster, b.cluster) AS cluster,
-    COALESCE(a.up, 0) + COALESCE(b.up, 0) AS unified_up
-FROM (
-    SELECT time, cluster, __value__ AS up
-    FROM A
-    WHERE cluster != 'fake'
-    ORDER BY time
-    LIMIT 5
-) a
-FULL OUTER JOIN (
-    SELECT time, cluster, __value__ AS up
-    FROM B
-    WHERE cluster != 'fake'
-    ORDER BY time
-    LIMIT 5
-) b ON a.time = b.time;
-```
-
-This approach ensures that a schema exists even when one query returns no data.
-
-
 ## Compatible data sources
 
 The following are compatible data sources:
@@ -297,6 +231,71 @@ During conversion:
 - If available, the `display_name` column contains a human-readable name.
 - The `metric_name` column stores the raw metric identifier.
 - For time series data, Grafana includes a `time` column with timestamps
+
+## Known limitations
+
+- Currently, only one SQL expression is supported per panel or alert.
+- Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
+- Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
+
+### Dynamic schemas (or Schema changes and missing data)
+
+SQL expressions have known limitations that may cause queries to fail or return unexpected results. These constraints are inherent to how the feature is implemented and should be understood when building queries.
+
+<!-- SQL expressions have known limitations in three scenarios: error responses, no data responses, and dynamic schema responses (where columns or labels change between query executions). These limitations exist because SQL expressions use a SQL engine that expects static schemas, but time-series data sources can return dynamic schemas that change over time. When the SQL layer encounters missing data, errors, or different column sets, it interprets these as columns not existing, which can cause queries to fail or return unexpected results. -->
+
+The following situations are affected:
+
+- Error responses – When a data source returns an error, SQL expressions cannot interpret the result.
+
+- No data responses – If a query returns no rows, the SQL expression engine cannot infer a schema.
+
+- Dynamic schema responses – If the set of columns or labels changes between query executions, SQL expressions may fail because it treats column changes as schema changes.
+
+#### Workarounds
+
+You can mitigate these issues in the following ways:
+
+- Avoid `SELECT *` – Explicitly select only the columns you expect to exist.
+
+- Ensure a consistent schema – If possible, configure your query to always return columns, even when no data is present.
+
+#### Example: Handling Prometheus No Data
+
+When joining results from the same Prometheus query across different data source instances, you can use this pattern:
+
+```sql
+-- Prometheus query
+sum by (cluster) (up{job=~".*zruler.*"})
+or on (cluster) (
+  (0/0) *
+  (
+    label_replace(vector(1), "cluster", "fake", "", "")
+  )
+)
+
+-- SQL expression
+SELECT
+    COALESCE(a.time, b.time) AS time,
+    COALESCE(a.cluster, b.cluster) AS cluster,
+    COALESCE(a.up, 0) + COALESCE(b.up, 0) AS unified_up
+FROM (
+    SELECT time, cluster, __value__ AS up
+    FROM A
+    WHERE cluster != 'fake'
+    ORDER BY time
+    LIMIT 5
+) a
+FULL OUTER JOIN (
+    SELECT time, cluster, __value__ AS up
+    FROM B
+    WHERE cluster != 'fake'
+    ORDER BY time
+    LIMIT 5
+) b ON a.time = b.time;
+```
+
+This approach ensures that a schema exists even when one query returns no data.
 
 ## SQL expressions examples
 
