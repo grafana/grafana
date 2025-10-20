@@ -1,6 +1,7 @@
 package zanzana
 
 import (
+	"github.com/grafana/grafana/pkg/infra/log"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
@@ -46,6 +47,7 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 		tuple, ok := TranslateToResourceTuple(subject, perm.Action, perm.Kind, perm.Identifier)
 		if !ok {
 			// Skip permissions that can't be translated
+			log.New("zanzana").Warn("skipping permission that can't be translated", "permission", perm)
 			continue
 		}
 
@@ -77,4 +79,3 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 
 	return tuples, nil
 }
-
