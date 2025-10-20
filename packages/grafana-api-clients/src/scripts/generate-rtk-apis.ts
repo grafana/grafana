@@ -93,6 +93,7 @@ const config: ConfigFile = {
     ...createAPIConfig('shorturl', 'v1alpha1'),
     ...createAPIConfig('preferences', 'v1alpha1', undefined, { hooks: true }),
     ...createAPIConfig('dashboard', 'v0alpha1', ['getSearch']),
+    ...createAPIConfig('correlations', 'v0alpha1'),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };

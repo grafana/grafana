@@ -354,6 +354,7 @@ func (s *service) start(ctx context.Context) error {
 		s.buildHandlerChainFuncFromBuilders,
 		groupVersions,
 		defGetters,
+		s.metrics,
 	)
 	if err != nil {
 		return err

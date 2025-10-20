@@ -32,8 +32,13 @@ export interface GaugeDimensions {
   barWidth: number;
   endAngle?: number;
   barIndex: number;
+  thresholdsBarRadius: number;
   thresholdsBarWidth: number;
   thresholdsBarSpacing: number;
+  showScaleLabels?: boolean;
+  scaleLabelsFontSize: number;
+  scaleLabelsSpacing: number;
+  scaleLabelsRadius: number;
 }
 
 export function calculateDimensions(
@@ -44,41 +49,72 @@ export function calculateDimensions(
   roundedBars: boolean,
   barWidthFactor: number,
   barIndex: number,
-  thresholdBar?: boolean
+  thresholdBar?: boolean,
+  showScaleLabels?: boolean
 ): GaugeDimensions {
   const yMaxAngle = endAngle > 180 ? 180 : endAngle;
   let margin = 0;
 
+  if (glow) {
+    margin = 0.02 * Math.min(width, height);
+  }
+
   // Max radius based on width
-  let maxRadiusH = width / 2 - margin;
+  let maxRadiusW = width / 2 - margin;
 
   // Max radius based on height
   let heightRatioV = Math.sin(toRad(yMaxAngle));
-  let maxRadiusV = (height - margin * 2) / (1 + heightRatioV);
+  let maxRadiusH = (height - margin * 2) / (1 + heightRatioV);
 
-  let maxRadius = Math.min(maxRadiusH, maxRadiusV);
+  let maxRadius = Math.min(maxRadiusW, maxRadiusH);
+  let maxRadiusIsLimitedByHeight = maxRadiusH === maxRadius;
+  let outerRadius = maxRadius;
 
   const barWidth = Math.max(barWidthFactor * (maxRadius / 3), 2);
-  const thresholdsToBarWidth = 0.2 * Math.pow(barWidth, 0.92);
-  const thresholdsBarWidth = thresholdBar ? Math.min(Math.max(thresholdsToBarWidth, 4), 12) : 0;
-  const thresholdsBarSpacing = Math.min(Math.max(thresholdsBarWidth / 2, 2), 12);
-
-  let outerRadius = maxRadius;
 
   // If rounded bars is enabled they need a bit more vertical space
   if (yMaxAngle < 180 && roundedBars) {
     outerRadius -= barWidth;
+    maxRadiusH -= barWidth;
+    maxRadiusW -= barWidth;
   }
+
+  // Scale labels
+  let scaleLabelsFontSize = 0;
+  let scaleLabelsSpacing = 0;
+  let scaleLabelsRadius = 0;
+
+  if (showScaleLabels) {
+    scaleLabelsRadius = outerRadius;
+    const radiusToFontSizeFactor = 0.12;
+    scaleLabelsFontSize = Math.max(radiusToFontSizeFactor * Math.pow(outerRadius, 0.92), 10);
+    scaleLabelsSpacing = scaleLabelsFontSize / 3;
+    const labelsSize = scaleLabelsFontSize * 1.2 + scaleLabelsSpacing;
+    outerRadius -= labelsSize;
+    maxRadiusW -= labelsSize;
+    maxRadiusH -= labelsSize;
+
+    // For gauges the max label needs a bit more vertical space so that it does not get clipped
+    if (maxRadiusIsLimitedByHeight && endAngle < 180) {
+      const amount = outerRadius * 0.07;
+      scaleLabelsRadius -= amount;
+      maxRadiusH -= amount;
+      maxRadiusW -= amount;
+      outerRadius -= amount;
+    }
+  }
+
+  // Thresholds bar
+  const thresholdsToBarWidth = 0.2 * Math.pow(barWidth, 0.92);
+  const thresholdsBarWidth = thresholdBar ? Math.min(Math.max(thresholdsToBarWidth, 4), 12) : 0;
+  const thresholdsBarSpacing = Math.min(Math.max(thresholdsBarWidth / 2, 2), 12);
+  let thresholdsBarRadius = 0;
 
   if (thresholdsBarWidth > 0) {
+    thresholdsBarRadius = outerRadius - thresholdsBarWidth / 2;
+    maxRadiusW -= thresholdsBarWidth + thresholdsBarSpacing;
     maxRadiusH -= thresholdsBarWidth + thresholdsBarSpacing;
-    maxRadiusV -= thresholdsBarWidth + thresholdsBarSpacing;
-    outerRadius = Math.min(maxRadiusH, maxRadiusV);
-  }
-
-  if (glow) {
-    margin = 0.04 * outerRadius;
-    outerRadius -= (margin * 2) / (1 + heightRatioV);
+    outerRadius = Math.min(maxRadiusW, maxRadiusH);
   }
 
   let innerRadius = outerRadius - barWidth / 2;
@@ -101,5 +137,17 @@ export function calculateDimensions(
     barIndex,
     thresholdsBarWidth,
     thresholdsBarSpacing,
+    thresholdsBarRadius,
+    scaleLabelsFontSize,
+    scaleLabelsSpacing,
+    scaleLabelsRadius,
+  };
+}
+
+export function toCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
+  let radian = ((angleInDegrees - 90) * Math.PI) / 180.0;
+  return {
+    x: centerX + radius * Math.cos(radian),
+    y: centerY + radius * Math.sin(radian),
   };
 }
