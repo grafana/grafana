@@ -3,11 +3,12 @@ package client
 import (
 	"context"
 
+	"go.opentelemetry.io/otel"
+	"google.golang.org/grpc"
+
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	authlib "github.com/grafana/authlib/types"
-	"go.opentelemetry.io/otel"
-	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
@@ -36,11 +37,11 @@ func New(cc grpc.ClientConnInterface) (*Client, error) {
 	return c, nil
 }
 
-func (c *Client) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
+func (c *Client) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Check")
 	defer span.End()
 
-	return c.authzlibclient.Check(ctx, id, req)
+	return c.authzlibclient.Check(ctx, id, req, folder)
 }
 
 func (c *Client) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {

@@ -26,7 +26,7 @@ import (
 type WebhookExtraBuilder struct {
 	provisioningapis.ExtraBuilder
 	isPublic    bool
-	urlProvider func(namespace string) string
+	urlProvider func(ctx context.Context, namespace string) string
 }
 
 // FIXME: separate the URL provider from connector to simplify operators
@@ -38,7 +38,7 @@ func (b *WebhookExtraBuilder) WebhookURL(ctx context.Context, r *provisioning.Re
 	gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
 	webhookURL := fmt.Sprintf(
 		"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-		b.urlProvider(r.GetNamespace()),
+		b.urlProvider(ctx, r.GetNamespace()),
 		gvr.Group,
 		gvr.Version,
 		r.GetNamespace(),
@@ -66,10 +66,10 @@ func ProvideWebhooksWithImages(
 	configProvider apiserver.RestConfigProvider,
 	registry prometheus.Registerer,
 ) *WebhookExtraBuilder {
-	urlProvider := func(_ string) string {
+	urlProvider := func(_ context.Context, _ string) string {
 		return cfg.AppURL
 	}
-	isPublic := isPublicURL(urlProvider(""))
+	isPublic := isPublicURL(urlProvider(context.Background(), ""))
 
 	return &WebhookExtraBuilder{
 		isPublic:    isPublic,
@@ -102,11 +102,11 @@ func ProvideWebhooksWithImages(
 }
 
 func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer) *WebhookExtraBuilder {
-	urlProvider := func(_ string) string {
+	urlProvider := func(_ context.Context, _ string) string {
 		return provisioningURL
 	}
 
-	isPublic := isPublicURL(urlProvider(""))
+	isPublic := isPublicURL(urlProvider(context.Background(), ""))
 
 	return &WebhookExtraBuilder{
 		isPublic:    isPublic,
@@ -131,7 +131,7 @@ type WebhookExtraWithImages struct {
 func NewWebhookExtraWithImages(
 	render *renderConnector,
 	webhook *webhookConnector,
-	urlProvider func(namespace string) string,
+	urlProvider func(ctx context.Context, namespace string) string,
 	workers []jobs.Worker,
 ) *WebhookExtraWithImages {
 	return &WebhookExtraWithImages{

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"maps"
 
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
@@ -64,11 +66,11 @@ func convertToK8sResource(
 	for _, integration := range receiver.Integrations {
 		spec.Integrations = append(spec.Integrations, model.ReceiverIntegration{
 			Uid:                   &integration.UID,
-			Type:                  integration.Config.Type,
+			Type:                  string(integration.Config.Type()),
+			Version:               string(integration.Config.Version),
 			DisableResolveMessage: &integration.DisableResolveMessage,
 			Settings:              maps.Clone(integration.Settings),
 			SecureFields:          integration.SecureFields(),
-			Version:               integration.Config.Version,
 		})
 	}
 
@@ -125,13 +127,20 @@ func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[str
 	}
 	storedSecureFields := make(map[string][]string, len(receiver.Spec.Integrations))
 	for _, integration := range receiver.Spec.Integrations {
-		version := &integration.Version
-		if *version == "" {
-			version = nil
-		}
-		config, err := ngmodels.IntegrationConfigFromType(integration.Type, version)
+		t, err := alertingNotify.IntegrationTypeFromString(integration.Type)
 		if err != nil {
 			return nil, nil, err
+		}
+		var config schema.IntegrationSchemaVersion
+		typeSchema, _ := alertingNotify.GetSchemaForIntegration(t)
+		if integration.Version != "" {
+			var ok bool
+			config, ok = typeSchema.GetVersion(schema.Version(integration.Version))
+			if !ok {
+				return nil, nil, fmt.Errorf("invalid version %s for integration type %s", integration.Version, integration.Type)
+			}
+		} else {
+			config = typeSchema.GetCurrentVersion()
 		}
 		grafanaIntegration := ngmodels.Integration{
 			Name:           receiver.Spec.Title,

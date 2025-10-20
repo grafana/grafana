@@ -100,10 +100,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 		Responses: backend.Responses{},
 	}
 
-	var (
-		hasPromQLScopeFeatureFlag = s.featureToggles.IsEnabled("promQLScope")
-		m                         sync.Mutex
-	)
+	var m sync.Mutex
 
 	concurrentQueryCount, err := req.PluginContext.GrafanaConfig.ConcurrentQueryCount()
 	if err != nil {
@@ -113,7 +110,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 
 	_ = concurrency.ForEachJob(ctx, len(req.Queries), concurrentQueryCount, func(ctx context.Context, idx int) error {
 		query := req.Queries[idx]
-		r := s.handleQuery(ctx, query, fromAlert, hasPromQLScopeFeatureFlag)
+		r := s.handleQuery(ctx, query, fromAlert)
 		if r != nil {
 			m.Lock()
 			result.Responses[query.RefID] = *r
@@ -125,11 +122,10 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromAlert,
-	hasPromQLScopeFeatureFlag bool) *backend.DataResponse {
+func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromAlert bool) *backend.DataResponse {
 	traceCtx, span := s.tracer.Start(ctx, "datasource.prometheus")
 	defer span.End()
-	query, err := models.Parse(span, bq, s.TimeInterval, s.intervalCalculator, fromAlert, hasPromQLScopeFeatureFlag)
+	query, err := models.Parse(ctx, s.log, span, bq, s.TimeInterval, s.intervalCalculator, fromAlert)
 	if err != nil {
 		return &backend.DataResponse{
 			Error: err,
@@ -145,7 +141,7 @@ func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromA
 
 func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *models.Query) *backend.DataResponse {
 	logger := s.log.FromContext(traceCtx)
-	logger.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr /*, "queryTimeout", s.QueryTimeout*/)
+	logger.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr)
 
 	dr := &backend.DataResponse{
 		Frames: data.Frames{},

@@ -754,7 +754,7 @@ func TestCalculateChanges(t *testing.T) {
 
 			tt.setupMocks(parser, reader, progress, renderer, parserFactory)
 
-			evaluator := NewEvaluator(renderer, parserFactory, func(_ string) string {
+			evaluator := NewEvaluator(renderer, parserFactory, func(_ context.Context, _ string) string {
 				if tt.grafanaBaseURL != "" {
 					return tt.grafanaBaseURL
 				}

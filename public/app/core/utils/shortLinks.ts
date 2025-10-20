@@ -48,6 +48,9 @@ export const createShortLink = async function (path: string) {
       const result = await dispatch(
         generatedAPI.endpoints.createShortUrl.initiate({
           shortUrl: {
+            apiVersion: 'shorturl.grafana.app/v1alpha1',
+            kind: 'ShortURL',
+            metadata: {},
             spec: {
               path: getRelativeURLPath(path),
             },

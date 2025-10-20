@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -14,10 +13,7 @@ var (
 )
 
 type FeatureManager struct {
-	isDevMod        bool
-	restartRequired bool
-
-	Settings setting.FeatureMgmtSettings
+	isDevMod bool
 
 	flags    map[string]*FeatureFlag
 	enabled  map[string]bool   // only the "on" values
@@ -131,66 +127,6 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 	return v
 }
 
-// isFeatureEditingAllowed checks if the backend is properly configured to allow feature toggle changes from the UI
-func (fm *FeatureManager) IsFeatureEditingAllowed() bool {
-	return fm.Settings.AllowEditing && fm.Settings.UpdateWebhook != ""
-}
-
-// indicate if a change has been made (not that accurate, but better than nothing)
-func (fm *FeatureManager) IsRestartRequired() bool {
-	return fm.restartRequired
-}
-
-// Flags that can be edited
-func (fm *FeatureManager) IsEditableFromAdminPage(key string) bool {
-	flag, ok := fm.flags[key]
-	if !ok ||
-		!fm.IsFeatureEditingAllowed() ||
-		!flag.AllowSelfServe ||
-		flag.Name == FlagFeatureToggleAdminPage {
-		return false
-	}
-	return flag.Stage == FeatureStageGeneralAvailability ||
-		flag.Stage == FeatureStagePublicPreview ||
-		flag.Stage == FeatureStageDeprecated
-}
-
-// Flags that should not be shown in the UI (regardless of their state)
-func (fm *FeatureManager) IsHiddenFromAdminPage(key string, lenient bool) bool {
-	_, hide := fm.Settings.HiddenToggles[key]
-	flag, ok := fm.flags[key]
-	if !ok || flag.HideFromAdminPage || hide {
-		return true // unknown flag (should we show it as a warning!)
-	}
-
-	// Explicitly hidden from configs
-	_, found := fm.Settings.HiddenToggles[key]
-	if found {
-		return true
-	}
-	if lenient {
-		return false
-	}
-
-	return flag.Stage == FeatureStageUnknown ||
-		flag.Stage == FeatureStageExperimental ||
-		flag.Stage == FeatureStagePrivatePreview
-}
-
-// Get the flags that were explicitly set on startup
-func (fm *FeatureManager) GetStartupFlags() map[string]bool {
-	return fm.startup
-}
-
-// Perhaps expose the flag warnings
-func (fm *FeatureManager) GetWarning() map[string]string {
-	return fm.warnings
-}
-
-func (fm *FeatureManager) SetRestartRequired() {
-	fm.restartRequired = true
-}
-
 // ############# Test Functions #############
 
 func WithFeatures(spec ...any) FeatureToggles {
@@ -222,34 +158,4 @@ func WithManager(spec ...any) *FeatureManager {
 	}
 
 	return &FeatureManager{enabled: enabled, flags: features, startup: enabled, warnings: map[string]string{}}
-}
-
-// WithFeatureManager is used to define feature toggle manager for testing.
-// It should be used when your test feature toggles require metadata beyond `Name` and `Enabled`.
-// You should provide a feature toggle Name at a minimum.
-func WithFeatureManager(cfg setting.FeatureMgmtSettings, flags []*FeatureFlag, disabled ...string) *FeatureManager {
-	count := len(flags)
-	features := make(map[string]*FeatureFlag, count)
-	enabled := make(map[string]bool, count)
-
-	dis := make(map[string]bool)
-	for _, v := range disabled {
-		dis[v] = true
-	}
-
-	for _, f := range flags {
-		if f.Name == "" {
-			continue
-		}
-		features[f.Name] = f
-		enabled[f.Name] = !dis[f.Name]
-	}
-
-	return &FeatureManager{
-		Settings: cfg,
-		enabled:  enabled,
-		flags:    features,
-		startup:  enabled,
-		warnings: map[string]string{},
-	}
 }

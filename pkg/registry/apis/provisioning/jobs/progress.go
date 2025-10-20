@@ -35,12 +35,12 @@ func maybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
 
 // FIXME: ProgressRecorder should be initialized in the queue
 type JobResourceResult struct {
-	Name     string
-	Resource string
-	Group    string
-	Path     string
-	Action   repository.FileAction
-	Error    error
+	Name   string
+	Group  string
+	Kind   string
+	Path   string
+	Action repository.FileAction
+	Error  error
 }
 
 type jobProgressRecorder struct {
@@ -73,7 +73,7 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.mu.Lock()
 	r.resultCount++
 
-	logger := logging.FromContext(ctx).With("path", result.Path, "resource", result.Resource, "group", result.Group, "action", result.Action, "name", result.Name)
+	logger := logging.FromContext(ctx).With("path", result.Path, "group", result.Group, "kind", result.Kind, "action", result.Action, "name", result.Name)
 	if result.Error != nil {
 		logger.Error("job resource operation failed", "err", result.Error)
 		if len(r.errors) < 20 {
@@ -173,12 +173,12 @@ func (r *jobProgressRecorder) summary() []*provisioning.JobResourceSummary {
 
 func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 	// Note: This method is called from Record() which already holds the lock
-	key := result.Resource + ":" + result.Group
+	key := result.Group + ":" + result.Kind
 	summary, exists := r.summaries[key]
 	if !exists {
 		summary = &provisioning.JobResourceSummary{
-			Resource: result.Resource,
-			Group:    result.Group,
+			Group: result.Group,
+			Kind:  result.Kind,
 		}
 		r.summaries[key] = summary
 	}

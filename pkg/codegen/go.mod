@@ -1,12 +1,12 @@
 module github.com/grafana/grafana/pkg/codegen
 
-go 1.24.6
+go 1.25.3
 
 require (
 	cuelang.org/go v0.11.1
 	github.com/dave/dst v0.27.3
 	github.com/grafana/codejen v0.0.4-0.20230321061741-77f656893a3d
-	github.com/grafana/cog v0.0.40
+	github.com/grafana/cog v0.0.43
 	github.com/grafana/cuetsy v0.1.11
 	github.com/matryer/is v1.4.1
 	golang.org/x/tools v0.37.0
@@ -48,9 +48,9 @@ require (
 	github.com/xlab/treeprint v1.2.0 // indirect
 	github.com/yalue/merged_fs v1.3.0 // indirect
 	golang.org/x/mod v0.28.0 // indirect
-	golang.org/x/net v0.44.0 // indirect
+	golang.org/x/net v0.45.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/text v0.29.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
