@@ -185,7 +185,7 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 
 			// For resource actions on folders we need to merge the tuples into one with combined subresources.
 			if zanzana.IsFolderResourceTuple(tuple) {
-				key := tupleStringWithoutCondition(tuple)
+				key := zanzana.TupleStringWithoutCondition(tuple)
 				if t, ok := tuples[tuple.Object][key]; ok {
 					zanzana.MergeFolderResourceTuples(t, tuple)
 				} else {
@@ -200,11 +200,6 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 
 		return tuples, nil
 	}
-}
-
-// tupleStringWithoutCondition is deprecated, use zanzana.TupleStringWithoutCondition instead
-func tupleStringWithoutCondition(tuple *openfgav1.TupleKey) string {
-	return zanzana.TupleStringWithoutCondition(tuple)
 }
 
 // basicRoleBindingsCollector collects role bindings for basic roles
@@ -397,7 +392,7 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 				// Use the appropriate key based on whether it's a folder resource tuple
 				var key string
 				if zanzana.IsFolderResourceTuple(tuple) {
-					key = tupleStringWithoutCondition(tuple)
+					key = zanzana.TupleStringWithoutCondition(tuple)
 				} else {
 					key = tuple.String()
 				}
@@ -484,7 +479,7 @@ func zanzanaCollector(relations []string) zanzanaTupleCollector {
 			}
 			for _, t := range tuples {
 				if zanzana.IsFolderResourceTuple(t.Key) {
-					out[tupleStringWithoutCondition(t.Key)] = t.Key
+					out[zanzana.TupleStringWithoutCondition(t.Key)] = t.Key
 				} else {
 					out[t.Key.String()] = t.Key
 				}
