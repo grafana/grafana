@@ -191,4 +191,3 @@ describe('AppNotificationList', () => {
     });
   });
 });
-

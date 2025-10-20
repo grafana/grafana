@@ -34,7 +34,7 @@ export function AppNotificationList() {
     // are still shown as they indicate successful operations or important information.
     const handleErrorAlert = (payload: AlertErrorPayload) => {
       const isKioskDashboard = chrome.state.getValue().kioskMode && location.pathname.startsWith('/d/');
-      
+
       if (!isKioskDashboard) {
         dispatch(notifyApp(createErrorNotification(...payload)));
       }
