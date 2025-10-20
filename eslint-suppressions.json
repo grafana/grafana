@@ -574,11 +574,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/BigValue/BigValue.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Cascader/Cascader.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
