@@ -107,13 +107,10 @@ func (b *SearchRequestBuilder) Sort(order SortOrder, field string, unmappedType 
 	return b
 }
 
-// AddTimeFieldWithStandardizedFormat adds a time field to fields with standardized time format
-func (b *SearchRequestBuilder) AddTimeFieldWithStandardizedFormat(timeField string, addWildcard bool) *SearchRequestBuilder {
-	fields := []map[string]string{{"field": timeField, "format": "strict_date_optional_time_nanos"}}
-	if addWildcard {
-		fields = append(fields, map[string]string{"field": "*"})
-	}
-	b.customProps["fields"] = fields
+// AddFieldsOption adds a time field to fields with standardized time format and all fields
+func (b *SearchRequestBuilder) AddFieldsOption(timeField string) *SearchRequestBuilder {
+	b.customProps["fields"] = []map[string]string{{"field": timeField, "format": "strict_date_optional_time_nanos"}, {"field": "*"}}
+
 	return b
 }
 
