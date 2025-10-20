@@ -127,9 +127,6 @@ func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets, li
 		DefaultUser: dtos.CurrentUser{},
 	}
 
-	processIndexViewData(&indexViewData)
-	logger.Info("josh index view data processed by hooks", "versionString", buildInfo.VersionString, "indexViewDataVersionString", indexViewData.Settings.BuildInfo.VersionString)
-
 	return &IndexProvider{
 		log:   logger,
 		index: t,
