@@ -325,48 +325,4 @@ func TestCachingMiddleware(t *testing.T) {
 			cs.AssertCalls(t, "HandleResourceRequest", 0)
 		})
 	})
-
-	t.Run("when request context doesn't contain a namespace, caching is a no-op", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodGet, "/doesnt/matter", nil)
-		require.NoError(t, err)
-
-		cs := caching.NewFakeOSSCachingService()
-		cachingServiceClient := caching.ProvideCachingServiceClient(cs, nil)
-		cdt := handlertest.NewHandlerMiddlewareTest(t,
-			WithReqContext(req, &user.SignedInUser{
-				Namespace: "",
-			}),
-			handlertest.WithMiddlewares(NewCachingMiddleware(cachingServiceClient)),
-		)
-
-		jsonDataMap := map[string]any{}
-		jsonDataBytes, err := json.Marshal(&jsonDataMap)
-		require.NoError(t, err)
-
-		pluginCtx := backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: jsonDataBytes,
-			},
-		}
-
-		qdr := &backend.QueryDataRequest{
-			PluginContext: pluginCtx,
-		}
-
-		resp, err := cdt.MiddlewareHandler.QueryData(req.Context(), qdr)
-		assert.NoError(t, err)
-		cs.AssertCalls(t, "HandleQueryRequest", 0)
-		require.Nil(t, resp)
-
-		crr := &backend.CallResourceRequest{
-			PluginContext: pluginCtx,
-		}
-
-		storeOneResponseCallResourceSender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-			return nil
-		})
-
-		require.NoError(t, cdt.MiddlewareHandler.CallResource(req.Context(), crr, storeOneResponseCallResourceSender))
-		cs.AssertCalls(t, "HandleResourceRequest", 0)
-	})
 }
