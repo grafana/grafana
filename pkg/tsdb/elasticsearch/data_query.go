@@ -384,7 +384,7 @@ func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defa
 	b.AddDocValueField(defaultTimeField)
 	// We need to add timeField as field with standardized time format to not receive
 	// invalid formats that elasticsearch can parse, but our frontend can't (e.g. yyyy_MM_dd_HH_mm_ss)
-	b.AddTimeFieldWithStandardizedFormat(defaultTimeField, true)
+	b.AddFieldsOption(defaultTimeField)
 	b.Size(stringToIntWithDefaultValue(metric.Settings.Get("limit").MustString(), defaultSize))
 	b.AddHighlight()
 
@@ -420,7 +420,7 @@ func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, 
 	if isRawDataQuery(q) {
 		// For raw_data queries we need to add timeField as field with standardized time format to not receive
 		// invalid formats that elasticsearch can parse, but our frontend can't (e.g. yyyy_MM_dd_HH_mm_ss)
-		b.AddTimeFieldWithStandardizedFormat(defaultTimeField, true)
+		b.AddFieldsOption(defaultTimeField)
 		// Disables _source for raw_data queries as all fields will be returned in the fields property
 		b.DisableSource()
 	}
