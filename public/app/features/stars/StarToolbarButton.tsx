@@ -128,10 +128,7 @@ const useUpdateNavStarredItems = () => {
       });
     } else {
       dispatch(removeNavIndex(navID));
-      const indexToRemove = starredNavItem.children?.findIndex((element) => element.id === navID);
-      if (indexToRemove) {
-        starredNavItem.children?.splice(indexToRemove, 1);
-      }
+      starredNavItem.children = starredNavItem.children?.filter((element) => element.id !== navID);
     }
     dispatch(updateNavIndex(starredNavItem));
   };
