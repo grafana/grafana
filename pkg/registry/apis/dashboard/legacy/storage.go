@@ -119,8 +119,13 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 				}
 
 				// dashboard version is the RV in legacy storage
+				// and deprecatedInternalID must be set here (as SaveDashboard does below for non-provisioned dashboards)
 				if after != nil {
 					rv = int64(after.Version)
+					access := GetLegacyAccess(ctx)
+					if access != nil {
+						access.DashboardID = after.ID
+					}
 				}
 			} else {
 				failOnExisting := event.Type == resourcepb.WatchEvent_ADDED
