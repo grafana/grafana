@@ -289,7 +289,7 @@ class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
                 onBlur={this.onBlurCascade}
                 value={activeLabel}
                 onFocus={(e) => {
-                  e.target.select();
+                  e.currentTarget.select();
                 }}
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
