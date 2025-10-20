@@ -108,7 +108,7 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 		end, err = strconv.ParseInt(query.Get("end"), 10, 64)
 		if err != nil {
 			ctxLogger.Error("Failed to parse end as int", "error", err, "function", logEntrypoint())
-			return backend.DownstreamError(fmt.Errorf("failed to parse start as int: %w", err))
+			return backend.DownstreamError(fmt.Errorf("failed to parse end as int: %w", err))
 		}
 	} else {
 		// Make sure to pass a valid time range to the client as v2 will not work without it.
