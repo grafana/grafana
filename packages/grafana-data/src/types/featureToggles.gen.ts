@@ -1222,4 +1222,14 @@ export interface FeatureToggles {
   * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
   */
   jaegerEnableGrpcEndpoint?: boolean;
+  /**
+  * Load plugins during store service startup instead of wire provider
+  * @default false
+  */
+  pluginStoreServiceLoading?: boolean;
+  /**
+  * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
+  * @default true
+  */
+  onlyStoreActionSets?: boolean;
 }
