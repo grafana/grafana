@@ -198,7 +198,7 @@ func TestQueryFramesDateTimeSelect(t *testing.T) {
 	}
 }
 
-func TestWhereOnNullNumber(t *testing.T) {
+func TestNaNBecomesNullOrZero(t *testing.T) {
 	f := &data.Frame{
 		RefID: "a",
 		Name:  "a",
