@@ -1,3 +1,5 @@
+import { FeatureToggles } from '../types/featureToggles.gen';
+
 import { ThemeColors } from './createColors';
 import { ThemeShadows } from './createShadows';
 import type { Radii } from './createShape';
@@ -63,10 +65,14 @@ export interface ThemeComponents {
   menu: MenuComponentTokens;
 }
 
-export function createComponents(colors: ThemeColors, shadows: ThemeShadows): ThemeComponents {
+export function createComponents(
+  colors: ThemeColors,
+  shadows: ThemeShadows,
+  featureToggles: FeatureToggles
+): ThemeComponents {
   const panel = {
-    padding: 1,
-    headerHeight: 4,
+    padding: featureToggles.newPanelPadding ? 2 : 1,
+    headerHeight: featureToggles.newPanelPadding ? 5 : 4,
     background: colors.background.primary,
     borderColor: colors.border.weak,
     boxShadow: 'none',

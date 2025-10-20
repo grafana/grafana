@@ -11,7 +11,7 @@ interface ThemeableStoryProps {
   handleSassThemeChange: SassThemeChangeHandler;
 }
 const ThemeableStory = ({ children, handleSassThemeChange, themeId }: React.PropsWithChildren<ThemeableStoryProps>) => {
-  const theme = getThemeById(themeId);
+  const theme = getThemeById(themeId, {});
 
   handleSassThemeChange(theme);
 
