@@ -4420,11 +4420,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/grafana-testdata-datasource/TestInfoTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/grafana-testdata-datasource/components/CSVWaveEditor.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
