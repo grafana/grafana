@@ -362,9 +362,8 @@ func (b *APIBuilder) isAuthenticatedRequest(r *http.Request) bool {
 
 // validateNamespace checks if the namespace in the evaluation context matches the namespace in the request
 func (b *APIBuilder) validateNamespace(r *http.Request) bool {
-	ctx, span := tracer.Start(r.Context(), "ofrep.validateNamespace")
+	_, span := tracer.Start(r.Context(), "ofrep.validateNamespace")
 	defer span.End()
-	r = r.WithContext(ctx)
 
 	var namespace string
 	user, ok := types.AuthInfoFrom(r.Context())

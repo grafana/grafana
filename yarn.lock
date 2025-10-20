@@ -3058,7 +3058,7 @@ __metadata:
     "@types/tinycolor2": "npm:1.4.6"
     d3-interpolate: "npm:3.0.1"
     date-fns: "npm:4.1.0"
-    dompurify: "npm:3.2.6"
+    dompurify: "npm:3.3.0"
     esbuild: "npm:0.25.8"
     eventemitter3: "npm:5.0.1"
     fast_array_intersect: "npm:1.1.0"
@@ -3526,11 +3526,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.39.5":
-  version: 6.39.5
-  resolution: "@grafana/scenes-react@npm:6.39.5"
+"@grafana/scenes-react@npm:^6.39.8":
+  version: 6.39.8
+  resolution: "@grafana/scenes-react@npm:6.39.8"
   dependencies:
-    "@grafana/scenes": "npm:6.39.5"
+    "@grafana/scenes": "npm:6.39.8"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3542,13 +3542,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/9bd908578a62dfbafba96d7046f25785391555a77445c76de0195d9a132a9c3c3dde565ef76ad834968c65266fa6d2ba2ee746303e46ebe7fd69a2b87ef3f5b4
+  checksum: 10/14f94437976890e5f9f2046be67796612273041f45ac76baace296249630e1189b28838ff6346c4463fa3fabf3e55d34ccbc4ff92a5ece83bf04566d52638c87
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.39.5":
-  version: 6.39.5
-  resolution: "@grafana/scenes@npm:6.39.5"
+"@grafana/scenes@npm:6.39.8, @grafana/scenes@npm:^6.39.8":
+  version: 6.39.8
+  resolution: "@grafana/scenes@npm:6.39.8"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3568,7 +3568,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/8608c7e98e0928bc32ccc58cdaf47a4339c60d4c81b1c23db962569f1f9650d22552e88bb3fa3524173ac475c7f9c4578383da49968c7bdd3cb40db043ef233b
+  checksum: 10/0a9ce2dfae242c805463867d65f6dbd434490c764f791bb923af47b3042978ffceccbfe52e79d940b89c1e62f86a39992c10b505eb330dcf73005f69f2c2a444
   languageName: node
   linkType: hard
 
@@ -15310,15 +15310,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:3.2.6":
-  version: 3.2.6
-  resolution: "dompurify@npm:3.2.6"
+"dompurify@npm:3.3.0":
+  version: 3.3.0
+  resolution: "dompurify@npm:3.3.0"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10/b91631ed0e4d17fae950ef53613cc009ed7e73adc43ac94a41dd52f35483f7538d13caebdafa7626e0da145fc8184e7ac7935f14f25b7e841b32fda777e40447
+  checksum: 10/d8782b10a0454344476936c91038d06c9450b3e3ada2ceb8f722525e6b54e64d847939b9f35bf385facd4139f0a2eaf7f5553efce351f8e9295620570875f002
   languageName: node
   linkType: hard
 
@@ -18298,8 +18298,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.39.5"
-    "@grafana/scenes-react": "npm:6.39.5"
+    "@grafana/scenes": "npm:^6.39.8"
+    "@grafana/scenes-react": "npm:^6.39.8"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
