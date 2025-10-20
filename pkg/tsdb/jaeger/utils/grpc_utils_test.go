@@ -577,7 +577,6 @@ func TestProcessSpanKind(t *testing.T) {
 }
 
 func TestProcessAttributes(t *testing.T) {
-
 	t.Run("processes empty attributes", func(t *testing.T) {
 		actual := processAttributes([]types.GrpcKeyValue{})
 		assert.Equal(t, []types.KeyValueType{}, actual)

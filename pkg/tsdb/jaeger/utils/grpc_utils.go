@@ -311,7 +311,6 @@ func processAttributes(attributes []types.GrpcKeyValue) []types.KeyValueType {
 			})
 			continue
 		}
-
 	}
 	return tags
 }
@@ -349,7 +348,7 @@ func processSpanKind(kind int64) string {
 // This is to help ensure backwards compatibility with the current non OTLP based Jager trace format
 // a few fields are different between TraceLogs and GrpcSpanEvents
 func convertGrpcEventsToLogs(events []types.GrpcSpanEvent) []types.TraceLog {
-	var logs []types.TraceLog
+	logs := []types.TraceLog{}
 
 	for _, event := range events {
 		timestamp, err := strconv.Atoi(event.TimeUnixNano)
@@ -367,10 +366,10 @@ func convertGrpcEventsToLogs(events []types.GrpcSpanEvent) []types.TraceLog {
 	return logs
 }
 
-// this is to help ensure backwards compatibility between references and links with the curent non OTLP based Jaeger trace format
+// this is to help ensure backwards compatibility between references and links with the current non OTLP based Jaeger trace format
 // There is no convccept of RefType in the new OTLP based SpanLink, so we are only converting the SpanID and TraceID
 func convertGrpcLinkToReference(links []types.GrpcSpanLink) []types.TraceSpanReference {
-	var references []types.TraceSpanReference
+	references := []types.TraceSpanReference{}
 
 	for _, ref := range links {
 		references = append(references, types.TraceSpanReference{

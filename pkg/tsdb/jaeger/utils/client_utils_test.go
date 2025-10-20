@@ -137,7 +137,7 @@ func TestTransformTraceResponse(t *testing.T) {
 		}
 
 		frame := TransformTraceResponse(trace, "test")
-		experimental.CheckGoldenJSONFrame(t, "./testdata", "simple_trace.golden", frame, false)
+		experimental.CheckGoldenJSONFrame(t, "../testdata", "simple_trace.golden", frame, false)
 	})
 
 	t.Run("complex_trace", func(t *testing.T) {
@@ -256,6 +256,6 @@ func TestTransformTraceResponse(t *testing.T) {
 		}
 
 		frame := TransformTraceResponse(trace, "test")
-		experimental.CheckGoldenJSONFrame(t, "./testdata", "complex_trace.golden", frame, false)
+		experimental.CheckGoldenJSONFrame(t, "../testdata", "complex_trace.golden", frame, false)
 	})
 }
