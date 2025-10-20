@@ -562,9 +562,7 @@ export const LogsPanel = ({
           getRowContext={(row, options) => getLogRowContext(row, contextRow, options)}
           getLogRowContextUi={getLogRowContextUi}
           logOptionsStorageKey={controlsStorageKey}
-          logLineMenuCustomItems={
-            isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined
-          }
+          logLineMenuCustomItems={isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined}
           timeZone={timeZone}
           displayedFields={displayedFields}
           onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
