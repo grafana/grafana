@@ -238,19 +238,29 @@ During conversion:
 - Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
 - Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
 
-### Dynamic schemas (or Schema changes and missing data)
+### Schema changes and missing data
 
 SQL expressions have known limitations that may cause queries to fail or return unexpected results. These constraints are inherent to how the feature is implemented and should be understood when building queries.
 
-<!-- SQL expressions have known limitations in three scenarios: error responses, no data responses, and dynamic schema responses (where columns or labels change between query executions). These limitations exist because SQL expressions use a SQL engine that expects static schemas, but time-series data sources can return dynamic schemas that change over time. When the SQL layer encounters missing data, errors, or different column sets, it interprets these as columns not existing, which can cause queries to fail or return unexpected results. -->
-
 The following situations are affected:
 
-- Error responses – When a data source returns an error, SQL expressions cannot interpret the result.
+- Error responses – When a data source query returns an error, SQL expressions cannot interpret the result.
 
 - No data responses – If a query returns no rows, the SQL expression engine cannot infer a schema.
 
 - Dynamic schema responses – If the set of columns or labels changes between query executions, SQL expressions may fail because it treats column changes as schema changes.
+
+SQL expressions are powered by an embedded SQL engine where each query result is treated as a table. The schema of that table is derived from the columns returned by the underlying data source.
+
+Unlike traditional SQL databases, where schemas are usually fixed, many Grafana data sources (for example, Prometheus) can return results with varying label sets or no data at all.
+
+When this happens:
+
+- A missing column appears to the SQL engine as if it doesn’t exist.
+- A completely empty result provides no schema for subsequent SQL operations.
+- Error responses break the assumption that the query returns tabular data.
+
+As a result, SQL expressions can’t gracefully handle changes in schema or no-data conditions, since these cases violate the static schema model that SQL relies on.
 
 #### Workarounds
 
@@ -260,7 +270,7 @@ You can mitigate these issues in the following ways:
 
 - Ensure a consistent schema – If possible, configure your query to always return columns, even when no data is present.
 
-#### Example: Handling Prometheus No Data
+#### Example: Handling Prometheus no data
 
 When joining results from the same Prometheus query across different data source instances, you can use this pattern:
 
