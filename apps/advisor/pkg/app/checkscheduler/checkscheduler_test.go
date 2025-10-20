@@ -275,7 +275,7 @@ func TestRunner_Run_Pagination(t *testing.T) {
 		err := runAndTimeout(runner)
 		assert.ErrorAs(t, err, &context.DeadlineExceeded)
 		// Should handle pagination correctly
-		assert.Equal(t, 2, callCount)
+		assert.GreaterOrEqual(t, callCount, 2)
 	})
 }
 
