@@ -57,7 +57,7 @@ An alpha version may undergo breaking changes without adding an additional versi
 
 Beta versions should not contain breaking changes in the schema, but still may be subject to changes in handling logic or semantics.
 Breaking schema changes require a new published beta version (such as publishing `v1beta2` for breaking changes to the `v1beta1` schema).
-While beta versions are no longer considered experimental like alpha versions, they should still be disabled by default and require a feature flag to enable.
+While beta versions are no longer considered experimental like alpha versions, they should still be disabled by default.
 
 #### GA
 
