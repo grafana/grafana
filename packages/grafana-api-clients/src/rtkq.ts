@@ -2,6 +2,7 @@
  * Don't manually add to this file! Use the `generate:api-client` command to add new API clients.
  */
 import { generatedAPI as advisorAPIv0alpha1 } from './clients/rtkq/advisor/v0alpha1';
+import { generatedAPI as correlationsAPIv0alpha1 } from './clients/rtkq/correlations/v0alpha1';
 import { generatedAPI as dashboardAPIv0alpha1 } from './clients/rtkq/dashboard/v0alpha1';
 import { generatedAPI as folderAPIv1beta1 } from './clients/rtkq/folder/v1beta1';
 import { generatedAPI as iamAPIv0alpha1 } from './clients/rtkq/iam/v0alpha1';
@@ -25,6 +26,7 @@ export const allMiddleware = [
   preferencesUserAPI.middleware,
   provisioningAPIv0alpha1.middleware,
   shortURLAPIv1alpha1.middleware,
+  correlationsAPIv0alpha1.middleware,
   // PLOP_INJECT_MIDDLEWARE
 ] as const;
 
@@ -40,5 +42,6 @@ export const allReducers = {
   [preferencesUserAPI.reducerPath]: preferencesUserAPI.reducer,
   [provisioningAPIv0alpha1.reducerPath]: provisioningAPIv0alpha1.reducer,
   [shortURLAPIv1alpha1.reducerPath]: shortURLAPIv1alpha1.reducer,
+  [correlationsAPIv0alpha1.reducerPath]: correlationsAPIv0alpha1.reducer,
   // PLOP_INJECT_REDUCER
 };

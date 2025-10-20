@@ -1,6 +1,8 @@
-import { generatedAPI } from './endpoints.gen';
+export { BASE_URL, API_GROUP, API_VERSION } from './baseAPI';
+import { generatedAPI as rawAPI } from './endpoints.gen';
 
-export const correlationAPIv0alpha1 = generatedAPI.enhanceEndpoints({
+export * from './endpoints.gen';
+export const generatedAPI = rawAPI.enhanceEndpoints({
   endpoints: {
     createCorrelation: (endpointDefinition) => {
       const originalQuery = endpointDefinition.query;
