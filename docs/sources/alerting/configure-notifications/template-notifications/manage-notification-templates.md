@@ -62,6 +62,8 @@ To add an existing notification template to your contact point, complete the fol
 
 1. Click **Save contact point**.
 
+You can create custom notification templates using the **Enter custom message** tab. For reusable and consistent notifications, we recommend creating custom notification templates as described in the following section.
+
 ## Create a notification template and notification template group
 
 Create notification templates to customize notification messages and reuse them in contact points.
