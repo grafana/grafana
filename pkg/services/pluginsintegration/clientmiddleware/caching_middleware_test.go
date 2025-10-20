@@ -24,7 +24,7 @@ func TestCachingMiddleware(t *testing.T) {
 		cs := caching.NewFakeOSSCachingService()
 		cachingServiceClient := caching.ProvideCachingServiceClient(cs, nil)
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
-			WithReqContext(req, &user.SignedInUser{Namespace: "ns"}),
+			WithReqContext(req, &user.SignedInUser{}),
 			handlertest.WithMiddlewares(NewCachingMiddleware(cachingServiceClient)),
 		)
 
@@ -108,7 +108,7 @@ func TestCachingMiddleware(t *testing.T) {
 		t.Run("with async queries", func(t *testing.T) {
 			cachingServiceClient := caching.ProvideCachingServiceClient(cs, featuremgmt.WithFeatures(featuremgmt.FlagAwsAsyncQueryCaching))
 			asyncCdt := handlertest.NewHandlerMiddlewareTest(t,
-				WithReqContext(req, &user.SignedInUser{Namespace: "ns"}),
+				WithReqContext(req, &user.SignedInUser{}),
 				handlertest.WithMiddlewares(
 					NewCachingMiddleware(cachingServiceClient)),
 			)
@@ -200,7 +200,7 @@ func TestCachingMiddleware(t *testing.T) {
 		cs := caching.NewFakeOSSCachingService()
 		cachingServiceClient := caching.ProvideCachingServiceClient(cs, nil)
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
-			WithReqContext(req, &user.SignedInUser{Namespace: "ns"}),
+			WithReqContext(req, &user.SignedInUser{}),
 			handlertest.WithMiddlewares(NewCachingMiddleware(cachingServiceClient)),
 			handlertest.WithResourceResponses([]*backend.CallResourceResponse{simulatedPluginResponse}),
 		)
