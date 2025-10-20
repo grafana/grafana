@@ -63,6 +63,35 @@ export function getLogLevel(line: string): LogLevel {
       }
     }
   }
+  // z/OS syslog messages often use a single-letter severity at the end of the message
+  // e.g. "... MSGID I" or "... (I)" where I=informational, W=warning, E=error, S=severe
+  // Try to detect a trailing severity letter if no other token matched earlier in the line.
+  if (level === LogLevel.unknown) {
+    const zosRegexp = /(?:\b|\()([IWEFCS])(?:\b|\))/i; // include common letters used in syslog variants
+    const match = zosRegexp.exec(line);
+    if (match) {
+      // map z/OS letters to LogLevel where reasonable
+      const letter = match[1].toUpperCase();
+      switch (letter) {
+        case 'I':
+          level = LogLevel.info;
+          break;
+        case 'W':
+          level = LogLevel.warning;
+          break;
+        case 'E':
+          level = LogLevel.error;
+          break;
+        case 'C': // critical
+        case 'S': // severe
+        case 'F': // fatal
+          level = LogLevel.critical;
+          break;
+        default:
+          level = LogLevel.unknown;
+      }
+    }
+  }
   return level;
 }
 
@@ -70,6 +99,25 @@ export function getLogLevelFromKey(key: string | number): LogLevel {
   const level = LogLevel[key.toString().toLowerCase() as keyof typeof LogLevel];
   if (level) {
     return level;
+  }
+  // Support z/OS single-letter severity keys like 'I','W','E','S'
+  if (typeof key === 'string' && key.length === 1) {
+    switch (key.toUpperCase()) {
+      case 'I':
+        return LogLevel.info;
+      case 'W':
+        return LogLevel.warning;
+      case 'E':
+        return LogLevel.error;
+      case 'C':
+      case 'S':
+      case 'F':
+        return LogLevel.critical;
+      case 'D':
+        return LogLevel.debug;
+      default:
+        return LogLevel.unknown;
+    }
   }
   if (typeof key === 'string') {
     // The level did not match any entry of LogLevel. It might be unknown or a numeric level.
