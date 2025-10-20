@@ -1,4 +1,5 @@
 {
+  "_source": false,
   "docvalue_fields": [
     "testtime"
   ],
@@ -32,6 +33,9 @@
       {
         "field": "testtime",
         "format": "strict_date_optional_time_nanos"
+      },
+      {
+        "field": "*"
       }
     ]
 }
