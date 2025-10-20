@@ -419,7 +419,6 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 	rows := make([]dashv2alpha1.DashboardRowsLayoutRowKind, 0)
 
 	var currentRow *dashv2alpha1.DashboardRowsLayoutRowKind
-	var legacyRowY int64
 
 	for _, p := range panels {
 		panelMap, ok := p.(map[string]interface{})
@@ -429,10 +428,6 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 
 		if getStringField(panelMap, "type", "") == "row" {
 			// This is a row panel
-			if gridPos, ok := panelMap["gridPos"].(map[string]interface{}); ok {
-				legacyRowY = int64(getIntField(gridPos, "y", 0))
-			}
-
 			if currentRow != nil {
 				// Flush current row to layout
 				rows = append(rows, *currentRow)
@@ -446,7 +441,8 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 						element, name, err := buildElement(collapsedPanelMap)
 						if err == nil {
 							elements[name] = element
-							rowElements = append(rowElements, buildGridItemKind(collapsedPanelMap, name, int64Ptr(yOffsetInRows(collapsedPanelMap, legacyRowY))))
+							// Frontend preserves absolute Y coordinates for panels in rows
+							rowElements = append(rowElements, buildGridItemKind(collapsedPanelMap, name, nil))
 						}
 					}
 				}
@@ -465,14 +461,14 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 			if currentRow != nil {
 				// Add to current row
 				if currentRow.Spec.Layout.GridLayoutKind != nil {
+					// Frontend preserves absolute Y coordinates for panels in rows
 					currentRow.Spec.Layout.GridLayoutKind.Spec.Items = append(
 						currentRow.Spec.Layout.GridLayoutKind.Spec.Items,
-						buildGridItemKind(panelMap, elementName, int64Ptr(yOffsetInRows(panelMap, legacyRowY))),
+						buildGridItemKind(panelMap, elementName, nil),
 					)
 				}
 			} else {
 				// Create first row (hidden header)
-				legacyRowY = -1
 				gridItems := []dashv2alpha1.DashboardGridLayoutItemKind{
 					buildGridItemKind(panelMap, elementName, int64Ptr(0)),
 				}
@@ -1819,7 +1815,9 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 	}
 
 	// Build field config by mapping each field individually
+	// Always initialize with empty defaults to match frontend behavior
 	fieldConfigSource := dashv2alpha1.DashboardFieldConfigSource{
+		Defaults:  dashv2alpha1.DashboardFieldConfig{},
 		Overrides: []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{},
 	}
 

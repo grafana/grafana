@@ -178,7 +178,7 @@
             }
           },
           "vizConfig": {
-            "kind": "graph",
+            "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
               "options": {},
@@ -248,8 +248,7 @@
           "links": [
             {
               "title": "Drill Down",
-              "url": "/d/detailed-view",
-              "targetBlank": false
+              "url": "/d/detailed-view"
             }
           ],
           "data": {

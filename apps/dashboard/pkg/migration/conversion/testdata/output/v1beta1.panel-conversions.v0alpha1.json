@@ -36,8 +36,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -68,7 +67,8 @@
           "legend": {
             "calcs": [],
             "displayMode": "list",
-            "placement": "bottom"
+            "placement": "bottom",
+            "showLegend": true
           },
           "tooltip": {
             "mode": "single"
@@ -77,12 +77,20 @@
         "pluginVersion": "10.0.0",
         "targets": [
           {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "existing-ref-uid"
+            },
             "expr": "up",
             "hide": false,
             "interval": "30s",
             "refId": "A"
           },
           {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "existing-ref-uid"
+            },
             "expr": "cpu_usage",
             "hide": true,
             "interval": "1m",
@@ -115,11 +123,14 @@
           "name": "Shared Stats Panel",
           "uid": "library-panel-uid-123"
         },
-        "title": "Library Panel Reference",
-        "type": "stat"
+        "title": "Library Panel Reference"
       },
       {
         "collapsed": false,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "edprtf91hz01se"
+        },
         "gridPos": {
           "h": 1,
           "w": 24,
@@ -129,10 +140,20 @@
         "id": 3,
         "panels": [],
         "repeat": "server",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "edprtf91hz01se"
+            },
+            "refId": "A"
+          }
+        ],
         "title": "Row Panel",
         "type": "row"
       },
       {
+        "autoMigrateFrom": "graph",
         "datasource": {
           "type": "prometheus",
           "uid": "default-ds-uid"
@@ -140,7 +161,8 @@
         "fieldConfig": {
           "defaults": {
             "custom": {}
-          }
+          },
+          "overrides": []
         },
         "gridPos": {
           "h": 6,
@@ -150,60 +172,20 @@
         },
         "id": 4,
         "maxPerRow": 4,
-        "options": {},
         "repeat": "region",
         "repeatDirection": "h",
         "targets": [
           {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "default-ds-uid"
+            },
             "refId": "A",
             "scenarioId": "random_walk"
           }
         ],
         "title": "Panel in Row",
-        "type": "graph"
-      },
-      {
-        "collapsed": true,
-        "gridPos": {
-          "h": 1,
-          "w": 24,
-          "x": 0,
-          "y": 15
-        },
-        "id": 5,
-        "panels": [
-          {
-            "datasource": {
-              "type": "loki",
-              "uid": "non-default-test-ds-uid"
-            },
-            "fieldConfig": {
-              "defaults": {},
-              "overrides": []
-            },
-            "gridPos": {
-              "h": 8,
-              "w": 12,
-              "x": 0,
-              "y": 16
-            },
-            "id": 6,
-            "options": {
-              "showHeader": true
-            },
-            "targets": [
-              {
-                "format": "table",
-                "rawSql": "SELECT * FROM metrics",
-                "refId": "A"
-              }
-            ],
-            "title": "Hidden Panel in Collapsed Row",
-            "type": "table"
-          }
-        ],
-        "title": "Collapsed Row",
-        "type": "row"
+        "type": "timeseries"
       },
       {
         "datasource": {
@@ -218,7 +200,8 @@
             "custom": {
               "orientation": "horizontal"
             }
-          }
+          },
+          "overrides": []
         },
         "gridPos": {
           "h": 6,
@@ -230,7 +213,6 @@
         "id": 7,
         "links": [
           {
-            "targetBlank": false,
             "title": "Drill Down",
             "url": "/d/detailed-view"
           }
@@ -252,6 +234,10 @@
                 "type": "date_histogram"
               }
             ],
+            "datasource": {
+              "type": "elasticsearch",
+              "uid": "existing-target-uid"
+            },
             "query": "*",
             "refId": "A"
           }
@@ -286,6 +272,62 @@
           }
         ],
         "type": "barchart"
+      },
+      {
+        "collapsed": true,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "edprtf91hz01se"
+        },
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 15
+        },
+        "id": 5,
+        "panels": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "non-default-test-ds-uid"
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 0,
+              "y": 16
+            },
+            "id": 6,
+            "options": {
+              "showHeader": true
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "loki",
+                  "uid": "non-default-test-ds-uid"
+                },
+                "format": "table",
+                "rawSql": "SELECT * FROM metrics",
+                "refId": "A"
+              }
+            ],
+            "title": "Hidden Panel in Collapsed Row",
+            "type": "table"
+          }
+        ],
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "existing-ref-uid"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Collapsed Row",
+        "type": "row"
       }
     ],
     "preload": false,

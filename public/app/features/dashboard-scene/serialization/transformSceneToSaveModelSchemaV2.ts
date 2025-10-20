@@ -179,8 +179,8 @@ export function vizPanelToSchemaV2(
   const defaults = handleFieldConfigDefaultsConversion(vizPanel);
 
   const vizFieldConfig: FieldConfigSource = {
-    ...vizPanel.state.fieldConfig,
     defaults,
+    overrides: vizPanel.state.fieldConfig?.overrides ?? [],
   };
 
   const elementSpec: PanelKind = {
@@ -248,6 +248,10 @@ function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
     }).filter(([_, value]) => {
       if (Array.isArray(value)) {
         return value.length > 0;
+      }
+      // Filter out empty objects (like custom: {})
+      if (typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length === 0) {
+        return false;
       }
       return value !== undefined;
     })
@@ -324,7 +328,16 @@ export function getDataQueryKind(query: SceneDataQuery | string, queryRunner?: S
 }
 
 export function getDataQuerySpec(query: SceneDataQuery): DataQueryKind['spec'] {
-  return query;
+  // Add refId if it exists in the query to ensure round-trip consistency
+  if ('refId' in query && query.refId) {
+    return query;
+  }
+  // For queries without refId (like those in variables), add default refId to match
+  // the behavior in transformSaveModelSchemaV2ToScene.getDataQueryForVariable
+  return {
+    ...query,
+    refId: query.refId ?? 'A',
+  };
 }
 
 function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {

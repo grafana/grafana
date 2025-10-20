@@ -183,7 +183,7 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "graph",
+            "group": "timeseries",
             "version": "",
             "spec": {
               "options": {},
@@ -255,8 +255,7 @@
           "links": [
             {
               "title": "Drill Down",
-              "url": "/d/detailed-view",
-              "targetBlank": false
+              "url": "/d/detailed-view"
             }
           ],
           "data": {
@@ -418,7 +417,7 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 0,
-                        "y": 0,
+                        "y": 9,
                         "width": 8,
                         "height": 6,
                         "element": {
@@ -430,6 +429,19 @@
                           "value": "region",
                           "direction": "h",
                           "maxPerRow": 4
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 8,
+                        "y": 9,
+                        "width": 16,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-7"
                         }
                       }
                     }
@@ -451,25 +463,12 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 0,
-                        "y": 0,
+                        "y": 16,
                         "width": 12,
                         "height": 8,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-6"
-                        }
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
-                        "x": 8,
-                        "y": -7,
-                        "width": 16,
-                        "height": 6,
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "panel-7"
                         }
                       }
                     }
