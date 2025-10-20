@@ -1097,4 +1097,12 @@ const (
 	// FlagJaegerEnableGrpcEndpoint
 	// Enable querying trace data through Jaeger&#39;s gRPC endpoint (HTTP)
 	FlagJaegerEnableGrpcEndpoint = "jaegerEnableGrpcEndpoint"
+
+	// FlagPluginStoreServiceLoading
+	// Load plugins during store service startup instead of wire provider
+	FlagPluginStoreServiceLoading = "pluginStoreServiceLoading"
+
+	// FlagOnlyStoreActionSets
+	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
+	FlagOnlyStoreActionSets = "onlyStoreActionSets"
 )
