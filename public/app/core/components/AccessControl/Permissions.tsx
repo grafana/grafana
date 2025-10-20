@@ -68,7 +68,8 @@ export const Permissions = ({
       setDesc(r);
       return fetchPermissions();
     });
-  }, [resource, fetchPermissions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchPermissions changes on every render due to parent component re-renders
+  }, [resource, resourceId]);
 
   const onAdd = (state: SetPermission) => {
     let promise: Promise<void> | null = null;
