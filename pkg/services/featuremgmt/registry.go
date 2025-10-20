@@ -412,6 +412,13 @@ var (
 			Owner:             identityAccessTeam,
 		},
 		{
+			Name:         "createAlertRuleFromPanel",
+			Description:  "Enables creating alert rules from a panel using a drawer UI",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+		},
+		{
 			Name:         "panelMonitoring",
 			Description:  "Enables panel monitoring through logs and measurements",
 			Stage:        FeatureStageGeneralAvailability,
