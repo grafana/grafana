@@ -211,7 +211,7 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 	data, err := json.Marshal(res)
 	if err != nil {
 		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
-		return err
+		return backend.DownstreamErrorf("failed to marshall response: %w", err)
 	}
 
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Status: 200})
