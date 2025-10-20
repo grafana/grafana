@@ -178,5 +178,20 @@ describe('RadialGauge utils', () => {
 
       expect(result.angle).toBe(360);
     });
+
+    it('should handle values lower than min', () => {
+      const fieldDisplay = createFieldDisplay(-50, 0, 100);
+      const result = getValueAngleForValue(fieldDisplay, 240, 120);
+
+      expect(result.angle).toBe(0);
+    });
+
+    it('should handle values higher than max', () => {
+      const fieldDisplay = createFieldDisplay(200, 0, 100);
+      const result = getValueAngleForValue(fieldDisplay, 240, 120);
+
+      // Expect the angle to be clamped to the maximum range
+      expect(result.angle).toBe(240);
+    });
   });
 });

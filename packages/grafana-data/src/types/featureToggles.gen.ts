@@ -1218,6 +1218,11 @@ export interface FeatureToggles {
   */
   cdnPluginsUrls?: boolean;
   /**
+  * Enable new gauge visualization
+  * @default false
+  */
+  newGauge?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */

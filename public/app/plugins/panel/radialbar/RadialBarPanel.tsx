@@ -47,6 +47,7 @@ export function RadialBarPanel({
         alignmentFactors={valueProps.alignmentFactors}
         valueManualFontSize={options.text?.valueSize}
         nameManualFontSize={options.text?.titleSize}
+        onClick={menuProps.openMenu}
       />
     );
   }

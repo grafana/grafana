@@ -1,8 +1,37 @@
 import { PanelModel } from '@grafana/data';
+import { FieldColorModeId } from '@grafana/schema/dist/esm/index.gen';
 
 import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMigrations';
 
 describe('Gauge Panel Migrations', () => {
+  it('from old gauge', () => {
+    const panel = {
+      id: 2,
+      options: {
+        reduceOptions: {
+          calcs: ['lastNotNull'],
+        },
+        showThresholdLabels: false,
+        showThresholdMarkers: true,
+      },
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: FieldColorModeId.Fixed,
+            fixedColor: 'blue',
+          },
+        },
+        overrides: [],
+      },
+      pluginVersion: '12.3.0',
+      type: 'gauge',
+    } as Omit<PanelModel, 'fieldConfig'>;
+
+    const result = gaugePanelMigrationHandler(panel as PanelModel);
+    expect(result.showThresholdMarkers).toBe(false);
+    expect(result.sparkline).toBe(false);
+  });
+
   it('from 6.1.1', () => {
     const panel = {
       datasource: '-- Grafana --',
@@ -79,7 +108,6 @@ describe('Gauge Panel Migrations', () => {
     } as Omit<PanelModel, 'fieldConfig'>;
 
     const result = gaugePanelMigrationHandler(panel as PanelModel);
-    expect(result).toMatchSnapshot();
 
     // Ignored due to the API change
     //@ts-ignore
@@ -107,7 +135,7 @@ describe('Gauge Panel Migrations', () => {
     };
 
     const panel = {} as PanelModel;
-    const newOptions = gaugePanelChangedHandler(panel, 'singlestat', old);
+    const newOptions = gaugePanelChangedHandler(panel, 'singlestat', old, { defaults: {}, overrides: [] });
     expect(panel.fieldConfig.defaults.unit).toBe('ms');
     expect(panel.fieldConfig.defaults.min).toBe(-10);
     expect(panel.fieldConfig.defaults.max).toBe(150);

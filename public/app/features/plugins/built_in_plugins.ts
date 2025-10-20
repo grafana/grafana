@@ -1,3 +1,5 @@
+import { config } from '@grafana/runtime';
+
 const cloudwatchPlugin = async () =>
   await import(/* webpackChunkName: "cloudwatchPlugin" */ 'app/plugins/datasource/cloudwatch/module');
 const dashboardDSPlugin = async () =>
@@ -104,7 +106,7 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/debug': debugPanel,
   'core:plugin/flamegraph': flamegraphPanel,
   'core:plugin/gettingstarted': gettingStartedPanel,
-  'core:plugin/gauge': gaugePanel,
+  'core:plugin/gauge': config.featureToggles.newGauge ? radialBar : gaugePanel,
   'core:plugin/piechart': pieChartPanel,
   'core:plugin/bargauge': barGaugePanel,
   'core:plugin/barchart': barChartPanel,
