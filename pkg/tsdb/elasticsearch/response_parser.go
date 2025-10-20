@@ -133,6 +133,7 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
 	searchWords := make(map[string]bool)
+	fieldKeys := make(map[string]bool)
 
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattened map[string]interface{}
@@ -169,6 +170,7 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 			if ok {
 				for k, v := range source {
 					doc[k] = v
+					fieldKeys[k] = true
 				}
 			}
 		}
@@ -203,7 +205,7 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	}
 
 	sortedPropNames := sortPropNames(propNames, configuredFields, true)
-	fields := processDocsToDataFrameFields(docs, sortedPropNames, configuredFields)
+	fields := processDocsToDataFrameFields(docs, sortedPropNames, configuredFields, fieldKeys)
 
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
@@ -224,6 +226,7 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 func processRawDataResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse, logger log.Logger) error {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+	fieldKeys := make(map[string]bool)
 
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattened map[string]interface{}
@@ -248,6 +251,7 @@ func processRawDataResponse(res *es.SearchResponse, target *Query, configuredFie
 			if ok {
 				for k, v := range source {
 					doc[k] = v
+					fieldKeys[k] = true
 				}
 			}
 		}
@@ -260,7 +264,7 @@ func processRawDataResponse(res *es.SearchResponse, target *Query, configuredFie
 	}
 
 	sortedPropNames := sortPropNames(propNames, configuredFields, false)
-	fields := processDocsToDataFrameFields(docs, sortedPropNames, configuredFields)
+	fields := processDocsToDataFrameFields(docs, sortedPropNames, configuredFields, fieldKeys)
 
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
@@ -329,7 +333,64 @@ func processRawDocumentResponse(res *es.SearchResponse, target *Query, queryRes 
 	return nil
 }
 
-func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string, configuredFields es.ConfiguredFields) []*data.Field {
+// extractFieldValue extracts the value from a field array
+// Elasticsearch always returns runtime fields as arrays, even for single values.
+// For single-element arrays, we extract the value.
+// For multi-element arrays, we return the array as-is to preserve array fields.
+func extractFieldValue(value interface{}) (interface{}, bool) {
+	// Fields are returned as arrays
+	valueList, ok := value.([]interface{})
+	if !ok || len(valueList) == 0 {
+		return nil, false
+	}
+
+	// If array has exactly one element, extract it
+	if len(valueList) == 1 {
+		return valueList[0], true
+	}
+
+	// If array has multiple elements, return the array as-is
+	return valueList, true
+}
+
+// createFieldForProperty creates a data.Field for a given property name and documents.
+// It detects the type of the property and creates an appropriate field with the correct type.
+func createFieldForProperty(docs []map[string]interface{}, propName string, size int, isFilterable bool) *data.Field {
+	// Find the first non-nil value for type detection
+	propNameValue := findTheFirstNonNilDocValueForPropName(docs, propName)
+
+	// Create field based on detected type
+	switch propNameValue.(type) {
+	case float64:
+		return createFieldOfType[float64](docs, propName, size, isFilterable)
+	case int:
+		return createFieldOfType[int](docs, propName, size, isFilterable)
+	case string:
+		return createFieldOfType[string](docs, propName, size, isFilterable)
+	case bool:
+		return createFieldOfType[bool](docs, propName, size, isFilterable)
+	default:
+		// Default to json.RawMessage for complex types
+		fieldVector := make([]*json.RawMessage, size)
+		for i, doc := range docs {
+			if doc[propName] == nil {
+				continue
+			}
+			bytes, err := json.Marshal(doc[propName])
+			if err != nil {
+				// We skip values that cannot be marshalled
+				continue
+			}
+			value := json.RawMessage(bytes)
+			fieldVector[i] = &value
+		}
+		field := data.NewField(propName, nil, fieldVector)
+		field.Config = &data.FieldConfig{Filterable: &isFilterable}
+		return field
+	}
+}
+
+func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string, configuredFields es.ConfiguredFields, fieldKeys map[string]bool) []*data.Field {
 	size := len(docs)
 	isFilterable := true
 	allFields := make([]*data.Field, len(propNames))
@@ -337,6 +398,7 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 	timeStringOk := false
 
 	for propNameIdx, propName := range propNames {
+
 		// Special handling for time field
 		if propName == configuredFields.TimeField {
 			timeVector := make([]*time.Time, size)
@@ -369,33 +431,31 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 			continue
 		}
 
-		propNameValue := findTheFirstNonNilDocValueForPropName(docs, propName)
-		switch propNameValue.(type) {
-		// We are checking for default data types values (float64, int, bool, string)
-		// and default to json.RawMessage if we cannot find any of them
-		case float64:
-			allFields[propNameIdx] = createFieldOfType[float64](docs, propName, size, isFilterable)
-		case int:
-			allFields[propNameIdx] = createFieldOfType[int](docs, propName, size, isFilterable)
-		case string:
-			allFields[propNameIdx] = createFieldOfType[string](docs, propName, size, isFilterable)
-		case bool:
-			allFields[propNameIdx] = createFieldOfType[bool](docs, propName, size, isFilterable)
-		default:
-			fieldVector := make([]*json.RawMessage, size)
+		// Fields are handled differently from source fields as they are always an array.
+		isField := fieldKeys[propName]
+
+		// For fields, we need to extract values from arrays before type detection
+		if isField {
+			// Create a temporary docs slice with extracted field values
+			tempDocs := make([]map[string]interface{}, len(docs))
 			for i, doc := range docs {
-				bytes, err := json.Marshal(doc[propName])
-				if err != nil {
-					// We skip values that cannot be marshalled
-					continue
+				tempDoc := make(map[string]interface{})
+				if doc[propName] != nil {
+					extractedValue, ok := extractFieldValue(doc[propName])
+					if ok {
+						tempDoc[propName] = extractedValue
+					}
 				}
-				value := json.RawMessage(bytes)
-				fieldVector[i] = &value
+				tempDocs[i] = tempDoc
 			}
-			field := data.NewField(propName, nil, fieldVector)
-			field.Config = &data.FieldConfig{Filterable: &isFilterable}
-			allFields[propNameIdx] = field
+
+			// Create field using the extracted values
+			allFields[propNameIdx] = createFieldForProperty(tempDocs, propName, size, isFilterable)
+			continue
 		}
+
+		// Regular field handling (not a runtime field)
+		allFields[propNameIdx] = createFieldForProperty(docs, propName, size, isFilterable)
 	}
 
 	return allFields
