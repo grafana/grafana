@@ -1,7 +1,9 @@
 import { cx, css } from '@emotion/css';
-import { PureComponent } from 'react';
+import { memo } from 'react';
 
-import { stylesFactory } from '../../themes/stylesFactory';
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../..';
 
 export interface ListProps<T> {
   items: T[];
@@ -14,7 +16,23 @@ interface AbstractListProps<T> extends ListProps<T> {
   inline?: boolean;
 }
 
-const getStyles = stylesFactory((inlineList = false) => ({
+function AbstractListComponent<T>({ items, renderItem, getItemKey, className, inline }: AbstractListProps<T>) {
+  const styles = useStyles2(getStyles, inline);
+
+  return (
+    <ul className={cx(styles.list, className)}>
+      {items.map((item, i) => {
+        return (
+          <li className={styles.item} key={getItemKey ? getItemKey(item) : i}>
+            {renderItem(item, i)}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2, inlineList = false) => ({
   list: css({
     listStyleType: 'none',
     margin: 0,
@@ -24,27 +42,6 @@ const getStyles = stylesFactory((inlineList = false) => ({
   item: css({
     display: (inlineList && 'inline-block') || 'block',
   }),
-}));
+});
 
-export class AbstractList<T> extends PureComponent<AbstractListProps<T>> {
-  constructor(props: AbstractListProps<T>) {
-    super(props);
-  }
-
-  render() {
-    const { items, renderItem, getItemKey, className, inline } = this.props;
-    const styles = getStyles(inline);
-
-    return (
-      <ul className={cx(styles.list, className)}>
-        {items.map((item, i) => {
-          return (
-            <li className={styles.item} key={getItemKey ? getItemKey(item) : i}>
-              {renderItem(item, i)}
-            </li>
-          );
-        })}
-      </ul>
-    );
-  }
-}
+export const AbstractList = memo(AbstractListComponent);
