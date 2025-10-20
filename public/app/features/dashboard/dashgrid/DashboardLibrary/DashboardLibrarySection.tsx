@@ -191,6 +191,7 @@ function getStyles(theme: GrafanaTheme2, dashboardsLength?: number) {
       borderColor: theme.colors.text.primary,
       borderWidth: 1,
       borderStyle: 'solid',
+      objectFit: 'cover',
     }),
     showMoreButton: css({
       marginTop: theme.spacing(2),

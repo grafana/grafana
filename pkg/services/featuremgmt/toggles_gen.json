@@ -2281,6 +2281,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesQueryCaching",
+        "resourceVersion": "1760972620939",
+        "creationTimestamp": "2025-10-20T15:03:40Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes querycaching",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesShortURLs",
         "resourceVersion": "1756914263808",
         "creationTimestamp": "2025-08-04T12:12:12Z",
@@ -2683,6 +2696,20 @@
     },
     {
       "metadata": {
+        "name": "newGauge",
+        "resourceVersion": "1760700645318",
+        "creationTimestamp": "2025-10-17T11:30:45Z"
+      },
+      "spec": {
+        "description": "Enable new gauge visualization",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newInfluxDSConfigPageDesign",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-06-25T16:39:54Z"
@@ -2771,6 +2798,24 @@
         "description": "Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.",
         "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "onlyStoreActionSets",
+        "resourceVersion": "1759844046154",
+        "creationTimestamp": "2025-10-07T13:24:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-07 13:34:06.15476 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
         "expression": "true"
       }
     },
