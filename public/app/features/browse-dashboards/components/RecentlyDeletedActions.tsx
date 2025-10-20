@@ -173,17 +173,12 @@ export function RecentlyDeletedActions() {
       parentUIDs.add(folderUID);
     }
     dispatch(clearFolders(Array.from(parentUIDs)));
-
-    // Clear selections
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
-    // Clear cache and refresh the list immediately before showing notification
     deletedDashboardsCache.clear();
     await stateManager.doSearch();
 
-    // Show consolidated notification after list has been updated
     showRestoreNotifications(successful, failed);
-
     setIsBulkRestoreLoading(false);
     setIsRestoreModalOpen(false);
   };
