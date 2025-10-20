@@ -333,6 +333,75 @@
                 "value": 80
               }
             ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 14,
+        "y": 1
+      },
+      "id": 18,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "no_data_points"
+        }
+      ],
+      "title": "No data",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 60
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           },
           "unit": "percent"
         },
@@ -711,6 +780,66 @@
         "defaults": {
           "color": {
             "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 15,
+        "x": 0,
+        "y": 26
+      },
+      "id": 1,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,66"
+        }
+      ],
+      "title": "Old gauge with static blue color and show threshold markers enabled",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "description": "should not show any threshold markers",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
             "mode": "thresholds"
           },
           "mappings": [],
@@ -770,66 +899,6 @@
         }
       ],
       "title": "Many thresholds with labels",
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
-      },
-      "description": "should not show any threshold markers",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "fixedColor": "blue",
-            "mode": "fixed"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 15,
-        "x": 0,
-        "y": 26
-      },
-      "id": 1,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": false,
-        "sizing": "auto"
-      },
-      "pluginVersion": "12.3.0-pre",
-      "targets": [
-        {
-          "refId": "A",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "1,20,90,30,5,66"
-        }
-      ],
-      "title": "Old gauge with static blue color and show threshold markers enabled",
       "type": "gauge"
     },
     {
@@ -1002,5 +1071,5 @@
   "timezone": "browser",
   "title": "Panel tests - Old gauge to new",
   "uid": "panel-tests-old-gauge-to-new",
-  "version": 2
+  "version": 3
 }
