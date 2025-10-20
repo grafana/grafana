@@ -25,6 +25,7 @@ export interface GetLibraryPanelsOptions {
   sortDirection?: string;
   typeFilter?: string[];
   folderFilterUIDs?: string[];
+  signal?: AbortSignal;
 }
 
 export async function getLibraryPanels({
@@ -35,6 +36,7 @@ export async function getLibraryPanels({
   sortDirection = '',
   typeFilter = [],
   folderFilterUIDs = [],
+  signal,
 }: GetLibraryPanelsOptions = {}): Promise<LibraryElementsSearchResult> {
   const params = new URLSearchParams();
   params.append('searchString', searchString);
@@ -46,10 +48,15 @@ export async function getLibraryPanels({
   params.append('page', page.toString(10));
   params.append('kind', LibraryElementKind.Panel.toString(10));
 
-  const { result } = await getBackendSrv().get<{ result: LibraryElementsSearchResult }>(
-    `/api/library-elements?${params.toString()}`
+  const response = await lastValueFrom(
+    getBackendSrv().fetch<{ result: LibraryElementsSearchResult }>({
+      method: 'GET',
+      url: `/api/library-elements?${params.toString()}`,
+      abortSignal: signal,
+      showErrorAlert: false,
+    })
   );
-  return result;
+  return response.data.result;
 }
 
 export async function getLibraryPanel(uid: string, isHandled = false): Promise<LibraryElementDTO> {

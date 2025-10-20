@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useReducer } from 'react';
+import { useEffect, useMemo, useReducer, useRef } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
@@ -43,8 +43,20 @@ export const LibraryPanelsView = ({
     }
   );
   const asyncDispatch = useMemo(() => asyncDispatcher(dispatch), [dispatch]);
+  const abortControllerRef = useRef<AbortController>();
+
   useDebounce(
-    () =>
+    () => {
+      // Abort previous request if it exists
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new AbortController for this request
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+
+      // Start search with abort controller
       asyncDispatch(
         searchForLibraryPanels({
           searchString,
@@ -54,11 +66,22 @@ export const LibraryPanelsView = ({
           page,
           perPage,
           currentPanelId,
-        })
-      ),
+        }),
+        abortController
+      );
+    },
     300,
     [searchString, sortDirection, panelFilter, folderFilter, page, asyncDispatch]
   );
+
+  // Cleanup: abort any pending request on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const onDelete = ({ uid }: LibraryElementDTO) =>
     asyncDispatch(
