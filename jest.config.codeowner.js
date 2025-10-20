@@ -89,8 +89,7 @@ module.exports = {
           console.log(`📄 Coverage report saved to ${reportURL}`);
 
           if (process.env.SHOULD_OPEN_COVERAGE_REPORT === 'true') {
-            const start = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
-            child_process.exec(start + ' ' + reportURL);
+            openCoverageReport(reportURL);
           }
 
           // TODO: Emit coverage metrics https://github.com/grafana/grafana/issues/111208
@@ -121,5 +120,21 @@ function createOwnerDirectory(owner) {
     // Example: user@domain.tld
     const [user, domain] = owner.split('@');
     return `emails/${user}-at-${domain}`;
+  }
+}
+
+/**
+ * Open the given file URL in the default browser safely, without shell injection risk.
+ * @param {string} reportURL
+ */
+function openCoverageReport(reportURL) {
+  const { spawn } = require('child_process');
+  if (process.platform === 'darwin') {
+    spawn('open', [reportURL], { stdio: 'inherit' });
+  } else if (process.platform === 'win32') {
+    // start "" "<url>" required; must be run via cmd.exe
+    spawn('cmd', ['/c', 'start', '""', reportURL], { stdio: 'inherit' });
+  } else {
+    spawn('xdg-open', [reportURL], { stdio: 'inherit' });
   }
 }
