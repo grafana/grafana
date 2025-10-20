@@ -2103,7 +2103,6 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},
-<<<<<<< HEAD
 		{
 			Name:         "newGauge",
 			Description:  "Enable new gauge visualization",
@@ -2112,8 +2111,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
 		},
-||||||| eb9c8e539cd
-=======
 		{
 			Name:         "preventPanelChromeOverflow",
 			Description:  "Restrict PanelChrome contents with overflow: hidden;",
@@ -2130,7 +2127,6 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},
->>>>>>> 93af167f9c8e4c37c5e02e6dcb2253751a7509bc
 	}
 )
 
