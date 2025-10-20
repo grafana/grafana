@@ -332,10 +332,10 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	unifiedInfo := objInfo
 	unifiedForceCreate := forceAllowCreate
 	if d.readUnified {
-		legacyInfo = &wrappedUpdateInfo{objInfo}
+		legacyInfo = &wrappedUpdateInfo{objInfo: objInfo}
 		legacyForceCreate = true
 	} else {
-		unifiedInfo = &wrappedUpdateInfo{objInfo}
+		unifiedInfo = &wrappedUpdateInfo{objInfo: objInfo}
 		unifiedForceCreate = true
 	}
 
@@ -343,6 +343,21 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	if err != nil {
 		log.With("object", objFromLegacy).Error("could not update in legacy storage", "err", err)
 		return nil, false, err
+	}
+
+	// add any metadata returned from legacy to what is saved in unified storage when forceCreate is used.
+	// this is especially needed for legacy internal IDs
+	if createdLegacy {
+		legacyMeta, err := utils.MetaAccessor(objFromLegacy)
+		if err != nil {
+			log.With("object", objFromLegacy).Error("could not get meta accessor for legacy object", "err", err)
+			return nil, false, err
+		}
+		unifiedInfo = &wrappedUpdateInfo{
+			objInfo:           objInfo,
+			legacyLabels:      legacyMeta.GetLabels(),
+			legacyAnnotations: legacyMeta.GetAnnotations(),
+		}
 	}
 
 	if d.readUnified {
@@ -427,7 +442,9 @@ func (d *dualWriter) ConvertToTable(ctx context.Context, object runtime.Object, 
 }
 
 type wrappedUpdateInfo struct {
-	objInfo rest.UpdatedObjectInfo
+	objInfo           rest.UpdatedObjectInfo
+	legacyLabels      map[string]string
+	legacyAnnotations map[string]string
 }
 
 // Preconditions implements rest.UpdatedObjectInfo.
@@ -445,6 +462,29 @@ func (w *wrappedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime.Ob
 	if err != nil {
 		return nil, err
 	}
+
+	// add any labels or annotations set by legacy storage
+	if len(w.legacyLabels) > 0 {
+		existingLabels := meta.GetLabels()
+		if existingLabels == nil {
+			existingLabels = make(map[string]string)
+		}
+		for key, value := range w.legacyLabels {
+			existingLabels[key] = value
+		}
+		meta.SetLabels(existingLabels)
+	}
+	if len(w.legacyAnnotations) > 0 {
+		existingAnnotations := meta.GetAnnotations()
+		if existingAnnotations == nil {
+			existingAnnotations = make(map[string]string)
+		}
+		for key, value := range w.legacyAnnotations {
+			existingAnnotations[key] = value
+		}
+		meta.SetAnnotations(existingAnnotations)
+	}
+
 	meta.SetResourceVersion("")
 	meta.SetUID("")
 	return obj, err
