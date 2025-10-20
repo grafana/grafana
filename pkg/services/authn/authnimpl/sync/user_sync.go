@@ -187,7 +187,10 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 		return nil
 	}
 
-	if !s.rejectNonProvisionedUsers {
+	effectiveReject := s.shouldRejectNonProvisionedUsers(ctx, currentIdentity)
+
+	if !effectiveReject {
+		log.Debug("Skip provisioning validation, non-provisioned users are allowed")
 		return nil
 	}
 
@@ -230,7 +233,7 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 	}
 
 	// Reject non-provisioned users if configured to do so
-	if s.shouldRejectNonProvisionedUsers(ctx, currentIdentity) {
+	if effectiveReject {
 		log.Error("Failed to authenticate user, user is not provisioned")
 		return errUserNotProvisioned.Errorf("user is not provisioned")
 	}
