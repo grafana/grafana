@@ -3522,11 +3522,6 @@
       "count": 3
     }
   },
-  "public/app/features/profile/UserOrganizations.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/profile/UserProfileEditForm.tsx": {
     "no-restricted-syntax": {
       "count": 3
