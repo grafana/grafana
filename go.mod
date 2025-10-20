@@ -134,7 +134,7 @@ require (
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/grafana-backend-group
 	github.com/madflojo/testcerts v1.4.0 // @grafana/alerting-backend
 	github.com/mattn/go-isatty v0.0.20 // @grafana/grafana-backend-group
-	github.com/mattn/go-sqlite3 v1.14.22 // @grafana/grafana-backend-group
+	github.com/mattn/go-sqlite3 v1.14.32 // @grafana/grafana-backend-group
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-backend
 	github.com/microsoft/go-mssqldb v1.9.2 // @grafana/partner-datasources
 	github.com/migueleliasweb/go-github-mock v1.1.0 // @grafana/grafana-git-ui-sync-team
