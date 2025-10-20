@@ -513,7 +513,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 
 	ctxLogger := s.log.FromContext(ctx)
 
-	if s.rejectNonProvisionedUsers && usr.IsProvisioned && id.AuthenticatedBy != login.GrafanaComAuthModule {
+	if s.shouldRejectNonProvisionedUsers(ctx, id) && usr.IsProvisioned && id.AuthenticatedBy != login.GrafanaComAuthModule {
 		ctxLogger.Debug("User is provisioned", "id.UID", id.UID)
 		needsConnectionCreation = false
 		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})
