@@ -91,6 +91,7 @@
         "segmentCount": 1,
         "segmentSpacing": 0.3,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false
       },
@@ -171,6 +172,7 @@
         "segmentCount": 1,
         "segmentSpacing": 0.3,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false
       },
@@ -251,6 +253,7 @@
         "segmentCount": 1,
         "segmentSpacing": 0.3,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false
       },
@@ -331,6 +334,7 @@
         "segmentCount": 1,
         "segmentSpacing": 0.3,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false
       },
@@ -411,6 +415,7 @@
         "segmentCount": 1,
         "segmentSpacing": 0.3,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": true
       },
@@ -491,6 +496,7 @@
         "segmentCount": 1,
         "segmentSpacing": 0.3,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false
       },
@@ -571,6 +577,7 @@
         "segmentCount": 1,
         "segmentSpacing": 0.3,
         "shape": "gauge",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false
       },
@@ -664,6 +671,7 @@
         "segmentCount": 1,
         "segmentSpacing": 0.3,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false
       },
@@ -744,6 +752,7 @@
         "segmentCount": 1,
         "segmentSpacing": 0.3,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false
       },
@@ -824,6 +833,7 @@
         "segmentCount": 1,
         "segmentSpacing": 0.3,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false
       },
@@ -904,6 +914,7 @@
         "segmentCount": 1,
         "segmentSpacing": 0.3,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false
       },
@@ -1001,6 +1012,7 @@
         "segmentCount": 1,
         "segmentSpacing": 0.3,
         "shape": "gauge",
+        "showThresholdLabels": false,
         "showThresholdMarkers": true,
         "sparkline": false
       },
@@ -1079,8 +1091,9 @@
           "values": false
         },
         "segmentCount": 37,
-        "segmentSpacing": 0.19,
+        "segmentSpacing": 0.31,
         "shape": "gauge",
+        "showThresholdLabels": false,
         "showThresholdMarkers": true,
         "sparkline": false
       },
@@ -1159,8 +1172,9 @@
           "values": false
         },
         "segmentCount": 46,
-        "segmentSpacing": 0.19,
+        "segmentSpacing": 0.3,
         "shape": "gauge",
+        "showThresholdLabels": false,
         "showThresholdMarkers": true,
         "sparkline": false
       },
@@ -1219,10 +1233,10 @@
         "x": 0,
         "y": 27
       },
-      "id": 27,
+      "id": 30,
       "maxDataPoints": 20,
       "options": {
-        "barWidthFactor": 0.43,
+        "barWidthFactor": 0.9,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
@@ -1239,8 +1253,9 @@
           "values": false
         },
         "segmentCount": 1,
-        "segmentSpacing": 0.19,
-        "shape": "circle",
+        "segmentSpacing": 0.3,
+        "shape": "gauge",
+        "showThresholdLabels": false,
         "showThresholdMarkers": true,
         "sparkline": false
       },
@@ -1257,7 +1272,7 @@
           "stringInput": "1,20,90,30,5,70"
         }
       ],
-      "title": "Thresholds circle",
+      "title": "Plain thresholds",
       "type": "radialbar"
     },
     {
@@ -1319,8 +1334,9 @@
           "values": false
         },
         "segmentCount": 62,
-        "segmentSpacing": 0.19,
+        "segmentSpacing": 0.3,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": true,
         "sparkline": false
       },
@@ -1347,6 +1363,274 @@
         "w": 24,
         "x": 0,
         "y": 34
+      },
+      "id": 31,
+      "panels": [],
+      "title": "Threshold labels",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "semi-dark-yellow",
+                "value": 40
+              },
+              {
+                "color": "orange",
+                "value": 65
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 7,
+        "x": 0,
+        "y": 35
+      },
+      "id": 32,
+      "maxDataPoints": 20,
+      "options": {
+        "barWidthFactor": 0.9,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "rounded": false,
+          "spotlight": false
+        },
+        "gradient": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 62,
+        "segmentSpacing": 0.3,
+        "shape": "gauge",
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "sparkline": false
+      },
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "alias": "1",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,70"
+        }
+      ],
+      "title": "Thresholds labels",
+      "type": "radialbar"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "semi-dark-yellow",
+                "value": 40
+              },
+              {
+                "color": "orange",
+                "value": 65
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 7,
+        "x": 7,
+        "y": 35
+      },
+      "id": 34,
+      "maxDataPoints": 20,
+      "options": {
+        "barWidthFactor": 0.9,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "rounded": false,
+          "spotlight": false
+        },
+        "gradient": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 62,
+        "segmentSpacing": 0.3,
+        "shape": "gauge",
+        "showThresholdLabels": true,
+        "showThresholdMarkers": false,
+        "sparkline": false
+      },
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "alias": "1",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,70"
+        }
+      ],
+      "title": "Thresholds labels only",
+      "type": "radialbar"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "semi-dark-yellow",
+                "value": 40
+              },
+              {
+                "color": "orange",
+                "value": 65
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 6,
+        "x": 14,
+        "y": 35
+      },
+      "id": 33,
+      "maxDataPoints": 20,
+      "options": {
+        "barWidthFactor": 0.9,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "rounded": false,
+          "spotlight": false
+        },
+        "gradient": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 80,
+        "segmentSpacing": 0.59,
+        "shape": "circle",
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "sparkline": false
+      },
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "alias": "1",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,70"
+        }
+      ],
+      "title": "Thresholds labels + circle",
+      "type": "radialbar"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 45
       },
       "id": 6,
       "panels": [],
@@ -1389,7 +1673,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 35
+        "y": 46
       },
       "id": 9,
       "maxDataPoints": 20,
@@ -1415,6 +1699,7 @@
         "segmentCount": 1,
         "segmentSpacing": 0.3,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false,
         "spotlight": true
@@ -1476,7 +1761,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 41
+        "y": 52
       },
       "id": 11,
       "maxDataPoints": 20,
@@ -1502,6 +1787,7 @@
         "segmentCount": 1,
         "segmentSpacing": 0.3,
         "shape": "gauge",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": true,
         "spotlight": true
@@ -1533,7 +1819,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 47
+        "y": 58
       },
       "id": 12,
       "panels": [],
@@ -1577,7 +1863,7 @@
         "h": 7,
         "w": 4,
         "x": 0,
-        "y": 48
+        "y": 59
       },
       "id": 13,
       "maxDataPoints": 20,
@@ -1603,6 +1889,7 @@
         "segmentCount": 8,
         "segmentSpacing": 0.3,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false,
         "spotlight": true
@@ -1665,7 +1952,7 @@
         "h": 7,
         "w": 5,
         "x": 4,
-        "y": 48
+        "y": 59
       },
       "id": 14,
       "maxDataPoints": 20,
@@ -1692,6 +1979,7 @@
         "segmentCount": 12,
         "segmentSpacing": 0.3,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false,
         "spotlight": true
@@ -1753,7 +2041,7 @@
         "h": 7,
         "w": 5,
         "x": 9,
-        "y": 48
+        "y": 59
       },
       "id": 15,
       "maxDataPoints": 20,
@@ -1779,6 +2067,7 @@
         "segmentCount": 39,
         "segmentSpacing": 0.76,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false,
         "spotlight": true
@@ -1840,7 +2129,7 @@
         "h": 7,
         "w": 6,
         "x": 14,
-        "y": 48
+        "y": 59
       },
       "id": 16,
       "maxDataPoints": 20,
@@ -1866,6 +2155,7 @@
         "segmentCount": 81,
         "segmentSpacing": 0.28,
         "shape": "circle",
+        "showThresholdLabels": false,
         "showThresholdMarkers": false,
         "sparkline": false,
         "spotlight": true
@@ -1892,6 +2182,7 @@
       "type": "radialbar"
     }
   ],
+  "preload": false,
   "schemaVersion": 42,
   "tags": [],
   "templating": {

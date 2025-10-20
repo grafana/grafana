@@ -4515,7 +4515,8 @@
       "paste-row": "Tempel baris",
       "paste-tab": "Tempel tab",
       "un-group-panels": "Pisah grup",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -5026,6 +5027,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Salin",
         "copy-or-duplicate": "Salin atau Duplikasikan",
@@ -5035,7 +5037,10 @@
         "group-layout-disabled": "Tidak ada grup di level ini",
         "panel-layout": "Tata letak panel",
         "panel-layout-disabled": "Pilih baris atau tab untuk mengubah opsi tata letak panel"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5184,7 +5189,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "Menghapus baris ini juga akan menghapus semua panel. Anda yakin ingin melanjutkan?",
       "delete-row-title": "Hapus baris?",
@@ -5224,9 +5228,7 @@
         "title-not-unique": "Judul ini tidak unik"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dasbor disimpan"
@@ -5316,6 +5318,9 @@
       "delete-tab-title": "Hapus tab?",
       "delete-tab-yes": "Hapus",
       "description": "Atur panel menjadi tab horizontal",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Tab",
       "tab": {
         "new": "Tab baru",
@@ -7655,6 +7660,7 @@
   },
   "gauge": {
     "category-gauge": "Alat ukur",
+    "category-radial-bar": "",
     "description-min-height": "Tinggi baris minimum (orientasi horizontal)",
     "description-min-width": "Lebar kolom minimum (orientasi vertikal)",
     "description-neutral": "Biarkan kosong untuk menggunakan Min sebagai titik netral",
@@ -7670,7 +7676,8 @@
     "name-neutral": "Netral",
     "name-show-threshold-labels": "Tampilkan label ambang batas",
     "name-show-threshold-markers": "Tampilkan penanda ambang batas",
-    "placeholder-neutral": "otomatis"
+    "placeholder-neutral": "otomatis",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Terapkan",
@@ -9074,6 +9081,8 @@
       "make-time-range-permanent": "Jadikan rentang waktu absolut/permanen",
       "move-time-range-back": "Pindahkan rentang waktu mundur",
       "move-time-range-forward": "Pindahkan rentang waktu ke depan",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Buka pencarian",
       "open-share-embed-drawer": "Sematan Bagikan panel",
       "open-share-link-drawer": "Tautan Bagikan panel",
@@ -11785,7 +11794,8 @@
       "button-cancelling": "Membatalkan...",
       "button-previous": "Sebelumnya",
       "button-submitting": "Mengirim...",
-      "error-instance-repository-exists": "Repositori instans sudah ada"
+      "error-instance-repository-exists": "Repositori instans sudah ada",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12007,6 +12017,28 @@
       "show-response": "Tampilkan respons"
     },
     "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
