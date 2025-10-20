@@ -60,22 +60,6 @@ func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets, li
 
 	logger := logging.DefaultLogger.With("logger", "index-provider")
 
-	version := setting.BuildVersion
-	commit := setting.BuildCommit
-	commitShort := getShortCommitHash(setting.BuildCommit, 10)
-	buildstamp := setting.BuildStamp
-	versionString := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, version, commitShort)
-
-	buildInfo := dtos.FrontendSettingsBuildInfoDTO{
-		Version:       version,
-		VersionString: versionString,
-		Commit:        commit,
-		CommitShort:   commitShort,
-		Buildstamp:    buildstamp,
-		Edition:       license.Edition(),
-		Env:           cfg.Env,
-	}
-
 	// subset of frontend settings needed for the login page
 	// TODO what about enterprise settings here?
 	frontendSettings := FSFrontendSettings{
@@ -106,31 +90,29 @@ func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets, li
 		RudderstackWriteKey:                 cfg.RudderstackWriteKey,
 		TrustedTypesDefaultPolicyEnabled:    (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for")),
 		VerifyEmailEnabled:                  cfg.VerifyEmailEnabled,
-		BuildInfo:                           buildInfo,
-	}
-
-	indexViewData := IndexViewData{
-		AppTitle:     "Grafana",
-		AppSubUrl:    cfg.AppSubURL, // Based on the request?
-		BuildVersion: cfg.BuildVersion,
-		BuildCommit:  cfg.BuildCommit,
-		Config:       cfg,
-
-		CSPEnabled:           cfg.CSPEnabled,
-		CSPContent:           cfg.CSPTemplate,
-		CSPReportOnlyContent: cfg.CSPReportOnlyTemplate,
-
-		IsDevelopmentEnv: cfg.Env == setting.Dev,
-
-		Assets:      assetsManifest,
-		Settings:    frontendSettings,
-		DefaultUser: dtos.CurrentUser{},
+		BuildInfo:                           getBuildInfo(license, cfg),
 	}
 
 	return &IndexProvider{
 		log:   logger,
 		index: t,
-		data:  indexViewData,
+		data: IndexViewData{
+			AppTitle:     "Grafana",
+			AppSubUrl:    cfg.AppSubURL, // Based on the request?
+			BuildVersion: cfg.BuildVersion,
+			BuildCommit:  cfg.BuildCommit,
+			Config:       cfg,
+
+			CSPEnabled:           cfg.CSPEnabled,
+			CSPContent:           cfg.CSPTemplate,
+			CSPReportOnlyContent: cfg.CSPReportOnlyTemplate,
+
+			IsDevelopmentEnv: cfg.Env == setting.Dev,
+
+			Assets:      assetsManifest,
+			Settings:    frontendSettings,
+			DefaultUser: dtos.CurrentUser{},
+		},
 	}, nil
 }
 
@@ -170,6 +152,26 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		}
 		panic(fmt.Sprintf("Error rendering index\n %s", err.Error()))
 	}
+}
+
+func getBuildInfo(license licensing.Licensing, cfg *setting.Cfg) dtos.FrontendSettingsBuildInfoDTO {
+	version := setting.BuildVersion
+	commit := setting.BuildCommit
+	commitShort := getShortCommitHash(setting.BuildCommit, 10)
+	buildstamp := setting.BuildStamp
+	versionString := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, version, commitShort)
+
+	buildInfo := dtos.FrontendSettingsBuildInfoDTO{
+		Version:       version,
+		VersionString: versionString,
+		Commit:        commit,
+		CommitShort:   commitShort,
+		Buildstamp:    buildstamp,
+		Edition:       license.Edition(),
+		Env:           cfg.Env,
+	}
+
+	return buildInfo
 }
 
 func getShortCommitHash(commitHash string, maxLength int) string {
