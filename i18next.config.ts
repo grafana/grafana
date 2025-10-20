@@ -9,5 +9,6 @@ export default defineConfig({
     defaultNS: 'grafana',
     functions: ['t', '*.t'],
     transComponents: ['Trans'],
+    disablePlurals: false,
   },
 });

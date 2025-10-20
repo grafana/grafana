@@ -209,7 +209,7 @@
       "title-delete": "Delete"
     },
     "orgs": {
-      "delete-body": "Are you sure you want to delete '{{deleteOrgName}}'? <br></br> <5>All dashboards for this organization will be removed!</5>",
+      "delete-body": "Are you sure you want to delete '{{deleteOrgName}}'? <br></br> <4>All dashboards for this organization will be removed!</4>",
       "id-header": "ID",
       "name-header": "Name",
       "new-org-button": "New org"
@@ -404,7 +404,7 @@
       "silence": "Silence"
     },
     "alert-group": {
-      "delivered-to": "Delivered to <1>{{name}}</1>",
+      "delivered-to": "Delivered to <2>{{name}}</2>",
       "no-grouping": "No grouping"
     },
     "alert-group-alerts-table": {
@@ -917,7 +917,7 @@
         "jira": "Creates a \"{{issueType}}\" issue in the \"{{project}}\" project"
       },
       "telegram": {
-        "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
+        "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <4>None</4>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
       "used-by_one": "Used by {{ count }} notification policy",
@@ -1362,7 +1362,7 @@
       }
     },
     "getting-stared": {
-      "learn-more": "For a hands-on introduction, refer to our <1> tutorial to get started with Grafana Alerting </1>"
+      "learn-more": "For a hands-on introduction, refer to our <2> tutorial to get started with Grafana Alerting </2>"
     },
     "getting-started": {
       "condition-breached-alert-instance-fires": "If the condition is breached, an alert instance fires",
@@ -2264,8 +2264,8 @@
       "title-copy-provisioned-alert-rule": "Copy provisioned alert rule"
     },
     "redirect-to-rule-viewer": {
-      "no-rules-found": "No rules in <1>{{sourceName}}</1> matched the name <3>{{name}}</3>",
-      "several-rules-found": "Several rules in <1>{{sourceName}}</1> matched the name <3>{{name}}</3>, please select the rule you want to view.",
+      "no-rules-found": "No rules in <1>{{sourceName}}</1> matched the name <5>{{name}}</5>",
+      "several-rules-found": "Several rules in <1>{{sourceName}}</1> matched the name <5>{{name}}</5>, please select the rule you want to view.",
       "text-loading-rule": "Loading rule...",
       "title-could-not-view-rule": "Could not view rule",
       "title-failed-to-load": "Failed to load rules from {{sourceName}}"
@@ -2509,8 +2509,8 @@
       "cloud-rulessource-errors-title-errors-loading-rules": "Errors loading rules",
       "failed-to-load-grafana-rules-config": "Failed to load Grafana rules config:",
       "failed-to-load-grafana-rules-state": "Failed to load Grafana rules state:",
-      "failed-to-load-rules-config": "Failed to load rules config from <1>{{dataSource}}</1>",
-      "failed-to-load-rules-state": "Failed to load rules state from <1>{{dataSource}}</1>",
+      "failed-to-load-rules-config": "Failed to load rules config from <2>{{dataSource}}</2>",
+      "failed-to-load-rules-state": "Failed to load rules state from <2>{{dataSource}}</2>",
       "more-errors_one": "{{count}} more errors",
       "more-errors_other": "{{count}} more errors",
       "unknown-error": "Unknown error."
@@ -2553,7 +2553,7 @@
     },
     "rule-time-range-label": {
       "relative": "<0>{{from}}</0> to now",
-      "relative-with-to": "<0>{{from}}</0> to <2>{{to}}</2>"
+      "relative-with-to": "<0>{{from}}</0> to <3>{{to}}</3>"
     },
     "rule-type-picker": {
       "grafana-managed": "Select “Grafana managed” unless you have a Mimir, Loki or Cortex data source with the Ruler API enabled."
@@ -2871,7 +2871,7 @@
       },
       "misconfigured-badge-text": "Misconfigured",
       "misconfigured-warning": "This template is misconfigured.",
-      "misconfigured-warning-details": "Templates must be defined in both the <1></1> and <3></3> sections of your alertmanager configuration."
+      "misconfigured-warning-details": "Templates must be defined in both the <2></2> and <5></5> sections of your alertmanager configuration."
     },
     "templates-picker": {
       "button-edit": "Edit {{name}}",
@@ -3201,7 +3201,7 @@
     "empty-state": {
       "button-title": "Add annotation query",
       "info-box-content": "<p> Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines and icons on all graph panels. When you hover over an annotation icon you can get event text & tags for the event. You can add annotation events directly from grafana by holding CTRL or CMD + click on graph (or drag region). These will be stored in Grafana's annotation database. </p>",
-      "info-box-content-2": "Checkout the <1> Annotations documentation </1> for more information.",
+      "info-box-content-2": "Checkout the <2> Annotations documentation </2> for more information.",
       "title": "There are no custom annotation queries added yet"
     },
     "get-annotation-event-names": {
@@ -3238,7 +3238,7 @@
       "auth-settings": "Auth settings"
     },
     "auth-drawer-unconneced": {
-      "subtitle": "Configure auth settings. Find out more in our <1> documentation </1> ."
+      "subtitle": "Configure auth settings. Find out more in our <2> documentation </2> ."
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "Advanced Auth",
@@ -3272,7 +3272,7 @@
       "allowed-organizations-description": "List of comma- or space-separated organizations. The user should be a member \nof at least one organization to log in.",
       "allowed-organizations-label": "Allowed organizations",
       "allowed-organizations-placeholder": "Enter organizations (my-team, myteam...) and press Enter to add",
-      "api-url-description": "The user information endpoint of your OAuth2 provider. Information returned by this endpoint must be compatible with <1> OpenID UserInfo </1> .",
+      "api-url-description": "The user information endpoint of your OAuth2 provider. Information returned by this endpoint must be compatible with <2> OpenID UserInfo </2> .",
       "api-url-required": "This field must be a valid URL if set.",
       "auth-style-description": "It determines how \"{{ clientIDLabel }}\" and \"{{ clientSecretLabel }}\" are sent to Oauth2 provider. Default is AutoDetect.",
       "auth-style-label": "Auth style",
@@ -3364,7 +3364,7 @@
       "tls-skip-verify-label": "TLS skip verify",
       "token-url-description": "The token endpoint of your OAuth2 provider.",
       "token-url-required": "This field is required and must be a valid URL.",
-      "use-pkce-description": "If enabled, Grafana will use <1> Proof Key for Code Exchange (PKCE) </1> with the OAuth2 Authorization Code Grant.",
+      "use-pkce-description": "If enabled, Grafana will use <2> Proof Key for Code Exchange (PKCE) </2> with the OAuth2 Authorization Code Grant.",
       "use-pkce-label": "Use PKCE",
       "use-refresh-token-description": "If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.",
       "use-refresh-token-label": "Use refresh token",
@@ -3417,7 +3417,7 @@
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <1> documentation </1> ."
+    "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <2> documentation </2> ."
   },
   "bar-chart": {
     "warn": {
@@ -3626,7 +3626,7 @@
     },
     "empty-state": {
       "button-title": "Create dashboard",
-      "pro-tip": "Add/move dashboards to your folder at <1> Browse dashboards </1>",
+      "pro-tip": "Add/move dashboards to your folder at <2> Browse dashboards </2>",
       "title": "You haven't created any dashboards yet",
       "title-folder": "This folder doesn't have any dashboards yet"
     },
@@ -4247,7 +4247,7 @@
       }
     },
     "feature-highlight-page": {
-      "foot-note": "After creating an account, you can easily <1> migrate this instance to Grafana Cloud </1> with our Migration Assistant.",
+      "foot-note": "After creating an account, you can easily <2> migrate this instance to Grafana Cloud </2> with our Migration Assistant.",
       "footer": "Create a Grafana Cloud Free account to start using data source permissions. This feature is also available with a Grafana Enterprise license.",
       "footer-link": "Learn about Enterprise",
       "link-button-label": "Create account"
@@ -4270,12 +4270,12 @@
     },
     "no-access-modal": {
       "connection-contact-grafana-admin": "To add a new connection, contact your Grafana admin.",
-      "editor-warning": "Editors cannot add new connections. You may check to see if it is already configured in <1>Data sources</1>.",
+      "editor-warning": "Editors cannot add new connections. You may check to see if it is already configured in <2>Data sources</2>.",
       "links": "Links",
       "okay": "Okay"
     },
     "not-found-datasource": {
-      "body": "Maybe you mistyped the URL or the plugin with the id <1></1> is unavailable. <br></br> To see a list of available datasources please <5>click here</5>."
+      "body": "Maybe you mistyped the URL or the plugin with the id <1></1> is unavailable. <br></br> To see a list of available datasources please <4>click here</4>."
     },
     "oss": {
       "connections-home-page": {
@@ -4384,7 +4384,7 @@
       "error-text": "The selected data source could not be loaded.",
       "error-title": "Error loading data source",
       "loading": "Loading query editor...",
-      "query-description": "Define the query that is run when the link is clicked. You can use <1> variables </1> to access specific field values.",
+      "query-description": "Define the query that is run when the link is clicked. You can use <2> variables </2> to access specific field values.",
       "query-editor-title": "Data source does not export a query editor.",
       "query-label": "Query"
     },
@@ -4404,7 +4404,7 @@
       "source-label": "Source",
       "sub-text": "<p> Define what data source will display the correlation, and what data will replace previously defined variables. </p>"
     },
-    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <1> documentation </1>",
+    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2> documentation </2>",
     "target-form": {
       "control-rules": "This field is required.",
       "sub-text": "<p> Define what the correlation will link to. With the query type, a query will run when the correlation is clicked. With the external type, clicking the correlation will open a URL. </p>",
@@ -4829,7 +4829,7 @@
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
-      "import-a-dashboard-body": "Import dashboards from files or <1> grafana.com </1> .",
+      "import-a-dashboard-body": "Import dashboards from files or <2> grafana.com </2> .",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
       "show-less-dashboards": "Show less",
@@ -4855,7 +4855,7 @@
     },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Send custom feedback",
-      "footer-text": "This content is AI-generated using the <1> Grafana LLM plugin </1>",
+      "footer-text": "This content is AI-generated using the <2> Grafana LLM plugin </2>",
       "placeholder-tell-ai-what-to-do-next": "Tell AI what to do next..."
     },
     "general-settings-unconnected": {
@@ -5307,7 +5307,7 @@
       "copy-json-to-clipboard": "Copy JSON to clipboard",
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "save-json-to-file": "Save JSON to file",
-      "see-docs": "See <1> documentation </1> for more information about provisioning."
+      "see-docs": "See <2> documentation </2> for more information about provisioning."
     },
     "search-panel": {
       "no-match": "No panels matching"
@@ -5642,7 +5642,7 @@
   "dashboard-links": {
     "empty-state": {
       "button-title": "Add dashboard link",
-      "info-box-content": "Dashboard links allow you to place links to other dashboards and web sites directly below the dashboard header. <1> Learn more </1>",
+      "info-box-content": "Dashboard links allow you to place links to other dashboards and web sites directly below the dashboard header. <2> Learn more </2>",
       "title": "There are no dashboard links added yet"
     }
   },
@@ -6082,7 +6082,7 @@
       "cannot-be-deleted": "This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config file to delete it.",
       "file-path": "File path: {{dashboardId}}",
       "ok": "OK",
-      "see-docs": "See <1> documentation </1> for more information about provisioning.",
+      "see-docs": "See <2> documentation </2> for more information about provisioning.",
       "title-cannot-delete-provisioned-dashboard": "Cannot delete provisioned dashboard"
     },
     "query-editor": {
@@ -6193,7 +6193,7 @@
       "save": "Save",
       "save-json-to-file": "Save JSON to file",
       "saving": "Saving...",
-      "see-docs": "See <1> documentation </1> for more information about provisioning.",
+      "see-docs": "See <2> documentation </2> for more information about provisioning.",
       "title-required": "Dashboard title is required",
       "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
       "title-validation-failed": "Dashboard title validation failed."
@@ -6486,7 +6486,7 @@
   "data-source-list": {
     "empty-state": {
       "button-title": "Add data source",
-      "pro-tip": "You can also define data sources through configuration files. <1> Learn more </1>",
+      "pro-tip": "You can also define data sources through configuration files. <2> Learn more </2>",
       "title": "No data sources defined"
     }
   },
@@ -6508,8 +6508,8 @@
     "open-advanced-button": "Open advanced data source picker"
   },
   "data-source-testing-status-page": {
-    "error-more-details-link": "Click <1> here </1> to learn more about this error.",
-    "success-more-details-links": "Next, you can start to visualize data by <1> building a dashboard </1> , or by querying data in the <3> Explore view </3> ."
+    "error-more-details-link": "Click <2> here </2> to learn more about this error.",
+    "success-more-details-links": "Next, you can start to visualize data by <2> building a dashboard </2> , or by querying data in the <6> Explore view </6> ."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6925,7 +6925,7 @@
     "pro-tip": "ProTip: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "We're looking but can't seem to find this {{lowerCaseEntity}}. Try returning <3>home</3> or seeking help on the <5> community site. </5>"
+    "description": "We're looking but can't seem to find this {{lowerCaseEntity}}. Try returning <3>home</3> or seeking help on the <7> community site. </7>"
   },
   "errors": {
     "dashboard-settings": {
@@ -7595,8 +7595,8 @@
     },
     "math": {
       "available-math-functions": "Available math functions",
-      "run-math-operations": "Run math operations on one or more queries. You reference the query by {{refExample}} ie. {{ref1}}, {{ref2}}, {{ref3}} etc. <br></br> Example: <3>{{example}}</3>",
-      "tooltip-footer": "See our additional documentation on <1> Math expressions </1> .",
+      "run-math-operations": "Run math operations on one or more queries. You reference the query by {{refExample}} ie. {{ref1}}, {{ref2}}, {{ref3}} etc. <br></br> Example: <11>{{example}}</11>",
+      "tooltip-footer": "See our additional documentation on <2> Math expressions </2> .",
       "tooltip-title": "Math operator",
       "tooltip-trigger": "Expression"
     },
@@ -9181,8 +9181,8 @@
     },
     "signup-invited-page": {
       "complete-following": "Please complete the following and choose a password to accept your invitation and continue:",
-      "custom-has-invited-you": "<0>{{invitedBy}}</0> has invited you to join Grafana and the organization <2>{{orgName}}</2>",
-      "default-has-invited-you": "<0>Someone</0> has invited you to join Grafana and the organization <2>{{orgName}}</2>",
+      "custom-has-invited-you": "<0>{{invitedBy}}</0> has invited you to join Grafana and the organization <4>{{orgName}}</4>",
+      "default-has-invited-you": "<0>Someone</0> has invited you to join Grafana and the organization <4>{{orgName}}</4>",
       "greeting-custom": "Hello {{greeting}}.",
       "greeting-default": "Hello there.",
       "label-email": "Email",
@@ -9344,7 +9344,7 @@
       "label": "Search base DNS",
       "placeholder": "example: dc=grafana,dc=org"
     },
-    "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <1><0>documentation</0></1> .",
+    "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><3>documentation</3></2> .",
     "title": "Basic Settings"
   },
   "library-panel": {
@@ -9359,7 +9359,7 @@
     },
     "empty-state": {
       "message": "You haven't created any library panels yet",
-      "more-info": "Create a library panel from any existing dashboard panel through the panel context menu. <1> Learn more </1>"
+      "more-info": "Create a library panel from any existing dashboard panel through the panel context menu. <2> Learn more </2>"
     }
   },
   "library-panels": {
@@ -9871,7 +9871,7 @@
       "options": "Options"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Importing dashboard from <1>Grafana.com</1>",
+      "importing-from": "Importing dashboard from <2>Grafana.com</2>",
       "published-by": "Published by",
       "updated-on": "Updated on"
     },
@@ -10011,7 +10011,7 @@
       "modal-field-description": "Copy the token now, as you will not be able to see it again. Losing this token requires creating a new one.",
       "modal-field-label": "Token",
       "modal-title": "Migration token created",
-      "status": "Current status: <1></1>"
+      "status": "Current status: <2></2>"
     },
     "onprem": {
       "cancel-snapshot-error-title": "Error cancelling creating snapshot",
@@ -10128,7 +10128,7 @@
       "upload-migration": "Upload snapshot"
     },
     "support-types-disclosure": {
-      "text": "Resources are copied to your Grafana Cloud stack. <1> Learn more </1> about the full set of supported resources and migrating other settings."
+      "text": "Resources are copied to your Grafana Cloud stack. <2> Learn more </2> about the full set of supported resources and migrating other settings."
     },
     "token-status": {
       "active": "Token created and active",
@@ -10554,7 +10554,7 @@
     "name-show-image": "Show image",
     "name-url": "URL",
     "news-panel": {
-      "body-error-loading-rss-feed": "Make sure that the feed URL is correct and that CORS is configured correctly on the server. See <1> News panel documentation. </1>",
+      "body-error-loading-rss-feed": "Make sure that the feed URL is correct and that CORS is configured correctly on the server. See <2> News panel documentation. </2>",
       "loading": "Loading...",
       "title-error-loading-rss-feed": "Error loading RSS feed"
     },
@@ -10945,7 +10945,7 @@
     },
     "empty": {
       "button": "Create playlist",
-      "pro-tip": "You can use playlists to cycle dashboards on TVs without user control. <1> Learn more </1>",
+      "pro-tip": "You can use playlists to cycle dashboards on TVs without user control. <2> Learn more </2>",
       "title": "There are no playlists created yet"
     }
   },
@@ -10956,7 +10956,7 @@
   },
   "plugin": {
     "plugin-details-deprecated-warning": {
-      "body-deprecated": "This {{pluginType}} plugin is <1> deprecated </1> and has been removed from the catalog."
+      "body-deprecated": "This {{pluginType}} plugin is <3> deprecated </3> and has been removed from the catalog."
     }
   },
   "plugins": {
@@ -10986,7 +10986,7 @@
       "label-search": "Search",
       "label-state": "State",
       "label-type": "Type",
-      "subtitle": "Extend the Grafana experience with panel plugins and apps. To find more data sources go to <1>Connections</1>.",
+      "subtitle": "Extend the Grafana experience with panel plugins and apps. To find more data sources go to <2>Connections</2>.",
       "tooltip-filter-disabled": "This filter has been disabled because the Grafana server cannot access grafana.com"
     },
     "catalog": {
@@ -11016,7 +11016,7 @@
     },
     "details": {
       "connections-tab": {
-        "description": "You currently have the following data sources configured for {{pluginName}}, click a tile to view the configuration details. You can find all of your data source connections in <1><0>Connections</0> - <2>Data sources</2>. </1>"
+        "description": "You currently have the following data sources configured for {{pluginName}}, click a tile to view the configuration details. You can find all of your data source connections in <3><4>Connections</4> - <8>Data sources</8>. </3>"
       },
       "disabled-error": {
         "angular-deprecation-link": "Read more about angular deprecation",
@@ -11106,7 +11106,7 @@
       }
     },
     "install-controls-warning": {
-      "body-not-published": "This plugin is not published to <1> grafana.com/plugins </1> and can't be managed via the catalog.",
+      "body-not-published": "This plugin is not published to <2> grafana.com/plugins </2> and can't be managed via the catalog.",
       "enterprise-plugin-info": "This plugin is only available in Grafana Cloud and Grafana Enterprise.",
       "learn-more": "Learn more",
       "title-dev-alert": "This is a development build of the plugin and can't be uninstalled.",
@@ -11123,7 +11123,7 @@
       "message": "All plugins are up to date"
     },
     "not-found-plugin": {
-      "body-plugin-not-found": "That plugin cannot be found. Please check the url is correct or <br></br> go to the <3>plugin catalog</3>.",
+      "body-plugin-not-found": "That plugin cannot be found. Please check the url is correct or <br></br> go to the <2>plugin catalog</2>.",
       "title-plugin-not-found": "Plugin not found"
     },
     "plugin-actions": {
@@ -11190,7 +11190,7 @@
     },
     "plugin-usage": {
       "body-missing-feature-toggle-panel-title-search": "Plugin usage requires the new search index to find usage across dashboards. Please enable the feature toggle",
-      "num-usages": "{{pluginName}} is used <1>{{numUsages}}</1> times.",
+      "num-usages": "{{pluginName}} is used <2>{{numUsages}}</2> times.",
       "title-missing-feature-toggle-panel-title-search": "Missing feature toggle: {{toggle}}",
       "title-not-used-yet": "{{pluginName}} is not used in any dashboards yet"
     },
@@ -11298,7 +11298,7 @@
   "provisioned-resource-request-handler-folder": "Folder created successfully",
   "provisioning": {
     "banner": {
-      "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <1> nightly build </1> of Grafana."
+      "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2> nightly build </2> of Grafana."
     },
     "bitbucket": {
       "branch-description": "The branch to use for provisioning",
@@ -11430,7 +11430,7 @@
       "actions": {
         "set-up-required-feature-toggles": "Set up required feature toggles"
       },
-      "learn-more-documentation": "Want to learn more? See our <1> documentation </1> .",
+      "learn-more-documentation": "Want to learn more? See our <2> documentation </2> .",
       "manage-dashboards-provision-updates-automatically": "Manage dashboards as code in Git and provision updates automatically",
       "manage-your-dashboards-with-remote-provisioning": "Get started with Git Sync",
       "store-dashboards-in-version-controlled-storage": "Store dashboards in version-controlled storage for better organization and history tracking"
@@ -11456,8 +11456,8 @@
     "finish-step": {
       "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
       "description-generate-dashboard-previews": "Create preview links for pull requests",
-      "description-image-rendering": "Requires image rendering. <1> Set up image rendering </1>",
-      "description-preview-requirements": "(requires <1> image rendering </1> and public access enabled)",
+      "description-image-rendering": "Requires image rendering. <2> Set up image rendering </2>",
+      "description-preview-requirements": "(requires <2> image rendering </2> and public access enabled)",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-sync-interval": "How often to sync changes from the repository",
       "error-sync-interval-required": "Sync interval is required",
@@ -11798,7 +11798,7 @@
       "alert-point-1": "Resources won't be able to be created, edited, or deleted during this process. In the last step, they will disappear.",
       "alert-point-2": "Once provisioning is complete, resources will reappear and be managed through external storage.",
       "alert-point-3": "The duration of this process depends on the number of resources involved.",
-      "alert-point-4": "Enterprise instance administrators can display an announcement banner to users. See <1> this guide </1> for step-by-step instructions.",
+      "alert-point-4": "Enterprise instance administrators can display an announcement banner to users. See <2> this guide </2> for step-by-step instructions.",
       "alert-title": "Important: No data or configuration will be lost, but dashboards will be temporarily unavailable for a few minutes.",
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
@@ -12010,13 +12010,13 @@
       "hide-time-info": "Hide time info",
       "Query options-title-query-options": "Query options",
       "relative-time": "Relative time",
-      "relative-time-tooltip": "Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure the Last 5 minutes the Relative time should be <1>{{relativeFrom}}</1> and <3>{{relativeTo}}</3>, or variables like <5>{{variable}}</5>.",
+      "relative-time-tooltip": "Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure the Last 5 minutes the Relative time should be <1>{{relativeFrom}}</1> and <5>{{relativeTo}}</5>, or variables like <8>{{variable}}</8>.",
       "render-cache-timeout-option": {
         "cache-timeout": "Cache timeout"
       },
       "render-interval-option": {
         "interval": "Interval",
-        "interval-tooltip": "The evaluated interval that is sent to data source and is used in <1>$__interval</1> and <3>$__interval_ms</3>. This value is not exactly equal to <5>Time range / max data points</5>, it will approximate a series of magic number.",
+        "interval-tooltip": "The evaluated interval that is sent to data source and is used in <1>$__interval</1> and <5>$__interval_ms</5>. This value is not exactly equal to <8>Time range / max data points</8>, it will approximate a series of magic number.",
         "min-interval": "Min interval",
         "min-interval-tooltip": "A lower limit for the interval. Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute. Default value can be set in data source settings for most data sources.",
         "time-range-max-data-points": "Time range / max data points"
@@ -12030,7 +12030,7 @@
         "cache-ttl": "Cache TTL"
       },
       "time-shift": "Time shift",
-      "time-shift-tooltip": "Overrides the time range for individual panels by shifting its start and end relative to the time picker. For example to configure the Last 1h the Time shift should be <1>{{relativeFrom}}</1> and <3>{{relativeTo}}</3>, or variables like <5>{{variable}}</5>."
+      "time-shift-tooltip": "Overrides the time range for individual panels by shifting its start and end relative to the time picker. For example to configure the Last 1h the Time shift should be <1>{{relativeFrom}}</1> and <5>{{relativeTo}}</5>, or variables like <8>{{variable}}</8>."
     },
     "query-group-top-section": {
       "data-source": "Data source",
@@ -12078,7 +12078,7 @@
   },
   "reduce": {
     "strictMode": {
-      "description": "When <1>Reduce Strict mode</1> is used, the <3>fill(null)</3> function (InfluxQL) will result in <5>NaN</5>. <7> See the documentation for more details. </7>",
+      "description": "When <1>Reduce Strict mode</1> is used, the <4>fill(null)</4> function (InfluxQL) will result in <8>NaN</8>. <12> See the documentation for more details. </12>",
       "title": "Strict Mode Behaviour"
     }
   },
@@ -12130,7 +12130,7 @@
     },
     "sub-menu-aria-label": "Role picker submenu",
     "title": {
-      "description": "Assign roles to users to ensure granular control over access to Grafana‘s features and resources. Find out more in our <1> documentation </1> ."
+      "description": "Assign roles to users to ensure granular control over access to Grafana‘s features and resources. Find out more in our <2> documentation </2> ."
     }
   },
   "role-picker-drawer": {
@@ -12367,7 +12367,7 @@
       "confirmText-delete": "Delete",
       "confirmText-disable-service-account": "Disable service account",
       "placeholder-search-service-account-by-name": "Search service account by name",
-      "sub-title": "Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our <1> documentation. </1>",
+      "sub-title": "Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our <2> documentation. </2>",
       "title-delete-service-account": "Delete service account",
       "title-disable-service-account": "Disable service account"
     },
@@ -12440,7 +12440,7 @@
       "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
       "link-url": "Link URL",
       "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render an image, you must install the <1> Grafana image renderer plugin </1> . Please contact your Grafana administrator to install the plugin.",
+      "render-instructions": "To render an image, you must install the <2> Grafana image renderer plugin </2> . Please contact your Grafana administrator to install the plugin.",
       "rendered-image": "Direct link rendered image",
       "save-alert": "Dashboard is not saved",
       "save-dashboard": "To render a panel image, you must save the dashboard first.",
@@ -12569,7 +12569,7 @@
     },
     "empty-state": {
       "message": "You haven't created any shared dashboards yet",
-      "more-info": "Create a shared dashboard from any existing dashboard through the <1>Share</1> modal. <3> Learn more </3>"
+      "more-info": "Create a shared dashboard from any existing dashboard through the <1>Share</1> modal. <5> Learn more </5>"
     },
     "toggle": {
       "pause-sharing-toggle-text": "Pause access"
@@ -12584,7 +12584,7 @@
       "locale-preference-description": "Choose your region to see the corresponding date, time, and number format",
       "locale-preference-label": "Region format",
       "locale-preference-placeholder": "Choose region",
-      "theme-description": "Enjoying the experimental themes? Tell us what you'd like to see <1> here. </1>",
+      "theme-description": "Enjoying the experimental themes? Tell us what you'd like to see <2> here. </2>",
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
     },
@@ -12638,7 +12638,7 @@
   "snapshot": {
     "empty-state": {
       "message": "You haven't created any snapshots yet",
-      "more-info": "You can create a snapshot of any dashboard through the <1>Share</1> modal. <3> Learn more </3>"
+      "more-info": "You can create a snapshot of any dashboard through the <1>Share</1> modal. <5> Learn more </5>"
     },
     "external-badge": "External",
     "name-column-header": "Name",
@@ -12957,7 +12957,7 @@
     "empty-state": {
       "button-title": "New team",
       "message": "No teams found",
-      "pro-tip": "Assign folder and dashboard permissions to teams instead of users to ease administration. <1> Learn more </1>",
+      "pro-tip": "Assign folder and dashboard permissions to teams instead of users to ease administration. <2> Learn more </2>",
       "title": "You haven't created any teams yet"
     },
     "team-group-sync": {
@@ -13038,7 +13038,7 @@
       "select-time": "Select a time range"
     },
     "content": {
-      "empty-recent-list-docs": "<0><0> Read the documentation </0><1> to find out more about how to enter custom time ranges.</1></0>",
+      "empty-recent-list-docs": "<0><1> Read the documentation </1><4> to find out more about how to enter custom time ranges.</4></0>",
       "empty-recent-list-info": "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.",
       "filter-placeholder": "Search quick ranges"
     },
@@ -13463,7 +13463,7 @@
       "label-format": "Format",
       "label-set-timezone": "Set timezone",
       "label-time-field": "Time field",
-      "tooltip-format": "The output format for the field specified as a <1> Moment.js format string </1> .",
+      "tooltip-format": "The output format for the field specified as a <2> Moment.js format string </2> .",
       "tooltip-timezone-manually": "Set the timezone of the date manually"
     },
     "format-time-transformer-editor": {
@@ -14143,7 +14143,7 @@
     "empty-state": {
       "button-title": "Add variable",
       "info-box-content": "Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or sensor names in your metric queries you can use variables in their place. Variables are shown as list boxes at the top of the dashboard. These drop-down lists make it easy to change the data being displayed in your dashboard.",
-      "info-box-content-2": "Check out the <1> Templates and variables documentation </1> for more information.",
+      "info-box-content-2": "Check out the <2> Templates and variables documentation </2> for more information.",
       "title": "There are no variables added yet"
     },
     "legacy-variable-query-editor": {

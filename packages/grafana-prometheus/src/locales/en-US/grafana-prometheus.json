@@ -11,7 +11,7 @@
         "label-title": "Title",
         "placeholder-auto": "auto",
         "tooltip-either-pattern-example-instance-replaced-label": "Use either the name or a pattern. For example, {{labelTemplate}} is replaced with label value for the label {{labelName}}.",
-        "tooltip-min-step": "An additional lower limit for the step parameter of the Prometheus query and for the <1>{{intervalVar}}</1> and <3>{{rateIntervalVar}}</3> variables.",
+        "tooltip-min-step": "An additional lower limit for the step parameter of the Prometheus query and for the <2>{{intervalVar}}</2> and <5>{{rateIntervalVar}}</5> variables.",
         "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "The unit of timestamp is milliseconds. If the unit of the series value is seconds, multiply its range vector by 1000."
       },
       "get-query-type-options": {
@@ -175,7 +175,7 @@
         "label-scrape-interval": "Scrape interval",
         "label-series-limit": "Series limit",
         "label-use-series-endpoint": "Use series endpoint",
-        "more-info": "For more information on configuring prometheus type and version in data sources, see the <1> provisioning documentation </1> .",
+        "more-info": "For more information on configuring prometheus type and version in data sources, see the <2> provisioning documentation </2> .",
         "placeholder-example-maxsourceresolutionmtimeout": "Example: {{example}}",
         "title-interval-behaviour": "Interval behaviour",
         "title-other": "Other",
@@ -430,7 +430,7 @@
         "label-type": "Type",
         "placeholder-auto": "auto",
         "title-options": "Options",
-        "tooltip-min-step": "An additional lower limit for the step parameter of the Prometheus query and for the <1>{{interval}}</1> and <3>{{rateInterval}}</3> variables."
+        "tooltip-min-step": "An additional lower limit for the step parameter of the Prometheus query and for the <2>{{interval}}</2> and <5>{{rateInterval}}</5> variables."
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost.",

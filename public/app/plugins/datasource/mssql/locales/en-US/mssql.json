@@ -54,7 +54,7 @@
   },
   "configuration": {
     "configuration-editor": {
-      "body-user-permission": "The database user should only be granted {{permissionType}} permissions on the specified database and tables you want to query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example, statements like <1>{{example1}}</1> and <3>{{example2}}</3> would be executed. To protect against this we <5>highly</5> recommend you create a specific MS SQL user with restricted permissions. Check out the <7> Microsoft SQL Server Data Source Docs </7> for more information.",
+      "body-user-permission": "The database user should only be granted {{permissionType}} permissions on the specified database and tables you want to query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example, statements like <3>{{example1}}</3> and <6>{{example2}}</6> would be executed. To protect against this we <9>highly</9> recommend you create a specific MS SQL user with restricted permissions. Check out the <13> Microsoft SQL Server Data Source Docs </13> for more information.",
       "description-additional-settings": "Additional settings are optional settings that can be configured for more control over your data source. This includes connection limits, connection timeout, group-by time interval, and Secure Socks Proxy.",
       "description-auth-type-azure-auth": "<i>Azure Authentication</i> Securely authenticate and access Azure resources and applications using Azure AD credentials - Managed Service Identity and Client Secret Credentials are supported.",
       "description-auth-type-credential-cache": "<i>Windows AD: Credential cache</i> Windows Active Directory - Sign on for domain user via credential cache.",
@@ -104,7 +104,7 @@
     },
     "kerberos-advanced-settings": {
       "description-dns-lookup-kdc": "Indicate whether DNS `SRV` records should be used to locate the KDCs and other servers for a realm. The default is <1>{{default}}</1>.",
-      "description-krb5-config-file-path": "The path to the configuration file for the <1> MIT krb5 package </1> . The default is <3>{{default}}</3>.",
+      "description-krb5-config-file-path": "The path to the configuration file for the <2> MIT krb5 package </2> . The default is <5>{{default}}</5>.",
       "description-udp-preference-limit": "The default is <1>{{default}}</1> and means always use TCP and is optional.",
       "label-dns-lookup-kdc": "DNS Lookup KDC",
       "label-krb5-config-file-path": "krb5 config file path",
