@@ -45,7 +45,7 @@ These APIs will also uses semantic versioning with three stability levels:
 | Level | Format     | Description                                                                 | Use Case                 | Enabled By Default? |
 | ----- | ---------- | --------------------------------------------------------------------------- | ------------------------ | ------------------- |
 | Alpha | `v1alpha1` | Early development stage. Unstable, may contain bugs, and subject to removal | For testing new features | No                  |
-| Beta  | `v1beta1`  | More stable than alpha, but may still have some changes                     | For early production use | No                  |
+| Beta  | `v1beta1`  | More stable than alpha, but may still have some changes                     | For non-critical use | No                  |
 | GA    | `v1`       | Generally Available. Stable with backward compatibility guarantees          | For production use       | Yes                 |
 
 #### Alpha
