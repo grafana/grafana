@@ -311,6 +311,7 @@ func setupDecrypter(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeClient
 		tracer,
 		address,
 		secretsTls,
+		secretsSec.Key("grpc_client_load_balancing").MustBool(false),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create decrypt service: %w", err)
