@@ -3692,7 +3692,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "Alphabetically (A–Z)",
-        "alphabetically-za": "Alphabetically (Z–A)"
+        "alphabetically-za": "Alphabetically (Z–A)",
+        "deleted-newest": "Deleted (newest first)",
+        "deleted-oldest": "Deleted (oldest first)"
       }
     }
   },
