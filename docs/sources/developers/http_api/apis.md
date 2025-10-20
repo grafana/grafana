@@ -51,7 +51,7 @@ These APIs will also uses semantic versioning with three stability levels:
 #### Alpha
 
 Alpha versions should not be served unless explicitly enabled by a feature flag, and should be considered completely experimental and subject to major changes.
-An Alpha version may undergo breaking changes without adding an additional version, and should not be relied upon by production workflows.
+An alpha version may undergo breaking changes without adding an additional version, and should not be relied upon by production workflows. Alpha versions may be removed completely, even without being promoted to a more stable level (e.g. an experimental API may be introduced as alpha for a new feature and subsequently removed completely, in case that feature gets canceled).
 
 #### Beta
 
