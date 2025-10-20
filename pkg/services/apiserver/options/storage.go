@@ -57,6 +57,7 @@ type StorageOptions struct {
 
 	// Secrets Manager Configuration for InlineSecureValueSupport
 	SecretsManagerGrpcClientEnable        bool
+	SecretsManagerGrpcClientLoadBalancing bool
 	SecretsManagerGrpcServerAddress       string
 	SecretsManagerGrpcServerUseTLS        bool
 	SecretsManagerGrpcServerTLSSkipVerify bool
@@ -115,6 +116,7 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&o.SecretsManagerGrpcServerTLSSkipVerify, "grafana.secrets-manager.grpc-server-tls-skip-verify", false, "Skip TLS verification for gRPC server")
 	fs.StringVar(&o.SecretsManagerGrpcServerTLSServerName, "grafana.secrets-manager.grpc-server-tls-server-name", "", "Server name for TLS verification")
 	fs.StringVar(&o.SecretsManagerGrpcServerTLSCAFile, "grafana.secrets-manager.grpc-server-tls-ca-file", "", "CA file for TLS verification")
+	fs.BoolVar(&o.SecretsManagerGrpcClientLoadBalancing, "grafana.secrets-manager.grpc-client-load-balancing", false, "Enable client-side load balancing for gRPC client")
 }
 
 func (o *StorageOptions) Validate() []error {
@@ -218,6 +220,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 			o.SecretsManagerGrpcServerAddress,
 			tlsCfg,
 			tracer,
+			o.SecretsManagerGrpcClientLoadBalancing,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create inline secure value service: %w", err)
