@@ -7699,7 +7699,8 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Mostrar etiquetas de umbral",
     "name-show-threshold-markers": "Mostrar marcadores de umbral",
-    "placeholder-neutral": "auto"
+    "placeholder-neutral": "auto",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Aplicar",
@@ -12076,6 +12077,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },

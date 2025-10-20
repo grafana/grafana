@@ -1089,4 +1089,12 @@ const (
 	// FlagCdnPluginsUrls
 	// Enable loading plugins via declarative URLs
 	FlagCdnPluginsUrls = "cdnPluginsUrls"
+
+	// FlagPreventPanelChromeOverflow
+	// Restrict PanelChrome contents with overflow: hidden;
+	FlagPreventPanelChromeOverflow = "preventPanelChromeOverflow"
+
+	// FlagPluginStoreServiceLoading
+	// Load plugins during store service startup instead of wire provider
+	FlagPluginStoreServiceLoading = "pluginStoreServiceLoading"
 )

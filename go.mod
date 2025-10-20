@@ -161,7 +161,6 @@ require (
 	github.com/prometheus/common v0.66.1 // @grafana/alerting-backend
 	github.com/prometheus/prometheus v0.303.1 // @grafana/alerting-backend
 	github.com/prometheus/sigv4 v0.1.2 // @grafana/alerting-backend
-	github.com/puzpuzpuz/xsync/v4 v4.2.0 // @grafana/grafana-backend-group
 	github.com/redis/go-redis/v9 v9.14.0 // @grafana/alerting-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/grafana-backend-group
 	github.com/rs/cors v1.11.1 // @grafana/identity-access-team
@@ -235,7 +234,6 @@ require (
 
 require (
 	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/plugins-platform-backend
-	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/alerting/rules v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/correlations v0.0.0 // @grafana/datapro
@@ -243,6 +241,7 @@ require (
 	github.com/grafana/grafana/apps/folder v0.0.0 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/apps/iam v0.0.0 // @grafana/identity-access-team
 	github.com/grafana/grafana/apps/investigations v0.0.0 // @fcjack @matryer
+	github.com/grafana/grafana/apps/logsdrilldown v0.0.0 // @grafana/observability-logs
 	github.com/grafana/grafana/apps/playlist v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/plugins v0.0.0 // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/apps/preferences v0.0.0 // @grafana/grafana-app-platform-squad
@@ -272,6 +271,7 @@ replace (
 	github.com/grafana/grafana/apps/folder => ./apps/folder
 	github.com/grafana/grafana/apps/iam => ./apps/iam
 	github.com/grafana/grafana/apps/investigations => ./apps/investigations
+	github.com/grafana/grafana/apps/logsdrilldown => ./apps/logsdrilldown
 	github.com/grafana/grafana/apps/playlist => ./apps/playlist
 	github.com/grafana/grafana/apps/plugins => ./apps/plugins
 	github.com/grafana/grafana/apps/preferences => ./apps/preferences
@@ -325,6 +325,7 @@ require (
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apache/thrift v0.22.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
+	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/at-wat/mqtt-go v0.19.4 // indirect
@@ -471,7 +472,6 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
-	github.com/jaegertracing/jaeger v1.67.0 // indirect
 	github.com/jaegertracing/jaeger-idl v0.5.0 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
@@ -535,9 +535,6 @@ require (
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
-	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.124.1 // indirect
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/core/xidutils v0.124.1 // indirect
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.124.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
@@ -605,7 +602,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.6.4 // indirect
 	go.mongodb.org/mongo-driver v1.17.3 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
-	go.opentelemetry.io/collector/semconv v0.124.0 // indirect
+	go.opentelemetry.io/collector/featuregate v1.43.0 // indirect
 	go.opentelemetry.io/contrib/bridges/prometheus v0.61.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.36.0 // indirect
 	go.opentelemetry.io/contrib/exporters/autoexport v0.61.0 // indirect
@@ -653,12 +650,7 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-require (
-	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
-	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
-	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	go.opentelemetry.io/collector/featuregate v1.43.0 // indirect
-)
+require github.com/go-jose/go-jose/v3 v3.0.4
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
