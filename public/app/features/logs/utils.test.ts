@@ -55,6 +55,17 @@ describe('getLoglevel()', () => {
     expect(getLogLevel('WARN this could be a debug message')).toBe(LogLevel.warn);
     expect(getLogLevel('WARN this is a non-critical message')).toBe(LogLevel.warn);
   });
+
+  it('detects z/OS single-letter severities', () => {
+    // informational
+    expect(getLogLevel('MSG1234 I')).toBe(LogLevel.info);
+    // warning
+    expect(getLogLevel('MSG9999 (W) Some warning text')).toBe(LogLevel.warning);
+    // error
+    expect(getLogLevel('Some failure occurred E')).toBe(LogLevel.error);
+    // severe/critical
+    expect(getLogLevel('Very bad S')).toBe(LogLevel.critical);
+  });
 });
 
 describe('getLogLevelFromKey()', () => {
@@ -63,6 +74,13 @@ describe('getLogLevelFromKey()', () => {
   });
   it('returns correct log level when level is capitalized', () => {
     expect(getLogLevelFromKey('INFO')).toBe(LogLevel.info);
+  });
+  it('parses z/OS single-letter keys', () => {
+    expect(getLogLevelFromKey('I')).toBe(LogLevel.info);
+    expect(getLogLevelFromKey('W')).toBe(LogLevel.warning);
+    expect(getLogLevelFromKey('E')).toBe(LogLevel.error);
+    expect(getLogLevelFromKey('S')).toBe(LogLevel.critical);
+    expect(getLogLevelFromKey('C')).toBe(LogLevel.critical);
   });
   describe('Numeric log levels', () => {
     it('returns critical', () => {
