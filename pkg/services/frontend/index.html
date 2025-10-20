@@ -174,15 +174,13 @@
           document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
           document.querySelector('.fs-variant-error').classList.remove('fs-hidden');
 
-          // Report the error to the backend
-          const errorMessage = err ? err.message : 'Unknown error';
-
-          fetch('/-/fe-boot-error', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: errorMessage,
+          // not a secure random value, but collisions are highly unlikely and 1/1000_000_000 lost requests
+          // doesn't make a difference.
+          fetch(`/-/fe-boot-error?ts=${Date.now()}${Math.random()}`, {
+            // This "should" be a POST request, but we must use GET to interact with the correct service.
+            // no-store and ?ts=_ are used to ensure the request isn't cached.
+            method: 'GET',
+            cache: "no-store",
           }).catch(err => {
             console.error('Failed to report boot error to backend: ', err);
           });
