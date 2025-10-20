@@ -25,6 +25,7 @@ type BulkStoreClient interface {
 //go:generate mockery --name StorageSwapper --structname MockStorageSwapper --inpackage --filename mock_storage_swapper.go --with-expecter
 type StorageSwapper interface {
 	StopReadingUnifiedStorage(ctx context.Context) error
+	StartReadingUnifiedStorage(ctx context.Context) error
 	WipeUnifiedAndSetMigratedFlag(ctx context.Context, namespace string) error
 }
 
@@ -93,6 +94,33 @@ func (s *storageSwapper) WipeUnifiedAndSetMigratedFlag(ctx context.Context, name
 		status.ReadUnified = true
 		status.WriteLegacy = false // keep legacy "clean"
 		_, err = s.dual.Update(ctx, status)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *storageSwapper) StartReadingUnifiedStorage(ctx context.Context) error {
+	for _, gr := range resources.SupportedProvisioningResources {
+		status, _ := s.dual.Status(ctx, gr.GroupResource())
+		if status.ReadUnified {
+			return fmt.Errorf("unexpected state - already using unified storage for: %s", gr)
+		}
+		if status.Migrating > 0 {
+			if time.Since(time.UnixMilli(status.Migrating)) < time.Second*30 {
+				return fmt.Errorf("another migration job is running for: %s", gr)
+			}
+		}
+
+		logger := logging.FromContext(ctx)
+		logger.Error("switch to unified storage", "group", gr.Group, "resource", gr.Resource, "version", gr.Version)
+
+		status.Migrated = time.Now().UnixMilli() // but not really... since the sync is starting
+		status.ReadUnified = true
+		status.WriteLegacy = false // keep legacy "clean"
+		_, err := s.dual.Update(ctx, status)
 		if err != nil {
 			return err
 		}
