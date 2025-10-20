@@ -616,8 +616,8 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 	var allRules ngmodels.RulesGroup
 
 	if canUseCache {
-		// Try to get from cache using lite+MGET strategy
-		if cachedRules, found := st.getCachedAlertRulesFiltered(ctx, query); found {
+		// Try to get from cache (full rules per org+ruleType)
+		if cachedRules, found := st.getCachedAlertRules(query.OrgID, query.RuleType); found {
 			st.Logger.Info("Store ListAlertRulesByGroup cache hit", "orgID", query.OrgID, "cachedCount", len(cachedRules))
 			allRules = cachedRules
 		}
@@ -1011,7 +1011,7 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 
 	if canUseCache {
 		startCache := time.Now()
-		if cachedRules, found := st.getCachedAlertRulesFiltered(ctx, query); found {
+		if cachedRules, found := st.getCachedAlertRules(query.OrgID, query.RuleType); found {
 			cacheRetrievalDuration = time.Since(startCache)
 			cacheHit = true
 

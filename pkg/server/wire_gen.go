@@ -591,7 +591,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	dashverService := dashverimpl.ProvideService(cfg, sqlStore, dashboardService, featureToggles, k8sHandlerWithFallback)
 	dashboardSnapshotStore := database5.ProvideStore(sqlStore, cfg)
 	serviceImpl := service10.ProvideService(dashboardSnapshotStore, secretsService, dashboardService)
-	alertRuleCache := store2.ProvideAlertRuleCache(cfg, cacheService, remoteCache)
+	alertRuleCache := store2.ProvideAlertRuleCache(cacheService)
 	dBstore, err := store2.ProvideDBStore(cfg, featureToggles, sqlStore, folderimplService, dashboardService, accessControl, inProcBus, cacheService, alertRuleCache)
 	if err != nil {
 		return nil, err
@@ -1194,7 +1194,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	dashverService := dashverimpl.ProvideService(cfg, sqlStore, dashboardService, featureToggles, k8sHandlerWithFallback)
 	dashboardSnapshotStore := database5.ProvideStore(sqlStore, cfg)
 	serviceImpl := service10.ProvideService(dashboardSnapshotStore, secretsService, dashboardService)
-	alertRuleCache := store2.ProvideAlertRuleCache(cfg, cacheService, remoteCache)
+	alertRuleCache := store2.ProvideAlertRuleCache(cacheService)
 	dBstore, err := store2.ProvideDBStore(cfg, featureToggles, sqlStore, folderimplService, dashboardService, accessControl, inProcBus, cacheService, alertRuleCache)
 	if err != nil {
 		return nil, err

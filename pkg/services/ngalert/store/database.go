@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -61,6 +62,9 @@ func ProvideDBStore(
 	cacheService *localcache.CacheService,
 	alertRuleCache AlertRuleCache,
 ) (*DBstore, error) {
+	if alertRuleCache == nil {
+		alertRuleCache = ProvideAlertRuleCache(cfg, cacheService, remotecache.CacheStorage(nil))
+	}
 	logger := log.New("ngalert.dbstore")
 	store := DBstore{
 		Cfg:              cfg.UnifiedAlerting,

@@ -111,6 +111,27 @@ func matchesAllFiltersLite(rule *ngmodels.AlertRuleLite, query *ngmodels.ListAle
 			return false
 		}
 	}
+	// Datasource UIDs filter (lite)
+	if len(query.DatasourceUIDs) > 0 {
+		if len(rule.DatasourceUIDs) == 0 {
+			return false
+		}
+		match := false
+		for _, f := range query.DatasourceUIDs {
+			for _, ds := range rule.DatasourceUIDs {
+				if ds == f {
+					match = true
+					break
+				}
+			}
+			if match {
+				break
+			}
+		}
+		if !match {
+			return false
+		}
+	}
 	return true
 }
 

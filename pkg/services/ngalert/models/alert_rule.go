@@ -385,6 +385,7 @@ type AlertRuleLite struct {
 	ReceiverNames  []string
 	RuleGroupIndex int
 	IsRecording    bool
+	DatasourceUIDs []string
 }
 
 // ToLite converts an AlertRule to its lightweight version for caching
@@ -394,6 +395,24 @@ func (r *AlertRule) ToLite() *AlertRuleLite {
 	for _, ns := range r.NotificationSettings {
 		receiverNames = append(receiverNames, ns.Receiver)
 	}
+
+	// Extract datasource UIDs from queries (skip expressions)
+	dsSet := make(map[string]struct{}, len(r.Data))
+	for _, q := range r.Data {
+		if q.DatasourceUID == "" {
+			continue
+		}
+		isExpr, _ := q.IsExpression()
+		if isExpr {
+			continue
+		}
+		dsSet[q.DatasourceUID] = struct{}{}
+	}
+	dsUIDs := make([]string, 0, len(dsSet))
+	for uid := range dsSet {
+		dsUIDs = append(dsUIDs, uid)
+	}
+	sort.Strings(dsUIDs)
 
 	return &AlertRuleLite{
 		UID:            r.UID,
@@ -407,6 +426,7 @@ func (r *AlertRule) ToLite() *AlertRuleLite {
 		ReceiverNames:  receiverNames,
 		RuleGroupIndex: r.RuleGroupIndex,
 		IsRecording:    r.Type() == RuleTypeRecording,
+		DatasourceUIDs: dsUIDs,
 	}
 }
 
