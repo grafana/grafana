@@ -606,19 +606,10 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	// Extract datasource_uid filter (can be multiple)
 	datasourceUIDs := opts.Query["datasource_uid"]
 
-	// Check if we have filters that will be applied after grouping
+	// Extract filters - all will be applied at store level
 	namespaceFilter := opts.Query.Get("namespace")
 	ruleGroupFilter := opts.Query.Get("rule_group")
 	ruleNameFilter := opts.Query.Get("rule_name")
-	hasPostGroupFilters := namespaceFilter != "" || ruleGroupFilter != ""
-
-	// If we have post-group filters, don't paginate at store level - we need all groups to filter properly
-	storeLevelLimit := maxGroups
-	storeLevelToken := nextToken
-	if hasPostGroupFilters {
-		storeLevelLimit = 0  // 0 means no limit
-		storeLevelToken = "" // No pagination at store level
-	}
 
 	if collector != nil {
 		collector.End("parse_query", "Parse and validate query parameters")
@@ -631,16 +622,17 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 			NamespaceUIDs: namespaceUIDs,
 			DashboardUID:  dashboardUID,
 			PanelID:       panelID,
-			// Don't pass RuleGroups - we'll do substring filtering after grouping
-			ReceiverName: receiverName,
+			ReceiverName:  receiverName,
 		},
 		RuleType:        ruleType,
 		Labels:          labelFilters,
-		RuleName:        ruleNameFilter,
+		Namespace:       namespaceFilter, // Backend does case-insensitive substring match
+		GroupName:       ruleGroupFilter, // Backend does case-insensitive substring match
+		RuleName:        ruleNameFilter,  // Backend does case-insensitive substring match
 		HidePluginRules: hidePlugins,
 		DatasourceUIDs:  datasourceUIDs,
-		Limit:           storeLevelLimit,
-		ContinueToken:   storeLevelToken,
+		Limit:           maxGroups,
+		ContinueToken:   nextToken,
 		DisableCache:    false,
 	}
 	ruleList, continueToken, err := store.ListAlertRulesByGroup(opts.Ctx, &byGroupQuery)
@@ -668,61 +660,8 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	if collector != nil {
 		collector.Start("filter_group")
 	}
-	// Don't pass ruleNamesSet for exact matching - we're doing substring filtering at store level
+	// All filtering done at store level - just group the results
 	groupedRules := getGroupedRules(log, ruleList, nil, opts.AllowedNamespaces)
-
-	// Filter by namespace (folder name) if provided - case-insensitive substring match
-	if namespaceFilter != "" {
-		filteredGroups := make([]*ruleGroup, 0, len(groupedRules))
-		lowerFilter := strings.ToLower(namespaceFilter)
-		for _, rg := range groupedRules {
-			if strings.Contains(strings.ToLower(rg.Folder), lowerFilter) {
-				filteredGroups = append(filteredGroups, rg)
-			}
-		}
-		groupedRules = filteredGroups
-	}
-
-	// Filter by rule_group (group name) if provided - case-insensitive substring match
-	if ruleGroupFilter != "" {
-		filteredGroups := make([]*ruleGroup, 0, len(groupedRules))
-		lowerFilter := strings.ToLower(ruleGroupFilter)
-		for _, rg := range groupedRules {
-			if strings.Contains(strings.ToLower(rg.GroupKey.RuleGroup), lowerFilter) {
-				filteredGroups = append(filteredGroups, rg)
-			}
-		}
-		groupedRules = filteredGroups
-	}
-
-	// Apply pagination at API level if we did post-group filtering
-	if hasPostGroupFilters && maxGroups > 0 {
-		// Handle pagination token
-		startIdx := 0
-		if nextToken != "" {
-			// Find the starting position based on token
-			for i, rg := range groupedRules {
-				groupToken := getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup)
-				if tokenGreaterThanOrEqual(groupToken, nextToken) {
-					startIdx = i
-					break
-				}
-			}
-		}
-
-		// Apply limit and generate next token
-		endIdx := startIdx + int(maxGroups)
-		if endIdx > len(groupedRules) {
-			endIdx = len(groupedRules)
-			continueToken = "" // No more groups
-		} else {
-			// Generate next token from the group after the last one we're returning
-			nextGroup := groupedRules[endIdx]
-			continueToken = getRuleGroupNextToken(nextGroup.Folder, nextGroup.GroupKey.RuleGroup)
-		}
-
-		groupedRules = groupedRules[startIdx:endIdx]
-	}
 
 	if collector != nil {
 		collector.End("filter_group", "Filter and paginate rule groups")

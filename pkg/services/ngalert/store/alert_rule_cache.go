@@ -20,11 +20,11 @@ const (
 
 // AlertRuleCache is an abstraction for caching alert rules
 type AlertRuleCache interface {
-	// GetRules retrieves all cached alert rules for an organization and rule type
-	GetRules(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter) (ngmodels.RulesGroup, bool)
+	// GetLiteRules retrieves cached lite rules for filtering
+	GetLiteRules(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter) ([]*ngmodels.AlertRuleLite, bool)
 
-	// SetRules stores alert rules in the cache
-	SetRules(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter, rules ngmodels.RulesGroup) error
+	// SetLiteRules stores lite rules in the cache
+	SetLiteRules(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter, rules []*ngmodels.AlertRuleLite) error
 
 	// Delete invalidates all cached alert rules for an organization
 	Delete(ctx context.Context, orgID int64) error
@@ -50,7 +50,7 @@ func ProvideAlertRuleCache(cfg *setting.Cfg, cache *localcache.CacheService, _ r
 	return NewAlertRuleCache(cache, log.New("ngalert.cache"))
 }
 
-func (c *localAlertRuleCache) GetRules(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter) (ngmodels.RulesGroup, bool) {
+func (c *localAlertRuleCache) GetLiteRules(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter) ([]*ngmodels.AlertRuleLite, bool) {
 	if c.localCache == nil {
 		return nil, false
 	}
@@ -61,17 +61,17 @@ func (c *localAlertRuleCache) GetRules(ctx context.Context, orgID int64, ruleTyp
 		return nil, false
 	}
 
-	rules, ok := cached.(ngmodels.RulesGroup)
+	liteRules, ok := cached.([]*ngmodels.AlertRuleLite)
 	if !ok {
 		// Cache corruption - invalidate
 		c.localCache.Delete(key)
 		return nil, false
 	}
 
-	return rules, true
+	return liteRules, true
 }
 
-func (c *localAlertRuleCache) SetRules(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter, rules ngmodels.RulesGroup) error {
+func (c *localAlertRuleCache) SetLiteRules(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter, rules []*ngmodels.AlertRuleLite) error {
 	if c.localCache == nil {
 		return nil
 	}
@@ -100,22 +100,22 @@ func alertRuleCacheKey(orgID int64, ruleType ngmodels.RuleTypeFilter) string {
 	return fmt.Sprintf("alert-rules:%d:%s", orgID, ruleType)
 }
 
-// getCachedAlertRules retrieves cached alert rules for an organization and rule type
-func (st *DBstore) getCachedAlertRules(orgID int64, ruleType ngmodels.RuleTypeFilter) (ngmodels.RulesGroup, bool) {
+// getCachedLiteRules retrieves cached lite rules for an organization and rule type
+func (st *DBstore) getCachedLiteRules(orgID int64, ruleType ngmodels.RuleTypeFilter) ([]*ngmodels.AlertRuleLite, bool) {
 	if st.AlertRuleCache == nil {
 		return nil, false
 	}
 
-	return st.AlertRuleCache.GetRules(context.Background(), orgID, ruleType)
+	return st.AlertRuleCache.GetLiteRules(context.Background(), orgID, ruleType)
 }
 
-// setCachedAlertRules stores alert rules in the cache for an organization and rule type
-func (st *DBstore) setCachedAlertRules(orgID int64, ruleType ngmodels.RuleTypeFilter, rules ngmodels.RulesGroup) {
+// setCachedLiteRules stores lite rules in the cache for an organization and rule type
+func (st *DBstore) setCachedLiteRules(orgID int64, ruleType ngmodels.RuleTypeFilter, rules []*ngmodels.AlertRuleLite) {
 	if st.AlertRuleCache == nil {
 		return
 	}
 
-	_ = st.AlertRuleCache.SetRules(context.Background(), orgID, ruleType, rules)
+	_ = st.AlertRuleCache.SetLiteRules(context.Background(), orgID, ruleType, rules)
 }
 
 // invalidateAlertRulesCache invalidates all cached alert rules for an organization

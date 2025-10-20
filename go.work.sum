@@ -1710,6 +1710,7 @@ go.etcd.io/gofail v0.2.0/go.mod h1:nL3ILMGfkXTekKI3clMBNazKnjUZjYLKmBHzsVAnC1o=
 go.mongodb.org/mongo-driver v1.11.4/go.mod h1:PTSz5yu21bkT/wXpkS7WR5f0ddqw5quethTUn9WM+2g=
 go.mongodb.org/mongo-driver v1.14.0/go.mod h1:Vzb0Mk/pa7e6cWw85R4F/endUC3u0U9jGcNU603k65c=
 go.mongodb.org/mongo-driver v1.16.1/go.mod h1:oB6AhJQvFQL4LEHyXi6aJzQJtBiTQHiAd83l0GdFaiw=
+go.opentelemetry.io/collector v0.124.0 h1:g/dfdGFhBcQI0ggGxTmGlJnJ6Yl6T2gVxQoIj4UfXCc=
 go.opentelemetry.io/collector v0.124.0/go.mod h1:QzERYfmHUedawjr8Ph/CBEEkVqWS8IlxRLAZt+KHlCg=
 go.opentelemetry.io/collector/client v1.30.0 h1:QbvOrvwUGcnVjnIBn2zyLLubisOjgh7kMgkzDAiYpHg=
 go.opentelemetry.io/collector/client v1.30.0/go.mod h1:msXhZlNdAra2fZiyeT0o/xj43Kl1yvF9zYW0r+FhGUI=
@@ -1813,6 +1814,7 @@ go.opentelemetry.io/collector/otelcol v0.124.0 h1:q/+ebTZgEZX+yFbvO7FeqpEtvtRPJ+
 go.opentelemetry.io/collector/otelcol v0.124.0/go.mod h1:mFGJZn5YuffdMVO/lPBavbW+R64Dgd3jOMgw2WAmJEM=
 go.opentelemetry.io/collector/pdata v1.30.0 h1:j3jyq9um436r6WzWySzexP2nLnFdmL5uVBYAlyr9nDM=
 go.opentelemetry.io/collector/pdata v1.30.0/go.mod h1:0Bxu1ktuj4wE7PIASNSvd0SdBscQ1PLtYasymJ13/Cs=
+go.opentelemetry.io/collector/pdata/pprofile v0.124.0/go.mod h1:1EN3Gw5LSI4fSVma/Yfv/6nqeuYgRTm1/kmG5nE5Oyo=
 go.opentelemetry.io/collector/pdata/testdata v0.124.0 h1:vY+pWG7CQfzzGSB5+zGYHQOltRQr59Ek9QiPe+rI+NY=
 go.opentelemetry.io/collector/pdata/testdata v0.124.0/go.mod h1:lNH48lGhGv4CYk27fJecpsR1zYHmZjKgNrAprwjym0o=
 go.opentelemetry.io/collector/pipeline v0.124.0 h1:hKvhDyH2GPnNO8LGL34ugf36sY7EOXPjBvlrvBhsOdw=

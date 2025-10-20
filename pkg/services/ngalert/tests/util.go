@@ -86,7 +86,8 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 	folderService := foldertest.NewFakeService()
 	dashboardService := dashboards.NewFakeDashboardService(tb)
 	cacheService := localcache.ProvideService()
-	ruleStore, err := store.ProvideDBStore(cfg, options.featureToggles, sqlStore, folderService, &dashboards.FakeDashboardService{}, ac, bus, cacheService)
+	// Pass nil for AlertRuleCache - ProvideDBStore will create a default one
+	ruleStore, err := store.ProvideDBStore(cfg, options.featureToggles, sqlStore, folderService, &dashboards.FakeDashboardService{}, ac, bus, cacheService, nil)
 	require.NoError(tb, err)
 	ng, err := ngalert.ProvideService(
 		cfg, options.featureToggles, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, quotatest.New(false, nil),

@@ -603,7 +603,6 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 	// Determine if we can use cache:
 	// - DisableCache must not be set
 	// - Must not have specific rule UIDs (those bypass cache)
-	// Continue token and limits are fine - we'll paginate the cached results
 	canUseCache := !query.DisableCache && len(query.RuleUIDs) == 0
 
 	st.Logger.Info("ListAlertRulesByGroup cache check",
@@ -613,31 +612,94 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 		"ruleType", query.RuleType,
 		"org_id", query.OrgID)
 
-	var allRules ngmodels.RulesGroup
+	var matchingUIDs []string
 
+	// STAGE 1: Try to filter using lite rules from cache
 	if canUseCache {
-		// Try to get from cache (full rules per org+ruleType)
-		if cachedRules, found := st.getCachedAlertRules(query.OrgID, query.RuleType); found {
-			st.Logger.Info("Store ListAlertRulesByGroup cache hit", "orgID", query.OrgID, "cachedCount", len(cachedRules))
-			allRules = cachedRules
+		if cachedLiteRules, found := st.getCachedLiteRules(query.OrgID, query.RuleType); found {
+			st.Logger.Info("Cache HIT: filtering lite rules",
+				"orgID", query.OrgID,
+				"cachedCount", len(cachedLiteRules))
+
+			// Filter lite rules to get matching lite rules (not just UIDs)
+			filteredLiteRules := filterLiteRules(cachedLiteRules, query)
+
+			st.Logger.Info("After filtering lite rules",
+				"matchingCount", len(filteredLiteRules))
+
+			// Paginate on lite rules BEFORE fetching from DB
+			var paginatedLiteRules []*ngmodels.AlertRuleLite
+			paginatedLiteRules, nextToken = st.paginateLiteRulesByGroup(filteredLiteRules, query.Limit, query.ContinueToken)
+
+			st.Logger.Info("After paginating lite rules",
+				"paginatedCount", len(paginatedLiteRules),
+				"hasNextToken", nextToken != "")
+
+			// Extract UIDs from paginated lite rules
+			matchingUIDs = make([]string, len(paginatedLiteRules))
+			for i, lite := range paginatedLiteRules {
+				matchingUIDs[i] = lite.UID
+			}
+
+			// Fetch ONLY paginated rules from DB and return immediately
+			if len(matchingUIDs) > 0 {
+				err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+					fetchQuery := &ngmodels.ListAlertRulesExtendedQuery{
+						ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
+							OrgID:    query.OrgID,
+							RuleUIDs: matchingUIDs,
+						},
+					}
+
+					q, groupsSet, err := st.buildListAlertRulesQuery(sess, fetchQuery)
+					if err != nil {
+						return err
+					}
+
+					queryStart := time.Now()
+					rows, err := q.Rows(new(alertRule))
+					if err != nil {
+						return err
+					}
+					if collector := getTimingCollectorFromContext(ctx); collector != nil {
+						collector.RecordDBQuery(time.Since(queryStart))
+					}
+					defer rows.Close()
+
+					result = st.convertAlertRulesBatched(rows, fetchQuery, groupsSet, len(matchingUIDs))
+					result = st.reorderByUIDs(result, matchingUIDs)
+
+					return nil
+				})
+
+				if err != nil {
+					return nil, "", err
+				}
+
+				st.Logger.Info("ListAlertRulesByGroup returning results (cache hit path)",
+					"resultCount", len(result),
+					"hasNextToken", nextToken != "")
+
+				return result, nextToken, nil
+			}
+
+			// No results after filtering/pagination
+			return []*ngmodels.AlertRule{}, nextToken, nil
 		}
 	}
 
-	// If not in cache, fetch from DB
-	if allRules == nil {
-		st.Logger.Info("Store ListAlertRulesByGroup cache miss, fetching from DB", "orgID", query.OrgID)
+	// STAGE 2: If no cache hit, fetch all rules from DB and build lite cache
+	if matchingUIDs == nil {
+		st.Logger.Info("Cache MISS: fetching all rules from DB", "orgID", query.OrgID)
 
-		// Time the database query
 		dbStart := time.Now()
 		err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-			// Create a modified query that fetches ALL rules for the org (for caching)
-			// We'll filter by namespace, dashboard, etc. in-memory
+			// Build query for ALL rules (no filters except org/type)
 			dbQuery := &ngmodels.ListAlertRulesExtendedQuery{
 				ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
 					OrgID: query.OrgID,
-					// Don't pass NamespaceUIDs, DashboardUID, PanelID, RuleGroups, ReceiverName to SQL
-					// We'll filter these in-memory to enable caching
 				},
+				RuleType: query.RuleType,
 			}
 
 			q, groupsSet, err := st.buildListAlertRulesQuery(sess, dbQuery)
@@ -645,16 +707,11 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 				return err
 			}
 
-			// Don't apply cursor to DB query - we need ALL rules for caching
-			// We'll apply pagination after filtering in-memory
-
-			rule := new(alertRule)
 			queryStart := time.Now()
-			rows, err := q.Rows(rule)
+			rows, err := q.Rows(new(alertRule))
 			if err != nil {
 				return err
 			}
-			// Record query timing to Server-Timing collector if present
 			if collector := getTimingCollectorFromContext(ctx); collector != nil {
 				collector.RecordDBQuery(time.Since(queryStart))
 			}
@@ -662,12 +719,38 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 				_ = rows.Close()
 			}()
 
-			// Use batched conversion to overlap DB I/O with JSON unmarshaling
-			allRules = st.convertAlertRulesBatched(rows, dbQuery, groupsSet, 1000)
+			// Convert to full rules
+			allRules := st.convertAlertRulesBatched(rows, dbQuery, groupsSet, 1000)
+
+			// Convert to lite and cache
+			liteRules := make([]*ngmodels.AlertRuleLite, len(allRules))
+			for i, rule := range allRules {
+				liteRules[i] = rule.ToLite()
+			}
+
+			if canUseCache {
+				st.setCachedLiteRules(query.OrgID, query.RuleType, liteRules)
+				st.Logger.Info("Cached lite rules", "count", len(liteRules))
+			}
+
+			// Filter and paginate lite rules
+			filteredLiteRules := filterLiteRules(liteRules, query)
+			var paginatedLiteRules []*ngmodels.AlertRuleLite
+			paginatedLiteRules, nextToken = st.paginateLiteRulesByGroup(filteredLiteRules, query.Limit, query.ContinueToken)
+
+			st.Logger.Info("After filtering and paginating lite rules",
+				"filteredCount", len(filteredLiteRules),
+				"paginatedCount", len(paginatedLiteRules))
+
+			// Extract UIDs from paginated lite rules
+			matchingUIDs = make([]string, len(paginatedLiteRules))
+			for i, lite := range paginatedLiteRules {
+				matchingUIDs[i] = lite.UID
+			}
+
 			return nil
 		})
 
-		// Record total DB operation time including row processing
 		if collector := getTimingCollectorFromContext(ctx); collector != nil {
 			dbDuration := time.Since(dbStart)
 			st.Logger.Debug("Database operation completed", "duration_ms", float64(dbDuration.Microseconds())/1000.0)
@@ -677,30 +760,82 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			return nil, "", err
 		}
 
-		// Cache the full result set for future requests
-		if canUseCache {
-			st.Logger.Info("Store ListAlertRulesByGroup storing in cache", "orgID", query.OrgID, "count", len(allRules))
-			st.setCachedAlertRules(query.OrgID, query.RuleType, allRules)
+		// Early return if we took the non-cached path
+		if result != nil {
+			return result, nextToken, nil
 		}
 	}
 
-	// Now apply in-memory filters to the full rule set (from cache or DB)
-	filteredRules := applyInMemoryFilters(allRules, query)
-	st.Logger.Info("Store ListAlertRulesByGroup after in-memory filters", "count", len(filteredRules))
+	// STAGE 3: Fetch full rules for the already-paginated UIDs
+	if len(matchingUIDs) == 0 {
+		return []*ngmodels.AlertRule{}, nextToken, nil
+	}
 
-	// Apply group-based pagination on filtered results
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		fetchQuery := &ngmodels.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
+				OrgID:    query.OrgID,
+				RuleUIDs: matchingUIDs,
+			},
+		}
+
+		q, groupsSet, err := st.buildListAlertRulesQuery(sess, fetchQuery)
+		if err != nil {
+			return err
+		}
+
+		queryStart := time.Now()
+		rows, err := q.Rows(new(alertRule))
+		if err != nil {
+			return err
+		}
+		if collector := getTimingCollectorFromContext(ctx); collector != nil {
+			collector.RecordDBQuery(time.Since(queryStart))
+		}
+		defer func() {
+			_ = rows.Close()
+		}()
+
+		result = st.convertAlertRulesBatched(rows, fetchQuery, groupsSet, len(matchingUIDs))
+
+		// Maintain UID order from pagination
+		result = st.reorderByUIDs(result, matchingUIDs)
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	st.Logger.Info("ListAlertRulesByGroup returning results (cache miss path)",
+		"resultCount", len(result),
+		"hasNextToken", nextToken != "")
+
+	return result, nextToken, nil
+}
+
+// paginateRulesByGroup applies group-based pagination to a list of rules
+func (st DBstore) paginateRulesByGroup(rules ngmodels.RulesGroup, limit int64, continueToken string) (ngmodels.RulesGroup, string) {
+	if limit <= 0 {
+		// No pagination
+		return rules, ""
+	}
+
+	// Parse continue token
 	var cursor ngmodels.GroupCursor
-	if query.ContinueToken != "" {
-		if cur, err := ngmodels.DecodeGroupCursor(query.ContinueToken); err == nil {
+	if continueToken != "" {
+		if cur, err := ngmodels.DecodeGroupCursor(continueToken); err == nil {
 			cursor = cur
 		}
 	}
 
-	result = make([]*ngmodels.AlertRule, 0)
+	result := make([]*ngmodels.AlertRule, 0)
 	var groupsFetched int64
 	var currentGroup ngmodels.GroupCursor
+	var nextToken string
 
-	for _, rule := range filteredRules {
+	for _, rule := range rules {
 		ruleGroup := ngmodels.GroupCursor{
 			NamespaceUID: rule.NamespaceUID,
 			RuleGroup:    rule.RuleGroup,
@@ -720,7 +855,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 		// Check if we've moved to a new group
 		if ruleGroup != currentGroup {
 			// Check if we've reached the group limit
-			if query.Limit > 0 && groupsFetched >= query.Limit {
+			if groupsFetched >= limit {
 				// Return next token for the next group (the one we're about to skip)
 				nextToken = ngmodels.EncodeGroupCursor(ruleGroup)
 				break
@@ -733,8 +868,102 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 		result = append(result, rule)
 	}
 
-	st.Logger.Info("Store ListAlertRulesByGroup returning results", "resultCount", len(result), "groupsFetched", groupsFetched, "hasNextToken", nextToken != "")
-	return result, nextToken, nil
+	return result, nextToken
+}
+
+// filterLiteRules filters lite rules and returns matching lite rules (not just UIDs)
+func filterLiteRules(liteRules []*ngmodels.AlertRuleLite, query *ngmodels.ListAlertRulesExtendedQuery) []*ngmodels.AlertRuleLite {
+	if !hasAnyFilters(query) && query.RuleType == ngmodels.RuleTypeFilterAll {
+		// No filters: return all
+		return liteRules
+	}
+
+	result := make([]*ngmodels.AlertRuleLite, 0, len(liteRules))
+	for _, lite := range liteRules {
+		if matchesAllFiltersLite(lite, query) {
+			result = append(result, lite)
+		}
+	}
+	return result
+}
+
+// paginateLiteRulesByGroup applies group-based pagination to lite rules
+func (st DBstore) paginateLiteRulesByGroup(liteRules []*ngmodels.AlertRuleLite, limit int64, continueToken string) ([]*ngmodels.AlertRuleLite, string) {
+	if limit <= 0 {
+		// No pagination
+		return liteRules, ""
+	}
+
+	// Parse continue token
+	var cursor ngmodels.GroupCursor
+	if continueToken != "" {
+		if cur, err := ngmodels.DecodeGroupCursor(continueToken); err == nil {
+			cursor = cur
+		}
+	}
+
+	result := make([]*ngmodels.AlertRuleLite, 0)
+	var groupsFetched int64
+	var currentGroup ngmodels.GroupCursor
+	var nextToken string
+
+	for _, lite := range liteRules {
+		ruleGroup := ngmodels.GroupCursor{
+			NamespaceUID: lite.NamespaceUID,
+			RuleGroup:    lite.RuleGroup,
+		}
+
+		// Skip until we reach the cursor position
+		if cursor.NamespaceUID != "" {
+			// Skip groups before cursor
+			if ruleGroup.NamespaceUID < cursor.NamespaceUID {
+				continue
+			}
+			if ruleGroup.NamespaceUID == cursor.NamespaceUID && ruleGroup.RuleGroup <= cursor.RuleGroup {
+				continue
+			}
+		}
+
+		// Check if we've moved to a new group
+		if ruleGroup != currentGroup {
+			// Check if we've reached the group limit
+			if groupsFetched >= limit {
+				// Return next token for the next group (the one we're about to skip)
+				nextToken = ngmodels.EncodeGroupCursor(ruleGroup)
+				break
+			}
+
+			currentGroup = ruleGroup
+			groupsFetched++
+		}
+
+		result = append(result, lite)
+	}
+
+	return result, nextToken
+}
+
+// reorderByUIDs reorders rules to match the order of the provided UID list
+func (st DBstore) reorderByUIDs(rules ngmodels.RulesGroup, orderedUIDs []string) ngmodels.RulesGroup {
+	if len(rules) == 0 {
+		return rules
+	}
+
+	// Build UID to rule map
+	uidToRule := make(map[string]*ngmodels.AlertRule, len(rules))
+	for _, rule := range rules {
+		uidToRule[rule.UID] = rule
+	}
+
+	// Reconstruct in the order of orderedUIDs
+	result := make([]*ngmodels.AlertRule, 0, len(orderedUIDs))
+	for _, uid := range orderedUIDs {
+		if rule, ok := uidToRule[uid]; ok {
+			result = append(result, rule)
+		}
+	}
+
+	return result
 }
 
 func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm.Session {
@@ -1011,42 +1240,76 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 
 	if canUseCache {
 		startCache := time.Now()
-		if cachedRules, found := st.getCachedAlertRules(query.OrgID, query.RuleType); found {
+		if cachedLiteRules, found := st.getCachedLiteRules(query.OrgID, query.RuleType); found {
 			cacheRetrievalDuration = time.Since(startCache)
 			cacheHit = true
 
-			// Apply in-memory filters to cached results (redundant but safe)
+			// Filter lite rules to get matching UIDs
 			startFiltering := time.Now()
-			filteredRules := applyInMemoryFilters(cachedRules, query)
+			matchingUIDs := filterLiteRuleUIDs(cachedLiteRules, query)
 			filteringDuration = time.Since(startFiltering)
 
-			// Apply pagination to filtered results
-			result = filteredRules
-			if query.Limit > 0 && len(result) > int(query.Limit) {
-				// Generate next token
-				result = result[:query.Limit]
-				lastRule := result[len(result)-1]
-				cursor := continueCursor{
-					NamespaceUID: lastRule.NamespaceUID,
-					RuleGroup:    lastRule.RuleGroup,
-					RuleGroupIdx: int64(lastRule.RuleGroupIndex),
-					ID:           lastRule.ID,
+			// Fetch full rules by UID
+			var fetchedRules ngmodels.RulesGroup
+			if len(matchingUIDs) > 0 {
+				fetchErr := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+					fetchQuery := &ngmodels.ListAlertRulesExtendedQuery{
+						ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
+							OrgID:    query.OrgID,
+							RuleUIDs: matchingUIDs,
+						},
+					}
+
+					q, groupsSet, err := st.buildListAlertRulesQuery(sess, fetchQuery)
+					if err != nil {
+						return err
+					}
+
+					rows, err := q.Rows(new(alertRule))
+					if err != nil {
+						return err
+					}
+					defer rows.Close()
+
+					fetchedRules = st.convertAlertRulesBatched(rows, fetchQuery, groupsSet, len(matchingUIDs))
+					fetchedRules = st.reorderByUIDs(fetchedRules, matchingUIDs)
+					return nil
+				})
+
+				if fetchErr != nil {
+					// Fall through to normal path
+					st.Logger.Warn("Failed to fetch full rules from cache hit", "error", fetchErr)
+					cacheHit = false
+				} else {
+					// Apply pagination to fetched results
+					result = fetchedRules
+					if query.Limit > 0 && len(result) > int(query.Limit) {
+						// Generate next token
+						result = result[:query.Limit]
+						lastRule := result[len(result)-1]
+						cursor := continueCursor{
+							NamespaceUID: lastRule.NamespaceUID,
+							RuleGroup:    lastRule.RuleGroup,
+							RuleGroupIdx: int64(lastRule.RuleGroupIndex),
+							ID:           lastRule.ID,
+						}
+						nextToken = encodeCursor(cursor)
+					}
+
+					totalDuration := time.Since(startTotal)
+					st.Logger.Info("Store ListAlertRulesPaginated performance",
+						"cache_hit", true,
+						"cache_retrieval_ms", cacheRetrievalDuration.Milliseconds(),
+						"filtering_ms", filteringDuration.Milliseconds(),
+						"total_ms", totalDuration.Milliseconds(),
+						"cached_lite_count", len(cachedLiteRules),
+						"matching_uid_count", len(matchingUIDs),
+						"returned_rule_count", len(result),
+						"org_id", query.OrgID)
+
+					return result, nextToken, nil
 				}
-				nextToken = encodeCursor(cursor)
 			}
-
-			totalDuration := time.Since(startTotal)
-			st.Logger.Info("Store ListAlertRulesPaginated performance",
-				"cache_hit", true,
-				"cache_retrieval_ms", cacheRetrievalDuration.Milliseconds(),
-				"filtering_ms", filteringDuration.Milliseconds(),
-				"total_ms", totalDuration.Milliseconds(),
-				"cached_rule_count", len(cachedRules),
-				"filtered_rule_count", len(filteredRules),
-				"returned_rule_count", len(result),
-				"org_id", query.OrgID)
-
-			return result, nextToken, nil
 		}
 		cacheRetrievalDuration = time.Since(startCache)
 	}
@@ -1101,9 +1364,13 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 		conversionDuration = time.Since(startRowScan)
 		rowScanDuration = conversionDuration // They're now overlapped, report same duration
 
-		// Cache the full result set if this was a cacheable query (before filtering and pagination)
+		// Cache lite rules if this was a cacheable query
 		if canUseCache {
-			st.setCachedAlertRules(query.OrgID, query.RuleType, alertRules)
+			liteRules := make([]*ngmodels.AlertRuleLite, len(alertRules))
+			for i, rule := range alertRules {
+				liteRules[i] = rule.ToLite()
+			}
+			st.setCachedLiteRules(query.OrgID, query.RuleType, liteRules)
 		}
 
 		// Apply in-memory filters to rules (for both cache miss path and non-cacheable queries)
