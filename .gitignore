@@ -124,7 +124,6 @@ profile.cov
 /pkg/build/cmd/artifactspage.tmpl.html
 /pkg/build/cmd/exportversion.go
 /pkg/extensions/*
-/pkg/services/frontend/hooks_enterprise.go
 !/pkg/extensions/.keep
 !/pkg/extensions/main.go
 !/pkg/extensions/enterprise_imports.go
