@@ -42,14 +42,6 @@
       "count": 2
     }
   },
-  "packages/grafana-data/src/dataframe/MutableDataFrame.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 3
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 9
-    }
-  },
   "packages/grafana-data/src/dataframe/StreamingDataFrame.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 4

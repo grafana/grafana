@@ -3,12 +3,11 @@ import { isString } from 'lodash';
 import { QueryResultMeta } from '../types/data';
 import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
 import { makeFieldParser } from '../utils/fieldParser';
-import { FunctionalVector } from '../vector/FunctionalVector';
 
 import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
 
 /** @deprecated */
-export type MutableField<T = any> = Field<T>;
+export type MutableField<T = unknown> = Field<T>;
 
 /** @deprecated */
 type MutableVectorCreator = (buffer?: unknown[]) => unknown[];
@@ -20,13 +19,13 @@ export const MISSING_VALUE = undefined; // Treated as connected in new graph pan
  *
  * @deprecated use standard DataFrame, or create one with PartialDataFrame
  */
-export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame {
+export class MutableDataFrame<T = unknown> extends Array<T> implements DataFrame {
   name?: string;
   refId?: string;
   meta?: QueryResultMeta;
   fields: MutableField[] = [];
 
-  private first: any[] = [];
+  private first: unknown[] = [];
   private creator: MutableVectorCreator;
 
   constructor(source?: DataFrame | DataFrameDTO, creator?: MutableVectorCreator) {
@@ -35,7 +34,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     // This creates the underlying storage buffers
     this.creator = creator
       ? creator
-      : (buffer?: any[]) => {
+      : (buffer?: unknown[]) => {
           return buffer ?? [];
         };
 
@@ -80,7 +79,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   }
 
   addField(f: Field | FieldDTO, startLength?: number): Field {
-    let buffer: any[] | undefined = undefined;
+    let buffer: unknown[] | undefined = undefined;
 
     if (f.values) {
       buffer = f.values;
@@ -149,14 +148,14 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     }
   }
 
-  private parsers: Map<Field, (v: string) => any> | undefined = undefined;
+  private parsers: Map<Field, (v: string) => unknown> | undefined = undefined;
 
   /**
    * @deprecated unclear if this is actually used
    */
-  setParser(field: Field, parser: (v: string) => any) {
+  setParser(field: Field, parser: (v: string) => unknown) {
     if (!this.parsers) {
-      this.parsers = new Map<Field, (v: string) => any>();
+      this.parsers = new Map<Field, (v: string) => unknown>();
     }
     this.parsers.set(field, parser);
     return parser;
@@ -222,7 +221,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
    */
   add(value: T): void {
     // Will add one value for every field
-    const obj = value as any;
+    const obj = Object(value);
     for (const field of this.fields) {
       let val = obj[field.name];
 
@@ -243,9 +242,12 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       throw new Error('Unable to set value beyond current length');
     }
 
-    const obj = (value as Record<string, unknown>) || {};
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const obj = (value || {}) as Record<string, unknown>;
     for (const field of this.fields) {
-      field.values[index] = obj[field.name];
+      if (Object.hasOwnProperty.call(obj, field.name)) {
+        field.values[index] = obj[field.name];
+      }
     }
   }
 
@@ -257,6 +259,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     for (const field of this.fields) {
       v[field.name] = field.values[idx];
     }
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return v as T;
   }
 
