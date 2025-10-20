@@ -129,7 +129,7 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 
 			cfg := setting.NewCfg()
 			cfg.AnnotationCleanupJobBatchSize = int64(test.annotationCleanupJobBatchSize)
-			cleaner := ProvideCleanupService(fakeSQL, cfg)
+			cleaner := ProvideCleanupService(fakeSQL, cfg, prometheus.NewRegistry())
 			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(context.Background(), test.cfg)
 			require.NoError(t, err)
 
