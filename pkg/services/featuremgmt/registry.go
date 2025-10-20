@@ -505,6 +505,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesQueryCaching",
+			Description:     "Adds support for Kubernetes querycaching",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
