@@ -1043,9 +1043,6 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 		datasourceType = *getDefaultDatasourceRef().Type
 	}
 
-	// Add definition field to match frontend behavior
-	definition := getStringField(varMap, "query", "")
-
 	queryVar := &dashv2alpha1.DashboardQueryVariableKind{
 		Kind: "QueryVariable",
 		Spec: dashv2alpha1.DashboardQueryVariableSpec{
@@ -1062,8 +1059,14 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 			Regex:            getStringField(varMap, "regex", ""),
 			Query:            buildDataQueryKind(varMap["query"], datasourceType),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
-			Definition:       &definition, // Add definition field like frontend
 		},
+	}
+
+	// Only set definition if it exists in the input (match frontend behavior)
+	if def, exists := varMap["definition"]; exists && def != nil {
+		if defStr, ok := def.(string); ok {
+			queryVar.Spec.Definition = &defStr
+		}
 	}
 
 	// Only include datasource if datasourceUID exists (matching frontend behavior)

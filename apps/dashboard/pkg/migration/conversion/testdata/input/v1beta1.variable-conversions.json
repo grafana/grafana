@@ -147,7 +147,16 @@
           ],
           "hide": 0,
           "skipUrlSync": false,
-          "defaultKeys": ["job", "instance"],
+          "defaultKeys": [
+            {
+              "text": "job",
+              "value": "job"
+            },
+            {
+              "text": "instance",
+              "value": "instance"
+            }
+          ],
           "allowCustomValue": true
         },
         {

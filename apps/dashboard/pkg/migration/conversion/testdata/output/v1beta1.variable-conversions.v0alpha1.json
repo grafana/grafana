@@ -149,8 +149,14 @@
             "uid": "existing-ref-uid"
           },
           "defaultKeys": [
-            "job",
-            "instance"
+            {
+              "text": "job",
+              "value": "job"
+            },
+            {
+              "text": "instance",
+              "value": "instance"
+            }
           ],
           "description": "Add filters",
           "filters": [
