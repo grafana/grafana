@@ -74,19 +74,16 @@ func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 		return fmt.Errorf("get signer: %w", err)
 	}
 
-	cfg := rw.Config()
-	if cfg != nil && cfg.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
-		progress.SetMessage(ctx, "migrate folders from SQL")
-		clients, err := m.clients.Clients(ctx, namespace)
-		if err != nil {
-			return err
-		}
+	progress.SetMessage(ctx, "migrate folders from SQL")
+	clients, err := m.clients.Clients(ctx, namespace)
+	if err != nil {
+		return err
+	}
 
-		// nothing special for the export for now
-		exportOpts := provisioning.ExportJobOptions{}
-		if err = m.exportFn(ctx, rw.Config().Name, exportOpts, clients, repositoryResources, progress); err != nil {
-			return fmt.Errorf("migrate folders from SQL: %w", err)
-		}
+	// nothing special for the export for now
+	exportOpts := provisioning.ExportJobOptions{}
+	if err = m.exportFn(ctx, rw.Config().Name, exportOpts, clients, repositoryResources, progress); err != nil {
+		return fmt.Errorf("migrate folders from SQL: %w", err)
 	}
 
 	progress.SetMessage(ctx, "migrate resources from SQL")
