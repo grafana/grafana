@@ -132,8 +132,8 @@ type CreateTeamMemberCommand struct {
 	UserID     int64
 	UserUID    string
 	OrgID      int64
-	Created    DBTime
-	Updated    DBTime
+	Created    legacysql.DBTime
+	Updated    legacysql.DBTime
 	External   bool
 	Permission team.PermissionType
 }
@@ -164,8 +164,8 @@ func (r createTeamMemberQuery) Validate() error {
 
 func (s *legacySQLStore) CreateTeamMember(ctx context.Context, ns claims.NamespaceInfo, cmd CreateTeamMemberCommand) (*CreateTeamMemberResult, error) {
 	now := time.Now().UTC()
-	cmd.Created = NewDBTime(now)
-	cmd.Updated = NewDBTime(now)
+	cmd.Created = legacysql.NewDBTime(now)
+	cmd.Updated = legacysql.NewDBTime(now)
 	cmd.OrgID = ns.OrgID
 
 	if cmd.OrgID == 0 {

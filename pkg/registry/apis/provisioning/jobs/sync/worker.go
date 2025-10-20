@@ -41,6 +41,8 @@ type SyncWorker struct {
 	metrics jobs.JobMetrics
 
 	tracer tracing.Tracer
+
+	maxSyncWorkers int
 }
 
 func NewSyncWorker(
@@ -51,6 +53,7 @@ func NewSyncWorker(
 	syncer Syncer,
 	metrics jobs.JobMetrics,
 	tracer tracing.Tracer,
+	maxSyncWorkers int,
 ) *SyncWorker {
 	return &SyncWorker{
 		clients:             clients,
@@ -60,6 +63,7 @@ func NewSyncWorker(
 		syncer:              syncer,
 		metrics:             metrics,
 		tracer:              tracer,
+		maxSyncWorkers:      maxSyncWorkers,
 	}
 }
 
