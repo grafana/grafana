@@ -37,11 +37,7 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	if reqCtx == nil {
 		return m.BaseHandler.QueryData(ctx, req)
 	}
-	ns := reqCtx.GetNamespace()
-	if ns == "" {
-		return m.BaseHandler.QueryData(ctx, req)
-	}
-	return m.cachingServiceClient.WithQueryDataCaching(ctx, ns, req, func() (*backend.QueryDataResponse, error) {
+	return m.cachingServiceClient.WithQueryDataCaching(ctx, req, func() (*backend.QueryDataResponse, error) {
 		return m.BaseHandler.QueryData(ctx, req)
 	})
 }
@@ -54,11 +50,8 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	if reqCtx == nil {
 		return m.BaseHandler.CallResource(ctx, req, sender)
 	}
-	ns := reqCtx.GetNamespace()
-	if ns == "" {
-		return m.BaseHandler.CallResource(ctx, req, sender)
-	}
-	return m.cachingServiceClient.WithCallResourceCaching(ctx, ns, req, sender, func(sender backend.CallResourceResponseSender) error {
+
+	return m.cachingServiceClient.WithCallResourceCaching(ctx, req, sender, func(sender backend.CallResourceResponseSender) error {
 		return m.BaseHandler.CallResource(ctx, req, sender)
 	})
 }

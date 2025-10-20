@@ -16,12 +16,12 @@ type FakeOSSCachingService struct {
 	ReturnQueryResponse    CachedQueryDataResponse
 }
 
-func (f *FakeOSSCachingService) HandleQueryRequest(ctx context.Context, namespace string, req *backend.QueryDataRequest) (bool, CachedQueryDataResponse, CacheStatus) {
+func (f *FakeOSSCachingService) HandleQueryRequest(ctx context.Context, req *backend.QueryDataRequest) (bool, CachedQueryDataResponse, CacheStatus) {
 	f.calls["HandleQueryRequest"]++
 	return f.ReturnHit, f.ReturnQueryResponse, f.ReturnStatus
 }
 
-func (f *FakeOSSCachingService) HandleResourceRequest(ctx context.Context, namespace string, req *backend.CallResourceRequest) (bool, CachedResourceDataResponse, CacheStatus) {
+func (f *FakeOSSCachingService) HandleResourceRequest(ctx context.Context, req *backend.CallResourceRequest) (bool, CachedResourceDataResponse, CacheStatus) {
 	f.calls["HandleResourceRequest"]++
 	return f.ReturnHit, f.ReturnResourceResponse, f.ReturnStatus
 }

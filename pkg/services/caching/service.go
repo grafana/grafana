@@ -63,28 +63,28 @@ type CachingService interface {
 	// HandleQueryRequest uses a QueryDataRequest to check the cache for any existing results for that query.
 	// If none are found, it should return false and a CachedQueryDataResponse with an UpdateCacheFn which can be used to update the results cache after the fact.
 	// This function may populate any response headers (accessible through the context) with the cache status using the X-Cache header.
-	HandleQueryRequest(ctx context.Context, namespace string, req *backend.QueryDataRequest) (bool, CachedQueryDataResponse, CacheStatus)
+	HandleQueryRequest(ctx context.Context, req *backend.QueryDataRequest) (bool, CachedQueryDataResponse, CacheStatus)
 	// HandleResourceRequest uses a CallResourceRequest to check the cache for any existing results for that request. If none are found, it should return false.
 	// This function may populate any response headers (accessible through the context) with the cache status using the X-Cache header.
-	HandleResourceRequest(ctx context.Context, namespace string, req *backend.CallResourceRequest) (bool, CachedResourceDataResponse, CacheStatus)
+	HandleResourceRequest(ctx context.Context, req *backend.CallResourceRequest) (bool, CachedResourceDataResponse, CacheStatus)
 }
 
 // Implementation of interface - does nothing
 type OSSCachingService struct {
 }
 
-func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, namspace string, req *backend.QueryDataRequest) (bool, CachedQueryDataResponse, CacheStatus) {
+func (s *OSSCachingService) HandleQueryRequest(ctx context.Context, req *backend.QueryDataRequest) (bool, CachedQueryDataResponse, CacheStatus) {
 	return false, CachedQueryDataResponse{}, ""
 }
 
-func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, namespace string, req *backend.CallResourceRequest) (bool, CachedResourceDataResponse, CacheStatus) {
+func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, req *backend.CallResourceRequest) (bool, CachedResourceDataResponse, CacheStatus) {
 	return false, CachedResourceDataResponse{}, ""
 }
 
 var _ CachingService = &OSSCachingService{}
 
 // GetKey creates a prefixed cache key and uses the internal `encoder` to encode the query into a string
-func GetKey(namespace string, prefix string, query interface{}) (string, error) {
+func GetKey(prefix string, query interface{}) (string, error) {
 	keybuf := bytes.NewBuffer(nil)
 
 	encoder := &JSONEncoder{}
@@ -98,7 +98,7 @@ func GetKey(namespace string, prefix string, query interface{}) (string, error) 
 		return "", err
 	}
 
-	return strings.Join([]string{namespace, prefix, key}, ":"), nil
+	return strings.Join([]string{prefix, key}, ":"), nil
 }
 
 // SHA256KeyFunc copies the data from `r` into a sha256.Hash, and returns the encoded Sum.
@@ -169,8 +169,8 @@ func ProvideCachingServiceClient(cachingService CachingService, features feature
 
 // WithQueryDataCaching calls `f` and caches the returned value if `req` has not been cached already.
 // Returns the cached value otherwise.
-func (c *CachingServiceClient) WithQueryDataCaching(ctx context.Context, namespace string, req *backend.QueryDataRequest, f func() (*backend.QueryDataResponse, error)) (*backend.QueryDataResponse, error) {
-	if c == nil || namespace == "" || req == nil {
+func (c *CachingServiceClient) WithQueryDataCaching(ctx context.Context, req *backend.QueryDataRequest, f func() (*backend.QueryDataResponse, error)) (*backend.QueryDataResponse, error) {
+	if c == nil || req == nil {
 		return f()
 	}
 
@@ -180,7 +180,7 @@ func (c *CachingServiceClient) WithQueryDataCaching(ctx context.Context, namespa
 	start := time.Now()
 
 	// First look in the query cache if enabled
-	hit, cr, status := c.cachingService.HandleQueryRequest(ctx, namespace, req)
+	hit, cr, status := c.cachingService.HandleQueryRequest(ctx, req)
 
 	// record request duration if caching was used
 	if reqCtx != nil {
@@ -229,8 +229,8 @@ func (c *CachingServiceClient) WithQueryDataCaching(ctx context.Context, namespa
 
 // WithCallResourceCaching calls `f` and caches the returned value if `req` has not been cached already.
 // Returns the cached value otherwise.
-func (c *CachingServiceClient) WithCallResourceCaching(ctx context.Context, namespace string, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, f func(backend.CallResourceResponseSender) error) error {
-	if c == nil || namespace == "" || req == nil {
+func (c *CachingServiceClient) WithCallResourceCaching(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, f func(backend.CallResourceResponseSender) error) error {
+	if c == nil || req == nil {
 		return f(sender)
 	}
 
@@ -240,7 +240,7 @@ func (c *CachingServiceClient) WithCallResourceCaching(ctx context.Context, name
 	start := time.Now()
 
 	// First look in the resource cache if enabled
-	hit, cr, status := c.cachingService.HandleResourceRequest(ctx, namespace, req)
+	hit, cr, status := c.cachingService.HandleResourceRequest(ctx, req)
 
 	if reqCtx != nil {
 		reqCtx.Resp.Header().Set(XCacheHeader, string(status))
