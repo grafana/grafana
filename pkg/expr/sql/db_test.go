@@ -5,6 +5,7 @@ package sql
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"net/http"
 	"testing"
 	"time"
@@ -195,6 +196,37 @@ func TestQueryFramesDateTimeSelect(t *testing.T) {
 	if diff := cmp.Diff(expectedFrame, f, data.FrameTestCompareOptions()...); diff != "" {
 		require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
 	}
+}
+
+func TestWhereOnNullNumber(t *testing.T) {
+	f := &data.Frame{
+		RefID: "a",
+		Name:  "a",
+		Fields: []*data.Field{
+			data.NewField("d", nil, []float64{2.35, math.NaN()}),
+			data.NewField("e", nil, []*float64{p(3.1), p(math.NaN())}),
+		},
+	}
+
+	expectedFrame := &data.Frame{
+		RefID: "b",
+		Name:  "b",
+		Fields: []*data.Field{
+			data.NewField("d", nil, []float64{2.35, 0}),
+			data.NewField("e", nil, []*float64{p(3.1), nil}),
+		},
+	}
+
+	db := DB{}
+	qry := `SELECT * FROM a`
+
+	ret, err := db.QueryFrames(context.Background(), &testTracer{}, "b", qry, []*data.Frame{f})
+
+	if diff := cmp.Diff(expectedFrame, ret, data.FrameTestCompareOptions()...); diff != "" {
+		require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
+	}
+
+	require.NoError(t, err)
 }
 
 func TestErrorsFromGoMySQLServerAreFlagged(t *testing.T) {
