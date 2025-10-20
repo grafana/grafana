@@ -20,6 +20,19 @@ export function gaugePanelMigrationHandler(panel: PanelModel<Options>): Partial<
 
     // This option is enabled by default in new gauge but does not exist in old gauge
     newOptions.sparkline = false;
+
+    // Remove deprecated sizing options
+    if ('sizing' in newOptions) {
+      delete newOptions.sizing;
+    }
+
+    if ('minVizHeight' in newOptions) {
+      delete newOptions.minVizHeight;
+    }
+
+    if ('minVizWidth' in newOptions) {
+      delete newOptions.minVizWidth;
+    }
   }
 
   return newOptions;
