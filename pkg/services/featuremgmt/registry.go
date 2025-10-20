@@ -2119,6 +2119,16 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},
+		{
+			Name:              "onlyStoreActionSets",
+			Description:       "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
+			Stage:             FeatureStageGeneralAvailability,
+			FrontendOnly:      false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true, // this should not be a user facing change
+			Owner:             identityAccessTeam,
+			Expression:        "true",
+		},
 	}
 )
 
