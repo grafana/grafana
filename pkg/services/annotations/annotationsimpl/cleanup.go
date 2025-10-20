@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // CleanupServiceImpl is responsible for cleaning old annotations.
@@ -13,9 +14,9 @@ type CleanupServiceImpl struct {
 	store store
 }
 
-func ProvideCleanupService(db db.DB, cfg *setting.Cfg) *CleanupServiceImpl {
+func ProvideCleanupService(db db.DB, cfg *setting.Cfg, registerer prometheus.Registerer) *CleanupServiceImpl {
 	return &CleanupServiceImpl{
-		store: NewXormStore(cfg, log.New("annotations"), db, nil),
+		store: NewXormStore(cfg, log.New("annotations"), db, nil, registerer),
 	}
 }
 
