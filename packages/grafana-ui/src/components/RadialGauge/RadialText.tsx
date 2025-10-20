@@ -59,9 +59,9 @@ export function RadialText({
 
   // Not sure where this comes from but svg text is not using body line-height
   const lineHeight = 1.21;
-  const valueWidthToRadiusFactor = 0.6;
+  const valueWidthToRadiusFactor = 0.85;
   const nameToHeightFactor = 0.3;
-  const largeRadiusScalingDecay = 0.92;
+  const largeRadiusScalingDecay = 0.86;
 
   // This pow 0.92 factor is to create a decay so the font size does not become rediculously large for very large panels
   let maxValueHeight = valueWidthToRadiusFactor * Math.pow(radius, largeRadiusScalingDecay);

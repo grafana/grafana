@@ -39,7 +39,7 @@ export interface Options extends common.SingleStatBaseOptions {
 }
 
 export const defaultOptions: Partial<Options> = {
-  barWidthFactor: 0.4,
+  barWidthFactor: 0.5,
   effects: {},
   gradient: 'auto',
   segmentCount: 1,

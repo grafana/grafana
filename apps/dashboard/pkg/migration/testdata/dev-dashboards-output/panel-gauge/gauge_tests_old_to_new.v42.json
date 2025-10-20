@@ -19,7 +19,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 0,
+  "id": 531,
   "links": [],
   "panels": [
     {
@@ -89,7 +89,8 @@
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": false
+        "showThresholdMarkers": false,
+        "sizing": "auto"
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -157,7 +158,8 @@
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": false
+        "showThresholdMarkers": false,
+        "sizing": "auto"
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -224,7 +226,8 @@
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": false
+        "showThresholdMarkers": false,
+        "sizing": "auto"
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -292,7 +295,8 @@
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": false
+        "showThresholdMarkers": false,
+        "sizing": "auto"
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -360,7 +364,8 @@
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": false
+        "showThresholdMarkers": false,
+        "sizing": "auto"
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -429,6 +434,7 @@
         },
         "showThresholdLabels": false,
         "showThresholdMarkers": false,
+        "sizing": "auto",
         "text": {
           "valueSize": 100
         }
@@ -505,7 +511,8 @@
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": false
+        "showThresholdMarkers": false,
+        "sizing": "auto"
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -584,7 +591,8 @@
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": false
+        "showThresholdMarkers": false,
+        "sizing": "auto"
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -653,6 +661,7 @@
         },
         "showThresholdLabels": false,
         "showThresholdMarkers": false,
+        "sizing": "auto",
         "text": {}
       },
       "pluginVersion": "12.3.0-pre",
@@ -697,7 +706,7 @@
       "type": "gauge"
     },
     {
-      "collapsed": true,
+      "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -740,7 +749,7 @@
       },
       "gridPos": {
         "h": 9,
-        "w": 9,
+        "w": 15,
         "x": 0,
         "y": 26
       },
@@ -757,7 +766,8 @@
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": false
+        "showThresholdMarkers": false,
+        "sizing": "auto"
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -813,7 +823,7 @@
       "gridPos": {
         "h": 9,
         "w": 9,
-        "x": 9,
+        "x": 15,
         "y": 26
       },
       "id": 2,
@@ -829,7 +839,8 @@
           "values": false
         },
         "showThresholdLabels": true,
-        "showThresholdMarkers": true
+        "showThresholdMarkers": true,
+        "sizing": "auto"
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -914,7 +925,8 @@
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": false
+        "showThresholdMarkers": false,
+        "sizing": "auto"
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -986,7 +998,8 @@
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": false
+        "showThresholdMarkers": false,
+        "sizing": "auto"
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -1015,7 +1028,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Panel tests - Old gauge to new ",
+  "title": "Panel tests - Old gauge to new",
   "uid": "panel-tests-old-gauge-to-new",
   "weekStart": ""
 }

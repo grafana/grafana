@@ -64,6 +64,8 @@ export interface RadialGaugeProps {
   /** Specify which text should be visible  */
   textMode?: RadialTextMode;
   showScaleLabels?: boolean;
+  /** For data links */
+  onClick?: React.MouseEventHandler<HTMLElement>;
 }
 
 export type RadialGradientMode = 'none' | 'auto';
