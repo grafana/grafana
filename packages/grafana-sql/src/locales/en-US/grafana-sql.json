@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Your query is invalid. Check below for details. <br></br> However, you can still run this query.",
+        "content-invalid-query": "Your query is invalid. Check below for details. <br/>However, you can still run this query.",
         "editor-modes": {
           "label-builder": "Builder",
           "label-code": "Code"
