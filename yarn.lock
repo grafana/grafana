@@ -18602,7 +18602,7 @@ __metadata:
     uplot: "npm:1.6.32"
     uuid: "npm:11.1.0"
     vis-data: "npm:^8.0.0"
-    vis-network: "npm:10.0.1"
+    vis-network: "npm:10.0.2"
     webpack: "npm:5.101.0"
     webpack-assets-manifest: "npm:^5.1.0"
     webpack-cli: "npm:6.0.1"
@@ -32362,17 +32362,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vis-network@npm:10.0.1":
-  version: 10.0.1
-  resolution: "vis-network@npm:10.0.1"
+"vis-network@npm:10.0.2":
+  version: 10.0.2
+  resolution: "vis-network@npm:10.0.2"
   peerDependencies:
     "@egjs/hammerjs": ^2.0.0
     component-emitter: ^1.3.0 || ^2.0.0
     keycharm: ^0.2.0 || ^0.3.0 || ^0.4.0
-    uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0
+    uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0 || ^13.0.0
     vis-data: ">=8.0.0"
     vis-util: ">=6.0.0"
-  checksum: 10/a44310daa9c4e361ccfceecc681791938dffbb292673de9438a640a10cf8f79674f7b33e77fbc747d482ce63177478eed83a30ac3ba4f8a55e01895b69554664
+  checksum: 10/5e150c2b7b5d8d590dd3f31c7be8fd2e64003d3e4daa11448c6e891f74b74b4e3dbd418f72429c1175841e2610861cf13ffe2631310d6f205b8870a20250c6aa
   languageName: node
   linkType: hard
 
