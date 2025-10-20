@@ -2952,11 +2952,6 @@
       "count": 1
     }
   },
-  "public/app/features/dimensions/editors/ThresholdsEditor/thresholds.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dimensions/editors/URLPickerTab.tsx": {
     "no-restricted-syntax": {
       "count": 2
