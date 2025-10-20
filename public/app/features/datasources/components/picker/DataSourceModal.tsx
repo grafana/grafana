@@ -320,10 +320,9 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
     }),
     builtInDataSources: css({
       flex: '1 1',
-      marginBottom: theme.spacing(4),
 
       [theme.breakpoints.down('md')]: {
-        flex: 0,
+        display: 'none',
       },
     }),
     builtInDataSourcesList: css({
@@ -345,6 +344,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       width: '100%',
       justifyContent: 'space-between',
       alignItems: 'center',
+      paddingTop: theme.spacing(1),
     }),
     newDSDescription: css({
       flex: '1 0',
@@ -352,6 +352,9 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       overflow: 'hidden',
       whiteSpace: 'nowrap',
       color: theme.colors.text.secondary,
+      [theme.breakpoints.down('sm')]: {
+        visibility: 'hidden',
+      },
     }),
     searchInput: css({
       width: '100%',

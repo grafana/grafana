@@ -46,6 +46,9 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       minHeight: '42px',
       margin: theme.spacing(1, 2, 0, 2),
+      [theme.breakpoints.down('sm')]: {
+        margin: theme.spacing(0, 1, 0, 1),
+      },
     }),
     modalHeaderWithTabs: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,
@@ -79,6 +82,11 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       marginBottom: theme.spacing(3),
       scrollbarWidth: 'thin',
       width: '100%',
+
+      [theme.breakpoints.down('sm')]: {
+        padding: theme.spacing(1, 2, 0, 2),
+        marginBottom: theme.spacing(2),
+      },
     }),
     modalButtonRow: css({
       background: theme.colors.background.primary,
