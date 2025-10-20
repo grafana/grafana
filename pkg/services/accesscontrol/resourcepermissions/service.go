@@ -359,11 +359,11 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 	// Write action sets for folders and dashboards
 	if s.options.Resource == dashboards.ScopeFoldersRoot || s.options.Resource == dashboards.ScopeDashboardsRoot {
 		actions = append(actions, GetActionSetName(s.options.Resource, permission))
-	}
 
-	// If we only want to store action sets, return now
-	if s.features.IsEnabledGlobally(featuremgmt.FlagOnlyStoreActionSets) {
-		return actions, nil
+		// If we only want to store action sets, return now
+		if s.features.IsEnabledGlobally(featuremgmt.FlagOnlyStoreActionSets) {
+			return actions, nil
+		}
 	}
 
 	for k, v := range s.options.PermissionsToActions {
