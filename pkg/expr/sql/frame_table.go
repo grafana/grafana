@@ -96,19 +96,10 @@ func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 		switch v := val.(type) {
 		case float32:
 			if math.IsNaN(float64(v)) || math.IsInf(float64(v), 0) {
-				if field.Type().Nullable() {
-					continue
-				}
-				row[colIndex] = float64(0)
 				continue
 			}
 		case float64:
 			if math.IsNaN(v) || math.IsInf(v, 0) {
-				if field.Type().Nullable() {
-					row[colIndex] = nil
-					continue
-				}
-				row[colIndex] = float64(0)
 				continue
 			}
 		}
