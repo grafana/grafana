@@ -1111,11 +1111,6 @@ export interface FeatureToggles {
   */
   foldersAppPlatformAPI?: boolean;
   /**
-  * Set this to true to use the new PluginImporter functionality
-  * @default false
-  */
-  enablePluginImporter?: boolean;
-  /**
   * Applies OTel formatting templates to displayed logs
   */
   otelLogsFormatting?: boolean;
