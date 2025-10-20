@@ -3037,11 +3037,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/index.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/TracePageHeader/TracePageHeader.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 1
