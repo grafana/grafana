@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -229,6 +230,101 @@ func TestCheck_Run(t *testing.T) {
 		assert.Len(t, failures, 1)
 		assert.Equal(t, MissingPluginStepID, failures[0].StepID)
 		assert.Len(t, failures[0].Links, 1)
+	})
+
+	t.Run("should return failure when prometheus datasource uses SigV4 auth", func(t *testing.T) {
+		jsonData := simplejson.New()
+		jsonData.Set("sigV4Auth", true)
+		datasources := []*datasources.DataSource{
+			{UID: "valid-uid-1", Type: "prometheus", Name: "Prometheus", JsonData: jsonData},
+		}
+		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
+		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
+		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+			{ID: 2, Slug: "grafana-amazonprometheus-datasource", Status: "active"},
+		}}
+		mockPluginStore := &MockPluginStore{exists: true}
+
+		check := &check{
+			DatasourceSvc:         mockDatasourceSvc,
+			PluginContextProvider: mockPluginContextProvider,
+			PluginClient:          mockPluginClient,
+			PluginRepo:            mockPluginRepo,
+			PluginStore:           mockPluginStore,
+			GrafanaVersion:        "11.0.0",
+		}
+
+		failures, err := runChecks(check)
+		assert.NoError(t, err)
+		assert.Len(t, failures, 1)
+		assert.Equal(t, PromDepAuthStepID, failures[0].StepID)
+		assert.Contains(t, failures[0].Links, advisor.CheckErrorLink{
+			Message: "View SigV4 docs",
+			Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/",
+		})
+	})
+
+	t.Run("should return failure when prometheus datasource uses Azure auth", func(t *testing.T) {
+		jsonData := simplejson.New()
+		jsonData.Set("azureCredentials", map[string]interface{}{"authType": "msi"})
+		datasources := []*datasources.DataSource{
+			{UID: "valid-uid-1", Type: "prometheus", Name: "Prometheus", JsonData: jsonData},
+		}
+		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
+		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
+		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+			{ID: 2, Slug: "grafana-azureprometheus-datasource", Status: "active"},
+		}}
+		mockPluginStore := &MockPluginStore{exists: true}
+
+		check := &check{
+			DatasourceSvc:         mockDatasourceSvc,
+			PluginContextProvider: mockPluginContextProvider,
+			PluginClient:          mockPluginClient,
+			PluginRepo:            mockPluginRepo,
+			PluginStore:           mockPluginStore,
+			GrafanaVersion:        "11.0.0",
+		}
+
+		failures, err := runChecks(check)
+		assert.NoError(t, err)
+		assert.Len(t, failures, 1)
+		assert.Equal(t, PromDepAuthStepID, failures[0].StepID)
+		assert.Contains(t, failures[0].Links, advisor.CheckErrorLink{
+			Message: "View Azure auth docs",
+			Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/",
+		})
+	})
+
+	t.Run("should not return failure when prometheus datasource does not use deprecated auth", func(t *testing.T) {
+		jsonData := simplejson.New()
+		datasources := []*datasources.DataSource{
+			{UID: "valid-uid-1", Type: "prometheus", Name: "Prometheus", JsonData: jsonData},
+		}
+		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
+		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
+		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
+		mockPluginStore := &MockPluginStore{exists: true}
+
+		check := &check{
+			DatasourceSvc:         mockDatasourceSvc,
+			PluginContextProvider: mockPluginContextProvider,
+			PluginClient:          mockPluginClient,
+			PluginRepo:            mockPluginRepo,
+			PluginStore:           mockPluginStore,
+			GrafanaVersion:        "11.0.0",
+		}
+
+		failures, err := runChecks(check)
+		assert.NoError(t, err)
+		assert.Empty(t, failures)
 	})
 }
 
