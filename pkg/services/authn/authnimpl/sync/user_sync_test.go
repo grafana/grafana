@@ -203,7 +203,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 		quotaService    quota.Service
 	}
 	type args struct {
-		// ctx context.Context
 		id *authn.Identity
 	}
 	tests := []struct {
@@ -221,7 +220,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					Login: "test",
 					Name:  "test",
@@ -255,7 +253,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					Login: "test",
 					Name:  "test",
@@ -295,7 +292,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					Login: "test",
 					Name:  "test",
@@ -335,7 +331,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					AuthID:          "2032",
 					AuthenticatedBy: "oauth",
@@ -379,7 +374,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					Login:           "test",
 					Name:            "test",
@@ -405,7 +399,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					Login:           "test_create",
 					Name:            "test_create",
@@ -454,7 +447,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					Login:          "test_mod",
 					Name:           "test_mod",
@@ -499,7 +491,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					Login:          "test",
 					Name:           "test",
@@ -546,7 +537,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					AuthID:          "1",
 					AuthenticatedBy: login.SAMLAuthModule,
@@ -564,7 +554,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					AuthID:          "1",
 					AuthenticatedBy: login.SAMLAuthModule,
@@ -582,7 +571,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					AuthID:          "1",
 					AuthenticatedBy: login.SAMLAuthModule,
@@ -600,7 +588,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					AuthID:          "1",
 					AuthenticatedBy: login.SAMLAuthModule,
@@ -655,7 +642,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					AuthID:          "id_from_saml_assertion",
 					AuthenticatedBy: "saml",
@@ -717,7 +703,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					AuthID:          "id_from_saml_assertion",
 					AuthenticatedBy: "saml",
@@ -776,7 +761,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					AuthID:          "id_from_saml_assertion",
 					AuthenticatedBy: "saml",
@@ -862,7 +846,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
-				// ctx: context.Background(),
 				id: &authn.Identity{
 					AuthenticatedBy: "saml",
 					// No AuthID or ExternalUID for this non-SCIM path, will lookup by email/login
