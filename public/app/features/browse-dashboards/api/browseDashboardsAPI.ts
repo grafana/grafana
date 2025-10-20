@@ -7,6 +7,7 @@ import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
 import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
+import { legacyUserAPI } from 'app/api/legacy/user/api';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { AnnoKeyFolder, Resource, ResourceList } from 'app/features/apiserver/types';
@@ -14,6 +15,8 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { updateStarredNavItems } from 'app/features/stars/utils';
+import { RootState } from 'app/store/configureStore';
 import { dispatch } from 'app/store/store';
 import { PermissionLevel } from 'app/types/acl';
 import { SaveDashboardResponseDTO, ImportDashboardResponseDTO } from 'app/types/dashboard';
@@ -168,6 +171,7 @@ export const browseDashboardsAPI = createApi({
 
     // delete an *individual* folder. used in the folder actions menu.
     deleteFolder: builder.mutation<void, FolderDTO>({
+      invalidatesTags: ['getFolder'],
       query: ({ uid }) => ({
         url: `/folders/${uid}`,
         method: 'DELETE',
@@ -339,7 +343,7 @@ export const browseDashboardsAPI = createApi({
     // delete *multiple* dashboards. used in the delete modal.
     deleteDashboards: builder.mutation<void, DeleteDashboardsArgs>({
       invalidatesTags: ['getFolder'],
-      queryFn: async ({ dashboardUIDs }, _api, _extraOptions, baseQuery) => {
+      queryFn: async ({ dashboardUIDs }) => {
         const pageStateManager = getDashboardScenePageStateManager();
         // Delete all the dashboards sequentially
         // TODO error handling here
@@ -375,9 +379,25 @@ export const browseDashboardsAPI = createApi({
         }
         return { data: undefined };
       },
-      onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, getState }) => {
         queryFulfilled.then(() => {
           dispatch(refreshParents(dashboardUIDs));
+
+          // Get the navIndex from the state, under the assumption that this is connected to
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const { navIndex } = getState() as RootState;
+          const { starred: starredNavItem } = navIndex;
+          dispatch(legacyUserAPI.util.invalidateTags(['dashboardStars']));
+          for (const uid of dashboardUIDs) {
+            updateStarredNavItems(
+              dispatch,
+              starredNavItem,
+              uid,
+              // We don't need to pass the correct title as we're only removing the starred items here
+              '',
+              false
+            );
+          }
         });
       },
     }),
