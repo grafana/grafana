@@ -83,6 +83,7 @@ export function useSaveDashboard(isCopy = false) {
           trackDashboardSceneCreatedOrSaved(!!options.isNew, scene, {
             name: saveModel.title || '',
             url: resultData.url || '',
+            expression_types: scene.getExpressionTypes(saveModel),
           });
         }
 
