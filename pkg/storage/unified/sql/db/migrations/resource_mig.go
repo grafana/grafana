@@ -125,6 +125,13 @@ func initResourceTables(mg *migrator.Migrator) string {
 			{Name: "last_import_time", Type: migrator.DB_DateTime, Nullable: false},
 		},
 		PrimaryKeys: []string{"group", "resource", "namespace"},
+		Indices: []*migrator.Index{
+			{
+				Cols: []string{"last_import_time"},
+				Type: migrator.IndexType,
+				Name: "UQE_resource_last_import_time_last_import_time",
+			},
+		},
 	})
 
 	// Initialize all tables
