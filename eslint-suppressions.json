@@ -770,21 +770,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/List/AbstractList.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/List/InlineList.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/List/List.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/MatchersUI/FieldValueMatcher.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
