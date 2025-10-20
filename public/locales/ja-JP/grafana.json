@@ -4515,7 +4515,8 @@
       "paste-row": "行を貼り付け",
       "paste-tab": "タブを貼り付け",
       "un-group-panels": "グループ解除",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4809,7 +4810,11 @@
       "add-visualization-header": "視覚化を追加して新しいダッシュボードを開始します",
       "import-a-dashboard-body": "ファイルまたは<1>grafana.com</1>からダッシュボードをインポートします。",
       "import-a-dashboard-header": "ダッシュボードをインポートする",
-      "import-dashboard-button": "ダッシュボードをインポート"
+      "import-dashboard-button": "ダッシュボードをインポート",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "ダッシュボードの読み込みに失敗しました"
@@ -5022,6 +5027,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "コピー",
         "copy-or-duplicate": "コピーまたは複製",
@@ -5031,7 +5037,10 @@
         "group-layout-disabled": "このレベルにグループはありません",
         "panel-layout": "パネルレイアウト",
         "panel-layout-disabled": "パネルレイアウトオプションを変更するには、行またはタブを選択してください"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5180,7 +5189,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "この行を削除すると、すべてのパネルも削除されます。続行してもよろしいですか？",
       "delete-row-title": "行を削除しますか？",
@@ -5220,9 +5228,7 @@
         "title-not-unique": "このタイトルは重複しています"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "ダッシュボードが保存されました"
@@ -5312,6 +5318,9 @@
       "delete-tab-title": "タブを削除しますか？",
       "delete-tab-yes": "削除",
       "description": "パネルを水平タブに整理する",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "タブ",
       "tab": {
         "new": "新しいタブ",
@@ -7651,6 +7660,7 @@
   },
   "gauge": {
     "category-gauge": "ゲージ",
+    "category-radial-bar": "",
     "description-min-height": "最小行の高さ（水平方向）",
     "description-min-width": "最小列幅（垂直方向）",
     "description-neutral": "中立点として最小値を使用するには、空のままにします",
@@ -7666,7 +7676,8 @@
     "name-neutral": "中立",
     "name-show-threshold-labels": "しきい値ラベルを表示",
     "name-show-threshold-markers": "しきい値マーカーを表示",
-    "placeholder-neutral": "自動"
+    "placeholder-neutral": "自動",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "適用",
@@ -9070,6 +9081,8 @@
       "make-time-range-permanent": "時間範囲を絶対的/永続的にする",
       "move-time-range-back": "時間範囲を後ろに移動",
       "move-time-range-forward": "時間範囲を前に移動",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "検索を開く",
       "open-share-embed-drawer": "パネル埋め込みを共有",
       "open-share-link-drawer": "パネルリンクを共有",
@@ -11781,7 +11794,8 @@
       "button-cancelling": "キャンセル中…",
       "button-previous": "前へ",
       "button-submitting": "送信中…",
-      "error-instance-repository-exists": "インスタンスリポジトリはすでに存在します"
+      "error-instance-repository-exists": "インスタンスリポジトリはすでに存在します",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12003,6 +12017,28 @@
       "show-response": "応答の表示"
     },
     "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {

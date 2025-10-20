@@ -1692,7 +1692,8 @@
       "metadata": {
         "name": "filterOutBotsFromFrontendLogs",
         "resourceVersion": "1758000919535",
-        "creationTimestamp": "2025-09-16T05:35:19Z"
+        "creationTimestamp": "2025-09-16T05:35:19Z",
+        "deletionTimestamp": "2025-10-13T11:09:22Z"
       },
       "spec": {
         "description": "Filter out bots from collecting data for Frontend Observability",
@@ -2259,6 +2260,22 @@
         "description": "Routes library panel requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesLogsDrilldown",
+        "resourceVersion": "1760632282014",
+        "creationTimestamp": "2025-10-07T19:26:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-16 16:31:22.014483 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes logs drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
         "requiresRestart": true
       }
     },
@@ -2939,6 +2956,19 @@
     },
     {
       "metadata": {
+        "name": "pluginStoreServiceLoading",
+        "resourceVersion": "1760712768362",
+        "creationTimestamp": "2025-10-17T14:52:48Z"
+      },
+      "spec": {
+        "description": "Load plugins during store service startup instead of wire provider",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsAutoUpdate",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-04-16T11:44:39Z"
@@ -3037,6 +3067,20 @@
         "codeowner": "@grafana/dashboards-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "preventPanelChromeOverflow",
+        "resourceVersion": "1760704390127",
+        "creationTimestamp": "2025-10-17T12:33:10Z"
+      },
+      "spec": {
+        "description": "Restrict PanelChrome contents with overflow: hidden;",
+        "stage": "preview",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
