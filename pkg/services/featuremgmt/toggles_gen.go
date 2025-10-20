@@ -267,6 +267,10 @@ const (
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
 
+	// FlagKubernetesLogsDrilldown
+	// Adds support for Kubernetes logs drilldown
+	FlagKubernetesLogsDrilldown = "kubernetesLogsDrilldown"
+
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
 	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
@@ -1078,10 +1082,6 @@ const (
 	// Run search queries through the tempo backend
 	FlagTempoSearchBackendMigration = "tempoSearchBackendMigration"
 
-	// FlagFilterOutBotsFromFrontendLogs
-	// Filter out bots from collecting data for Frontend Observability
-	FlagFilterOutBotsFromFrontendLogs = "filterOutBotsFromFrontendLogs"
-
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
@@ -1089,4 +1089,12 @@ const (
 	// FlagCdnPluginsUrls
 	// Enable loading plugins via declarative URLs
 	FlagCdnPluginsUrls = "cdnPluginsUrls"
+
+	// FlagPreventPanelChromeOverflow
+	// Restrict PanelChrome contents with overflow: hidden;
+	FlagPreventPanelChromeOverflow = "preventPanelChromeOverflow"
+
+	// FlagPluginStoreServiceLoading
+	// Load plugins during store service startup instead of wire provider
+	FlagPluginStoreServiceLoading = "pluginStoreServiceLoading"
 )

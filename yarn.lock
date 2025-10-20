@@ -2536,7 +2536,7 @@ __metadata:
     typescript: "npm:5.9.2"
     webpack: "npm:5.101.0"
   peerDependencies:
-    "@grafana/assistant": ^0.0.17 || ^0.0.18
+    "@grafana/assistant": ^0.1.0
     "@grafana/runtime": "*"
   languageName: unknown
   linkType: soft
@@ -2604,7 +2604,7 @@ __metadata:
     "@types/node": "npm:22.17.0"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
-    "@types/semver": "npm:7.7.0"
+    "@types/semver": "npm:7.7.1"
     "@types/uuid": "npm:10.0.0"
     jest: "npm:29.7.0"
     lodash: "npm:4.17.21"
@@ -2614,7 +2614,7 @@ __metadata:
     react-use: "npm:17.6.0"
     redux: "npm:5.0.1"
     rxjs: "npm:7.8.2"
-    semver: "npm:7.7.2"
+    semver: "npm:7.7.3"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.9.2"
@@ -2887,7 +2887,7 @@ __metadata:
     "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
-    "@types/semver": "npm:7.7.0"
+    "@types/semver": "npm:7.7.1"
     "@types/uuid": "npm:10.0.0"
     buffer: "npm:6.0.3"
     events: "npm:3.3.0"
@@ -2904,7 +2904,7 @@ __metadata:
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
-    semver: "npm:7.7.2"
+    semver: "npm:7.7.3"
     stream-browserify: "npm:3.0.0"
     string_decoder: "npm:1.3.0"
     ts-node: "npm:10.9.2"
@@ -2993,9 +2993,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/assistant@npm:0.0.18":
-  version: 0.0.18
-  resolution: "@grafana/assistant@npm:0.0.18"
+"@grafana/assistant@npm:0.1.0":
+  version: 0.1.0
+  resolution: "@grafana/assistant@npm:0.1.0"
   peerDependencies:
     "@grafana/data": ">=12.1.0"
     "@grafana/runtime": ">=12.1.0"
@@ -3003,7 +3003,7 @@ __metadata:
     "@grafana/ui": ">=12.1.0"
     react: ">=18.0.0"
     rxjs: ">=7.0.0"
-  checksum: 10/6e95f6e7026121f220a20064aa1fc715cf969d93e02b506268dd589d4400b399a6e7d1f2a1a69edb973b604be932c7b091deee1960f90eccf8ea53b67314438e
+  checksum: 10/90cfee9860bc128190ec1357e554685892b3ddd080d914457da311f1d45294dfcc15a427be36c381463eefe39268b5abbc39e6b541ad402e78264cc6d038c23f
   languageName: node
   linkType: hard
 
@@ -3058,7 +3058,7 @@ __metadata:
     "@types/tinycolor2": "npm:1.4.6"
     d3-interpolate: "npm:3.0.1"
     date-fns: "npm:4.1.0"
-    dompurify: "npm:3.2.6"
+    dompurify: "npm:3.3.0"
     esbuild: "npm:0.25.8"
     eventemitter3: "npm:5.0.1"
     fast_array_intersect: "npm:1.1.0"
@@ -3096,7 +3096,7 @@ __metadata:
   dependencies:
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@types/node": "npm:22.17.0"
-    "@types/semver": "npm:7.7.0"
+    "@types/semver": "npm:7.7.1"
     esbuild: "npm:0.25.8"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
@@ -3223,7 +3223,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typescript: "npm:5.9.2"
   peerDependencies:
-    "@grafana/assistant": ^0.0.17 || ^0.0.18
+    "@grafana/assistant": ^0.1.0
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -3448,7 +3448,7 @@ __metadata:
     "@types/react-dom": "npm:18.3.5"
     "@types/react-highlight-words": "npm:0.20.0"
     "@types/react-window": "npm:1.8.8"
-    "@types/semver": "npm:7.7.0"
+    "@types/semver": "npm:7.7.1"
     "@types/uuid": "npm:10.0.0"
     debounce-promise: "npm:3.1.2"
     esbuild: "npm:0.25.8"
@@ -3472,7 +3472,7 @@ __metadata:
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rxjs: "npm:7.8.2"
-    semver: "npm:7.7.2"
+    semver: "npm:7.7.3"
     testing-library-selector: "npm:0.3.1"
     typescript: "npm:5.9.2"
     uuid: "npm:11.1.0"
@@ -3526,11 +3526,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.39.5":
-  version: 6.39.5
-  resolution: "@grafana/scenes-react@npm:6.39.5"
+"@grafana/scenes-react@npm:^6.39.8":
+  version: 6.39.8
+  resolution: "@grafana/scenes-react@npm:6.39.8"
   dependencies:
-    "@grafana/scenes": "npm:6.39.5"
+    "@grafana/scenes": "npm:6.39.8"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3542,13 +3542,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/9bd908578a62dfbafba96d7046f25785391555a77445c76de0195d9a132a9c3c3dde565ef76ad834968c65266fa6d2ba2ee746303e46ebe7fd69a2b87ef3f5b4
+  checksum: 10/14f94437976890e5f9f2046be67796612273041f45ac76baace296249630e1189b28838ff6346c4463fa3fabf3e55d34ccbc4ff92a5ece83bf04566d52638c87
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.39.5":
-  version: 6.39.5
-  resolution: "@grafana/scenes@npm:6.39.5"
+"@grafana/scenes@npm:6.39.8, @grafana/scenes@npm:^6.39.8":
+  version: 6.39.8
+  resolution: "@grafana/scenes@npm:6.39.8"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3568,7 +3568,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/8608c7e98e0928bc32ccc58cdaf47a4339c60d4c81b1c23db962569f1f9650d22552e88bb3fa3524173ac475c7f9c4578383da49968c7bdd3cb40db043ef233b
+  checksum: 10/0a9ce2dfae242c805463867d65f6dbd434490c764f791bb923af47b3042978ffceccbfe52e79d940b89c1e62f86a39992c10b505eb330dcf73005f69f2c2a444
   languageName: node
   linkType: hard
 
@@ -5758,9 +5758,9 @@ __metadata:
   linkType: hard
 
 "@openfeature/core@npm:^1.9.0":
-  version: 1.9.0
-  resolution: "@openfeature/core@npm:1.9.0"
-  checksum: 10/c6d20edc09053afd99752fe46d8328158680950bca4b86679f67f79249d7226eea127b31fffdc38e26ecb729f2bab5a4a5a7c1db708ae76b7fbbac68cd56f094
+  version: 1.9.1
+  resolution: "@openfeature/core@npm:1.9.1"
+  checksum: 10/6099e16b1b4cd6e3c45c05ab4acd44c9cb4ab501b676ab6f3e77f0be1b56abc7506c5629187381333a02975d315d831e0905582435b356d9676255e72a465899
   languageName: node
   linkType: hard
 
@@ -5785,11 +5785,11 @@ __metadata:
   linkType: hard
 
 "@openfeature/web-sdk@npm:^1.6.1":
-  version: 1.6.1
-  resolution: "@openfeature/web-sdk@npm:1.6.1"
+  version: 1.6.2
+  resolution: "@openfeature/web-sdk@npm:1.6.2"
   peerDependencies:
     "@openfeature/core": ^1.9.0
-  checksum: 10/8bd7d1ea386e21cdd7492cab2fd1d2b138b4e6a376a4c0a40244633e5955f6452039bc2633fc5230bd7b494506a4137ba7210d40850634f9618f77a0ee435f9d
+  checksum: 10/0fcc0ef76ff51d4725a00ff07755b21941b647f775d1ff04fc3d973143e78c909ccba485f582fcbc7f6201f42c795c85bcb103c43d64924fedf13ea517f625ac
   languageName: node
   linkType: hard
 
@@ -10066,10 +10066,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/semver@npm:7.7.0, @types/semver@npm:^7.3.12, @types/semver@npm:^7.3.4":
-  version: 7.7.0
-  resolution: "@types/semver@npm:7.7.0"
-  checksum: 10/ee4514c6c852b1c38f951239db02f9edeea39f5310fad9396a00b51efa2a2d96b3dfca1ae84c88181ea5b7157c57d32d7ef94edacee36fbf975546396b85ba5b
+"@types/semver@npm:7.7.1, @types/semver@npm:^7.3.12, @types/semver@npm:^7.3.4":
+  version: 7.7.1
+  resolution: "@types/semver@npm:7.7.1"
+  checksum: 10/8f09e7e6ca3ded67d78ba7a8f7535c8d9cf8ced83c52e7f3ac3c281fe8c689c3fe475d199d94390dc04fc681d51f2358b430bb7b2e21c62de24f2bee2c719068
   languageName: node
   linkType: hard
 
@@ -15310,15 +15310,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:3.2.6":
-  version: 3.2.6
-  resolution: "dompurify@npm:3.2.6"
+"dompurify@npm:3.3.0":
+  version: 3.3.0
+  resolution: "dompurify@npm:3.3.0"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10/b91631ed0e4d17fae950ef53613cc009ed7e73adc43ac94a41dd52f35483f7538d13caebdafa7626e0da145fc8184e7ac7935f14f25b7e841b32fda777e40447
+  checksum: 10/d8782b10a0454344476936c91038d06c9450b3e3ada2ceb8f722525e6b54e64d847939b9f35bf385facd4139f0a2eaf7f5553efce351f8e9295620570875f002
   languageName: node
   linkType: hard
 
@@ -18277,7 +18277,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
-    "@grafana/assistant": "npm:0.0.18"
+    "@grafana/assistant": "npm:0.1.0"
     "@grafana/aws-sdk": "npm:0.7.1"
     "@grafana/azure-sdk": "npm:0.0.7"
     "@grafana/data": "workspace:*"
@@ -18298,8 +18298,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.39.5"
-    "@grafana/scenes-react": "npm:6.39.5"
+    "@grafana/scenes": "npm:^6.39.8"
+    "@grafana/scenes-react": "npm:^6.39.8"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -18387,7 +18387,7 @@ __metadata:
     "@types/react-window": "npm:1.8.8"
     "@types/react-window-infinite-loader": "npm:^1"
     "@types/redux-mock-store": "npm:1.5.0"
-    "@types/semver": "npm:7.7.0"
+    "@types/semver": "npm:7.7.1"
     "@types/slate": "npm:0.47.11"
     "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
@@ -18577,7 +18577,7 @@ __metadata:
     sass: "npm:1.89.2"
     sass-loader: "npm:16.0.5"
     selecto: "npm:1.26.3"
-    semver: "npm:7.7.2"
+    semver: "npm:7.7.3"
     slate: "npm:0.47.9"
     slate-plain-serializer: "npm:0.7.13"
     slate-react: "npm:0.22.10"
@@ -23573,11 +23573,11 @@ __metadata:
   linkType: hard
 
 "nanoid@npm:^5.0.9":
-  version: 5.1.5
-  resolution: "nanoid@npm:5.1.5"
+  version: 5.1.6
+  resolution: "nanoid@npm:5.1.6"
   bin:
     nanoid: bin/nanoid.js
-  checksum: 10/6de2d006b51c983be385ef7ee285f7f2a57bd96f8c0ca881c4111461644bd81fafc2544f8e07cb834ca0f3e0f3f676c1fe78052183f008b0809efe6e273119f5
+  checksum: 10/4109dbcf596d7f297a9b42f459b8f01694a03ebbdd2f41408d963ad54e5ec7234cbe7b4acad137751f31add11bb4fb3415a3e688082516745812811f05570014
   languageName: node
   linkType: hard
 
@@ -28997,12 +28997,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:7.7.2, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.3.8, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.0, semver@npm:^7.6.2, semver@npm:^7.6.3, semver@npm:^7.7.0, semver@npm:^7.7.1, semver@npm:^7.7.2, semver@npm:~7.7.1":
-  version: 7.7.2
-  resolution: "semver@npm:7.7.2"
+"semver@npm:7.7.3, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.3.8, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.0, semver@npm:^7.6.2, semver@npm:^7.6.3, semver@npm:^7.7.0, semver@npm:^7.7.1, semver@npm:^7.7.2, semver@npm:~7.7.1":
+  version: 7.7.3
+  resolution: "semver@npm:7.7.3"
   bin:
     semver: bin/semver.js
-  checksum: 10/7a24cffcaa13f53c09ce55e05efe25cd41328730b2308678624f8b9f5fc3093fc4d189f47950f0b811ff8f3c3039c24a2c36717ba7961615c682045bf03e1dda
+  checksum: 10/8dbc3168e057a38fc322af909c7f5617483c50caddba135439ff09a754b20bdd6482a5123ff543dad4affa488ecf46ec5fb56d61312ad20bb140199b88dfaea9
   languageName: node
   linkType: hard
 

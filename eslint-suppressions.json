@@ -579,11 +579,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/BigValue/BigValueLayout.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Cascader/Cascader.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -2177,11 +2172,6 @@
       "count": 4
     }
   },
-  "public/app/features/dashboard-scene/edit-pane/DashboardEditableElement.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/edit-pane/DashboardOutline.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2197,28 +2187,8 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/inspect/InspectDataTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/inspect/InspectJsonTab.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/inspect/InspectMetaDataTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/inspect/InspectQueryTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/inspect/InspectStatsTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2235,23 +2205,8 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataAlertingTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataPane.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataQueriesTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataTransformationsTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2283,21 +2238,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/AddLibraryPanelDrawer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/CustomTimeRangeCompare.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/DashboardDataLayerSet.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2305,11 +2245,6 @@
   },
   "public/app/features/dashboard-scene/scene/PanelSearchLayout.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/ViewPanelScene.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2369,11 +2304,6 @@
   },
   "public/app/features/dashboard-scene/serialization/buildNewDashboardSaveModel.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/serialization/custom-variables/SnapshotVariable.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -3311,11 +3241,6 @@
   "public/app/features/expressions/ExpressionDatasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    }
-  },
-  "public/app/features/expressions/ExpressionQueryEditor.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 4
     }
   },
   "public/app/features/expressions/guards.ts": {

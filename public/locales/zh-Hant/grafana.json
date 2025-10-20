@@ -4515,7 +4515,8 @@
       "paste-row": "貼上列",
       "paste-tab": "貼上分頁",
       "un-group-panels": "解散群組",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -5026,6 +5027,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "複製",
         "copy-or-duplicate": "複製或重複",
@@ -5035,7 +5037,10 @@
         "group-layout-disabled": "此層級上不存在群組",
         "panel-layout": "面板版面配置",
         "panel-layout-disabled": "選擇一列或分頁以變更面板版面配置選項"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5184,7 +5189,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "刪除此列也會移除所有面板。確定要繼續嗎？",
       "delete-row-title": "要刪除列嗎？",
@@ -5224,9 +5228,7 @@
         "title-not-unique": "此標題不是唯一"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "儀表板已儲存"
@@ -5316,6 +5318,9 @@
       "delete-tab-title": "要刪除分頁嗎？",
       "delete-tab-yes": "刪除",
       "description": "將面板組織成橫向分頁",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "分頁",
       "tab": {
         "new": "新分頁",
@@ -7655,6 +7660,7 @@
   },
   "gauge": {
     "category-gauge": "儀表",
+    "category-radial-bar": "",
     "description-min-height": "最小列高（橫向）",
     "description-min-width": "最小欄寬（縱向）",
     "description-neutral": "留空以使用最小值作為中性點",
@@ -7670,7 +7676,8 @@
     "name-neutral": "中性",
     "name-show-threshold-labels": "顯示閾值標籤",
     "name-show-threshold-markers": "顯示閾值標記",
-    "placeholder-neutral": "自動"
+    "placeholder-neutral": "自動",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "套用",
@@ -9074,6 +9081,8 @@
       "make-time-range-permanent": "將時間範圍設為絕對／永久",
       "move-time-range-back": "將時間範圍向後移動",
       "move-time-range-forward": "將時間範圍向前移動",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "開啟搜尋",
       "open-share-embed-drawer": "分享面板嵌入",
       "open-share-link-drawer": "分享面板連結",
@@ -11785,7 +11794,8 @@
       "button-cancelling": "正在取消…",
       "button-previous": "上一個",
       "button-submitting": "正在提交…",
-      "error-instance-repository-exists": "執行個體儲存庫已存在"
+      "error-instance-repository-exists": "執行個體儲存庫已存在",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12007,6 +12017,28 @@
       "show-response": "顯示回應"
     },
     "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {

@@ -4535,7 +4535,8 @@
       "paste-row": "Pegar fila",
       "paste-tab": "Pegar pestaña",
       "un-group-panels": "Desagrupar",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -5046,6 +5047,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Copiar",
         "copy-or-duplicate": "Copiar o duplicar",
@@ -5055,7 +5057,10 @@
         "group-layout-disabled": "No existen grupos en este nivel",
         "panel-layout": "Diseño del panel",
         "panel-layout-disabled": "Selecciona una fila o pestaña para cambiar las opciones de diseño del panel"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5205,7 +5210,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "Al eliminar esta fila también se eliminarán todos los paneles. ¿Seguro que quieres continuar?",
       "delete-row-title": "¿Eliminar fila?",
@@ -5245,9 +5249,7 @@
         "title-not-unique": "Este título no es único"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard guardado"
@@ -5337,6 +5339,9 @@
       "delete-tab-title": "¿Eliminar pestaña?",
       "delete-tab-yes": "Eliminar",
       "description": "Organizar paneles en pestañas horizontales",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Pestañas",
       "tab": {
         "new": "Nueva pestaña",
@@ -7678,6 +7683,7 @@
   },
   "gauge": {
     "category-gauge": "Medidor",
+    "category-radial-bar": "",
     "description-min-height": "Altura mínima de fila (orientación horizontal)",
     "description-min-width": "Ancho mínimo de columna (orientación vertical)",
     "description-neutral": "Dejar vacío para usar mín. como punto neutro",
@@ -7693,7 +7699,8 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Mostrar etiquetas de umbral",
     "name-show-threshold-markers": "Mostrar marcadores de umbral",
-    "placeholder-neutral": "auto"
+    "placeholder-neutral": "auto",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Aplicar",
@@ -9097,6 +9104,8 @@
       "make-time-range-permanent": "Hacer que el rango de tiempo sea absoluto/permanente",
       "move-time-range-back": "Retrasar el rango de tiempo",
       "move-time-range-forward": "Mover el rango de tiempo hacia delante",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Abrir búsqueda",
       "open-share-embed-drawer": "Compartir incrustación del panel",
       "open-share-link-drawer": "Compartir enlace del panel",
@@ -11825,7 +11834,8 @@
       "button-cancelling": "Cancelando... ",
       "button-previous": "Anterior",
       "button-submitting": "Enviando...",
-      "error-instance-repository-exists": "El repositorio de instancias ya existe"
+      "error-instance-repository-exists": "El repositorio de instancias ya existe",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12048,6 +12058,28 @@
       "show-response": "Mostrar respuesta"
     },
     "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {

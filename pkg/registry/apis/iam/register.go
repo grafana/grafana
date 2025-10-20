@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -192,7 +193,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
-	teamBindingLegacyStore := team.NewLegacyBindingStore(b.store, enableAuthnMutation)
+	teamBindingLegacyStore := teambinding.NewLegacyBindingStore(b.store, enableAuthnMutation)
 	storage[teamBindingResource.StoragePath()] = teamBindingLegacyStore
 
 	if b.enableDualWriter {
@@ -377,7 +378,7 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 		case *iamv0.Team:
 			return team.ValidateOnCreate(ctx, typedObj)
 		case *iamv0.TeamBinding:
-			return team.ValidateOnBindingCreate(ctx, typedObj)
+			return teambinding.ValidateOnCreate(ctx, typedObj)
 		case *iamv0.ResourcePermission:
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
 		}
