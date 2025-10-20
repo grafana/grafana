@@ -23,8 +23,9 @@ const defaultEvaluationInterval = 7 * 24 * time.Hour // 7 days
 const defaultMaxHistory = 10
 
 var (
-	waitInterval   = 5 * time.Second
-	waitMaxRetries = 3
+	waitInterval                = 5 * time.Second
+	waitMaxRetries              = 3
+	evalIntervalRandomVariation = 1 * time.Hour
 )
 
 // Runner is a "runnable" app used to be able to expose and API endpoint
@@ -38,7 +39,6 @@ type Runner struct {
 	maxHistory          int
 	namespace           string
 	log                 logging.Logger
-	randomVariationMax  time.Duration
 }
 
 // NewRunner creates a new Runner.
@@ -78,7 +78,6 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 		checksClient:        client,
 		typesClient:         typesClient,
 		defaultEvalInterval: evalInterval,
-		randomVariationMax:  1 * time.Hour,
 		maxHistory:          maxHistory,
 		namespace:           namespace,
 		log:                 log.With("runner", "advisor.checkscheduler"),
@@ -95,8 +94,8 @@ func (r *Runner) Run(ctx context.Context) error {
 		logger.Error("Error getting last check creation time", "error", err)
 		return err
 	}
+	// If there are checks already created, run an initial cleanup to remove old checks
 	if !lastCreated.IsZero() {
-		// Run an initial cleanup to remove old checks
 		err = r.cleanupChecks(ctxWithoutCancel, logger)
 		if err != nil {
 			logger.Error("Error cleaning up old check reports", "error", err)
@@ -104,7 +103,7 @@ func (r *Runner) Run(ctx context.Context) error {
 		}
 	}
 
-	nextEvalTime, _ := r.getNextEvalTime(r.defaultEvalInterval, lastCreated)
+	nextEvalTime := r.getNextEvalTime(r.defaultEvalInterval, lastCreated)
 	ticker := time.NewTicker(nextEvalTime)
 	defer ticker.Stop()
 
@@ -117,15 +116,14 @@ func (r *Runner) Run(ctx context.Context) error {
 				return err
 			}
 
-			// Get the next evaluation time and if we should write checks
-			nextEvalTime, shouldCreate := r.getNextEvalTime(r.defaultEvalInterval, lastCreated)
-
-			if shouldCreate {
+			// If there are checks already created, then we can automatically create more
+			if !lastCreated.IsZero() {
 				err = r.createChecks(ctxWithoutCancel, logger)
 				if err != nil {
 					logger.Error("Error creating new check reports", "error", err)
 				}
 
+				// Clean up old checks to avoid going over the limit
 				err = r.cleanupChecks(ctxWithoutCancel, logger)
 				if err != nil {
 					logger.Error("Error cleaning up old check reports", "error", err)
@@ -133,6 +131,7 @@ func (r *Runner) Run(ctx context.Context) error {
 			}
 
 			// Reset the ticker to the next send interval
+			nextEvalTime = r.getNextEvalTime(r.defaultEvalInterval, lastCreated)
 			ticker.Reset(nextEvalTime)
 		case <-ctx.Done():
 			return ctx.Err()
@@ -295,20 +294,17 @@ func getEvaluationInterval(pluginConfig map[string]string) (time.Duration, error
 	return evaluationInterval, nil
 }
 
-func (r *Runner) getNextEvalTime(defaultEvaluationInterval time.Duration, lastCreated time.Time) (time.Duration, bool) {
+func (r *Runner) getNextEvalTime(defaultEvaluationInterval time.Duration, lastCreated time.Time) time.Duration {
 	nextEvalTime := defaultEvaluationInterval
-	shouldCreate := true
 
 	baseTime := lastCreated
 	if lastCreated.IsZero() {
-		// If there are no checks previously created, we should not automatically create them
-		shouldCreate = false
 		baseTime = time.Now()
 	}
 
 	// Calculate the next evaluation time and add random variation
 	nextEvalTime = time.Until(baseTime.Add(nextEvalTime))
-	randomVariation := time.Duration(rand.Int63n(r.randomVariationMax.Nanoseconds()))
+	randomVariation := time.Duration(rand.Int63n(evalIntervalRandomVariation.Nanoseconds()))
 	nextEvalTime += randomVariation
 
 	// Ensure we always return a positive duration to avoid ticker panics
@@ -316,7 +312,7 @@ func (r *Runner) getNextEvalTime(defaultEvaluationInterval time.Duration, lastCr
 		nextEvalTime = 1 * time.Millisecond
 	}
 
-	return nextEvalTime, shouldCreate
+	return nextEvalTime
 }
 
 func getMaxHistory(pluginConfig map[string]string) (int, error) {

@@ -18,6 +18,7 @@ import (
 
 func init() {
 	waitInterval = 1 * time.Millisecond
+	evalIntervalRandomVariation = 1 * time.Millisecond
 }
 
 // TestRunner_Run tests the main Run function with various scenarios
@@ -41,6 +42,7 @@ func TestRunner_Run(t *testing.T) {
 		err := runner.Run(ctx)
 		assert.ErrorAs(t, err, &context.DeadlineExceeded)
 	})
+
 	t.Run("handles check list error gracefully", func(t *testing.T) {
 		mockClient := &MockClient{
 			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
@@ -331,7 +333,6 @@ func createTestRunnerWithRegistry(checkClient, typesClient *MockClient, checkReg
 		maxHistory:          defaultMaxHistory,
 		namespace:           "test-namespace",
 		log:                 &logging.NoOpLogger{},
-		randomVariationMax:  1 * time.Millisecond, // Small variation for testing
 	}
 }
 
