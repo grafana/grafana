@@ -37,6 +37,8 @@ For example, on Linux `/usr/share/grafana/bin/grafana` and on Windows `C:\Progra
 {{< admonition type="note" >}}
 Some commands, such as installing or removing plugins, require `sudo` on Linux.
 If you're on Windows, run Windows PowerShell as Administrator.
+
+On Unix-like systems, when a plugin is installed, its directory inherits ownership from the plugins directory where it's being installed. This ensures proper file permissions are maintained.
 {{< /admonition >}}
 
 ## Grafana CLI command syntax
@@ -174,6 +176,10 @@ grafana cli plugins list-remote
 ```bash
 grafana cli plugins install <plugin-id>
 ```
+
+{{< admonition type="note" >}}
+On Unix-like systems (Linux, macOS), when a plugin is installed, its directory inherits ownership from the plugins directory where it's being installed. This ensures the plugin files have the correct permissions to run properly.
+{{< /admonition >}}
 
 ### Install a specific version of a plugin
 
