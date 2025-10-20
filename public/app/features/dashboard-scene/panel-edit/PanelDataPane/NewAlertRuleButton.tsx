@@ -1,11 +1,12 @@
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService, logInfo } from '@grafana/runtime';
+import { config, locationService, logInfo } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { Alert, Button } from '@grafana/ui';
+import { Alert, Button, Drawer } from '@grafana/ui';
 import { LogMessages } from 'app/features/alerting/unified/Analytics';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 
@@ -17,6 +18,7 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
   const location = useLocation();
 
   const { loading, value: formValues } = useAsync(() => scenesPanelToRuleFormValues(panel), [panel]);
+  const [isOpen, setIsOpen] = useState(false);
 
   if (loading) {
     return (
@@ -54,6 +56,34 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
 
     locationService.push(ruleFormUrl);
   };
+
+  const shouldUseDrawer = config.featureToggles.createAlertRuleFromPanel;
+
+  if (shouldUseDrawer) {
+    return (
+      <>
+        <Button
+          icon="bell"
+          className={className}
+          data-testid="create-alert-rule-button-drawer"
+          onClick={() => {
+            // logInfo(LogMessages.alertRuleFromPanel);
+            setIsOpen(true);
+          }}
+        >
+          <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
+        </Button>
+        {isOpen && (
+          <Drawer
+            title={t('alerting.new-rule-from-panel-button.new-alert-rule', 'New alert rule')}
+            onClose={() => setIsOpen(false)}
+          >
+            <Trans i18nKey="alerting.new-rule-from-panel-button.content-coming-soon">Content coming soon...</Trans>
+          </Drawer>
+        )}
+      </>
+    );
+  }
 
   return (
     <Button icon="bell" onClick={onClick} className={className} data-testid="create-alert-rule-button">

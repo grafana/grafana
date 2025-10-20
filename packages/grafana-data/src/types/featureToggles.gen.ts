@@ -812,6 +812,10 @@ export interface FeatureToggles {
   */
   elasticsearchImprovedParsing?: boolean;
   /**
+   * Enables creating alert rules from a panel using a drawer UI
+   */
+  createAlertRuleFromPanel?: boolean;
+  /**
   * Shows defined connections for a data source in the plugins detail page
   */
   datasourceConnectionsTab?: boolean;
