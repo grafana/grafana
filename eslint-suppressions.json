@@ -3398,11 +3398,6 @@
       "count": 1
     }
   },
-  "public/app/features/panel/components/PanelPluginError.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 3
-    }
-  },
   "public/app/features/panel/components/VizTypePicker/PanelTypeCard.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 1
