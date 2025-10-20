@@ -29,7 +29,7 @@ composableKinds: PanelCfg: {
 					barGlow?: bool | *false
 					spotlight?: bool | *false
 					rounded?: bool | *false	
-					centerGlow?: bool | *true
+					centerGlow?: bool | *false
 				 } @cuetsy(kind="interface")
 
 				Options: {

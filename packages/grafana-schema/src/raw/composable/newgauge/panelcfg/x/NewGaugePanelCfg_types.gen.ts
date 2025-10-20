@@ -21,7 +21,7 @@ export interface GaugePanelEffects {
 
 export const defaultGaugePanelEffects: Partial<GaugePanelEffects> = {
   barGlow: false,
-  centerGlow: true,
+  centerGlow: false,
   rounded: false,
   spotlight: false,
 };

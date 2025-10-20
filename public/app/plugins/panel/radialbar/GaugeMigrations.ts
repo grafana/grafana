@@ -1,4 +1,4 @@
-import { PanelModel } from '@grafana/data';
+import { PanelModel, PanelTypeChangedHandler } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema/dist/esm/index.gen';
 import { sharedSingleStatPanelChangedHandler, sharedSingleStatMigrationHandler } from '@grafana/ui';
 
@@ -31,7 +31,11 @@ export function shouldMigrateGauge(panel: PanelModel): boolean {
 }
 
 // This is called when the panel changes from another panel
-export function gaugePanelChangedHandler(panel: PanelModel<Partial<Options>>, prevPluginId: string, prevOptions: any) {
+export const gaugePanelChangedHandler: PanelTypeChangedHandler<Options> = (
+  panel,
+  prevPluginId: string,
+  prevOptions
+) => {
   // This handles most config changes
   const opts: Options = sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions);
 
@@ -44,4 +48,4 @@ export function gaugePanelChangedHandler(panel: PanelModel<Partial<Options>>, pr
     }
   }
   return opts;
-}
+};

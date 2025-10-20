@@ -7,7 +7,7 @@ import { addOrientationOption, addStandardDataReduceOptions } from '../stat/comm
 import { EffectsEditor } from './EffectsEditor';
 import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './GaugeMigrations';
 import { RadialBarPanel } from './RadialBarPanel';
-import { defaultGaugePanelEffects, defaultOptions, Options } from './panelcfg.gen';
+import { defaultOptions, Options } from './panelcfg.gen';
 import { GaugeSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(RadialBarPanel)
@@ -109,7 +109,7 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       category,
       editor: EffectsEditor,
       settings: {},
-      defaultValue: defaultGaugePanelEffects,
+      defaultValue: defaultOptions.effects,
     });
   })
   .setSuggestionsSupplier(new GaugeSuggestionsSupplier())

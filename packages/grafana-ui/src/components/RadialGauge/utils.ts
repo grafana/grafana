@@ -41,6 +41,7 @@ export interface GaugeDimensions {
   scaleLabelsFontSize: number;
   scaleLabelsSpacing: number;
   scaleLabelsRadius: number;
+  gaugeBottomY: number;
 }
 
 export function calculateDimensions(
@@ -121,8 +122,8 @@ export function calculateDimensions(
 
   let innerRadius = outerRadius - barWidth / 2;
 
-  const maxY = maxRadius * Math.sin(toRad(yMaxAngle)) + maxRadius;
-  const rest = height - maxY - margin * 2;
+  const belowCenterY = maxRadius * Math.sin(toRad(yMaxAngle));
+  const rest = height - belowCenterY - margin * 2 - maxRadius;
   const centerX = width / 2;
   const centerY = maxRadius + margin + rest / 2;
 
@@ -132,6 +133,7 @@ export function calculateDimensions(
 
   return {
     margin,
+    gaugeBottomY: centerY + belowCenterY,
     radius: innerRadius,
     centerX,
     centerY,

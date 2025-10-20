@@ -78,14 +78,6 @@
       },
       "id": 8,
       "options": {
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": true,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -94,13 +86,8 @@
           "fields": "",
           "values": false
         },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
         "showThresholdLabels": false,
-        "showThresholdMarkers": false,
-        "sizing": "auto",
-        "sparkline": false
+        "showThresholdMarkers": false
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -157,14 +144,6 @@
       },
       "id": 9,
       "options": {
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": true,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -173,13 +152,8 @@
           "fields": "",
           "values": false
         },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
         "showThresholdLabels": false,
-        "showThresholdMarkers": false,
-        "sizing": "auto",
-        "sparkline": false
+        "showThresholdMarkers": false
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -235,14 +209,6 @@
       },
       "id": 11,
       "options": {
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": true,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -251,13 +217,8 @@
           "fields": "",
           "values": false
         },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
         "showThresholdLabels": false,
-        "showThresholdMarkers": false,
-        "sizing": "auto",
-        "sparkline": false
+        "showThresholdMarkers": false
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -315,14 +276,6 @@
       },
       "id": 10,
       "options": {
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": true,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -331,13 +284,8 @@
           "fields": "",
           "values": false
         },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
         "showThresholdLabels": false,
-        "showThresholdMarkers": false,
-        "sizing": "auto",
-        "sparkline": false
+        "showThresholdMarkers": false
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -394,14 +342,6 @@
       },
       "id": 13,
       "options": {
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": true,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -410,13 +350,8 @@
           "fields": "",
           "values": false
         },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
         "showThresholdLabels": false,
-        "showThresholdMarkers": false,
-        "sizing": "auto",
-        "sparkline": false
+        "showThresholdMarkers": false
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -473,14 +408,6 @@
       },
       "id": 12,
       "options": {
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": true,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -489,13 +416,8 @@
           "fields": "",
           "values": false
         },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
         "showThresholdLabels": false,
         "showThresholdMarkers": false,
-        "sizing": "auto",
-        "sparkline": false,
         "text": {
           "valueSize": 100
         }
@@ -561,14 +483,6 @@
       },
       "id": 16,
       "options": {
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": true,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -577,13 +491,8 @@
           "fields": "",
           "values": false
         },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
         "showThresholdLabels": false,
-        "showThresholdMarkers": false,
-        "sizing": "auto",
-        "sparkline": false
+        "showThresholdMarkers": false
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -651,14 +560,6 @@
       },
       "id": 17,
       "options": {
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": true,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -667,13 +568,8 @@
           "fields": "",
           "values": false
         },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
         "showThresholdLabels": false,
-        "showThresholdMarkers": false,
-        "sizing": "auto",
-        "sparkline": false
+        "showThresholdMarkers": false
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -730,14 +626,6 @@
       },
       "id": 14,
       "options": {
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": true,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -746,13 +634,8 @@
           "fields": "",
           "values": false
         },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
         "showThresholdLabels": false,
         "showThresholdMarkers": false,
-        "sizing": "auto",
-        "sparkline": false,
         "text": {}
       },
       "pluginVersion": "12.3.0-pre",
@@ -846,14 +729,6 @@
       },
       "id": 1,
       "options": {
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": true,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -862,13 +737,8 @@
           "fields": "",
           "values": false
         },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
         "showThresholdLabels": false,
-        "showThresholdMarkers": false,
-        "sizing": "auto",
-        "sparkline": false
+        "showThresholdMarkers": false
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -929,14 +799,6 @@
       },
       "id": 2,
       "options": {
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": true,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -945,13 +807,8 @@
           "fields": "",
           "values": false
         },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
         "showThresholdLabels": true,
-        "showThresholdMarkers": true,
-        "sizing": "auto",
-        "sparkline": false
+        "showThresholdMarkers": true
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -1025,14 +882,6 @@
       },
       "id": 3,
       "options": {
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": true,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -1041,13 +890,8 @@
           "fields": "",
           "values": false
         },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
         "showThresholdLabels": false,
-        "showThresholdMarkers": false,
-        "sizing": "auto",
-        "sparkline": false
+        "showThresholdMarkers": false
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [
@@ -1108,14 +952,6 @@
       },
       "id": 4,
       "options": {
-        "barWidthFactor": 0.4,
-        "effects": {
-          "barGlow": false,
-          "centerGlow": true,
-          "rounded": false,
-          "spotlight": false
-        },
-        "gradient": "none",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -1124,13 +960,8 @@
           "fields": "",
           "values": false
         },
-        "segmentCount": 1,
-        "segmentSpacing": 0.3,
-        "shape": "gauge",
         "showThresholdLabels": false,
-        "showThresholdMarkers": false,
-        "sizing": "auto",
-        "sparkline": false
+        "showThresholdMarkers": false
       },
       "pluginVersion": "12.3.0-pre",
       "targets": [

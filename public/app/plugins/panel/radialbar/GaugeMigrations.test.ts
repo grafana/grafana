@@ -132,7 +132,8 @@ describe('Gauge Panel Migrations', () => {
               "to": "1000",
               "type": 2,
               "value": "",
-            },
+            
+              },
           ],
           "max": "50",
           "min": "-50",
@@ -184,7 +185,7 @@ describe('Gauge Panel Migrations', () => {
     };
 
     const panel = {} as PanelModel;
-    const newOptions = gaugePanelChangedHandler(panel, 'singlestat', old);
+    const newOptions = gaugePanelChangedHandler(panel, 'singlestat', old, { defaults: {}, overrides: [] });
     expect(panel.fieldConfig.defaults.unit).toBe('ms');
     expect(panel.fieldConfig.defaults.min).toBe(-10);
     expect(panel.fieldConfig.defaults.max).toBe(150);

@@ -19,7 +19,7 @@ export interface GaugePanelEffects {
 
 export const defaultGaugePanelEffects: Partial<GaugePanelEffects> = {
   barGlow: false,
-  centerGlow: true,
+  centerGlow: false,
   rounded: false,
   spotlight: false,
 };
@@ -38,7 +38,7 @@ export interface Options extends common.SingleStatBaseOptions {
 
 export const defaultOptions: Partial<Options> = {
   barWidthFactor: 0.4,
-  effects: {},
+  effects: defaultGaugePanelEffects,
   gradient: 'auto',
   segmentCount: 1,
   segmentSpacing: 0.3,
