@@ -1,3 +1,4 @@
+const child_process = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -84,7 +85,14 @@ module.exports = {
         },
         cleanCache: true,
         onEnd: (coverageResults) => {
-          console.log(`📄 Coverage report saved to file://${path.resolve(outputDir)}/index.html`);
+          const reportURL = `file://${path.resolve(outputDir)}/index.html`;
+          console.log(`📄 Coverage report saved to ${reportURL}`);
+
+          if (process.env.SHOULD_OPEN_COVERAGE_REPORT === 'true') {
+            const start = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+            child_process.exec(start + ' ' + reportURL);
+          }
+
           // TODO: Emit coverage metrics https://github.com/grafana/grafana/issues/111208
         },
       },

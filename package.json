@@ -184,6 +184,7 @@
     "cypress": "14.3.2",
     "cypress-file-upload": "5.0.8",
     "cypress-recurse": "^1.35.3",
+    "enquirer": "^2.4.1",
     "esbuild": "0.25.8",
     "esbuild-loader": "4.3.0",
     "esbuild-plugin-browserslist": "^1.0.0",
