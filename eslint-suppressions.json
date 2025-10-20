@@ -3248,11 +3248,6 @@
       "count": 1
     }
   },
-  "public/app/features/invites/InviteeRow.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/invites/InviteesTable.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
