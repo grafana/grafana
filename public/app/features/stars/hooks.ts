@@ -1,6 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
+import { locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/preferences/v1alpha1';
 import {
@@ -9,9 +10,8 @@ import {
   useUnstarDashboardMutation as useLegacyUnstarDashboardMutation,
 } from 'app/api/legacy/user/api';
 import { contextSrv } from 'app/core/core';
-import { useDispatch, useSelector } from 'app/types/store';
-
-import { updateStarredNavItems } from './utils';
+import { setStarred } from 'app/core/reducers/navBarTree';
+import { dispatch } from 'app/store/store';
 
 type StarItemArgs = {
   id: string;
@@ -87,10 +87,8 @@ export const useStarredItems = (group: string, kind: string) => {
  * Hook to update the nav menu with starred items
  */
 export const useUpdateNavStarredItems = () => {
-  const dispatch = useDispatch();
-  const navIndex = useSelector((state) => state.navIndex);
-  const { starred: starredNavItem } = navIndex;
-
-  return ({ id, title }: { id: string; title: string }, isStarred: boolean) =>
-    updateStarredNavItems(dispatch, starredNavItem, id, title, isStarred);
+  return ({ id, title }: { id: string; title: string }, isStarred: boolean) => {
+    const url = locationUtil.assureBaseUrl(`/d/${id}`);
+    return dispatch(setStarred({ id, title, url, isStarred }));
+  };
 };

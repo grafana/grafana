@@ -10,13 +10,12 @@ import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import { legacyUserAPI } from 'app/api/legacy/user/api';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
+import { setStarred } from 'app/core/reducers/navBarTree';
 import { AnnoKeyFolder, Resource, ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { updateStarredNavItems } from 'app/features/stars/utils';
-import { RootState } from 'app/store/configureStore';
 import { dispatch } from 'app/store/store';
 import { PermissionLevel } from 'app/types/acl';
 import { SaveDashboardResponseDTO, ImportDashboardResponseDTO } from 'app/types/dashboard';
@@ -382,20 +381,16 @@ export const browseDashboardsAPI = createApi({
       onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, getState }) => {
         queryFulfilled.then(() => {
           dispatch(refreshParents(dashboardUIDs));
-
-          // Get the navIndex from the state, under the assumption that this is connected to
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const { navIndex } = getState() as RootState;
-          const { starred: starredNavItem } = navIndex;
           dispatch(legacyUserAPI.util.invalidateTags(['dashboardStars']));
           for (const uid of dashboardUIDs) {
-            updateStarredNavItems(
-              dispatch,
-              starredNavItem,
-              uid,
-              // We don't need to pass the correct title as we're only removing the starred items here
-              '',
-              false
+            dispatch(
+              setStarred({
+                id: uid,
+                // We don't need to send the title or url as we're removing the starred items here
+                title: '',
+                url: '',
+                isStarred: false,
+              })
             );
           }
         });
