@@ -97,7 +97,7 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
       - name: Setup nodejs environment
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
       - name: "Configure git user"

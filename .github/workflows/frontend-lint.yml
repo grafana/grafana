@@ -42,7 +42,7 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'
@@ -63,7 +63,7 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'
@@ -89,7 +89,7 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'
@@ -109,7 +109,7 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'
@@ -133,7 +133,7 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'
@@ -164,7 +164,7 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'
