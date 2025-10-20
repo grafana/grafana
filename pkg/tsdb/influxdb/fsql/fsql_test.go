@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type FSQLTestSuite struct {
@@ -56,9 +57,8 @@ func (suite *FSQLTestSuite) AfterTest(suiteName, testName string) {
 }
 
 func TestIntegrationFSQLTestSuite(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	suite.Run(t, new(FSQLTestSuite))
 }
 
