@@ -57,9 +57,7 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 		return nil, err
 	}
 
-	// hooksService.RunIndexDataHooks()
-
-	index, err := NewIndexProvider(cfg, assetsManifest, license)
+	index, err := NewIndexProvider(cfg, assetsManifest, license, hooksService)
 	if err != nil {
 		return nil, err
 	}
