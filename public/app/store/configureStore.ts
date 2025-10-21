@@ -2,9 +2,9 @@ import { configureStore as reduxConfigureStore, createListenerMiddleware } from 
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { Middleware } from 'redux';
 
-import { alertingAPI as alertingPackageAPI } from '@grafana/alerting/unstable';
+import { notificationsAPIv0alpha1, rulesAPIv0alpha1 } from '@grafana/alerting/unstable';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
-import { rulesAPIv0alpha1 } from 'app/api/clients/rules/v0alpha1';
+import { preferencesAPIv1alpha1 } from 'app/api/clients/preferences/v1alpha1';
 import { shortURLAPIv1alpha1 } from 'app/api/clients/shorturl/v1alpha1';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
@@ -45,8 +45,12 @@ export function configureStore(initialState?: Partial<StoreState>) {
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
         listenerMiddleware.middleware,
+        // older internal alerting API client
         alertingApi.middleware,
-        alertingPackageAPI.middleware,
+        // @grafana/alerting clients for managing (Alertmanager) notification entities and rules
+        notificationsAPIv0alpha1.middleware,
+        rulesAPIv0alpha1.middleware,
+        // other Grafana core APIs
         publicDashboardApi.middleware,
         browseDashboardsAPI.middleware,
         cloudMigrationAPI.middleware,
@@ -57,8 +61,8 @@ export function configureStore(initialState?: Partial<StoreState>) {
         folderAPIv1beta1.middleware,
         advisorAPIv0alpha1.middleware,
         dashboardAPIv0alpha1.middleware,
-        rulesAPIv0alpha1.middleware,
         shortURLAPIv1alpha1.middleware,
+        preferencesAPIv1alpha1.middleware,
         // PLOP_INJECT_MIDDLEWARE
         // Used by the API client generator
         ...extraMiddleware

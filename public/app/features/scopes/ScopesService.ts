@@ -76,8 +76,8 @@ export class ScopesService implements ScopesContextValue {
 
     // Pre-load parent node, to prevent UI flickering
     if (parentNodeId) {
-      this.selectorService.getScopeNode(parentNodeId).catch((error) => {
-        console.error('Failed to pre-load parent node', error);
+      this.selectorService.resolvePathToRoot(parentNodeId, this.selectorService.state.tree!).catch((error) => {
+        console.error('Failed to pre-load parent node path', error);
       });
     }
 
@@ -94,7 +94,9 @@ export class ScopesService implements ScopesContextValue {
         const parentNode = queryParams.get('scope_parent');
         const scopes = queryParams.getAll('scopes');
 
-        if (scopes.length) {
+        // Check if new scopes are different from the old scopes
+        const currentScopes = this.selectorService.state.appliedScopes.map((scope) => scope.scopeId);
+        if (scopes.length && !isEqual(scopes, currentScopes)) {
           // We only update scopes but never delete them. This is to keep the scopes in memory if user navigates to
           // page that does not use scopes (like from dashboard to dashboard list back to dashboard). If user
           // changes the URL directly, it would trigger a reload so scopes would still be reset.
@@ -105,17 +107,21 @@ export class ScopesService implements ScopesContextValue {
 
     // Update the URL based on change in the scopes state
     this.subscriptions.push(
-      selectorService.subscribeToState((state, prev) => {
-        const oldParentNode = prev.appliedScopes[0]?.parentNodeId;
+      selectorService.subscribeToState((state, prevState) => {
+        const oldParentNode = prevState.appliedScopes[0]?.parentNodeId;
         const newParentNode = state.appliedScopes[0]?.parentNodeId;
-        if (oldParentNode !== newParentNode && newParentNode) {
-          this.locationService.partial({ scope_parent: newParentNode }, true);
-        }
 
-        const oldScopeNames = prev.appliedScopes.map((scope) => scope.scopeId);
+        const parentNodeChanged = oldParentNode !== newParentNode;
+
+        const oldScopeNames = prevState.appliedScopes.map((scope) => scope.scopeId);
         const newScopeNames = state.appliedScopes.map((scope) => scope.scopeId);
-        if (!isEqual(oldScopeNames, newScopeNames)) {
-          this.locationService.partial({ scopes: newScopeNames }, true);
+
+        const scopesChanged = !isEqual(oldScopeNames, newScopeNames);
+        if (scopesChanged) {
+          this.locationService.partial(
+            { scopes: newScopeNames, scope_parent: parentNodeChanged ? newParentNode || null : oldParentNode },
+            true
+          );
         }
       })
     );

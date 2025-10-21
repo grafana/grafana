@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Ustaw dolną granicę dla parametru kroku",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Wybierz rozwiązanie",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Mapa intensywności",
           "label-table": "Tabela",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "Błąd analizy: przełączyć na tryb konstruktora?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Legenda",
         "placeholder-select-legend-mode": "Wybierz tryb legendy",
         "tooltip-legend": "Zastąpienie nazwy szeregu lub szablon. Na przykład wzorzec {{templateExample}} zostanie zastąpiony wartością etykiety {{labelName}}."
@@ -482,11 +486,6 @@
         "message-no-metrics-found": "W źródle danych nie znaleziono żadnych metryk.",
         "name": "Imię",
         "type": "Typ"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Analiza zapytania jest niejednoznaczna."
-        }
       }
     }
   }

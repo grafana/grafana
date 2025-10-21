@@ -39,9 +39,10 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
+        package-manager-cache: false # too large for GH's cache limits :-(
     - run: yarn install --immutable --check-cache
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
@@ -68,9 +69,10 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
+        package-manager-cache: false # too large for GH's cache limits :-(
     - run: yarn install --immutable --check-cache
     - name: Install Playwright browsers
       run: npx playwright install --with-deps

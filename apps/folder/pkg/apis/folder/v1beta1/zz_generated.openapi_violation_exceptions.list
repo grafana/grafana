@@ -1,4 +1,5 @@
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1,DescendantCounts,Counts
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1,FolderInfoList,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1,FolderMetadata,Finalizers
+API rule violation: names_match,github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1,FolderClient,client
 API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1,FolderList,ListMeta

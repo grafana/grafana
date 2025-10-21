@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Establecer límite inferior para el parámetro de paso",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Seleccionar resolución",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Mapa de calor",
           "label-table": "Tabla",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "Error de análisis: ¿cambiar al modo Creador?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Leyenda",
         "placeholder-select-legend-mode": "Seleccionar modo de leyenda",
         "tooltip-legend": "Anulación o plantilla del nombre de la serie. Por ejemplo, {{templateExample}} se reemplazará con el valor de etiqueta para {{labelName}}."
@@ -482,11 +486,6 @@
         "message-no-metrics-found": "No se han encontrado métricas en la fuente de datos.",
         "name": "Nombre",
         "type": "Tipo"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "El análisis de la consulta es ambiguo."
-        }
       }
     }
   }

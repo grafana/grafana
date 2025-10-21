@@ -64,13 +64,10 @@ export const publicDashboardApi = createApi({
       },
       async onQueryStarted({ dashboard, payload: { share } }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
-        let message = t('public-dashboard.sharing.success-creation', 'Dashboard is public!');
-        if (config.featureToggles.newDashboardSharingComponent) {
-          message =
-            share === PublicDashboardShareType.PUBLIC
-              ? t('public-dashboard.public-sharing.success-creation', 'Your dashboard is now publicly accessible')
-              : t('public-dashboard.email-sharing.success-creation', 'Your dashboard is ready for external sharing');
-        }
+        const message =
+          share === PublicDashboardShareType.PUBLIC
+            ? t('public-dashboard.public-sharing.success-creation', 'Your dashboard is now publicly accessible')
+            : t('public-dashboard.email-sharing.success-creation', 'Your dashboard is ready for external sharing');
         dispatch(notifyApp(createSuccessNotification(message)));
 
         if (dashboard instanceof DashboardScene) {
@@ -107,9 +104,7 @@ export const publicDashboardApi = createApi({
         dispatch(
           notifyApp(
             createSuccessNotification(
-              config.featureToggles.newDashboardSharingComponent
-                ? t('public-dashboard.configuration.success-update', 'Settings have been successfully updated')
-                : t('public-dashboard.configuration.success-update-old', 'Public dashboard updated!')
+              t('public-dashboard.configuration.success-update', 'Settings have been successfully updated')
             )
           )
         );
@@ -136,12 +131,9 @@ export const publicDashboardApi = createApi({
       },
       async onQueryStarted({ dashboard, payload: { isEnabled } }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
-        let message = t('public-dashboard.configuration.success-update-old', 'Public dashboard updated!');
-        if (config.featureToggles.newDashboardSharingComponent) {
-          message = isEnabled
-            ? t('public-dashboard.configuration.success-resume', 'Your dashboard access has been resumed')
-            : t('public-dashboard.configuration.success-pause', 'Your dashboard access has been paused');
-        }
+        const message = isEnabled
+          ? t('public-dashboard.configuration.success-resume', 'Your dashboard access has been resumed')
+          : t('public-dashboard.configuration.success-pause', 'Your dashboard access has been paused');
         dispatch(notifyApp(createSuccessNotification(message)));
 
         if (dashboard instanceof DashboardScene) {
@@ -176,20 +168,16 @@ export const publicDashboardApi = createApi({
       },
       async onQueryStarted({ dashboard, payload: { share } }, { dispatch, queryFulfilled }) {
         await queryFulfilled;
-        let message = t('public-dashboard.configuration.success-update-old', 'Public dashboard updated!');
-
-        if (config.featureToggles.newDashboardSharingComponent) {
-          message =
-            share === PublicDashboardShareType.PUBLIC
-              ? t(
-                  'public-dashboard.public-sharing.success-share-type-change',
-                  'Dashboard access updated: Anyone with the link can now access'
-                )
-              : t(
-                  'public-dashboard.email-sharing.success-share-type-change',
-                  'Dashboard access updated: Only specific people can now access with the link'
-                );
-        }
+        const message =
+          share === PublicDashboardShareType.PUBLIC
+            ? t(
+                'public-dashboard.public-sharing.success-share-type-change',
+                'Dashboard access updated: Anyone with the link can now access'
+              )
+            : t(
+                'public-dashboard.email-sharing.success-share-type-change',
+                'Dashboard access updated: Only specific people can now access with the link'
+              );
         dispatch(notifyApp(createSuccessNotification(message)));
       },
       invalidatesTags: (result, error, { payload }) => [
@@ -250,9 +238,7 @@ export const publicDashboardApi = createApi({
         dispatch(
           notifyApp(
             createSuccessNotification(
-              config.featureToggles.newDashboardSharingComponent
-                ? t('public-dashboard.share.success-delete', 'Your dashboard is no longer shareable')
-                : t('public-dashboard.share.success-delete-old', 'Public dashboard deleted!')
+              t('public-dashboard.share.success-delete', 'Your dashboard is no longer shareable')
             )
           )
         );

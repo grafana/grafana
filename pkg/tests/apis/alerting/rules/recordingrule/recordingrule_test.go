@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	prom_model "github.com/prometheus/common/model"
 )
 
@@ -25,9 +26,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationResourceIdentifier(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
@@ -123,9 +122,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 // TestIntegrationAccessControl tests basic access control functionality
 // Access control is primarily handled in the service layer, so this test focuses on basic CRUD operations
 func TestIntegrationAccessControl(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
@@ -207,9 +204,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 }
 
 func TestIntegrationCRUD(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
@@ -465,9 +460,7 @@ func TestIntegrationCRUD(t *testing.T) {
 }
 
 func TestIntegrationPatch(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
@@ -544,9 +537,7 @@ func TestIntegrationPatch(t *testing.T) {
 }
 
 func TestIntegrationBasicAPI(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)

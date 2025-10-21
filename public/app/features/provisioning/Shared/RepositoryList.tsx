@@ -41,12 +41,18 @@ export function RepositoryList({ items }: Props) {
           <Alert title={''} severity="info">
             <Trans
               i18nKey="provisioning.folder-repository-list.partial-managed"
-              count={resourceCount}
-              values={{ managedCount }}
+              values={{ managedCount, resourceCount }}
             >
-              {{ managedCount }}/{{ count: resourceCount }} resources managed. {{ unmanagedCount }} resources
-              aren&apos;t managed as code yet.
+              {{ managedCount }}/{{ resourceCount }} resources managed by Git sync.
             </Trans>
+            {unmanagedCount > 0 && (
+              <>
+                {' '}
+                <Trans i18nKey="provisioning.folder-repository-list.unmanaged-resources" count={unmanagedCount}>
+                  {{ count: unmanagedCount }} resources aren&apos;t managed by Git sync.
+                </Trans>
+              </>
+            )}
           </Alert>
         </Stack>
       );

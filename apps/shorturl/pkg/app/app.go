@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	shorturlv1alpha1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
@@ -27,14 +28,7 @@ var (
 	ErrShortURLInvalidPath  = fmt.Errorf("invalid short URL path")
 )
 
-type ShortURLConfig struct{}
-
 func New(cfg app.Config) (app.App, error) {
-	shortURLConfig, ok := cfg.SpecificConfig.(*ShortURLConfig)
-	if !ok || shortURLConfig == nil {
-		return nil, fmt.Errorf("invalid or missing ShortURLConfig")
-	}
-
 	cfg.KubeConfig.APIPath = "apis"
 	client, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).
 		ClientFor(shorturlv1alpha1.ShortURLKind())
@@ -46,8 +40,10 @@ func New(cfg app.Config) (app.App, error) {
 		Name:       "shorturl",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
-				klog.ErrorS(err, "Informer processing error")
+			InformerOptions: operator.InformerOptions{
+				ErrorHandler: func(ctx context.Context, err error) {
+					klog.ErrorS(err, "Informer processing error")
+				},
 			},
 		},
 		ManagedKinds: []simple.AppManagedKind{

@@ -58,7 +58,12 @@ func V35(_ context.Context, dashboard map[string]interface{}) error {
 // applyXAxisVisibilityOverride adds a field override to ensure x-axis visibility
 // when the panel's default axis placement is set to hidden.
 func applyXAxisVisibilityOverride(panel map[string]interface{}) {
-	fieldConfig, _ := panel["fieldConfig"].(map[string]interface{})
+	fieldConfig, ok := panel["fieldConfig"].(map[string]interface{})
+	if !ok {
+		// Only process panels that already have fieldConfig (matches frontend behavior)
+		return
+	}
+
 	defaults, _ := fieldConfig["defaults"].(map[string]interface{})
 	custom, _ := defaults["custom"].(map[string]interface{})
 

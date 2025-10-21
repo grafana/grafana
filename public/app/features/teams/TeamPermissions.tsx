@@ -20,7 +20,6 @@ const TeamPermissions = (props: TeamPermissionsProps) => {
 
   return (
     <Permissions
-      title=""
       addPermissionTitle="Add member"
       buttonLabel="Add member"
       emptyLabel="There are no members in this team or you do not have the permissions to list the current members."

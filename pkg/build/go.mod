@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/build
 
-go 1.24.6
+go 1.25.3
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
@@ -13,11 +13,11 @@ require (
 	go.opentelemetry.io/otel v1.38.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.38.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.44.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.45.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/sync v0.17.0 // @grafana/alerting-backend
-	golang.org/x/text v0.29.0 // indirect; @grafana/grafana-backend-group
-	google.golang.org/grpc v1.75.0 // indirect; @grafana/plugins-platform-backend
-	google.golang.org/protobuf v1.36.8 // indirect; @grafana/plugins-platform-backend
+	golang.org/x/text v0.30.0 // indirect; @grafana/grafana-backend-group
+	google.golang.org/grpc v1.76.0 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/protobuf v1.36.10 // indirect; @grafana/plugins-platform-backend
 )
 
 require (
@@ -38,7 +38,7 @@ require (
 	dagger.io/dagger v0.18.8
 	github.com/Masterminds/semver v1.5.0
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
-	github.com/urfave/cli/v3 v3.3.3
+	github.com/urfave/cli/v3 v3.4.1
 )
 
 require (

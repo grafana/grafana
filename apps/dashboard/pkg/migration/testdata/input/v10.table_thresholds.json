@@ -1,0 +1,36 @@
+{
+  "title": "V10 Table Thresholds Test",
+  "schemaVersion": 9,
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "styles": [
+        {
+          "thresholds": ["10", "20", "30"]
+        },
+        {
+          "thresholds": ["100", "200", "300"]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "styles": [
+        {
+          "thresholds": ["50", "75"]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "graph",
+      "styles": [
+        {
+          "thresholds": ["5", "10", "15"]
+        }
+      ]
+    }
+  ]
+}

@@ -11,7 +11,8 @@ import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboard
 import { dispatch } from 'app/store/store';
 
 import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1alpha1/shorturl_object_gen';
-import { BASE_URL as k8sShortURLBaseAPI } from '../../api/clients/shorturl/v1alpha1/baseAPI';
+import { generatedAPI } from '../../api/clients/shorturl/v1alpha1/endpoints.gen';
+import { extractErrorMessage } from '../../api/utils';
 import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
 
 import { copyStringToClipboard } from './explore';
@@ -32,30 +33,51 @@ function getRelativeURLPath(url: string) {
   return path.startsWith('/') ? path.substring(1, path.length) : path;
 }
 
-export const createShortLink = memoizeOne(async function (path: string) {
+// Memoized legacy API call - preserves original behavior
+const createShortLinkLegacy = memoizeOne(async (path: string): Promise<string> => {
+  const shortLink = await getBackendSrv().post(`/api/short-urls`, {
+    path: getRelativeURLPath(path),
+  });
+  return shortLink.url;
+});
+
+export const createShortLink = async function (path: string) {
   try {
     if (config.featureToggles.useKubernetesShortURLsAPI) {
-      // TODO: this is not ideal, we should use the RTK API but we can't call a hook from here and
-      // this util function is being called from several places, will require a bigger refactor including some code that
-      // is deprecated.
-      const k8sShortUrl: ShortURL = await getBackendSrv().post(`${k8sShortURLBaseAPI}/shorturls`, {
-        spec: {
-          path: getRelativeURLPath(path),
-        },
-      });
-      return buildShortUrl(k8sShortUrl);
+      // Use RTK API - it handles caching/failures/retries automatically
+      const result = await dispatch(
+        generatedAPI.endpoints.createShortUrl.initiate({
+          shortUrl: {
+            apiVersion: 'shorturl.grafana.app/v1alpha1',
+            kind: 'ShortURL',
+            metadata: {},
+            spec: {
+              path: getRelativeURLPath(path),
+            },
+          },
+        })
+      );
+
+      if ('data' in result && result.data) {
+        return buildShortUrl(result.data);
+      }
+
+      if ('error' in result) {
+        const errorMessage = extractErrorMessage(result.error);
+        throw new Error(errorMessage || 'Failed to create short URL');
+      }
+
+      throw new Error('Failed to create short URL');
     } else {
-      // Old short URL API
-      const shortLink = await getBackendSrv().post(`/api/short-urls`, {
-        path: getRelativeURLPath(path),
-      });
-      return shortLink.url;
+      // Old API - use memoized function (preserves original behavior)
+      return await createShortLinkLegacy(path);
     }
   } catch (err) {
     console.error('Error when creating shortened link: ', err);
     dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+    throw err; // Re-throw so callers know it failed
   }
-});
+};
 
 /**
  * Creates a ClipboardItem for the shortened link. This is used due to clipboard issues in Safari after making async calls.
@@ -70,17 +92,18 @@ const createShortLinkClipboardItem = (path: string) => {
 };
 
 export const createAndCopyShortLink = async (path: string) => {
-  if (typeof ClipboardItem !== 'undefined' && navigator.clipboard.write) {
-    navigator.clipboard.write([createShortLinkClipboardItem(path)]);
-    dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
-  } else {
-    const shortLink = await createShortLink(path);
-    if (shortLink) {
-      copyStringToClipboard(shortLink);
+  try {
+    if (typeof ClipboardItem !== 'undefined' && navigator.clipboard.write) {
+      await navigator.clipboard.write([createShortLinkClipboardItem(path)]);
       dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
     } else {
-      dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+      const shortLink = await createShortLink(path);
+      copyStringToClipboard(shortLink);
+      dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
     }
+  } catch (error) {
+    // createShortLink already handles error notifications, just log
+    console.error('Error in createAndCopyShortLink:', error);
   }
 };
 
