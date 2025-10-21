@@ -54,6 +54,8 @@ func ProvideAuthZClient(
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
 ) (authlib.AccessClient, error) {
+	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
 		return nil, err
@@ -63,8 +65,7 @@ func ProvideAuthZClient(
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagZanzana) &&
-		features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
+	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
 		return zanzanaClient, nil
 	}
 
@@ -78,7 +79,7 @@ func ProvideAuthZClient(
 	switch authCfg.mode {
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
-		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		if zanzanaEnabled {
 			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
 		return rbacClient, err
@@ -125,7 +126,7 @@ func ProvideAuthZClient(
 			authzlib.WithTracerClientOption(tracer),
 		)
 
-		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		if zanzanaEnabled {
 			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
 
