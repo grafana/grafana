@@ -1008,8 +1008,8 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 	k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 		return ( // gofmt comment helper
-		req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindPlugin) &&
-			req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "testing")
+			req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindPlugin) &&
+				req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "testing")
 	})).Return(&resourcepb.ResourceSearchResponse{
 		Results: &resourcepb.ResourceTable{
 			Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -1938,6 +1938,33 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		assert.Equal(t, "dash-db", query.Type) // query type should be added
 	})
 
+	t.Run("search will try and match all included tags", func(t *testing.T) {
+		ctx := context.Background()
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		query := &dashboards.FindPersistedDashboardsQuery{
+			OrgId: 1,
+			Sort:  model.SortOption{Name: "viewed-recently-desc"},
+			Tags:  []string{"tag1", "tag2"},
+		}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			// make sure we use AND logic with multiple tags
+			for _, field := range req.Options.Fields {
+				if field.Key == "tags" {
+					return field.Operator == "="
+				}
+			}
+			return false
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{},
+				Rows:    []*resourcepb.ResourceTableRow{},
+			}}, nil)
+		_, err := service.searchDashboardsThroughK8s(ctx, query)
+		require.NoError(t, err)
+	})
+
 	t.Run("search will include sort field in hit fields", func(t *testing.T) {
 		ctx := context.Background()
 		k8sCliMock := new(client.MockK8sHandler)
@@ -2057,7 +2084,7 @@ func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
 				Updated:    provisioningTimestamp,
 			},
 		},
-	}, res) // only should return the one provisioned dashboard
+	}, res)                                // only should return the one provisioned dashboard
 	assert.Equal(t, "dash-db", query.Type) // query type should be added as dashboards only
 }
 
