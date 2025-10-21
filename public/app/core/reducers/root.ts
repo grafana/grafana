@@ -5,6 +5,7 @@ import { notificationsAPIv0alpha1, rulesAPIv0alpha1 } from '@grafana/alerting/un
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { preferencesAPIv1alpha1 } from 'app/api/clients/preferences/v1alpha1';
 import { shortURLAPIv1alpha1 } from 'app/api/clients/shorturl/v1alpha1';
+import { legacyUserAPI } from 'app/api/legacy/user/api';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
@@ -64,6 +65,7 @@ const rootReducers = {
   ...authConfigReducers,
   plugins: pluginsReducer,
   [alertingApi.reducerPath]: alertingApi.reducer,
+  [legacyUserAPI.reducerPath]: legacyUserAPI.reducer,
   [notificationsAPIv0alpha1.reducerPath]: notificationsAPIv0alpha1.reducer,
   [rulesAPIv0alpha1.reducerPath]: rulesAPIv0alpha1.reducer,
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
