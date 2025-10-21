@@ -1062,9 +1062,9 @@ const (
 	// Enables team folders functionality
 	FlagTeamFolders = "teamFolders"
 
-	// FlagNewHelpMenu
-	// Enables the new help menu app
-	FlagNewHelpMenu = "newHelpMenu"
+	// FlagInteractiveLearning
+	// Enables the interactive learning app
+	FlagInteractiveLearning = "interactiveLearning"
 
 	// FlagAlertingTriage
 	// Enables the alerting triage feature

@@ -2011,6 +2011,18 @@
     },
     {
       "metadata": {
+        "name": "interactiveLearning",
+        "resourceVersion": "1761063016739",
+        "creationTimestamp": "2025-10-21T16:10:16Z"
+      },
+      "spec": {
+        "description": "Enables the interactive learning app",
+        "stage": "preview",
+        "codeowner": "@grafana/pathfinder"
+      }
+    },
+    {
+      "metadata": {
         "name": "investigationsBackend",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-12-18T08:31:03Z"
@@ -2707,18 +2719,6 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "newHelpMenu",
-        "resourceVersion": "1761063016739",
-        "creationTimestamp": "2025-10-21T16:10:16Z"
-      },
-      "spec": {
-        "description": "Enables the new help menu app",
-        "stage": "preview",
-        "codeowner": "@grafana/pathfinder"
       }
     },
     {

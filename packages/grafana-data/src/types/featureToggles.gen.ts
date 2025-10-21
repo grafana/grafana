@@ -1178,9 +1178,9 @@ export interface FeatureToggles {
   */
   teamFolders?: boolean;
   /**
-  * Enables the new help menu app
+  * Enables the interactive learning app
   */
-  newHelpMenu?: boolean;
+  interactiveLearning?: boolean;
   /**
   * Enables the alerting triage feature
   * @default false

@@ -109,7 +109,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorLogsBuilderEditor` | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `localeFormatPreference`        | Specifies the locale so the correct format for numbers and dates can be shown                          |
 | `logsPanelControls`             | Enables a control component for the logs panel in Explore                                              |
-| `newHelpMenu`                   | Enables the new help menu app                                                                          |
+| `interactiveLearning`           | Enables the interactive learning app                                                                   |
 | `azureResourcePickerUpdates`    | Enables the updated Azure Monitor resource picker                                                      |
 | `preventPanelChromeOverflow`    | Restrict PanelChrome contents with overflow: hidden;                                                   |
 

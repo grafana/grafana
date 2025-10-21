@@ -260,12 +260,12 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 		treeRoot.AddSection(helpNode)
 
 		ctx := c.Req.Context()
-		// The help menu plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
+		// The interactive learning plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
 		// Support both until that migration is complete.
-		_, oldHelpMenuPluginInstalled := s.pluginStore.Plugin(ctx, "grafana-grafanadocsplugin-app")
-		_, newHelpMenuPluginInstalled := s.pluginStore.Plugin(ctx, "grafana-pathfinder-app")
-		if oldHelpMenuPluginInstalled || newHelpMenuPluginInstalled {
-			// Add a custom property to indicate this should open the help menu plugin if available.
+		_, oldInteractiveLearningPluginInstalled := s.pluginStore.Plugin(ctx, "grafana-grafanadocsplugin-app")
+		_, newInteractiveLearningPluginInstalled := s.pluginStore.Plugin(ctx, "grafana-pathfinder-app")
+		if oldInteractiveLearningPluginInstalled || newInteractiveLearningPluginInstalled {
+			// Add a custom property to indicate this should open the interactive learning plugin if available.
 			helpNode.HideFromTabs = true
 		}
 

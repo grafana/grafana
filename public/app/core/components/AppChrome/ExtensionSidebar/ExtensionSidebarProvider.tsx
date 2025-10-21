@@ -268,10 +268,10 @@ export function getComponentMetaFromComponentId(
   }
 }
 
-// The help menu plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
+// The interactive learning plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
 // Support both until that migration is complete.
 // Prioritize the new plugin ID (grafana-pathfinder-app).
-export function getHelpMenuPluginId(availableComponents: ExtensionPointPluginMeta): string | undefined {
+export function getInteractiveLearningPluginId(availableComponents: ExtensionPointPluginMeta): string | undefined {
   if (availableComponents.has('grafana-pathfinder-app')) {
     return 'grafana-pathfinder-app';
   }

@@ -10,7 +10,7 @@ import { OpenExtensionSidebarEvent } from 'app/types/events';
 import {
   useExtensionSidebarContext,
   getComponentIdFromComponentMeta,
-  getHelpMenuPluginId,
+  getInteractiveLearningPluginId,
 } from '../ExtensionSidebar/ExtensionSidebarProvider';
 
 import { TopNavBarMenu } from './TopNavBarMenu';
@@ -29,9 +29,9 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
     return null;
   }
 
-  const helpMenuPluginId = getHelpMenuPluginId(availableComponents);
+  const interactiveLearningPluginId = getInteractiveLearningPluginId(availableComponents);
 
-  if (isSmallScreen || !enrichedHelpNode.hideFromTabs || helpMenuPluginId === undefined) {
+  if (isSmallScreen || !enrichedHelpNode.hideFromTabs || interactiveLearningPluginId === undefined) {
     return (
       <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
         <ToolbarButton iconOnly icon="question-circle" aria-label={t('navigation.help.aria-label', 'Help')} />
@@ -39,7 +39,7 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
     );
   }
 
-  const componentId = getComponentIdFromComponentMeta(helpMenuPluginId, 'Help');
+  const componentId = getComponentIdFromComponentMeta(interactiveLearningPluginId, 'Interactive learning');
   const isOpen = dockedComponentId === componentId;
 
   return (
@@ -55,8 +55,8 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
           const appEvents = getAppEvents();
           appEvents.publish(
             new OpenExtensionSidebarEvent({
-              pluginId: helpMenuPluginId,
-              componentTitle: 'Help',
+              pluginId: interactiveLearningPluginId,
+              componentTitle: 'Interactive learning',
             })
           );
         }

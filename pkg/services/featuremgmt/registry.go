@@ -2047,8 +2047,8 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "newHelpMenu",
-			Description: "Enables the new help menu app",
+			Name:        "interactiveLearning",
+			Description: "Enables the interactive learning app",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaPathfinderSquad,
 		},
