@@ -1,3 +1,23 @@
+<!-- 12.2.1 START -->
+
+# 12.2.1 (2025-10-21)
+
+### Features and enhancements
+
+- **Go:** Update to 1.25.2 + golangci-lint v2.5.0 + golang.org/x/net v0.45.0 [#112156](https://github.com/grafana/grafana/pull/112156), [@macabu](https://github.com/macabu)
+- **Go:** Update to 1.25.3 [#112361](https://github.com/grafana/grafana/pull/112361), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Auth:** Fix render user OAuth passthrough [#112092](https://github.com/grafana/grafana/pull/112092), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Dashboards:** Fix missing Ctrl+O keyboard shortcut for crosshair toggle [#111402](https://github.com/grafana/grafana/pull/111402), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Fix:** Fix redirection after login when Grafana is served from subpath [#111069](https://github.com/grafana/grafana/pull/111069), [@mgyongyosi](https://github.com/mgyongyosi)
+- **FlameGraph:** Ensure total is only counted once for recursive function calls [#111606](https://github.com/grafana/grafana/pull/111606), [@simonswine](https://github.com/simonswine)
+- **LDAP Authentication:** Fix URL to propagate username context as parameter [#111849](https://github.com/grafana/grafana/pull/111849), [@bradleypettit](https://github.com/bradleypettit)
+- **Plugins:** Dependencies do not inherit parent URL for preinstall [#111769](https://github.com/grafana/grafana/pull/111769), [@wbrowne](https://github.com/wbrowne)
+- **Table:** Backport the Safari 26 fixes to 12.2.1 [#111906](https://github.com/grafana/grafana/pull/111906), [@fastfrwrd](https://github.com/fastfrwrd)
+
+<!-- 12.2.1 END -->
 <!-- 12.1.3 START -->
 
 # 12.1.3 (2025-10-21)
