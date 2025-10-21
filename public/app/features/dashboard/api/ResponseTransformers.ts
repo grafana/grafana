@@ -474,18 +474,19 @@ function getDefaultDatasourceType() {
 }
 
 export function getDefaultDatasource(): DataSourceRef {
-  const configDefaultDS = getDefaultDataSourceRef() ?? { type: 'grafana', uid: '-- Grafana --' };
+  const defaultDataSourceRef = getDefaultDataSourceRef() ?? { type: 'grafana', uid: '-- Grafana --' };
 
-  if (configDefaultDS.uid && !configDefaultDS.apiVersion) {
+  if (defaultDataSourceRef.uid && !defaultDataSourceRef.apiVersion) {
     // get api version from config
-    const dsInstance = config.datasources[configDefaultDS.uid];
-    configDefaultDS.apiVersion = dsInstance.apiVersion ?? undefined;
+    const defaultDatasource = config.defaultDatasource;
+    const dsInstance = config.datasources[defaultDatasource];
+    defaultDataSourceRef.apiVersion = dsInstance.apiVersion ?? undefined;
   }
 
   return {
-    apiVersion: configDefaultDS.apiVersion,
-    type: configDefaultDS.type,
-    uid: configDefaultDS.uid,
+    apiVersion: defaultDataSourceRef.apiVersion,
+    type: defaultDataSourceRef.type,
+    uid: defaultDataSourceRef.uid,
   };
 }
 

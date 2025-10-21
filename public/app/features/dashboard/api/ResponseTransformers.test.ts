@@ -74,7 +74,7 @@ describe('ResponseTransformers', () => {
     it('should return prometheus as default', () => {
       expect(getDefaultDatasource()).toEqual({
         apiVersion: 'v2',
-        uid: 'PromTest',
+        uid: 'xyz-abc',
         type: 'prometheus',
       });
     });
@@ -83,7 +83,7 @@ describe('ResponseTransformers', () => {
   describe('getDefaultDataSourceRef', () => {
     it('should return prometheus as default', () => {
       expect(getDefaultDataSourceRef()).toEqual({
-        uid: 'PromTest',
+        uid: 'xyz-abc',
         type: 'prometheus',
       });
     });
