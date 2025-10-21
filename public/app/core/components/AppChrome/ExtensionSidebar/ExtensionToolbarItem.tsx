@@ -17,26 +17,26 @@ type Props = {
 };
 
 const compactAllowedComponents = ['grafana-assistant-app'];
-const pathfinderPluginIds = ['grafana-pathfinder-app', 'grafana-grafanadocsplugin-app'];
+const helpMenuPluginIds = ['grafana-pathfinder-app', 'grafana-grafanadocsplugin-app'];
 
 export function ExtensionToolbarItem({ compact }: Props) {
   const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
 
-  // Don't render the toolbar if the only available plugins are Grafana Pathfinder.
-  // It's opened by the help menu.
-  const nonPathfinderPlugins = Array.from(availableComponents.keys()).filter(
-    (pluginId) => !pathfinderPluginIds.includes(pluginId)
+  // Don't render the toolbar if the only available plugins are help menu plugins.
+  // They're opened by the help menu.
+  const nonHelpMenuPlugins = Array.from(availableComponents.keys()).filter(
+    (pluginId) => !helpMenuPluginIds.includes(pluginId)
   );
-  if (nonPathfinderPlugins.length === 0) {
+  if (nonHelpMenuPlugins.length === 0) {
     return null;
   }
 
   const dockedMeta = dockedComponentId ? getComponentMetaFromComponentId(dockedComponentId) : null;
 
   const renderPluginButton = (pluginId: string, components: ComponentWithPluginId[]) => {
-    // Don't render the Grafana Pathfinder button.
-    // It's opened by the help menu button.
-    if (pathfinderPluginIds.includes(pluginId)) {
+    // Don't render any button for the help menu plugins.
+    // They're opened by the help menu button.
+    if (helpMenuPluginIds.includes(pluginId)) {
       return null;
     }
 

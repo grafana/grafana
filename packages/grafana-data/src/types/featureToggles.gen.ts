@@ -1178,9 +1178,9 @@ export interface FeatureToggles {
   */
   teamFolders?: boolean;
   /**
-  * Enables Pathfinder app
+  * Enables the new help menu app
   */
-  grafanaPathfinder?: boolean;
+  newHelpMenu?: boolean;
   /**
   * Enables the alerting triage feature
   * @default false
