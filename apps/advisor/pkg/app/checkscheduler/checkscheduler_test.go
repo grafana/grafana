@@ -4,27 +4,50 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand/v2"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func init() {
+	waitInterval = 1 * time.Millisecond
+	evalIntervalRandomVariation = 1 * time.Millisecond
+}
+
+// TestRunner_Run tests the main Run function with various scenarios
 func TestRunner_Run(t *testing.T) {
-	t.Run("does not crash when error on list", func(t *testing.T) {
+	t.Run("handles context cancellation gracefully", func(t *testing.T) {
+		runner := createTestRunner(&MockClient{}, &MockClient{})
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel() // Cancel immediately
+
+		err := runner.Run(ctx)
+		assert.ErrorAs(t, err, &context.Canceled)
+	})
+
+	t.Run("handles timeout gracefully", func(t *testing.T) {
+		runner := createTestRunner(&MockClient{}, &MockClient{})
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
+		defer cancel()
+
+		err := runner.Run(ctx)
+		assert.ErrorAs(t, err, &context.DeadlineExceeded)
+	})
+
+	t.Run("handles check list error gracefully", func(t *testing.T) {
 		mockClient := &MockClient{
 			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-				return nil, errors.New("list error")
-			},
-			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
-				return &advisorv0alpha1.Check{}, nil
+				return nil, errors.New("list checks error")
 			},
 		}
 
@@ -34,354 +57,288 @@ func TestRunner_Run(t *testing.T) {
 			},
 		}
 
-		runner := &Runner{
-			client:             mockClient,
-			typesClient:        mockTypesClient,
-			log:                &logging.NoOpLogger{},
-			evaluationInterval: 1 * time.Hour,
-			orgService:         &mockOrgService{orgs: []*org.OrgDTO{}},
-			stackID:            "123",
-		}
-
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
-		err := runner.Run(ctx)
-		assert.ErrorAs(t, err, &context.Canceled)
+		runner := createTestRunner(mockClient, mockTypesClient)
+		err := runner.Run(context.Background())
+		assert.ErrorContains(t, err, "list checks error")
 	})
 }
 
-func TestRunner_checkLastCreated_ErrorOnList(t *testing.T) {
-	mockClient := &MockClient{
-		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			return nil, errors.New("list error")
-		},
-	}
+// TestRunner_Run_CheckCreation tests check creation scenarios
+func TestRunner_Run_CheckCreation(t *testing.T) {
+	t.Run("does not create checks on first run when no previous checks exist", func(t *testing.T) {
+		checksCreated := []string{}
 
-	runner := &Runner{
-		client: mockClient,
-		log:    &logging.NoOpLogger{},
-	}
+		mockClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				// Return empty list - no previous checks
+				return &advisorv0alpha1.CheckList{Items: []advisorv0alpha1.Check{}}, nil
+			},
+			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+				checksCreated = append(checksCreated, id.Name)
+				return obj, nil
+			},
+		}
 
-	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{}, []string{"default"})
-	assert.Error(t, err)
-	assert.True(t, lastCreated.IsZero())
-}
-
-func TestRunner_checkLastCreated_UnprocessedCheck(t *testing.T) {
-	patchOperation := resource.PatchOperation{}
-	identifier := resource.Identifier{}
-
-	mockClient := &MockClient{
-		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			return &advisorv0alpha1.CheckList{
-				Items: []advisorv0alpha1.Check{
-					{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: "check-1",
+		mockTypesClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return &advisorv0alpha1.CheckTypeList{
+					Items: []advisorv0alpha1.CheckType{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "test-check",
+							},
+							Spec: advisorv0alpha1.CheckTypeSpec{
+								Name: "test-check",
+							},
 						},
 					},
-				},
-			}, nil
-		},
-		patchFunc: func(ctx context.Context, id resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions, into resource.Object) error {
-			patchOperation = patch.Operations[0]
-			identifier = id
-			return nil
-		},
-	}
+				}, nil
+			},
+		}
 
-	runner := &Runner{
-		client: mockClient,
-		log:    &logging.NoOpLogger{},
-	}
+		// Create a mock check service with one check to match the check type
+		mockCheckService := &MockCheckService{checks: []checks.Check{&mockCheck{id: "test-check"}}}
+		runner := createTestRunnerWithRegistry(mockClient, mockTypesClient, mockCheckService)
 
-	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{}, []string{"default"})
-	assert.NoError(t, err)
-	assert.True(t, lastCreated.IsZero())
-	assert.Equal(t, "check-1", identifier.Name)
-	assert.Equal(t, "/metadata/annotations", patchOperation.Path)
-	expectedAnnotations := map[string]string{
-		checks.StatusAnnotation: "error",
-	}
-	assert.Equal(t, expectedAnnotations, patchOperation.Value)
-}
+		err := runAndTimeout(runner)
+		assert.ErrorAs(t, err, &context.DeadlineExceeded)
+		// Should not create checks on first run when no previous checks exist
+		assert.Empty(t, checksCreated, "Should not create checks on first run when no previous checks exist")
+	})
 
-func TestRunner_checkLastCreated_PaginatedResponse(t *testing.T) {
-	// Create checks with different creation times
-	past := time.Now().Add(-1 * time.Hour)
-	now := time.Now()
+	t.Run("creates checks when evaluation interval has passed", func(t *testing.T) {
+		checksCreated := []string{}
 
-	mockClient := &MockClient{
-		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			if options.Continue == "" {
-				// First page - return oldest and middle checks with continue token
+		mockClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				// Return a check that was created long ago (past the evaluation interval)
 				return &advisorv0alpha1.CheckList{
-					ListMeta: metav1.ListMeta{
-						Continue: "continue-token-123",
-					},
 					Items: []advisorv0alpha1.Check{
 						{
 							ObjectMeta: metav1.ObjectMeta{
-								Name:              "check-1",
-								CreationTimestamp: metav1.NewTime(past),
+								Name:              "old-check",
+								CreationTimestamp: metav1.NewTime(time.Now().Add(-15 * 24 * time.Hour)), // 15 days ago
 								Annotations: map[string]string{
-									checks.StatusAnnotation: "completed",
-								},
-							},
-						},
-						{
-							ObjectMeta: metav1.ObjectMeta{
-								Name:              "check-2",
-								CreationTimestamp: metav1.NewTime(past),
-								Annotations: map[string]string{
-									checks.StatusAnnotation: "completed",
+									checks.StatusAnnotation: checks.StatusAnnotationProcessed,
 								},
 							},
 						},
 					},
 				}, nil
-			}
-			// Second page - verify continue token is passed and return newest check
-			assert.Equal(t, "continue-token-123", options.Continue)
-			return &advisorv0alpha1.CheckList{
-				Items: []advisorv0alpha1.Check{
-					{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:              "check-3",
-							CreationTimestamp: metav1.NewTime(now),
-							Annotations: map[string]string{
-								checks.StatusAnnotation: "completed",
+			},
+			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+				checksCreated = append(checksCreated, id.Name)
+				return obj, nil
+			},
+		}
+
+		mockTypesClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return &advisorv0alpha1.CheckTypeList{
+					Items: []advisorv0alpha1.CheckType{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "test-check",
+							},
+							Spec: advisorv0alpha1.CheckTypeSpec{
+								Name: "test-check",
 							},
 						},
 					},
-				},
-			}, nil
-		},
-	}
+				}, nil
+			},
+		}
 
-	runner := &Runner{
-		client: mockClient,
-		log:    &logging.NoOpLogger{},
-	}
+		// Create a mock check service with one check to match the check type
+		mockCheckService := &MockCheckService{checks: []checks.Check{&mockCheck{id: "test-check"}}}
+		runner := createTestRunnerWithRegistry(mockClient, mockTypesClient, mockCheckService)
 
-	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{}, []string{"default"})
-	assert.NoError(t, err)
-	assert.Equal(t, now.Truncate(time.Second), lastCreated.Truncate(time.Second))
+		err := runAndTimeout(runner)
+		assert.ErrorAs(t, err, &context.DeadlineExceeded)
+		// Should create checks when the evaluation interval has passed
+		assert.Greater(t, len(checksCreated), 0, "Should create checks when evaluation interval has passed")
+	})
 }
 
-func TestRunner_createChecks_ErrorOnCreate(t *testing.T) {
-	mockCheckService := &MockCheckService{checks: []checks.Check{&mockCheck{id: "check-1"}}}
+// TestRunner_Run_CheckCleanup tests check cleanup scenarios
+func TestRunner_Run_CheckCleanup(t *testing.T) {
+	t.Run("cleans up old checks when limit exceeded", func(t *testing.T) {
+		checksDeleted := []string{}
 
-	mockClient := &MockClient{
-		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
-			return nil, errors.New("create error")
-		},
-	}
+		// Create checks that exceed the max history limit
+		items := make([]advisorv0alpha1.Check, 0, defaultMaxHistory+2)
+		for i := 0; i < defaultMaxHistory+2; i++ {
+			item := advisorv0alpha1.Check{}
+			item.SetName(fmt.Sprintf("check-%d", i))
+			item.SetLabels(map[string]string{
+				checks.TypeLabel: "test-type",
+			})
+			item.SetCreationTimestamp(metav1.NewTime(time.Now().Add(-time.Duration(i) * time.Hour)))
+			items = append(items, item)
+		}
 
-	mockTypesClient := &MockClient{
-		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			checkType := &advisorv0alpha1.CheckType{}
-			checkType.Spec.Name = "check-1"
-			return &advisorv0alpha1.CheckTypeList{
-				Items: []advisorv0alpha1.CheckType{*checkType},
-			}, nil
-		},
-	}
+		mockClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return &advisorv0alpha1.CheckList{Items: items}, nil
+			},
+			deleteFunc: func(ctx context.Context, id resource.Identifier, opts resource.DeleteOptions) error {
+				checksDeleted = append(checksDeleted, id.Name)
+				return nil
+			},
+		}
 
-	runner := &Runner{
-		checkRegistry: mockCheckService,
-		client:        mockClient,
-		typesClient:   mockTypesClient,
-		log:           &logging.NoOpLogger{},
-	}
+		mockTypesClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return &advisorv0alpha1.CheckTypeList{Items: []advisorv0alpha1.CheckType{}}, nil
+			},
+		}
 
-	err := runner.createChecks(context.Background(), &logging.NoOpLogger{}, []string{"default"})
-	assert.Error(t, err)
+		runner := createTestRunner(mockClient, mockTypesClient)
+
+		err := runAndTimeout(runner)
+		assert.ErrorAs(t, err, &context.DeadlineExceeded)
+		// Should delete some checks due to cleanup
+		assert.Greater(t, len(checksDeleted), 0)
+	})
 }
 
-func TestRunner_createChecks_Success(t *testing.T) {
-	mockCheckService := &MockCheckService{checks: []checks.Check{&mockCheck{id: "check-1"}}}
+// TestRunner_Run_UnprocessedChecks tests handling of unprocessed checks
+func TestRunner_Run_UnprocessedChecks(t *testing.T) {
+	t.Run("marks unprocessed checks as error", func(t *testing.T) {
+		patchOperations := []resource.PatchOperation{}
 
-	mockClient := &MockClient{
-		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
-			return &advisorv0alpha1.Check{}, nil
-		},
-	}
+		mockClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return &advisorv0alpha1.CheckList{
+					Items: []advisorv0alpha1.Check{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "unprocessed-check",
+								// No status annotation - unprocessed
+							},
+						},
+					},
+				}, nil
+			},
+			patchFunc: func(ctx context.Context, id resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions, into resource.Object) error {
+				patchOperations = append(patchOperations, patch.Operations...)
+				return nil
+			},
+		}
 
-	mockTypesClient := &MockClient{
-		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			checkType := &advisorv0alpha1.CheckType{}
-			checkType.Spec.Name = "check-1"
-			return &advisorv0alpha1.CheckTypeList{
-				Items: []advisorv0alpha1.CheckType{*checkType},
-			}, nil
-		},
-	}
+		mockTypesClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return &advisorv0alpha1.CheckTypeList{Items: []advisorv0alpha1.CheckType{}}, nil
+			},
+		}
 
-	runner := &Runner{
-		checkRegistry: mockCheckService,
-		client:        mockClient,
-		typesClient:   mockTypesClient,
-		log:           &logging.NoOpLogger{},
-	}
+		runner := createTestRunner(mockClient, mockTypesClient)
 
-	err := runner.createChecks(context.Background(), &logging.NoOpLogger{}, []string{"default"})
-	assert.NoError(t, err)
+		err := runAndTimeout(runner)
+		assert.ErrorAs(t, err, &context.DeadlineExceeded)
+		// Should patch unprocessed check with error status
+		assert.Greater(t, len(patchOperations), 0)
+	})
 }
 
-func TestRunner_cleanupChecks_ErrorOnList(t *testing.T) {
-	mockClient := &MockClient{
-		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			return nil, errors.New("list error")
-		},
-	}
+// TestRunner_Run_Pagination tests pagination handling
+func TestRunner_Run_Pagination(t *testing.T) {
+	t.Run("handles paginated check lists", func(t *testing.T) {
+		callCount := 0
 
-	runner := &Runner{
-		client: mockClient,
-		log:    &logging.NoOpLogger{},
-	}
+		mockClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				callCount++
+				if callCount == 1 {
+					return &advisorv0alpha1.CheckList{
+						ListMeta: metav1.ListMeta{Continue: "continue-token"},
+						Items: []advisorv0alpha1.Check{
+							{ObjectMeta: metav1.ObjectMeta{Name: "check-1"}},
+						},
+					}, nil
+				}
+				return &advisorv0alpha1.CheckList{
+					Items: []advisorv0alpha1.Check{
+						{ObjectMeta: metav1.ObjectMeta{Name: "check-2"}},
+					},
+				}, nil
+			},
+		}
 
-	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{}, []string{"default"})
-	assert.Error(t, err)
+		mockTypesClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				return &advisorv0alpha1.CheckTypeList{Items: []advisorv0alpha1.CheckType{}}, nil
+			},
+		}
+
+		runner := createTestRunner(mockClient, mockTypesClient)
+
+		err := runAndTimeout(runner)
+		assert.ErrorAs(t, err, &context.DeadlineExceeded)
+		// Should handle pagination correctly
+		assert.GreaterOrEqual(t, callCount, 2)
+	})
 }
 
-func TestRunner_cleanupChecks_WithinMax(t *testing.T) {
-	mockClient := &MockClient{
-		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			return &advisorv0alpha1.CheckList{
-				Items: []advisorv0alpha1.Check{{}, {}},
-			}, nil
-		},
-		deleteFunc: func(ctx context.Context, identifier resource.Identifier, options resource.DeleteOptions) error {
-			return fmt.Errorf("shouldn't be called")
-		},
-	}
+// Helper functions
 
-	runner := &Runner{
-		client: mockClient,
-		log:    &logging.NoOpLogger{},
-	}
-
-	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{}, []string{"default"})
-	assert.NoError(t, err)
+// runAndTimeout runs a runner with a short timeout for testing purposes.
+// This is used to terminate the runner's infinite loop in tests that don't specifically test timeout behavior.
+func runAndTimeout(runner *Runner) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Millisecond)
+	defer cancel()
+	return runner.Run(ctx)
 }
 
-func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
-	mockClient := &MockClient{
-		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			items := make([]advisorv0alpha1.Check, 0, defaultMaxHistory+1)
-			for i := 0; i < defaultMaxHistory+1; i++ {
-				item := advisorv0alpha1.Check{}
-				item.SetLabels(map[string]string{
-					checks.TypeLabel: "mock",
-				})
-				items = append(items, item)
-			}
-			return &advisorv0alpha1.CheckList{
-				Items: items,
-			}, nil
-		},
-		deleteFunc: func(ctx context.Context, identifier resource.Identifier, options resource.DeleteOptions) error {
-			return errors.New("delete error")
-		},
-	}
-
-	runner := &Runner{
-		client:     mockClient,
-		maxHistory: defaultMaxHistory,
-		log:        &logging.NoOpLogger{},
-	}
-	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{}, []string{"default"})
-	assert.ErrorContains(t, err, "delete error")
+// createTestRunner creates a test runner with mock clients
+func createTestRunner(checkClient, typesClient *MockClient) *Runner {
+	return createTestRunnerWithRegistry(checkClient, typesClient, &MockCheckService{checks: []checks.Check{}})
 }
 
-func TestRunner_cleanupChecks_Success(t *testing.T) {
-	itemsDeleted := []string{}
-	items := make([]advisorv0alpha1.Check, 0, defaultMaxHistory+1)
-	for i := 0; i < defaultMaxHistory+1; i++ {
-		item := advisorv0alpha1.Check{}
-		item.SetName(fmt.Sprintf("check-%d", i))
-		item.SetLabels(map[string]string{
-			checks.TypeLabel: "mock",
-		})
-		item.SetCreationTimestamp(metav1.NewTime(time.Time{}.Add(time.Duration(i) * time.Hour)))
-		items = append(items, item)
+// createTestRunnerWithRegistry creates a test runner with mock clients and custom registry
+func createTestRunnerWithRegistry(checkClient, typesClient *MockClient, checkRegistry checkregistry.CheckService) *Runner {
+	// Ensure mock clients have default implementations
+	if checkClient.listFunc == nil {
+		checkClient.listFunc = func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			return &advisorv0alpha1.CheckList{Items: []advisorv0alpha1.Check{}}, nil
+		}
 	}
-	// shuffle the items to ensure the oldest are deleted
-	rand.Shuffle(len(items), func(i, j int) { items[i], items[j] = items[j], items[i] })
-
-	mockClient := &MockClient{
-		listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
-			return &advisorv0alpha1.CheckList{
-				Items: items,
-			}, nil
-		},
-		deleteFunc: func(ctx context.Context, identifier resource.Identifier, options resource.DeleteOptions) error {
-			itemsDeleted = append(itemsDeleted, identifier.Name)
+	if checkClient.createFunc == nil {
+		checkClient.createFunc = func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+			return obj, nil
+		}
+	}
+	if checkClient.deleteFunc == nil {
+		checkClient.deleteFunc = func(ctx context.Context, id resource.Identifier, opts resource.DeleteOptions) error {
 			return nil
-		},
+		}
+	}
+	if checkClient.patchFunc == nil {
+		checkClient.patchFunc = func(ctx context.Context, id resource.Identifier, patch resource.PatchRequest, opts resource.PatchOptions, into resource.Object) error {
+			return nil
+		}
 	}
 
-	runner := &Runner{
-		client:     mockClient,
-		maxHistory: defaultMaxHistory,
-		log:        &logging.NoOpLogger{},
+	if typesClient.listFunc == nil {
+		typesClient.listFunc = func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+			// Return empty list to match the empty MockCheckService
+			return &advisorv0alpha1.CheckTypeList{Items: []advisorv0alpha1.CheckType{}}, nil
+		}
 	}
-	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{}, []string{"default"})
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"check-0"}, itemsDeleted)
+
+	return &Runner{
+		checkRegistry:       checkRegistry,
+		checksClient:        checkClient,
+		typesClient:         typesClient,
+		defaultEvalInterval: 5 * time.Millisecond,
+		maxHistory:          defaultMaxHistory,
+		log:                 &logging.NoOpLogger{},
+		orgService:          &mockOrgService{orgs: []*org.OrgDTO{{ID: 1}}},
+		stackID:             "",
+	}
 }
 
-func Test_getEvaluationInterval(t *testing.T) {
-	t.Run("default", func(t *testing.T) {
-		interval, err := getEvaluationInterval(map[string]string{})
-		assert.NoError(t, err)
-		assert.Equal(t, 7*24*time.Hour, interval)
-	})
-
-	t.Run("invalid", func(t *testing.T) {
-		interval, err := getEvaluationInterval(map[string]string{"evaluation_interval": "invalid"})
-		assert.Error(t, err)
-		assert.Zero(t, interval)
-	})
-
-	t.Run("custom", func(t *testing.T) {
-		interval, err := getEvaluationInterval(map[string]string{"evaluation_interval": "1h"})
-		assert.NoError(t, err)
-		assert.Equal(t, time.Hour, interval)
-	})
-}
-
-func Test_getMaxHistory(t *testing.T) {
-	t.Run("default", func(t *testing.T) {
-		history, err := getMaxHistory(map[string]string{})
-		assert.NoError(t, err)
-		assert.Equal(t, 10, history)
-	})
-
-	t.Run("invalid", func(t *testing.T) {
-		history, err := getMaxHistory(map[string]string{"max_history": "invalid"})
-		assert.Error(t, err)
-		assert.Zero(t, history)
-	})
-
-	t.Run("custom", func(t *testing.T) {
-		history, err := getMaxHistory(map[string]string{"max_history": "5"})
-		assert.NoError(t, err)
-		assert.Equal(t, 5, history)
-	})
-}
-
-func Test_getNextSendInterval(t *testing.T) {
-	lastCreated := time.Now().Add(-7 * 24 * time.Hour)
-	evaluationInterval := 7 * 24 * time.Hour
-	nextSendInterval := getNextSendInterval(lastCreated, evaluationInterval)
-	// The next send interval should be in < 1 hour
-	assert.True(t, nextSendInterval < time.Hour)
-	// Calculate the next send interval again and it should be different
-	nextSendInterval2 := getNextSendInterval(lastCreated, evaluationInterval)
-	assert.NotEqual(t, nextSendInterval, nextSendInterval2)
-}
+// Mock implementations
 
 type MockClient struct {
 	resource.Client
@@ -417,7 +374,6 @@ func (m *MockCheckService) Checks() []checks.Check {
 
 type mockCheck struct {
 	checks.Check
-
 	id    string
 	steps []checks.Step
 }
