@@ -35,7 +35,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
       ? 'local/generate-enterprise-apis.ts'
       : 'packages/grafana-api-clients/src/scripts/generate-rtk-apis.ts';
 
-    const clientImportPath = isEnterprise ? '../extensions/api/clients' : './clients';
+    const clientImportPath = isEnterprise ? '../extensions/api/clients' : '.';
 
     const apiPathPrefix = isEnterprise ? '../public/app/extensions/api/clients' : '../clients';
 
@@ -70,19 +70,19 @@ export default function plopGenerator(plop: NodePlopAPI) {
       actions.push(
         {
           type: 'modify',
-          path: '../rtkq.ts',
+          path: '../clients/rtkq/index.ts',
           pattern: '// PLOP_INJECT_IMPORT',
-          template: `import { generatedAPI as ${reducerPath} } from '${clientImportPath}/rtkq/${groupName}/${version}';\n// PLOP_INJECT_IMPORT`,
+          template: `import { generatedAPI as ${reducerPath} } from '${clientImportPath}/${groupName}/${version}';\n// PLOP_INJECT_IMPORT`,
         },
         {
           type: 'modify',
-          path: '../rtkq.ts',
+          path: '../clients/rtkq/index.ts',
           pattern: '// PLOP_INJECT_REDUCER',
           template: `[${reducerPath}.reducerPath]: ${reducerPath}.reducer,\n  // PLOP_INJECT_REDUCER`,
         },
         {
           type: 'modify',
-          path: '../rtkq.ts',
+          path: '../clients/rtkq/index.ts',
           pattern: '// PLOP_INJECT_MIDDLEWARE',
           template: `${reducerPath}.middleware,\n        // PLOP_INJECT_MIDDLEWARE`,
         },

@@ -51,7 +51,7 @@ export const getFilesToFormat = (groupName: string, version: string, isEnterpris
       ? []
       : [
           `packages/grafana-api-clients/src/index.ts`,
-          `packages/grafana-api-clients/src/rtkq.ts`,
+          `packages/grafana-api-clients/src/clients/rtkq/index.ts`,
           `packages/grafana-api-clients/package.json`,
         ]),
   ];
