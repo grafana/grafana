@@ -6,16 +6,7 @@ import { DataFrame } from '@grafana/data';
 import { Pagination } from '@grafana/ui';
 import { makeFramePerSeries } from 'app/core/components/TimelineChart/utils';
 
-import { defaultOptions } from './panelcfg.gen';
-
-export const containerStyles = {
-  container: css({
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-};
-
-const styles = {
+const paginationStyles = {
   paginationContainer: css({
     display: 'flex',
     justifyContent: 'center',
@@ -45,8 +36,6 @@ export function usePagination(frames?: DataFrame[], perPage?: number) {
     };
   }
 
-  perPage ||= defaultOptions.perPage!;
-
   const numberOfPages = Math.ceil(pagedFrames.length / perPage);
   // `perPage` changing might lead to temporarily too large values of `currentPage`.
   const currentPageCapped = Math.min(currentPage, numberOfPages);
@@ -60,9 +49,9 @@ export function usePagination(frames?: DataFrame[], perPage?: number) {
 
   const showSmallVersion = paginationWidth < 550;
   const paginationElement = (
-    <div className={styles.paginationContainer} ref={paginationWrapperRef}>
+    <div className={paginationStyles.paginationContainer} ref={paginationWrapperRef}>
       <Pagination
-        className={styles.paginationElement}
+        className={paginationStyles.paginationElement}
         currentPage={currentPageCapped}
         numberOfPages={numberOfPages}
         showSmallVersion={showSmallVersion}
