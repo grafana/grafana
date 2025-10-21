@@ -1,3 +1,19 @@
+<!-- 11.5.10 START -->
+
+# 11.5.10 (2025-10-21)
+
+### Features and enhancements
+
+- **Go:** Update to 1.25.2 + golangci-lint v2.5.0 + golang.org/x/net v0.45.0 [#112163](https://github.com/grafana/grafana/pull/112163), [@macabu](https://github.com/macabu)
+- **Go:** Update to 1.25.3 [#112366](https://github.com/grafana/grafana/pull/112366), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Auth:** Fix render user OAuth passthrough [#112093](https://github.com/grafana/grafana/pull/112093), [@mgyongyosi](https://github.com/mgyongyosi)
+- **LDAP Authentication:** Fix URL to propagate username context as parameter [#111845](https://github.com/grafana/grafana/pull/111845), [@bradleypettit](https://github.com/bradleypettit)
+- **Plugins:** Dependencies do not inherit parent URL for preinstall [#111802](https://github.com/grafana/grafana/pull/111802), [@wbrowne](https://github.com/wbrowne)
+
+<!-- 11.5.10 END -->
 <!-- 11.5.9 START -->
 
 # 11.5.9 (2025-09-23)
