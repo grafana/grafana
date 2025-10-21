@@ -22,7 +22,7 @@ weight: 100
 
 # Node graph
 
-Node graphs are useful when you need to visualize elements that are related to each other. This is done by displaying circles&mdash;or _nodes_&mdash;for each element you want to visualize, connected by lines&mdash;or _edges_. The visualization uses a directed force layout that positions the nodes into a network of connected circles.
+Node graphs are useful when you need to visualize elements that are related to each other. This is done by displaying circles&mdash;or _nodes_&mdash;for each element you want to visualize, connected by lines&mdash;or _edges_. The visualization uses a [layered layout](#layout-algorithm) that positions the nodes into a network of connected circles.
 
 Node graphs display useful information about each node, as well as the relationships between them, allowing you to visualize complex infrastructure maps, hierarchies, or execution diagrams.
 
@@ -155,7 +155,20 @@ Click on the node and select "Show in Graph layout" option to switch back to gra
 
 Use the following options to refine your node graph visualization.
 
-- **Zoom mode** - Choose how the node graph should handle zoom and scroll events.
+#### Zoom mode
+
+Choose how the node graph should handle zoom and scroll events:
+
+- **Cooperative** - Allows you to scroll the visualization normally.
+- **Greedy** - Reacts to all zoom gestures.
+
+#### Layout algorithm
+
+Choose how the layout is generated:
+
+- **Layered** - Default. Creates a predictable and orderly layout, especially useful for service graphs.
+- **Force** - Uses a physics-based force layout algorithm, that's useful with a large number of nodes (500+).
+- **Grid** - Arranges nodes into a grid format without edges. In grid view, the graph can be sorted by the stats shown inside the nodes or the ones represented by the colored border of the nodes.
 
 ### Nodes options
 
