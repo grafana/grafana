@@ -15,6 +15,9 @@ import (
 func (hs *HTTPServer) GetAlertNotifiers() func(*contextmodel.ReqContext) response.Response {
 	return func(r *contextmodel.ReqContext) response.Response {
 		v2 := notify.GetSchemaForAllIntegrations()
+		if v2 == nil {
+			return response.Error(http.StatusInternalServerError, "Failed to load alert notifier schemas", nil)
+		}
 		slices.SortFunc(v2, func(a, b schema.IntegrationTypeSchema) int {
 			return strings.Compare(string(a.Type), string(b.Type))
 		})

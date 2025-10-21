@@ -150,15 +150,19 @@ func (s *Server) Shutdown(ctx context.Context, reason string) error {
 	var err error
 	s.shutdownOnce.Do(func() {
 		s.log.Info("Shutdown started", "reason", reason)
-		if shutdownErr := s.managerAdapter.Shutdown(ctx, "shutdown"); shutdownErr != nil {
-			s.log.Error("Failed to shutdown background services", "error", shutdownErr)
-		}
+		shutdownCh := make(chan error, 1)
+		go func() {
+			shutdownCh <- s.managerAdapter.Shutdown(ctx, "shutdown")
+		}()
 		select {
+		case shutdownErr := <-shutdownCh:
+			if shutdownErr != nil {
+				s.log.Error("Failed to shutdown background services", "error", shutdownErr)
+				err = shutdownErr
+			}
 		case <-ctx.Done():
 			s.log.Warn("Timed out while waiting for server to shut down")
 			err = fmt.Errorf("timeout waiting for shutdown")
-		default:
-			s.log.Debug("Finished waiting for server to shut down")
 		}
 	})
 
