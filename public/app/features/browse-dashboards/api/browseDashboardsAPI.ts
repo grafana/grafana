@@ -1,6 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { createBaseQuery, handleRequestError } from '@grafana/api-clients';
+import { handleRequestError } from '@grafana/api-clients';
+import { createBaseQuery } from '@grafana/api-clients/rtkq';
 import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
