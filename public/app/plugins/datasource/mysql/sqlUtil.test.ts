@@ -1,4 +1,5 @@
 import { isValidIdentifier } from './sqlUtil';
+import { toRawSql } from './sqlUtil';
 
 describe('isValidIdentifier', () => {
   test.each([
@@ -14,5 +15,19 @@ describe('isValidIdentifier', () => {
     { value: 'table_name', expected: true },
   ])('should return $expected when value is $value', ({ value, expected }) => {
     expect(isValidIdentifier(value)).toBe(expected);
+  });
+});
+
+describe('toRawSql', () => {
+  it('quotes dataset and table identifiers when they contain prohibited characters', () => {
+    const query = {
+      sql: { columns: [{ type: 'column', name: '*' } as any] },
+      dataset: 'se-backoffice',
+      table: 'action_title',
+    } as any;
+
+    const result = toRawSql(query);
+    // dataset contains a hyphen and should be backticked
+    expect(result).toContain('FROM `se-backoffice`.action_title');
   });
 });
