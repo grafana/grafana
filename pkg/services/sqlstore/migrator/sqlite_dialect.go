@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/retryer"
 	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -118,18 +119,23 @@ func (db *SQLite3) CleanDB(engine *xorm.Engine) error {
 func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
 	// Helper providing retry/backoff on busy/locked to reduce flakiness
 	execWithRetry := func(sess *xorm.Session, query string) error {
-		const maxAttempts = 3
-		backoff := 100 * time.Millisecond
-		_, err := sess.Exec(query)
-		attempts := 1
-		for attempts < maxAttempts && sqlite.IsBusyOrLocked(err) {
-			sqliteLogger.Warn(fmt.Sprintf("retrying busy or locked error: query=%s, error=%s, attempts=%d", query, err, attempts))
+		const maxRetries = 5
+		const minDelay = 100 * time.Millisecond
+		const maxDelay = time.Second
+		attempts := 0
+		fn := func() (retryer.RetrySignal, error) {
 			attempts++
-			time.Sleep(backoff)
-			backoff *= 2
-			_, err = sess.Exec(query)
+			_, err := sess.Exec(query)
+			if err != nil {
+				if sqlite.IsBusyOrLocked(err) {
+					sqliteLogger.Warn(fmt.Sprintf("retrying busy or locked error: query=%s, error=%s, attempts=%d", query, err, attempts))
+					return retryer.FuncFailure, nil
+				}
+				return retryer.FuncError, err
+			}
+			return retryer.FuncComplete, nil
 		}
-		return err
+		return retryer.Retry(fn, maxRetries, minDelay, maxDelay)
 	}
 
 	tables, err := engine.Dialect().GetTables()
