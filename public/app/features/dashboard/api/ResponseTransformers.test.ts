@@ -446,6 +446,7 @@ describe('ResponseTransformers', () => {
           description: '',
           id: 1,
           links: [],
+          transparent: false,
           vizConfig: {
             kind: 'VizConfig',
             group: 'timeseries',
