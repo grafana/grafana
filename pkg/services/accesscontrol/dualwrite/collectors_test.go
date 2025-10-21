@@ -555,7 +555,7 @@ func TestIntegrationManagedPermissionsCollector(t *testing.T) {
 		env := setupTestEnv(t)
 
 		user1 := createUser(t, env, "user1", 1, false)
-		roleUID := createRole(t, env, "managed:dashboard:uid1:permissions", 1)
+		roleUID := createRole(t, env, "managed:dash:u1:perm", 1)
 		addUserRole(t, env, user1.ID, roleUID, 1)
 		addPermission(t, env, roleUID, "dashboards:read", "dashboards", "uid1")
 
@@ -570,7 +570,7 @@ func TestIntegrationManagedPermissionsCollector(t *testing.T) {
 		env := setupTestEnv(t)
 
 		sa := createUser(t, env, "sa1", 1, true)
-		roleUID := createRole(t, env, "managed:dashboard:uid1:permissions", 1)
+		roleUID := createRole(t, env, "managed:dash:u1:perm", 1)
 		addUserRole(t, env, sa.ID, roleUID, 1)
 		addPermission(t, env, roleUID, "dashboards:read", "dashboards", "uid1")
 
@@ -597,7 +597,7 @@ func TestIntegrationManagedPermissionsCollector(t *testing.T) {
 		env := setupTestEnv(t)
 
 		team1 := createTeam(t, env, "team1", 1)
-		roleUID := createRole(t, env, "managed:dashboard:uid1:permissions", 1)
+		roleUID := createRole(t, env, "managed:dash:u1:perm", 1)
 		addTeamRole(t, env, team1.ID, roleUID, 1)
 		addPermission(t, env, roleUID, "dashboards:read", "dashboards", "uid1")
 
@@ -623,7 +623,7 @@ func TestIntegrationManagedPermissionsCollector(t *testing.T) {
 	t.Run("should collect managed permissions for basic roles", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		roleUID := createRole(t, env, "managed:dashboard:uid1:permissions", 1)
+		roleUID := createRole(t, env, "managed:dash:u1:perm", 1)
 		addBuiltinRole(t, env, roleUID, "Admin", 1)
 		addPermission(t, env, roleUID, "dashboards:read", "dashboards", "uid1")
 
@@ -638,8 +638,8 @@ func TestIntegrationManagedPermissionsCollector(t *testing.T) {
 		env := setupTestEnv(t)
 
 		user1 := createUser(t, env, "user1", 1, false)
-		roleUID1 := createRole(t, env, "managed:dashboard:uid1:permissions", 1)
-		roleUID2 := createRole(t, env, "managed:folder:uid2:permissions", 1)
+		roleUID1 := createRole(t, env, "managed:dash:u1:perm", 1)
+		roleUID2 := createRole(t, env, "managed:fld:u2:perm", 1)
 		addUserRole(t, env, user1.ID, roleUID1, 1)
 		addUserRole(t, env, user1.ID, roleUID2, 1)
 		addPermission(t, env, roleUID1, "dashboards:read", "dashboards", "uid1")
@@ -758,7 +758,7 @@ func TestIntegrationRoleBindingsCollector(t *testing.T) {
 
 		user1 := createUser(t, env, "user1", 1, false)
 		customRole := createRole(t, env, "custom-role", 1)
-		managedRole := createRole(t, env, "managed:dashboard:permissions", 1)
+		managedRole := createRole(t, env, "managed:dash:perm", 1)
 		addUserRole(t, env, user1.ID, customRole, 1)
 		addUserRole(t, env, user1.ID, managedRole, 1)
 
@@ -823,7 +823,7 @@ func TestIntegrationRolePermissionsCollector(t *testing.T) {
 		env := setupTestEnv(t)
 
 		customRole := createRole(t, env, "custom-role", 1)
-		managedRole := createRole(t, env, "managed:dashboard:permissions", 1)
+		managedRole := createRole(t, env, "managed:dash:perm", 1)
 		addPermission(t, env, customRole, "dashboards:read", "dashboards", "uid1")
 		addPermission(t, env, managedRole, "dashboards:read", "dashboards", "uid2")
 
