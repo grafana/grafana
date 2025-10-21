@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 // This file contains the common parts of the rollup configuration that are shared across multiple packages.
 import nodeResolve from '@rollup/plugin-node-resolve';
 import { dirname, resolve } from 'node:path';
