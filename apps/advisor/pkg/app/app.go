@@ -3,8 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -149,22 +147,4 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 			advisorv0alpha1.CheckTypeKind(),
 		},
 	}
-}
-
-// getOrgIDFromNamespace extracts the org ID from a namespace.
-// - "default" or "stack-*" namespaces → org ID 1
-// - "org-X" namespaces → org ID X
-func getOrgIDFromNamespace(namespace string) (int64, error) {
-	if namespace == "default" || strings.HasPrefix(namespace, "stack-") {
-		return 1, nil
-	}
-	if strings.HasPrefix(namespace, "org-") {
-		orgIDStr := strings.TrimPrefix(namespace, "org-")
-		orgID, err := strconv.ParseInt(orgIDStr, 10, 64)
-		if err != nil {
-			return 0, fmt.Errorf("invalid org namespace %s: %w", namespace, err)
-		}
-		return orgID, nil
-	}
-	return 0, fmt.Errorf("unknown namespace format: %s", namespace)
 }

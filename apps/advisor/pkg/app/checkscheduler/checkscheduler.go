@@ -107,7 +107,7 @@ func (r *Runner) Run(ctx context.Context) error {
 		wg.Add(1)
 		go func(ns string) {
 			defer wg.Done()
-			if err := r.runScheduler(ctx, logger, ns); err != nil {
+			if err := r.runScheduler(ctxWithoutCancel, logger, ns); err != nil {
 				errChan <- err
 			}
 		}(namespace)
@@ -131,10 +131,9 @@ func (r *Runner) Run(ctx context.Context) error {
 // runScheduler runs the check scheduler for a single namespace
 func (r *Runner) runScheduler(ctx context.Context, logger logging.Logger, namespace string) error {
 	logger = logger.With("namespace", namespace)
-	ctxWithoutCancel := context.WithoutCancel(ctx)
 
 	// Get the last created time for this specific namespace
-	lastCreated, err := r.checkLastCreated(ctxWithoutCancel, logger, namespace)
+	lastCreated, err := r.checkLastCreated(ctx, logger, namespace)
 	if err != nil {
 		logger.Error("Error getting last check creation time", "error", err)
 		return err
@@ -142,7 +141,7 @@ func (r *Runner) runScheduler(ctx context.Context, logger logging.Logger, namesp
 
 	// If there are checks already created, run an initial cleanup
 	if !lastCreated.IsZero() {
-		err = r.cleanupChecks(ctxWithoutCancel, logger, namespace)
+		err = r.cleanupChecks(ctx, logger, namespace)
 		if err != nil {
 			logger.Error("Error cleaning up old check reports", "error", err)
 			return err
@@ -157,7 +156,7 @@ func (r *Runner) runScheduler(ctx context.Context, logger logging.Logger, namesp
 		select {
 		case <-ticker.C:
 			// Get the current last created time for this namespace
-			lastCreated, err := r.checkLastCreated(ctxWithoutCancel, logger, namespace)
+			lastCreated, err := r.checkLastCreated(ctx, logger, namespace)
 			if err != nil {
 				logger.Error("Error getting last check creation time", "error", err)
 				return err
@@ -165,14 +164,14 @@ func (r *Runner) runScheduler(ctx context.Context, logger logging.Logger, namesp
 
 			// If there are checks already created, then we can automatically create more
 			if !lastCreated.IsZero() {
-				err = r.createChecks(ctxWithoutCancel, logger, namespace)
+				err = r.createChecks(ctx, logger, namespace)
 				if err != nil {
 					logger.Error("Error creating new check reports", "error", err)
 					return err
 				}
 
 				// Clean up old checks to avoid going over the limit
-				err = r.cleanupChecks(ctxWithoutCancel, logger, namespace)
+				err = r.cleanupChecks(ctx, logger, namespace)
 				if err != nil {
 					logger.Error("Error cleaning up old check reports", "error", err)
 					return err
@@ -246,7 +245,7 @@ func (r *Runner) createChecks(ctx context.Context, logger logging.Logger, namesp
 	allChecksRegistered := len(list.GetItems()) == len(r.checkRegistry.Checks())
 	retryCount := 0
 	for !allChecksRegistered && retryCount < waitMaxRetries {
-		logger.Info("Waiting for all check types to be registered", "retryCount", retryCount, "waitInterval", waitInterval, "namespace", namespace)
+		logger.Info("Waiting for all check types to be registered", "retryCount", retryCount, "waitInterval", waitInterval)
 		time.Sleep(waitInterval)
 		list, err = r.typesClient.List(ctx, namespace, resource.ListOptions{})
 		if err != nil {
