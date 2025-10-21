@@ -5,12 +5,13 @@ import { useAsync } from 'react-use';
 import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, Button, Drawer, LinkButton } from '@grafana/ui';
+import { Alert, Button, LinkButton } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { useSelector } from 'app/types/store';
 
 import { LogMessages, logInfo } from '../../Analytics';
+import { AlertRuleDrawerForm } from '../../components/AlertRuleDrawerForm';
 import { panelToRuleFormValues } from '../../utils/rule-form';
 
 interface Props {
@@ -72,18 +73,11 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
             icon="bell"
             className={className}
             data-testid="create-alert-rule-button-drawer"
-            onClick={() => {
-              setIsOpen(true);
-            }}
+            onClick={() => setIsOpen(true)}
           >
             <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
           </Button>
-          <Drawer
-            title={t('alerting.new-rule-from-panel-button.new-alert-rule', 'New alert rule')}
-            onClose={() => setIsOpen(false)}
-          >
-            <Trans i18nKey="alerting.new-rule-from-panel-button.content-coming-soon">Content coming soon...</Trans>
-          </Drawer>
+          <AlertRuleDrawerForm isOpen={isOpen} onClose={() => setIsOpen(false)} />
         </>
       );
     }
