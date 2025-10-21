@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
 import { GrafanaConfig, locationUtil } from '@grafana/data';
 import { config, setBackendSrv } from '@grafana/runtime';
@@ -6,8 +6,6 @@ import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { useSelector } from 'app/types/store';
-
-import { testWithFeatureToggles } from '../alerting/unified/test/test-utils';
 
 import { StarToolbarButton } from './StarToolbarButton';
 
@@ -21,6 +19,11 @@ locationUtil.initialize({
   getVariablesUrlParams: jest.fn(),
 });
 
+/**
+ * Test component that renders the list of starred items from the nav tree state
+ *
+ * This is just for basic assertions that we've added/removed items correctly
+ */
 const TestStarredMenuItems = () => {
   const navTree = useSelector((state) => state.navBarTree);
   const starred = navTree.find((item) => item.id === 'starred');
@@ -72,16 +75,16 @@ const fixtures: Array<
   [
     // Test title
     string,
-    // Enabled feature toggles
+    // Feature toggle setup
     Parameters<typeof testWithFeatureToggles>[0],
   ]
 > = [
-  ['app platform APIs enabled', ['starsFromAPIServer']],
-  ['app platform APIs disabled', []],
+  ['app platform APIs enabled', { enable: ['starsFromAPIServer'] }],
+  ['app platform APIs disabled', {}],
 ];
 describe('StarToolbarButton', () => {
-  describe.each(fixtures)('%s', (_title, featureToggles) => {
-    testWithFeatureToggles(featureToggles);
+  describe.each(fixtures)('%s', (_title, featureToggleSetup) => {
+    testWithFeatureToggles(featureToggleSetup);
 
     it('adds a nav menu item, including correct url', async () => {
       const { user } = setup(itemToStar);
