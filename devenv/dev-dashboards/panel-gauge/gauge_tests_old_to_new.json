@@ -37,8 +37,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -103,8 +102,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -170,8 +168,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "very small\n",
       "fieldConfig": {
@@ -236,8 +233,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -304,8 +300,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -361,8 +356,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "no_data_points"
@@ -373,8 +367,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -440,8 +433,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -510,8 +502,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -583,8 +574,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -661,8 +651,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "",
       "fieldConfig": {
@@ -725,8 +714,7 @@
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "refId": "B",
@@ -735,8 +723,7 @@
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "refId": "C",
@@ -745,8 +732,7 @@
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "hide": false,
           "refId": "D",
@@ -772,8 +758,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "should not show any threshold markers",
       "fieldConfig": {
@@ -801,7 +786,7 @@
       },
       "gridPos": {
         "h": 9,
-        "w": 15,
+        "w": 8,
         "x": 0,
         "y": 26
       },
@@ -832,8 +817,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "should not show any threshold markers",
       "fieldConfig": {
@@ -872,8 +856,8 @@
       },
       "gridPos": {
         "h": 9,
-        "w": 9,
-        "x": 15,
+        "w": 8,
+        "x": 8,
         "y": 26
       },
       "id": 2,
@@ -902,6 +886,75 @@
       "type": "gauge"
     },
     {
+      "id": 19,
+      "type": "gauge",
+      "title": "Thresholds (min != 0, max != 100)",
+      "gridPos": {
+        "x": 16,
+        "y": 26,
+        "h": 9,
+        "w": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "min": 20,
+          "max": 90
+        },
+        "overrides": []
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "scenarioId": "random_walk",
+          "refId": "A",
+          "min": 20,
+          "max": 90
+        }
+      ],
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "shape": "gauge",
+        "gradient": "none",
+        "barWidthFactor": 0.5,
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "sparkline": false,
+        "showThresholdMarkers": true,
+        "showThresholdLabels": false,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "rounded": false,
+          "spotlight": false
+        }
+      }
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
@@ -916,8 +969,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "should not show any threshold markers",
       "fieldConfig": {
@@ -987,8 +1039,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "description": "should not show any threshold markers",
       "fieldConfig": {
@@ -1071,5 +1122,5 @@
   "timezone": "browser",
   "title": "Panel tests - Old gauge to new",
   "uid": "panel-tests-old-gauge-to-new",
-  "version": 3
+  "version": 4
 }
