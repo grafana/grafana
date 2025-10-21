@@ -85,11 +85,9 @@ export const getCardContainerStyles = (
   disableHover = false,
   isSelected?: boolean,
   isCompact?: boolean,
-  noMargin = false,
-  isOnCanvas = false
+  noMargin = false
 ) => {
   const isSelectable = isSelected !== undefined;
-  const background = isOnCanvas ? theme.colors.background.primary : theme.colors.background.secondary;
 
   return {
     container: css({
@@ -106,10 +104,9 @@ export const getCardContainerStyles = (
         "Figure Actions Secondary"`,
       width: '100%',
       padding: theme.spacing(isCompact ? 1 : 2),
-      background: background,
+      background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
       marginBottom: theme.spacing(noMargin ? 0 : 1),
-      border: isOnCanvas ? `1px solid ${theme.colors.border.weak}` : 'none',
       pointerEvents: disabled ? 'none' : 'auto',
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
@@ -119,7 +116,7 @@ export const getCardContainerStyles = (
 
       ...(!disableHover && {
         '&:hover': {
-          background: theme.colors.emphasize(background, 0.03),
+          background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
           cursor: 'pointer',
           zIndex: 1,
         },
@@ -150,7 +147,7 @@ export const getCardContainerStyles = (
 
       ...(!disableHover && {
         '&:hover': {
-          background: theme.colors.emphasize(background, 0.03),
+          background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
           cursor: 'pointer',
           zIndex: 1,
         },

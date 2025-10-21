@@ -13,12 +13,7 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   navId?: string;
   navModel?: NavModel;
   pageNav?: NavModelItem;
-  /**
-   * Determines the background color of the page.
-   * Defaults to primary. If you have visualizations or a page full of cards give canvas a try.
-   * Om components needs to be adjusted to work well on canvas in both themes.
-   * Card has background properties as well that needs to match this.
-   */
+  /** Determines the background color of the page. Defaults to primary. */
   background?: PluginPageBackground;
   /** Can be used to place info inline with the heading */
   info?: PageInfoItem[];
