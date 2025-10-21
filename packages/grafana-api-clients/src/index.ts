@@ -1,2 +1,2 @@
-export { createBaseQuery, handleRequestError } from './utils/createBaseQuery';
+export { handleRequestError } from './utils/utils';
 export { getAPINamespace, getAPIBaseURL, normalizeError } from './utils/utils';

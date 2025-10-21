@@ -53,3 +53,10 @@ export const normalizeError = (e: unknown): string => {
 
   return String(e);
 };
+export function handleRequestError(error: unknown) {
+  if (isFetchError(error) || error instanceof Error) {
+    return { error };
+  } else {
+    return { error: new Error('Unknown error') };
+  }
+}
