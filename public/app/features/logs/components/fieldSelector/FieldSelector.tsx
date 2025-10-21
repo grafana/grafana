@@ -19,7 +19,6 @@ import { LogListModel } from '../panel/processing';
 import { FieldList } from './FieldList';
 import { FieldSearch } from './FieldSearch';
 
-
 /**
  * FieldSelector wrapper for the LogList visualization.
  */
