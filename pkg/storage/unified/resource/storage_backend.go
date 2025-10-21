@@ -397,7 +397,6 @@ type kvListIterator struct {
 
 	// current item state
 	currentDataObj *DataObj
-	rv             int64
 	value          []byte
 }
 
@@ -416,7 +415,6 @@ func (i *kvListIterator) Next() bool {
 	}
 
 	i.currentDataObj = &dataObj
-	i.rv = dataObj.Key.ResourceVersion
 
 	var readErr error
 	i.value, readErr = readAndClose(dataObj.Value)
@@ -442,7 +440,10 @@ func (i *kvListIterator) ContinueToken() string {
 }
 
 func (i *kvListIterator) ResourceVersion() int64 {
-	return i.rv
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.ResourceVersion
+	}
+	return 0
 }
 
 func (i *kvListIterator) Namespace() string {
@@ -937,7 +938,6 @@ type kvHistoryIterator struct {
 
 	// current item state
 	currentDataObj *DataObj
-	rv             int64
 	value          []byte
 	folder         string
 }
@@ -953,7 +953,6 @@ func (i *kvHistoryIterator) Next() bool {
 	}
 
 	i.currentDataObj = &dataObj
-	i.rv = dataObj.Key.ResourceVersion
 
 	var readErr error
 	i.value, readErr = readAndClose(dataObj.Value)
@@ -990,16 +989,20 @@ func (i *kvHistoryIterator) ContinueToken() string {
 	if i.currentDataObj == nil {
 		return ""
 	}
+	rv := i.currentDataObj.Key.ResourceVersion
 	token := ContinueToken{
-		StartOffset:     i.rv,
-		ResourceVersion: i.rv,
+		StartOffset:     rv,
+		ResourceVersion: rv,
 		SortAscending:   i.sortAscending,
 	}
 	return token.String()
 }
 
 func (i *kvHistoryIterator) ResourceVersion() int64 {
-	return i.rv
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.ResourceVersion
+	}
+	return 0
 }
 
 func (i *kvHistoryIterator) Namespace() string {
