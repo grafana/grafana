@@ -1,10 +1,9 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { getPanelProps } from '../test-utils';
@@ -23,7 +22,7 @@ describe.each([
   // Legacy APIs
   false,
 ])('GettingStarted - app platform APIs: %s', (featureTogglesEnabled) => {
-  testWithFeatureToggles(featureTogglesEnabled ? ['unifiedStorageSearchUI'] : []);
+  testWithFeatureToggles({ enable: featureTogglesEnabled ? ['unifiedStorageSearchUI'] : [] });
 
   it('renders getting started steps', async () => {
     const props = getPanelProps({});
