@@ -25,8 +25,8 @@
       "require": "./src/index.ts"
     },
     "./rtkq": {
-      "import": "./src/rtkq.ts",
-      "require": "./src/rtkq.ts"
+      "import": "./src/clients/rtkq/index.ts",
+      "require": "./src/clients/rtkq/index.ts"
     },
     "./rtkq/advisor/v0alpha1": {
       "import": "./src/clients/rtkq/advisor/v0alpha1/index.ts",
