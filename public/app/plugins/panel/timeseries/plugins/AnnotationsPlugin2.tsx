@@ -264,6 +264,7 @@ export const AnnotationsPlugin2 = ({
               pinAnnotation={setAnnotation}
               isPinned={annoIdx === `${frameIdx}:${i}`}
               showOnHover={!annoIdx}
+              frame={frame}
               annoIdx={i}
               annoVals={vals}
               className={className}

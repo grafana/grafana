@@ -5,15 +5,17 @@ import { useState } from 'react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
-import { ClickOutsideWrapper, floatingUtils, useStyles2 } from '@grafana/ui';
+import { ClickOutsideWrapper, useStyles2 } from '@grafana/ui';
+import { getDataLinks } from 'app/plugins/panel/status-history/utils';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
 
 interface AnnoBoxProps {
+  frame: DataFrame;
   annoVals: Record<string, any[]>;
   annoIdx: number;
   style: React.CSSProperties | null;
@@ -26,7 +28,12 @@ interface AnnoBoxProps {
   showOnHover: boolean;
 }
 
+const STATE_DEFAULT = 0;
+const STATE_EDITING = 1;
+const STATE_HOVERED = 2;
+
 export const AnnotationMarker2 = ({
+  frame,
   annoVals,
   annoIdx,
   className,
@@ -41,12 +48,11 @@ export const AnnotationMarker2 = ({
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
 
-  const [editing, setEditing] = useState(exitWipEdit != null);
+  const [state, setState] = useState(exitWipEdit != null ? STATE_EDITING : STATE_DEFAULT);
   const [isHovering, setIsHovering] = useState(false);
   const { refs, floatingStyles } = useFloating({
     open: true,
     placement,
-    middleware: floatingUtils.getPositioningMiddleware(placement),
     whileElementsMounted: autoUpdate,
     strategy: 'fixed',
   });
@@ -55,18 +61,26 @@ export const AnnotationMarker2 = ({
     pinAnnotation(false);
     setIsHovering(false);
   };
+  const links: LinkModel[] = [];
+
+  if (STATE_HOVERED) {
+    frame.fields.forEach((field) => {
+      links.push(...getDataLinks(field, annoIdx));
+    });
+  }
 
   const contents =
-    (isPinned && !editing) || (showOnHover && isHovering && !editing) ? (
+    (isPinned && !(state === STATE_EDITING)) || (showOnHover && isHovering && !(state === STATE_EDITING)) ? (
       <AnnotationTooltip2
         annoIdx={annoIdx}
         annoVals={annoVals}
         timeZone={timeZone}
         onClose={onClose}
         isPinned={isPinned}
-        onEdit={() => setEditing(true)}
+        onEdit={() => setState(STATE_EDITING)}
+        links={links}
       />
-    ) : editing ? (
+    ) : state === STATE_EDITING ? (
       <AnnotationEditor2
         isPinned={isPinned}
         annoIdx={annoIdx}
@@ -74,7 +88,7 @@ export const AnnotationMarker2 = ({
         timeZone={timeZone}
         dismiss={() => {
           exitWipEdit?.();
-          setEditing(false);
+          setState(STATE_DEFAULT);
           onClose();
         }}
       />
