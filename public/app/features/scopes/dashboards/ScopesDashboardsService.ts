@@ -1,4 +1,5 @@
 import { isEqual } from 'lodash';
+import { Subscription } from 'rxjs';
 
 import { ScopeDashboardBinding } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
@@ -6,6 +7,7 @@ import { config, locationService } from '@grafana/runtime';
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 
+import { isCurrentPath } from './scopeNavgiationUtils';
 import { ScopeNavigation, SuggestedNavigationsFoldersMap } from './types';
 
 interface ScopesDashboardsServiceState {
@@ -24,6 +26,7 @@ interface ScopesDashboardsServiceState {
 }
 
 export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsServiceState> {
+  private locationSubscription: Subscription | undefined;
   constructor(private apiClient: ScopesApiClient) {
     super({
       drawerOpened: false,
@@ -35,7 +38,55 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       loading: false,
       searchQuery: '',
     });
+
+    // Add/ remove location subscribtion based on the drawer opened state
+    this.subscribeToState((state, prevState) => {
+      if (state.drawerOpened === prevState.drawerOpened) {
+        return;
+      }
+      if (state.drawerOpened && !prevState.drawerOpened) {
+        // Before creating a new subscription, ensure any existing subscription is disposed to avoid multiple active subscriptions and potential memory leaks.
+        this.locationSubscription?.unsubscribe();
+        this.locationSubscription = locationService.getLocationObservable().subscribe((location) => {
+          this.onLocationChange(location.pathname);
+        });
+      } else if (!state.drawerOpened && prevState.drawerOpened) {
+        this.locationSubscription?.unsubscribe();
+      }
+    });
   }
+
+  // Expand the group that matches the current path, if it is not already expanded
+  private onLocationChange = (pathname: string) => {
+    if (!this.state.drawerOpened) {
+      return;
+    }
+    const currentPath = pathname;
+    const activeScopeNavigation = this.state.scopeNavigations.find((s) => {
+      if (!('url' in s.spec) || typeof s.spec.url !== 'string') {
+        return false;
+      }
+      return isCurrentPath(currentPath, s.spec.url);
+    });
+
+    if (!activeScopeNavigation) {
+      return;
+    }
+
+    // Check if the activeScopeNavigation is in a folder that is already expanded
+    if (activeScopeNavigation.status.groups) {
+      for (const group of activeScopeNavigation.status.groups) {
+        if (this.state.folders[''].folders[group].expanded) {
+          return;
+        }
+      }
+    }
+
+    // Expand the first group, as we don't know which one to prioritize
+    if (activeScopeNavigation.status.groups) {
+      this.updateFolder(['', activeScopeNavigation.status.groups[0]], true);
+    }
+  };
 
   public updateFolder = (path: string[], expanded: boolean) => {
     let folders = { ...this.state.folders };
