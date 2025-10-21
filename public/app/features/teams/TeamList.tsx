@@ -5,7 +5,6 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getBackendSrv } from '@grafana/runtime';
 import {
   Avatar,
   CellProps,
@@ -66,7 +65,6 @@ export const TeamList = ({
   changeSort,
 }: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const [scimGroupSyncEnabled, setScimGroupSyncEnabled] = useState(false);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -77,25 +75,6 @@ export const TeamList = ({
     if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
       fetchRoleOptions().then((roles) => setRoleOptions(roles));
     }
-  }, []);
-
-  useEffect(() => {
-    const checkSCIMSettings = async () => {
-      if (!config.featureToggles.enableSCIM) {
-        setScimGroupSyncEnabled(false);
-        return;
-      }
-      try {
-        const scimSettings = await getBackendSrv().get(
-          `/apis/scim.grafana.app/v0alpha1/namespaces/${config.namespace}/config`
-        );
-        setScimGroupSyncEnabled(scimSettings?.items[0]?.spec?.enableGroupSync || false);
-      } catch {
-        setScimGroupSyncEnabled(false);
-      }
-    };
-
-    checkSCIMSettings();
   }, []);
 
   const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
@@ -217,9 +196,7 @@ export const TeamList = ({
           }
 
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
-          const canDelete =
-            contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original) &&
-            (!scimGroupSyncEnabled || !original.isProvisioned);
+          const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
@@ -247,7 +224,7 @@ export const TeamList = ({
         },
       },
     ],
-    [displayRolePicker, hasFetched, rolesLoading, roleOptions, deleteTeam, styles, scimGroupSyncEnabled]
+    [displayRolePicker, hasFetched, rolesLoading, roleOptions, deleteTeam, styles]
   );
 
   return (
