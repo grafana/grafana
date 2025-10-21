@@ -5,11 +5,9 @@ import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, Field, LinkModel } from '@grafana/data';
+import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR, getPortalContainer, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
-
-import { getDataLinks } from '../../status-history/utils';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
 
@@ -249,14 +247,9 @@ export const AnnotationsPlugin2 = ({
         if (isVisible) {
           let isWip = frame.meta?.custom?.isWip;
 
-          let links: LinkModel[] = [];
-          frame.fields.forEach((field: Field) => {
-            links.push(...getDataLinks(field, i));
-          });
-
           markers.push(
             <AnnotationMarker2
-              links={links}
+              frame={frame}
               annoIdx={i}
               annoVals={vals}
               className={className}
