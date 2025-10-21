@@ -12,6 +12,7 @@ import { generatedAPI as preferencesUserAPI } from './clients/rtkq/preferences/u
 import { generatedAPI as preferencesAPIv1alpha1 } from './clients/rtkq/preferences/v1alpha1';
 import { generatedAPI as provisioningAPIv0alpha1 } from './clients/rtkq/provisioning/v0alpha1';
 import { generatedAPI as shortURLAPIv1alpha1 } from './clients/rtkq/shorturl/v1alpha1';
+import { generatedAPI as legacyUserAPI } from './clients/rtkq/user';
 // PLOP_INJECT_IMPORT
 
 /** RTK Query middleware for all API clients  */
@@ -27,6 +28,7 @@ export const allMiddleware = [
   provisioningAPIv0alpha1.middleware,
   shortURLAPIv1alpha1.middleware,
   correlationsAPIv0alpha1.middleware,
+  legacyUserAPI.middleware,
   // PLOP_INJECT_MIDDLEWARE
 ] as const;
 
@@ -43,5 +45,6 @@ export const allReducers = {
   [provisioningAPIv0alpha1.reducerPath]: provisioningAPIv0alpha1.reducer,
   [shortURLAPIv1alpha1.reducerPath]: shortURLAPIv1alpha1.reducer,
   [correlationsAPIv0alpha1.reducerPath]: correlationsAPIv0alpha1.reducer,
+  [legacyUserAPI.reducerPath]: legacyUserAPI.reducer,
   // PLOP_INJECT_REDUCER
 };

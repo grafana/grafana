@@ -71,6 +71,12 @@ const config: ConfigFile = {
       apiFile: '../clients/rtkq/preferences/user/baseAPI.ts',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
+    '../clients/rtkq/user/endpoints.gen.ts': {
+      schemaFile: path.join(basePath, 'public/openapi3.json'),
+      hooks: true,
+      apiFile: '../clients/rtkq/user/baseAPI.ts',
+      filterEndpoints: ['starDashboardByUid', 'unstarDashboardByUid'],
+    },
     ...createAPIConfig('iam', 'v0alpha1', ['getDisplayMapping']),
     ...createAPIConfig('provisioning', 'v0alpha1', filterEndpoints, { hooks: true }),
     ...createAPIConfig('folder', 'v1beta1', undefined),

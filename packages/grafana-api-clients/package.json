@@ -51,6 +51,10 @@
       "import": "./src/clients/rtkq/preferences/user/index.ts",
       "require": "./src/clients/rtkq/preferences/user/index.ts"
     },
+    "./rtkq/legacy/user": {
+      "import": "./src/clients/rtkq/user/index.ts",
+      "require": "./src/clients/rtkq/user/index.ts"
+    },
     "./rtkq/playlist/v0alpha1": {
       "import": "./src/clients/rtkq/playlist/v0alpha1/index.ts",
       "require": "./src/clients/rtkq/playlist/v0alpha1/index.ts"
