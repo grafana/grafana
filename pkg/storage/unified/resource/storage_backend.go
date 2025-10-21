@@ -121,15 +121,13 @@ func (k *kvStorageBackend) runCleanupOldEvents(ctx context.Context) {
 // cleanupOldEvents performs the actual cleanup of old events
 func (k *kvStorageBackend) cleanupOldEvents(ctx context.Context) {
 	cutoff := time.Now().Add(-k.eventRetentionPeriod)
-	deletedCount, err := k.eventStore.CleanupOldEvents(ctx, cutoff)
+	err := k.eventStore.CleanupOldEvents(ctx, cutoff)
 	if err != nil {
 		k.log.Error("Failed to cleanup old events", "error", err)
 		return
 	}
 
-	if deletedCount == 0 {
-		k.log.Info("Cleaned up old events", "deleted_count", deletedCount, "retention_period", k.eventRetentionPeriod)
-	}
+	k.log.Debug("Cleaned up old events", "retention_period", k.eventRetentionPeriod)
 }
 
 func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) error {
@@ -364,64 +362,57 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 			break
 		}
 	}
+	// Create pull-style iterator from BatchGet
+	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, keys))
+
 	iter := kvListIterator{
-		keys:         keys,
-		currentIndex: -1,
-		ctx:          ctx,
-		listRV:       listRV,
-		offset:       offset,
-		limit:        req.Limit + 1, // TODO: for now we need at least one more item. Fix the caller
-		dataStore:    k.dataStore,
+		listRV: listRV,
+		offset: offset,
+		next:   next,
+		stop:   stop,
 	}
 	err := cb(&iter)
 	if err != nil {
+		iter.stop() // Clean up the iterator
 		return 0, err
 	}
+	iter.stop() // Clean up the iterator
 
 	return listRV, nil
 }
 
 // kvListIterator implements ListIterator for KV storage
 type kvListIterator struct {
-	ctx          context.Context
-	keys         []DataKey
-	currentIndex int
-	dataStore    *dataStore
-	listRV       int64
-	offset       int64
-	limit        int64
+	listRV int64
+	offset int64
 
-	// current
-	rv    int64
-	err   error
-	value []byte
+	// pull-style iterator
+	next func() (DataObj, error, bool)
+	stop func()
+
+	// current item state
+	currentDataObj *DataObj
+	value          []byte
 }
 
 func (i *kvListIterator) Next() bool {
-	i.currentIndex++
-
-	if i.currentIndex >= len(i.keys) {
+	// Pull next item from the iterator
+	dataObj, err, ok := i.next()
+	if !ok {
 		return false
 	}
-
-	if int64(i.currentIndex) >= i.limit {
-		return false
-	}
-
-	i.rv, i.err = i.keys[i.currentIndex].ResourceVersion, nil
-
-	data, err := i.dataStore.Get(i.ctx, i.keys[i.currentIndex])
 	if err != nil {
-		i.err = err
 		return false
 	}
 
-	i.value, i.err = readAndClose(data)
-	if i.err != nil {
+	i.currentDataObj = &dataObj
+
+	var readErr error
+	i.value, readErr = readAndClose(dataObj.Value)
+	if readErr != nil {
 		return false
 	}
 
-	// increment the offset
 	i.offset++
 
 	return true
@@ -439,19 +430,31 @@ func (i *kvListIterator) ContinueToken() string {
 }
 
 func (i *kvListIterator) ResourceVersion() int64 {
-	return i.rv
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.ResourceVersion
+	}
+	return 0
 }
 
 func (i *kvListIterator) Namespace() string {
-	return i.keys[i.currentIndex].Namespace
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.Namespace
+	}
+	return ""
 }
 
 func (i *kvListIterator) Name() string {
-	return i.keys[i.currentIndex].Name
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.Name
+	}
+	return ""
 }
 
 func (i *kvListIterator) Folder() string {
-	return i.keys[i.currentIndex].Folder
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.Folder
+	}
+	return ""
 }
 
 func (i *kvListIterator) Value() []byte {
@@ -825,19 +828,22 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	// Pagination: filter out items up to and including lastSeenRV
 	pagedKeys := applyPagination(filteredKeys, lastSeenRV, sortAscending)
 
+	// Create pull-style iterator from BatchGet
+	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, pagedKeys))
+
 	iter := kvHistoryIterator{
-		keys:          pagedKeys,
-		currentIndex:  -1,
-		ctx:           ctx,
 		listRV:        listRV,
 		sortAscending: sortAscending,
-		dataStore:     k.dataStore,
+		next:          next,
+		stop:          stop,
 	}
 
 	err := fn(&iter)
 	if err != nil {
+		iter.stop() // Clean up the iterator
 		return 0, err
 	}
+	iter.stop() // Clean up the iterator
 
 	return listRV, nil
 }
@@ -889,63 +895,58 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 	// Pagination: filter out items up to and including lastSeenRV
 	pagedKeys := applyPagination(filteredKeys, lastSeenRV, sortAscending)
 
+	// Create pull-style iterator from BatchGet
+	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, pagedKeys))
+
 	iter := kvHistoryIterator{
-		keys:            pagedKeys,
-		currentIndex:    -1,
-		ctx:             ctx,
 		listRV:          listRV,
 		sortAscending:   sortAscending,
-		dataStore:       k.dataStore,
 		skipProvisioned: true,
+		next:            next,
+		stop:            stop,
 	}
 
 	err = fn(&iter)
 	if err != nil {
+		iter.stop() // Clean up the iterator
 		return 0, err
 	}
+	iter.stop() // Clean up the iterator
 
 	return listRV, nil
 }
 
 // kvHistoryIterator implements ListIterator for KV storage history
 type kvHistoryIterator struct {
-	ctx             context.Context
-	keys            []DataKey
-	currentIndex    int
 	listRV          int64
 	sortAscending   bool
 	skipProvisioned bool
-	dataStore       *dataStore
 
-	// current
-	rv     int64
-	err    error
-	value  []byte
-	folder string
+	// pull-style iterator
+	next func() (DataObj, error, bool)
+	stop func()
+
+	// current item state
+	currentDataObj *DataObj
+	value          []byte
+	folder         string
 }
 
 func (i *kvHistoryIterator) Next() bool {
-	i.currentIndex++
-
-	if i.currentIndex >= len(i.keys) {
+	// Pull next item from the iterator
+	dataObj, err, ok := i.next()
+	if !ok {
 		return false
 	}
-
-	key := i.keys[i.currentIndex]
-	i.rv = key.ResourceVersion
-
-	// Read the value from the ReadCloser
-	data, err := i.dataStore.Get(i.ctx, key)
 	if err != nil {
-		i.err = err
 		return false
 	}
-	if data == nil {
-		i.err = fmt.Errorf("data is nil")
-		return false
-	}
-	i.value, i.err = readAndClose(data)
-	if i.err != nil {
+
+	i.currentDataObj = &dataObj
+
+	var readErr error
+	i.value, readErr = readAndClose(dataObj.Value)
+	if readErr != nil {
 		return false
 	}
 
@@ -953,17 +954,14 @@ func (i *kvHistoryIterator) Next() bool {
 	partial := &metav1.PartialObjectMetadata{}
 	err = json.Unmarshal(i.value, partial)
 	if err != nil {
-		i.err = err
 		return false
 	}
 
 	meta, err := utils.MetaAccessor(partial)
 	if err != nil {
-		i.err = err
 		return false
 	}
 	i.folder = meta.GetFolder()
-	i.err = nil
 
 	// if the resource is provisioned and we are skipping provisioned resources, continue onto the next one
 	if i.skipProvisioned && meta.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
@@ -974,35 +972,39 @@ func (i *kvHistoryIterator) Next() bool {
 }
 
 func (i *kvHistoryIterator) Error() error {
-	return i.err
+	return nil
 }
 
 func (i *kvHistoryIterator) ContinueToken() string {
-	if i.currentIndex < 0 || i.currentIndex >= len(i.keys) {
+	if i.currentDataObj == nil {
 		return ""
 	}
+	rv := i.currentDataObj.Key.ResourceVersion
 	token := ContinueToken{
-		StartOffset:     i.rv,
-		ResourceVersion: i.keys[i.currentIndex].ResourceVersion,
+		StartOffset:     rv,
+		ResourceVersion: rv,
 		SortAscending:   i.sortAscending,
 	}
 	return token.String()
 }
 
 func (i *kvHistoryIterator) ResourceVersion() int64 {
-	return i.rv
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.ResourceVersion
+	}
+	return 0
 }
 
 func (i *kvHistoryIterator) Namespace() string {
-	if i.currentIndex >= 0 && i.currentIndex < len(i.keys) {
-		return i.keys[i.currentIndex].Namespace
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.Namespace
 	}
 	return ""
 }
 
 func (i *kvHistoryIterator) Name() string {
-	if i.currentIndex >= 0 && i.currentIndex < len(i.keys) {
-		return i.keys[i.currentIndex].Name
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.Name
 	}
 	return ""
 }

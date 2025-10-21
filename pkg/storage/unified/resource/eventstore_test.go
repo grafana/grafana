@@ -535,9 +535,8 @@ func TestEventStore_CleanupOldEvents(t *testing.T) {
 	require.NoError(t, err)
 
 	// Clean up events older than 24 hours
-	deletedCount, err := store.CleanupOldEvents(ctx, time.Now().Add(-24*time.Hour))
+	err = store.CleanupOldEvents(ctx, time.Now().Add(-24*time.Hour))
 	require.NoError(t, err)
-	assert.Equal(t, 1, deletedCount, "Should have deleted 1 old event")
 
 	// Verify old event was deleted
 	_, err = store.Get(ctx, EventKey{
@@ -584,9 +583,8 @@ func TestEventStore_CleanupOldEvents_NoOldEvents(t *testing.T) {
 	require.NoError(t, err)
 
 	// Clean up events older than 24 hours
-	deletedCount, err := store.CleanupOldEvents(ctx, time.Now().Add(-24*time.Hour))
+	err = store.CleanupOldEvents(ctx, time.Now().Add(-24*time.Hour))
 	require.NoError(t, err)
-	assert.Equal(t, 0, deletedCount, "Should not have deleted any events")
 
 	// Verify event still exists
 	_, err = store.Get(ctx, EventKey{
@@ -606,7 +604,6 @@ func TestEventStore_CleanupOldEvents_EmptyStore(t *testing.T) {
 	store := setupTestEventStore(t)
 
 	// Clean up events from empty store
-	deletedCount, err := store.CleanupOldEvents(ctx, time.Now().Add(-24*time.Hour))
+	err := store.CleanupOldEvents(ctx, time.Now().Add(-24*time.Hour))
 	require.NoError(t, err)
-	assert.Equal(t, 0, deletedCount, "Should not have deleted any events from empty store")
 }

@@ -19,6 +19,8 @@ const (
 	dataSection = "unified/data"
 	// cache
 	groupResourcesCacheKey = "group-resources"
+	// batch operations
+	dataBatchSize = 50 // default batch size for BatchGet operations
 )
 
 // dataStore is a data store that uses a KV store to store data.
@@ -360,6 +362,63 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error)
 	return d.kv.Get(ctx, dataSection, key.String())
 }
 
+// BatchGet retrieves multiple data objects in batches.
+// It returns an iterator that yields DataObj results for the given keys.
+// Keys are processed in batches (default 50) to balance between efficiency and memory usage.
+// Non-existent entries will not appear in the result.
+func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[DataObj, error] {
+	return func(yield func(DataObj, error) bool) {
+		// Validate all keys first
+		for _, key := range keys {
+			if err := key.Validate(); err != nil {
+				yield(DataObj{}, fmt.Errorf("invalid data key %s: %w", key.String(), err))
+				return
+			}
+		}
+
+		// Process keys in batches
+		for i := 0; i < len(keys); i += dataBatchSize {
+			end := i + dataBatchSize
+			if end > len(keys) {
+				end = len(keys)
+			}
+			batch := keys[i:end]
+
+			// Convert DataKeys to string keys and create a mapping
+			stringKeys := make([]string, len(batch))
+			keyMap := make(map[string]DataKey) // map string key back to DataKey
+			for j, key := range batch {
+				strKey := key.String()
+				stringKeys[j] = strKey
+				keyMap[strKey] = key
+			}
+
+			// Call kv.BatchGet for this batch
+			for kv, err := range d.kv.BatchGet(ctx, dataSection, stringKeys) {
+				if err != nil {
+					yield(DataObj{}, err)
+					return
+				}
+
+				// Look up the original DataKey
+				dataKey, ok := keyMap[kv.Key]
+				if !ok {
+					yield(DataObj{}, fmt.Errorf("unexpected key in batch response: %s", kv.Key))
+					return
+				}
+
+				// Yield the DataObj
+				if !yield(DataObj{
+					Key:   dataKey,
+					Value: kv.Value,
+				}, nil) {
+					return
+				}
+			}
+		}
+	}
+}
+
 func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) error {
 	if err := key.Validate(); err != nil {
 		return fmt.Errorf("invalid data key: %w", err)
@@ -384,6 +443,39 @@ func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
 	}
 
 	return d.kv.Delete(ctx, dataSection, key.String())
+}
+
+// batchDelete deletes multiple data objects in batches.
+// Keys are processed in batches (default 50) to balance between efficiency and memory usage.
+func (d *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
+	// Validate all keys first
+	for _, key := range keys {
+		if err := key.Validate(); err != nil {
+			return fmt.Errorf("invalid data key %s: %w", key.String(), err)
+		}
+	}
+
+	// Process keys in batches
+	for i := 0; i < len(keys); i += dataBatchSize {
+		end := i + dataBatchSize
+		if end > len(keys) {
+			end = len(keys)
+		}
+		batch := keys[i:end]
+
+		// Convert DataKeys to string keys
+		stringKeys := make([]string, len(batch))
+		for j, key := range batch {
+			stringKeys[j] = key.String()
+		}
+
+		// Call kv.BatchDelete for this batch
+		if err := d.kv.BatchDelete(ctx, dataSection, stringKeys); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // ParseKey parses a string key into a DataKey struct

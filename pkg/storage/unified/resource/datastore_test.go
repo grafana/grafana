@@ -2949,3 +2949,148 @@ func TestDataStore_getGroupResources(t *testing.T) {
 		require.True(t, foundCombinations[expected], "Expected combination not found: %s", expected)
 	}
 }
+
+func TestDataStore_BatchGet(t *testing.T) {
+	ds := setupTestDataStore(t)
+	ctx := context.Background()
+
+	t.Run("batch get multiple existing keys", func(t *testing.T) {
+		// Create test data
+		keys := make([]DataKey, 5)
+		expectedContent := make(map[string]string)
+
+		for i := 0; i < 5; i++ {
+			rv := node.Generate().Int64()
+			keys[i] = DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            fmt.Sprintf("test-name-%d", i),
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			}
+			content := fmt.Sprintf("test-value-%d", i)
+			expectedContent[keys[i].Name] = content
+			err := ds.Save(ctx, keys[i], bytes.NewReader([]byte(content)))
+			require.NoError(t, err)
+		}
+
+		// Batch get all keys
+		results := make([]DataObj, 0, 5)
+		for obj, err := range ds.BatchGet(ctx, keys) {
+			require.NoError(t, err)
+			results = append(results, obj)
+		}
+
+		// Verify all keys were returned
+		require.Len(t, results, 5)
+
+		// Verify content matches
+		for _, result := range results {
+			resultBytes, err := io.ReadAll(result.Value)
+			require.NoError(t, err)
+			expectedValue, ok := expectedContent[result.Key.Name]
+			require.True(t, ok, "Unexpected key in results: %s", result.Key.Name)
+			require.Equal(t, expectedValue, string(resultBytes))
+		}
+	})
+
+	t.Run("batch get with some non-existent keys", func(t *testing.T) {
+		// Create 3 existing keys
+		existingKeys := make([]DataKey, 3)
+		for i := 0; i < 3; i++ {
+			rv := node.Generate().Int64()
+			existingKeys[i] = DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            fmt.Sprintf("existing-%d", i),
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			}
+			err := ds.Save(ctx, existingKeys[i], bytes.NewReader([]byte(fmt.Sprintf("value-%d", i))))
+			require.NoError(t, err)
+		}
+
+		// Create 2 non-existent keys (not saved to datastore)
+		nonExistentKeys := make([]DataKey, 2)
+		for i := 0; i < 2; i++ {
+			rv := node.Generate().Int64()
+			nonExistentKeys[i] = DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            fmt.Sprintf("non-existent-%d", i),
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			}
+		}
+
+		// Combine existing and non-existent keys
+		allKeys := append(existingKeys, nonExistentKeys...)
+
+		// Batch get all keys
+		results := make([]DataObj, 0, 3)
+		for obj, err := range ds.BatchGet(ctx, allKeys) {
+			require.NoError(t, err)
+			results = append(results, obj)
+		}
+
+		// Should only return the 3 existing keys
+		require.Len(t, results, 3)
+
+		// Verify only existing keys are returned
+		for _, result := range results {
+			require.Contains(t, result.Key.Name, "existing-")
+			// Verify content
+			resultBytes, err := io.ReadAll(result.Value)
+			require.NoError(t, err)
+			require.NotEmpty(t, resultBytes)
+		}
+	})
+
+	t.Run("batch get with large number of keys to test batching", func(t *testing.T) {
+		numKeys := 150
+		keys := make([]DataKey, numKeys)
+		expectedContent := make(map[string]string)
+
+		for i := 0; i < numKeys; i++ {
+			rv := node.Generate().Int64()
+			keys[i] = DataKey{
+				Namespace:       "batch-test",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            fmt.Sprintf("item-%d", i),
+				ResourceVersion: rv,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			}
+			content := fmt.Sprintf("content-%d", i)
+			expectedContent[keys[i].Name] = content
+			err := ds.Save(ctx, keys[i], bytes.NewReader([]byte(content)))
+			require.NoError(t, err)
+		}
+
+		// Batch get all keys
+		results := make([]DataObj, 0, numKeys)
+		for obj, err := range ds.BatchGet(ctx, keys) {
+			require.NoError(t, err)
+			results = append(results, obj)
+		}
+
+		// Verify all keys were returned
+		require.Len(t, results, numKeys)
+
+		// Verify content matches for all keys
+		for _, result := range results {
+			resultBytes, err := io.ReadAll(result.Value)
+			require.NoError(t, err)
+			expectedValue, ok := expectedContent[result.Key.Name]
+			require.True(t, ok, "Unexpected key in results: %s", result.Key.Name)
+			require.Equal(t, expectedValue, string(resultBytes))
+		}
+	})
+}
