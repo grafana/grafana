@@ -76,6 +76,7 @@ export const AnnotationMarker2 = ({
         timeZone={timeZone}
         onEdit={() => setState(STATE_EDITING)}
         links={links}
+        actions={actions}
       />
     ) : state === STATE_EDITING ? (
       <AnnotationEditor2
