@@ -400,6 +400,7 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 	rows := make([]dashv2alpha1.DashboardRowsLayoutRowKind, 0)
 
 	var currentRow *dashv2alpha1.DashboardRowsLayoutRowKind
+	var legacyRowY int64
 
 	for _, p := range panels {
 		panelMap, ok := p.(map[string]interface{})
@@ -409,6 +410,10 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 
 		if getStringField(panelMap, "type", "") == "row" {
 			// This is a row panel
+			if gridPos, ok := panelMap["gridPos"].(map[string]interface{}); ok {
+				legacyRowY = int64(getIntField(gridPos, "y", 0))
+			}
+
 			if currentRow != nil {
 				// Flush current row to layout
 				rows = append(rows, *currentRow)
@@ -422,8 +427,7 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 						element, name, err := buildElement(collapsedPanelMap)
 						if err == nil {
 							elements[name] = element
-							// Frontend preserves absolute Y coordinates for panels in rows
-							rowElements = append(rowElements, buildGridItemKind(collapsedPanelMap, name, nil))
+							rowElements = append(rowElements, buildGridItemKind(collapsedPanelMap, name, int64Ptr(yOffsetInRows(collapsedPanelMap, legacyRowY))))
 						}
 					}
 				}
@@ -442,14 +446,16 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 			if currentRow != nil {
 				// Add to current row
 				if currentRow.Spec.Layout.GridLayoutKind != nil {
-					// Frontend preserves absolute Y coordinates for panels in rows
 					currentRow.Spec.Layout.GridLayoutKind.Spec.Items = append(
 						currentRow.Spec.Layout.GridLayoutKind.Spec.Items,
-						buildGridItemKind(panelMap, elementName, nil),
+						buildGridItemKind(panelMap, elementName, int64Ptr(yOffsetInRows(panelMap, legacyRowY))),
 					)
 				}
 			} else {
 				// Create first row (hidden header)
+				// Since this row does not exist in V1, we simulate it being outside of the grid above the first panel
+				// The Y position does not matter for the rows layout, but it's used to calculate the position of the panels in the grid layout in the row.
+				legacyRowY = -1
 				gridItems := []dashv2alpha1.DashboardGridLayoutItemKind{
 					buildGridItemKind(panelMap, elementName, int64Ptr(0)),
 				}
