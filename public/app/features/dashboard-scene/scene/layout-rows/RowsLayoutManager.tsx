@@ -23,6 +23,7 @@ import { getRowFromClipboard } from '../layouts-shared/paste';
 import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
 import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
+import { isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -203,7 +204,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       for (const row of this.state.rows) {
         const layout = row.getLayout();
         if (!layout.descriptor.isGridLayout) {
-          if (layout instanceof RowsLayoutManager || layout instanceof TabsLayoutManager) {
+          if (isDashboardLayoutGroup(layout)) {
             layout.ungroup(gridLayoutType);
           } else {
             throw new Error(`Ungrouping not supported for layout type: ${layout.descriptor.name}`);
