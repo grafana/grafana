@@ -67,6 +67,7 @@
     "lodash": "4.17.21",
     "moment": "2.30.1",
     "moment-timezone": "0.5.47",
+    "monaco-editor": "0.34.1",
     "monaco-promql": "1.8.0",
     "pluralize": "8.0.0",
     "prismjs": "1.30.0",
