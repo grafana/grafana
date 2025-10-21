@@ -2,14 +2,14 @@
   "name": "@grafana-plugins/grafana-testdata-datasource",
   "description": "Generates test data in different forms",
   "private": true,
-  "version": "11.5.10",
+  "version": "11.5.11",
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@grafana/data": "11.5.10",
+    "@grafana/data": "11.5.11",
     "@grafana/experimental": "2.1.6",
-    "@grafana/runtime": "11.5.10",
-    "@grafana/schema": "11.5.10",
-    "@grafana/ui": "11.5.10",
+    "@grafana/runtime": "11.5.11",
+    "@grafana/schema": "11.5.11",
+    "@grafana/ui": "11.5.11",
     "d3-random": "^3.0.1",
     "lodash": "4.17.21",
     "micro-memoize": "^4.1.2",
@@ -22,7 +22,7 @@
     "uuid": "11.0.5"
   },
   "devDependencies": {
-    "@grafana/e2e-selectors": "11.5.10",
+    "@grafana/e2e-selectors": "11.5.11",
     "@grafana/plugin-configs": "workspace:*",
     "@testing-library/dom": "10.4.0",
     "@testing-library/react": "16.1.0",
