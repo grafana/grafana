@@ -1,2 +1,1 @@
-export { handleRequestError } from './utils/utils';
-export { getAPINamespace, getAPIBaseURL, normalizeError } from './utils/utils';
+export { getAPINamespace, getAPIBaseURL, normalizeError, handleRequestError } from './utils/utils';
