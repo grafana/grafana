@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
 import { BootData, DataQuery } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { reportInteraction, setEchoSrv } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 import config from 'app/core/config';

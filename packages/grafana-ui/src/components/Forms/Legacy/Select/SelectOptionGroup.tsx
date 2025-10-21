@@ -94,4 +94,5 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
   }
 }
 
-export const SelectOptionGroup = withTheme2(UnthemedSelectOptionGroup);
+// TODO: type this properly
+export const SelectOptionGroup: React.FC<ExtendedGroupProps> = withTheme2(UnthemedSelectOptionGroup);
