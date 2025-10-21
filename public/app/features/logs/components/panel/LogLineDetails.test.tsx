@@ -30,7 +30,10 @@ import { defaultValue } from './__mocks__/LogListContext';
 jest.mock('@grafana/assistant', () => {
   return {
     ...jest.requireActual('@grafana/assistant'),
-    useAssistant: jest.fn().mockReturnValue([true, jest.fn()]),
+    useAssistant: jest.fn().mockReturnValue({
+      isAvailable: true,
+      openAssistant: jest.fn(),
+    }),
   };
 });
 

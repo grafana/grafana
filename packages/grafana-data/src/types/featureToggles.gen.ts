@@ -299,6 +299,14 @@ export interface FeatureToggles {
   */
   kubernetesCorrelations?: boolean;
   /**
+  * Adds support for Kubernetes logs drilldown
+  */
+  kubernetesLogsDrilldown?: boolean;
+  /**
+  * Adds support for Kubernetes querycaching
+  */
+  kubernetesQueryCaching?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -1200,11 +1208,6 @@ export interface FeatureToggles {
   */
   tempoSearchBackendMigration?: boolean;
   /**
-  * Filter out bots from collecting data for Frontend Observability
-  * @default false
-  */
-  filterOutBotsFromFrontendLogs?: boolean;
-  /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
   */
@@ -1214,4 +1217,24 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsUrls?: boolean;
+  /**
+  * Enable new gauge visualization
+  * @default false
+  */
+  newGauge?: boolean;
+  /**
+  * Restrict PanelChrome contents with overflow: hidden;
+  * @default true
+  */
+  preventPanelChromeOverflow?: boolean;
+  /**
+  * Load plugins during store service startup instead of wire provider
+  * @default false
+  */
+  pluginStoreServiceLoading?: boolean;
+  /**
+  * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
+  * @default true
+  */
+  onlyStoreActionSets?: boolean;
 }
