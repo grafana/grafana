@@ -249,6 +249,7 @@ export const AnnotationsPlugin2 = ({
 
           markers.push(
             <AnnotationMarker2
+              frame={frame}
               annoIdx={i}
               annoVals={vals}
               className={className}
