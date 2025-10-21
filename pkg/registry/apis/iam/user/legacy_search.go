@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"strconv"
 
 	"google.golang.org/grpc"
@@ -40,6 +41,14 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 	signedInUser, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if req.Limit > 100 {
+		req.Limit = 100
+	}
+
+	if req.Page > math.MaxInt32 {
+		return nil, fmt.Errorf("invalid page number: %d", req.Page)
 	}
 
 	query := &user.SearchUsersQuery{
