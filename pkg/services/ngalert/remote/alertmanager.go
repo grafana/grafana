@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"maps"
@@ -13,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	openapiRuntime "github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -465,6 +467,18 @@ func (am *Alertmanager) CreateSilence(ctx context.Context, silence *apimodels.Po
 	params := amsilence.NewPostSilencesParamsWithContext(ctx).WithSilence(silence)
 	res, err := am.amClient.Silence.PostSilences(params)
 	if err != nil {
+		// Translate downstream 4xx errors into a well-known bad payload error so callers can surface HTTP 400.
+		// The swagger client returns typed errors and/or an *openapiRuntime.APIError with a Code field.
+		var badReq *amsilence.PostSilencesBadRequest
+		if errors.As(err, &badReq) {
+			return "", fmt.Errorf("%w: %v", alertingNotify.ErrCreateSilenceBadPayload, err)
+		}
+		var apiErr *openapiRuntime.APIError
+		if errors.As(err, &apiErr) {
+			if apiErr.Code >= http.StatusBadRequest && apiErr.Code < http.StatusInternalServerError {
+				return "", fmt.Errorf("%w: %v", alertingNotify.ErrCreateSilenceBadPayload, err)
+			}
+		}
 		return "", err
 	}
 
