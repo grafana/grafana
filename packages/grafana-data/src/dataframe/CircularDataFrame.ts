@@ -1,5 +1,3 @@
-import { CircularVector } from '../vector/CircularVector';
-
 import { MutableDataFrame } from './MutableDataFrame';
 
 interface CircularOptions {
@@ -11,13 +9,10 @@ interface CircularOptions {
  * This dataframe can have values constantly added, and will never
  * exceed the given capacity
  */
-export class CircularDataFrame<T = any> extends MutableDataFrame<T> {
+export class CircularDataFrame<T = unknown> extends MutableDataFrame<T> {
   constructor(options: CircularOptions) {
     super(undefined, (buffer) => {
-      return new CircularVector({
-        ...options,
-        buffer,
-      });
+      return [{ ...options, buffer }];
     });
   }
 }

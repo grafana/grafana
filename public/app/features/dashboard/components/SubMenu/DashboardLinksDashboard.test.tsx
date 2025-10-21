@@ -134,8 +134,9 @@ describe.each([
     it('should filter out the calling dashboardUID', async () => {
       const { link, linkSrv, sanitize, sanitizeUrl } = setupTestContext();
       const { view: searchHits, totalRows } = await searchForTags([]);
+      const searchHitsArray = [...searchHits];
 
-      const results = resolveLinks(dashbdD.item.uid, link, searchHits, {
+      const results = resolveLinks(dashbdD.item.uid, link, searchHitsArray, {
         getLinkSrv: () => linkSrv,
         sanitize,
         sanitizeUrl,
@@ -153,8 +154,9 @@ describe.each([
     it('should resolve link url', async () => {
       const { link, linkSrv, sanitize, sanitizeUrl } = setupTestContext();
       const { view: searchHits, totalRows } = await searchForTags([]);
+      const searchHitsArray = [...searchHits];
 
-      const results = resolveLinks(dashboardUID, link, searchHits, {
+      const results = resolveLinks(dashboardUID, link, searchHitsArray, {
         getLinkSrv: () => linkSrv,
         sanitize,
         sanitizeUrl,
@@ -168,8 +170,9 @@ describe.each([
     it('should sanitize title', async () => {
       const { link, linkSrv, sanitize, sanitizeUrl } = setupTestContext();
       const { view: searchHits, totalRows } = await searchForTags([]);
+      const searchHitsArray = [...searchHits];
 
-      const results = resolveLinks(dashboardUID, link, searchHits, {
+      const results = resolveLinks(dashboardUID, link, searchHitsArray, {
         getLinkSrv: () => linkSrv,
         sanitize,
         sanitizeUrl,
@@ -184,7 +187,9 @@ describe.each([
       const { link, linkSrv, sanitize, sanitizeUrl } = setupTestContext();
       const result = await searchForTags([]);
       const { view: searchHits, totalRows } = result;
-      const results = resolveLinks(dashboardUID, link, searchHits, {
+      const searchHitsArray = [...searchHits];
+
+      const results = resolveLinks(dashboardUID, link, searchHitsArray, {
         getLinkSrv: () => linkSrv,
         sanitize,
         sanitizeUrl,

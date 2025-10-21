@@ -120,7 +120,8 @@ const useResolvedLinks = ({ link, dashboardUID }: Pick<Props, 'link' | 'dashboar
   if (!result.value) {
     return [];
   }
-  return resolveLinks(dashboardUID, link, result.value.view);
+  const resultArray = Array.from(result.value.view);
+  return resolveLinks(dashboardUID, link, resultArray);
 };
 
 interface ResolvedLinkDTO {
