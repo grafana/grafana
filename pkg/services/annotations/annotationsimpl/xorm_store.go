@@ -292,6 +292,7 @@ func tagSet[T any](fn func(T) int64, list []T) map[int64]struct{} {
 	return set
 }
 
+//nolint:gocyclo
 func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
