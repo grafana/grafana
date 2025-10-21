@@ -1,6 +1,7 @@
 {
   "author": "Grafana Labs",
   "license": "Apache-2.0",
+  "private": true,
   "name": "@grafana/api-clients",
   "version": "12.3.0-pre",
   "description": "Grafana API client utilities",
