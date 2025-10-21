@@ -86,8 +86,6 @@ func convertFilePathHashIndexToPrimaryKey(mg *migrator.Migrator) {
 	mysqlMigration1.Condition = &migrator.IfColumnExistsCondition{TableName: "file", ColumnName: "my_row_id"}
 	mg.AddMigration("drop my_row_id and add primary key to file table if my_row_id exists (auto-generated mysql column)", mysqlMigration1)
 
-	// migrations 2 and 3 are separated so we skip the statement if it was already exectude before, because MySQL may
-	// not support IF EXISTS syntax
 	mysqlMigration2 := migrator.NewRawSQLMigration("").Mysql(`ALTER TABLE file DROP INDEX UQE_file_path_hash`)
 	mysqlMigration2.Condition = &migrator.IfIndexExistsCondition{TableName: "file", IndexName: "UQE_file_path_hash"}
 	mg.AddMigration("drop file_path unique index from file table if it exists (mysql)", mysqlMigration2)
@@ -159,8 +157,6 @@ func convertFileMetaPathHashKeyIndexToPrimaryKey(mg *migrator.Migrator) {
 	mysqlMigration1.Condition = &migrator.IfColumnExistsCondition{TableName: "file_meta", ColumnName: "my_row_id"}
 	mg.AddMigration("drop my_row_id and add primary key to file_meta table if my_row_id exists (auto-generated mysql column)", mysqlMigration1)
 
-	// migrations 2 and 3 are separated so we skip the statement if it was already exectude before, because MySQL may
-	// not support IF EXISTS syntax
 	mysqlMigration2 := migrator.NewRawSQLMigration("").Mysql(`ALTER TABLE file_meta DROP INDEX UQE_file_meta_path_hash_key`)
 	mysqlMigration2.Condition = &migrator.IfIndexExistsCondition{TableName: "file_meta", IndexName: "UQE_file_meta_path_hash_key"}
 	mg.AddMigration("drop file_path unique index from file_meta table if it exists (mysql)", mysqlMigration2)
