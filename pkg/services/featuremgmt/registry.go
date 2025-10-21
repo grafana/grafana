@@ -505,6 +505,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesQueryCaching",
+			Description:     "Adds support for Kubernetes querycaching",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -1054,6 +1061,14 @@ var (
 		{
 			Name:              "zanzana",
 			Description:       "Use openFGA as authorization engine.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "zanzanaNoLegacyClient",
+			Description:       "Use openFGA as main authorization engine and disable legacy RBAC clietn.",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
@@ -2101,6 +2116,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "newGauge",
+			Description:  "Enable new gauge visualization",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
 		},
 		{

@@ -271,6 +271,10 @@ const (
 	// Adds support for Kubernetes logs drilldown
 	FlagKubernetesLogsDrilldown = "kubernetesLogsDrilldown"
 
+	// FlagKubernetesQueryCaching
+	// Adds support for Kubernetes querycaching
+	FlagKubernetesQueryCaching = "kubernetesQueryCaching"
+
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
 	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
@@ -562,6 +566,10 @@ const (
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
+
+	// FlagZanzanaNoLegacyClient
+	// Use openFGA as main authorization engine and disable legacy RBAC clietn.
+	FlagZanzanaNoLegacyClient = "zanzanaNoLegacyClient"
 
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
@@ -1089,6 +1097,10 @@ const (
 	// FlagCdnPluginsUrls
 	// Enable loading plugins via declarative URLs
 	FlagCdnPluginsUrls = "cdnPluginsUrls"
+
+	// FlagNewGauge
+	// Enable new gauge visualization
+	FlagNewGauge = "newGauge"
 
 	// FlagPreventPanelChromeOverflow
 	// Restrict PanelChrome contents with overflow: hidden;

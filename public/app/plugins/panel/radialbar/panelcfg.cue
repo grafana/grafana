@@ -29,7 +29,7 @@ composableKinds: PanelCfg: {
 					barGlow?: bool | *false
 					spotlight?: bool | *false
 					rounded?: bool | *false	
-					centerGlow?: bool | *true
+					centerGlow?: bool | *false
 				 } @cuetsy(kind="interface")
 
 				Options: {
@@ -38,10 +38,10 @@ composableKinds: PanelCfg: {
 					showThresholdLabels: bool | *false
 					segmentCount: number | *1
 					segmentSpacing: number | *0.3
-					sparkline?: bool | *false
+					sparkline?: bool | *true
 					shape: "circle" | *"gauge"	
-					barWidthFactor: number | *0.4
-					gradient: *"none" | "auto" 
+					barWidthFactor: number | *0.5
+					gradient: "none" | *"auto" 
 					effects: GaugePanelEffects | *{}
 				} @cuetsy(kind="interface")
 			}
