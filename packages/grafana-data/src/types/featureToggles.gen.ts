@@ -299,6 +299,14 @@ export interface FeatureToggles {
   */
   kubernetesCorrelations?: boolean;
   /**
+  * Adds support for Kubernetes logs drilldown
+  */
+  kubernetesLogsDrilldown?: boolean;
+  /**
+  * Adds support for Kubernetes querycaching
+  */
+  kubernetesQueryCaching?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -1030,6 +1038,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzResourcePermissionApis?: boolean;
   /**
+  * Enable sync of Zanzana authorization store on AuthZ CRD mutations
+  */
+  kubernetesAuthzZanzanaSync?: boolean;
+  /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;
@@ -1092,6 +1104,11 @@ export interface FeatureToggles {
   * @default false
   */
   enableAppChromeExtensions?: boolean;
+  /**
+  * Set this to true to enable all dashboard empty state extensions registered by plugins.
+  * @default false
+  */
+  enableDashboardEmptyExtensions?: boolean;
   /**
   * Enables use of app platform API for folders
   * @default false
@@ -1157,6 +1174,10 @@ export interface FeatureToggles {
   */
   teamFolders?: boolean;
   /**
+  * Enables Pathfinder app
+  */
+  grafanaPathfinder?: boolean;
+  /**
   * Enables the alerting triage feature
   * @default false
   */
@@ -1187,11 +1208,6 @@ export interface FeatureToggles {
   */
   tempoSearchBackendMigration?: boolean;
   /**
-  * Filter out bots from collecting data for Frontend Observability
-  * @default false
-  */
-  filterOutBotsFromFrontendLogs?: boolean;
-  /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
   */
@@ -1201,4 +1217,24 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsUrls?: boolean;
+  /**
+  * Enable new gauge visualization
+  * @default false
+  */
+  newGauge?: boolean;
+  /**
+  * Restrict PanelChrome contents with overflow: hidden;
+  * @default true
+  */
+  preventPanelChromeOverflow?: boolean;
+  /**
+  * Load plugins during store service startup instead of wire provider
+  * @default false
+  */
+  pluginStoreServiceLoading?: boolean;
+  /**
+  * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
+  * @default true
+  */
+  onlyStoreActionSets?: boolean;
 }

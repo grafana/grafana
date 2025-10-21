@@ -1665,6 +1665,15 @@
     "inspector-yaml-tab": {
       "apply": "Zastosuj"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2330,6 +2339,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Źródło danych"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Wyrażenie"
     },
@@ -2583,6 +2595,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Dodano lub zaktualizowano regułę alertu. Pojawienie się zmian w widoku Lista reguł alertów może potrwać do minuty.",
         "alert-title": "Aktualizacja w toku"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Podczas oceniania tej reguły alertu wystąpił problem"
     },
@@ -2954,10 +2970,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "Dodaj wyrażenie"
@@ -4547,7 +4575,8 @@
       "paste-row": "Wklej wiersz",
       "paste-tab": "Wklej kartę",
       "un-group-panels": "Rozłącz grupę",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4647,7 +4676,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "Pulpit {{dashboardName}}"
+      "aria-label-dashboard-name": "Pulpit {{dashboardName}}",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Anuluj wczytywanie pulpitu"
@@ -4840,7 +4870,11 @@
       "add-visualization-header": "Dodaj wizualizację, aby rozpocząć tworzenie nowego pulpitu",
       "import-a-dashboard-body": "Zaimportuj pulpity z plików lub witryny <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importuj pulpit",
-      "import-dashboard-button": "Importuj pulpit"
+      "import-dashboard-button": "Importuj pulpit",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Nie udało się załadować pulpitu"
@@ -5053,6 +5087,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Kopiuj",
         "copy-or-duplicate": "Kopiuj lub duplikuj",
@@ -5062,7 +5097,10 @@
         "group-layout-disabled": "Brak grup na tym poziomie",
         "panel-layout": "Układ panelu",
         "panel-layout-disabled": "Wybierz wiersz lub kartę, aby zmienić opcje układu panelu"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5214,7 +5252,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "Usunięcie tego wiersza spowoduje również usunięcie wszystkich paneli. Na pewno chcesz kontynuować?",
       "delete-row-title": "Usunąć wiersz?",
@@ -5254,9 +5291,7 @@
         "title-not-unique": "Ten tytuł nie jest unikalny"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Pulpit został zapisany"
@@ -5346,6 +5381,9 @@
       "delete-tab-title": "Usunąć kartę?",
       "delete-tab-yes": "Usuń",
       "description": "Organizuj panele w poziome karty",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Karty",
       "tab": {
         "new": "Nowa karta",
@@ -7691,6 +7729,7 @@
   },
   "gauge": {
     "category-gauge": "Wskaźnik",
+    "category-radial-bar": "",
     "description-min-height": "Minimalna wysokość wiersza (orientacja pozioma)",
     "description-min-width": "Minimalna szerokość kolumny (orientacja pionowa)",
     "description-neutral": "Pozostaw puste, aby użyć wartości minimalnej jako punktu neutralnego",
@@ -7706,7 +7745,8 @@
     "name-neutral": "Neutralne",
     "name-show-threshold-labels": "Pokaż etykiety progów",
     "name-show-threshold-markers": "Pokaż znaczniki progów",
-    "placeholder-neutral": "automatycznie"
+    "placeholder-neutral": "automatycznie",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Zastosuj",
@@ -9110,6 +9150,8 @@
       "make-time-range-permanent": "Ustaw bezwzględny/stały zakres czasu",
       "move-time-range-back": "Przesuń zakres czasu wstecz",
       "move-time-range-forward": "Przesuń zakres czasu do przodu",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Otwórz wyszukiwanie",
       "open-share-embed-drawer": "Udostępnij osadzenie panelu",
       "open-share-link-drawer": "Udostępnij link do panelu",
@@ -11872,7 +11914,8 @@
       "button-cancelling": "Anulowanie…",
       "button-previous": "Wstecz",
       "button-submitting": "Zgłaszanie…",
-      "error-instance-repository-exists": "Repozytorium instancji już istnieje"
+      "error-instance-repository-exists": "Repozytorium instancji już istnieje",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12097,6 +12140,28 @@
       "show-response": "Pokaż odpowiedź"
     },
     "query-editor-not-exported": "Wtyczka źródła danych nie eksportuje żadnego komponentu Edytora zapytań"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {

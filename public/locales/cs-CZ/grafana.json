@@ -1665,6 +1665,15 @@
     "inspector-yaml-tab": {
       "apply": "Použít"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2330,6 +2339,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Zdroj dat"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Výraz"
     },
@@ -2583,6 +2595,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Pravidlo výstrahy bylo přidáno nebo aktualizováno. Může trvat až minutu, než se změny projeví v zobrazení seznamu pravidel výstrah.",
         "alert-title": "Probíhá aktualizace"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Při vyhodnocování tohoto pravidla výstrahy se něco pokazilo"
     },
@@ -2954,10 +2970,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "Přidat výraz"
@@ -4547,7 +4575,8 @@
       "paste-row": "Vložit řádek",
       "paste-tab": "Vložit záložku",
       "un-group-panels": "Zrušit seskupení",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4647,7 +4676,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "Nástěnka {{dashboardName}}"
+      "aria-label-dashboard-name": "Nástěnka {{dashboardName}}",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Zrušit načítání nástěnky"
@@ -4840,7 +4870,11 @@
       "add-visualization-header": "Začněte novou nástěnku přidáním vizualizace",
       "import-a-dashboard-body": "Importujte nástěnky ze souborů nebo z <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importovat nástěnku",
-      "import-dashboard-button": "Importovat nástěnku"
+      "import-dashboard-button": "Importovat nástěnku",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Nástěnku se nepodařilo načíst"
@@ -5053,6 +5087,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Kopírovat",
         "copy-or-duplicate": "Kopírovat nebo duplikovat",
@@ -5062,7 +5097,10 @@
         "group-layout-disabled": "Na této úrovni neexistují žádné skupiny",
         "panel-layout": "Rozvržení panelu",
         "panel-layout-disabled": "Vyberte řádek nebo záložku pro změnu možností rozvržení panelu"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5214,7 +5252,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "Odstraněním tohoto řádku dojde také k odebrání všech panelů. Opravdu chcete pokračovat?",
       "delete-row-title": "Odstranit řádek?",
@@ -5254,9 +5291,7 @@
         "title-not-unique": "Tento název není jedinečný"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Nástěnka byla uložena"
@@ -5346,6 +5381,9 @@
       "delete-tab-title": "Odstranit záložku?",
       "delete-tab-yes": "Odstranit",
       "description": "Uspořádat panely do vodorovných karet",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Karty",
       "tab": {
         "new": "Nová karta",
@@ -7691,6 +7729,7 @@
   },
   "gauge": {
     "category-gauge": "Měřidlo",
+    "category-radial-bar": "",
     "description-min-height": "Minimální výška řádku (vodorovná orientace)",
     "description-min-width": "Minimální šířka sloupce (svislá orientace)",
     "description-neutral": "Ponechte prázdné pro použití Min. jako neutrálního bodu",
@@ -7706,7 +7745,8 @@
     "name-neutral": "Neutrální",
     "name-show-threshold-labels": "Zobrazit štítky prahových hodnot",
     "name-show-threshold-markers": "Zobrazit značky prahových hodnot",
-    "placeholder-neutral": "auto."
+    "placeholder-neutral": "auto.",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Použít",
@@ -9110,6 +9150,8 @@
       "make-time-range-permanent": "Nastavit absolutní/trvalý časový rozsah",
       "move-time-range-back": "Přesunout časový rozsah dozadu",
       "move-time-range-forward": "Přesunout časový rozsah dopředu",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Otevřít vyhledávání",
       "open-share-embed-drawer": "Sdílet vložení panelu",
       "open-share-link-drawer": "Sdílet odkaz na panel",
@@ -11872,7 +11914,8 @@
       "button-cancelling": "Probíhá zrušení…",
       "button-previous": "Předchozí",
       "button-submitting": "Odesílání…",
-      "error-instance-repository-exists": "Instance úložiště už existuje"
+      "error-instance-repository-exists": "Instance úložiště už existuje",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12097,6 +12140,28 @@
       "show-response": "Zobrazit odpověď"
     },
     "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {

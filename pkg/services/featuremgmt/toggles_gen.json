@@ -1082,14 +1082,16 @@
     {
       "metadata": {
         "name": "dashboardLibrary",
-        "resourceVersion": "1758902532246",
-        "creationTimestamp": "2025-09-26T16:02:12Z"
+        "resourceVersion": "1760051989635",
+        "creationTimestamp": "2025-09-26T16:02:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-09 23:19:49.635811 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable suggested dashboards when creating new dashboards",
         "stage": "experimental",
-        "codeowner": "@grafana/sharing-squad",
-        "frontend": true
+        "codeowner": "@grafana/sharing-squad"
       }
     },
     {
@@ -1377,6 +1379,22 @@
         "description": "Set this to true to enable all app chrome extensions registered by plugins.",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "enableDashboardEmptyExtensions",
+        "resourceVersion": "1759194774156",
+        "creationTimestamp": "2025-09-30T01:12:54Z"
+      },
+      "spec": {
+        "description": "Set this to true to enable all dashboard empty state extensions registered by plugins.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromAdminPage": true,
         "hideFromDocs": true,
@@ -1674,7 +1692,8 @@
       "metadata": {
         "name": "filterOutBotsFromFrontendLogs",
         "resourceVersion": "1758000919535",
-        "creationTimestamp": "2025-09-16T05:35:19Z"
+        "creationTimestamp": "2025-09-16T05:35:19Z",
+        "deletionTimestamp": "2025-10-13T11:09:22Z"
       },
       "spec": {
         "description": "Filter out bots from collecting data for Frontend Observability",
@@ -1798,6 +1817,21 @@
         "codeowner": "@grafana/alerting-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafanaPathfinder",
+        "resourceVersion": "1760434668782",
+        "creationTimestamp": "2025-08-20T12:30:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-14 09:37:48.782577 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Pathfinder app",
+        "stage": "preview",
+        "codeowner": "@grafana/pathfinder"
       }
     },
     {
@@ -2157,6 +2191,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzZanzanaSync",
+        "resourceVersion": "1758887751768",
+        "creationTimestamp": "2025-09-26T09:35:02Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-09-26 11:55:51.768754 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesCorrelations",
         "resourceVersion": "1757513374180",
         "creationTimestamp": "2025-09-10T14:09:34Z"
@@ -2214,6 +2265,35 @@
     },
     {
       "metadata": {
+        "name": "kubernetesLogsDrilldown",
+        "resourceVersion": "1760632282014",
+        "creationTimestamp": "2025-10-07T19:26:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-16 16:31:22.014483 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes logs drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesQueryCaching",
+        "resourceVersion": "1760972620939",
+        "creationTimestamp": "2025-10-20T15:03:40Z"
+      },
+      "spec": {
+        "description": "Adds support for Kubernetes querycaching",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesShortURLs",
         "resourceVersion": "1756914263808",
         "creationTimestamp": "2025-08-04T12:12:12Z",
@@ -2252,6 +2332,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesZanzanaPopulate",
+        "resourceVersion": "1758879077577",
+        "creationTimestamp": "2025-09-26T09:31:17Z",
+        "deletionTimestamp": "2025-09-26T09:35:02Z"
+      },
+      "spec": {
+        "description": "Populate Zanzana on AuthZ CRDs creation or update",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -2601,6 +2696,20 @@
     },
     {
       "metadata": {
+        "name": "newGauge",
+        "resourceVersion": "1760700645318",
+        "creationTimestamp": "2025-10-17T11:30:45Z"
+      },
+      "spec": {
+        "description": "Enable new gauge visualization",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newInfluxDSConfigPageDesign",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-06-25T16:39:54Z"
@@ -2689,6 +2798,24 @@
         "description": "Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.",
         "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "onlyStoreActionSets",
+        "resourceVersion": "1759844046154",
+        "creationTimestamp": "2025-10-07T13:24:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-07 13:34:06.15476 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
         "expression": "true"
       }
     },
@@ -2856,6 +2983,19 @@
     },
     {
       "metadata": {
+        "name": "pluginStoreServiceLoading",
+        "resourceVersion": "1760712768362",
+        "creationTimestamp": "2025-10-17T14:52:48Z"
+      },
+      "spec": {
+        "description": "Load plugins during store service startup instead of wire provider",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsAutoUpdate",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-04-16T11:44:39Z"
@@ -2954,6 +3094,20 @@
         "codeowner": "@grafana/dashboards-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "preventPanelChromeOverflow",
+        "resourceVersion": "1760704390127",
+        "creationTimestamp": "2025-10-17T12:33:10Z"
+      },
+      "spec": {
+        "description": "Restrict PanelChrome contents with overflow: hidden;",
+        "stage": "preview",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -3156,7 +3310,8 @@
       "metadata": {
         "name": "queryServiceWithConnections",
         "resourceVersion": "1756367172351",
-        "creationTimestamp": "2025-08-28T07:46:12Z"
+        "creationTimestamp": "2025-08-28T19:28:26Z",
+        "deletionTimestamp": "2025-08-29T12:49:57Z"
       },
       "spec": {
         "description": "Adds datasource connections to the query service",

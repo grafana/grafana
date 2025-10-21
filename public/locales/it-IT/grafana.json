@@ -1655,6 +1655,15 @@
     "inspector-yaml-tab": {
       "apply": "Applica"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2314,6 +2323,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Sorgente dati"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Espressione"
     },
@@ -2559,6 +2571,10 @@
       "prometheus-consistency-check": {
         "alert-message": "La regola di avviso è stata aggiunta o aggiornata. Potrebbe essere necessario attendere fino a un minuto per visualizzare le modifiche nella vista elenco delle regole di avviso.",
         "alert-title": "Aggiornamento in corso"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Si è verificato un errore durante la valutazione di questa regola di avviso"
     },
@@ -2930,10 +2946,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "Aggiungi espressione"
@@ -4507,7 +4535,8 @@
       "paste-row": "Incolla riga",
       "paste-tab": "Incolla scheda",
       "un-group-panels": "Annulla raggruppamento",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4607,7 +4636,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "Dashboard {{dashboardName}}"
+      "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Annulla caricamento della dashboard"
@@ -4800,7 +4830,11 @@
       "add-visualization-header": "Avvia il tuo nuovo dashboard aggiungendo una visualizzazione",
       "import-a-dashboard-body": "Importa dashboard da file o <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importa un dashboard",
-      "import-dashboard-button": "Importa dashboard"
+      "import-dashboard-button": "Importa dashboard",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Impossibile caricare il dashboard"
@@ -5013,6 +5047,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Copia",
         "copy-or-duplicate": "Copia o duplica",
@@ -5022,7 +5057,10 @@
         "group-layout-disabled": "Non esistono gruppi a questo livello",
         "panel-layout": "Layout del pannello",
         "panel-layout-disabled": "Seleziona una riga o una scheda per modificare le opzioni di layout del pannello"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5172,7 +5210,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "L'eliminazione di questa riga rimuoverà anche tutti i pannelli. Desideri continuare?",
       "delete-row-title": "Elimina riga?",
@@ -5212,9 +5249,7 @@
         "title-not-unique": "Questo titolo non è univoco"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard salvata"
@@ -5304,6 +5339,9 @@
       "delete-tab-title": "Eliminare la scheda?",
       "delete-tab-yes": "Elimina",
       "description": "Organizza i pannelli in schede orizzontali",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Schede",
       "tab": {
         "new": "Nuova scheda",
@@ -7645,6 +7683,7 @@
   },
   "gauge": {
     "category-gauge": "Calibro",
+    "category-radial-bar": "",
     "description-min-height": "Altezza minima della riga (orientamento orizzontale)",
     "description-min-width": "Larghezza minima della colonna (orientamento verticale)",
     "description-neutral": "Lascia vuoto per utilizzare Min come punto neutro",
@@ -7660,7 +7699,8 @@
     "name-neutral": "Normale",
     "name-show-threshold-labels": "Mostra etichette di soglia",
     "name-show-threshold-markers": "Mostra indicatori di soglia",
-    "placeholder-neutral": "automatico"
+    "placeholder-neutral": "automatico",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Applica",
@@ -9064,6 +9104,8 @@
       "make-time-range-permanent": "Rendi l'intervallo di tempo assoluto/permanente",
       "move-time-range-back": "Sposta indietro l'intervallo di tempo",
       "move-time-range-forward": "Sposta avanti l'intervallo di tempo",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Apri ricerca",
       "open-share-embed-drawer": "Condividi incorporamento pannello",
       "open-share-link-drawer": "Condividi link pannello",
@@ -11792,7 +11834,8 @@
       "button-cancelling": "Annullamento in corso...",
       "button-previous": "Precedente",
       "button-submitting": "Invio in corso...",
-      "error-instance-repository-exists": "Il repository delle istanze esiste già"
+      "error-instance-repository-exists": "Il repository delle istanze esiste già",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12015,6 +12058,28 @@
       "show-response": "Mostra la risposta"
     },
     "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
