@@ -392,6 +392,7 @@ type kvListIterator struct {
 	// current item state
 	currentDataObj *DataObj
 	value          []byte
+	err            error
 }
 
 func (i *kvListIterator) Next() bool {
@@ -401,14 +402,15 @@ func (i *kvListIterator) Next() bool {
 		return false
 	}
 	if err != nil {
+		i.err = err
 		return false
 	}
 
 	i.currentDataObj = &dataObj
 
-	var readErr error
-	i.value, readErr = readAndClose(dataObj.Value)
-	if readErr != nil {
+	i.value, err = readAndClose(dataObj.Value)
+	if err != nil {
+		i.err = err
 		return false
 	}
 
@@ -418,7 +420,7 @@ func (i *kvListIterator) Next() bool {
 }
 
 func (i *kvListIterator) Error() error {
-	return nil
+	return i.err
 }
 
 func (i *kvListIterator) ContinueToken() string {
@@ -924,6 +926,7 @@ type kvHistoryIterator struct {
 	currentDataObj *DataObj
 	value          []byte
 	folder         string
+	err            error
 }
 
 func (i *kvHistoryIterator) Next() bool {
@@ -933,14 +936,15 @@ func (i *kvHistoryIterator) Next() bool {
 		return false
 	}
 	if err != nil {
+		i.err = err
 		return false
 	}
 
 	i.currentDataObj = &dataObj
 
-	var readErr error
-	i.value, readErr = readAndClose(dataObj.Value)
-	if readErr != nil {
+	i.value, err = readAndClose(dataObj.Value)
+	if err != nil {
+		i.err = err
 		return false
 	}
 
@@ -948,11 +952,13 @@ func (i *kvHistoryIterator) Next() bool {
 	partial := &metav1.PartialObjectMetadata{}
 	err = json.Unmarshal(i.value, partial)
 	if err != nil {
+		i.err = err
 		return false
 	}
 
 	meta, err := utils.MetaAccessor(partial)
 	if err != nil {
+		i.err = err
 		return false
 	}
 	i.folder = meta.GetFolder()
@@ -966,7 +972,7 @@ func (i *kvHistoryIterator) Next() bool {
 }
 
 func (i *kvHistoryIterator) Error() error {
-	return nil
+	return i.err
 }
 
 func (i *kvHistoryIterator) ContinueToken() string {
