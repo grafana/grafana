@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { th } from '@faker-js/faker/.';
 import { HTMLAttributes } from 'react';
 import * as React from 'react';
 
