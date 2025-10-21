@@ -6,8 +6,9 @@ import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService, logInfo } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { Alert, Button, Drawer } from '@grafana/ui';
+import { Alert, Button } from '@grafana/ui';
 import { LogMessages } from 'app/features/alerting/unified/Analytics';
+import { AlertRuleDrawerForm } from 'app/features/alerting/unified/components/AlertRuleDrawerForm';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 
 interface ScenesNewRuleFromPanelButtonProps {
@@ -67,20 +68,12 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
           className={className}
           data-testid="create-alert-rule-button-drawer"
           onClick={() => {
-            // logInfo(LogMessages.alertRuleFromPanel);
             setIsOpen(true);
           }}
         >
           <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
         </Button>
-        {isOpen && (
-          <Drawer
-            title={t('alerting.new-rule-from-panel-button.new-alert-rule', 'New alert rule')}
-            onClose={() => setIsOpen(false)}
-          >
-            <Trans i18nKey="alerting.new-rule-from-panel-button.content-coming-soon">Content coming soon...</Trans>
-          </Drawer>
-        )}
+        <AlertRuleDrawerForm isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </>
     );
   }
