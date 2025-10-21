@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-kit/log/level"
-	"github.com/grafana/dskit/services"
 	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/contrib/samplers/jaegerremote"
 	"go.opentelemetry.io/otel"
@@ -29,9 +27,11 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc/credentials"
 
+	"github.com/go-kit/log/level"
+
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -103,23 +103,6 @@ func ProvideService(tracingCfg *TracingConfig) (*TracingService, error) {
 		return nil, err
 	}
 	return ots, nil
-}
-
-// InitTracing initializes the tracing service with the provided configuration.
-// Used to initialize tracing early to ensure it's always available for other
-// services, outside of the wire context.
-func InitTracing(cfg *setting.Cfg) error {
-	tracingCfg, err := ParseTracingConfig(cfg)
-	if err != nil {
-		return fmt.Errorf("parse tracing config: %w", err)
-	}
-
-	_, err = ProvideService(tracingCfg)
-	if err != nil {
-		return fmt.Errorf("initialize tracing: %w", err)
-	}
-
-	return nil
 }
 
 func NewNoopTracerService() *TracingService {
