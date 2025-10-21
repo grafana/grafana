@@ -1,20 +1,11 @@
 import { css } from '@emotion/css';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useReducer } from 'react';
 import * as React from 'react';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import {
-  ActionModel,
-  arrayToDataFrame,
-  colorManipulator,
-  DataFrame,
-  DataTopic,
-  Field,
-  InterpolateFunction,
-  LinkModel,
-} from '@grafana/data';
+import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, InterpolateFunction } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import {
   DEFAULT_ANNOTATION_COLOR,
@@ -24,8 +15,6 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-
-import { getDataLinks, getFieldActions } from '../../status-history/utils';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
 
@@ -94,7 +83,7 @@ export const AnnotationsPlugin2 = ({
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
 
   const { canExecuteActions } = usePanelContext();
-  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
+  const userCanExecuteActions = canExecuteActions?.() ?? false;
 
   const annos = useMemo(() => {
     let annos = annotations.filter(
@@ -134,6 +123,7 @@ export const AnnotationsPlugin2 = ({
   annoRef.current = annos;
   const newRangeRef = useRef(newRange);
   newRangeRef.current = newRange;
+
   const xAxisRef = useRef<HTMLDivElement>();
 
   useLayoutEffect(() => {
@@ -268,24 +258,10 @@ export const AnnotationsPlugin2 = ({
         // @TODO: Reset newRange after annotation is saved
         if (isVisible) {
           let isWip = frame.meta?.custom?.isWip;
-          const links: LinkModel[] = [];
-          const actions: Array<ActionModel<Field>> = [];
-
-          // @todo only grab links/actions from y-axis field, or from all fields?
-          frame.fields.forEach((field: Field) => {
-            // Get data links
-            links.push(...getDataLinks(field, i));
-
-            // Get actions
-            if (userCanExecuteActions && field.state?.scopedVars) {
-              actions.push(...getFieldActions(frame, field, replaceVariables, i));
-            }
-          });
 
           markers.push(
             <AnnotationMarker2
-              actions={actions}
-              links={links}
+              frame={frame}
               annoIdx={i}
               annoVals={vals}
               className={className}
@@ -294,6 +270,8 @@ export const AnnotationsPlugin2 = ({
               key={`${frameIdx}:${i}`}
               exitWipEdit={isWip ? exitWipEdit : null}
               portalRoot={portalRoot}
+              canExecuteActions={userCanExecuteActions}
+              replaceVariables={replaceVariables}
             />
           );
         }

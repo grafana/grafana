@@ -22,8 +22,6 @@ export const getDataLinks = (field: Field, rowIdx: number) => {
   return links;
 };
 
-export const getAllFrameActions = (dataFrame: DataFrame) => {};
-
 export const getFieldActions = (
   dataFrame: DataFrame,
   field: Field,
@@ -31,9 +29,10 @@ export const getFieldActions = (
   rowIndex: number
 ) => {
   const actions: Array<ActionModel<Field>> = [];
-  const actionLookup = new Set<string>();
 
   if (field.state?.scopedVars) {
+    const actionLookup = new Set<string>();
+
     const actionsModel = getActions(dataFrame, field, field.state.scopedVars, replaceVars, field.config.actions ?? [], {
       valueRowIndex: rowIndex,
     });
@@ -45,8 +44,6 @@ export const getFieldActions = (
         actionLookup.add(key);
       }
     });
-  } else {
-    console.warn(`Unable to get actions for field: ${field.name}, in frame: ${dataFrame.name}`);
   }
 
   return actions;
