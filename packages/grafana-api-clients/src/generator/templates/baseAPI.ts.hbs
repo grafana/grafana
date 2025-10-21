@@ -1,10 +1,11 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
 {{#if isEnterprise}}
-import { createBaseQuery, getAPIBaseURL } from '@grafana/api-clients';
+import { getAPIBaseURL } from '@grafana/api-clients';
+import { createBaseQuery } from '@grafana/api-clients/rtkq';
 {{else}}
-import { createBaseQuery } from '../../../../utils/createBaseQuery';
 import { getAPIBaseURL } from '../../../../utils/utils';
+import { createBaseQuery } from '../../createBaseQuery';
 {{/if}}
 
 export const API_GROUP = '{{group}}' as const;
