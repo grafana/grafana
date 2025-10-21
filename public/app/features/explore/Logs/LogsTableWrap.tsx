@@ -8,10 +8,12 @@ import {
   ExploreLogsPanelState,
   GrafanaTheme2,
   Labels,
+  LogRowModel,
   LogsSortOrder,
   SelectableValue,
   SplitOpen,
   TimeRange,
+  AbsoluteTimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -36,6 +38,11 @@ interface Props extends Themeable2 {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   datasourceType?: string;
+  exploreId?: string;
+  displayedFields?: string[];
+  visualisationType?: 'table';
+  absoluteRange?: AbsoluteTimeRange;
+  logRows?: LogRowModel[];
 }
 
 type ActiveFieldMeta = {
@@ -656,6 +663,12 @@ export function LogsTableWrap(props: Props) {
               : undefined
           }
           onSortByChange={onSortByChange}
+          exploreId={props.exploreId}
+          displayedFields={props.displayedFields}
+          panelState={props.panelState}
+          visualisationType={props.visualisationType}
+          absoluteRange={props.absoluteRange}
+          logRows={props.logRows}
         />
       </div>
     </>

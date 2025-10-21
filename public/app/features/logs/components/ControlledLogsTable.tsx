@@ -24,6 +24,10 @@ export const ControlledLogsTable = ({
   width,
   logsTableFrames,
   visualisationType,
+  exploreId,
+  absoluteRange,
+  logRows,
+  displayedFields,
   ...rest
 }: LogRowsComponentProps) => {
   const { sortOrder, controlsExpanded } = useLogListContext();
@@ -59,6 +63,11 @@ export const ControlledLogsTable = ({
           theme={theme}
           updatePanelState={updatePanelState}
           datasourceType={datasourceType}
+          exploreId={exploreId}
+          absoluteRange={absoluteRange}
+          logRows={logRows}
+          displayedFields={displayedFields}
+          visualisationType="table"
         />
       </div>
     </div>

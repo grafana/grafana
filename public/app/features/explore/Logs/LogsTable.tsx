@@ -16,14 +16,24 @@ import {
   TimeRange,
   transformDataFrame,
   ValueLinkConfig,
+  AbsoluteTimeRange,
+  LogRowModel,
+  ExploreLogsPanelState,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AdHocFilterItem, Table } from '@grafana/ui';
+import {
+  AdHocFilterItem,
+  CustomCellRendererProps,
+  Table,
+  TableCellDisplayMode,
+  TableCustomCellOptions,
+} from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { DETECTED_LEVEL, LEVEL, LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
+import { LogsTableActionButtons } from './LogsTableActionButtons';
 import { FieldNameMeta } from './LogsTableWrap';
 
 interface Props {
@@ -40,6 +50,12 @@ interface Props {
   logsFrame: LogsFrame | null;
   sortBy?: Array<{ displayName: string; desc?: boolean }>;
   onSortByChange?: (sortBy: Array<{ displayName: string; desc?: boolean }>) => void;
+  exploreId?: string;
+  displayedFields?: string[];
+  visualisationType?: 'table' | 'logs';
+  panelState?: ExploreLogsPanelState;
+  absoluteRange?: AbsoluteTimeRange;
+  logRows?: LogRowModel[];
 }
 
 export function LogsTable(props: Props) {
@@ -94,9 +110,61 @@ export function LogsTable(props: Props) {
         field.type = field.type === FieldType.string ? (guessFieldTypeForField(field) ?? FieldType.string) : field.type;
       }
 
+      // Add column for action buttons
+      const actionsField: Field = {
+        name: '',
+        type: FieldType.other,
+        config: {
+          custom: {
+            width: 80,
+            height: 100,
+            filterable: false,
+            sortable: false,
+            inspect: true,
+            cellOptions: {
+              type: TableCellDisplayMode.Custom,
+              cellComponent: (cellProps: CustomCellRendererProps) => (
+                <LogsTableActionButtons
+                  {...cellProps}
+                  fieldIndex={0}
+                  logId={logsFrame?.idField?.values[cellProps.rowIndex]}
+                  logsFrame={logsFrame ? { bodyField: { name: logsFrame.bodyField.name } } : undefined}
+                  exploreId={props.exploreId}
+                  panelState={props.panelState}
+                  displayedFields={props.displayedFields}
+                  visualisationType={props.visualisationType}
+                  absoluteRange={props.absoluteRange}
+                  logRows={props.logRows}
+                />
+              ),
+            } satisfies TableCustomCellOptions,
+            hideHeader: true,
+          },
+        },
+        values: new Array(frameWithOverrides.length).fill(null),
+        display: (value: unknown) => ({ text: '', numeric: 0 }),
+        getLinks: () => [],
+      };
+
+      // Add Actions field to the beginning of the fields array
+      frameWithOverrides.fields.unshift(actionsField);
+
       return frameWithOverrides;
     },
-    [logsSortOrder, timeZone, splitOpen, range, logsFrame?.bodyField.name, logsFrame?.timeField.name, timeIndex]
+    [
+      logsSortOrder,
+      timeZone,
+      splitOpen,
+      range,
+      timeIndex,
+      logsFrame,
+      props.exploreId,
+      props.panelState,
+      props.displayedFields,
+      props.visualisationType,
+      props.absoluteRange,
+      props.logRows,
+    ]
   );
 
   useEffect(() => {

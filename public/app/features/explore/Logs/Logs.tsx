@@ -1048,6 +1048,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 theme={theme}
                 updatePanelState={updatePanelState}
                 datasourceType={props.datasourceType}
+                exploreId={props.exploreId}
+                displayedFields={displayedFields}
+                visualisationType={visualisationType}
+                absoluteRange={props.absoluteRange}
+                logRows={props.logRows}
               />
             </div>
           )}
@@ -1102,6 +1107,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onLogOptionsChange={onLogOptionsChange}
                   filterLevels={filterLevels}
                   timeRange={props.range}
+                  exploreId={exploreId}
+                  absoluteRange={absoluteRange}
                 />
               </div>
             )}
