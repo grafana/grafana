@@ -53,11 +53,15 @@ export const useGetUpdatable = () => {
   };
 };
 
-export const useGetSingle = (id: string): CatalogPlugin | undefined => {
+export const useGetSingle = (id: string, version?: string): CatalogPlugin | undefined => {
   useFetchAll();
   useFetchDetails(id);
-  useFetchPluginInsights(id);
 
+  return useSelector((state) => selectById(state, id));
+};
+
+export const useGetPluginInsights = (id: string, version?: string): CatalogPlugin | undefined => {
+  useFetchPluginInsights(id, version);
   return useSelector((state) => selectById(state, id));
 };
 
@@ -163,7 +167,7 @@ export const useFetchDetails = (id: string) => {
   }, [plugin]); // eslint-disable-line
 };
 
-export const useFetchPluginInsights = (id: string) => {
+export const useFetchPluginInsights = (id: string, version?: string) => {
   console.log('useFetchPluginInsights', id);
   const dispatch = useDispatch();
   const plugin = useSelector((state) => selectById(state, id));
@@ -171,7 +175,7 @@ export const useFetchPluginInsights = (id: string) => {
   const shouldFetch = isNotFetching && plugin && !plugin.insights;
 
   useEffect(() => {
-    shouldFetch && dispatch(fetchPluginInsights(id));
+    shouldFetch && dispatch(fetchPluginInsights({ id, version }));
   }, [plugin]); // eslint-disable-line
 };
 

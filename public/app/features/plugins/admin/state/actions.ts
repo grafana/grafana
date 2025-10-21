@@ -166,11 +166,11 @@ export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, stri
   }
 );
 
-export const fetchPluginInsights = createAsyncThunk<Update<CatalogPlugin, string>, string>(
+export const fetchPluginInsights = createAsyncThunk<Update<CatalogPlugin, string>, { id: string; version?: string }>(
   `${STATE_PREFIX}/fetchPluginInsights`,
-  async (id, thunkApi) => {
+  async ({ id, version }, thunkApi) => {
     try {
-      const insights = await getPluginInsights(id);
+      const insights = await getPluginInsights(id, version);
 
       return {
         id,

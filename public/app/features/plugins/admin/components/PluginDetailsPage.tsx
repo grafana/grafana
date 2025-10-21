@@ -16,7 +16,7 @@ import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
-import { useGetSingle, useFetchStatus, useFetchDetailsStatus } from '../state/hooks';
+import { useGetSingle, useFetchStatus, useFetchDetailsStatus, useGetPluginInsights } from '../state/hooks';
 import { PluginTabIds } from '../types';
 
 import { PluginDetailsDeprecatedWarning } from './PluginDetailsDeprecatedWarning';
@@ -48,7 +48,10 @@ export function PluginDetailsPage({
     active: true,
   };
   const queryParams = new URLSearchParams(location.search);
-  const plugin = useGetSingle(pluginId); // fetches the plugin settings for this Grafana instance
+  let plugin = useGetSingle(pluginId); // fetches the plugin settings for this Grafana instance
+  console.log('plugin', plugin);
+  useGetPluginInsights(pluginId, plugin?.isInstalled ? plugin?.installedVersion : plugin?.latestVersion);
+
   const isNarrowScreen = useMedia('(max-width: 600px)');
   const { navModel, activePageId } = usePluginDetailsTabs(
     plugin,
@@ -57,7 +60,7 @@ export function PluginDetailsPage({
     isNarrowScreen
   );
   console.log('plugin', plugin);
-  console.log('insights', plugin?.insights);
+
   const { actions, info, subtitle } = usePluginPageExtensions(plugin);
   const { isLoading: isFetchLoading } = useFetchStatus();
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
