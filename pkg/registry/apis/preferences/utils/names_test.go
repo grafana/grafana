@@ -24,7 +24,7 @@ func TestLegacyAuthorizer(t *testing.T) {
 		{
 			name:   "with user",
 			input:  "user-a",
-			output: utils.OwnerReference{Owner: utils.UserResourceOwner, Name: "a"},
+			output: utils.OwnerReference{Owner: utils.UserResourceOwner, Identifier: "a"},
 			found:  true,
 		},
 		{
@@ -36,7 +36,7 @@ func TestLegacyAuthorizer(t *testing.T) {
 		{
 			name:   "with team",
 			input:  "team-b",
-			output: utils.OwnerReference{Owner: utils.TeamResourceOwner, Name: "b"},
+			output: utils.OwnerReference{Owner: utils.TeamResourceOwner, Identifier: "b"},
 			found:  true,
 		},
 		{

@@ -16,17 +16,17 @@ type URLParams struct {
 	SubPath     string
 	Method      string
 	Body        io.Reader
-	QueryParams map[string]string
+	QueryParams map[string][]string
 	Headers     map[string]string
 }
 
 type GraphiteQuery struct {
-	QueryType       string   `json:"queryType"`
-	TextEditor      *bool    `json:"textEditor,omitempty"`
-	Target          string   `json:"target,omitempty"`
-	TargetFull      string   `json:"targetFull,omitempty"`
-	Tags            []string `json:"tags,omitempty"`
-	FromAnnotations *bool    `json:"fromAnnotations,omitempty"`
+	QueryType       string `json:"queryType"`
+	TextEditor      *bool  `json:"textEditor,omitempty"`
+	Target          string `json:"target,omitempty"`
+	TargetFull      string `json:"targetFull,omitempty"`
+	FromAnnotations *bool  `json:"fromAnnotations,omitempty"`
+	IsMetricTank    bool   `json:"isMetricTank,omitempty"`
 }
 
 type GraphiteEventsRequest struct {
@@ -65,4 +65,13 @@ type GraphiteTagsRequest struct {
 	Until     string `json:"until"`
 	Limit     int    `json:"limit,omitempty"`
 	TagPrefix string `json:"tagPrefix,omitempty"`
+}
+
+type GraphiteTagValuesRequest struct {
+	Expr        []string `json:"expr"`
+	Tag         string   `json:"tag"`
+	From        string   `json:"from"`
+	Until       string   `json:"until"`
+	Limit       int      `json:"limit,omitempty"`
+	ValuePrefix string   `json:"valuePrefix,omitempty"`
 }

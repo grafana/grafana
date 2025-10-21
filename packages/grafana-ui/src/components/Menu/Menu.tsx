@@ -25,6 +25,7 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
 const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
   ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, ...otherProps }, forwardedRef) => {
     const styles = useStyles2(getStyles);
+    const componentTokens = useComponentTokens();
 
     const localRef = useRef<HTMLDivElement>(null);
     useImperativeHandle(forwardedRef, () => localRef.current!);
@@ -36,12 +37,11 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
         {...otherProps}
         aria-label={ariaLabel}
         backgroundColor="elevated"
-        borderRadius="default"
+        borderRadius={componentTokens.borderRadius}
         boxShadow="z3"
         display="inline-block"
         onKeyDown={handleKeys}
-        paddingX={0.5}
-        paddingY={0.5}
+        padding={componentTokens.padding}
         ref={localRef}
         role="menu"
         tabIndex={-1}
@@ -69,6 +69,18 @@ export const Menu = Object.assign(MenuComp, {
   Divider: MenuDivider,
   Group: MenuGroup,
 });
+
+const useComponentTokens = () =>
+  useStyles2((theme: GrafanaTheme2) => {
+    const {
+      components: { menu },
+    } = theme;
+
+    return {
+      padding: menu.padding,
+      borderRadius: menu.borderRadius,
+    };
+  });
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

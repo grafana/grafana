@@ -21,30 +21,40 @@ import searchHandlers from 'app/features/alerting/unified/mocks/server/handlers/
 import silenceHandlers from 'app/features/alerting/unified/mocks/server/handlers/silences';
 
 /**
- * Array of all mock handlers that are required across Alerting tests
- * @deprecated Move to `@grafana/test-utils` instead
+ * All alerting-specific handlers that are required across tests
+ * @deprecated Move to `@grafana/alerting/testing` instead
  */
-const allHandlers = [
-  ...accessControlHandlers,
+export const alertingHandlers = [
   ...alertNotifierHandlers,
   ...grafanaRulerHandlers,
   ...mimirRulerHandlers,
   ...alertmanagerHandlers,
-  ...datasourcesHandlers,
-  ...evalHandlers,
-  ...folderHandlers,
-  ...pluginsHandlers,
-  ...provisioningHandlers,
   ...silenceHandlers,
-  ...searchHandlers,
-
-  ...allPluginHandlers,
+  ...provisioningHandlers,
 
   // Kubernetes-style handlers
   ...timeIntervalK8sHandlers,
   ...receiverK8sHandlers,
   ...templatesK8sHandlers,
   ...routingTreeK8sHandlers,
+];
+
+/**
+ * Array of all mock handlers that are required across Alerting tests,
+ * including some re-defined behaviour for handlers that are defined in `@grafana/test-utils`
+ *
+ * @deprecated Move to or use inbuilt handlers from `@grafana/test-utils` instead
+ */
+const allHandlers = [
+  ...alertingHandlers,
+  ...folderHandlers,
+  ...searchHandlers,
+
+  ...accessControlHandlers,
+  ...allPluginHandlers,
+  ...datasourcesHandlers,
+  ...evalHandlers,
+  ...pluginsHandlers,
 ];
 
 export default allHandlers;

@@ -43,20 +43,6 @@ func TestTemplates(t *testing.T) {
 		return &v
 	}
 
-	getRemovePermission := func(scope, action, roleName string) sqltemplate.SQLTemplate {
-		v := removePermissionTemplate{
-			SQLTemplate:     sqltemplate.New(nodb.DialectForDriver()),
-			PermissionTable: nodb.Table("permission"),
-			RoleTable:       nodb.Table("role"),
-			Scope:           scope,
-			Action:          action,
-			OrgID:           55,
-			RoleName:        roleName,
-		}
-		v.SQLTemplate = mocks.NewTestingSQLTemplate()
-		return &v
-	}
-
 	getInsertAssignment := func(orgID int64, roleID int64, assignment rbacAssignmentCreate) sqltemplate.SQLTemplate {
 		v := insertAssignmentTemplate{
 			SQLTemplate:      sqltemplate.New(nodb.DialectForDriver()),
@@ -120,6 +106,7 @@ func TestTemplates(t *testing.T) {
 			PermissionTable:    nodb.Table("permission"),
 			RoleTable:          nodb.Table("role"),
 			ManagedRolePattern: "managed:%",
+			RoleName:           q.RoleName,
 		}
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
@@ -149,12 +136,6 @@ func TestTemplates(t *testing.T) {
 						Attribute:  "uid",
 						Identifier: "dash1",
 					}),
-				},
-			},
-			permissionRemoveTplt: {
-				{
-					Name: "remove_permission",
-					Data: getRemovePermission("folders:uid:folder1", "folders:edit", "managed:users:1:permissions"),
 				},
 			},
 			assignmentInsertTplt: {
@@ -218,6 +199,14 @@ func TestTemplates(t *testing.T) {
 					Data: getDeleteResourcePermissionsQuery(&DeleteResourcePermissionsQuery{
 						Scope: "dash_123",
 						OrgID: 3,
+					}),
+				},
+				{
+					Name: "specific_role_cleanup_query",
+					Data: getDeleteResourcePermissionsQuery(&DeleteResourcePermissionsQuery{
+						Scope:    "dash_123",
+						OrgID:    3,
+						RoleName: "managed:users:1:permissions",
 					}),
 				},
 			},

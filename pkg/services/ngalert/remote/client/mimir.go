@@ -11,13 +11,15 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/util/httpclient"
 )
@@ -41,7 +43,7 @@ type MimirClient interface {
 }
 
 type Mimir struct {
-	client   client.Requester
+	client   alertingInstrument.Requester
 	endpoint *url.URL
 	logger   log.Logger
 	metrics  *metrics.RemoteAlertmanager
@@ -64,7 +66,8 @@ type Config struct {
 	TenantID string
 	Password string
 
-	Logger log.Logger
+	Logger  log.Logger
+	Timeout time.Duration
 }
 
 // successResponse represents a successful response from the Mimir API.
@@ -97,9 +100,10 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer
 
 	c := &http.Client{
 		Transport: rt,
+		Timeout:   cfg.Timeout,
 	}
-	tc := client.NewTimedClient(c, metrics.RequestLatency)
-	trc := client.NewTracedClient(tc, tracer, "remote.alertmanager.client")
+	tc := alertingInstrument.NewTimedClient(c, metrics.RequestLatency)
+	trc := alertingInstrument.NewTracedClient(tc, tracer, "remote.alertmanager.client")
 
 	return &Mimir{
 		endpoint: cfg.URL,
@@ -148,7 +152,7 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, ou
 		if err != nil {
 			bodyStr = fmt.Sprintf("fail_to_read: %s", err)
 		}
-		mc.logger.Error(msg, "content-type", "url", r.URL.String(), "method", r.Method, ct, "status", resp.StatusCode, "body", bodyStr)
+		mc.logger.Error(msg, "content-type", ct, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode, "body", bodyStr)
 		return nil, fmt.Errorf("%s: %s", msg, ct)
 	}
 

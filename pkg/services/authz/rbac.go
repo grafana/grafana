@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/authlib/cache"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/middleware"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -53,6 +54,8 @@ func ProvideAuthZClient(
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
 ) (authlib.AccessClient, error) {
+	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
 		return nil, err
@@ -60,6 +63,10 @@ func ProvideAuthZClient(
 
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && authCfg.mode == clientModeCloud {
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
+	}
+
+	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
+		return zanzanaClient, nil
 	}
 
 	// Provisioning uses mode 4 (read+write only to unified storage)
@@ -72,7 +79,7 @@ func ProvideAuthZClient(
 	switch authCfg.mode {
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
-		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		if zanzanaEnabled {
 			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
 		return rbacClient, err
@@ -90,7 +97,7 @@ func ProvideAuthZClient(
 			// When running in-proc we get a injection cycle between
 			// authz client, resource client and apiserver so we need to use
 			// package level function to get rest config
-			store.NewAPIFolderStore(tracer, restConfig.GetRestConfig),
+			store.NewAPIFolderStore(tracer, reg, restConfig.GetRestConfig),
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
@@ -119,7 +126,7 @@ func ProvideAuthZClient(
 			authzlib.WithTracerClientOption(tracer),
 		)
 
-		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		if zanzanaEnabled {
 			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
 
@@ -180,6 +187,16 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 		grpc.WithChainStreamInterceptor(streamInterceptors...),
 	}
 
+	// // if we serve the client as a load balancer
+	if clientCfg.loadBalancingEnabled {
+		// Use round_robin to balances requests more evenly over the available Grafana replicas.
+		opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy": "round_robin"}`))
+
+		// Disable looking up service config from TXT DNS records.
+		// This reduces the number of requests made to the DNS servers.
+		opts = append(opts, grpc.WithDisableServiceConfig())
+	}
+
 	conn, err := grpc.NewClient(clientCfg.remoteAddress, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create authz client to remote server: %w", err)
@@ -214,7 +231,7 @@ func RegisterRBACAuthZService(
 	if cfg.Folder.Host == "" {
 		folderStore = store.NewSQLFolderStore(db, tracer)
 	} else {
-		folderStore = store.NewAPIFolderStore(tracer, func(ctx context.Context) (*rest.Config, error) {
+		folderStore = store.NewAPIFolderStore(tracer, reg, func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{
 				Host: cfg.Folder.Host,
 				WrapTransport: func(rt http.RoundTripper) http.RoundTripper {

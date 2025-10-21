@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "단계 매개변수에 대한 하한 설정",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "해상도 선택",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "히트맵",
           "label-table": "테이블",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "구문 분석 오류: 빌더 모드로 전환하시겠어요?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "범례",
         "placeholder-select-legend-mode": "범례 모드 선택",
         "tooltip-legend": "계열 이름 재정의 또는 템플릿. 예: {{templateExample}} 은(는) {{labelName}}에 대한 레이블 값으로 대체됩니다."
@@ -482,11 +486,6 @@
         "message-no-metrics-found": "데이터 소스에서 메트릭을 찾을 수 없습니다.",
         "name": "이름",
         "type": "유형"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "쿼리 구문 분석이 모호합니다."
-        }
       }
     }
   }

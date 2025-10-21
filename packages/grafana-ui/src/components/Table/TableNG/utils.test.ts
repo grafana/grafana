@@ -46,6 +46,7 @@ import {
   getDefaultRowHeight,
   getDisplayName,
   predicateByName,
+  parseStyleJson,
   calculateFooterHeight,
 } from './utils';
 
@@ -1457,6 +1458,51 @@ describe('TableNG utils', () => {
       const field: Field = { name: 'test', type: FieldType.string, config: {}, values: [] };
       const predicate = predicateByName('other');
       expect(predicate(field)).toBe(false);
+    });
+  });
+
+  describe('parseStyleJson', () => {
+    it('parses the contents of the styleField for this row and returns a style object', () => {
+      expect(parseStyleJson('{"color":"red"}')).toEqual({ color: 'red' });
+    });
+
+    it.each([
+      { type: 'number', value: 12345 },
+      { type: 'boolean', value: true },
+      { type: 'null', value: null },
+      { type: 'undefined', value: undefined },
+      { type: 'object', value: { color: 'red' } },
+      { type: 'array', value: ['not', 'a', 'string'] },
+    ])('returns void if input is a $type', ({ value }) => {
+      expect(parseStyleJson(value)).toBeUndefined();
+    });
+
+    it.each([
+      { type: 'array', value: '["not","an","object"]' },
+      { type: 'string', value: '"just a string"' },
+      { type: 'number', value: '12345' },
+      { type: 'boolean', value: 'true' },
+      { type: 'null', value: 'null' },
+    ])('returns void and does not throw if the parsed JSON is a $type', ({ value }) => {
+      expect(parseStyleJson(value)).toBeUndefined();
+    });
+
+    it('returns void and does not throw if this is invalid JSON (but it does console.error)', () => {
+      jest.spyOn(console, 'error').mockImplementation();
+      expect(parseStyleJson('{"mal": "formed}')).toBeUndefined();
+      expect(console.error).toHaveBeenCalled();
+    });
+
+    it('only calls console.error once for a given malformed style', () => {
+      jest.spyOn(console, 'error').mockImplementation();
+      for (let i = 0; i < 100; i++) {
+        parseStyleJson('{"mal": "formed-in-a-new-way}');
+      }
+      expect(console.error).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns an object with invalid style properties, because we do not validate the style properties', () => {
+      expect(parseStyleJson('{"notARealStyle": "someValue"}')).toEqual({ notARealStyle: 'someValue' });
     });
   });
 });

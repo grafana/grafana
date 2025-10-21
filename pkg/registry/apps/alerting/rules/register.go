@@ -2,19 +2,20 @@ package rules
 
 import (
 	"context"
-	"fmt"
 
 	restclient "k8s.io/client-go/rest"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis"
 	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
@@ -40,7 +41,8 @@ func RegisterAppInstaller(
 	ng *ngalert.AlertNG,
 ) (*AlertingRulesAppInstaller, error) {
 	if ng.IsDisabled() {
-		return nil, fmt.Errorf("alerting rules app installer cannot be registered when ngalert is disabled")
+		log.New("app-registry").Info("Skipping Kubernetes Alerting Rules apiserver (rules.alerting.grafana.app): Unified Alerting is disabled")
+		return nil, nil
 	}
 
 	installer := &AlertingRulesAppInstaller{
@@ -55,7 +57,7 @@ func RegisterAppInstaller(
 		ManifestData: *apis.LocalManifest().ManifestData,
 	}
 
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.ManifestGoTypeAssociator, apis.ManifestCustomRouteResponsesAssociator)
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &apis.GoTypeAssociator{})
 	if err != nil {
 		return nil, err
 	}

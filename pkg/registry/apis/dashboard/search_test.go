@@ -189,6 +189,98 @@ func TestSearchFallback(t *testing.T) {
 	})
 }
 
+func TestSearchHandlerPagination(t *testing.T) {
+	t.Run("should calculate offset and page parameters", func(t *testing.T) {
+		limit := 50
+		for i, tt := range []struct {
+			offset         int
+			page           int
+			expectedOffset int
+			expectedPage   int
+		}{
+			{
+				offset:         0,
+				page:           0,
+				expectedOffset: 0,
+				expectedPage:   1,
+			},
+			{
+				offset:         0,
+				page:           1,
+				expectedOffset: 0,
+				expectedPage:   1,
+			},
+			{
+				offset:         0,
+				page:           2,
+				expectedOffset: 50,
+				expectedPage:   2,
+			},
+			{
+				offset:         0,
+				page:           3,
+				expectedOffset: 100,
+				expectedPage:   3,
+			},
+			{
+				offset:         50,
+				page:           0,
+				expectedOffset: 50,
+				expectedPage:   2,
+			},
+			{
+				offset:         100,
+				page:           0,
+				expectedOffset: 100,
+				expectedPage:   3,
+			},
+			{
+				offset:         149,
+				page:           0,
+				expectedOffset: 149,
+				expectedPage:   3,
+			},
+			{
+				offset:         150,
+				page:           0,
+				expectedOffset: 150,
+				expectedPage:   4,
+			},
+		} {
+			mockClient := &MockClient{}
+
+			cfg := &setting.Cfg{
+				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
+				},
+			}
+			dual := dualwrite.ProvideStaticServiceForTests(cfg)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil)
+
+			rr := httptest.NewRecorder()
+			endpoint := fmt.Sprintf("/search?limit=%d", limit)
+			if tt.offset > 0 {
+				endpoint = fmt.Sprintf("%s&offset=%d", endpoint, tt.offset)
+			}
+			if tt.page > 0 {
+				endpoint = fmt.Sprintf("%s&page=%d", endpoint, tt.page)
+			}
+			req := httptest.NewRequest("GET", endpoint, nil)
+			req.Header.Add("content-type", "application/json")
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+			searchHandler.DoSearch(rr, req)
+
+			if mockClient.LastSearchRequest == nil {
+				t.Fatalf("expected Search to be called, but it was not")
+			}
+
+			require.Equal(t, int(mockClient.LastSearchRequest.Offset), tt.expectedOffset, fmt.Sprintf("mismatch offset in test %d", i))
+			require.Equal(t, int(mockClient.LastSearchRequest.Page), tt.expectedPage, fmt.Sprintf("mismatch page in test %d", i))
+		}
+	})
+}
+
 func TestSearchHandler(t *testing.T) {
 	t.Run("Multiple comma separated fields will be appended to default dashboard search fields", func(t *testing.T) {
 		// Create a mock client
@@ -213,7 +305,7 @@ func TestSearchHandler(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
-		expectedFields := []string{"title", "folder", "tags", "field1", "field2", "field3"}
+		expectedFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", "field1", "field2", "field3"}
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}
@@ -242,7 +334,7 @@ func TestSearchHandler(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
-		expectedFields := []string{"title", "folder", "tags", "field1"}
+		expectedFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", "field1"}
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}
@@ -271,7 +363,7 @@ func TestSearchHandler(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
-		expectedFields := []string{"title", "folder", "tags"}
+		expectedFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id"}
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}

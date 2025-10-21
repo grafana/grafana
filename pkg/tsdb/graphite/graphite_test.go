@@ -26,7 +26,7 @@ func Test_CreateRequest(t *testing.T) {
 		expectedMethod string
 		expectedError  string
 		checkHeaders   map[string]string
-		checkQuery     map[string]string
+		checkQuery     map[string][]string
 	}{
 		{
 			name:           "basic request with default GET method",
@@ -57,16 +57,16 @@ func Test_CreateRequest(t *testing.T) {
 			name:   "request with query parameters",
 			dsInfo: dsInfo,
 			params: URLParams{
-				QueryParams: map[string]string{
-					"query":  "stats.counters.*",
-					"format": "json",
+				QueryParams: map[string][]string{
+					"query":  {"stats.counters.*"},
+					"format": {"json"},
 				},
 			},
 			expectedURL:    "http://graphite.example.com",
 			expectedMethod: "GET",
-			checkQuery: map[string]string{
-				"query":  "stats.counters.*",
-				"format": "json",
+			checkQuery: map[string][]string{
+				"query":  {"stats.counters.*"},
+				"format": {"json"},
 			},
 		},
 		{
@@ -99,9 +99,9 @@ func Test_CreateRequest(t *testing.T) {
 			params: URLParams{
 				SubPath: "/metrics/expand",
 				Method:  "POST",
-				QueryParams: map[string]string{
-					"groupByExpr": "true",
-					"leavesOnly":  "false",
+				QueryParams: map[string][]string{
+					"groupByExpr": {"true"},
+					"leavesOnly":  {"false"},
 				},
 				Headers: map[string]string{
 					"X-Custom-Header": "test-value",
@@ -110,9 +110,9 @@ func Test_CreateRequest(t *testing.T) {
 			},
 			expectedURL:    "http://graphite.example.com/metrics/expand",
 			expectedMethod: "POST",
-			checkQuery: map[string]string{
-				"groupByExpr": "true",
-				"leavesOnly":  "false",
+			checkQuery: map[string][]string{
+				"groupByExpr": {"true"},
+				"leavesOnly":  {"false"},
 			},
 			checkHeaders: map[string]string{
 				"X-Custom-Header": "test-value",
@@ -130,16 +130,30 @@ func Test_CreateRequest(t *testing.T) {
 			name:   "empty query parameter values",
 			dsInfo: dsInfo,
 			params: URLParams{
-				QueryParams: map[string]string{
-					"empty": "",
-					"valid": "value",
+				QueryParams: map[string][]string{
+					"empty": {""},
+					"valid": {"value"},
 				},
 			},
 			expectedURL:    "http://graphite.example.com",
 			expectedMethod: "GET",
-			checkQuery: map[string]string{
-				"empty": "",
-				"valid": "value",
+			checkQuery: map[string][]string{
+				"empty": {""},
+				"valid": {"value"},
+			},
+		},
+		{
+			name:   "multi-valued query parameter",
+			dsInfo: dsInfo,
+			params: URLParams{
+				QueryParams: map[string][]string{
+					"valid": {"value1", "value2"},
+				},
+			},
+			expectedURL:    "http://graphite.example.com",
+			expectedMethod: "GET",
+			checkQuery: map[string][]string{
+				"valid": {"value1", "value2"},
 			},
 		},
 	}
@@ -163,9 +177,13 @@ func Test_CreateRequest(t *testing.T) {
 			assert.Equal(t, tt.expectedMethod, req.Method)
 
 			if tt.checkQuery != nil {
-				for key, expectedValue := range tt.checkQuery {
-					actualValue := req.URL.Query().Get(key)
-					assert.Equal(t, expectedValue, actualValue, "Query parameter %s", key)
+				for key, expectedValues := range tt.checkQuery {
+					actualValue := req.URL.Query()[key]
+					assert.NotZero(t, len(actualValue))
+
+					for _, expectedValue := range expectedValues {
+						assert.Contains(t, actualValue, expectedValue, "Query parameter %s", key)
+					}
 				}
 			}
 

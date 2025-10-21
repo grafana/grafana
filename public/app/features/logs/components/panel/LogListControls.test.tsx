@@ -49,7 +49,9 @@ jest.mock('../../utils', () => ({
 jest.mock('@grafana/assistant', () => {
   return {
     ...jest.requireActual('@grafana/assistant'),
-    useAssistant: jest.fn().mockReturnValue([true, jest.fn()]),
+    useAssistant: jest.fn().mockReturnValue({
+      isAvailable: true,
+    }),
   };
 });
 
@@ -239,7 +241,7 @@ describe('LogListControls', () => {
     expect(onLogOptionsChange).toHaveBeenCalledWith('dedupStrategy', LogsDedupStrategy.numbers);
   });
 
-  test('Sets level filters', async () => {
+  test('Sets all level filters if not provided', async () => {
     const onLogOptionsChange = jest.fn();
     render(
       <LogListContextProvider {...contextProps} onLogOptionsChange={onLogOptionsChange}>
@@ -256,6 +258,25 @@ describe('LogListControls', () => {
     expect(screen.getByText('Critical')).toBeVisible();
     await userEvent.click(screen.getByText('Error'));
     expect(onLogOptionsChange).toHaveBeenCalledWith('filterLevels', ['error']);
+  });
+
+  test('Sets all level filters from provided levels', async () => {
+    const onLogOptionsChange = jest.fn();
+    render(
+      <LogListContextProvider {...contextProps} onLogOptionsChange={onLogOptionsChange}>
+        <LogListControls eventBus={new EventBusSrv()} logLevels={[LogLevel.critical, LogLevel.information]} />
+      </LogListContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText(FILTER_LEVELS_LABEL_COPY));
+    expect(await screen.findByText('All levels')).toBeVisible();
+    expect(screen.getByText('Info')).toBeVisible();
+    expect(screen.queryByText('Debug')).not.toBeInTheDocument();
+    expect(screen.queryByText('Trace')).not.toBeInTheDocument();
+    expect(screen.queryByText('Warning')).not.toBeInTheDocument();
+    expect(screen.queryByText('Error')).not.toBeInTheDocument();
+    expect(screen.getByText('Critical')).toBeVisible();
+    await userEvent.click(screen.getByText('Critical'));
+    expect(onLogOptionsChange).toHaveBeenCalledWith('filterLevels', ['critical']);
   });
 
   test('Controls timestamp visibility', async () => {
@@ -303,19 +324,19 @@ describe('LogListControls', () => {
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(2);
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', true);
-    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', false);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyLogMessage', false);
 
     await userEvent.click(screen.getByLabelText(WRAP_LINES_LABEL_COPY));
     await userEvent.click(screen.getByText(WRAP_JSON_TOOLTIP_COPY));
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(4);
-    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', true);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyLogMessage', true);
 
     await userEvent.click(screen.getByLabelText(WRAP_JSON_LABEL_COPY));
     await userEvent.click(screen.getByText(WRAP_DISABLE_LABEL_COPY));
 
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', false);
-    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', false);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyLogMessage', false);
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(6);
 

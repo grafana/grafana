@@ -234,6 +234,10 @@ export class DashboardGridItem
   public setRepeatByVariable(variableName: string | undefined) {
     const stateUpdate: Partial<DashboardGridItemState> = { variableName };
 
+    if (!variableName) {
+      stateUpdate.repeatedPanels = undefined;
+    }
+
     if (variableName && !this.state.repeatDirection) {
       stateUpdate.repeatDirection = 'h';
     }

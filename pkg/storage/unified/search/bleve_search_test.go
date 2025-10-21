@@ -58,139 +58,189 @@ func TestCanSearchByTitle(t *testing.T) {
 		Resource:  "dashboards",
 	}
 
-	t.Run("when query is empty, sort documents by title instead of search score", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		indexDocumentsWithTitles(t, index, key, map[string]string{
-			"name1": "bbb",
-			"name2": "aaa",
-		})
+	for _, useFullNgram := range []bool{false, true} {
+		name := "when useFullNgram feature flag is "
+		if useFullNgram {
+			name += "enabled"
+		} else {
+			name += "disabled"
+		}
 
-		checkSearchQuery(t, index, newTestQuery(""), []string{"name2", "name1"})
-	})
+		t.Run(name, func(t *testing.T) {
+			t.Run("and query is empty, sort documents by title instead of search score", func(t *testing.T) {
+				index := newTestDashboardsIndex(t, threshold, 2, noop, useFullNgram)
+				indexDocumentsWithTitles(t, index, key, map[string]string{
+					"name1": "bbb",
+					"name2": "aaa",
+				})
 
-	t.Run("will boost phrase match query over match query results", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		indexDocumentsWithTitles(t, index, key, map[string]string{
-			"name1": "I want to say a hello",
-			"name2": "we want hello",
-		})
-
-		checkSearchQuery(t, index, newTestQuery("want hello"), []string{"name2", "name1"})
-	})
-
-	t.Run("will prioritize matches", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		indexDocumentsWithTitles(t, index, key, map[string]string{
-			"name1": "Asserts Dashboards",
-			"name2": "New dashboard 10",
-		})
-
-		checkSearchQuery(t, index, newTestQuery("dashboard"), []string{"name2", "name1"})
-	})
-
-	t.Run("all terms must match", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		indexDocumentsWithTitles(t, index, key, map[string]string{
-			"name1": "Dashboard",
-			"name2": "New dashboard 10",
-		})
-
-		checkSearchQuery(t, index, newTestQuery("dashboard new"), []string{"name2"})
-	})
-
-	t.Run("will boost exact match query over match phrase query results", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		indexDocumentsWithTitles(t, index, key, map[string]string{
-			"name1": "we want hello pls",
-			"name2": "we want hello",
-		})
-
-		checkSearchQuery(t, index, newTestQuery("we want hello"), []string{"name2", "name1"})
-	})
-
-	t.Run("title with numbers will match document", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		indexDocumentsWithTitles(t, index, key, map[string]string{
-			"name1": "A123456",
-		})
-
-		// search for prefix of title with mix of chars and numbers
-		checkSearchQuery(t, index, newQueryByTitle("A12"), []string{"name1"})
-		// search for whole title
-		checkSearchQuery(t, index, newQueryByTitle("A123456"), []string{"name1"})
-		// case insensive search for partial title
-		checkSearchQuery(t, index, newQueryByTitle("a1234"), []string{"name1"})
-	})
-
-	t.Run("title will match escaped characters", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		indexDocumentsWithTitles(t, index, key, map[string]string{
-			"name1": "what\"s up",
-			"name2": "what\"s that",
-		})
-
-		checkSearchQuery(t, index, newQueryByTitle("what\"s up"), []string{"name1"})
-		checkSearchQuery(t, index, newQueryByTitle("what\"s"), []string{"name2", "name1"})
-	})
-
-	t.Run("title search will match document", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		indexDocumentsWithTitles(t, index, key, map[string]string{
-			"name1": "I want to say a wonderfully Hello to the WORLD! Hello-world",
-		})
-
-		// search by entire phrase
-		checkSearchQuery(t, index, newTestQuery("I want to say a wonderfully Hello to the WORLD! Hello-world"), []string{"name1"})
-
-		// search for word at start
-		checkSearchQuery(t, index, newTestQuery("hello"), []string{"name1"})
-		// search for word larger than ngram max size
-		checkSearchQuery(t, index, newTestQuery("wonderfully"), []string{"name1"})
-		// search for word at end
-		checkSearchQuery(t, index, newTestQuery("world"), []string{"name1"})
-		// can search for word substring anchored at start of word (edge ngram)
-		checkSearchQuery(t, index, newTestQuery("worl"), []string{"name1"})
-		// can search for multiple, non-consecutive words in title
-		checkSearchQuery(t, index, newTestQuery("hello world"), []string{"name1"})
-		// can search for multiple, non-consecutive words in title
-		checkSearchQuery(t, index, newTestQuery("hello-world"), []string{"name1"})
-	})
-
-	t.Run("title search will NOT match documents", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		indexDocumentsWithTitles(t, index, key, map[string]string{
-			"name1": "I want to say a wonderfully Hello to the WORLD! Hello-world",
-			"name2": "A0456",
-			"name3": "mash-A02382-10",
-		})
-
-		// word that doesn't exist
-		checkSearchQuery(t, index, newTestQuery("cats"), nil)
-		// string shorter than 3 chars (ngam min)
-		checkSearchQuery(t, index, newTestQuery("ma"), nil)
-		// substring that doesn't exist
-		checkSearchQuery(t, index, newTestQuery("A01"), nil)
-	})
-
-	t.Run("title search with character will match one document", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		indexDocumentsWithTitles(t, index, key, map[string]string{
-			"name1": "foo",
-		})
-
-		for i, v := range search.TermCharacters {
-			name := fmt.Sprintf("name%d", i)
-			title := fmt.Sprintf(`test foo%d%sbar`, i, v)
-			indexDocumentsWithTitles(t, index, key, map[string]string{
-				name: title,
+				checkSearchQuery(t, index, newTestQuery(""), []string{"name2", "name1"})
 			})
 
-			checkSearchQuery(t, index, newQueryByTitle(title), []string{name})
+			t.Run("will boost phrase match query over match query results", func(t *testing.T) {
+				index := newTestDashboardsIndex(t, threshold, 2, noop, useFullNgram)
+				indexDocumentsWithTitles(t, index, key, map[string]string{
+					"name1": "I want to say a hello",
+					"name2": "we want hello",
+				})
 
-			// can search for a title with a term character suffix
-			checkSearchQuery(t, index, newQueryByTitle(fmt.Sprintf(`foo%d%s`, i, v)), []string{name})
-		}
-	})
+				checkSearchQuery(t, index, newTestQuery("want hello"), []string{"name2", "name1"})
+			})
+
+			t.Run("will prioritize matches", func(t *testing.T) {
+				index := newTestDashboardsIndex(t, threshold, 2, noop, useFullNgram)
+				indexDocumentsWithTitles(t, index, key, map[string]string{
+					"name1": "Asserts Dashboards",
+					"name2": "New dashboard 10",
+				})
+
+				checkSearchQuery(t, index, newTestQuery("dashboard"), []string{"name2", "name1"})
+			})
+
+			t.Run("all terms must match", func(t *testing.T) {
+				index := newTestDashboardsIndex(t, threshold, 2, noop, useFullNgram)
+				indexDocumentsWithTitles(t, index, key, map[string]string{
+					"name1": "Dashboard",
+					"name2": "New dashboard 10",
+				})
+
+				checkSearchQuery(t, index, newTestQuery("dashboard new"), []string{"name2"})
+			})
+
+			t.Run("will boost exact match query over match phrase query results", func(t *testing.T) {
+				index := newTestDashboardsIndex(t, threshold, 2, noop, useFullNgram)
+				indexDocumentsWithTitles(t, index, key, map[string]string{
+					"name1": "we want hello pls",
+					"name2": "we want hello",
+				})
+
+				checkSearchQuery(t, index, newTestQuery("we want hello"), []string{"name2", "name1"})
+			})
+
+			t.Run("title with numbers will match document", func(t *testing.T) {
+				index := newTestDashboardsIndex(t, threshold, 2, noop, useFullNgram)
+				indexDocumentsWithTitles(t, index, key, map[string]string{
+					"name1": "A123456",
+				})
+
+				// search for prefix of title with mix of chars and numbers
+				checkSearchQuery(t, index, newQueryByTitle("A12"), []string{"name1"})
+				// search for whole title
+				checkSearchQuery(t, index, newQueryByTitle("A123456"), []string{"name1"})
+				// case insensive search for partial title
+				checkSearchQuery(t, index, newQueryByTitle("a1234"), []string{"name1"})
+			})
+
+			t.Run("title will match escaped characters", func(t *testing.T) {
+				index := newTestDashboardsIndex(t, threshold, 2, noop, useFullNgram)
+				indexDocumentsWithTitles(t, index, key, map[string]string{
+					"name1": "what\"s up",
+					"name2": "what\"s that",
+				})
+
+				checkSearchQuery(t, index, newQueryByTitle("what\"s up"), []string{"name1"})
+				checkSearchQuery(t, index, newQueryByTitle("what\"s"), []string{"name2", "name1"})
+			})
+
+			t.Run("title search will match document", func(t *testing.T) {
+				index := newTestDashboardsIndex(t, threshold, 2, noop, useFullNgram)
+				indexDocumentsWithTitles(t, index, key, map[string]string{
+					"name1": "I want to say a wonderfully Hello to the WORLD! Hello-world",
+				})
+
+				// search by entire phrase
+				checkSearchQuery(t, index, newTestQuery("I want to say a wonderfully Hello to the WORLD! Hello-world"), []string{"name1"})
+
+				// search for word at start
+				checkSearchQuery(t, index, newTestQuery("hello"), []string{"name1"})
+				// search for word larger than ngram max size
+				checkSearchQuery(t, index, newTestQuery("wonderfully"), []string{"name1"})
+				// search for word at end
+				checkSearchQuery(t, index, newTestQuery("world"), []string{"name1"})
+				// can search for word substring anchored at start of word (edge ngram)
+				checkSearchQuery(t, index, newTestQuery("worl"), []string{"name1"})
+				// can search for multiple, non-consecutive words in title
+				checkSearchQuery(t, index, newTestQuery("hello world"), []string{"name1"})
+				// can search for multiple, non-consecutive words in title
+				checkSearchQuery(t, index, newTestQuery("hello-world"), []string{"name1"})
+			})
+
+			t.Run("title search will NOT match documents", func(t *testing.T) {
+				index := newTestDashboardsIndex(t, threshold, 2, noop, useFullNgram)
+				indexDocumentsWithTitles(t, index, key, map[string]string{
+					"name1": "I want to say a wonderfully Hello to the WORLD! Hello-world",
+					"name2": "A0456",
+					"name3": "mash-A02382-10",
+				})
+
+				// word that doesn't exist
+				checkSearchQuery(t, index, newTestQuery("cats"), nil)
+				// string shorter than 3 chars (ngram min)
+				checkSearchQuery(t, index, newTestQuery("ma"), nil)
+				// substring that doesn't exist
+				checkSearchQuery(t, index, newTestQuery("A01"), nil)
+			})
+
+			t.Run("title search with character will match one document", func(t *testing.T) {
+				index := newTestDashboardsIndex(t, threshold, 2, noop, useFullNgram)
+				indexDocumentsWithTitles(t, index, key, map[string]string{
+					"name1": "foo",
+				})
+
+				for i, v := range search.TermCharacters {
+					name := fmt.Sprintf("name%d", i)
+					title := fmt.Sprintf(`test foo%d%sbar`, i, v)
+					indexDocumentsWithTitles(t, index, key, map[string]string{
+						name: title,
+					})
+
+					checkSearchQuery(t, index, newQueryByTitle(title), []string{name})
+
+					// can search for a title with a term character suffix
+					checkSearchQuery(t, index, newQueryByTitle(fmt.Sprintf(`foo%d%s`, i, v)), []string{name})
+				}
+			})
+
+			t.Run("title search will ignore terms < 3 characters", func(t *testing.T) {
+				index := newTestDashboardsIndex(t, threshold, 2, noop, useFullNgram)
+				indexDocumentsWithTitles(t, index, key, map[string]string{
+					"name1": "new dashboard",
+					"name2": "new dash",
+					"name3": "new",
+				})
+
+				// matches everything
+				checkSearchQuery(t, index, newTestQuery("new"), []string{"name3", "name2", "name1"})
+				// ignore terms shorter than 3 chars
+				checkSearchQuery(t, index, newTestQuery("new d"), []string{"name3", "name2", "name1"})
+				// include terms shorter that are exactly 3 chars
+				checkSearchQuery(t, index, newTestQuery("new das"), []string{"name2", "name1"})
+			})
+
+			name := "title search will%smatch term in the middle/end"
+			if useFullNgram {
+				name = fmt.Sprintf(name, " ")
+			} else {
+				name = fmt.Sprintf(name, " NOT ")
+			}
+			t.Run(name, func(t *testing.T) {
+				index := newTestDashboardsIndex(t, threshold, 2, noop, useFullNgram)
+				indexDocumentsWithTitles(t, index, key, map[string]string{
+					"name1": "new dashboard",
+					"name2": "new dash",
+					"name3": "somedash",
+				})
+
+				if useFullNgram {
+					checkSearchQuery(t, index, newTestQuery("ash"), []string{"name2", "name3", "name1"})
+					checkSearchQuery(t, index, newTestQuery("ome"), []string{"name3"})
+				} else {
+					checkSearchQuery(t, index, newTestQuery("ash"), nil)
+					checkSearchQuery(t, index, newTestQuery("ome"), nil)
+				}
+			})
+		})
+	}
 }
 
 func newTestQuery(query string) *resourcepb.ResourceSearchRequest {
@@ -221,7 +271,7 @@ func newQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
 	}
 }
 
-func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize int64, writer resource.BuildFn) resource.ResourceIndex {
+func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer resource.BuildFn, useFullNgram bool) resource.ResourceIndex {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -230,11 +280,11 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
-		BatchSize:     int(batchSize),
+		UseFullNgram:  useFullNgram,
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 
-	t.Cleanup(backend.CloseAllIndexes)
+	t.Cleanup(backend.Stop)
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 

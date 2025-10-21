@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Ställ in nedre gräns för stegparametern",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Välj upplösning",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Värmekarta",
           "label-table": "Tabell",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "Tolkningsfel: Vill du byta till byggläget?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Förklaringar",
         "placeholder-select-legend-mode": "Välj förklaringsläge",
         "tooltip-legend": "Åsidosätt serienamn eller mall. Ex. {{templateExample}} kommer att ersättas med etikettvärdet för {{labelName}}."
@@ -482,11 +486,6 @@
         "message-no-metrics-found": "Inga mätvärden hittades i datakällan.",
         "name": "Namn",
         "type": "Typ"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Tolkningen av frågan är tvetydig."
-        }
       }
     }
   }

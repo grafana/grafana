@@ -2,19 +2,14 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"sync"
 
-	"github.com/grafana/dskit/modules"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
@@ -24,9 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs/adapter"
-	"github.com/grafana/grafana/pkg/semconv"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -66,18 +59,14 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 	tracerProvider *tracing.TracingService,
 	promReg prometheus.Registerer,
 ) (*Server, error) {
-	rootCtx, shutdownFn := context.WithCancel(context.Background())
-	childRoutines, childCtx := errgroup.WithContext(rootCtx)
+	rootCtx := context.Background()
 
 	s := &Server{
 		promReg:                   promReg,
-		context:                   childCtx,
-		childRoutines:             childRoutines,
+		context:                   rootCtx,
 		HTTPServer:                httpServer,
 		provisioningService:       provisioningService,
 		roleRegistry:              roleRegistry,
-		shutdownFn:                shutdownFn,
-		shutdownFinished:          make(chan struct{}),
 		log:                       log.New("server"),
 		cfg:                       cfg,
 		pidFile:                   opts.PidFile,
@@ -86,6 +75,7 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 		buildBranch:               opts.BuildBranch,
 		backgroundServiceRegistry: backgroundServiceProvider,
 		tracerProvider:            tracerProvider,
+		managerAdapter:            adapter.NewManagerAdapter(backgroundServiceProvider),
 	}
 
 	return s, nil
@@ -95,15 +85,12 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 // core Server implementation which starts the entire Grafana server. Use
 // ModuleServer to launch specific modules.
 type Server struct {
-	context          context.Context
-	shutdownFn       func()
-	childRoutines    *errgroup.Group
-	log              log.Logger
-	cfg              *setting.Cfg
-	shutdownOnce     sync.Once
-	shutdownFinished chan struct{}
-	isInitialized    bool
-	mtx              sync.Mutex
+	context       context.Context
+	log           log.Logger
+	cfg           *setting.Cfg
+	shutdownOnce  sync.Once
+	isInitialized bool
+	mtx           sync.Mutex
 
 	pidFile     string
 	version     string
@@ -117,6 +104,7 @@ type Server struct {
 	roleRegistry        accesscontrol.RoleRegistry
 	provisioningService provisioning.ProvisioningService
 	promReg             prometheus.Registerer
+	managerAdapter      *adapter.ManagerAdapter
 }
 
 // Init initializes the server and its services.
@@ -145,83 +133,14 @@ func (s *Server) Init() error {
 }
 
 func (s *Server) Run() error {
-	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagDskitBackgroundServices) {
-		s.log.Debug("Running background services with dskit wrapper")
-		return s.dskitRun()
-	}
-	s.log.Debug("Running standard background services")
-	return s.backgroundServicesRun()
-}
-
-func (s *Server) dskitRun() error {
-	if err := s.Init(); err != nil {
-		return err
-	}
-	managerAdapter := adapter.NewManagerAdapter(s.backgroundServiceRegistry)
-	s.notifySystemd("READY=1")
-
-	ctx, span := s.tracerProvider.Start(s.context, "server.dskitRun")
-	defer span.End()
-
-	// override the shutdownFn (context cancel func) for now until the feature flag is removed.
-	// this is a temporary solution to ensure that the services are shutdown properly.
-	cancelFn := s.shutdownFn
-	s.shutdownFn = func() {
-		defer close(s.shutdownFinished)
-		s.log.Debug("Shutting down background services")
-		if err := managerAdapter.Shutdown(s.context, modules.ErrStopProcess.Error()); err != nil {
-			s.log.Error("Failed to shutdown background services", "error", err)
-		}
-		cancelFn()
-	}
-
-	return managerAdapter.Run(ctx)
-}
-
-func (s *Server) backgroundServicesRun() error {
-	ctx, span := s.tracerProvider.Start(s.context, "server.backgroundServicesRun")
-	defer span.End()
-	defer close(s.shutdownFinished)
-
 	if err := s.Init(); err != nil {
 		return err
 	}
 
-	services := s.backgroundServiceRegistry.GetServices()
-
-	// Start background services.
-	for _, svc := range services {
-		if registry.IsDisabled(svc) {
-			continue
-		}
-
-		service := svc
-		serviceName := reflect.TypeOf(service).String()
-		s.childRoutines.Go(func() error {
-			select {
-			case <-s.context.Done():
-				return s.context.Err()
-			default:
-			}
-			s.log.Debug("Starting background service", "service", serviceName)
-			span.AddEvent(fmt.Sprintf("%s start", serviceName), trace.WithAttributes(semconv.GrafanaServiceName(serviceName)))
-			err := service.Run(ctx)
-			// Do not return context.Canceled error since errgroup.Group only
-			// returns the first error to the caller - thus we can miss a more
-			// interesting error.
-			if err != nil && !errors.Is(err, context.Canceled) {
-				s.log.Error("Stopped background service", "service", serviceName, "reason", err)
-				return fmt.Errorf("%s run error: %w", serviceName, err)
-			}
-			s.log.Debug("Stopped background service", "service", serviceName, "reason", err)
-			return nil
-		})
-	}
-
+	ctx, span := s.tracerProvider.Start(s.context, "server.Run")
+	defer span.End()
 	s.notifySystemd("READY=1")
-
-	s.log.Debug("Waiting on services...")
-	return s.childRoutines.Wait()
+	return s.managerAdapter.Run(ctx)
 }
 
 // Shutdown initiates Grafana graceful shutdown. This shuts down all
@@ -231,15 +150,15 @@ func (s *Server) Shutdown(ctx context.Context, reason string) error {
 	var err error
 	s.shutdownOnce.Do(func() {
 		s.log.Info("Shutdown started", "reason", reason)
-		// Call cancel func to stop background services.
-		s.shutdownFn()
-		// Wait for server to shut down
+		if shutdownErr := s.managerAdapter.Shutdown(ctx, "shutdown"); shutdownErr != nil {
+			s.log.Error("Failed to shutdown background services", "error", shutdownErr)
+		}
 		select {
-		case <-s.shutdownFinished:
-			s.log.Debug("Finished waiting for server to shut down")
 		case <-ctx.Done():
 			s.log.Warn("Timed out while waiting for server to shut down")
 			err = fmt.Errorf("timeout waiting for shutdown")
+		default:
+			s.log.Debug("Finished waiting for server to shut down")
 		}
 	})
 

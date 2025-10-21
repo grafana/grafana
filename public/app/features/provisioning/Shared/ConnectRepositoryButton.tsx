@@ -33,7 +33,9 @@ export function ConnectRepositoryButton({ items }: Props) {
                 key={config.type}
                 icon={config.icon}
                 label={config.label}
-                onClick={() => navigate(`${CONNECT_URL}/${config.type}`)}
+                onClick={() => {
+                  navigate(`${CONNECT_URL}/${config.type}`);
+                }}
               />
             );
           })}

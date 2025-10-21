@@ -31,12 +31,19 @@ export function getDisplayValuesAndLinks(data: DataFrame, rowIndex: number, colu
 
   const displayValues: DisplayValue[] = [];
   const links: Array<LinkModel<Field>> = [];
+  const linkLookup = new Set<string>();
 
   for (const field of visibleFields) {
     const value = field.values[rowIndex];
     const fieldDisplay = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
 
-    links.push(...getDataLinks(field, rowIndex));
+    getDataLinks(field, rowIndex).forEach((link) => {
+      const key = `${link.title}/${link.href}`;
+      if (!linkLookup.has(key)) {
+        links.push(link);
+        linkLookup.add(key);
+      }
+    });
 
     displayValues.push({
       name: getFieldDisplayName(field, data),
