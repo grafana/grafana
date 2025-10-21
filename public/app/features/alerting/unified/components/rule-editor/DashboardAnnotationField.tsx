@@ -26,8 +26,8 @@ const DashboardAnnotationField = ({
 }) => {
   const styles = useStyles2(getStyles);
 
-  const dashboardLink = makeDashboardLink(dashboard?.uid || dashboardUid);
-  const panelLink = makePanelLink(dashboard?.uid || dashboardUid, panel?.id?.toString() || panelId);
+  const dashboardLink = '/grafana-app/' + makeDashboardLink(dashboard?.uid || dashboardUid); // LOGZ.IO GRAFANA CHANGE :: DEV-48786 - broken dashboard links
+  const panelLink = '/grafana-app/' + makePanelLink(dashboard?.uid || dashboardUid, panel?.id?.toString() || panelId); // LOGZ.IO GRAFANA CHANGE :: DEV-48786 - broken dashboard links
   return (
     <div className={styles.container}>
       {dashboard && (

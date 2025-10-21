@@ -100,7 +100,7 @@ export function NotificationRouteDetailsModal({
               <Stack gap={1} direction="row" alignItems="center">
                 <a
                   href={makeAMLink(
-                    `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
+                    `/grafana-app/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`, // LOGZ.IO GRAFANA CHANGE :: DEV-48786 - broken links
                     alertManagerSourceName
                   )}
                   className={styles.link}
