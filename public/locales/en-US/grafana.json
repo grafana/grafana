@@ -6294,6 +6294,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "This variable is not referenced by other variables or dashboard.",
       "content-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
     },
+    "variable-controls": {
+      "add-variable": "Add"
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
       "back-to-list": "Back to list",
