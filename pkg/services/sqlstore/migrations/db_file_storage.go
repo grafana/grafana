@@ -1,8 +1,6 @@
 package migrations
 
-import (
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-)
+import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func addDbFileStorageMigration(mg *migrator.Migrator) {
 	filesTable := migrator.Table{
@@ -207,5 +205,5 @@ func convertFileMetaPathHashKeyIndexToPrimaryKey(mg *migrator.Migrator) {
 		Postgres(postgres).
 		SQLite(sqlite)
 
-	mg.AddMigration("add primary key to file_meta table (with auto-generated primary key)", migration)
+	mg.AddMigration("add primary key to file_meta table (postgres and sqlite)", migration)
 }

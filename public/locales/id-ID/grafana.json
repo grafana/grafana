@@ -7676,7 +7676,8 @@
     "name-neutral": "Netral",
     "name-show-threshold-labels": "Tampilkan label ambang batas",
     "name-show-threshold-markers": "Tampilkan penanda ambang batas",
-    "placeholder-neutral": "otomatis"
+    "placeholder-neutral": "otomatis",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Terapkan",
@@ -12035,6 +12036,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },

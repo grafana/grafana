@@ -584,6 +584,11 @@
       "count": 1
     }
   },
+  "packages/grafana-ui/src/components/Cascader/styles.ts": {
+    "@grafana/no-unreduced-motion": {
+      "count": 17
+    }
+  },
   "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -3241,11 +3246,6 @@
   "public/app/features/expressions/ExpressionDatasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    }
-  },
-  "public/app/features/expressions/ExpressionQueryEditor.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 4
     }
   },
   "public/app/features/expressions/guards.ts": {
