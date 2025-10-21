@@ -53,7 +53,7 @@ export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
       '&:disabled': {
         backgroundColor: theme.colors.action.disabledBackground,
         color: theme.colors.action.disabledText,
-        border: `1px solid ${theme.colors.action.disabledBackground}`,
+        border: `1px solid ${theme.colors.border.weak}`,
 
         '&:hover': {
           borderColor,

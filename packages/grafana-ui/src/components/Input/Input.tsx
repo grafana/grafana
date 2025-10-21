@@ -223,7 +223,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     inputDisabled: css({
       backgroundColor: theme.colors.action.disabledBackground,
       color: theme.colors.action.disabledText,
-      border: `1px solid ${theme.colors.action.disabledBackground}`,
+      border: `1px solid ${theme.colors.border.weak}`,
       '&:focus': {
         boxShadow: 'none',
       },
