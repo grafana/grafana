@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Auto max idle",
-        "content-auto-max-idle": "If enabled, automatically set the number of <i>Maximum idle connections</i> to the same value as <i> Max open connections</i>. If the number of maximum open connections is not set it will be set to the default ({{defaultMaxIdle}}).",
-        "content-max-idle": "The maximum number of connections in the idle connection pool.If <i>Max open connections</i> is greater than 0 but less than the <i>Max idle connections</i>, then the <i>Max idle connections</i> will be reduced to match the <i>Max open connections</i> limit. If set to 0, no idle connections are retained.",
+        "content-auto-max-idle": "If enabled, automatically set the number of <1>Maximum idle connections</1> to the same value as<3> Max open connections</3>. If the number of maximum open connections is not set it will be set to the default ({{defaultMaxIdle}}).",
+        "content-max-idle": "The maximum number of connections in the idle connection pool.If <1>Max open connections</1> is greater than 0 but less than the <3>Max idle connections</3>, then the <5>Max idle connections</5> will be reduced to match the <8>Max open connections</8> limit. If set to 0, no idle connections are retained.",
         "content-max-lifetime": "The maximum amount of time in seconds a connection may be reused. If set to 0, connections are reused forever.",
-        "content-max-open": "The maximum number of open connections to the database. If <i>Max idle connections</i> is greater than 0 and the <i>Max open connections</i> is less than <i>Max idle connections</i>, then <i>Max idle connections</i> will be reduced to match the <i>Max open connections</i> limit. If set to 0, there is no limit on the number of open connections.",
+        "content-max-open": "The maximum number of open connections to the database. If <1>Max idle connections</1> is greater than 0 and the <3>Max open connections</3> is less than <5>Max idle connections</5>, then<7>Max idle connections</7> will be reduced to match the <9>Max open connections</9> limit. If set to 0, there is no limit on the number of open connections.",
         "max-idle": "Max idle",
         "max-lifetime": "Max lifetime",
         "max-open": "Max open",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Your query is invalid. Check below for details. <br/>However, you can still run this query.",
+        "content-invalid-query": "Your query is invalid. Check below for details. <1></1>However, you can still run this query.",
         "editor-modes": {
           "label-builder": "Builder",
           "label-code": "Code"
@@ -76,7 +76,7 @@
         "tooltip-format-query": "Format query"
       },
       "query-validator": {
-        "query-will-process": "<0></0> This query will process <strong>{{bytes}}</strong> when run.",
+        "query-will-process": "<0></0> This query will process <2>{{bytes}}</2> when run.",
         "validating-query": "Validating query..."
       },
       "raw-editor": {
