@@ -316,7 +316,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    if (!this.state.isDirty || skipConfirm || this.managedResourceCannotBeEdited()) {
+    const changes = this.serializer.getDashboardChangesFromScene(this, {});
+
+    if (!this.state.isDirty || skipConfirm || !changes.diffCount || this.managedResourceCannotBeEdited()) {
       this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
       return;
     }

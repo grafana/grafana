@@ -83,7 +83,9 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       return true;
     }
 
-    if (!dashboard.state.isDirty) {
+    const changes = dashboard.serializer.getDashboardChangesFromScene(dashboard, {});
+
+    if (!dashboard.state.isDirty || !changes.diffCount) {
       return true;
     }
 
