@@ -65,7 +65,7 @@ func TestSearchBackendBenchmark(t *testing.T) {
 
 	// Create a new bleve backend
 	backend, err := NewBleveBackend(BleveOptions{
-		Root:         tempDir,
+		Root: tempDir,
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
@@ -87,7 +87,7 @@ func TestSearchBackendBenchmarkFullNgramEnabled(t *testing.T) {
 
 	// Create a new bleve backend
 	backend, err := NewBleveBackend(BleveOptions{
-		Root:         tempDir,
+		Root: tempDir,
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
