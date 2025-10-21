@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, DraggableProvided, Droppable, DropResult } from '@hello-pangea/dnd';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -21,18 +21,21 @@ interface Props {
 export const ActiveFields = ({ activeFields, clear, fields, reorder, suggestedFields, toggle }: Props) => {
   const styles = useStyles2(getLogsFieldsStyles);
 
-  const onDragEnd = (result: DropResult) => {
-    if (!result.destination) {
-      return;
-    }
-    const newActiveFields = [...activeFields];
-    const element = activeFields[result.source.index];
+  const onDragEnd = useCallback(
+    (result: DropResult) => {
+      if (!result.destination) {
+        return;
+      }
+      const newActiveFields = [...activeFields];
+      const element = activeFields[result.source.index];
 
-    newActiveFields.splice(result.source.index, 1);
-    newActiveFields.splice(result.destination.index, 0, element);
+      newActiveFields.splice(result.source.index, 1);
+      newActiveFields.splice(result.destination.index, 0, element);
 
-    reorder(newActiveFields);
-  };
+      reorder(newActiveFields);
+    },
+    [activeFields, reorder]
+  );
 
   const active = useMemo(
     () => [
