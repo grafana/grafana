@@ -248,6 +248,7 @@ func (s *service) GetRestConfig(ctx context.Context) (*clientrest.Config, error)
 	if err := s.AwaitRunning(ctx); err != nil {
 		return nil, fmt.Errorf("unable to get rest config: %w", err)
 	}
+	s.restConfig.BearerToken = ""
 	s.restConfig.WrapTransport = func(rt http.RoundTripper) http.RoundTripper {
 		return newPreserveContextRoundTripper(ctx, rt)
 	}
