@@ -621,6 +621,10 @@ export interface FeatureToggles {
   */
   zanzana?: boolean;
   /**
+  * Use openFGA as main authorization engine and disable legacy RBAC clietn.
+  */
+  zanzanaNoLegacyClient?: boolean;
+  /**
   * Enables reload of dashboards on scopes, time range and variables changes
   */
   reloadDashboardsOnParamsChange?: boolean;
