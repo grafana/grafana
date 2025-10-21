@@ -440,7 +440,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	zanzanaClient, err := authz.ProvideZanzana(cfg, sqlStore, tracingService, featureToggles, registerer)
+	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, tracingService, featureToggles, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1049,7 +1049,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	zanzanaClient, err := authz.ProvideZanzana(cfg, sqlStore, tracingService, featureToggles, registerer)
+	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, tracingService, featureToggles, registerer)
 	if err != nil {
 		return nil, err
 	}

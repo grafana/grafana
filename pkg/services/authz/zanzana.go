@@ -30,19 +30,16 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// ProvideZanzana used to register ZanzanaClient.
+// ProvideZanzanaClient used to register ZanzanaClient.
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
-func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Client, error) {
+func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Client, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return zanzana.NewNoopClient(), nil
 	}
 
-	logger := log.New("zanzana.server")
-
-	var client zanzana.Client
 	switch cfg.ZanzanaClient.Mode {
 	case setting.ZanzanaModeClient:
-		return NewZanzanaClient(
+		return NewRemoteZanzanaClient(
 			fmt.Sprintf("stacks-%s", cfg.StackID),
 			ZanzanaClientConfig{
 				URL:              cfg.ZanzanaClient.Addr,
@@ -50,7 +47,9 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 				TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
 				ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
 			})
+
 	case setting.ZanzanaModeEmbedded:
+		logger := log.New("zanzana.server")
 		store, err := zanzana.NewEmbeddedStore(cfg, db, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
@@ -81,16 +80,15 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 		authzv1.RegisterAuthzServiceServer(channel, srv)
 		authzextv1.RegisterAuthzExtentionServiceServer(channel, srv)
 
-		client, err = zanzana.NewClient(channel)
+		client, err := zanzana.NewClient(channel)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}
+		return client, nil
 
 	default:
 		return nil, fmt.Errorf("unsupported zanzana mode: %s", cfg.ZanzanaClient.Mode)
 	}
-
-	return client, nil
 }
 
 type ZanzanaClientConfig struct {
@@ -100,7 +98,8 @@ type ZanzanaClientConfig struct {
 	ServerCertFile   string
 }
 
-func NewZanzanaClient(namespace string, cfg ZanzanaClientConfig) (zanzana.Client, error) {
+// NewRemoteZanzanaClient creates a new Zanzana client that connects to remote Zanzana server.
+func NewRemoteZanzanaClient(namespace string, cfg ZanzanaClientConfig) (zanzana.Client, error) {
 	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 		Token:            cfg.Token,
 		TokenExchangeURL: cfg.TokenExchangeURL,
