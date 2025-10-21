@@ -7633,7 +7633,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Clear folders",
     "noOptionsMessage-no-folders-found": "No folders found",
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
