@@ -303,6 +303,10 @@ export interface FeatureToggles {
   */
   kubernetesLogsDrilldown?: boolean;
   /**
+  * Adds support for Kubernetes querycaching
+  */
+  kubernetesQueryCaching?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -1214,6 +1218,11 @@ export interface FeatureToggles {
   */
   cdnPluginsUrls?: boolean;
   /**
+  * Enable new gauge visualization
+  * @default false
+  */
+  newGauge?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */
@@ -1223,4 +1232,9 @@ export interface FeatureToggles {
   * @default false
   */
   pluginStoreServiceLoading?: boolean;
+  /**
+  * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
+  * @default true
+  */
+  onlyStoreActionSets?: boolean;
 }
