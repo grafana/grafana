@@ -370,7 +370,6 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	iter := kvListIterator{
 		listRV: listRV,
 		offset: offset,
-		limit:  req.Limit + 1, // TODO: for now we need at least one more item. Fix the caller
 		next:   next,
 		stop:   stop,
 	}
@@ -386,10 +385,8 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 // kvListIterator implements ListIterator for KV storage
 type kvListIterator struct {
-	listRV    int64
-	offset    int64
-	limit     int64
-	itemsRead int64 // number of items read so far
+	listRV int64
+	offset int64
 
 	// pull-style iterator
 	next func() (DataObj, error, bool)
@@ -401,10 +398,6 @@ type kvListIterator struct {
 }
 
 func (i *kvListIterator) Next() bool {
-	if i.itemsRead >= i.limit {
-		return false
-	}
-
 	// Pull next item from the iterator
 	dataObj, err, ok := i.next()
 	if !ok {
@@ -423,7 +416,6 @@ func (i *kvListIterator) Next() bool {
 	}
 
 	i.offset++
-	i.itemsRead++
 
 	return true
 }
