@@ -149,7 +149,8 @@ export default function GettingStarted() {
       <Stack direction="column" gap={6} wrap="wrap">
         <Stack gap={10} alignItems="center">
           <div className={styles.imageContainer}>
-            <img src={provisioningSvg} className={styles.image} alt={'Grafana provisioning'} />
+            {/* decorative img doesn't need alt */}
+            <img src={provisioningSvg} className={styles.image} alt="" />
           </div>
           <FeaturesList
             hasRequiredFeatures={hasRequiredFeatures}
