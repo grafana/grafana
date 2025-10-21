@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Definir limite inferior para o parâmetro de passos",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Selecionar resolução",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Mapa de calor",
           "label-table": "Tabela",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "Erro de análise: mudar para o modo de construtor?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Legenda",
         "placeholder-select-legend-mode": "Selecionar modo de legenda",
         "tooltip-legend": "Substituição ou modelo do nome da série. Ex. {{templateExample}} será substituído pelo valor da etiqueta para{{labelName}}."
@@ -482,11 +486,6 @@
         "message-no-metrics-found": "Não foram encontradas métricas na origem de dados.",
         "name": "Nome",
         "type": "Tipo"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "A análise da consulta é ambígua."
-        }
       }
     }
   }

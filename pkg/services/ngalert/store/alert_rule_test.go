@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -36,12 +35,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationUpdateAlertRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
 	sqlStore := db.InitTestDB(t)
@@ -232,9 +231,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 }
 
 func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
@@ -389,9 +386,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 }
 
 func TestIntegration_CountAlertRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
@@ -456,9 +451,7 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 }
 
 func TestIntegration_DeleteInFolder(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
@@ -488,9 +481,7 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 }
 
 func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
@@ -739,9 +730,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 }
 
 func TestIntegrationInsertAlertRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	orgID := int64(1)
 	usr := models.UserUID("test")
@@ -908,9 +897,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 }
 
 func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	usr := models.UserUID("test")
 
@@ -1199,9 +1186,8 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 }
 
 func TestIntegrationListNotificationSettings(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	usr := models.UserUID("test")
 	sqlStore := db.InitTestDB(t)
 	folderService := setupFolderService(t, sqlStore, setting.NewCfg(), featuremgmt.WithFeatures())
@@ -1320,9 +1306,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 }
 
 func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	usr := models.UserUID("test")
 
@@ -1371,9 +1355,8 @@ func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
 }
 
 func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	usr := models.UserUID("test")
 
 	sqlStore := db.InitTestDB(t)
@@ -1478,9 +1461,8 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 }
 
 func TestIntegrationIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
 	sqlStore := db.InitTestDB(t)
@@ -1527,9 +1509,8 @@ func TestIntegrationIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 }
 
 func TestIntegrationGetRuleVersions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
 	sqlStore := db.InitTestDB(t)
@@ -1630,16 +1611,14 @@ func createRule(tb testing.TB, store *DBstore, generator *models.AlertRuleGenera
 func setupFolderService(t testing.TB, sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
+	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, cfg)
 
-	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
+	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
 }
 
 func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	usr := models.UserUID("test")
 	cfg := setting.UnifiedAlertingSettings{
 		BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second,
@@ -1736,9 +1715,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 }
 
 func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
@@ -1780,7 +1757,7 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 	})
 
 	t.Run("should return all rules when no limit passed", func(t *testing.T) {
-		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesByGroupQuery{
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
 		})
 		require.NoError(t, err)
@@ -1791,9 +1768,9 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 	t.Run("should return paginated results when group limit is set", func(t *testing.T) {
 		// random number from 1 to totalGroups - 1 (to ensure we always receive less than totalGroups)
 		groupLimit := rand.Int64N(int64(totalGroups)-1) + 1
-		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesByGroupQuery{
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
-			GroupLimit:          groupLimit,
+			Limit:               groupLimit,
 		})
 		require.NoError(t, err)
 		expectedRuleCount := groupLimit * int64(rulesPerGroup)
@@ -1803,9 +1780,9 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 
 	t.Run("pagination should all for continuation", func(t *testing.T) {
 		groupLimit := int64(2) // fixed group limit for this test
-		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesByGroupQuery{
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
-			GroupLimit:          groupLimit,
+			Limit:               groupLimit,
 		})
 		require.NoError(t, err)
 		require.Len(t, result, int(groupLimit*int64(rulesPerGroup)), "should return rules for the first two groups")
@@ -1821,9 +1798,9 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		resultRules = append(resultRules, result...)
 
 		// Continue from previous, fetching the rest of the rules
-		result, continueToken, err = store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesByGroupQuery{
+		result, continueToken, err = store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
-			GroupContinueToken:  continueToken,
+			ContinueToken:       continueToken,
 		})
 		require.NoError(t, err)
 		resultRules = append(resultRules, result...)
@@ -1886,9 +1863,9 @@ func Benchmark_ListAlertRules(b *testing.B) {
 	for _, groupLimit := range []int{1, 2, 5, 10, 50, 100} {
 		b.Run(fmt.Sprintf("list %d groups paginated", groupLimit), func(b *testing.B) {
 			for b.Loop() {
-				_, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesByGroupQuery{
+				_, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
 					ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
-					GroupLimit:          int64(groupLimit),
+					Limit:               int64(groupLimit),
 				})
 				if err != nil {
 					b.Fatal(err)
@@ -1899,9 +1876,8 @@ func Benchmark_ListAlertRules(b *testing.B) {
 }
 
 func TestIntegration_ListAlertRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
@@ -1957,9 +1933,8 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 }
 
 func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
@@ -2097,9 +2072,8 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 }
 
 func TestIntegration_ListDeletedRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
+
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
 		BaseInterval:           1 * time.Second,
@@ -2183,9 +2157,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 }
 
 func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	tutil.SkipIntegrationTestInShortMode(t)
 
 	oldClk := TimeNow
 	t.Cleanup(func() {

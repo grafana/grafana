@@ -32,9 +32,12 @@ import (
 // NOTE: this should not be added to the public API docs, and is useful for a transition
 // towards a fully static index.html -- this will likely be replaced with multiple calls
 func (hs *HTTPServer) GetBootdata(c *contextmodel.ReqContext) {
+	c, span := hs.injectSpan(c, "api.GetBootdata")
+	defer span.End()
+
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
-		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
+		c.JsonApiErr(http.StatusInternalServerError, "Failed to get settings", err)
 		return
 	}
 	c.JSON(http.StatusOK, data)
@@ -347,6 +350,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			MaxIdleConns:    hs.Cfg.SqlDatasourceMaxIdleConnsDefault,
 			ConnMaxLifetime: hs.Cfg.SqlDatasourceMaxConnLifetimeDefault,
 		},
+		OpenFeatureContext: hs.Cfg.OpenFeature.ContextAttrs,
 	}
 
 	if hs.Cfg.UnifiedAlerting.StateHistory.Enabled {

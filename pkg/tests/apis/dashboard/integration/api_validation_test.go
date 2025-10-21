@@ -20,6 +20,7 @@ import (
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -30,9 +31,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboards" // TODO: Check if we can remove this import
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -58,9 +61,7 @@ type TestContext struct {
 
 // TestIntegrationDashboardAPIValidation tests the dashboard K8s API with validation checks
 func TestIntegrationDashboardAPIValidation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
@@ -83,6 +84,11 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 			})
 
 			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+
+			// trash is supported through unified storage only
+			if dualWriterMode == rest.Mode5 {
+				runDashboardTrashTests(t, org1Ctx)
+			}
 
 			t.Run("Dashboard validation tests", func(t *testing.T) {
 				runDashboardValidationTests(t, org1Ctx)
@@ -126,9 +132,7 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 
 // TestIntegrationDashboardAPIAuthorization tests the dashboard K8s API with authorization checks
 func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
@@ -175,9 +179,7 @@ func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
 
 // TestIntegrationDashboardAPI tests the dashboard K8s API
 func TestIntegrationDashboardAPI(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
@@ -652,12 +654,9 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 	})
 
 	t.Run("Dashboard refresh interval validations", func(t *testing.T) {
-		// Store original settings to restore after test
-		origCfg := ctx.Helper.GetEnv().Cfg
-		origMinRefreshInterval := origCfg.MinRefreshInterval
-
-		// Set a fixed min_refresh_interval for all tests to make them predictable
-		ctx.Helper.GetEnv().Cfg.MinRefreshInterval = "10s"
+		// Test infrastructure is configured with
+		// [dashboards]
+		// min_refresh_interval = 10s
 
 		testCases := []struct {
 			name          string
@@ -725,9 +724,6 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 				}
 			})
 		}
-
-		// Restore original settings
-		ctx.Helper.GetEnv().Cfg.MinRefreshInterval = origMinRefreshInterval
 	})
 
 	t.Run("Dashboard size limit validations", func(t *testing.T) {
@@ -784,6 +780,76 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			err = adminClient.Resource.Delete(context.Background(), specificUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
+	})
+
+	t.Run("Dashboard upsert propagates legacy id", func(t *testing.T) {
+		// ensures that the internal ID is propogated from legacy to unified on upsert even in mode 3
+		if ctx.DualWriterMode != rest.Mode3 {
+			t.Skip("Skipping upsert metadata test")
+		}
+
+		// create via the service, so that upsert is used
+		specificUID := "upsert-metadata-test"
+		dashboardService := ctx.Helper.GetEnv().Server.HTTPServer.DashboardService
+		require.NotNil(t, dashboardService)
+		provisioningService, ok := dashboardService.(dashboards.DashboardProvisioningService)
+		require.True(t, ok, "DashboardService should also implement DashboardProvisioningService")
+		dashboardData := simplejson.NewFromAny(map[string]interface{}{
+			"title": "Dashboard for Upsert Metadata Test",
+			"uid":   specificUID,
+		})
+		result, err := provisioningService.SaveProvisionedDashboard(context.Background(), &dashboards.SaveDashboardDTO{
+			OrgID: ctx.OrgID,
+			Dashboard: &dashboards.Dashboard{
+				Title: "Dashboard for Upsert Metadata Test",
+				UID:   specificUID,
+				Data:  dashboardData,
+			},
+		}, &dashboards.DashboardProvisioning{
+			Name:       "test-provisioner",
+			ExternalID: "/test/path/dashboard.json",
+			CheckSum:   "abc123",
+		})
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		// get the internal id from legacy directly from the db
+		sqlStore := ctx.Helper.GetEnv().Server.HTTPServer.SQLStore
+		require.NotNil(t, sqlStore)
+
+		var legacyID int64
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			has, innerErr := sess.Table("dashboard").
+				Where("uid = ? AND org_id = ?", specificUID, ctx.OrgID).
+				Cols("id").
+				Get(&legacyID)
+			if innerErr != nil {
+				return innerErr
+			}
+			if !has {
+				return fmt.Errorf("dashboard not found in legacy storage")
+			}
+			return nil
+		})
+		require.NoError(t, err)
+		require.NotZero(t, legacyID)
+
+		// then compare what unistore returns
+		dashboardObj, err := adminClient.Resource.Get(context.Background(), specificUID, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, dashboardObj)
+		labels := dashboardObj.GetLabels()
+		require.NotNil(t, labels)
+		deprecatedIDStr, exists := labels[utils.LabelKeyDeprecatedInternalID]
+		require.True(t, exists)
+
+		legacyIDStr := strconv.FormatInt(legacyID, 10)
+		require.Equal(t, legacyIDStr, deprecatedIDStr)
+
+		// clean up - with force so the provisioned dashboard deletion check is skipped
+		zeroPtr := int64(0)
+		err = adminClient.Resource.Delete(context.Background(), specificUID, v1.DeleteOptions{GracePeriodSeconds: &zeroPtr})
+		require.NoError(t, err)
 	})
 }
 
@@ -2561,4 +2627,75 @@ func postHelper(t *testing.T, ctx *TestContext, path string, body interface{}, u
 	}
 
 	return result, nil
+}
+
+func runDashboardTrashTests(t *testing.T, ctx TestContext) {
+	t.Helper()
+	adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
+	editorClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, getDashboardGVR())
+	viewerClient := getResourceClient(t, ctx.Helper, ctx.ViewerUser, getDashboardGVR())
+
+	t.Run("regular dashboards appear in trash but provisioned ones do not", func(t *testing.T) {
+		// create two dashboards, one that is provisioned and one that is not
+		regularDash, err := createDashboard(t, adminClient, "Regular Dashboard for Trash Comparison", nil, nil)
+		require.NoError(t, err)
+		regularDashUID := regularDash.GetName()
+		provisionedDash, err := createDashboard(t, adminClient, "Provisioned Dashboard for Trash Comparison", nil, nil)
+		require.NoError(t, err)
+		provisionedDashUID := provisionedDash.GetName()
+		meta, err := utils.MetaAccessor(provisionedDash)
+		require.NoError(t, err)
+		meta.SetAnnotation(utils.AnnoKeyManagerKind, "repo")
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind: utils.ManagerKindTerraform,
+		})
+		updatedProvisionedDash, err := adminClient.Resource.Update(context.Background(), provisionedDash, v1.UpdateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, updatedProvisionedDash)
+
+		// delete both dashboards
+		err = adminClient.Resource.Delete(context.Background(), regularDashUID, v1.DeleteOptions{})
+		require.NoError(t, err)
+		err = adminClient.Resource.Delete(context.Background(), provisionedDashUID, v1.DeleteOptions{})
+		require.NoError(t, err)
+
+		// trash should only contain the regular dashboard
+		trashList, err := adminClient.Resource.List(context.Background(), v1.ListOptions{
+			LabelSelector: utils.LabelKeyGetTrash + "=true",
+		})
+		require.NoError(t, err)
+		require.Len(t, trashList.Items, 1, "Trash should only contain the regular dashboard")
+		require.Equal(t, regularDashUID, trashList.Items[0].GetName(), "Trash should only contain the regular dashboard")
+	})
+
+	t.Run("permission checks - admin can see everything, users can see their own deleted items", func(t *testing.T) {
+		dash, err := createDashboard(t, editorClient, "Dashboard for Trash Test", nil, nil)
+		require.NoError(t, err)
+		dashUID := dash.GetName()
+		err = editorClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+		require.NoError(t, err)
+
+		// although editor deleted it, admin can still see it
+		trashList, err := adminClient.Resource.List(context.Background(), v1.ListOptions{
+			LabelSelector: utils.LabelKeyGetTrash + "=true",
+		})
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, len(trashList.Items), 1, "Admin should see deleted dashboards in trash")
+		require.Equal(t, dashUID, trashList.Items[0].GetName(), "Admin should find the deleted dashboard in trash")
+
+		// editor can see
+		editorTrashList, err := editorClient.Resource.List(context.Background(), v1.ListOptions{
+			LabelSelector: utils.LabelKeyGetTrash + "=true",
+		})
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, len(editorTrashList.Items), 1, "Admin should see deleted dashboards in trash")
+		require.Equal(t, dashUID, editorTrashList.Items[0].GetName(), "Admin should find the deleted dashboard in trash")
+
+		// viewer should not see the editor's deleted dashboard
+		viewerTrashList, err := viewerClient.Resource.List(context.Background(), v1.ListOptions{
+			LabelSelector: utils.LabelKeyGetTrash + "=true",
+		})
+		require.NoError(t, err)
+		require.Len(t, viewerTrashList.Items, 0, "Viewer should not see any trash items")
+	})
 }

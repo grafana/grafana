@@ -17,7 +17,8 @@ import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { TabItem } from './TabItem';
 
-export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+  const model = this;
   const { layout } = model.useState();
 
   const tabCategory = useMemo(
@@ -29,7 +30,7 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
           render: (descriptor) => <TabTitleInput id={descriptor.props.id} tab={model} isNewElement={isNewElement} />,
         })
       ),
-    [model, isNewElement]
+    [isNewElement, model]
   );
 
   const repeatCategory = useMemo(
@@ -90,6 +91,7 @@ function TabTitleInput({ tab, isNewElement, id }: { tab: TabItem; isNewElement: 
         onFocus={() => (prevTitle.current = title || '')}
         onBlur={() => editTabTitleAction(tab, title || '', prevTitle.current || '')}
         onChange={(e) => tab.onChangeTitle(e.currentTarget.value)}
+        data-testid={selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput}
       />
     </Field>
   );

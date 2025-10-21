@@ -241,17 +241,20 @@ The Alert object represents an alert included in the notification group, as prov
 
 ## Custom Payload
 
+The `Custom Payload` option allows you to completely customize the webhook payload using [templates](ref:notification-templates). This gives you full control over the structure and content of the webhook request.
+
+For detailed information about how to create and manage notification templates, refer to [notification templates](ref:notification-templates).
+
 {{< admonition type="note" >}}
 
-Custom Payload is not yet [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) in Grafana Cloud.
+- When using Custom Payload, the [`Title` and `Message` fields](#optional-notification-settings) are ignored as the entire payload structure is determined by your template.
+- Custom Payload is not yet [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) in Grafana Cloud.
 
 {{< /admonition >}}
 
-The `Custom Payload` option allows you to completely customize the webhook payload using templates. This gives you full control over the structure and content of the webhook request.
-
 | Option            | Description                                                                                               |
 | ----------------- | --------------------------------------------------------------------------------------------------------- |
-| Payload Template  | Template string that defines the structure of the webhook payload.                                        |
+| Payload Template  | [Notification template](ref:notification-templates) that defines the structure of the webhook payload.    |
 | Payload Variables | Key-value pairs that define additional variables available in the template under `.Vars.<variable_name>`. |
 
 Example of a custom payload template that includes variables:
@@ -264,10 +267,6 @@ Example of a custom payload template that includes variables:
   "custom_field": "{{ .Vars.custom_field }}"
 }
 ```
-
-{{< admonition type="note" >}}
-When using Custom Payload, the Title and Message fields are ignored as the entire payload structure is determined by your template.
-{{< /admonition >}}
 
 ### JSON Template Functions
 

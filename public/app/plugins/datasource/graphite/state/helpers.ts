@@ -1,8 +1,8 @@
 import { clone, some } from 'lodash';
 
-import { createErrorNotification } from '../../../../core/copy/appNotification';
-import { notifyApp } from '../../../../core/reducers/appNotification';
-import { dispatch } from '../../../../store/store';
+import { AppEvents } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
+
 import { FuncInstance } from '../gfunc';
 import { GraphiteTagOperator } from '../types';
 
@@ -185,7 +185,10 @@ export function handleMetricsAutoCompleteError(
 ): GraphiteQueryEditorState {
   if (!state.metricAutoCompleteErrorShown) {
     state.metricAutoCompleteErrorShown = true;
-    dispatch(notifyApp(createErrorNotification(`Fetching metrics failed: ${error.message}.`)));
+    getAppEvents().publish({
+      type: AppEvents.alertError.name,
+      payload: [`Fetching metrics failed: ${error.message}.`],
+    });
   }
   return state;
 }
@@ -196,7 +199,10 @@ export function handleMetricsAutoCompleteError(
 export function handleTagsAutoCompleteError(state: GraphiteQueryEditorState, error: Error): GraphiteQueryEditorState {
   if (!state.tagsAutoCompleteErrorShown) {
     state.tagsAutoCompleteErrorShown = true;
-    dispatch(notifyApp(createErrorNotification(`Fetching tags failed: ${error.message}.`)));
+    getAppEvents().publish({
+      type: AppEvents.alertError.name,
+      payload: [`Fetching tags failed: ${error.message}.`],
+    });
   }
   return state;
 }

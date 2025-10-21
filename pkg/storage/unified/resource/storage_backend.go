@@ -11,50 +11,55 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util/debouncer"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/debouncer"
 )
 
 const (
-	defaultListBufferSize = 100
-	prunerMaxEvents       = 20
+	defaultListBufferSize       = 100
+	prunerMaxEvents             = 20
+	defaultEventRetentionPeriod = 1 * time.Hour
+	defaultEventPruningInterval = 5 * time.Minute
 )
 
 // kvStorageBackend Unified storage backend based on KV storage.
 type kvStorageBackend struct {
-	snowflake     *snowflake.Node
-	kv            KV
-	dataStore     *dataStore
-	metaStore     *metadataStore
-	eventStore    *eventStore
-	notifier      *notifier
-	builder       DocumentBuilder
-	log           logging.Logger
-	withPruner    bool
-	historyPruner Pruner
+	snowflake            *snowflake.Node
+	kv                   KV
+	dataStore            *dataStore
+	eventStore           *eventStore
+	notifier             *notifier
+	builder              DocumentBuilder
+	log                  logging.Logger
+	withPruner           bool
+	eventRetentionPeriod time.Duration
+	eventPruningInterval time.Duration
+	historyPruner        Pruner
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
 }
 
 var _ StorageBackend = &kvStorageBackend{}
 
-type KvBackendOptions struct {
-	KvStore    KV
-	WithPruner bool
-	Tracer     trace.Tracer          // TODO add tracing
-	Reg        prometheus.Registerer // TODO add metrics
+type KVBackendOptions struct {
+	KvStore              KV
+	WithPruner           bool
+	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
+	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
+	Tracer               trace.Tracer          // TODO add tracing
+	Reg                  prometheus.Registerer // TODO add metrics
 }
 
-func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
+func NewKVStorageBackend(opts KVBackendOptions) (StorageBackend, error) {
 	ctx := context.Background()
 	kv := opts.KvStore
 
@@ -63,21 +68,68 @@ func NewKvStorageBackend(opts KvBackendOptions) (StorageBackend, error) {
 		return nil, fmt.Errorf("failed to create snowflake node: %w", err)
 	}
 	eventStore := newEventStore(kv)
+
+	eventRetentionPeriod := opts.EventRetentionPeriod
+	if eventRetentionPeriod <= 0 {
+		eventRetentionPeriod = defaultEventRetentionPeriod
+	}
+
+	eventPruningInterval := opts.EventPruningInterval
+	if eventPruningInterval <= 0 {
+		eventPruningInterval = defaultEventPruningInterval
+	}
+
 	backend := &kvStorageBackend{
-		kv:         kv,
-		dataStore:  newDataStore(kv),
-		metaStore:  newMetadataStore(kv),
-		eventStore: eventStore,
-		notifier:   newNotifier(eventStore, notifierOptions{}),
-		snowflake:  s,
-		builder:    StandardDocumentBuilder(), // For now we use the standard document builder.
-		log:        &logging.NoOpLogger{},     // Make this configurable
+		kv:                   kv,
+		dataStore:            newDataStore(kv),
+		eventStore:           eventStore,
+		notifier:             newNotifier(eventStore, notifierOptions{}),
+		snowflake:            s,
+		builder:              StandardDocumentBuilder(), // For now we use the standard document builder.
+		log:                  &logging.NoOpLogger{},     // Make this configurable
+		eventRetentionPeriod: eventRetentionPeriod,
+		eventPruningInterval: eventPruningInterval,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
 	}
+
+	// Start the event cleanup background job
+	go backend.runCleanupOldEvents(ctx)
+
 	return backend, nil
+}
+
+// runCleanupOldEvents starts a background goroutine that periodically cleans up old events
+func (k *kvStorageBackend) runCleanupOldEvents(ctx context.Context) {
+	// Run cleanup every hour
+	ticker := time.NewTicker(k.eventPruningInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			k.log.Debug("Event cleanup stopped due to context cancellation")
+			return
+		case <-ticker.C:
+			k.cleanupOldEvents(ctx)
+		}
+	}
+}
+
+// cleanupOldEvents performs the actual cleanup of old events
+func (k *kvStorageBackend) cleanupOldEvents(ctx context.Context) {
+	cutoff := time.Now().Add(-k.eventRetentionPeriod)
+	deletedCount, err := k.eventStore.CleanupOldEvents(ctx, cutoff)
+	if err != nil {
+		k.log.Error("Failed to cleanup old events", "error", err)
+		return
+	}
+
+	if deletedCount == 0 {
+		k.log.Info("Cleaned up old events", "deleted_count", deletedCount, "retention_period", k.eventRetentionPeriod)
+	}
 }
 
 func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) error {
@@ -85,25 +137,31 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		return fmt.Errorf("invalid pruning key, all fields must be set: %+v", key)
 	}
 
-	keepEvents := make([]DataKey, 0, prunerMaxEvents)
-
+	counter := 0
 	// iterate over all keys for the resource and delete versions beyond the latest 20
-	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey(key)) {
+	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Name:      key.Name,
+	}, SortOrderDesc) {
 		if err != nil {
 			return err
 		}
 
-		if len(keepEvents) < prunerMaxEvents {
-			keepEvents = append(keepEvents, datakey)
+		// Pruner needs to exclude deleted events
+		if counter < prunerMaxEvents && datakey.Action != DataActionDeleted {
+			counter++
 			continue
 		}
 
-		// If we already have 20 versions, delete the oldest one and append the new one
-		err := k.dataStore.Delete(ctx, keepEvents[0])
-		if err != nil {
-			return err
+		// If we already have 20 versions, delete any more create or update events
+		if datakey.Action != DataActionDeleted {
+			err := k.dataStore.Delete(ctx, datakey)
+			if err != nil {
+				return err
+			}
 		}
-		keepEvents = append(keepEvents[1:], datakey)
 	}
 
 	return nil
@@ -155,10 +213,10 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	case resourcepb.WatchEvent_ADDED:
 		action = DataActionCreated
 		// Check if resource already exists for create operations
-		_, err := k.metaStore.GetLatestResourceKey(ctx, MetaGetRequestKey{
-			Namespace: event.Key.Namespace,
+		_, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
+			Namespace: event.Key.Namespace,
 			Name:      event.Key.Name,
 		})
 		if err == nil {
@@ -182,42 +240,18 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		return 0, fmt.Errorf("object is nil")
 	}
 
-	// Build the search document
-	doc, err := k.builder.BuildDocument(ctx, event.Key, rv, event.Value)
-	if err != nil {
-		return 0, fmt.Errorf("failed to build document: %w", err)
-	}
-
 	// Write the data
-	err = k.dataStore.Save(ctx, DataKey{
-		Namespace:       event.Key.Namespace,
+	err := k.dataStore.Save(ctx, DataKey{
 		Group:           event.Key.Group,
 		Resource:        event.Key.Resource,
+		Namespace:       event.Key.Namespace,
 		Name:            event.Key.Name,
 		ResourceVersion: rv,
 		Action:          action,
+		Folder:          obj.GetFolder(),
 	}, bytes.NewReader(event.Value))
 	if err != nil {
 		return 0, fmt.Errorf("failed to write data: %w", err)
-	}
-
-	// Write metadata
-	err = k.metaStore.Save(ctx, MetaDataObj{
-		Key: MetaDataKey{
-			Namespace:       event.Key.Namespace,
-			Group:           event.Key.Group,
-			Resource:        event.Key.Resource,
-			Name:            event.Key.Name,
-			ResourceVersion: rv,
-			Action:          action,
-			Folder:          obj.GetFolder(),
-		},
-		Value: MetaData{
-			IndexableDocument: *doc,
-		},
-	})
-	if err != nil {
-		return 0, fmt.Errorf("failed to write metadata: %w", err)
 	}
 
 	// Write event
@@ -249,10 +283,10 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if req.Key == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
-	meta, err := k.metaStore.GetResourceKeyAtRevision(ctx, MetaGetRequestKey{
-		Namespace: req.Key.Namespace,
+	meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
+		Namespace: req.Key.Namespace,
 		Name:      req.Key.Name,
 	}, req.ResourceVersion)
 	if errors.Is(err, ErrNotFound) {
@@ -261,12 +295,13 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
 	data, err := k.dataStore.Get(ctx, DataKey{
-		Namespace:       req.Key.Namespace,
 		Group:           req.Key.Group,
 		Resource:        req.Key.Resource,
+		Namespace:       req.Key.Namespace,
 		Name:            req.Key.Name,
 		ResourceVersion: meta.ResourceVersion,
 		Action:          meta.Action,
+		Folder:          meta.Folder,
 	})
 	if err != nil || data == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
@@ -307,12 +342,12 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	}
 
 	// Fetch the latest objects
-	keys := make([]MetaDataKey, 0, min(defaultListBufferSize, req.Limit+1))
+	keys := make([]DataKey, 0, min(defaultListBufferSize, req.Limit+1))
 	idx := 0
-	for metaKey, err := range k.metaStore.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
-		Namespace: req.Options.Key.Namespace,
+	for dataKey, err := range k.dataStore.ListResourceKeysAtRevision(ctx, ListRequestKey{
 		Group:     req.Options.Key.Group,
 		Resource:  req.Options.Key.Resource,
+		Namespace: req.Options.Key.Namespace,
 		Name:      req.Options.Key.Name,
 	}, resourceVersion) {
 		if err != nil {
@@ -323,20 +358,20 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 			idx++
 			continue
 		}
-		keys = append(keys, metaKey)
+		keys = append(keys, dataKey)
 		// Only fetch the first limit items + 1 to get the next token.
 		if len(keys) >= int(req.Limit+1) {
 			break
 		}
 	}
+	// Create pull-style iterator from BatchGet
+	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, keys))
+	defer stop()
+
 	iter := kvListIterator{
-		keys:         keys,
-		currentIndex: -1,
-		ctx:          ctx,
-		listRV:       listRV,
-		offset:       offset,
-		limit:        req.Limit + 1, // TODO: for now we need at least one more item. Fix the caller
-		dataStore:    k.dataStore,
+		listRV: listRV,
+		offset: offset,
+		next:   next,
 	}
 	err := cb(&iter)
 	if err != nil {
@@ -348,59 +383,44 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 // kvListIterator implements ListIterator for KV storage
 type kvListIterator struct {
-	ctx          context.Context
-	keys         []MetaDataKey
-	currentIndex int
-	dataStore    *dataStore
-	listRV       int64
-	offset       int64
-	limit        int64
+	listRV int64
+	offset int64
 
-	// current
-	rv    int64
-	err   error
-	value []byte
+	// pull-style iterator
+	next func() (DataObj, error, bool)
+
+	// current item state
+	currentDataObj *DataObj
+	value          []byte
+	err            error
 }
 
 func (i *kvListIterator) Next() bool {
-	i.currentIndex++
-
-	if i.currentIndex >= len(i.keys) {
+	// Pull next item from the iterator
+	dataObj, err, ok := i.next()
+	if !ok {
 		return false
 	}
-
-	if int64(i.currentIndex) >= i.limit {
-		return false
-	}
-
-	i.rv, i.err = i.keys[i.currentIndex].ResourceVersion, nil
-
-	data, err := i.dataStore.Get(i.ctx, DataKey{
-		Namespace:       i.keys[i.currentIndex].Namespace,
-		Group:           i.keys[i.currentIndex].Group,
-		Resource:        i.keys[i.currentIndex].Resource,
-		Name:            i.keys[i.currentIndex].Name,
-		ResourceVersion: i.keys[i.currentIndex].ResourceVersion,
-		Action:          i.keys[i.currentIndex].Action,
-	})
 	if err != nil {
 		i.err = err
 		return false
 	}
 
-	i.value, i.err = readAndClose(data)
-	if i.err != nil {
+	i.currentDataObj = &dataObj
+
+	i.value, err = readAndClose(dataObj.Value)
+	if err != nil {
+		i.err = err
 		return false
 	}
 
-	// increment the offset
 	i.offset++
 
 	return true
 }
 
 func (i *kvListIterator) Error() error {
-	return nil
+	return i.err
 }
 
 func (i *kvListIterator) ContinueToken() string {
@@ -411,19 +431,31 @@ func (i *kvListIterator) ContinueToken() string {
 }
 
 func (i *kvListIterator) ResourceVersion() int64 {
-	return i.rv
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.ResourceVersion
+	}
+	return 0
 }
 
 func (i *kvListIterator) Namespace() string {
-	return i.keys[i.currentIndex].Namespace
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.Namespace
+	}
+	return ""
 }
 
 func (i *kvListIterator) Name() string {
-	return i.keys[i.currentIndex].Name
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.Name
+	}
+	return ""
 }
 
 func (i *kvListIterator) Folder() string {
-	return i.keys[i.currentIndex].Folder
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.Folder
+	}
+	return ""
 }
 
 func (i *kvListIterator) Value() []byte {
@@ -457,7 +489,7 @@ func filterHistoryKeysByVersion(historyKeys []DataKey, req *resourcepb.ListReque
 		if req.ResourceVersion <= 0 {
 			return nil, fmt.Errorf("expecting an explicit resource version query when using Exact matching")
 		}
-		var exactKeys []DataKey
+		exactKeys := make([]DataKey, 0, len(historyKeys))
 		for _, key := range historyKeys {
 			if key.ResourceVersion == req.ResourceVersion {
 				exactKeys = append(exactKeys, key)
@@ -466,7 +498,7 @@ func filterHistoryKeysByVersion(historyKeys []DataKey, req *resourcepb.ListReque
 		return exactKeys, nil
 	case resourcepb.ResourceVersionMatchV2_NotOlderThan:
 		if req.ResourceVersion > 0 {
-			var filteredKeys []DataKey
+			filteredKeys := make([]DataKey, 0, len(historyKeys))
 			for _, key := range historyKeys {
 				if key.ResourceVersion >= req.ResourceVersion {
 					filteredKeys = append(filteredKeys, key)
@@ -476,7 +508,7 @@ func filterHistoryKeysByVersion(historyKeys []DataKey, req *resourcepb.ListReque
 		}
 	default:
 		if req.ResourceVersion > 0 {
-			var filteredKeys []DataKey
+			filteredKeys := make([]DataKey, 0, len(historyKeys))
 			for _, key := range historyKeys {
 				if key.ResourceVersion <= req.ResourceVersion {
 					filteredKeys = append(filteredKeys, key)
@@ -502,7 +534,7 @@ func applyLiveHistoryFilter(filteredKeys []DataKey, req *resourcepb.ListRequest)
 		}
 	}
 	if latestDeleteRV > 0 {
-		var liveKeys []DataKey
+		liveKeys := make([]DataKey, 0, len(filteredKeys))
 		for _, key := range filteredKeys {
 			if key.ResourceVersion > latestDeleteRV {
 				liveKeys = append(liveKeys, key)
@@ -532,7 +564,7 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 		return keys
 	}
 
-	var pagedKeys []DataKey
+	pagedKeys := make([]DataKey, 0, len(keys))
 	for _, key := range keys {
 		if sortAscending && key.ResourceVersion > lastSeenRV {
 			pagedKeys = append(pagedKeys, key)
@@ -604,7 +636,7 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 	return func(yield func(*ModifiedResource, error) bool) {
 		var lastSeenResource *ModifiedResource
 		var lastSeenDataKey DataKey
-		for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}) {
+		for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}, SortOrderAsc) {
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return
@@ -705,7 +737,14 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 			}
 			seen[evtKey.Name] = struct{}{}
 
-			value, err := k.getValueFromDataStore(ctx, DataKey(evtKey))
+			value, err := k.getValueFromDataStore(ctx, DataKey{
+				Group:           evtKey.Group,
+				Resource:        evtKey.Resource,
+				Namespace:       evtKey.Namespace,
+				Name:            evtKey.Name,
+				ResourceVersion: evtKey.ResourceVersion,
+				Action:          evtKey.Action,
+			})
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return
@@ -758,7 +797,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Name:      key.Name,
-	}) {
+	}, SortOrderAsc) {
 		if err != nil {
 			return 0, err
 		}
@@ -790,13 +829,14 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	// Pagination: filter out items up to and including lastSeenRV
 	pagedKeys := applyPagination(filteredKeys, lastSeenRV, sortAscending)
 
+	// Create pull-style iterator from BatchGet
+	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, pagedKeys))
+	defer stop()
+
 	iter := kvHistoryIterator{
-		keys:          pagedKeys,
-		currentIndex:  -1,
-		ctx:           ctx,
 		listRV:        listRV,
 		sortAscending: sortAscending,
-		dataStore:     k.dataStore,
+		next:          next,
 	}
 
 	err := fn(&iter)
@@ -810,7 +850,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 // processTrashEntries handles the special case of listing deleted items (trash)
 func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error, historyKeys []DataKey, lastSeenRV int64, sortAscending bool, listRV int64) (int64, error) {
 	// Filter to only deleted entries
-	var deletedKeys []DataKey
+	deletedKeys := make([]DataKey, 0, len(historyKeys))
 	for _, key := range historyKeys {
 		if key.Action == DataActionDeleted {
 			deletedKeys = append(deletedKeys, key)
@@ -819,14 +859,14 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 
 	// Check if the resource currently exists (is live)
 	// If it exists, don't return any trash entries
-	_, err := k.metaStore.GetLatestResourceKey(ctx, MetaGetRequestKey{
-		Namespace: req.Options.Key.Namespace,
+	_, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
 		Group:     req.Options.Key.Group,
 		Resource:  req.Options.Key.Resource,
+		Namespace: req.Options.Key.Namespace,
 		Name:      req.Options.Key.Name,
 	})
 
-	var trashKeys []DataKey
+	trashKeys := make([]DataKey, 0, 1)
 	if errors.Is(err, ErrNotFound) {
 		// Resource doesn't exist currently, so we can return the latest delete
 		// Find the latest delete event
@@ -854,13 +894,15 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 	// Pagination: filter out items up to and including lastSeenRV
 	pagedKeys := applyPagination(filteredKeys, lastSeenRV, sortAscending)
 
+	// Create pull-style iterator from BatchGet
+	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, pagedKeys))
+	defer stop()
+
 	iter := kvHistoryIterator{
-		keys:          pagedKeys,
-		currentIndex:  -1,
-		ctx:           ctx,
-		listRV:        listRV,
-		sortAscending: sortAscending,
-		dataStore:     k.dataStore,
+		listRV:          listRV,
+		sortAscending:   sortAscending,
+		skipProvisioned: true,
+		next:            next,
 	}
 
 	err = fn(&iter)
@@ -873,42 +915,36 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 
 // kvHistoryIterator implements ListIterator for KV storage history
 type kvHistoryIterator struct {
-	ctx           context.Context
-	keys          []DataKey
-	currentIndex  int
-	listRV        int64
-	sortAscending bool
-	dataStore     *dataStore
+	listRV          int64
+	sortAscending   bool
+	skipProvisioned bool
 
-	// current
-	rv     int64
-	err    error
-	value  []byte
-	folder string
+	// pull-style iterator
+	next func() (DataObj, error, bool)
+
+	// current item state
+	currentDataObj *DataObj
+	value          []byte
+	folder         string
+	err            error
 }
 
 func (i *kvHistoryIterator) Next() bool {
-	i.currentIndex++
-
-	if i.currentIndex >= len(i.keys) {
+	// Pull next item from the iterator
+	dataObj, err, ok := i.next()
+	if !ok {
 		return false
 	}
-
-	key := i.keys[i.currentIndex]
-	i.rv = key.ResourceVersion
-
-	// Read the value from the ReadCloser
-	data, err := i.dataStore.Get(i.ctx, key)
 	if err != nil {
 		i.err = err
 		return false
 	}
-	if data == nil {
-		i.err = fmt.Errorf("data is nil")
-		return false
-	}
-	i.value, i.err = readAndClose(data)
-	if i.err != nil {
+
+	i.currentDataObj = &dataObj
+
+	i.value, err = readAndClose(dataObj.Value)
+	if err != nil {
+		i.err = err
 		return false
 	}
 
@@ -926,7 +962,11 @@ func (i *kvHistoryIterator) Next() bool {
 		return false
 	}
 	i.folder = meta.GetFolder()
-	i.err = nil
+
+	// if the resource is provisioned and we are skipping provisioned resources, continue onto the next one
+	if i.skipProvisioned && meta.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
+		return i.Next()
+	}
 
 	return true
 }
@@ -936,31 +976,35 @@ func (i *kvHistoryIterator) Error() error {
 }
 
 func (i *kvHistoryIterator) ContinueToken() string {
-	if i.currentIndex < 0 || i.currentIndex >= len(i.keys) {
+	if i.currentDataObj == nil {
 		return ""
 	}
+	rv := i.currentDataObj.Key.ResourceVersion
 	token := ContinueToken{
-		StartOffset:     i.rv,
-		ResourceVersion: i.keys[i.currentIndex].ResourceVersion,
+		StartOffset:     rv,
+		ResourceVersion: rv,
 		SortAscending:   i.sortAscending,
 	}
 	return token.String()
 }
 
 func (i *kvHistoryIterator) ResourceVersion() int64 {
-	return i.rv
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.ResourceVersion
+	}
+	return 0
 }
 
 func (i *kvHistoryIterator) Namespace() string {
-	if i.currentIndex >= 0 && i.currentIndex < len(i.keys) {
-		return i.keys[i.currentIndex].Namespace
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.Namespace
 	}
 	return ""
 }
 
 func (i *kvHistoryIterator) Name() string {
-	if i.currentIndex >= 0 && i.currentIndex < len(i.keys) {
-		return i.keys[i.currentIndex].Name
+	if i.currentDataObj != nil {
+		return i.currentDataObj.Key.Name
 	}
 	return ""
 }
@@ -983,12 +1027,13 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 		for event := range notifierEvents {
 			// fetch the data
 			dataReader, err := k.dataStore.Get(ctx, DataKey{
-				Namespace:       event.Namespace,
 				Group:           event.Group,
 				Resource:        event.Resource,
+				Namespace:       event.Namespace,
 				Name:            event.Name,
 				ResourceVersion: event.ResourceVersion,
 				Action:          event.Action,
+				Folder:          event.Folder,
 			})
 			if err != nil || dataReader == nil {
 				k.log.Error("failed to get data for event", "error", err)
@@ -1030,48 +1075,14 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 }
 
 // GetResourceStats returns resource stats within the storage backend.
-// TODO: this isn't very efficient, we should use a more efficient algorithm.
 func (k *kvStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
-	stats := make([]ResourceStats, 0)
-	res := make(map[string]map[string]bool)
-	rvs := make(map[string]int64)
+	return k.dataStore.GetResourceStats(ctx, namespace, minCount)
+}
 
-	// Use datastore.Keys to get all data keys for the namespace
-	for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{Namespace: namespace}) {
-		if err != nil {
-			return nil, err
-		}
-		key := fmt.Sprintf("%s/%s/%s", dataKey.Namespace, dataKey.Group, dataKey.Resource)
-		if _, ok := res[key]; !ok {
-			res[key] = make(map[string]bool)
-			rvs[key] = 1
-		}
-		res[key][dataKey.Name] = dataKey.Action != DataActionDeleted
-		rvs[key] = dataKey.ResourceVersion
+func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
+	return func(yield func(ResourceLastImportTime, error) bool) {
+		yield(ResourceLastImportTime{}, fmt.Errorf("not implemented"))
 	}
-
-	for key, names := range res {
-		parts := strings.Split(key, "/")
-		count := int64(0)
-		for _, exists := range names {
-			if exists {
-				count++
-			}
-		}
-		if count <= int64(minCount) {
-			continue
-		}
-		stats = append(stats, ResourceStats{
-			NamespacedResource: NamespacedResource{
-				Namespace: parts[0],
-				Group:     parts[1],
-				Resource:  parts[2],
-			},
-			Count:           count,
-			ResourceVersion: rvs[key],
-		})
-	}
-	return stats, nil
 }
 
 // readAndClose reads all data from a ReadCloser and ensures it's closed,

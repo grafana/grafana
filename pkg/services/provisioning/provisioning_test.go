@@ -48,7 +48,7 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		serviceTest.waitForStop()
 
 		assert.False(t, serviceTest.serviceRunning, "Service should not be running")
-		assert.Equal(t, context.Canceled, serviceTest.serviceError, "Service should have returned canceled error")
+		assert.NoError(t, serviceTest.serviceError, "Service should not have returned an error")
 	})
 
 	t.Run("Failed reloading does not stop polling with old provisioned", func(t *testing.T) {
@@ -91,7 +91,7 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		serviceTest.cancel()
 		serviceTest.waitForStop()
 
-		assert.Equal(t, context.Canceled, serviceTest.serviceError)
+		assert.NoError(t, serviceTest.serviceError, "Service should not have returned an error")
 	})
 
 	t.Run("Should return run error when dashboard provisioning fails for non-allow-listed error", func(t *testing.T) {
@@ -168,6 +168,9 @@ func setup(t *testing.T) *serviceTestStruct {
 			return nil
 		},
 		func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error {
+			return nil
+		},
+		func(context.Context) error {
 			return nil
 		},
 		searchStub,

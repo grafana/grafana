@@ -430,14 +430,12 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	dashStore, err := database.ProvideDashboardStore(sc.db, sc.cfg, features, tagimpl.ProvideService(sc.db))
 	require.NoError(b, err)
 
-	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
-
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	actionSets := resourcepermissions.NewActionSetService()
 	fStore := folderimpl.ProvideStore(sc.db)
 	folderServiceWithFlagOn := folderimpl.ProvideService(
-		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
 		nil, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
@@ -449,7 +447,6 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg,
 		dashStore,
-		folderStore,
 		features,
 		folderPermissions,
 		ac,

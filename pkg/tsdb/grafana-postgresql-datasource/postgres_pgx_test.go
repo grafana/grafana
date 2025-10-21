@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -15,14 +16,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 
+	"github.com/grafana/grafana/pkg/util/testutil"
 	_ "github.com/lib/pq"
 )
 
 // Test generateConnectionString.
 func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCases := []struct {
 		desc        string
@@ -42,7 +42,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='/var/run/postgresql' dbname='database' sslmode='verify-full'",
+			expConnStr:  "user='user' host='/var/run/postgresql' dbname='database' password='password' sslmode='verify-full'",
 		},
 		{
 			desc:        "TCP host",
@@ -51,7 +51,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
+			expConnStr:  "user='user' host='host' dbname='database' password='password' sslmode='verify-full'",
 		},
 		{
 			desc:        "verify-ca automatically adds disable-sni",
@@ -60,7 +60,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-ca"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' port=1234 sslmode='verify-ca' sslsni=0",
+			expConnStr:  "user='user' host='host' dbname='database' password='password' port=1234 sslmode='verify-ca' sslsni=0",
 		},
 		{
 			desc:        "TCP/port host",
@@ -69,7 +69,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' port=1234 sslmode='verify-full'",
+			expConnStr:  "user='user' host='host' dbname='database' password='password' port=1234 sslmode='verify-full'",
 		},
 		{
 			desc:        "Ipv6 host",
@@ -78,7 +78,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='::1' dbname='database' sslmode='verify-full'",
+			expConnStr:  "user='user' host='::1' dbname='database' password='password' sslmode='verify-full'",
 		},
 		{
 			desc:        "Ipv6/port host",
@@ -87,7 +87,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='::1' dbname='database' port=1234 sslmode='verify-full'",
+			expConnStr:  "user='user' host='::1' dbname='database' password='password' port=1234 sslmode='verify-full'",
 		},
 		{
 			desc:        "Invalid port",
@@ -104,7 +104,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    `p'\assword`,
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
+			expConnStr:  `user='user' host='host' dbname='database' password='p\'\\assword' sslmode='verify-full'`,
 		},
 		{
 			desc:        "User/DB with single quote and backslash",
@@ -113,7 +113,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    `password`,
 			database:    `d'\atabase`,
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  `user='u\'\\ser' password='password' host='host' dbname='d\'\\atabase' sslmode='verify-full'`,
+			expConnStr:  `user='u\'\\ser' host='host' dbname='d\'\\atabase' password='password' sslmode='verify-full'`,
 		},
 		{
 			desc:        "Custom TLS mode disabled",
@@ -122,7 +122,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "disable"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='disable'",
+			expConnStr:  "user='user' host='host' dbname='database' password='password' sslmode='disable'",
 		},
 		{
 			desc:     "Custom TLS mode verify-full with certificate files",
@@ -136,16 +136,21 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 				CertFile:     "i/am/coding/client.crt",
 				CertKeyFile:  "i/am/coding/client.key",
 			},
-			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' " +
+			expConnStr: "user='user' host='host' dbname='database' password='password' sslmode='verify-full' " +
 				"sslrootcert='i/am/coding/ca.crt' sslcert='i/am/coding/client.crt' sslkey='i/am/coding/client.key'",
+		},
+		{
+			desc:        "No password",
+			host:        "host",
+			user:        "user",
+			password:    "",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  "user='user' host='host' dbname='database' sslmode='verify-full'",
 		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
-			svc := Service{
-				logger: backend.NewLoggerWith("logger", "tsdb.postgres"),
-			}
-
 			ds := sqleng.DataSourceInfo{
 				URL:                     tt.host,
 				User:                    tt.user,
@@ -153,8 +158,9 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 				Database:                tt.database,
 				UID:                     tt.uid,
 			}
+			logger := backend.NewLoggerWith("logger", "tsdb.postgres")
 
-			connStr, err := svc.generateConnectionString(ds, tt.tlsSettings, false)
+			connStr, err := generateConnectionString(ds, tt.tlsSettings, false, logger)
 
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)
@@ -177,9 +183,8 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
 func TestIntegrationPostgresPGX(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false
 
@@ -276,7 +281,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 					},
 				},
 			}
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -375,7 +380,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -418,7 +423,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 					},
 				},
 			}
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -452,7 +457,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			frames := queryResult.Frames
@@ -480,7 +485,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -534,7 +539,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -581,7 +586,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -616,7 +621,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 			},
 		}
 
-		resp, err := exe.QueryDataPGX(t.Context(), query)
+		resp, err := exe.QueryData(t.Context(), query)
 		require.NoError(t, err)
 		queryResult := resp.Responses["A"]
 		require.NoError(t, queryResult.Error)
@@ -733,7 +738,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(t.Context(), query)
+				resp, err := exe.QueryData(t.Context(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -757,7 +762,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(t.Context(), query)
+				resp, err := exe.QueryData(t.Context(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -781,7 +786,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(t.Context(), query)
+				resp, err := exe.QueryData(t.Context(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -805,7 +810,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(t.Context(), query)
+				resp, err := exe.QueryData(t.Context(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -829,7 +834,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(t.Context(), query)
+				resp, err := exe.QueryData(t.Context(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -853,7 +858,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(t.Context(), query)
+				resp, err := exe.QueryData(t.Context(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -877,7 +882,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(t.Context(), query)
+				resp, err := exe.QueryData(t.Context(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -902,7 +907,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(t.Context(), query)
+				resp, err := exe.QueryData(t.Context(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -926,7 +931,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -951,7 +956,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -983,7 +988,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1018,7 +1023,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1078,7 +1083,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 
 			queryResult := resp.Responses["Deploys"]
@@ -1105,7 +1110,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 
 			queryResult := resp.Responses["Tickets"]
@@ -1128,7 +1133,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1153,7 +1158,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1178,7 +1183,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1204,7 +1209,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1230,7 +1235,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1256,7 +1261,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1282,7 +1287,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1330,7 +1335,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 					},
 				}
 
-				resp, err := handler.QueryDataPGX(t.Context(), query)
+				resp, err := handler.QueryData(t.Context(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -1360,7 +1365,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 					},
 				}
 
-				resp, err := handler.QueryDataPGX(t.Context(), query)
+				resp, err := handler.QueryData(t.Context(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -1398,7 +1403,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(t.Context(), query)
+			resp, err := exe.QueryData(t.Context(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 
@@ -1408,5 +1413,167 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 			require.NotNil(t, frames[0].Fields)
 			require.Empty(t, frames[0].Fields)
 		})
+
+		t.Run("Should handle multiple result sets without panicking", func(t *testing.T) {
+			// Create a test table for the panic scenario test
+			sql := `
+				DROP TABLE IF EXISTS test_multi_results;
+				CREATE TABLE test_multi_results(
+					id integer,
+					name text,
+					value numeric
+				);
+				INSERT INTO test_multi_results VALUES
+					(1, 'test1', 10.5),
+					(2, 'test2', 20.7),
+					(3, 'test3', 30.2);
+			`
+			_, err := p.Exec(t.Context(), sql)
+			require.NoError(t, err)
+
+			t.Run("Should handle compatible multiple result sets", func(t *testing.T) {
+				// This query returns multiple result sets with the same structure
+				query := &backend.QueryDataRequest{
+					Queries: []backend.DataQuery{
+						{
+							RefID: "A",
+							JSON: []byte(`{
+								"rawSql": "SELECT id, name FROM test_multi_results WHERE id <= 2; SELECT id, name FROM test_multi_results WHERE id >= 2;",
+								"format": "table"
+							}`),
+							TimeRange: backend.TimeRange{
+								From: fromStart,
+								To:   fromStart.Add(1 * time.Hour),
+							},
+						},
+					},
+				}
+
+				// This should not panic and should work correctly
+				resp, err := exe.QueryData(t.Context(), query)
+				require.NoError(t, err)
+				queryResult := resp.Responses["A"]
+				require.NoError(t, queryResult.Error)
+
+				frames := queryResult.Frames
+				require.Len(t, frames, 1)
+
+				// The frame should be properly constructed from both SELECT results
+				frame := frames[0]
+				require.Equal(t, 2, len(frame.Fields)) // id, name from both queries
+				require.Equal(t, "id", frame.Fields[0].Name)
+				require.Equal(t, "name", frame.Fields[1].Name)
+				require.Equal(t, 4, frame.Rows()) // 2 rows from first result + 2 rows from second result
+			})
+
+			t.Run("Should return error for incompatible multiple result sets", func(t *testing.T) {
+				// This query returns multiple result sets with different structures - the kind that used to cause panic
+				query := &backend.QueryDataRequest{
+					Queries: []backend.DataQuery{
+						{
+							RefID: "A",
+							JSON: []byte(`{
+								"rawSql": "SELECT id, name FROM test_multi_results WHERE id <= 2; SELECT id, value FROM test_multi_results WHERE id >= 2;",
+								"format": "table"
+							}`),
+							TimeRange: backend.TimeRange{
+								From: fromStart,
+								To:   fromStart.Add(1 * time.Hour),
+							},
+						},
+					},
+				}
+
+				// This should not panic anymore, but should return an error instead
+				resp, err := exe.QueryData(t.Context(), query)
+				require.NoError(t, err)
+				queryResult := resp.Responses["A"]
+
+				// We expect an error about column mismatch, not a panic
+				require.Error(t, queryResult.Error)
+				require.Contains(t, queryResult.Error.Error(), "column name mismatch")
+			})
+
+			t.Run("Should return error for incompatible number of columns", func(t *testing.T) {
+				// This query returns multiple result sets with different number of columns
+				// This should fix the error "runtime error: index out of range [1] with length 1"
+				query := &backend.QueryDataRequest{
+					Queries: []backend.DataQuery{
+						{
+							RefID: "A",
+							JSON: []byte(`{
+								"rawSql": "SELECT id, name FROM test_multi_results WHERE id = 1; SELECT id FROM test_multi_results WHERE id = 1;",
+								"format": "table"
+							}`),
+							TimeRange: backend.TimeRange{
+								From: fromStart,
+								To:   fromStart.Add(1 * time.Hour),
+							},
+						},
+					},
+				}
+
+				// This should not panic anymore, but should return an error instead
+				resp, err := exe.QueryData(t.Context(), query)
+				require.NoError(t, err)
+				queryResult := resp.Responses["A"]
+
+				// We expect an error about incompatible result structure, not a panic
+				require.Error(t, queryResult.Error)
+				require.Contains(t, queryResult.Error.Error(), "incompatible result structure: expected 2 columns, got 1 columns")
+			})
+		})
+
+		t.Run("Should handle queries with mixed statement types", func(t *testing.T) {
+			// This tests a scenario with UPDATE + SELECT that could cause the original panic
+			query := &backend.QueryDataRequest{
+				Queries: []backend.DataQuery{
+					{
+						RefID: "A",
+						JSON: []byte(`{
+							"rawSql": "UPDATE test_multi_results SET name = 'updated' WHERE id = 1; SELECT id, name FROM test_multi_results WHERE id = 1;",
+							"format": "table"
+						}`),
+						TimeRange: backend.TimeRange{
+							From: fromStart,
+							To:   fromStart.Add(1 * time.Hour),
+						},
+					},
+				},
+			}
+
+			// This should not panic
+			resp, err := exe.QueryData(t.Context(), query)
+			require.NoError(t, err)
+			queryResult := resp.Responses["A"]
+			require.NoError(t, queryResult.Error)
+
+			frames := queryResult.Frames
+			require.Len(t, frames, 1)
+
+			// Should only contain data from the SELECT part
+			frame := frames[0]
+			require.Equal(t, 2, len(frame.Fields)) // id, name
+			require.Equal(t, 1, frame.Rows())      // 1 row
+
+			// Verify the update worked
+			nameField := frame.Fields[1]
+			nameValue := nameField.At(0).(*string)
+			require.Equal(t, "updated", *nameValue)
+		})
+	})
+
+	t.Run("Test Postgres connection with pgpass file", func(t *testing.T) {
+		require.NoError(t, preparePgpassFile(t))
+		require.FileExists(t, os.Getenv("PGPASSFILE"), "Make sure that PGPASSFILE is set and file exists")
+
+		cnnstr := postgresTestDBConnString()
+		require.NotContains(t, cnnstr, "password=", "Make sure that password is not in the connection string")
+
+		pgpassPool, _, err := newPostgresPGX(t.Context(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+		require.NoError(t, err)
+
+		_, err = pgpassPool.Query(t.Context(), "SELECT 1") // Test connection
+		require.NoError(t, err)
 	})
 }

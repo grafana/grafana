@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
@@ -24,5 +26,5 @@ type DecryptStorage interface {
 
 // DecryptAuthorizer is the interface for authorizing decryption requests.
 type DecryptAuthorizer interface {
-	Authorize(ctx context.Context, namespace xkube.Namespace, secureValueName string, secureValueDecrypters []string) (identity string, allowed bool)
+	Authorize(ctx context.Context, namespace xkube.Namespace, secureValueName string, secureValueDecrypters []string, owner []metav1.OwnerReference) (identity string, allowed bool, reason string)
 }

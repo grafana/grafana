@@ -28,8 +28,8 @@ var (
 
 type ShortURLAppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg     *setting.Cfg
-	service shorturls.Service
+	service    shorturls.Service
+	namespacer request.NamespaceMapper
 }
 
 func RegisterAppInstaller(
@@ -37,20 +37,16 @@ func RegisterAppInstaller(
 	service shorturls.Service,
 ) (*ShortURLAppInstaller, error) {
 	installer := &ShortURLAppInstaller{
-		cfg:     cfg,
-		service: service,
+		service:    service,
+		namespacer: request.GetNamespaceMapper(cfg),
 	}
-	specificConfig := any(&shorturlapp.ShortURLConfig{
-		AppURL: cfg.AppURL,
-	})
-	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, shorturlapp.New)
+	provider := simple.NewAppProvider(apis.LocalManifest(), nil, shorturlapp.New)
 
 	appCfg := app.Config{
-		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
-		ManifestData:   *apis.LocalManifest().ManifestData,
-		SpecificConfig: specificConfig,
+		KubeConfig:   restclient.Config{}, // this will be overridden by the installer's InitializeApp method
+		ManifestData: *apis.LocalManifest().ManifestData,
 	}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appCfg, apis.ManifestGoTypeAssociator, apis.ManifestCustomRouteResponsesAssociator)
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appCfg, &apis.GoTypeAssociator{})
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +65,7 @@ func (s *ShortURLAppInstaller) GetLegacyStorage(requested schema.GroupVersionRes
 	}
 	legacyStore := &legacyStorage{
 		service:    s.service,
-		namespacer: request.GetNamespaceMapper(s.cfg),
+		namespacer: s.namespacer,
 	}
 	legacyStore.tableConverter = utils.NewTableConverter(
 		gvr.GroupResource(),

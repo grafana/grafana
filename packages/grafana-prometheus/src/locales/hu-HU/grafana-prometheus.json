@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Állítsa be a léptékparaméter alsó határát",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Felbontás kiválasztása",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Hőtérkép",
           "label-table": "Táblázat",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "Elemzési hiba: Váltás építő módba?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Jelmagyarázat",
         "placeholder-select-legend-mode": "Jelmagyarázat mód kiválasztása",
         "tooltip-legend": "Sorozatnév felülbírálása vagy sablon. Például a(z) {{templateExample}} helyébe a(z) {{labelName}} címkeértéke lép."
@@ -482,11 +486,6 @@
         "message-no-metrics-found": "Nem található metrika az adatforrásban.",
         "name": "Név",
         "type": "Típus"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "A lekérdezés elemzése nem egyértelmű."
-        }
       }
     }
   }

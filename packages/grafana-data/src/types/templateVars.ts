@@ -23,7 +23,8 @@ export type TypedVariableModel =
   | UserVariableModel
   | OrgVariableModel
   | DashboardVariableModel
-  | SnapshotVariableModel;
+  | SnapshotVariableModel
+  | SwitchVariableModel;
 
 export enum VariableRefresh {
   never, // removed from the UI
@@ -47,6 +48,7 @@ export enum VariableHide {
   dontHide,
   hideLabel,
   hideVariable,
+  inControlsMenu,
 }
 
 export interface AdHocVariableFilter {
@@ -129,6 +131,10 @@ export interface ConstantVariableModel extends VariableWithOptions {
   type: 'constant';
 }
 
+export interface SwitchVariableModel extends VariableWithOptions {
+  type: 'switch';
+}
+
 export interface VariableWithMultiSupport extends VariableWithOptions {
   multi: boolean;
   includeAll: boolean;
@@ -186,7 +192,6 @@ export interface BaseVariableModel {
   error: any | null;
   description: string | null;
   usedInRepeat?: boolean;
-  showInControlsMenu?: boolean;
 }
 
 export interface SnapshotVariableModel extends VariableWithOptions {

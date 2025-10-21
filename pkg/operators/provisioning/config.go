@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
+	"k8s.io/client-go/util/flowcontrol"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -23,19 +24,23 @@ import (
 	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 )
 
 // provisioningControllerConfig contains the configuration that overlaps for the jobs and repo controllers
 type provisioningControllerConfig struct {
-	provisioningClient *client.Clientset
-	resyncInterval     time.Duration
-	repoFactory        repository.Factory
-	unified            resources.ResourceStore
-	clients            resources.ClientFactory
+	provisioningClient  *client.Clientset
+	resyncInterval      time.Duration
+	repoFactory         repository.Factory
+	unified             resources.ResourceStore
+	clients             resources.ClientFactory
+	tokenExchangeClient *authn.TokenExchangeClient
+	tlsConfig           rest.TLSClientConfig
 }
 
 // expects:
@@ -55,6 +60,7 @@ type provisioningControllerConfig struct {
 // audiences =
 // [operator]
 // provisioning_server_url =
+// provisioning_server_public_url =
 // dashboards_server_url =
 // folders_server_url =
 // tls_insecure =
@@ -62,10 +68,11 @@ type provisioningControllerConfig struct {
 // tls_key_file =
 // tls_ca_file =
 // resync_interval =
-// repository_types =
 // home_path =
 // local_permitted_prefixes =
-func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerConfig, err error) {
+// [provisioning]
+// repository_types =
+func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controllerCfg *provisioningControllerConfig, err error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
@@ -111,9 +118,10 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		APIPath: "/apis",
 		Host:    provisioningServerURL,
 		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-			return authrt.NewRoundTripper(tokenExchangeClient, rt)
+			return authrt.NewRoundTripper(tokenExchangeClient, rt, provisioning.GROUP)
 		}),
 		TLSClientConfig: tlsConfig,
+		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
 	}
 
 	provisioningClient, err := client.NewForConfig(config)
@@ -126,7 +134,7 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 		return nil, fmt.Errorf("failed to setup decrypter: %w", err)
 	}
 
-	repoFactory, err := setupRepoFactory(cfg, decrypter, provisioningClient)
+	repoFactory, err := setupRepoFactory(cfg, decrypter, provisioningClient, registry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup repository getter: %w", err)
 	}
@@ -145,37 +153,54 @@ func setupFromConfig(cfg *setting.Cfg) (controllerCfg *provisioningControllerCon
 	}
 
 	dashboardsServerURL := operatorSec.Key("dashboards_server_url").String()
-	if provisioningServerURL == "" {
+	if dashboardsServerURL == "" {
 		return nil, fmt.Errorf("dashboards_server_url is required in [operator] section")
 	}
 	foldersServerURL := operatorSec.Key("folders_server_url").String()
-	if provisioningServerURL == "" {
+	if foldersServerURL == "" {
 		return nil, fmt.Errorf("folders_server_url is required in [operator] section")
 	}
 
-	apiServerURLs := []string{dashboardsServerURL, foldersServerURL}
-	configProviders := make([]apiserver.RestConfigProvider, len(apiServerURLs))
+	apiServerURLs := map[string]string{
+		resources.DashboardResource.Group: dashboardsServerURL,
+		resources.FolderResource.Group:    foldersServerURL,
+		provisioning.GROUP:                provisioningServerURL,
+	}
+	configProviders := make(map[string]apiserver.RestConfigProvider)
 
-	for i, url := range apiServerURLs {
+	tlsConfigForTransport, err := rest.TLSConfigFor(&rest.Config{TLSClientConfig: tlsConfig})
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert TLS config for transport: %w", err)
+	}
+
+	for group, url := range apiServerURLs {
 		config := &rest.Config{
 			APIPath: "/apis",
 			Host:    url,
 			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-				return authrt.NewRoundTripper(tokenExchangeClient, rt)
+				return authrt.NewRoundTripper(tokenExchangeClient, rt, group)
 			}),
-			TLSClientConfig: tlsConfig,
+			Transport: &http.Transport{
+				MaxConnsPerHost:     100,
+				MaxIdleConns:        100,
+				MaxIdleConnsPerHost: 100,
+				TLSClientConfig:     tlsConfigForTransport,
+			},
+			RateLimiter: flowcontrol.NewFakeAlwaysRateLimiter(),
 		}
-		configProviders[i] = NewDirectConfigProvider(config)
+		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders)
 
 	return &provisioningControllerConfig{
-		provisioningClient: provisioningClient,
-		repoFactory:        repoFactory,
-		unified:            unified,
-		clients:            clients,
-		resyncInterval:     operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
+		provisioningClient:  provisioningClient,
+		repoFactory:         repoFactory,
+		unified:             unified,
+		clients:             clients,
+		resyncInterval:      operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
+		tokenExchangeClient: tokenExchangeClient,
+		tlsConfig:           tlsConfig,
 	}, nil
 }
 
@@ -212,9 +237,14 @@ func setupRepoFactory(
 	cfg *setting.Cfg,
 	decrypter repository.Decrypter,
 	provisioningClient *client.Clientset,
+	registry prometheus.Registerer,
 ) (repository.Factory, error) {
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
-	repoTypes := operatorSec.Key("repository_types").Strings("|")
+	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
+	repoTypes := provisioningSec.Key("repository_types").Strings("|")
+	if len(repoTypes) == 0 {
+		repoTypes = []string{"github"}
+	}
 
 	// TODO: This depends on the different flavor of Grafana
 	// https://github.com/grafana/git-ui-sync-project/issues/495
@@ -228,13 +258,19 @@ func setupRepoFactory(
 		alreadyRegistered[provisioning.RepositoryType(t)] = struct{}{}
 
 		switch provisioning.RepositoryType(t) {
+		case provisioning.GitRepositoryType:
+			extras = append(extras, git.Extra(decrypter))
 		case provisioning.GitHubRepositoryType:
+			var webhook *webhooks.WebhookExtraBuilder
+			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
+			if provisioningAppURL != "" {
+				webhook = webhooks.ProvideWebhooks(provisioningAppURL, registry)
+			}
+
 			extras = append(extras, github.Extra(
 				decrypter,
 				github.ProvideFactory(),
-				// TODO: we need to plug the webhook builder here for webhooks to be created in repository controller
-				// https://github.com/grafana/git-ui-sync-project/issues/455
-				nil,
+				webhook,
 			),
 			)
 		case provisioning.LocalRepositoryType:
@@ -257,7 +293,7 @@ func setupRepoFactory(
 		}
 	}
 
-	repoFactory, err := repository.ProvideFactory(extras)
+	repoFactory, err := repository.ProvideFactory(alreadyRegistered, extras)
 	if err != nil {
 		return nil, fmt.Errorf("create repository factory: %w", err)
 	}
@@ -288,6 +324,7 @@ func setupDecrypter(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeClient
 		tracer,
 		address,
 		secretsTls,
+		secretsSec.Key("grpc_client_load_balancing").MustBool(false),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create decrypt service: %w", err)
@@ -306,6 +343,7 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	if address == "" {
 		return nil, fmt.Errorf("grpc_address is required in [unified_storage] section")
 	}
+	// FIXME: These metrics are not going to show up in /metrics
 	registry := prometheus.NewPedanticRegistry()
 	conn, err := unified.GrpcConn(address, registry)
 	if err != nil {
@@ -316,7 +354,10 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	indexConn := conn
 	indexAddress := unifiedStorageSec.Key("grpc_index_address").String()
 	if indexAddress != "" {
-		indexConn, err = unified.GrpcConn(indexAddress, registry)
+		// FIXME: These metrics are not going to show up in /metrics. We will also need to wrap these metrics
+		// to start with something else so it doesn't collide with the storage api metrics.
+		registry2 := prometheus.NewPedanticRegistry()
+		indexConn, err = unified.GrpcConn(indexAddress, registry2)
 		if err != nil {
 			return nil, fmt.Errorf("create unified storage index gRPC connection: %w", err)
 		}

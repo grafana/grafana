@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-kit/log/level"
+	"github.com/grafana/dskit/services"
 	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/contrib/samplers/jaegerremote"
 	"go.opentelemetry.io/otel"
@@ -27,13 +29,13 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/go-kit/log/level"
-
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
+	ServiceName        = "tracing"
 	envJaegerAgentHost = "JAEGER_AGENT_HOST"
 	envJaegerAgentPort = "JAEGER_AGENT_PORT"
 )
@@ -48,6 +50,8 @@ const (
 )
 
 type TracingService struct {
+	services.NamedService
+
 	cfg *TracingConfig
 	log log.Logger
 
@@ -93,11 +97,29 @@ func ProvideService(tracingCfg *TracingConfig) (*TracingService, error) {
 		cfg: tracingCfg,
 		log: log.New("tracing"),
 	}
+	ots.NamedService = services.NewBasicService(ots.starting, ots.running, ots.stopping).WithName(ServiceName)
 
 	if err := ots.initOpentelemetryTracer(); err != nil {
 		return nil, err
 	}
 	return ots, nil
+}
+
+// InitTracing initializes the tracing service with the provided configuration.
+// Used to initialize tracing early to ensure it's always available for other
+// services, outside of the wire context.
+func InitTracing(cfg *setting.Cfg) error {
+	tracingCfg, err := ParseTracingConfig(cfg)
+	if err != nil {
+		return fmt.Errorf("parse tracing config: %w", err)
+	}
+
+	_, err = ProvideService(tracingCfg)
+	if err != nil {
+		return fmt.Errorf("initialize tracing: %w", err)
+	}
+
+	return nil
 }
 
 func NewNoopTracerService() *TracingService {
@@ -306,27 +328,35 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 	return nil
 }
 
-func (ots *TracingService) Run(ctx context.Context) error {
+func (ots *TracingService) starting(ctx context.Context) error {
 	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
 		err = level.Error(ots.log).Log("msg", "OpenTelemetry handler returned an error", "err", err)
 		if err != nil {
 			ots.log.Error("OpenTelemetry log returning error", err)
 		}
 	}))
+	return nil
+}
+func (ots *TracingService) running(ctx context.Context) error {
 	<-ctx.Done()
+	return nil
+}
 
+func (ots *TracingService) stopping(_ error) error {
 	ots.log.Info("Closing tracing")
 	if ots.tracerProvider == nil {
 		return nil
 	}
-	ctxShutdown, cancel := context.WithTimeout(ctx, time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
+	return ots.tracerProvider.Shutdown(ctx)
+}
 
-	if err := ots.tracerProvider.Shutdown(ctxShutdown); err != nil {
+func (ots *TracingService) Run(ctx context.Context) error {
+	if err := ots.StartAsync(ctx); err != nil {
 		return err
 	}
-
-	return nil
+	return ots.AwaitTerminated(ctx)
 }
 
 func (ots *TracingService) Inject(ctx context.Context, header http.Header, _ trace.Span) {

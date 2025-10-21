@@ -2,8 +2,9 @@ import { createContext, ReactNode, useContext } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+import { SavedQuery } from 'app/features/explore/QueryLibrary/types';
 
-import { OnSelectQueryType, QueryTemplate, QueryLibraryEventsPropertyMap } from './types';
+import { OnSelectQueryType, QueryLibraryEventsPropertyMap, QueryLibraryTab } from './types';
 
 export type QueryLibraryDrawerOptions = {
   datasourceFilters?: string[];
@@ -29,7 +30,7 @@ export type QueryLibraryContextType = {
    * @param newQuery New query to be added to the library.
    */
   openDrawer: (options: QueryLibraryDrawerOptions) => void;
-  closeDrawer: () => void;
+  closeDrawer: (isSelectingQuery?: boolean) => void;
   isDrawerOpen: boolean;
   onSave?: () => void;
 
@@ -70,8 +71,22 @@ export type QueryLibraryContextType = {
     properties?: QueryLibraryEventsPropertyMap,
     contextOverride?: string
   ) => void;
-  setNewQuery: (query?: QueryTemplate) => void;
+  setNewQuery: (query?: SavedQuery) => void;
   onSelectQuery: (query: DataQuery) => void;
+  onFavorite: (uid: string) => void;
+  onUnfavorite: (uid: string) => void;
+  userFavorites: { [key: string]: boolean };
+  isEditingQuery: boolean;
+  setIsEditingQuery: (isEditingQuery: boolean) => void;
+  onAddHistoryQueryToLibrary: (newQuery: SavedQuery) => void;
+  activeTab: QueryLibraryTab;
+  setActiveTab: (activeTab: QueryLibraryTab) => void;
+  onTabChange: (activeTab: QueryLibraryTab) => void;
+  highlightedQuery: string | undefined;
+  newQuery: SavedQuery | undefined;
+  activeDatasources: string[];
+  /** Set a guard function that returns true to allow closing, false to prevent closing */
+  setCloseGuard: (shouldAllowClose: () => boolean) => void;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
@@ -94,6 +109,19 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   context: 'unknown',
   triggerAnalyticsEvent: () => {},
   onSelectQuery: () => {},
+  onFavorite: () => {},
+  onUnfavorite: () => {},
+  userFavorites: {},
+  isEditingQuery: false,
+  setIsEditingQuery: () => {},
+  onAddHistoryQueryToLibrary: () => {},
+  activeTab: QueryLibraryTab.ALL,
+  setActiveTab: () => {},
+  onTabChange: () => {},
+  highlightedQuery: undefined,
+  newQuery: undefined,
+  activeDatasources: [],
+  setCloseGuard: () => {},
 });
 
 export function useQueryLibraryContext() {

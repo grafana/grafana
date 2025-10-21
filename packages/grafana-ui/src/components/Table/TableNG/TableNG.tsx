@@ -25,7 +25,7 @@ import {
   getDisplayProcessor,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { FieldColorModeId, TableCellTooltipPlacement } from '@grafana/schema';
+import { FieldColorModeId, TableCellTooltipPlacement, TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
@@ -95,6 +95,9 @@ import {
   shouldTextOverflow,
   shouldTextWrap,
   withDataLinksActionsTooltip,
+  getSummaryCellTextAlign,
+  parseStyleJson,
+  IS_SAFARI_26,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -107,7 +110,6 @@ export function TableNG(props: TableNGProps) {
     enablePagination = false,
     enableSharedCrosshair = false,
     enableVirtualization,
-    fieldConfig,
     frozenColumns = 0,
     getActions = () => [],
     height,
@@ -124,12 +126,6 @@ export function TableNG(props: TableNGProps) {
     width,
   } = props;
 
-  const hasFooter = useMemo(
-    () => data.fields.some((field) => field.config?.custom?.footer?.reducers?.length ?? false),
-    [data.fields]
-  );
-  const footerHeight = hasFooter ? calculateFooterHeight(data, fieldConfig) : 0;
-
   const theme = useTheme2();
   const styles = useStyles2(getGridStyles, enablePagination, transparent);
   const panelContext = usePanelContext();
@@ -145,7 +141,16 @@ export function TableNG(props: TableNGProps) {
     [getActions, data, userCanExecuteActions]
   );
 
+  const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
   const hasHeader = !noHeader;
+  const hasFooter = useMemo(
+    () => visibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
+    [visibleFields]
+  );
+  const footerHeight = useMemo(
+    () => (hasFooter ? calculateFooterHeight(visibleFields) : 0),
+    [hasFooter, visibleFields]
+  );
 
   const resizeHandler = useColumnResize(onColumnResize);
 
@@ -172,7 +177,7 @@ export function TableNG(props: TableNGProps) {
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
   // vt scrollbar accounting for column auto-sizing
-  const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+
   const defaultRowHeight = useMemo(
     () => getDefaultRowHeight(theme, visibleFields, cellHeight),
     [theme, visibleFields, cellHeight]
@@ -237,6 +242,33 @@ export function TableNG(props: TableNGProps) {
     rowHeight,
   });
 
+  const [footers, isUniformFooter] = useMemo(() => {
+    const footers: Array<TableFooterOptions | undefined> = [];
+    let isUniformFooter = true;
+    let firstReducers: string[] | undefined;
+    for (const field of visibleFields) {
+      const footer = field.config?.custom?.footer;
+      footers.push(footer);
+
+      if (firstReducers === undefined && (footer?.reducers?.length ?? 0) > 0) {
+        firstReducers = footer?.reducers; // store the reducers for the first visible array with a footer.
+      } else if (firstReducers !== undefined) {
+        // once we have a list of reducers, compare each subsequent footer's reducers to the first.
+        const reducers: string[] | undefined = footer?.reducers;
+
+        // ignore fields with no footer reducers.
+        if (reducers?.length ?? 0 > 0) {
+          // isUniformFooter is false if there are different numbers of reducers or if the reducers are not identical.
+          if (reducers!.length !== firstReducers!.length || reducers!.some((r, idx) => firstReducers?.[idx] !== r)) {
+            isUniformFooter = false;
+            break;
+          }
+        }
+      }
+    }
+    return [footers, isUniformFooter];
+  }, [visibleFields]);
+
   // normalize the row height into a function which returns a number, so we avoid a bunch of conditionals during rendering.
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof rowHeight === 'function') {
@@ -256,7 +288,7 @@ export function TableNG(props: TableNGProps) {
   const commonDataGridProps = useMemo(
     () =>
       ({
-        enableVirtualization: enableVirtualization !== false && rowHeight !== 'auto',
+        enableVirtualization: !IS_SAFARI_26 && enableVirtualization !== false && rowHeight !== 'auto',
         defaultColumnOptions: {
           minWidth: 50,
           resizable: true,
@@ -429,7 +461,8 @@ export function TableNG(props: TableNGProps) {
           ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign))
           : undefined;
 
-        const shouldOverflow = rowHeight !== 'auto' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
+        const shouldOverflow =
+          !IS_SAFARI_26 && rowHeight !== 'auto' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
         const textWrap = rowHeight === 'auto' || shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
@@ -447,6 +480,10 @@ export function TableNG(props: TableNGProps) {
         const linkStyles = getLinkStyles(theme, canBeColorized);
         const cellParentStyles = clsx(defaultCellStyles, linkStyles);
         const maxHeightClassName = maxRowHeight ? getMaxHeightCellStyles(theme, cellStyleOptions) : undefined;
+        const styleFieldValue = field.config.custom?.styleField;
+        const styleField = styleFieldValue ? data.fields.find(predicateByName(styleFieldValue)) : undefined;
+        const styleFieldName = styleField ? getDisplayName(styleField) : undefined;
+        const hasValidStyleField = Boolean(styleFieldName);
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -473,6 +510,9 @@ export function TableNG(props: TableNGProps) {
             const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
             const cellColorStyles = getCellColorInlineStyles(cellOptions, displayValue, applyToRowBgFn != null);
             Object.assign(style, cellColorStyles);
+          }
+          if (hasValidStyleField) {
+            style = { ...style, ...parseStyleJson(props.row[styleFieldName!]) };
           }
 
           return (
@@ -647,7 +687,17 @@ export function TableNG(props: TableNGProps) {
               showTypeIcons={showTypeIcons}
             />
           ),
-          renderSummaryCell: () => <SummaryCell rows={rows} field={field} omitCountAll={i > 0} />,
+          renderSummaryCell: () => (
+            <SummaryCell
+              rows={sortedRows}
+              footers={footers}
+              field={field}
+              colIdx={i}
+              textAlign={getSummaryCellTextAlign(textAlign, cellType)}
+              rowLabel={isUniformFooter && i === 0}
+              hideLabel={isUniformFooter && i !== 0}
+            />
+          ),
         });
       });
 
@@ -660,17 +710,20 @@ export function TableNG(props: TableNGProps) {
       data,
       disableSanitizeHtml,
       filter,
+      footers,
       frozenColumns,
       getCellActions,
       getCellColorInlineStyles,
       getTextColorForBackground,
+      isUniformFooter,
       maxRowHeight,
       numFrozenColsFullyInView,
       onCellFilterAdded,
+      rows,
       rowHeight,
       rowHeightFn,
-      rows,
       setFilter,
+      sortedRows,
       showTypeIcons,
       theme,
       timeRange,
@@ -738,7 +791,7 @@ export function TableNG(props: TableNGProps) {
   const displayedEnd = pageRangeEnd;
   const numRows = sortedRows.length;
 
-  return (
+  let rendered = (
     <>
       <DataGrid<TableRow, TableSummaryRow>
         {...commonDataGridProps}
@@ -826,6 +879,12 @@ export function TableNG(props: TableNGProps) {
       )}
     </>
   );
+
+  if (IS_SAFARI_26) {
+    rendered = <div className={styles.safariWrapper}>{rendered}</div>;
+  }
+
+  return rendered;
 }
 
 /**

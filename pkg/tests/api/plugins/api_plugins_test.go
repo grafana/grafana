@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -44,9 +45,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationPlugins(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		PluginAdminEnabled: true,
@@ -144,9 +143,7 @@ func TestIntegrationPlugins(t *testing.T) {
 }
 
 func TestIntegrationPluginAssets(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	type testCase struct {
 		desc            string

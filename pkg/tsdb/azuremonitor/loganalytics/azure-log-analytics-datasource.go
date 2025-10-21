@@ -128,7 +128,11 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 		req.URL.RawQuery = queryParams.Encode()
 		resp, err := cli.Do(req)
 		if err != nil {
-			return nil, writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("failed to fetch metadata: %s", err))
+			statusCode := http.StatusInternalServerError
+			if resp != nil {
+				statusCode = resp.StatusCode
+			}
+			return nil, writeErrorResponse(rw, statusCode, fmt.Sprintf("failed to fetch metadata: %v", err))
 		}
 
 		defer func() {
@@ -573,6 +577,10 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 		return err
 	}
 
+	if len(queryJSONModel.AzureTraces.Resources) == 0 {
+		return fmt.Errorf("no resources specified for Azure traces data link")
+	}
+
 	traceIdVariable := "${__data.fields.traceID}"
 	resultFormat := dataquery.ResultFormatTrace
 	queryJSONModel.AzureTraces.ResultFormat = &resultFormat
@@ -668,6 +676,9 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, queryUR
 	if query.AppInsightsQuery {
 		// If the query type is traces then we only need the first resource as the rest are specified in the query
 		if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
+			if len(query.Resources) == 0 {
+				return nil, fmt.Errorf("no resources specified for Azure traces Application Insights query")
+			}
 			body["applications"] = []string{query.Resources[0]}
 		} else {
 			body["applications"] = query.Resources

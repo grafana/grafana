@@ -10,6 +10,7 @@ type Mapper interface {
 	ActionSets() []string
 	Scope(name string) string
 	ActionSet(level string) (string, error)
+	ScopePattern() string
 }
 
 type mapper struct {
@@ -42,4 +43,8 @@ func (m mapper) ActionSet(level string) (string, error) {
 		return "", fmt.Errorf("invalid level (%s): %w", level, errInvalidSpec)
 	}
 	return actionSet, nil
+}
+
+func (m mapper) ScopePattern() string {
+	return m.resource + ":uid:%"
 }
