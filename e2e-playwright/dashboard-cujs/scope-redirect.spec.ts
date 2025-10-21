@@ -1,4 +1,5 @@
 import { test, expect } from '@grafana/plugin-e2e';
+
 import { applyScopes, openScopesSelector, selectScope } from '../utils/scope-helpers';
 import { testScopesWithRedirect } from '../utils/scopes';
 
