@@ -206,7 +206,7 @@ describe('Backend / Frontend result comparison', () => {
         expect(backendOutput.spec).toBeDefined();
 
         // Compare the spec structures
-        expect(frontendOutput.spec).toEqual(backendOutput.spec);
+        expect(backendOutput.spec).toEqual(frontendOutput.spec);
 
         // Verify the conversion doesn't throw errors and produces a valid structure
         expect(() => JSON.stringify(frontendOutput)).not.toThrow();

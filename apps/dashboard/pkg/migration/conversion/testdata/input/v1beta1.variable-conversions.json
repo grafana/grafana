@@ -274,6 +274,7 @@
             "value": "legacy_string_content"
           },
           "hide": 0,
+          "refresh": 1,
           "skipUrlSync": false
         },
         {

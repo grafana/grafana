@@ -184,8 +184,10 @@ export function ensureV2Response(
     tags: dashboard.tags ?? [],
     cursorSync: transformCursorSynctoEnum(dashboard.graphTooltip),
     preload: dashboard.preload || dashboardDefaults.preload,
-    ...(dashboard.liveNow !== undefined && { liveNow: dashboard.liveNow }),
-    ...(dashboard.editable !== undefined && { editable: dashboard.editable }),
+    // transformSceneToSaveModelSchemaV2.ts sets liveNow and editable to default values if they are not set
+    // so we are matching that behavior here so conversion pipeline tests like ResponseTransformersToBackend.test.ts pass
+    liveNow: dashboard.liveNow ?? Boolean(dashboardDefaults.liveNow),
+    editable: dashboard.editable ?? dashboardDefaults.editable,
     ...(dashboard.revision !== undefined && { revision: dashboard.revision }),
     timeSettings: {
       from: dashboard.time?.from || timeSettingsDefaults.from,
@@ -502,7 +504,7 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
         query: {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
-          group: ds.type ?? getDefaultDatasourceType(),
+          group: ds.type ?? '',
           ...(ds.uid && {
             datasource: {
               name: ds.uid,
@@ -519,9 +521,29 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
 }
 
 export function buildPanelKind(p: Panel & { transparent?: boolean }): PanelKind {
-  const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource || getDefaultDatasource());
+  const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource ?? { type: '', uid: '' });
 
   const transformations = getPanelTransformations(p.transformations || []);
+
+  const fieldConfig = p.fieldConfig || defaultFieldConfigSource();
+
+  // match backend conversion behavior
+  if (fieldConfig.defaults.mappings && fieldConfig.defaults.mappings.length === 0) {
+    delete fieldConfig.defaults.mappings;
+  }
+  // match backend conversion behavior
+  if (fieldConfig.defaults.custom && Object.keys(fieldConfig.defaults.custom).length === 0) {
+    delete fieldConfig.defaults.custom;
+  }
+
+  // match backend conversion behavior
+  if (
+    fieldConfig.defaults.thresholds?.steps &&
+    fieldConfig.defaults.thresholds.steps.length > 0 &&
+    !fieldConfig.defaults.thresholds.steps[0]?.value
+  ) {
+    fieldConfig.defaults.thresholds.steps[0]!.value = null;
+  }
 
   const panelKind: PanelKind = {
     kind: 'Panel',
@@ -535,7 +557,7 @@ export function buildPanelKind(p: Panel & { transparent?: boolean }): PanelKind 
         version: p.pluginVersion ?? '',
         spec: {
           fieldConfig: p.fieldConfig || defaultFieldConfigSource(),
-          options: p.options as any,
+          options: p.options ?? {},
         },
       },
       links:
@@ -617,6 +639,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
               text: v.current?.text,
             },
             options: v.options ?? [],
+            ...(v.definition && { definition: v.definition }),
             refresh: transformVariableRefreshToEnum(v.refresh),
             regex: v.regex ?? '',
             sort: v.sort ? transformSortVariableToEnum(v.sort) : 'disabled',
@@ -807,7 +830,7 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
         query: {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
-          group: datasource?.type || (builtIn ? 'grafana' : getDefaultDatasourceType()),
+          group: datasource?.type || (builtIn ? 'grafana' : ''),
           ...(datasource?.uid && {
             datasource: {
               name: datasource.uid,

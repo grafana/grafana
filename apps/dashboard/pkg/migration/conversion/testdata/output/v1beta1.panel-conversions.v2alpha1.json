@@ -360,7 +360,7 @@
       "panels"
     ],
     "timeSettings": {
-      "timezone": "",
+      "timezone": "browser",
       "from": "now-1h",
       "to": "now",
       "autoRefresh": "",

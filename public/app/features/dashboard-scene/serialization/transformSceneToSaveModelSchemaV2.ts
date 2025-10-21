@@ -45,6 +45,7 @@ import {
   defaultFieldConfig,
   defaultDataQueryKind,
   SwitchVariableKind,
+  defaultTimeSettingsSpec,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -73,6 +74,8 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 
   const dsReferencesMapping: DSReferencesMapping = scene.serializer.getDSReferencesMapping();
 
+  const timeSettingsDefaults = defaultTimeSettingsSpec();
+
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
     title: sceneDash.title,
@@ -87,12 +90,12 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 
     // time settings
     timeSettings: {
-      timezone: timeRange.timeZone,
+      timezone: timeRange.timeZone || timeSettingsDefaults.timezone,
       from: timeRange.from,
       to: timeRange.to,
-      autoRefresh: refreshPicker?.state.refresh || '',
-      autoRefreshIntervals: refreshPicker?.state.intervals,
-      hideTimepicker: controlsState?.hideTimeControls ?? false,
+      autoRefresh: refreshPicker?.state.refresh || timeSettingsDefaults.autoRefresh,
+      autoRefreshIntervals: refreshPicker?.state.intervals || timeSettingsDefaults.autoRefreshIntervals,
+      hideTimepicker: controlsState?.hideTimeControls || timeSettingsDefaults.hideTimepicker,
       weekStart: timeRange.weekStart,
       fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
       nowDelay: timeRange.UNSAFE_nowDelay,

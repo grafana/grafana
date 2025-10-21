@@ -292,6 +292,7 @@
           "label": "Legacy Variable",
           "name": "legacy_string_var",
           "query": "up",
+          "refresh": 1,
           "skipUrlSync": false,
           "type": "query"
         },

@@ -187,12 +187,21 @@
         },
         {
           "builtIn": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "enable": false,
           "hide": true,
           "iconColor": "transparent",
           "name": "Disabled Built-in Annotation",
-          "target": {},
-          "type": "builtin"
+          "target": {
+            "expr": "ALERTS{alertstate=\"firing\"}",
+            "interval": "1m",
+            "refId": "Anno",
+            "step": 60
+          },
+          "type": "prometheus"
         }
       ]
     },

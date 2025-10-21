@@ -39,7 +39,7 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 	}
 
 	// Get defaults
-	timeSettingsDefaults := getDefaultTimeSettingsSpec()
+	timeSettingsDefaults := dashv2alpha1.NewDashboardTimeSettingsSpec()
 	dashboardDefaults := getDefaultDashboardV2Spec()
 
 	// Transform basic fields
@@ -205,23 +205,6 @@ func transformCursorSyncToEnum(cursorSync int) dashv2alpha1.DashboardDashboardCu
 	}
 }
 
-// Default value functions
-func getDefaultTimeSettingsSpec() dashv2alpha1.DashboardTimeSettingsSpec {
-	monday := dashv2alpha1.DashboardTimeSettingsSpecWeekStartMonday
-	nowDelay := ""
-	return dashv2alpha1.DashboardTimeSettingsSpec{
-		From:                 "now-6h",
-		To:                   "now",
-		Timezone:             nil, // No default timezone to match frontend behavior
-		AutoRefresh:          "",
-		AutoRefreshIntervals: []string{"5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"},
-		FiscalYearStartMonth: 0,
-		HideTimepicker:       false,
-		WeekStart:            &monday,
-		NowDelay:             &nowDelay,
-	}
-}
-
 func getDefaultDashboardV2Spec() dashv2alpha1.DashboardSpec {
 	return dashv2alpha1.DashboardSpec{
 		Preload: false,
@@ -229,7 +212,7 @@ func getDefaultDashboardV2Spec() dashv2alpha1.DashboardSpec {
 }
 
 // Transform time settings
-func transformTimeSettings(dashboard map[string]interface{}, defaults dashv2alpha1.DashboardTimeSettingsSpec) dashv2alpha1.DashboardTimeSettingsSpec {
+func transformTimeSettings(dashboard map[string]interface{}, defaults *dashv2alpha1.DashboardTimeSettingsSpec) dashv2alpha1.DashboardTimeSettingsSpec {
 	timeSettings := dashv2alpha1.DashboardTimeSettingsSpec{
 		From:                 defaults.From,
 		To:                   defaults.To,
@@ -252,12 +235,10 @@ func transformTimeSettings(dashboard map[string]interface{}, defaults dashv2alph
 	}
 
 	// Extract other time-related fields
-	if timezone := getStringField(dashboard, "timezone", ""); timezone != "" {
-		timeSettings.Timezone = &timezone
-	} else {
-		// Set empty timezone to match frontend behavior
-		emptyTimezone := ""
-		timeSettings.Timezone = &emptyTimezone
+	if timezone, exists := dashboard["timezone"]; exists {
+		if timezoneStr, ok := timezone.(string); ok {
+			timeSettings.Timezone = &timezoneStr
+		}
 	}
 	if refresh := getStringField(dashboard, "refresh", ""); refresh != "" {
 		timeSettings.AutoRefresh = refresh
@@ -736,28 +717,26 @@ func transformVariableRefreshToEnum(refresh interface{}) dashv2alpha1.DashboardV
 	case int:
 		switch v {
 		case 0:
-			// Change "never" to "onDashboardLoad" to match frontend behavior
-			return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
+			return dashv2alpha1.DashboardVariableRefreshNever
 		case 1:
 			return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
 		case 2:
 			return dashv2alpha1.DashboardVariableRefreshOnTimeRangeChanged
 		default:
-			return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
+			return dashv2alpha1.DashboardVariableRefreshNever
 		}
 	case float64:
 		return transformVariableRefreshToEnum(int(v))
 	case string:
 		switch v {
 		case "never", "":
-			// Change "never" to "onDashboardLoad" to match frontend behavior
-			return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
+			return dashv2alpha1.DashboardVariableRefreshNever
 		case "onDashboardLoad":
 			return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
 		case "onTimeRangeChanged":
 			return dashv2alpha1.DashboardVariableRefreshOnTimeRangeChanged
 		default:
-			return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
+			return dashv2alpha1.DashboardVariableRefreshNever
 		}
 	default:
 		return dashv2alpha1.DashboardVariableRefreshOnDashboardLoad
@@ -2088,9 +2067,6 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 							threshold := dashv2alpha1.DashboardThreshold{}
 							if value, ok := stepMap["value"].(float64); ok {
 								threshold.Value = &value
-							} else if stepMap["value"] == nil {
-								// Handle null values by setting to null (preserve null values)
-								threshold.Value = nil
 							}
 							if color, ok := stepMap["color"].(string); ok {
 								threshold.Color = color

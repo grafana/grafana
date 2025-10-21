@@ -271,9 +271,17 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "",
+            "group": "prometheus",
             "version": "v0",
-            "spec": {}
+            "datasource": {
+              "name": "default-ds-uid"
+            },
+            "spec": {
+              "expr": "ALERTS{alertstate=\"firing\"}",
+              "interval": "1m",
+              "refId": "Anno",
+              "step": 60
+            }
           },
           "enable": false,
           "hide": true,
@@ -281,7 +289,7 @@
           "name": "Disabled Built-in Annotation",
           "builtIn": true,
           "legacyOptions": {
-            "type": "builtin"
+            "type": "prometheus"
           }
         }
       }
@@ -304,7 +312,7 @@
       "annotations"
     ],
     "timeSettings": {
-      "timezone": "",
+      "timezone": "browser",
       "from": "now-24h",
       "to": "now",
       "autoRefresh": "",
