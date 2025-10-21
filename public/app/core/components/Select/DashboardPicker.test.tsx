@@ -1,11 +1,9 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
-import { FeatureToggles } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 
 import { DashboardPicker } from './DashboardPicker';
 
@@ -18,18 +16,18 @@ const fixtures: Array<
   [
     // Test title
     string,
-    // Enabled feature toggles
-    Array<keyof FeatureToggles>,
+    // Feature toggle setup
+    Parameters<typeof testWithFeatureToggles>[0],
   ]
 > = [
-  ['app platform APIs enabled', ['kubernetesDashboards']],
-  ['app platform APIs disabled', []],
+  ['app platform APIs enabled', { enable: ['kubernetesDashboards'] }],
+  ['app platform APIs disabled', {}],
 ];
 describe('DashboardPicker', () => {
-  describe.each(fixtures)('%s', (_title, enabledToggles) => {
+  describe.each(fixtures)('%s', (_title, featureToggleSetup) => {
     const onChange = jest.fn();
 
-    testWithFeatureToggles(enabledToggles);
+    testWithFeatureToggles(featureToggleSetup);
 
     it('should fetch and display dashboards', async () => {
       render(<DashboardPicker value={folderA_dashbdD.item.uid} />);
