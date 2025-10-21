@@ -42,6 +42,7 @@ __debug_bin*
 /devenv/docker/blocks/auth/saml-enterprise
 /devenv/docker/blocks/auth/signer
 /devenv/docker/blocks/mt-db
+/devenv/mt-tilt
 
 /tmp
 tools/phantomjs/phantomjs
@@ -94,6 +95,8 @@ example-apiserver/
 /devenv/docker/blocks/auth/openldap/certs/
 
 conf/custom.ini
+conf/operator.ini
+conf/storage.ini
 
 /conf/provisioning/**/*.yaml
 !/conf/provisioning/**/sample.yaml
@@ -117,6 +120,9 @@ profile.cov
 /pkg/server/wireexts_enterprise.go
 /pkg/server/enterprise_wire_gen.go
 /pkg/build/cmd/enterprise.go
+/pkg/build/cmd/artifactspage.go
+/pkg/build/cmd/artifactspage.tmpl.html
+/pkg/build/cmd/exportversion.go
 /pkg/extensions/*
 !/pkg/extensions/.keep
 !/pkg/extensions/main.go
@@ -124,6 +130,9 @@ profile.cov
 /public/app/extensions
 !/public/app/extensions/.keep
 
+# Enterprise operators
+/pkg/operators/enterprise_*
+/pkg/operators/**/enterprise_*
 
 debug.test
 /examples/*/dist
@@ -186,6 +195,8 @@ compilation-stats.json
 /e2e/build_results.zip
 /e2e/extensions
 !/e2e/extensions/.keep
+/e2e-playwright/extensions
+!/e2e-playwright/extensions/.keep
 /e2e/extensions-suite
 /test-results/
 /playwright-report/
@@ -215,7 +226,6 @@ public/api-spec.json
 
 deployment_tools_config.json
 
-.betterer.cache
 .nx
 
 # Temporary file for backporting PRs
@@ -238,3 +248,12 @@ public/app/plugins/**/dist/
 public/mockServiceWorker.js
 
 /e2e-playwright/test-plugins/*/dist
+/apps/provisioning/cmd/job-controller/bin/
+
+
+# Ignore unified storage kv store files
+/grafana-kv-data
+/codeowners-manifest/
+
+# Ignore grafana/hippocampus local cache folder
+.hippo

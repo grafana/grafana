@@ -49,6 +49,36 @@ func (_m *FakeQueryService) QueryData(ctx context.Context, user identity.Request
 	return r0, r1
 }
 
+// QueryDataNew provides a mock function with given fields: ctx, user, skipDSCache, reqDTO
+func (_m *FakeQueryService) QueryDataNew(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	ret := _m.Called(ctx, user, skipDSCache, reqDTO)
+
+	if len(ret) == 0 {
+		panic("no return value specified for QueryDataNew")
+	}
+
+	var r0 *backend.QueryDataResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, identity.Requester, bool, dtos.MetricRequest) (*backend.QueryDataResponse, error)); ok {
+		return rf(ctx, user, skipDSCache, reqDTO)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, identity.Requester, bool, dtos.MetricRequest) *backend.QueryDataResponse); ok {
+		r0 = rf(ctx, user, skipDSCache, reqDTO)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*backend.QueryDataResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, identity.Requester, bool, dtos.MetricRequest) error); ok {
+		r1 = rf(ctx, user, skipDSCache, reqDTO)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Run provides a mock function with given fields: ctx
 func (_m *FakeQueryService) Run(ctx context.Context) error {
 	ret := _m.Called(ctx)

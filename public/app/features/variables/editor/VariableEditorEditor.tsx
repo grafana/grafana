@@ -7,7 +7,7 @@ import { GrafanaTheme2, LoadingState, SelectableValue, VariableHide, VariableTyp
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, HorizontalGroup, Icon, Themeable2, withTheme2 } from '@grafana/ui';
+import { Button, Stack, Icon, Themeable2, withTheme2 } from '@grafana/ui';
 import { StoreState, ThunkDispatch } from 'app/types/store';
 
 import { VariableHideSelect } from '../../dashboard-scene/settings/variables/components/VariableHideSelect';
@@ -219,7 +219,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
           {hasOptions(this.props.variable) ? <VariableValuesPreview options={this.getVariableOptions()} /> : null}
 
           <div style={{ marginTop: '16px' }}>
-            <HorizontalGroup spacing="md" height="inherit">
+            <Stack gap={2} height="inherit">
               <Button variant="destructive" fill="outline" onClick={this.onModalOpen}>
                 <Trans i18nKey="variables.variable-editor-editor-un-connected.delete">Delete</Trans>
               </Button>
@@ -246,7 +246,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
               >
                 <Trans i18nKey="variables.variable-editor-editor-un-connected.apply">Apply</Trans>
               </Button>
-            </HorizontalGroup>
+            </Stack>
           </div>
         </form>
         <ConfirmDeleteModal

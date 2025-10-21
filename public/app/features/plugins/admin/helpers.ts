@@ -31,57 +31,45 @@ export function mergeLocalsAndRemotes({
   const catalogPlugins: CatalogPlugin[] = [];
   const errorByPluginId = groupErrorsByPluginId(errors);
 
-  const instancesMap = instance.reduce((map, instancePlugin) => {
-    map.set(instancePlugin.pluginSlug, instancePlugin);
-    return map;
-  }, new Map<string, InstancePlugin>());
-
-  const provisionedSet = provisioned.reduce((map, provisionedPlugin) => {
-    map.add(provisionedPlugin.slug);
-    return map;
-  }, new Set<string>());
+  const remoteSet = new Set<string>(remote?.map((plugin) => plugin.slug));
+  const localMap = new Map<string, LocalPlugin>(local.map((plugin) => [plugin.id, plugin]));
+  const instancesMap = new Map<string, InstancePlugin>(instance?.map((plugin) => [plugin.pluginSlug, plugin]));
+  const provisionedSet = new Set<string>(provisioned?.map((plugin) => plugin.slug));
 
   // add locals
   local.forEach((localPlugin) => {
-    const remoteCounterpart = remote.find((r) => r.slug === localPlugin.id);
     const error = errorByPluginId[localPlugin.id];
 
-    if (!remoteCounterpart) {
-      catalogPlugins.push(mergeLocalAndRemote(localPlugin, undefined, error));
+    if (!remoteSet.has(localPlugin.id)) {
+      let catalogPlugin = mergeLocalAndRemote(localPlugin, undefined, error);
+      if (config.pluginAdminExternalManageEnabled) {
+        catalogPlugin = mergeCloudState(
+          catalogPlugin,
+          instancesMap,
+          provisionedSet.has(localPlugin.id),
+          localMap.has(localPlugin.id)
+        );
+      }
+      catalogPlugins.push(catalogPlugin);
     }
   });
 
   // add remote
   remote.forEach((remotePlugin) => {
-    const localCounterpart = local.find((l) => l.id === remotePlugin.slug);
+    const localCounterpart = localMap.get(remotePlugin.slug);
     const error = errorByPluginId[remotePlugin.slug];
     const shouldSkip = remotePlugin.status === RemotePluginStatus.Deprecated && !localCounterpart; // We are only listing deprecated plugins in case they are installed.
 
     if (!shouldSkip) {
-      const catalogPlugin = mergeLocalAndRemote(localCounterpart, remotePlugin, error);
-
-      // for managed instances, check if plugin is installed, but not yet present in the current instance
+      let catalogPlugin = mergeLocalAndRemote(localCounterpart, remotePlugin, error);
       if (config.pluginAdminExternalManageEnabled) {
-        catalogPlugin.isFullyInstalled = catalogPlugin.isCore
-          ? true
-          : (instancesMap.has(remotePlugin.slug) || provisionedSet.has(remotePlugin.slug)) && catalogPlugin.isInstalled;
-
-        catalogPlugin.isInstalled = instancesMap.has(remotePlugin.slug) || catalogPlugin.isInstalled;
-
-        const instancePlugin = instancesMap.get(remotePlugin.slug);
-        catalogPlugin.isUpdatingFromInstance =
-          instancesMap.has(remotePlugin.slug) &&
-          catalogPlugin.hasUpdate &&
-          catalogPlugin.installedVersion !== instancePlugin?.version;
-
-        if (instancePlugin?.version && instancePlugin?.version !== remotePlugin.version) {
-          catalogPlugin.hasUpdate = true;
-        }
-
-        catalogPlugin.isUninstallingFromInstance = Boolean(localCounterpart) && !instancesMap.has(remotePlugin.slug);
-        catalogPlugin.isProvisioned = provisionedSet.has(remotePlugin.slug);
+        catalogPlugin = mergeCloudState(
+          catalogPlugin,
+          instancesMap,
+          provisionedSet.has(remotePlugin.slug),
+          localMap.has(remotePlugin.slug)
+        );
       }
-
       catalogPlugins.push(catalogPlugin);
     }
   });
@@ -475,4 +463,28 @@ export function isNonAngularVersion(version?: Version) {
 
 export function isDisabledAngularPlugin(plugin: CatalogPlugin) {
   return plugin.isDisabled && plugin.error === PluginErrorCode.angular;
+}
+
+export function mergeCloudState(
+  catalogPlugin: CatalogPlugin,
+  instanceMap: Map<string, InstancePlugin>,
+  isProvisioned: boolean,
+  hasLocal: boolean
+) {
+  const instancePlugin = instanceMap.get(catalogPlugin.id);
+
+  return {
+    ...catalogPlugin,
+    isFullyInstalled: catalogPlugin.isCore
+      ? true
+      : (instanceMap.has(catalogPlugin.id) || isProvisioned) && catalogPlugin.isInstalled,
+    isInstalled: instanceMap.has(catalogPlugin.id) || catalogPlugin.isInstalled,
+    isUpdatingFromInstance:
+      instanceMap.has(catalogPlugin.id) &&
+      catalogPlugin.hasUpdate &&
+      catalogPlugin.installedVersion !== instancePlugin?.version,
+    hasUpdate: Boolean(instancePlugin?.version && instancePlugin?.version !== catalogPlugin.latestVersion),
+    isUninstallingFromInstance: hasLocal && !instanceMap.has(catalogPlugin.id),
+    isProvisioned: isProvisioned,
+  };
 }

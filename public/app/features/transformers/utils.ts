@@ -1,4 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import * as React from 'react';
+import { useDebounce } from 'react-use';
 
 import {
   DataFrame,
@@ -8,9 +10,12 @@ import {
   getTimeZones,
   VariableOrigin,
   VariableSuggestion,
+  SpecialValue,
+  TransformerUIProps,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
+import { FieldValidationMessage } from '@grafana/ui';
 
 import { variableRegex } from '../variables/utils';
 
@@ -44,8 +49,60 @@ export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFiel
   return names;
 };
 
+export const detectPartialQueryFailures = (frames: DataFrame[]) => {
+  const hasSuccessful = frames.some(({ fields }) => fields.length > 0);
+  const hasEmpty = frames.some(({ fields }) => !fields.length);
+  return hasSuccessful && hasEmpty;
+};
+
 export function useAllFieldNamesFromDataFrames(frames: DataFrame[], withBaseFieldNames = false): string[] {
   return useMemo(() => getAllFieldNamesFromDataFrames(frames, withBaseFieldNames), [frames, withBaseFieldNames]);
+}
+
+export const TransformerMissingFieldsMessage = () => {
+  return React.createElement(
+    FieldValidationMessage,
+    null,
+    t(
+      'transformers.query-validation-message',
+      'One or more queries failed to return fields. This transformation can only reference fields from queries with a successful and visible result.'
+    )
+  );
+};
+
+type ExpandedTransformerUIProps<T> = TransformerUIProps<T> & { fieldNames: string[] };
+type DataFieldsErrorWrapperOptions = { withBaseFieldNames?: boolean };
+
+export const TIMEOUT = 300;
+
+export function DataFieldsErrorWrapper<T>(
+  Component: React.ComponentType<ExpandedTransformerUIProps<T>>,
+  { withBaseFieldNames = false }: DataFieldsErrorWrapperOptions = {}
+): React.ComponentType<TransformerUIProps<T>> {
+  function WrappedComponent({ input, ...props }: TransformerUIProps<T>) {
+    const [showError, setShowError] = useState(false);
+
+    const fieldNames = useAllFieldNamesFromDataFrames(input, withBaseFieldNames);
+    const hasPartialQueryFailures = detectPartialQueryFailures(input);
+    const hasErrorCondition = fieldNames.length === 0 || hasPartialQueryFailures;
+
+    useDebounce(() => setShowError(hasErrorCondition), TIMEOUT, [hasErrorCondition]);
+
+    const wrappedComponent = React.createElement(Component, { ...props, input, fieldNames });
+
+    if (showError) {
+      return React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(TransformerMissingFieldsMessage),
+        wrappedComponent
+      );
+    }
+
+    return wrappedComponent;
+  }
+
+  return WrappedComponent;
 }
 
 export function getDistinctLabels(input: DataFrame[]): Set<string> {
@@ -117,4 +174,34 @@ export function getVariableSuggestions(): VariableSuggestion[] {
   return getTemplateSrv()
     .getVariables()
     .map((v) => ({ value: v.name, label: v.label || v.name, origin: VariableOrigin.Template }));
+}
+
+export function getEmptyOptions(): Array<SelectableValue<SpecialValue>> {
+  return [
+    {
+      label: t('transformers.utils.special-value-options.label.null-value', 'Null'),
+      description: t('transformers.utils.special-value-options.description.null-value', 'Null value'),
+      value: SpecialValue.Null,
+    },
+    {
+      label: t('transformers.utils.special-value-options.label.boolean-true', 'True'),
+      description: t('transformers.utils.special-value-options.description.boolean-true', 'Boolean true value'),
+      value: SpecialValue.True,
+    },
+    {
+      label: t('transformers.utils.special-value-options.label.boolean-false', 'False'),
+      description: t('transformers.utils.special-value-options.description.boolean-false', 'Boolean false value'),
+      value: SpecialValue.False,
+    },
+    {
+      label: t('transformers.utils.special-value-options.label.number-value', 'Zero'),
+      description: t('transformers.utils.special-value-options.description.number-value', 'Number 0 value'),
+      value: SpecialValue.Zero,
+    },
+    {
+      label: t('transformers.utils.special-value-options.label.empty-string', 'Empty'),
+      description: t('transformers.utils.special-value-options.description.empty-string', 'Empty String'),
+      value: SpecialValue.Empty,
+    },
+  ];
 }

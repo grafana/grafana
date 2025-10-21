@@ -11,15 +11,15 @@ const useMigratedMetricsQuery = (
   query: CloudWatchMetricsQuery,
   onChangeQuery: (newQuery: CloudWatchMetricsQuery) => void
 ) => {
-  const migratedQUery = useMemo(() => migrateMetricQuery(query), [query]);
+  const migratedQuery = useMemo(() => migrateMetricQuery(query), [query]);
 
   useEffect(() => {
-    if (migratedQUery !== query) {
-      onChangeQuery(migratedQUery);
+    if (migratedQuery !== query) {
+      onChangeQuery(migratedQuery);
     }
-  }, [migratedQUery, query, onChangeQuery]);
+  }, [migratedQuery, query, onChangeQuery]);
 
-  return migratedQUery;
+  return migratedQuery;
 };
 
 export default useMigratedMetricsQuery;

@@ -4,6 +4,12 @@ import { test, expect, E2ESelectorGroups, DashboardPage } from '@grafana/plugin-
 
 const PAGE_UNDER_TEST = 'AejrN1AMz';
 
+test.use({
+  featureToggles: {
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+  },
+});
+
 test.describe(
   'TextBox - load options scenarios',
   {

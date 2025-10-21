@@ -15,8 +15,6 @@ const meta: Meta = {
       page: mdx,
     },
     controls: { exclude: ['href', 'external'] },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
   argTypes: {
     variant: {

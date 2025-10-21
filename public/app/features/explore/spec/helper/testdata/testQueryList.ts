@@ -1,14 +1,14 @@
 export const getTestQueryList = () => ({
-  kind: 'QueryTemplateList',
-  apiVersion: 'querylibrary.grafana.app/v0alpha1',
+  kind: 'QueryList',
+  apiVersion: 'queries.grafana.app/v1beta1',
   metadata: {
     resourceVersion: '1783293408052252672',
     remainingItemCount: 0,
   },
   items: [
     {
-      kind: 'QueryTemplate',
-      apiVersion: 'querylibrary.grafana.app/v0alpha1',
+      kind: 'Query',
+      apiVersion: 'queries.grafana.app/v1beta1',
       metadata: {
         name: 'AElastic2nkf9',
         generateName: 'AElastic',
@@ -54,8 +54,8 @@ export const getTestQueryList = () => ({
       },
     },
     {
-      kind: 'QueryTemplate',
-      apiVersion: 'querylibrary.grafana.app/v0alpha1',
+      kind: 'Query',
+      apiVersion: 'queries.grafana.app/v1beta1',
       metadata: {
         name: 'ALoki296ta',
         generateName: 'ALoki',
@@ -121,8 +121,8 @@ export const getTestQueryList = () => ({
       },
     },
     {
-      kind: 'QueryTemplate',
-      apiVersion: 'querylibrary.grafana.app/v0alpha1',
+      kind: 'Query',
+      apiVersion: 'queries.grafana.app/v1beta1',
       metadata: {
         name: 'ALoki296tj',
         generateName: 'ALoki',

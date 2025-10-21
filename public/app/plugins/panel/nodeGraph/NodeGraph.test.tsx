@@ -40,8 +40,8 @@ describe('NodeGraph', () => {
         layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
-    const zoomIn = await screen.findByTitle(/Zoom in/);
-    const zoomOut = await screen.findByTitle(/Zoom out/);
+    const zoomIn = await screen.findByLabelText(/Zoom in/);
+    const zoomOut = await screen.findByLabelText(/Zoom out/);
 
     expect(getScale()).toBe(1);
     await userEvent.click(zoomIn);

@@ -15,6 +15,9 @@ test.use({
     cookies: [],
     origins: [],
   },
+  featureToggles: {
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+  },
 });
 
 test.describe(

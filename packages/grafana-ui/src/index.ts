@@ -14,6 +14,7 @@ import { SecretFormField } from './components/SecretFormField/SecretFormField';
 import * as commonOptionsBuilder from './options/builder';
 import * as styleMixins from './themes/mixins';
 import * as DOMUtil from './utils/dom';
+import * as floatingUtils from './utils/floating';
 import * as ReactUtils from './utils/reactUtils';
 
 export { Icon } from './components/Icon/Icon';
@@ -437,7 +438,7 @@ export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
 export { fuzzyMatch } from './utils/fuzzy';
 export { logOptions } from './utils/logOptions';
 
-export { DOMUtil, ReactUtils };
+export { DOMUtil, ReactUtils, floatingUtils };
 
 export { ThemeContext } from '@grafana/data';
 export {

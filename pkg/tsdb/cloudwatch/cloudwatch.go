@@ -59,7 +59,7 @@ type DataSource struct {
 }
 
 func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Config, error) {
-	if region == defaultRegion {
+	if region == defaultRegion || region == "" {
 		if len(ds.Settings.Region) == 0 {
 			return aws.Config{}, models.ErrMissingRegion
 		}

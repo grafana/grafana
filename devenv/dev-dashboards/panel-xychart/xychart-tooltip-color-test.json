@@ -100,8 +100,7 @@
         {
           "csvContent": "x,y,z\n1,2,3\n3,4,5\n5,6,7",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "${DS_GDEV-TESTDATA}"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -189,8 +188,7 @@
         {
           "csvContent": "x,y,z\n1,2,3\n3,4,5\n5,6,7",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "${DS_GDEV-TESTDATA}"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -278,8 +276,7 @@
         {
           "csvContent": "x,y,z\n1,2,3\n3,4,5\n5,6,7",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "${DS_GDEV-TESTDATA}"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -374,8 +371,7 @@
         {
           "csvContent": "x,y,z\n1,2,3\n3,4,5\n5,6,7",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "${DS_GDEV-TESTDATA}"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -470,8 +466,7 @@
         {
           "csvContent": "x,y,z\n1,2,3\n3,4,5\n5,6,7",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "${DS_GDEV-TESTDATA}"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -566,8 +561,7 @@
         {
           "csvContent": "x,y,z\n1,2,3\n3,4,5\n5,6,7",
           "datasource": {
-            "type": "grafana-testdata-datasource",
-            "uid": "${DS_GDEV-TESTDATA}"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -577,7 +571,9 @@
       "type": "xychart"
     },
     {
-      "datasource": { "type": "testdata" },
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -654,8 +650,7 @@
         {
           "csvContent": "x,y,c\n0,0,0\n50,50,25\n100,100,50",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_content"

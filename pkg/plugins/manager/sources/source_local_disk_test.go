@@ -2,6 +2,7 @@ package sources
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -109,4 +110,33 @@ func TestDirAsLocalSources(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLocalSource(t *testing.T) {
+	t.Run("NewLocalSource should always return plugins with StaticFS", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		pluginID := "test-plugin"
+		pluginDir := filepath.Join(tmpDir, pluginID)
+
+		err := os.MkdirAll(pluginDir, 0750)
+		require.NoError(t, err)
+
+		pluginJSON := `{
+			"id": "test-plugin",
+			"name": "Test Plugin",
+			"type": "datasource",
+			"info": {
+				"version": "1.0.0"
+			}
+		}`
+		err = os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte(pluginJSON), 0644)
+		require.NoError(t, err)
+
+		bundles, err := NewLocalSource(plugins.ClassExternal, []string{pluginDir}).Discover(t.Context())
+		require.NoError(t, err)
+		require.Len(t, bundles, 1, "Should discover exactly one plugin")
+		require.Equal(t, pluginID, bundles[0].Primary.JSONData.ID)
+		_, canRemove := bundles[0].Primary.FS.(plugins.FSRemover)
+		require.True(t, canRemove)
+	})
 }

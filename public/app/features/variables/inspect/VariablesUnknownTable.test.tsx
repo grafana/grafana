@@ -81,6 +81,7 @@ describe('VariablesUnknownTable', () => {
 
         await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
 
+        await waitFor(() => expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument());
         expect(screen.getByText('No renamed or missing variables found.')).toBeInTheDocument();
       });
     });

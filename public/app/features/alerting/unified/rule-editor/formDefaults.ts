@@ -1,5 +1,5 @@
 import { clamp } from 'lodash';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { RuleWithLocation } from 'app/types/unified-alerting';

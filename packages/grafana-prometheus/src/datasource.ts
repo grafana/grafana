@@ -41,13 +41,8 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { PrometheusAnnotationSupport } from './annotations';
-import {
-  DEFAULT_SERIES_LIMIT,
-  GET_AND_POST_METADATA_ENDPOINTS,
-  InstantQueryRefIdIndex,
-  SUGGESTIONS_LIMIT,
-} from './constants';
-import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
+import { DEFAULT_SERIES_LIMIT, GET_AND_POST_METADATA_ENDPOINTS, InstantQueryRefIdIndex } from './constants';
+import { interpolateQueryExpr, prometheusRegularEscape } from './escaping';
 import {
   exportToAbstractQuery,
   importFromAbstractQuery,
@@ -96,7 +91,6 @@ export class PrometheusDatasource
   interval: string;
   languageProvider: PrometheusLanguageProviderInterface;
   lookupsDisabled: boolean;
-  metricNamesAutocompleteSuggestionLimit: number;
   ruleMappings: RuleQueryMapping;
   seriesEndpoint: boolean;
   seriesLimit: number;
@@ -132,8 +126,6 @@ export class PrometheusDatasource
     this.id = instanceSettings.id;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
-    this.metricNamesAutocompleteSuggestionLimit =
-      instanceSettings.jsonData.codeModeMetricNamesSuggestionLimit ?? SUGGESTIONS_LIMIT;
     this.ruleMappings = {};
     this.seriesEndpoint = instanceSettings.jsonData.seriesEndpoint ?? false;
     this.seriesLimit = instanceSettings.jsonData.seriesLimit ?? DEFAULT_SERIES_LIMIT;
@@ -379,22 +371,7 @@ export class PrometheusDatasource
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) {
-    // if no multi or include all do not regexEscape
-    if (!variable.multi && !variable.includeAll) {
-      return prometheusRegularEscape(value);
-    }
-
-    if (typeof value === 'string') {
-      return prometheusSpecialRegexEscape(value);
-    }
-
-    const escapedValues = value.map((val) => prometheusSpecialRegexEscape(val));
-
-    if (escapedValues.length === 1) {
-      return escapedValues[0];
-    }
-
-    return '(' + escapedValues.join('|') + ')';
+    return interpolateQueryExpr(value, variable);
   }
 
   targetContainsTemplate(target: PromQuery) {
@@ -453,7 +430,7 @@ export class PrometheusDatasource
       utcOffsetSec: utcOffset * 60,
     };
 
-    if (config.featureToggles.promQLScope) {
+    if (request.scopes) {
       processedTarget.scopes = (request.scopes ?? []).map((scope) => ({
         name: scope.metadata.name,
         ...scope.spec,
@@ -494,7 +471,9 @@ export class PrometheusDatasource
 
     // Use incremental query only if enabled and no instant queries or no $__range variables
     const shouldUseIncrementalQuery =
-      this.hasIncrementalQuery && !request.targets.some((target) => target.instant || target.expr.includes('$__range'));
+      this.hasIncrementalQuery &&
+      !config.publicDashboardAccessToken &&
+      !request.targets.some((target) => target.instant || target.expr?.includes('$__range'));
 
     let fullOrPartialRequest: DataQueryRequest<PromQuery> = request;
     let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
@@ -564,7 +543,7 @@ export class PrometheusDatasource
       options.timeRange = getDefaultTimeRange();
     }
 
-    if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
+    if ((options?.scopes?.length ?? 0) > 0) {
       const suggestions = await this.languageProvider.fetchSuggestions(
         options.timeRange,
         options.queries,
@@ -595,7 +574,7 @@ export class PrometheusDatasource
     }
 
     const requestId = `[${this.uid}][${options.key}]`;
-    if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
+    if ((options?.scopes?.length ?? 0) > 0) {
       return (
         await this.languageProvider.fetchSuggestions(
           options.timeRange,
@@ -630,7 +609,7 @@ export class PrometheusDatasource
           scopedVars,
           this.interpolateExploreMetrics(query.fromExploreMetrics)
         );
-        const replacedInterpolatedQuery = config.featureToggles.promQLScope
+        const replacedInterpolatedQuery = targetHasScopes(query)
           ? interpolatedQuery
           : this.templateSrv.replace(
               this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
@@ -640,7 +619,7 @@ export class PrometheusDatasource
 
         const expandedQuery = {
           ...query,
-          ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
+          ...(query.scopes && query.scopes.length > 0 ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
           datasource: this.getRef(),
           expr: replacedInterpolatedQuery,
           interval: this.templateSrv.replace(query.interval, scopedVars),
@@ -812,13 +791,13 @@ export class PrometheusDatasource
 
     // Apply ad-hoc filters
     // When ad-hoc filters are applied, we replace again the variables in case the ad-hoc filters also reference a variable
-    const exprWithAdhoc = config.featureToggles.promQLScope
+    const exprWithAdhoc = targetHasScopes(target)
       ? expr
       : this.templateSrv.replace(this.enhanceExprWithAdHocFilters(filters, expr), variables, this.interpolateQueryExpr);
 
     return {
       ...target,
-      ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
+      ...(targetHasScopes(target) ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
       expr: exprWithAdhoc,
       interval: this.templateSrv.replace(target.interval, variables),
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),
@@ -881,6 +860,10 @@ export class PrometheusDatasource
 
     return defaults;
   }
+}
+
+function targetHasScopes(target: PromQuery): boolean {
+  return !!(target.scopes && target.scopes.length > 0);
 }
 
 export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQueryMapping {

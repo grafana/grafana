@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func saveEvent(ctx context.Context, sql db.DB, cmd SaveEventCmd) error {
@@ -24,9 +25,8 @@ func saveEvent(ctx context.Context, sql db.DB, cmd SaveEventCmd) error {
 }
 
 func TestIntegrationEntityEventsService(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
 
 	setup := func() *entityEventService {
@@ -147,9 +147,8 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 }
 
 func TestIntegrationCreateDatabaseEntityId(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []struct {
 		name       string
 		entityType EntityType

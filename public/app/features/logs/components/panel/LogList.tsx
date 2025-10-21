@@ -24,14 +24,14 @@ import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './InfiniteScroll';
-import { getGridTemplateColumns } from './LogLine';
+import { getGridTemplateColumns, LogLineTimestampResolution } from './LogLine';
 import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
 import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
-import { preProcessLogs, LogListModel } from './processing';
+import { preProcessLogs, LogListModel, getLevelsFromLogs } from './processing';
 import { useKeyBindings } from './useKeyBindings';
 import { usePopoverMenu } from './usePopoverMenu';
 import { LogLineVirtualization, getLogLineSize, LogFieldDimension, ScrollToLogsEvent } from './virtualization';
@@ -66,7 +66,7 @@ export interface Props {
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
@@ -75,11 +75,19 @@ export interface Props {
   permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
+  prettifyJSON?: boolean;
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
+  /**
+   * Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata
+   * @alpha
+   */
+  showLogAttributes?: boolean;
   showTime: boolean;
+  showUniqueLabels?: boolean;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
+  timestampResolution?: LogLineTimestampResolution;
   timeZone: string;
   syntaxHighlighting?: boolean;
   wrapLogMessage: boolean;
@@ -87,7 +95,7 @@ export interface Props {
 
 export type LogListFontSize = 'default' | 'small';
 
-export type LogListControlOptions = LogListState;
+export type LogListOptions = keyof LogListState | 'wrapLogMessage' | 'prettifyLogMessage' | 'defaultDisplayedFields';
 
 type LogListComponentProps = Omit<
   Props,
@@ -108,7 +116,7 @@ export const LogList = ({
   displayedFields,
   containerElement,
   logOptionsStorageKey,
-  detailsMode = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.detailsMode`) ?? 'sidebar') : 'sidebar',
+  detailsMode,
   dedupStrategy,
   enableLogDetails,
   eventBus,
@@ -142,12 +150,16 @@ export const LogList = ({
   permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
+  prettifyJSON = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true) : true,
   setDisplayedFields,
   showControls,
+  showLogAttributes,
   showTime,
+  showUniqueLabels,
   sortOrder,
   syntaxHighlighting = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true) : true,
   timeRange,
+  timestampResolution,
   timeZone,
   wrapLogMessage,
 }: Props) => {
@@ -184,11 +196,15 @@ export const LogList = ({
       permalinkedLogId={permalinkedLogId}
       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
       pinnedLogs={pinnedLogs}
+      prettifyJSON={prettifyJSON}
       setDisplayedFields={setDisplayedFields}
       showControls={showControls}
+      showLogAttributes={showLogAttributes}
       showTime={showTime}
+      showUniqueLabels={showUniqueLabels}
       sortOrder={sortOrder}
       syntaxHighlighting={syntaxHighlighting}
+      timestampResolution={timestampResolution}
       wrapLogMessage={wrapLogMessage}
     >
       <LogListSearchContextProvider>
@@ -238,18 +254,17 @@ const LogListComponent = ({
     onClickFilterString,
     onClickFilterOutString,
     permalinkedLogId,
+    prettifyJSON,
     showDetails,
     showTime,
+    showUniqueLabels,
     sortOrder,
+    timestampResolution,
     toggleDetails,
     wrapLogMessage,
   } = useLogListContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
-  const [listHeight, setListHeight] = useState(
-    app === CoreApp.Explore
-      ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
-      : containerElement.clientHeight
-  );
+  const [listHeight, setListHeight] = useState(getListHeight(containerElement, app));
   const theme = useTheme2();
   const listRef = useRef<VariableSizeList | null>(null);
   const widthRef = useRef(containerElement.clientWidth);
@@ -257,8 +272,16 @@ const LogListComponent = ({
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const virtualization = useMemo(() => new LogLineVirtualization(theme, fontSize), [theme, fontSize]);
   const dimensions = useMemo(
-    () => (wrapLogMessage ? [] : virtualization.calculateFieldDimensions(processedLogs, displayedFields)),
-    [displayedFields, processedLogs, virtualization, wrapLogMessage]
+    () =>
+      wrapLogMessage
+        ? []
+        : virtualization.calculateFieldDimensions(
+            processedLogs,
+            displayedFields,
+            timestampResolution,
+            showUniqueLabels
+          ),
+    [displayedFields, processedLogs, showUniqueLabels, timestampResolution, virtualization, wrapLogMessage]
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { showTime });
   const widthContainer = wrapperRef.current ?? containerElement;
@@ -288,11 +311,13 @@ const LogListComponent = ({
     [filterLogs, levelFilteredLogs, matchingUids]
   );
 
+  // When log lines report size discrepancies, we debounce the calculation reset to give time to
+  // use the smallest log index to reset the heights.
   const debouncedResetAfterIndex = useMemo(() => {
     return debounce((index: number) => {
       listRef.current?.resetAfterIndex(index);
       overflowIndexRef.current = Infinity;
-    }, 25);
+    }, 0);
   }, []);
 
   const debouncedScrollToItem = useMemo(() => {
@@ -309,46 +334,44 @@ const LogListComponent = ({
   }, [eventBus, filteredLogs]);
 
   useEffect(() => {
-    if (loading) {
-      return;
-    }
     setProcessedLogs(
       preProcessLogs(
         logs,
-        { getFieldLinks, escape: forceEscape ?? false, order: sortOrder, timeZone, virtualization, wrapLogMessage },
+        {
+          getFieldLinks,
+          escape: forceEscape ?? false,
+          prettifyJSON,
+          order: sortOrder,
+          timeZone,
+          virtualization,
+          wrapLogMessage,
+        },
         grammar
       )
     );
     virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, getFieldLinks, grammar, loading, logs, sortOrder, timeZone, virtualization, wrapLogMessage]);
+  }, [forceEscape, getFieldLinks, grammar, logs, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
   }, [wrapLogMessage, showDetails, displayedFields, dedupStrategy]);
 
-  useEffect(() => {
-    const handleResize = debounce(() => {
-      setListHeight(
-        (app === CoreApp.Explore
-          ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
-          : containerElement.clientHeight) - (searchVisible ? LOG_LIST_SEARCH_HEIGHT : 0)
-      );
-    }, 50);
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [app, containerElement.clientHeight, searchVisible]);
-
   useLayoutEffect(() => {
-    if (widthRef.current === widthContainer.clientWidth) {
-      return;
-    }
-    widthRef.current = widthContainer.clientWidth;
-    debouncedResetAfterIndex(0);
-  });
+    const handleResize = (entry: ResizeObserverEntry) => {
+      setListHeight(getListHeight(containerElement, app, searchVisible));
+      if (widthRef.current !== entry.contentRect.width) {
+        widthRef.current = entry.contentRect.width;
+      }
+    };
+    const observer = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+      if (entries.length) {
+        handleResize(entries[0]);
+      }
+    });
+    observer.observe(containerElement);
+    return () => observer.disconnect();
+  }, [app, containerElement, searchVisible]);
 
   const overflowIndexRef = useRef(Infinity);
   const handleOverflow = useCallback(
@@ -365,21 +388,20 @@ const LogListComponent = ({
     [debouncedResetAfterIndex, virtualization, widthContainer]
   );
 
-  const handleScrollPosition = useCallback(() => {
-    if (permalinkedLogId) {
-      const index = processedLogs.findIndex((log) => log.uid === permalinkedLogId);
-      if (index >= 0) {
-        listRef.current?.scrollToItem(index, 'start');
-        return;
+  const handleScrollPosition = useCallback(
+    (log?: LogListModel) => {
+      const scrollToUID = log ? log.uid : permalinkedLogId;
+      if (scrollToUID) {
+        const index = processedLogs.findIndex((log) => log.uid === scrollToUID);
+        if (index >= 0) {
+          listRef.current?.scrollToItem(index, 'start');
+          return;
+        }
       }
-    }
-    listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : processedLogs.length - 1);
-  }, [initialScrollPosition, permalinkedLogId, processedLogs]);
-
-  if (!containerElement || listHeight == null) {
-    // Wait for container to be rendered
-    return null;
-  }
+      listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : processedLogs.length - 1);
+    },
+    [initialScrollPosition, permalinkedLogId, processedLogs]
+  );
 
   const handleLogLineClick = useCallback(
     (e: MouseEvent<HTMLElement>, log: LogListModel) => {
@@ -392,13 +414,9 @@ const LogListComponent = ({
     [handleTextSelection, toggleDetails]
   );
 
-  const handleLogDetailsResize = useCallback(() => {
-    debouncedResetAfterIndex(0);
-  }, [debouncedResetAfterIndex]);
-
   const focusLogLine = useCallback(
     (log: LogListModel) => {
-      const index = filteredLogs.indexOf(log);
+      const index = filteredLogs.findIndex((filteredLog) => filteredLog.uid === log.uid);
       if (index >= 0) {
         debouncedScrollToItem(index, 'start');
       }
@@ -406,15 +424,24 @@ const LogListComponent = ({
     [debouncedScrollToItem, filteredLogs]
   );
 
+  const logLevels = useMemo(() => getLevelsFromLogs(processedLogs), [processedLogs]);
+
+  if (!containerElement || listHeight == null) {
+    // Wait for container to be rendered
+    return null;
+  }
+
   return (
     <div className={styles.logListContainer}>
-      {showControls && <LogListControls eventBus={eventBus} />}
+      {showControls && <LogListControls logLevels={logLevels} eventBus={eventBus} />}
       {detailsMode === 'sidebar' && showDetails.length > 0 && (
         <LogLineDetails
           containerElement={containerElement}
           focusLogLine={focusLogLine}
           logs={filteredLogs}
-          onResize={handleLogDetailsResize}
+          timeRange={timeRange}
+          timeZone={timeZone}
+          showControls={showControls}
         />
       )}
       <div className={styles.logListWrapper} ref={wrapperRef}>
@@ -456,6 +483,7 @@ const LogListComponent = ({
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
           infiniteScrollMode={infiniteScrollMode}
+          loading={loading}
           logs={filteredLogs}
           loadMore={loadMore}
           onClick={handleLogLineClick}
@@ -551,4 +579,12 @@ function handleScrollToEvent(event: ScrollToLogsEvent, logs: LogListModel[], lis
       list?.scrollToItem(index, 'center');
     }
   }
+}
+
+function getListHeight(containerElement: HTMLDivElement, app: CoreApp, searchVisible = false) {
+  return (
+    (app === CoreApp.Explore
+      ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
+      : containerElement.clientHeight) - (searchVisible ? LOG_LIST_SEARCH_HEIGHT : 0)
+  );
 }

@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/i18n",
-  "version": "12.2.0-pre",
+  "version": "12.3.0-pre",
   "description": "Grafana Internationalization Library",
   "keywords": [
     "grafana",
@@ -28,6 +28,7 @@
       "require": "./src/internal/index.ts"
     },
     "./eslint-plugin": {
+      "types": "./src/eslint/index.d.ts",
       "import": "./src/eslint/index.cjs",
       "require": "./src/eslint/index.cjs"
     }
@@ -63,7 +64,6 @@
     "react-i18next": "^15.0.0"
   },
   "devDependencies": {
-    "@grafana/tsconfig": "^2.0.0",
     "@types/react": "18.3.18",
     "rollup": "^4.22.4",
     "rollup-plugin-copy": "3.5.0",

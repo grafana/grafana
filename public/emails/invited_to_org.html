@@ -1,10 +1,8 @@
 <!doctype html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html lang="und" dir="auto" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 
 <head>
-  <title>
-    {{ Subject .Subject .TemplateData "{{ .InvitedBy }} has added you to the {{ .OrgName }} organization" }}
-  </title>
+  <title>{{ Subject .Subject .TemplateData "{{ .InvitedBy }} has added you to the {{ .OrgName }} organization" }}</title>
   {{ __dangerouslyInjectHTML `<!--[if !mso]><!-->` }}
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   {{ __dangerouslyInjectHTML `<!--<![endif]-->` }}
@@ -83,7 +81,7 @@
 
   </style>
   <style type="text/css">
-    @media only screen and (max-width:480px) {
+    @media only screen and (max-width:479px) {
       table.mj-full-width-mobile {
         width: 100% !important;
       }
@@ -94,12 +92,10 @@
     }
 
   </style>
-  <style type="text/css">
-  </style>
 </head>
 
 <body style="word-spacing:normal;">
-  <div class="canvas" style="background-color: #fff;">
+  <div class="canvas" style="background-color: #fff;" lang="und" dir="auto">
     {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
     <div style="margin:0px auto;max-width:600px;">
       <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
@@ -116,7 +112,7 @@
                           <tbody>
                             <tr>
                               <td style="width:200px;">
-                                <img height="auto" src="https://grafana.com/static/assets/img/logo_new_transparent_light_400x100.png" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="200">
+                                <img alt src="https://grafana.com/static/assets/img/logo_new_transparent_light_400x100.png" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="200" height="auto">
                               </td>
                             </tr>
                           </tbody>
@@ -161,7 +157,7 @@
                       </td>
                     </tr>
                     <tr>
-                      <td align="center" vertical-align="middle" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                      <td align="center" style="font-size:0px;padding:10px 25px;word-break:break-word;">
                         <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                           <tbody>
                             <tr>

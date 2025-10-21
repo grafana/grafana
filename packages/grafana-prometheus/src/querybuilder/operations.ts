@@ -258,7 +258,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     createFunction({ id: PromOperationId.Sort }),
     createFunction({ id: PromOperationId.SortDesc }),
     createFunction({ id: PromOperationId.Sqrt }),
-    createFunction({ id: PromOperationId.Stddev }),
     createFunction({
       id: PromOperationId.Tan,
       category: PromVisualQueryOperationCategory.Trigonometric,

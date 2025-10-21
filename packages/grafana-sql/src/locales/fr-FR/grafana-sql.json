@@ -56,8 +56,8 @@
       "query-header": {
         "content-invalid-query": "Votre requête n’est pas valide. Vérifiez ci-dessous pour en savoir plus. <1></1>Cependant, vous pouvez toujours exécuter cette requête.",
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Builder",
+          "label-code": "Code"
         },
         "label-dataset": "Ensemble de données",
         "label-filter": "Filtrer",

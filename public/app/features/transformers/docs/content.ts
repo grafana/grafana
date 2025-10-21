@@ -375,24 +375,28 @@ This transformation is very useful if your data source does not natively filter 
 
 The available conditions for all fields are:
 
-- **Regex** - Match a regex expression.
 - **Is Null** - Match if the value is null.
 - **Is Not Null** - Match if the value is not null.
 - **Equal** - Match if the value is equal to the specified value.
-- **Different** - Match if the value is different than the specified value.
+- **Not Equal** - Match if the value is not equal to the specified value.
+- **Regex** - Match a regex expression.
 
 The available conditions for string fields are:
 
 - **Contains substring** - Match if the value contains the specified substring (case insensitive).
 - **Does not contain substring** - Match if the value doesn't contain the specified substring (case insensitive).
 
-The available conditions for number and time fields are:
+The available conditions for number fields are:
 
 - **Greater** - Match if the value is greater than the specified value.
 - **Lower** - Match if the value is lower than the specified value.
 - **Greater or equal** - Match if the value is greater or equal.
 - **Lower or equal** - Match if the value is lower or equal.
-- **Range** - Match a range between a specified minimum and maximum, min and max included. A time field will pre-populate with variables to filter by selected time.
+- **In between** - Match a range between a specified minimum and maximum, min and max included.
+
+The available conditions for time fields are:
+
+- **In between** - Match a range between a specified minimum and maximum. The min and max values will pre-populate with variables to filter by selected time.
 
 Consider the following dataset:
 
@@ -1565,7 +1569,7 @@ ${buildImageContent(
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
 Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
-If you have multiple types it will default to string type.
+If you have multiple types, it will default to string type. You can select how empty cells should be represented.
 
 **Before Transformation:**
 
@@ -1615,14 +1619,6 @@ ${buildImageContent(
     },
   },
 };
-
-export function getLinkToDocs(): string {
-  return `
-  Go to the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
-  transformation documentation
-  </a> for more general documentation.
-  `;
-}
 
 function buildImageContent(source: string, imageRenderType: ImageRenderType, imageAltText: string) {
   return imageRenderType === 'shortcodeFigure'

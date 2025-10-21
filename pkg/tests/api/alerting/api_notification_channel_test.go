@@ -17,11 +17,11 @@ import (
 	"time"
 
 	"github.com/grafana/alerting/receivers"
-	alertingLine "github.com/grafana/alerting/receivers/line"
-	alertingPushover "github.com/grafana/alerting/receivers/pushover"
-	alertingSlack "github.com/grafana/alerting/receivers/slack"
-	alertingTelegram "github.com/grafana/alerting/receivers/telegram"
-	alertingThreema "github.com/grafana/alerting/receivers/threema"
+	alertingLine "github.com/grafana/alerting/receivers/line/v1"
+	alertingPushover "github.com/grafana/alerting/receivers/pushover/v1"
+	alertingSlack "github.com/grafana/alerting/receivers/slack/v1"
+	alertingTelegram "github.com/grafana/alerting/receivers/telegram/v1"
+	alertingThreema "github.com/grafana/alerting/receivers/threema/v1"
 	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
@@ -37,12 +37,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationTestReceivers(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	t.Run("assert no receivers returns 400 Bad Request", func(t *testing.T) {
@@ -547,9 +547,8 @@ func TestIntegrationTestReceivers(t *testing.T) {
 }
 
 func TestIntegrationTestReceiversAlertCustomization(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	t.Run("assert custom annotations and labels are sent", func(t *testing.T) {
@@ -837,9 +836,8 @@ func TestIntegrationTestReceiversAlertCustomization(t *testing.T) {
 }
 
 func TestIntegrationNotificationChannels(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

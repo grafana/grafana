@@ -66,8 +66,9 @@ type dashboardSqlAccess struct {
 	invalidDashboardParseFallbackEnabled bool
 
 	// Use for writing (not reading)
-	dashStore             dashboards.Store
-	dashboardSearchClient legacysearcher.DashboardSearchClient
+	dashStore              dashboards.Store
+	dashboardSearchClient  legacysearcher.DashboardSearchClient
+	dashboardPermissionSvc accesscontrol.DashboardPermissionsService
 
 	accessControl   accesscontrol.AccessControl
 	libraryPanelSvc librarypanels.Service
@@ -84,6 +85,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	provisioning provisioning.ProvisioningService,
 	libraryPanelSvc librarypanels.Service,
 	sorter sort.Service,
+	dashboardPermissionSvc accesscontrol.DashboardPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	features featuremgmt.FeatureToggles,
 ) DashboardAccess {
@@ -94,6 +96,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 		dashStore:                            dashStore,
 		provisioning:                         provisioning,
 		dashboardSearchClient:                *dashboardSearchClient,
+		dashboardPermissionSvc:               dashboardPermissionSvc,
 		libraryPanelSvc:                      libraryPanelSvc,
 		accessControl:                        accessControl,
 		log:                                  log.New("dashboard.legacysql"),
@@ -251,7 +254,7 @@ func generateFallbackDashboard(data []byte, title, uid string) ([]byte, error) {
 				"type":  "text",
 			},
 		},
-		"schemaVersion": 41,
+		"schemaVersion": 42,
 		"title":         title,
 		"uid":           uid,
 		"version":       3,
@@ -289,12 +292,12 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 	var orgId int64
 	var folder_uid sql.NullString
 	var title string
-	var updated time.Time
+	var updated legacysql.DBTime
 	var updatedBy sql.NullString
 	var updatedByID sql.NullInt64
 	var deleted sql.NullTime
 
-	var created time.Time
+	var created legacysql.DBTime
 	var createdBy sql.NullString
 	var createdByID sql.NullInt64
 	var message sql.NullString
@@ -334,13 +337,13 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		dash.Namespace = a.namespacer(orgId)
 		dash.APIVersion = fmt.Sprintf("%s/%s", dashboardV1.GROUP, apiVersion.String)
 		dash.UID = gapiutil.CalculateClusterWideUID(dash)
-		dash.SetCreationTimestamp(metav1.NewTime(created))
+		dash.SetCreationTimestamp(metav1.NewTime(created.Time))
 		meta, err := utils.MetaAccessor(dash)
 		if err != nil {
 			a.log.Debug("failed to get meta accessor for dashboard", "error", err, "uid", dash.UID, "name", dash.Name, "version", version)
 			return nil, err
 		}
-		meta.SetUpdatedTimestamp(&updated)
+		meta.SetUpdatedTimestamp(&updated.Time)
 		meta.SetCreatedBy(getUserID(createdBy, createdByID))
 		meta.SetUpdatedBy(getUserID(updatedBy, updatedByID))
 		meta.SetDeprecatedInternalID(dashboard_id) //nolint:staticcheck
@@ -456,7 +459,7 @@ func (a *dashboardSqlAccess) buildSaveDashboardCommand(ctx context.Context, orgI
 	}
 
 	var userID int64
-	if claims.IsIdentityType(user.GetIdentityType(), claims.TypeUser) {
+	if claims.IsIdentityType(user.GetIdentityType(), claims.TypeUser) || claims.IsIdentityType(user.GetIdentityType(), claims.TypeServiceAccount) {
 		var err error
 		userID, err = identity.UserIdentifier(user.GetSubject())
 		if err != nil {

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ClipboardButton, useStyles2, CodeEditor } from '@grafana/ui';
 
 interface Props {
@@ -16,7 +17,14 @@ export const CodeBlock = ({ code, copyCode = true }: Props) => {
   return (
     <div className={styles.container}>
       {copyCode && (
-        <ClipboardButton className={styles.copyButton} variant="secondary" size="sm" icon="copy" getText={() => code} />
+        <ClipboardButton
+          aria-label={t('provisioning.code-block.aria-label-copy', 'Copy code to clipboard')}
+          className={styles.copyButton}
+          variant="secondary"
+          size="sm"
+          icon="copy"
+          getText={() => code}
+        />
       )}
       <CodeEditor
         value={code}

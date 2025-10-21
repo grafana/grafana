@@ -1,22 +1,26 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/internal';
+import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
-import { MessageList } from '../Shared/MessageList';
 import { formatTimestamp } from '../utils/time';
 
-import { CheckRepository } from './CheckRepository';
-import { RepositoryHealth } from './RepositoryHealth';
-import { SyncRepository } from './SyncRepository';
+import { RepositoryHealthCard } from './RepositoryHealthCard';
+import { RepositoryPullStatusCard } from './RepositoryPullStatusCard';
 
 type StatCell<T extends keyof ResourceCount = keyof ResourceCount> = CellProps<ResourceCount, ResourceCount[T]>;
 
-function getColumnCount(hasWebhook: boolean): 3 | 4 {
-  return hasWebhook ? 4 : 3;
+function getColumnCount(hasWebhook: boolean): { xxlColumn: 5 | 4; lgColumn: 3 | 2 } {
+  return {
+    xxlColumn: hasWebhook ? 5 : 4,
+    lgColumn: hasWebhook ? 3 : 2,
+  };
 }
 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
@@ -24,7 +28,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
 
   const status = repo.status;
   const webhookURL = getWebhookURL(repo);
-  const columns = getColumnCount(Boolean(repo.status?.webhook));
+  const { lgColumn, xxlColumn } = getColumnCount(Boolean(repo.status?.webhook));
 
   const resourceColumns = useMemo(
     () => [
@@ -50,7 +54,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
-        <Grid columns={columns} gap={2}>
+        <Grid columns={{ xs: 1, sm: 2, lg: lgColumn, xxl: xxlColumn }} gap={2} alignItems={'flex-start'}>
           <div className={styles.cardContainer}>
             <Card noMargin className={styles.card}>
               <Card.Heading>
@@ -66,144 +70,20 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                 ) : null}
               </Card.Description>
               <Card.Actions className={styles.actions}>
-                <LinkButton fill="outline" size="md" href={getFolderURL(repo)} icon="folder-open">
+                <LinkButton size="md" href={getFolderURL(repo)} icon="folder-open" variant="secondary">
                   <Trans i18nKey="provisioning.repository-overview.view-folder">View Folder</Trans>
                 </LinkButton>
               </Card.Actions>
             </Card>
           </div>
+
           {repo.status?.health && (
             <div className={styles.cardContainer}>
-              <Card noMargin className={styles.card}>
-                <Card.Heading>
-                  <Trans i18nKey="provisioning.repository-overview.health">Health</Trans>
-                </Card.Heading>
-                <Card.Description>
-                  <RepositoryHealth health={repo.status?.health} />
-                  <Grid columns={12} gap={1} alignItems="baseline">
-                    <div className={styles.labelColumn}>
-                      <Text color="secondary">
-                        <Trans i18nKey="provisioning.repository-overview.status">Status:</Trans>
-                      </Text>
-                    </div>
-                    <div className={styles.valueColumn}>
-                      <Text variant="body">
-                        {status?.health?.healthy
-                          ? t('provisioning.repository-overview.healthy', 'Healthy')
-                          : t('provisioning.repository-overview.unhealthy', 'Unhealthy')}
-                      </Text>
-                    </div>
-
-                    <div className={styles.labelColumn}>
-                      <Text color="secondary">
-                        <Trans i18nKey="provisioning.repository-overview.checked">Checked:</Trans>
-                      </Text>
-                    </div>
-                    <div className={styles.valueColumn}>
-                      <Text variant="body">{formatTimestamp(status?.health?.checked)}</Text>
-                    </div>
-
-                    {!!status?.health?.message?.length && (
-                      <>
-                        <div className={styles.labelColumn}>
-                          <Text color="secondary">
-                            <Trans i18nKey="provisioning.repository-overview.messages">Messages:</Trans>
-                          </Text>
-                        </div>
-                        <div className={styles.valueColumn}>
-                          <Stack gap={1}>
-                            {status.health.message.map((msg, idx) => (
-                              <Text key={idx} variant="body">
-                                {msg}
-                              </Text>
-                            ))}
-                          </Stack>
-                        </div>
-                      </>
-                    )}
-                  </Grid>
-                </Card.Description>
-                <Card.Actions className={styles.actions}>
-                  <CheckRepository repository={repo} />
-                </Card.Actions>
-              </Card>
+              <RepositoryHealthCard repo={repo} />
             </div>
           )}
-          <div className={styles.cardContainer}>
-            <Card className={styles.card} noMargin>
-              <Card.Heading>
-                <Trans i18nKey="provisioning.repository-overview.pull-status">Pull status</Trans>
-              </Card.Heading>
-              <Card.Description>
-                <Grid columns={12} gap={1} alignItems="baseline">
-                  <div className={styles.labelColumn}>
-                    <Text color="secondary">
-                      <Trans i18nKey="provisioning.repository-overview.status">Status:</Trans>
-                    </Text>
-                  </div>
-                  <div className={styles.valueColumn}>
-                    <Text variant="body">{status?.sync.state ?? 'N/A'}</Text>
-                  </div>
 
-                  <div className={styles.labelColumn}>
-                    <Text color="secondary">
-                      <Trans i18nKey="provisioning.repository-overview.job-id">Job ID:</Trans>
-                    </Text>
-                  </div>
-                  <div className={styles.valueColumn}>
-                    <Text variant="body">{status?.sync.job ?? 'N/A'}</Text>
-                  </div>
-
-                  <div className={styles.labelColumn}>
-                    <Text color="secondary">
-                      <Trans i18nKey="provisioning.repository-overview.last-ref">Last Ref:</Trans>
-                    </Text>
-                  </div>
-                  <div className={styles.valueColumn}>
-                    <Text variant="body">
-                      {status?.sync.lastRef
-                        ? status.sync.lastRef.substring(0, 7)
-                        : t('provisioning.repository-overview.not-available', 'N/A')}
-                    </Text>
-                  </div>
-
-                  <div className={styles.labelColumn}>
-                    <Text color="secondary">
-                      <Trans i18nKey="provisioning.repository-overview.started">Started:</Trans>
-                    </Text>
-                  </div>
-                  <div className={styles.valueColumn}>
-                    <Text variant="body">{formatTimestamp(status?.sync.started)}</Text>
-                  </div>
-
-                  <div className={styles.labelColumn}>
-                    <Text color="secondary">
-                      <Trans i18nKey="provisioning.repository-overview.finished">Finished:</Trans>
-                    </Text>
-                  </div>
-                  <div className={styles.valueColumn}>
-                    <Text variant="body">{formatTimestamp(status?.sync.finished)}</Text>
-                  </div>
-
-                  {!!status?.sync?.message?.length && (
-                    <>
-                      <div className={styles.labelColumn}>
-                        <Text color="secondary">
-                          <Trans i18nKey="provisioning.repository-overview.messages">Messages:</Trans>
-                        </Text>
-                      </div>
-                      <div className={styles.valueColumn}>
-                        <MessageList messages={status.sync.message} variant="body" />
-                      </div>
-                    </>
-                  )}
-                </Grid>
-              </Card.Description>
-              <Card.Actions className={styles.actions}>
-                <SyncRepository repository={repo} />
-              </Card.Actions>
-            </Card>
-          </div>
+          {/* Webhook */}
           {repo.status?.webhook && (
             <div className={styles.cardContainer}>
               <Card noMargin className={styles.card}>
@@ -248,10 +128,25 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
               </Card>
             </div>
           )}
+
+          {/* Pull status */}
+          <div
+            className={cx(
+              styles.pullStatusCard,
+              repo.status?.webhook ? styles.pullStatusCardLgSpan3 : styles.pullStatusCardLgSpan2
+            )}
+          >
+            <RepositoryPullStatusCard repo={repo} />
+          </div>
         </Grid>
-        <div className={styles.cardContainer}>
-          <RecentJobs repo={repo} />
-        </div>
+
+        {/* job status is not ready for Cloud yet */}
+        {(config.buildInfo.edition === GrafanaEdition.OpenSource ||
+          config.buildInfo.edition === GrafanaEdition.Enterprise) && (
+          <div className={styles.cardContainer}>
+            <RecentJobs repo={repo} />
+          </div>
+        )}
       </Stack>
     </Box>
   );
@@ -264,7 +159,7 @@ function getFolderURL(repo: Repository) {
   return '/dashboards';
 }
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     cardContainer: css({
       height: '100%',
@@ -278,10 +173,28 @@ const getStyles = () => {
       marginTop: 'auto',
     }),
     labelColumn: css({
+      minWidth: theme.spacing(10),
       gridColumn: 'span 3',
     }),
     valueColumn: css({
       gridColumn: 'span 9',
+    }),
+    pullStatusCard: css({
+      gridColumn: 'span 2',
+
+      [theme.breakpoints.down('lg')]: {
+        gridColumn: 'span 2',
+      },
+    }),
+    pullStatusCardLgSpan3: css({
+      [theme.breakpoints.down('xxl')]: {
+        gridColumn: 'span 3',
+      },
+    }),
+    pullStatusCardLgSpan2: css({
+      [theme.breakpoints.down('xxl')]: {
+        gridColumn: 'span 2',
+      },
     }),
   };
 };

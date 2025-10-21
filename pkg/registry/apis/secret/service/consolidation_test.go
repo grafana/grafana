@@ -81,8 +81,9 @@ func TestConsolidation(t *testing.T) {
 					Namespace: tc.namespace,
 				},
 				Spec: secretv1beta1.SecureValueSpec{
-					Value:      ptr.To(secretv1beta1.NewExposedSecureValue(tc.value)),
-					Decrypters: []string{"decrypter1"},
+					Description: "test description",
+					Value:       ptr.To(secretv1beta1.NewExposedSecureValue(tc.value)),
+					Decrypters:  []string{"decrypter1"},
 				},
 			}
 
@@ -158,8 +159,9 @@ func TestConsolidation(t *testing.T) {
 					Namespace: tc.namespace,
 				},
 				Spec: secretv1beta1.SecureValueSpec{
-					Value:      ptr.To(secretv1beta1.NewExposedSecureValue(tc.value)),
-					Decrypters: []string{"decrypter1"},
+					Description: "test description",
+					Value:       ptr.To(secretv1beta1.NewExposedSecureValue(tc.value)),
+					Decrypters:  []string{"decrypter1"},
 				},
 			}
 

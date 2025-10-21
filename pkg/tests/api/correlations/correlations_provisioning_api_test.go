@@ -13,12 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := NewTestEnv(t)
 
 	adminUser := ctx.createUser(user.CreateUserCommand{
@@ -175,6 +175,6 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 		})
 
 		require.Error(t, err)
-		require.ErrorIs(t, err, correlations.ErrInvalidConfigType)
+		require.ErrorIs(t, err, correlations.ErrConfigTypeDeprecated)
 	})
 }

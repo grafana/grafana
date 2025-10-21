@@ -4,7 +4,7 @@ import (
 	"errors"
 	"path"
 
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 )
 
 var (

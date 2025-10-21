@@ -14,8 +14,6 @@ import { PanelModel } from '../state/PanelModel';
 
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 
-jest.mock('app/core/services/context_srv', () => ({}));
-
 const dataSources = {
   prom: mockDataSource({
     name: 'prom',
@@ -1846,6 +1844,16 @@ describe('DashboardModel', () => {
               },
             ],
           },
+          // @ts-expect-error
+          {
+            id: 7,
+            datasource: { type: 'prometheus', uid: 'prom-uid' },
+          },
+          // @ts-expect-error
+          {
+            id: 8,
+            datasource: { type: 'prometheus' },
+          },
         ],
       });
     });
@@ -1874,6 +1882,14 @@ describe('DashboardModel', () => {
 
     it('should update datasources in panels collapsed rows', () => {
       expect(model.panels[3].panels?.[0].datasource).toEqual({ type: 'prometheus', uid: 'prom-uid' });
+    });
+
+    it("should not migrate datasource if it's already a ref", () => {
+      expect(model.panels[4].datasource).toEqual({ type: 'prometheus', uid: 'prom-uid' });
+    });
+
+    it("should not migrate datasource if it's already a ref with only a type", () => {
+      expect(model.panels[5].datasource).toEqual({ type: 'prometheus' });
     });
   });
 
@@ -2476,3 +2492,57 @@ function getGridPositions(dashboard: DashboardModel) {
     return panel.gridPos;
   });
 }
+
+describe('when migrating to specific target versions', () => {
+  it('should migrate dashboard to exactly the specified target version', () => {
+    const oldDashboard = {
+      panels: [
+        {
+          id: 1,
+          type: 'graphite',
+          targets: [{ refId: 'A' }],
+        },
+      ],
+      schemaVersion: 1,
+    };
+
+    const model = new DashboardModel(oldDashboard, undefined, { targetSchemaVersion: 5 });
+
+    expect(model.schemaVersion).toBe(5);
+  });
+
+  it('should not run migrations when target version equals current schema version', () => {
+    const dashboard = {
+      panels: [],
+      schemaVersion: 20,
+    };
+
+    const model = new DashboardModel(dashboard, undefined, { targetSchemaVersion: 20 });
+
+    expect(model.schemaVersion).toBe(20);
+  });
+
+  it('should migrate to latest version when no target version specified', () => {
+    const dashboard = {
+      panels: [],
+      schemaVersion: 1,
+    };
+
+    const model = new DashboardModel(dashboard);
+
+    expect(model.schemaVersion).toBe(DASHBOARD_SCHEMA_VERSION);
+  });
+
+  it('should not change schema version when target version equals current schema version', () => {
+    const dashboard = { panels: [], schemaVersion: 20 };
+    const model = new DashboardModel(dashboard, undefined, { targetSchemaVersion: 20 });
+    expect(model.schemaVersion).toBe(20);
+  });
+
+  it('should not change schema version when target version is lower than current', () => {
+    const dashboard = { panels: [], schemaVersion: 25 };
+    const model = new DashboardModel(dashboard, undefined, { targetSchemaVersion: 20 });
+    // Schema version should remain unchanged when no migrations are needed
+    expect(model.schemaVersion).toBe(25);
+  });
+});

@@ -14,7 +14,7 @@ import {
   InlineFieldRow,
   ValuePicker,
   Button,
-  HorizontalGroup,
+  Stack,
   FieldValidationMessage,
   RadioButtonGroup,
 } from '@grafana/ui';
@@ -119,7 +119,7 @@ export function PartitionByValuesEditor({
           labelWidth={10}
           grow={true}
         >
-          <HorizontalGroup>
+          <Stack>
             {fieldNames.map((name) => (
               <Button key={name} icon="times" variant="secondary" size="md" onClick={() => removeField(name)}>
                 {name}
@@ -133,9 +133,10 @@ export function PartitionByValuesEditor({
                 onChange={addField}
                 label={t('transformers.partition-by-values-editor.label-select-field', 'Select field')}
                 icon="plus"
+                isFullWidth={false}
               />
             )}
-          </HorizontalGroup>
+          </Stack>
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>

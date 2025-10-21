@@ -13,7 +13,6 @@ import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB, SQLDia
 
 import { ConfirmModal } from './ConfirmModal';
 import { DatasetSelector } from './DatasetSelector';
-import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './QueryEditorFeatureFlag.utils';
 import { TableSelector } from './TableSelector';
 
 export interface QueryHeaderProps {
@@ -115,11 +114,6 @@ export function QueryHeader({
 
   const datasetDropdownIsAvailable = () => {
     if (dialect === 'influx') {
-      return false;
-    }
-    // If the feature flag is DISABLED, && the datasource is Postgres (`dialect = 'postgres`),
-    // we want to hide the dropdown - as per previous behavior.
-    if (!isSqlDatasourceDatabaseSelectionFeatureFlagEnabled() && dialect === 'postgres') {
       return false;
     }
 

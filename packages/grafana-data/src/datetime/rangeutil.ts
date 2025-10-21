@@ -505,3 +505,14 @@ export function relativeToTimeRange(relativeTimeRange: RelativeTimeRange, now: D
     raw: { from, to },
   };
 }
+
+/**
+ * @internal
+ * Returns a RawTimeRange that has been converted so that from and to are strings
+ */
+export function formatRawTimeRange(range: RawTimeRange): RawTimeRange {
+  return {
+    from: isDateTime(range.from) ? range.from.toISOString() : range.from,
+    to: isDateTime(range.to) ? range.to.toISOString() : range.to,
+  };
+}

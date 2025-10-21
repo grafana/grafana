@@ -95,7 +95,7 @@ func TestAllowQuery(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := AllowQuery(tc.q)
+			_, err := AllowQuery("A", tc.q)
 			if tc.err != nil {
 				require.Error(t, err)
 			} else {

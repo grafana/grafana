@@ -6,7 +6,7 @@ import { ScopedVars } from './ScopedVars';
 import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
 import { IconName } from './icon';
 import { PanelData } from './panel';
-import { RawTimeRange, TimeZone } from './time';
+import { AbsoluteTimeRange, RawTimeRange, TimeZone } from './time';
 
 // Plugin Extensions types
 // ---------------------------------------
@@ -165,6 +165,8 @@ export type PluginExtensionOpenModalOptions = {
 
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
+  // The ID of the extension point that triggered this event
+  extensionPointId: string;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
   /**
@@ -179,6 +181,15 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
    * Closes the extension sidebar.
    */
   closeSidebar: () => void;
+  /**
+   * @internal
+   * Toggles the extension sidebar with the registered component.
+   * If the sidebar is open with the same component, it will be closed.
+   * If the sidebar is closed or open with a different component, it will be opened with the specified component.
+   * @param componentTitle The title of the component to be toggled in the sidebar.
+   * @param props The props to be passed to the component.
+   */
+  toggleSidebar: (componentTitle: string, props?: Record<string, unknown>) => void;
 };
 
 // Extension Points & Contexts
@@ -190,10 +201,14 @@ export enum PluginExtensionPoints {
   AlertingHomePage = 'grafana/alerting/home',
   AlertingAlertingRuleAction = 'grafana/alerting/alertingrule/action',
   AlertingRecordingRuleAction = 'grafana/alerting/recordingrule/action',
+  AlertingRuleQueryEditor = 'grafana/alerting/alertingrule/queryeditor',
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
+  DashboardEmpty = 'grafana/dashboard/empty',
   DataSourceConfig = 'grafana/datasources/config',
+  DataSourceConfigActions = 'grafana/datasources/config/actions',
   DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
+  DataSourceConfigStatus = 'grafana/datasources/config/status',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
   TraceViewDetails = 'grafana/traceview/details',
@@ -203,6 +218,18 @@ export enum PluginExtensionPoints {
   LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
   AppChrome = 'grafana/app/chrome/v1',
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
+}
+
+// Don't use directly in a plugin!
+// Extension point IDs that contain dynamic segments and are not valid as static values — they require runtime substitution of certain parts.
+// (They cannot be used as is. E.g. "grafana/nav-landing-page/.*/v1" becomes "grafana/nav-landing-page/observability/v1" during runtime.)
+export enum PluginExtensionPointPatterns {
+  NavLandingPage = 'grafana/dynamic/nav-landing-page/nav-id-.*/v1',
+}
+
+// Extension Points available in plugins
+export enum PluginExtensionExposedComponents {
+  CentralAlertHistorySceneV1 = 'grafana/central-alert-history-scene/v1',
 }
 
 export type PluginExtensionPanelContext = {
@@ -215,6 +242,13 @@ export type PluginExtensionPanelContext = {
   targets: DataQuery[];
   scopedVars?: ScopedVars;
   data?: PanelData;
+};
+
+export type CentralAlertHistorySceneV1Props = {
+  defaultLabelsFilter?: string;
+  defaultTimeRange?: { from: string; to: string };
+  hideFilters?: boolean;
+  hideAlertRuleColumn?: boolean;
 };
 
 export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {
@@ -251,6 +285,7 @@ export type PluginExtensionResourceAttributesContext = {
   // Key-value pairs of resource attributes, attribute name is the key
   attributes: Record<string, string[]>;
   spanAttributes?: Record<string, string[]>;
+  timeRange: AbsoluteTimeRange;
   datasource: {
     type: string;
     uid: string;
@@ -268,6 +303,30 @@ export type DataSourceConfigErrorStatusContext = {
     status?: string | null;
     details?: Record<string, unknown>;
   };
+};
+
+export type PluginExtensionDataSourceConfigActionsContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+    typeName: string;
+  };
+};
+
+export type PluginExtensionDataSourceConfigStatusContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+    typeName: string;
+  };
+  testingStatus?: {
+    message?: string | null;
+    status?: string | null;
+    details?: Record<string, unknown>;
+  };
+  severity: 'success' | 'error' | 'warning' | 'info';
 };
 
 type Dashboard = {

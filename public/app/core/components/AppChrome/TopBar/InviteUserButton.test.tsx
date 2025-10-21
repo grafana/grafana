@@ -11,6 +11,9 @@ import { InviteUserButton } from './InviteUserButton';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
+    featureToggles: {
+      inviteUserExperimental: true,
+    },
     externalUserMngLinkUrl: 'https://example.com/invite',
   },
   reportInteraction: jest.fn(),

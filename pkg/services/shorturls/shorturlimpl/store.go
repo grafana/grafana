@@ -13,6 +13,7 @@ type store interface {
 	Update(ctx context.Context, shortURL *shorturls.ShortUrl) error
 	Insert(ctx context.Context, shortURL *shorturls.ShortUrl) error
 	Delete(ctx context.Context, cmd *shorturls.DeleteShortUrlCommand) error
+	List(ctx context.Context, orgID int64) ([]*shorturls.ShortUrl, error)
 }
 
 type sqlStore struct {
@@ -58,6 +59,21 @@ func (s sqlStore) Insert(ctx context.Context, shortURL *shorturls.ShortUrl) erro
 }
 
 func (s sqlStore) Delete(ctx context.Context, cmd *shorturls.DeleteShortUrlCommand) error {
+	// If a UID is provided, delete that specific short URL
+	if cmd.Uid != "" {
+		return s.db.WithTransactionalDbSession(ctx, func(session *db.Session) error {
+			var rawSql = "DELETE FROM short_url WHERE uid = ?"
+
+			if result, err := session.Exec(rawSql, cmd.Uid); err != nil {
+				return err
+			} else if cmd.NumDeleted, err = result.RowsAffected(); err != nil {
+				return err
+			}
+			return nil
+		})
+	}
+
+	// Otherwise, delete all stale short URLs older than the specified time
 	return s.db.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		var rawSql = "DELETE FROM short_url WHERE created_at <= ? AND (last_seen_at IS NULL OR last_seen_at = 0)"
 
@@ -68,4 +84,20 @@ func (s sqlStore) Delete(ctx context.Context, cmd *shorturls.DeleteShortUrlComma
 		}
 		return nil
 	})
+}
+
+func (s sqlStore) List(ctx context.Context, orgID int64) ([]*shorturls.ShortUrl, error) {
+	var shortURLs []*shorturls.ShortUrl
+	err := s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		err := dbSession.Where("org_id = ?", orgID).Find(&shortURLs)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return shortURLs, nil
 }

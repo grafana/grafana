@@ -196,9 +196,7 @@ function WelcomeCTABox({ title, description, href, hrefText }: WelcomeCTABoxProp
       </Text>
       <div className={styles.desc}>{description}</div>
       <div className={styles.actionRow}>
-        <TextLink href={href} inline={false}>
-          {hrefText}
-        </TextLink>
+        <TextLink href={href}>{hrefText}</TextLink>
       </div>
     </div>
   );
@@ -243,6 +241,6 @@ const getContentBoxStyles = (theme: GrafanaTheme2) => ({
   box: css({
     padding: theme.spacing(2),
     backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
   }),
 });

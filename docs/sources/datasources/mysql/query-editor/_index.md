@@ -70,7 +70,7 @@ Grafana’s query editors are unique for each data source. For general informati
 The MySQL query editor is located on the [Explore page](ref:explore). You can also access the MySQL query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
 
 {{< admonition type="note" >}}
-If a default database is configured in the **Data Source Configuration page**, or via a provisioning configuration file, users will be restricted to querying only that pre-configured database. This feature is behind a feature flag and is available once you enable `sqlDatasourceDatabaseSelection`.
+If a default database is configured in the **Data Source Configuration page**, or via a provisioning configuration file, users will be restricted to querying only that pre-configured database.
 {{< /admonition >}}
 
 ## MySQL query editor components

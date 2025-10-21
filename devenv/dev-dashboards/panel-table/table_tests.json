@@ -19,7 +19,9 @@
   "panels": [
     {
       "columns": [],
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fontSize": "100%",
       "gridPos": {
         "h": 11,
@@ -114,7 +116,9 @@
           "value": "current"
         }
       ],
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fontSize": "100%",
       "gridPos": {
         "h": 11,
@@ -196,7 +200,9 @@
     },
     {
       "columns": [],
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fontSize": "100%",
       "gridPos": {
         "h": 7,
@@ -260,7 +266,9 @@
     },
     {
       "columns": [],
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fontSize": "100%",
       "gridPos": {
         "h": 8,
@@ -342,7 +350,9 @@
     },
     {
       "columns": [],
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
       "fontSize": "100%",
       "gridPos": {
         "h": 10,
@@ -431,11 +441,7 @@
   ],
   "refresh": false,
   "schemaVersion": 16,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "table"
-  ],
+  "tags": ["gdev", "panel-tests", "table"],
   "templating": {
     "list": []
   },

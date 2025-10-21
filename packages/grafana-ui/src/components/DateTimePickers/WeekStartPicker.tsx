@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 
-import { BootData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
@@ -21,12 +20,6 @@ export type WeekStart = 'saturday' | 'sunday' | 'monday';
 
 export function isWeekStart(value: string): value is WeekStart {
   return ['saturday', 'sunday', 'monday'].includes(value);
-}
-
-declare global {
-  interface Window {
-    grafanaBootData?: BootData;
-  }
 }
 
 /**

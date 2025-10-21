@@ -37,7 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-type BuildHandlerChainFuncFromBuilders = func([]APIGroupBuilder) BuildHandlerChainFunc
+type BuildHandlerChainFuncFromBuilders = func([]APIGroupBuilder, prometheus.Registerer) BuildHandlerChainFunc
 type BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler
 
 func ProvideDefaultBuildHandlerChainFuncFromBuilders() BuildHandlerChainFuncFromBuilders {
@@ -66,12 +66,13 @@ var PathRewriters = []filters.PathRewriter{
 	},
 }
 
-func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerChainFunc {
+func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		requestHandler, err := GetCustomRoutesHandler(
 			delegateHandler,
 			c.LoopbackClientConfig,
-			builders)
+			builders,
+			reg)
 		if err != nil {
 			panic(fmt.Sprintf("could not build the request handler for specified API builders: %s", err.Error()))
 		}
@@ -102,13 +103,11 @@ func SetupConfig(
 	scheme *runtime.Scheme,
 	serverConfig *genericapiserver.RecommendedConfig,
 	builders []APIGroupBuilder,
-	buildTimestamp int64,
 	buildVersion string,
-	buildCommit string,
-	buildBranch string,
 	buildHandlerChainFuncFromBuilders BuildHandlerChainFuncFromBuilders,
 	gvs []schema.GroupVersion,
 	additionalOpenAPIDefGetters []common.GetOpenAPIDefinitions,
+	reg prometheus.Registerer,
 ) error {
 	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
 	defsGetter := GetOpenAPIDefinitions(builders, additionalOpenAPIDefGetters...)
@@ -232,9 +231,8 @@ func SetupConfig(
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
-	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders)
+	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders, reg)
 
-	serverConfig.EffectiveVersion = getEffectiveVersion(buildTimestamp, buildVersion, buildCommit, buildBranch)
 	// set priority for aggregated discovery
 	for i, b := range builders {
 		gvs := GetGroupVersions(b)
@@ -321,6 +319,7 @@ func InstallAPIs(
 
 			// Force using storage only -- regardless of internal synchronization state
 			if mode == grafanarest.Mode5 {
+				builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode, grafanarest.Mode5)
 				return storage, nil
 			}
 

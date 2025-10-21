@@ -3,8 +3,6 @@ package expr
 import (
 	"errors"
 	"fmt"
-	"sort"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
@@ -77,6 +75,25 @@ func MakeDependencyError(refID, depRefID string) error {
 	return DependencyError.Build(data)
 }
 
+var parsErrStr = "failed to parse expression [{{ .Public.refId }}]: {{.Public.error}}"
+
+var ParseError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.parseError").MustTemplate(
+	parsErrStr,
+	errutil.WithPublic(parsErrStr))
+
+func MakeParseError(refID string, err error) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId": refID,
+			"error": err.Error(),
+		},
+		Error: err,
+	}
+
+	return ParseError.Build(data)
+}
+
 var unexpectedNodeTypeErrString = "expected executable node type but got node type [{{ .Public.nodeType }} for refid [{{ .Public.refId}}]"
 
 var UnexpectedNodeTypeError = errutil.NewBase(
@@ -94,32 +111,4 @@ func makeUnexpectedNodeTypeError(refID, nodeType string) error {
 	}
 
 	return UnexpectedNodeTypeError.Build(data)
-}
-
-var DuplicateStringColumnError = errutil.NewBase(
-	errutil.StatusBadRequest, "sse.duplicateStringColumns").MustTemplate(
-	"your SQL query returned {{ .Public.count }} rows with duplicate values across the string columns, which is not allowed for alerting. Examples: ({{ .Public.examples }}). Hint: use GROUP BY or aggregation (e.g. MAX(), AVG()) to return one row per unique combination.",
-	errutil.WithPublic("SQL query returned duplicate combinations of string column values. Use GROUP BY or aggregation to return one row per combination."),
-)
-
-func makeDuplicateStringColumnError(examples []string) error {
-	const limit = 5
-	sort.Strings(examples)
-	exampleStr := strings.Join(truncateExamples(examples, limit), ", ")
-
-	return DuplicateStringColumnError.Build(errutil.TemplateData{
-		Public: map[string]any{
-			"examples": exampleStr,
-			"count":    len(examples),
-		},
-	})
-}
-
-func truncateExamples(examples []string, limit int) []string {
-	if len(examples) <= limit {
-		return examples
-	}
-	truncated := examples[:limit]
-	truncated = append(truncated, fmt.Sprintf("... and %d more", len(examples)-limit))
-	return truncated
 }

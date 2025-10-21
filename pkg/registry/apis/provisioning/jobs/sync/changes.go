@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type ResourceFileChange struct {
@@ -118,6 +118,11 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 
 			_, ok := lookup[safeSegment]
 			if ok {
+				continue
+			}
+
+			// Ignore file change for `.keep` folders
+			if strings.HasSuffix(file.Path, ".keep") {
 				continue
 			}
 

@@ -4,12 +4,17 @@
 
 package v0alpha1
 
+import (
+	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+)
+
 // HealthStatusApplyConfiguration represents a declarative configuration of the HealthStatus type for use
 // with apply.
 type HealthStatusApplyConfiguration struct {
-	Healthy *bool    `json:"healthy,omitempty"`
-	Checked *int64   `json:"checked,omitempty"`
-	Message []string `json:"message,omitempty"`
+	Healthy *bool                                   `json:"healthy,omitempty"`
+	Error   *provisioningv0alpha1.HealthFailureType `json:"error,omitempty"`
+	Checked *int64                                  `json:"checked,omitempty"`
+	Message []string                                `json:"message,omitempty"`
 }
 
 // HealthStatusApplyConfiguration constructs a declarative configuration of the HealthStatus type for use with
@@ -23,6 +28,14 @@ func HealthStatus() *HealthStatusApplyConfiguration {
 // If called multiple times, the Healthy field is set to the value of the last call.
 func (b *HealthStatusApplyConfiguration) WithHealthy(value bool) *HealthStatusApplyConfiguration {
 	b.Healthy = &value
+	return b
+}
+
+// WithError sets the Error field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Error field is set to the value of the last call.
+func (b *HealthStatusApplyConfiguration) WithError(value provisioningv0alpha1.HealthFailureType) *HealthStatusApplyConfiguration {
+	b.Error = &value
 	return b
 }
 

@@ -119,7 +119,7 @@ export function OperationEditor({
                 fill="text"
                 icon="times"
                 variant="secondary"
-                title={t('grafana-prometheus.querybuilder.operation-editor.title-remove', 'Remove {{name}}', {
+                aria-label={t('grafana-prometheus.querybuilder.operation-editor.title-remove', 'Remove {{name}}', {
                   name: paramDef.name,
                 })}
                 onClick={() => onRemoveRestParam(paramIndex)}

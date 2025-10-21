@@ -23,21 +23,22 @@ const defaultEvaluationInterval = 7 * 24 * time.Hour // 7 days
 const defaultMaxHistory = 10
 
 var (
-	waitInterval   = 5 * time.Second
-	waitMaxRetries = 3
+	waitInterval                = 5 * time.Second
+	waitMaxRetries              = 3
+	evalIntervalRandomVariation = 1 * time.Hour
 )
 
 // Runner is a "runnable" app used to be able to expose and API endpoint
 // with the existing checks types. This does not need to be a CRUD resource, but it is
 // the only way existing at the moment to expose the check types.
 type Runner struct {
-	checkRegistry      checkregistry.CheckService
-	client             resource.Client
-	typesClient        resource.Client
-	evaluationInterval time.Duration
-	maxHistory         int
-	namespace          string
-	log                logging.Logger
+	checkRegistry       checkregistry.CheckService
+	checksClient        resource.Client
+	typesClient         resource.Client
+	defaultEvalInterval time.Duration
+	maxHistory          int
+	namespace           string
+	log                 logging.Logger
 }
 
 // NewRunner creates a new Runner.
@@ -73,13 +74,13 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 	}
 
 	return &Runner{
-		checkRegistry:      checkRegistry,
-		client:             client,
-		typesClient:        typesClient,
-		evaluationInterval: evalInterval,
-		maxHistory:         maxHistory,
-		namespace:          namespace,
-		log:                log.With("runner", "advisor.checkscheduler"),
+		checkRegistry:       checkRegistry,
+		checksClient:        client,
+		typesClient:         typesClient,
+		defaultEvalInterval: evalInterval,
+		maxHistory:          maxHistory,
+		namespace:           namespace,
+		log:                 log.With("runner", "advisor.checkscheduler"),
 	}, nil
 }
 
@@ -91,47 +92,47 @@ func (r *Runner) Run(ctx context.Context) error {
 	lastCreated, err := r.checkLastCreated(ctxWithoutCancel, logger)
 	if err != nil {
 		logger.Error("Error getting last check creation time", "error", err)
-		// Wait for interval to create the next scheduled check
-		lastCreated = time.Now()
-	} else {
-		// do an initial creation if necessary
-		if lastCreated.IsZero() {
-			err = r.createChecks(ctxWithoutCancel, logger)
-			if err != nil {
-				logger.Error("Error creating new check reports", "error", err)
-			} else {
-				lastCreated = time.Now()
-			}
-		} else {
-			// Run an initial cleanup to remove old checks
-			err = r.cleanupChecks(ctxWithoutCancel, logger)
-			if err != nil {
-				logger.Error("Error cleaning up old check reports", "error", err)
-			}
+		return err
+	}
+	// If there are checks already created, run an initial cleanup to remove old checks
+	if !lastCreated.IsZero() {
+		err = r.cleanupChecks(ctxWithoutCancel, logger)
+		if err != nil {
+			logger.Error("Error cleaning up old check reports", "error", err)
+			return err
 		}
 	}
 
-	nextSendInterval := getNextSendInterval(lastCreated, r.evaluationInterval)
-	ticker := time.NewTicker(nextSendInterval)
+	nextEvalTime := r.getNextEvalTime(r.defaultEvalInterval, lastCreated)
+	ticker := time.NewTicker(nextEvalTime)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			err = r.createChecks(ctxWithoutCancel, logger)
+			lastCreated, err := r.checkLastCreated(ctxWithoutCancel, logger)
 			if err != nil {
-				logger.Error("Error creating new check reports", "error", err)
+				logger.Error("Error getting last check creation time", "error", err)
+				return err
 			}
 
-			err = r.cleanupChecks(ctxWithoutCancel, logger)
-			if err != nil {
-				logger.Error("Error cleaning up old check reports", "error", err)
+			// If there are checks already created, then we can automatically create more
+			if !lastCreated.IsZero() {
+				err = r.createChecks(ctxWithoutCancel, logger)
+				if err != nil {
+					logger.Error("Error creating new check reports", "error", err)
+				}
+
+				// Clean up old checks to avoid going over the limit
+				err = r.cleanupChecks(ctxWithoutCancel, logger)
+				if err != nil {
+					logger.Error("Error cleaning up old check reports", "error", err)
+				}
 			}
 
-			if nextSendInterval != r.evaluationInterval {
-				nextSendInterval = r.evaluationInterval
-			}
-			ticker.Reset(nextSendInterval)
+			// Reset the ticker to the next send interval
+			nextEvalTime = r.getNextEvalTime(r.defaultEvalInterval, lastCreated)
+			ticker.Reset(nextEvalTime)
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -139,7 +140,9 @@ func (r *Runner) Run(ctx context.Context) error {
 }
 
 func (r *Runner) listChecks(ctx context.Context, logger logging.Logger) ([]resource.Object, error) {
-	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{})
+	list, err := r.checksClient.List(ctx, r.namespace, resource.ListOptions{
+		Limit: 1000, // Avoid pagination for normal uses cases, which is a costly operation
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +150,7 @@ func (r *Runner) listChecks(ctx context.Context, logger logging.Logger) ([]resou
 	checks := list.GetItems()
 	for list.GetContinue() != "" {
 		logger.Debug("List has continue token, listing next page", "continue", list.GetContinue())
-		list, err = r.client.List(ctx, r.namespace, resource.ListOptions{Continue: list.GetContinue()})
+		list, err = r.checksClient.List(ctx, r.namespace, resource.ListOptions{Continue: list.GetContinue(), Limit: 1000})
 		if err != nil {
 			return nil, err
 		}
@@ -175,7 +178,7 @@ func (r *Runner) checkLastCreated(ctx context.Context, log logging.Logger) (time
 		// If the check is unprocessed, set it to error
 		if checks.GetStatusAnnotation(item) == "" {
 			log.Info("Check is unprocessed, marking as error", "check", item.GetStaticMetadata().Identifier())
-			err := checks.SetStatusAnnotation(ctx, r.client, item, checks.StatusAnnotationError)
+			err := checks.SetStatusAnnotation(ctx, r.checksClient, item, checks.StatusAnnotationError)
 			if err != nil {
 				log.Error("Error setting check status to error", "error", err)
 			}
@@ -223,7 +226,7 @@ func (r *Runner) createChecks(ctx context.Context, logger logging.Logger) error 
 			Spec: advisorv0alpha1.CheckSpec{},
 		}
 		id := obj.GetStaticMetadata().Identifier()
-		_, err := r.client.Create(ctx, id, obj, resource.CreateOptions{})
+		_, err := r.checksClient.Create(ctx, id, obj, resource.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("error creating check: %w", err)
 		}
@@ -266,7 +269,7 @@ func (r *Runner) cleanupChecks(ctx context.Context, logger logging.Logger) error
 			for i := 0; i < len(checks)-r.maxHistory; i++ {
 				check := checks[i]
 				id := check.GetStaticMetadata().Identifier()
-				err := r.client.Delete(ctx, id, resource.DeleteOptions{})
+				err := r.checksClient.Delete(ctx, id, resource.DeleteOptions{})
 				if err != nil {
 					return fmt.Errorf("error deleting check: %w", err)
 				}
@@ -291,15 +294,25 @@ func getEvaluationInterval(pluginConfig map[string]string) (time.Duration, error
 	return evaluationInterval, nil
 }
 
-func getNextSendInterval(lastCreated time.Time, evaluationInterval time.Duration) time.Duration {
-	nextSendInterval := time.Until(lastCreated.Add(evaluationInterval))
-	// Add random variation of one hour
-	randomVariation := time.Duration(rand.Int63n(time.Hour.Nanoseconds()))
-	nextSendInterval += randomVariation
-	if nextSendInterval < time.Minute {
-		nextSendInterval = 1 * time.Minute
+func (r *Runner) getNextEvalTime(defaultEvaluationInterval time.Duration, lastCreated time.Time) time.Duration {
+	nextEvalTime := defaultEvaluationInterval
+
+	baseTime := lastCreated
+	if lastCreated.IsZero() {
+		baseTime = time.Now()
 	}
-	return nextSendInterval
+
+	// Calculate the next evaluation time and add random variation
+	nextEvalTime = time.Until(baseTime.Add(nextEvalTime))
+	randomVariation := time.Duration(rand.Int63n(evalIntervalRandomVariation.Nanoseconds()))
+	nextEvalTime += randomVariation
+
+	// Ensure we always return a positive duration to avoid ticker panics
+	if nextEvalTime <= 0 {
+		nextEvalTime = 1 * time.Millisecond
+	}
+
+	return nextEvalTime
 }
 
 func getMaxHistory(pluginConfig map[string]string) (int, error) {

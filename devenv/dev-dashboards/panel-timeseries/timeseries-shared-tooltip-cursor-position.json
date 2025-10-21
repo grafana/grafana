@@ -540,11 +540,7 @@
   ],
   "refresh": false,
   "schemaVersion": 28,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "graph-ng"
-  ],
+  "tags": ["gdev", "panel-tests", "graph-ng"],
   "templating": {
     "list": []
   },

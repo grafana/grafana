@@ -15,6 +15,8 @@ import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types/dashboard';
 
+import { contextSrv } from '../../../core/services/context_srv';
+
 export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise<DashboardDTO> {
   let variablesList = defaultDashboard.templating?.list;
 
@@ -58,7 +60,7 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
       uid: '',
       title: t('dashboard-scene.build-new-dashboard-save-model.data.title.new-dashboard', 'New dashboard'),
       panels: [],
-      timezone: config.bootData.user?.timezone || defaultDashboard.timezone,
+      timezone: contextSrv.user?.timezone || defaultDashboard.timezone,
     },
   };
 
@@ -123,7 +125,7 @@ export async function buildNewDashboardSaveModelV2(
       title: t('dashboard-scene.build-new-dashboard-save-model-v2.data.title.new-dashboard', 'New dashboard'),
       timeSettings: {
         ...defaultTimeSettingsSpec(),
-        timezone: config.bootData.user?.timezone || defaultTimeSettingsSpec().timezone,
+        timezone: contextSrv.user?.timezone || defaultTimeSettingsSpec().timezone,
       },
     },
     access: {

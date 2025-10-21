@@ -20,7 +20,7 @@ import {
 import { cloneQueryResponse, combineResponses } from '@grafana/o11y-ds-frontend';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 
-import { SearchStreamingState } from './dataquery.gen';
+import { MetricsQueryType, SearchStreamingState } from './dataquery.gen';
 import { DEFAULT_SPSS, TempoDatasource } from './datasource';
 import { formatTraceQLResponse } from './resultTransformer';
 import { SearchMetrics, TempoJsonData, TempoQuery } from './types';
@@ -177,7 +177,8 @@ export function doTempoMetricsStreaming(
         if (!curr) {
           return acc;
         }
-        if (!acc) {
+        // If the query is an instant query, we always want the latest result.
+        if (!acc || query.metricsQueryType === MetricsQueryType.Instant) {
           return cloneQueryResponse(curr);
         }
         return mergeFrames(acc, curr);

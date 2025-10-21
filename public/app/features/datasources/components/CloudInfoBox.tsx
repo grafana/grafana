@@ -1,9 +1,7 @@
-import { DataSourceSettings } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/internal';
+import { DataSourceSettings, LocalStorageValueProvider } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, TextLink } from '@grafana/ui';
-import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
-import { config } from 'app/core/config';
+import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
 
 const LOCAL_STORAGE_KEY = 'datasources.settings.cloudInfoBox.isDismissed';
 
@@ -21,7 +19,7 @@ export function CloudInfoBox({ dataSource }: Props) {
   }
 
   // Skip showing this info box in some editions
-  if (config.buildInfo.edition !== GrafanaEdition.OpenSource) {
+  if (!isOpenSourceBuildOrUnlicenced()) {
     return null;
   }
 

@@ -1,24 +1,14 @@
-import { css } from '@emotion/css';
-import {
-  autoUpdate,
-  flip,
-  offset,
-  shift,
-  useClick,
-  useDismiss,
-  useFloating,
-  useInteractions,
-} from '@floating-ui/react';
-import { FocusScope } from '@react-aria/focus';
 import { memo, HTMLAttributes, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
 import { PopoverContent } from '../Tooltip/types';
+
+import { Dropdown } from './Dropdown';
 
 export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   className?: string;
@@ -30,85 +20,42 @@ export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   narrow?: boolean;
   variant?: ToolbarButtonVariant;
   tooltip?: string;
+  root?: HTMLElement;
 }
 
 /**
  * @deprecated Use Combobox or Dropdown instead
  */
 const ButtonSelectComponent = <T,>(props: Props<T>) => {
-  const { className, options, value, onChange, narrow, variant, ...restProps } = props;
-  const styles = useStyles2(getStyles);
+  const { className, options, value, onChange, narrow, variant, root, ...restProps } = props;
   const [isOpen, setIsOpen] = useState(false);
 
-  // the order of middleware is important!
-  const middleware = [
-    offset(0),
-    flip({
-      fallbackAxisSideDirection: 'end',
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
-      boundary: document.body,
-    }),
-    shift(),
-  ];
-
-  const { context, refs, floatingStyles } = useFloating({
-    open: isOpen,
-    placement: 'bottom-end',
-    onOpenChange: setIsOpen,
-    middleware,
-    whileElementsMounted: autoUpdate,
-  });
-
-  const click = useClick(context);
-  const dismiss = useDismiss(context);
-
-  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
-
-  const onChangeInternal = (item: SelectableValue<T>) => {
-    onChange(item);
-    setIsOpen(false);
-  };
+  const renderMenu = () => (
+    <Menu tabIndex={-1} onClose={() => setIsOpen(false)}>
+      <ScrollContainer maxHeight="100vh">
+        {options.map((item) => (
+          <MenuItem
+            key={`${item.value}`}
+            label={item.label ?? String(item.value)}
+            onClick={() => onChange(item)}
+            active={item.value === value?.value}
+            ariaChecked={item.value === value?.value}
+            ariaLabel={item.ariaLabel || item.label}
+            disabled={item.isDisabled}
+            component={item.component}
+            role="menuitemradio"
+          />
+        ))}
+      </ScrollContainer>
+    </Menu>
+  );
 
   return (
-    <div className={styles.wrapper}>
-      <ToolbarButton
-        className={className}
-        isOpen={isOpen}
-        narrow={narrow}
-        variant={variant}
-        ref={refs.setReference}
-        {...getReferenceProps()}
-        {...restProps}
-      >
+    <Dropdown root={root} overlay={renderMenu} placement="bottom-end">
+      <ToolbarButton className={className} isOpen={isOpen} narrow={narrow} variant={variant} {...restProps}>
         {value?.label || (value?.value != null ? String(value?.value) : null)}
       </ToolbarButton>
-      {isOpen && (
-        <div className={styles.menuWrapper} ref={refs.setFloating} {...getFloatingProps()} style={floatingStyles}>
-          <FocusScope contain autoFocus restoreFocus>
-            {/*
-              tabIndex=-1 is needed here to support highlighting text within the menu when using FocusScope
-              see https://github.com/adobe/react-spectrum/issues/1604#issuecomment-781574668
-            */}
-            <Menu tabIndex={-1} onClose={() => setIsOpen(false)}>
-              {options.map((item) => (
-                <MenuItem
-                  key={`${item.value}`}
-                  label={item.label ?? String(item.value)}
-                  onClick={() => onChangeInternal(item)}
-                  active={item.value === value?.value}
-                  ariaChecked={item.value === value?.value}
-                  ariaLabel={item.ariaLabel || item.label}
-                  disabled={item.isDisabled}
-                  component={item.component}
-                  role="menuitemradio"
-                />
-              ))}
-            </Menu>
-          </FocusScope>
-        </div>
-      )}
-    </div>
+    </Dropdown>
   );
 };
 
@@ -118,15 +65,3 @@ ButtonSelectComponent.displayName = 'ButtonSelect';
 // see https://github.com/DefinitelyTyped/DefinitelyTyped/issues/37087#issuecomment-656596623
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 export const ButtonSelect = memo(ButtonSelectComponent) as typeof ButtonSelectComponent;
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    wrapper: css({
-      position: 'relative',
-      display: 'inline-flex',
-    }),
-    menuWrapper: css({
-      zIndex: theme.zIndex.dropdown,
-    }),
-  };
-};

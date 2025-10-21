@@ -1,44 +1,21 @@
 package rest
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
-)
 
-var (
-	_ rest.Storage              = (DualWriter)(nil)
-	_ rest.Scoper               = (DualWriter)(nil)
-	_ rest.TableConvertor       = (DualWriter)(nil)
-	_ rest.CreaterUpdater       = (DualWriter)(nil)
-	_ rest.CollectionDeleter    = (DualWriter)(nil)
-	_ rest.GracefulDeleter      = (DualWriter)(nil)
-	_ rest.SingularNameProvider = (DualWriter)(nil)
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // Function that will create a dual writer
 type DualWriteBuilder func(gr schema.GroupResource, legacy Storage, unified Storage) (Storage, error)
-
-// Storage is a storage implementation that satisfies the same interfaces as genericregistry.Store.
-type Storage interface {
-	rest.Storage
-	rest.Scoper
-	rest.TableConvertor
-	rest.SingularNameProvider
-	rest.Getter
-	rest.Lister
-	rest.CreaterUpdater
-	rest.GracefulDeleter
-	rest.CollectionDeleter
-}
 
 // DualWriter is a storage implementation that writes first to LegacyStorage and then to Storage.
 // If writing to LegacyStorage fails, the write to Storage is skipped and the error is returned.
@@ -186,27 +163,29 @@ func SetDualWritingMode(
 	return cfg.Mode, nil
 }
 
-var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructuredConverter)
-
 // Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
-func Compare(storageObj, legacyObj runtime.Object) bool {
-	if storageObj == nil || legacyObj == nil {
-		return storageObj == nil && legacyObj == nil
+func Compare(objA, objB runtime.Object) bool {
+	if objA == nil || objB == nil {
+		return objA == nil && objB == nil
 	}
-	return bytes.Equal(extractSpec(storageObj), extractSpec(legacyObj))
-}
-
-func extractSpec(obj runtime.Object) []byte {
-	cpy := obj.DeepCopyObject()
-	unstObj, err := defaultConverter.ToUnstructured(cpy)
+	if objA == objB {
+		return true
+	}
+	mA, err := utils.MetaAccessor(objA)
 	if err != nil {
-		return nil
+		return false
 	}
-
-	// we just want to compare the spec field
-	jsonObj, err := json.Marshal(unstObj["spec"])
+	mB, err := utils.MetaAccessor(objB)
 	if err != nil {
-		return nil
+		return false
 	}
-	return jsonObj
+	sA, err := mA.GetSpec()
+	if err != nil {
+		return false
+	}
+	sB, err := mB.GetSpec()
+	if err != nil {
+		return false
+	}
+	return apiequality.Semantic.DeepEqual(sA, sB)
 }

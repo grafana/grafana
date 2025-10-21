@@ -25,7 +25,7 @@ func RegisterApp(
 	appCfg := &runner.AppBuilderConfig{
 		OpenAPIDefGetter:         investigationv0alpha1.GetOpenAPIDefinitions,
 		ManagedKinds:             investigationapp.GetKinds(),
-		Authorizer:               investigationapp.GetAuthorizer(),
+		Authorizer:               GetAuthorizer(),
 		AllowedV0Alpha1Resources: []string{builder.AllResourcesAllowed},
 	}
 	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, investigationapp.New)

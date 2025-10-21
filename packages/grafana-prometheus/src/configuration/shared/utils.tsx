@@ -10,7 +10,7 @@ import { FieldValidationMessage, TextLink } from '@grafana/ui';
  * @returns
  */
 export function docsTip(url?: string) {
-  const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/';
+  const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/configure/';
 
   return (
     <TextLink href={url ? url : docsUrl} external>

@@ -56,8 +56,8 @@
       "query-header": {
         "content-invalid-query": "Kueri Anda tidak valid. Periksa di bawah ini untuk detailnya. <1></1>Namun, Anda masih dapat menjalankan kueri ini.",
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Pembangun",
+          "label-code": "Kode"
         },
         "label-dataset": "Kumpulan data",
         "label-filter": "Filter",

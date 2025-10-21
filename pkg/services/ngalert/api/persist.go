@@ -16,14 +16,14 @@ type RuleStore interface {
 	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.Folder, error)
 	GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error)
 	GetNamespaceByTitle(ctx context.Context, fullpath string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error)
-	GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error)
+	GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error)
 	// GetNamespaceChildren returns all children (first level) of the namespace with the given id.
 	GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.FolderReference, error)
 
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) ([]*ngmodels.AlertRule, error)
 	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
-	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesByGroupQuery) (ngmodels.RulesGroup, string, error)
+	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error)
 	ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmodels.AlertRule, error)
 
 	// InsertAlertRules will insert all alert rules passed into the function

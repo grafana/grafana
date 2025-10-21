@@ -31,8 +31,11 @@ func TestShortURLAPIEndpoint(t *testing.T) {
 			Path:  cmd.Path,
 		}
 		service := &fakeShortURLService{
-			createShortURLFunc: func(ctx context.Context, user *user.SignedInUser, path string) (*shorturls.ShortUrl, error) {
+			createShortURLFunc: func(ctx context.Context, user *user.SignedInUser, cmd *dtos.CreateShortURLCmd) (*shorturls.ShortUrl, error) {
 				return createResp, nil
+			},
+			createConvertShortURLToDTO: func(shortURL *shorturls.ShortUrl, appURL string) *dtos.ShortURL {
+				return &dtos.ShortURL{UID: createResp.Uid, URL: "http://localhost:3000/goto/N1u6L4eGz?orgId=1"}
 			},
 		}
 
@@ -44,7 +47,7 @@ func TestShortURLAPIEndpoint(t *testing.T) {
 				err := json.NewDecoder(sc.resp.Body).Decode(&shortUrl)
 				require.NoError(t, err)
 				require.Equal(t, 200, sc.resp.Code)
-				require.Equal(t, fmt.Sprintf("/goto/%s?orgId=%d", createResp.Uid, createResp.OrgId), shortUrl.URL)
+				require.Equal(t, fmt.Sprintf("http://localhost:3000/goto/%s?orgId=%d", createResp.Uid, createResp.OrgId), shortUrl.URL)
 			})
 	})
 }
@@ -78,16 +81,21 @@ func createShortURLScenario(t *testing.T, desc string, url string, routePattern 
 }
 
 type fakeShortURLService struct {
-	createShortURLFunc func(ctx context.Context, user *user.SignedInUser, path string) (*shorturls.ShortUrl, error)
+	createShortURLFunc         func(ctx context.Context, user *user.SignedInUser, cmd *dtos.CreateShortURLCmd) (*shorturls.ShortUrl, error)
+	createConvertShortURLToDTO func(shortURL *shorturls.ShortUrl, appURL string) *dtos.ShortURL
+}
+
+func (s *fakeShortURLService) List(ctx context.Context, orgID int64) ([]*shorturls.ShortUrl, error) {
+	return nil, nil
 }
 
 func (s *fakeShortURLService) GetShortURLByUID(ctx context.Context, user *user.SignedInUser, uid string) (*shorturls.ShortUrl, error) {
 	return nil, nil
 }
 
-func (s *fakeShortURLService) CreateShortURL(ctx context.Context, user *user.SignedInUser, path string) (*shorturls.ShortUrl, error) {
+func (s *fakeShortURLService) CreateShortURL(ctx context.Context, user *user.SignedInUser, cmd *dtos.CreateShortURLCmd) (*shorturls.ShortUrl, error) {
 	if s.createShortURLFunc != nil {
-		return s.createShortURLFunc(ctx, user, path)
+		return s.createShortURLFunc(ctx, user, cmd)
 	}
 
 	return nil, nil
@@ -98,5 +106,12 @@ func (s *fakeShortURLService) UpdateLastSeenAt(ctx context.Context, shortURL *sh
 }
 
 func (s *fakeShortURLService) DeleteStaleShortURLs(ctx context.Context, cmd *shorturls.DeleteShortUrlCommand) error {
+	return nil
+}
+
+func (s *fakeShortURLService) ConvertShortURLToDTO(shortURL *shorturls.ShortUrl, appURL string) *dtos.ShortURL {
+	if s.createConvertShortURLToDTO != nil {
+		return s.createConvertShortURLToDTO(shortURL, appURL)
+	}
 	return nil
 }

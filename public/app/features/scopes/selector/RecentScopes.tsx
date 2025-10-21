@@ -1,13 +1,15 @@
 import { css } from '@emotion/css';
 import { useId, useState } from 'react';
 
-import { GrafanaTheme2, Scope } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2, Stack, Text, Icon, Box } from '@grafana/ui';
 
+import { RecentScope } from './types';
+
 interface RecentScopesProps {
-  recentScopes: Scope[][];
-  onSelect: (scopeIds: string[]) => void;
+  recentScopes: RecentScope[][];
+  onSelect: (scopeIds: string[], parentNodeId?: string) => void;
 }
 
 export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
@@ -37,12 +39,22 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
             recentScopes.map((recentScopeSet) => (
               <button
                 className={styles.recentScopeButton}
-                key={recentScopeSet.map((s) => s.metadata.name).join(',')}
+                key={
+                  recentScopeSet.map((s) => s.metadata.name).join(',') + recentScopeSet[0]?.parentNode?.metadata?.name
+                }
                 onClick={() => {
-                  onSelect(recentScopeSet.map((s) => s.metadata.name));
+                  onSelect(
+                    recentScopeSet.map((s) => s.metadata.name),
+                    recentScopeSet[0]?.parentNode?.metadata?.name
+                  );
                 }}
               >
-                <Text>{recentScopeSet.map((s) => s.spec.title).join(', ')}</Text>
+                <Text truncate>{recentScopeSet.map((s) => s.spec.title).join(', ')}</Text>
+                {recentScopeSet[0]?.parentNode?.spec.title && (
+                  <Text truncate variant="body" color="secondary">
+                    {recentScopeSet[0]?.parentNode?.spec.title}
+                  </Text>
+                )}
               </button>
             ))}
         </Stack>
@@ -58,9 +70,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 'none',
     padding: 0,
     cursor: 'pointer',
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-    whiteSpace: 'nowrap',
+    display: 'flex',
+    gap: theme.spacing(1),
+    alignItems: 'center',
   }),
   expandButton: css({
     display: 'flex',

@@ -1,4 +1,4 @@
-import { config, getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { NestedFolderDTO } from 'app/features/search/service/types';
@@ -17,10 +17,6 @@ export async function listFolders(
   page = 1,
   pageSize = PAGE_SIZE
 ): Promise<DashboardViewItem[]> {
-  if (parentUID && !config.featureToggles.nestedFolders) {
-    return [];
-  }
-
   const backendSrv = getBackendSrv();
 
   // TODO: what to do here for unified search?
@@ -55,6 +51,7 @@ export async function listDashboards(parentUID?: string, page = 1, pageSize = PA
     location: parentUID || 'general',
     from: (page - 1) * pageSize, // our pages are 1-indexed, so we need to -1 to convert that to correct value to skip
     limit: pageSize,
+    offset: (page - 1) * pageSize,
   });
 
   return dashboardsResults.view.map((item) => {

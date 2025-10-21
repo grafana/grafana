@@ -139,9 +139,15 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
                     options={orderOptions}
                     onChange={(e) => e.value && handleOrderByChange(index, 'order', e.value)}
                   />
-                  <Button variant="secondary" icon="times" onClick={() => onDeleteOrderBy(index)} />
+                  <Button
+                    aria-label={t('components.order-by-section.aria-label-remove-order-by', 'Remove order by')}
+                    variant="secondary"
+                    icon="times"
+                    onClick={() => onDeleteOrderBy(index)}
+                  />
                   {index === orderBy.length - 1 ? (
                     <Button
+                      aria-label={t('components.order-by-section.aria-label-add-order-by', 'Add order by')}
                       variant="secondary"
                       onClick={() => handleOrderByChange(-1, 'column', '')}
                       icon="plus"
@@ -154,7 +160,12 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
               ))
             ) : (
               <InputGroup>
-                <Button variant="secondary" onClick={() => handleOrderByChange(-1, 'column', '')} icon="plus" />
+                <Button
+                  aria-label={t('components.order-by-section.aria-label-add-order-by', 'Add order by')}
+                  variant="secondary"
+                  onClick={() => handleOrderByChange(-1, 'column', '')}
+                  icon="plus"
+                />
               </InputGroup>
             )}
           </>

@@ -13,10 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -95,6 +97,7 @@ func (d *dashboardStore) GetDashboardsByLibraryPanelUID(ctx context.Context, lib
 	return connectedDashboards, err
 }
 
+// nolint:gocyclo
 func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dash *dashboards.Dashboard, overwrite bool) (bool, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.ValidateDashboardBeforesave")
 	defer span.End()
@@ -106,7 +109,7 @@ func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dash *
 
 		// we don't save FolderID in kubernetes object when saving through k8s
 		// this block guarantees we save dashboards with folder_id and folder_uid in those cases
-		if !dash.IsFolder && dash.FolderUID != "" && dash.FolderID == 0 { // nolint:staticcheck
+		if !dash.IsFolder && dash.FolderUID != "" && dash.FolderID == 0 && dash.FolderUID != folder.GeneralFolderUID { // nolint:staticcheck
 			var existing dashboards.Dashboard
 			folderIdFound, err := sess.Where("uid=? AND org_id=?", dash.FolderUID, dash.OrgID).Get(&existing)
 			if err != nil {
@@ -588,14 +591,20 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 			return err
 		}
 
-		// remove all access control permission with folder scope
-		err := d.deleteResourcePermissions(sess, dashboard.OrgID, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.UID))
-		if err != nil {
-			return err
+		// While migrating to unified storage, we might execute commands in both stores, so we delete the permissions
+		// only when the command is executed on both stores, thus we can skip it here.
+		if cmd.RemovePermissions {
+			if err := d.deleteResourcePermissions(sess, dashboard.OrgID, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.UID)); err != nil {
+				return err
+			}
 		}
 	} else {
-		if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dashboard.UID)); err != nil {
-			return err
+		// While migrating to unified storage, we might execute commands in both stores, so we delete the permissions
+		// only when the command is executed on both stores, thus we can skip it here.
+		if cmd.RemovePermissions {
+			if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dashboard.UID)); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -831,10 +840,9 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	if len(query.FolderUIDs) > 0 {
 		filters = append(filters, searchstore.FolderUIDFilter{
-			Dialect:              d.store.GetDialect(),
-			OrgID:                orgID,
-			UIDs:                 query.FolderUIDs,
-			NestedFoldersEnabled: d.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
+			Dialect: d.store.GetDialect(),
+			OrgID:   orgID,
+			UIDs:    query.FolderUIDs,
 		})
 	}
 
@@ -899,6 +907,9 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		}
 		if item.Term != "" {
 			item.Tags = append(item.Tags, item.Term)
+		}
+		if item.FolderTitle != "" {
+			item.FolderSlug = slugify.Slugify(item.FolderTitle)
 		}
 		seen[item.ID] = len(uniqueRes)
 		uniqueRes = append(uniqueRes, item)

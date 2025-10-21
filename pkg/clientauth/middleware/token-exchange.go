@@ -84,6 +84,7 @@ func (m tokenExchangeMiddlewareImpl) RoundTrip(req *http.Request) (res *http.Res
 	})
 
 	if err != nil {
+		log.Error("token signing failed", "error", err)
 		return nil, fmt.Errorf("failed to exchange token: %w", err)
 	}
 	req.Header.Set("X-Access-Token", "Bearer "+token.Token)

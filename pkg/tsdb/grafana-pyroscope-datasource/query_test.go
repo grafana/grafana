@@ -5,10 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
-	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/annotation"
 )
 
 // This is where the tests for the datasource backend live.
@@ -130,7 +133,7 @@ func Test_profileToDataFrame(t *testing.T) {
 		},
 		Units: "short",
 	}
-	frame := responseToDataFrames(profile)
+	frame := responseToDataFrames(profile, 15.0, "goroutine:goroutine:count:goroutine:count")
 	require.Equal(t, 4, len(frame.Fields))
 	require.Equal(t, data.NewField("level", nil, []int64{0, 1, 1}), frame.Fields[0])
 	require.Equal(t, data.NewField("value", nil, []int64{20, 10, 5}).SetConfig(&data.FieldConfig{Unit: "short"}), frame.Fields[1])
@@ -202,7 +205,7 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 			},
 		}
 
-		frame := treeToNestedSetDataFrame(tree, "short")
+		frame := treeToNestedSetDataFrame(tree, "short", 15.0, "goroutine:goroutine:count:goroutine:count")
 
 		labelConfig := &data.FieldConfig{
 			TypeConfig: &data.FieldTypeConfig{
@@ -221,9 +224,47 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 	})
 
 	t.Run("nil profile tree", func(t *testing.T) {
-		frame := treeToNestedSetDataFrame(nil, "short")
+		frame := treeToNestedSetDataFrame(nil, "short", 15.0, "goroutine:goroutine:count:goroutine:count")
 		require.Equal(t, 4, len(frame.Fields))
 		require.Equal(t, 0, frame.Fields[0].Len())
+	})
+
+	t.Run("no rateCalculated metadata for flamegraph", func(t *testing.T) {
+		tree := &ProfileTree{
+			Value: 100, Level: 0, Self: 1, Name: "root",
+		}
+		frame := treeToNestedSetDataFrame(tree, "short", 15.0, "process_cpu:cpu:nanoseconds:cpu:nanoseconds")
+		require.NotNil(t, frame.Meta)
+		require.Nil(t, frame.Meta.Custom)
+	})
+
+	t.Run("no rateCalculated metadata for instant profile", func(t *testing.T) {
+		tree := &ProfileTree{
+			Value: 100, Level: 0, Self: 1, Name: "root",
+		}
+		frame := treeToNestedSetDataFrame(tree, "short", 15.0, "goroutine:goroutine:count:goroutine:count")
+		require.NotNil(t, frame.Meta)
+		require.Nil(t, frame.Meta.Custom)
+	})
+
+	t.Run("CPU time keeps original values and units for flamegraph", func(t *testing.T) {
+		tree := &ProfileTree{
+			Value: 3000000000, Level: 0, Self: 1500000000, Name: "root", // 3s total, 1.5s self in nanoseconds
+		}
+		// Test CPU profile flamegraph - should keep original cumulative values and units
+		frame := treeToNestedSetDataFrame(tree, "ns", 15.0, "process_cpu:cpu:nanoseconds:cpu:nanoseconds")
+
+		// Check unit remains as nanoseconds
+		require.Equal(t, "ns", frame.Fields[1].Config.Unit)
+		require.Equal(t, "ns", frame.Fields[2].Config.Unit)
+
+		// Check values are NOT rate calculated - flamegraphs show cumulative totals
+		require.Equal(t, int64(3000000000), frame.Fields[1].At(0))
+		require.Equal(t, int64(1500000000), frame.Fields[2].At(0))
+
+		// Check metadata shows rate was NOT calculated for flamegraphs
+		require.NotNil(t, frame.Meta)
+		require.Nil(t, frame.Meta.Custom)
 	})
 }
 
@@ -253,7 +294,7 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 			Label: "samples",
 		}
 
-		frames, err := seriesToDataFrames(series, true)
+		frames, err := seriesToDataFrames(series, true, 15.0, "goroutine:goroutine:count:goroutine:count")
 		require.NoError(t, err)
 		require.Equal(t, 1, len(frames))
 		require.Equal(t, 2, len(frames[0].Fields))
@@ -270,7 +311,7 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 							Timestamp: int64(1609455600000),
 							Value:     30,
 							Annotations: []*typesv1.ProfileAnnotation{
-								{Key: string(profileAnnotationKeyThrottled), Value: rawAnnotation},
+								{Key: string(annotation.ProfileAnnotationKeyThrottled), Value: rawAnnotation},
 							},
 						},
 					},
@@ -278,7 +319,7 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 			},
 		}
 
-		frames, err := seriesToDataFrames(series, false)
+		frames, err := seriesToDataFrames(series, false, 15.0, "goroutine:goroutine:count:goroutine:count")
 		require.NoError(t, err)
 		require.Equal(t, 1, len(frames))
 	})
@@ -294,7 +335,7 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 							Timestamp: int64(1609455600000),
 							Value:     30,
 							Annotations: []*typesv1.ProfileAnnotation{
-								{Key: string(profileAnnotationKeyThrottled), Value: rawAnnotation},
+								{Key: string(annotation.ProfileAnnotationKeyThrottled), Value: rawAnnotation},
 							},
 						},
 					},
@@ -302,7 +343,7 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 			},
 		}
 
-		frames, err := seriesToDataFrames(series, true)
+		frames, err := seriesToDataFrames(series, true, 15.0, "goroutine:goroutine:count:goroutine:count")
 		require.NoError(t, err)
 		require.Equal(t, 2, len(frames))
 
@@ -348,7 +389,7 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 			},
 		}
 
-		frames, err := seriesToDataFrames(series, true)
+		frames, err := seriesToDataFrames(series, true, 15.0, "goroutine:goroutine:count:goroutine:count")
 		require.NoError(t, err)
 		require.Equal(t, 2, len(frames))
 
@@ -375,7 +416,7 @@ func Test_seriesToDataFrame(t *testing.T) {
 			Units: "short",
 			Label: "samples",
 		}
-		frames, err := seriesToDataFrames(series, true)
+		frames, err := seriesToDataFrames(series, true, 15.0, "goroutine:goroutine:count:goroutine:count")
 		require.NoError(t, err)
 		require.Equal(t, 2, len(frames[0].Fields))
 		require.Equal(t, data.NewField("time", nil, []time.Time{time.UnixMilli(1000), time.UnixMilli(2000)}), frames[0].Fields[0])
@@ -390,7 +431,7 @@ func Test_seriesToDataFrame(t *testing.T) {
 			Label: "samples",
 		}
 
-		frames, err = seriesToDataFrames(series, true)
+		frames, err = seriesToDataFrames(series, true, 15.0, "goroutine:goroutine:count:goroutine:count")
 		require.NoError(t, err)
 		require.Equal(t, data.NewField("samples", map[string]string{"app": "bar"}, []float64{30, 10}).SetConfig(&data.FieldConfig{Unit: "short"}), frames[0].Fields[1])
 	})
@@ -404,13 +445,106 @@ func Test_seriesToDataFrame(t *testing.T) {
 			Units: "short",
 			Label: "samples",
 		}
-		frames, err := seriesToDataFrames(resp, true)
+		frames, err := seriesToDataFrames(resp, true, 15.0, "goroutine:goroutine:count:goroutine:count")
 		require.NoError(t, err)
 		require.Equal(t, 2, len(frames))
 		require.Equal(t, 2, len(frames[0].Fields))
 		require.Equal(t, 2, len(frames[1].Fields))
 		require.Equal(t, data.NewField("samples", map[string]string{"foo": "bar"}, []float64{30, 10}).SetConfig(&data.FieldConfig{Unit: "short"}), frames[0].Fields[1])
 		require.Equal(t, data.NewField("samples", map[string]string{"foo": "baz"}, []float64{30, 10}).SetConfig(&data.FieldConfig{Unit: "short"}), frames[1].Fields[1])
+	})
+
+	t.Run("rateCalculated metadata for cumulative profile", func(t *testing.T) {
+		series := &SeriesResponse{
+			Series: []*Series{
+				{Labels: []*LabelPair{}, Points: []*Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
+			},
+			Units: "ns",
+			Label: "cpu",
+		}
+		frames, err := seriesToDataFrames(series, false, 15.0, "process_cpu:cpu:nanoseconds:cpu:nanoseconds")
+		require.NoError(t, err)
+		require.Equal(t, 1, len(frames))
+		require.NotNil(t, frames[0].Meta)
+		require.NotNil(t, frames[0].Meta.Custom)
+		custom := frames[0].Meta.Custom.(map[string]interface{})
+		require.Equal(t, true, custom["rateCalculated"])
+	})
+
+	t.Run("no rateCalculated metadata for instant profile", func(t *testing.T) {
+		series := &SeriesResponse{
+			Series: []*Series{
+				{Labels: []*LabelPair{}, Points: []*Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
+			},
+			Units: "short",
+			Label: "goroutines",
+		}
+		// Test instant profile (should not have rateCalculated metadata)
+		frames, err := seriesToDataFrames(series, false, 15.0, "goroutine:goroutine:count:goroutine:count")
+		require.NoError(t, err)
+		require.Equal(t, 1, len(frames))
+		require.NotNil(t, frames[0].Meta)
+		require.Nil(t, frames[0].Meta.Custom)
+	})
+
+	t.Run("CPU time conversion to cores", func(t *testing.T) {
+		series := &SeriesResponse{
+			Series: []*Series{
+				{Labels: []*LabelPair{}, Points: []*Point{{Timestamp: int64(1000), Value: 3000000000}, {Timestamp: int64(2000), Value: 1500000000}}}, // 3s and 1.5s in nanoseconds
+			},
+			Units: "ns",
+			Label: "cpu",
+		}
+		// should convert nanoseconds to cores and set unit to "cores"
+		frames, err := seriesToDataFrames(series, false, 15.0, "process_cpu:cpu:nanoseconds:cpu:nanoseconds")
+		require.NoError(t, err)
+		require.Equal(t, 1, len(frames))
+
+		require.Equal(t, "cores", frames[0].Fields[1].Config.Unit)
+
+		// Check values were converted: 3000000000/15/1e9 = 0.2 cores/sec, 1500000000/15/1e9 = 0.1 cores/sec
+		values := fieldValues[float64](frames[0].Fields[1])
+		require.Equal(t, []float64{0.2, 0.1}, values)
+	})
+
+	t.Run("Memory allocation unit conversion to bytes/sec", func(t *testing.T) {
+		series := &SeriesResponse{
+			Series: []*Series{
+				{Labels: []*LabelPair{}, Points: []*Point{{Timestamp: int64(1000), Value: 150000000}, {Timestamp: int64(2000), Value: 300000000}}}, // 150 MB, 300 MB
+			},
+			Units: "bytes",
+			Label: "memory_alloc",
+		}
+		// should convert bytes to binBps and apply rate calculation
+		frames, err := seriesToDataFrames(series, false, 15.0, "memory:alloc_space:bytes:space:bytes")
+		require.NoError(t, err)
+		require.Equal(t, 1, len(frames))
+
+		require.Equal(t, "binBps", frames[0].Fields[1].Config.Unit)
+
+		// Check values were rate calculated: 150000000/15 = 10000000, 300000000/15 = 20000000
+		values := fieldValues[float64](frames[0].Fields[1])
+		require.Equal(t, []float64{10000000, 20000000}, values)
+	})
+
+	t.Run("Count-based profile unit conversion to ops/sec", func(t *testing.T) {
+		series := &SeriesResponse{
+			Series: []*Series{
+				{Labels: []*LabelPair{}, Points: []*Point{{Timestamp: int64(1000), Value: 1500}, {Timestamp: int64(2000), Value: 3000}}}, // 1500, 3000 contentions
+			},
+			Units: "short",
+			Label: "contentions",
+		}
+		// should convert short to ops and apply rate calculation
+		frames, err := seriesToDataFrames(series, false, 15.0, "mutex:contentions:count:contentions:count")
+		require.NoError(t, err)
+		require.Equal(t, 1, len(frames))
+
+		require.Equal(t, "ops", frames[0].Fields[1].Config.Unit)
+
+		// Check values were rate calculated: 1500/15 = 100, 3000/15 = 200
+		values := fieldValues[float64](frames[0].Fields[1])
+		require.Equal(t, []float64{100, 200}, values)
 	})
 }
 

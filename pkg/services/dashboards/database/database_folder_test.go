@@ -12,31 +12,35 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var testFeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
 
 func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("Testing DB", func(t *testing.T) {
 		var sqlStore db.DB
 		var cfg *setting.Cfg
 		var flder, dashInRoot, childDash *dashboards.Dashboard
 		var currentUser *user.SignedInUser
 		var dashboardStore dashboards.Store
+		var folderStore *folderimpl.FolderStoreImpl
 
 		setup := func() {
 			sqlStore, cfg = db.InitTestDBWithCfg(t)
 			var err error
 			dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 			require.NoError(t, err)
-			flder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
+			folderStore = folderimpl.ProvideStore(sqlStore)
+			require.NoError(t, err)
+			flder = insertTestDashFolder(t, dashboardStore, folderStore, "1 test dash folder", 1, 0, "", "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, "", false, "prod", "webapp")
 			childDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, flder.ID, flder.UID, false, "prod", "webapp")
 			insertTestDashboard(t, dashboardStore, "test dash 45", 1, flder.ID, flder.UID, false, "prod")
@@ -132,8 +136,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				sqlStore, cfg = db.InitTestDBWithCfg(t)
 				var err error
 				require.NoError(t, err)
-				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod")
-				folder2 = insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, "", true, "prod")
+				folder1 = insertTestDashFolder(t, dashboardStore, folderStore, "1 test dash folder", 1, 0, "", "prod")
+				folder2 = insertTestDashFolder(t, dashboardStore, folderStore, "2 test dash folder", 1, 0, "", "prod")
 				dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, "", false, "prod")
 				childDash1 = insertTestDashboard(t, dashboardStore, "child dash 1", 1, folder1.ID, folder1.UID, false, "prod")
 				childDash2 = insertTestDashboard(t, dashboardStore, "child dash 2", 1, folder2.ID, folder2.UID, false, "prod")
@@ -190,8 +194,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 				t.Run("and a dashboard is moved from folder with acl to the folder without an acl", func(t *testing.T) {
 					setup2()
-					moveDashboard(t, dashboardStore, 1, childDash1.Data, folder2.ID, childDash2.FolderUID)
-					currentUser.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashInRoot.UID), dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2.UID)}, dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2.UID)}}}
+					moveDashboard(t, dashboardStore, 1, childDash1.Data, folder2.ID, childDash2.UID)
+					currentUser.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashInRoot.UID), dashboards.ScopeDashboardsProvider.GetResourceScopeUID(folder2.UID), dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2.UID)}, dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2.UID)}}}
 					actest.AddUserPermissionToDB(t, sqlStore, currentUser)
 
 					t.Run("should return folder without acl and its children", func(t *testing.T) {
@@ -202,7 +206,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 						}
 						hits, err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
-						assert.Equal(t, len(hits), 4)
+						assert.Equal(t, 4, len(hits))
 						assert.Equal(t, hits[0].ID, folder2.ID)
 						assert.Equal(t, hits[1].ID, childDash1.ID)
 						assert.Equal(t, hits[2].ID, childDash2.ID)

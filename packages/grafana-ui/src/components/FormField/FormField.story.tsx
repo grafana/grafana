@@ -9,8 +9,6 @@ const meta: Meta<typeof FormField> = {
     controls: {
       exclude: ['inputEl'],
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
   args: {
     inputWidth: 20,

@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/timeinterval"
@@ -49,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -60,9 +61,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationProvisioningApi(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("policies", func(t *testing.T) {
 		t.Run("successful GET returns 200", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
@@ -403,7 +403,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 			})
 
 			t.Run("PUT without MissingSeriesEvalsToResolve clears the field", func(t *testing.T) {
-				oldValue := util.Pointer(5)
+				oldValue := util.Pointer[int64](5)
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				rule := createTestAlertRule("rule", 1)
@@ -420,8 +420,8 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 			})
 
 			t.Run("PUT with MissingSeriesEvalsToResolve updates the value", func(t *testing.T) {
-				oldValue := util.Pointer(5)
-				newValue := util.Pointer(10)
+				oldValue := util.Pointer[int64](5)
+				newValue := util.Pointer[int64](10)
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				rule := createTestAlertRule("rule", 1)
@@ -510,6 +510,63 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 			response := sut.RoutePostAlertRule(&rc, rule)
 
 			require.Equal(t, 403, response.Status())
+		})
+
+		t.Run("with notification settings", func(t *testing.T) {
+			t.Run("POST returns 400 when receiver does not exist", func(t *testing.T) {
+				env := createTestEnv(t, testConfig)
+				env.nsValidator = &fakeRejectingNotificationSettingsValidatorProvider{}
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+				rule.NotificationSettings.Receiver = "non-existent-receiver"
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 400, response.Status())
+				require.Contains(t, string(response.Body()), "receiver non-existent-receiver does not exist")
+			})
+
+			t.Run("PUT returns 400 when receiver does not exist", func(t *testing.T) {
+				env := createTestEnv(t, testConfig)
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+				rule.UID = "test-uid"
+				insertRule(t, sut, rule)
+
+				env.nsValidator = &fakeRejectingNotificationSettingsValidatorProvider{}
+				sut = createProvisioningSrvSutFromEnv(t, &env)
+				rule.NotificationSettings.Receiver = "non-existent-receiver"
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+
+				require.Equal(t, 400, response.Status())
+				require.Contains(t, string(response.Body()), "receiver non-existent-receiver does not exist")
+			})
+
+			t.Run("POST returns 201 when receiver exists", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 201, response.Status())
+			})
+
+			t.Run("PUT returns 200 when receiver exists", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+				rule.UID = "test-uid-2"
+				insertRule(t, sut, rule)
+				rule.Title = "updated rule"
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+
+				require.Equal(t, 200, response.Status())
+			})
 		})
 	})
 
@@ -616,6 +673,28 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				require.NotEmpty(t, response.Body())
 				require.Contains(t, string(response.Body()), "invalid alert rule")
 			})
+
+			t.Run("PUT returns 400 when the alert rule has invalid queries", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				group := definitions.AlertRuleGroup{
+					Title:    "test rule group",
+					Interval: 60,
+					Rules: []definitions.ProvisionedAlertRule{
+						createTestAlertRule("rule", 1),
+					},
+				}
+				// Set an invalid query model that will fail PreSave validation
+				// Invalid JSON should trigger unmarshal error in PreSave
+				group.Rules[0].Data[0].Model = json.RawMessage(`{invalid json`)
+
+				response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "invalid alert rule")
+				require.Contains(t, string(response.Body()), "invalid alert query")
+			})
 		})
 
 		t.Run("have reached the rule quota, PUT returns 403", func(t *testing.T) {
@@ -657,12 +736,12 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				require.Nil(t, updated.Rules[0].MissingSeriesEvalsToResolve)
 
 				// Put the same group with a new value
-				group.Rules[0].MissingSeriesEvalsToResolve = util.Pointer(5)
+				group.Rules[0].MissingSeriesEvalsToResolve = util.Pointer[int64](5)
 				response = sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
 				require.Equal(t, 200, response.Status())
 				updated = deserializeRuleGroup(t, response.Body())
 				require.NotNil(t, updated.Rules[0].MissingSeriesEvalsToResolve)
-				require.Equal(t, 5, *updated.Rules[0].MissingSeriesEvalsToResolve)
+				require.Equal(t, int64(5), *updated.Rules[0].MissingSeriesEvalsToResolve)
 
 				// Reset the value again
 				group.Rules[0].MissingSeriesEvalsToResolve = nil
@@ -1593,9 +1672,8 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 }
 
 func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	createTestEnv := func(t *testing.T, testConfig string) testEnvironment {
 		env := createTestEnv(t, testConfig)
 		env.ac = &recordingAccessControlFake{
@@ -1954,11 +2032,11 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 			t.Run(fmt.Sprintf("exportType=%s", exportType), func(t *testing.T) {
 				for _, redacted := range []bool{true, false} {
 					t.Run(fmt.Sprintf("redacted=%t", redacted), func(t *testing.T) {
-						allIntegrations := make([]models.Integration, 0, len(alertingNotify.AllKnownConfigsForTesting))
-						for integrationType := range alertingNotify.AllKnownConfigsForTesting {
+						allIntegrations := make([]models.Integration, 0, len(notifytest.AllKnownV1ConfigsForTesting))
+						for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
 							integration := models.IntegrationGen(
 								models.IntegrationMuts.WithName(allIntegrationsName),
-								models.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", integrationType)),
+								models.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", strings.ToLower(string(integrationType)))),
 								models.IntegrationMuts.WithValidConfig(integrationType),
 							)()
 							integration.DisableResolveMessage = redacted
@@ -1993,6 +2071,7 @@ type testEnvironment struct {
 	user             *user.SignedInUser
 	rulesAuthz       *fakes.FakeRuleService
 	features         featuremgmt.FeatureToggles
+	nsValidator      provisioning.NotificationSettingsValidatorProvider
 }
 
 func createTestEnv(t *testing.T, testConfig string) testEnvironment {
@@ -2111,6 +2190,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		user:             user,
 		rulesAuthz:       ruleAuthz,
 		features:         features,
+		nsValidator:      &provisioning.NotificationSettingsValidatorProviderFake{},
 	}
 }
 
@@ -2142,7 +2222,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		contactPointService: provisioning.NewContactPointService(configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService()),
 		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store),
-		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),
+		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz),
 		folderSvc:           env.folderService,
 		featureManager:      env.features,
 	}
@@ -2253,6 +2333,12 @@ func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Conte
 }
 
 type fakeRejectingNotificationPolicyService struct{}
+
+type fakeRejectingNotificationSettingsValidatorProvider struct{}
+
+func (f *fakeRejectingNotificationSettingsValidatorProvider) Validator(ctx context.Context, orgID int64) (notifier.NotificationSettingsValidator, error) {
+	return notifier.RejectingValidation{}, nil
+}
 
 func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
 	return definitions.Route{}, "", nil

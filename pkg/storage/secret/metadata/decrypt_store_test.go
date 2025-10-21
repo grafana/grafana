@@ -15,12 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationDecrypt(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Parallel()
 
@@ -33,7 +32,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		exposed, err := sut.DecryptStorage.Decrypt(ctx, "default", "name")
-		require.Error(t, err)
+		require.Equal(t, err.Error(), contracts.ErrDecryptNotAuthorized.Error()) // make sure we are stripping the error details
 		require.Empty(t, exposed)
 	})
 
@@ -44,13 +43,27 @@ func TestIntegrationDecrypt(t *testing.T) {
 		t.Cleanup(cancel)
 
 		// Create auth context with proper permissions
-		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, "svc", types.TypeUser)
+		svcIdentity := "svc"
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, svcIdentity, types.TypeUser)
+
+		fakeLogger := &mockLogger{}
+		loggerCtx := logging.Context(authCtx, fakeLogger)
 
 		sut := testutils.Setup(t)
 
-		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "non-existent-value")
-		require.ErrorIs(t, err, contracts.ErrDecryptNotFound)
+		exposed, err := sut.DecryptStorage.Decrypt(loggerCtx, "default", "non-existent-value")
+		require.Equal(t, err.Error(), contracts.ErrDecryptNotFound.Error()) // make sure we are stripping the error details
 		require.Empty(t, exposed)
+
+		require.Len(t, fakeLogger.InfoArgs, 2)
+		// we only want to check the audit log args
+		args := fakeLogger.InfoArgs[1]
+		require.Contains(t, args, "decrypter_identity")
+		for i, arg := range args {
+			if arg == "decrypter_identity" {
+				require.Equal(t, svcIdentity, args[i+1].(string))
+			}
+		}
 	})
 
 	t.Run("when happy path with valid auth and permissions, it returns decrypted value", func(t *testing.T) {
@@ -115,7 +128,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", svName)
-		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
+		require.Equal(t, err.Error(), contracts.ErrDecryptNotAuthorized.Error()) // make sure we are stripping the error details
 		require.Empty(t, exposed)
 	})
 
@@ -147,7 +160,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "sv-test")
-		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
+		require.Equal(t, err.Error(), contracts.ErrDecryptNotAuthorized.Error()) // make sure we are stripping the error details
 		require.Empty(t, exposed)
 	})
 
@@ -180,7 +193,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", svName)
-		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
+		require.Equal(t, err.Error(), contracts.ErrDecryptNotAuthorized.Error()) // make sure we are stripping the error details)
 		require.Empty(t, exposed)
 	})
 
@@ -212,7 +225,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "sv-test")
-		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
+		require.Equal(t, err.Error(), contracts.ErrDecryptNotAuthorized.Error()) // make sure we are stripping the error details
 		require.Empty(t, exposed)
 	})
 
@@ -245,8 +258,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", svName)
-		require.Error(t, err)
-		require.Equal(t, err.Error(), "not authorized")
+		require.Equal(t, err.Error(), contracts.ErrDecryptNotAuthorized.Error()) // make sure we are stripping the error details
 		require.Empty(t, exposed)
 	})
 
@@ -292,13 +304,14 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.NotEmpty(t, exposed)
 		require.Equal(t, "value", exposed.DangerouslyExposeAndConsumeValue())
 
-		require.Len(t, fakeLogger.InfoMsgs, 2)
+		require.Len(t, fakeLogger.InfoMsgs, 3)
 		require.Equal(t, fakeLogger.InfoMsgs[0], "SecureValueMetadataStorage.Read")
-		require.Equal(t, fakeLogger.InfoMsgs[1], "Secrets Audit Log")
+		require.Equal(t, fakeLogger.InfoMsgs[1], "KeeperMetadataStorage.GetKeeperConfig")
+		require.Equal(t, fakeLogger.InfoMsgs[2], "Secrets Audit Log")
 
-		require.Len(t, fakeLogger.InfoArgs, 2)
+		require.Len(t, fakeLogger.InfoArgs, 3)
 		// we only want to check the audit log args
-		args := fakeLogger.InfoArgs[1]
+		args := fakeLogger.InfoArgs[2]
 		require.Contains(t, args, "grafana_decrypter_identity")
 		require.Contains(t, args, "decrypter_identity")
 		for i, arg := range args {

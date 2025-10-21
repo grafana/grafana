@@ -33,6 +33,9 @@ export const versionedComponents = {
     ungroup: {
       '12.1.0': 'data-testid CanvasGridAddActions ungroup',
     },
+    ungroupRows: {
+      '12.1.0': 'data-testid CanvasGridAddActions ungroup-rows',
+    },
     addRow: {
       '12.1.0': 'data-testid CanvasGridAddActions add-row',
     },
@@ -44,6 +47,9 @@ export const versionedComponents = {
     },
     pasteTab: {
       '12.1.0': 'data-testid CanvasGridAddActions paste-tab',
+    },
+    pastePanel: {
+      '12.1.0': 'data-testid CanvasGridAddActions paste-panel',
     },
   },
   DashboardEditPaneSplitter: {
@@ -493,6 +499,22 @@ export const versionedComponents = {
             '12.1.0': 'data-testid tableng filter select-all',
           },
         },
+        Tooltip: {
+          Wrapper: {
+            '12.2.0': 'data-testid tableng tooltip wrapper',
+          },
+          Caret: {
+            '12.2.0': 'data-testid tableng tooltip caret',
+          },
+        },
+        Footer: {
+          ReducerLabel: {
+            '12.2.0': 'data-testid tableng footer reducer-label',
+          },
+          Value: {
+            '12.2.0': 'data-testid tableng footer value',
+          },
+        },
       },
     },
   },
@@ -649,6 +671,11 @@ export const versionedComponents = {
         },
         fillScreen: {
           '12.1.0': 'data-testid fill screen switch',
+        },
+      },
+      TabsLayout: {
+        titleInput: {
+          '12.2.0': 'data-testid tab title input',
         },
       },
     },

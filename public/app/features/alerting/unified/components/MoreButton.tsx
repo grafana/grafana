@@ -4,7 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, ButtonProps, Icon, Stack } from '@grafana/ui';
 
 const MoreButton = forwardRef(function MoreButton(
-  props: ButtonProps & { title?: string },
+  props: Omit<ButtonProps, 'children'> & { title?: string },
   ref: Ref<HTMLButtonElement>
 ) {
   return (

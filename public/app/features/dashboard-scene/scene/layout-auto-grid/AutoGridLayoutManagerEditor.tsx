@@ -15,6 +15,7 @@ export function getEditOptions(layoutManager: AutoGridLayoutManager): OptionsPan
 
   options.push(
     new OptionsPaneItemDescriptor({
+      id: 'layout-auto-grid-column-options',
       title: t('dashboard-scene.get-edit-options.title.column-options', 'Column options'),
       skipField: true,
       render: () => <GridLayoutColumns layoutManager={layoutManager} />,
@@ -23,6 +24,7 @@ export function getEditOptions(layoutManager: AutoGridLayoutManager): OptionsPan
 
   options.push(
     new OptionsPaneItemDescriptor({
+      id: 'layout-auto-grid-row-height',
       title: t('dashboard-scene.get-edit-options.title.row-height-options', 'Row height options'),
       skipField: true,
       render: () => <GridLayoutRows layoutManager={layoutManager} />,

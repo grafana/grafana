@@ -1,12 +1,23 @@
-import { readdirSync, readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import path from 'path';
 
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { variableAdapters } from 'app/features/variables/adapters';
+import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
+import { createCustomVariableAdapter } from 'app/features/variables/custom/adapter';
+import { createDataSourceVariableAdapter } from 'app/features/variables/datasource/adapter';
+import { createIntervalVariableAdapter } from 'app/features/variables/interval/adapter';
+import { createQueryVariableAdapter } from 'app/features/variables/query/adapter';
+import { createTextBoxVariableAdapter } from 'app/features/variables/textbox/adapter';
 
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 import { DashboardModel } from './DashboardModel';
+import {
+  setupTestDataSources,
+  getTestDirectories,
+  getOutputDirectory,
+  getJsonInputFiles,
+  constructLatestVersionOutputFilename,
+} from './__tests__/migrationTestUtils';
 
 /*
  * Backend / Frontend Migration Comparison Test Design Explanation:
@@ -22,7 +33,7 @@ import { DashboardModel } from './DashboardModel';
  *
  * 3. Why DashboardMigrator doesn't run on backendOutput:
  *    - DashboardMigrator.updateSchema() has an early return: `if (oldVersion === this.dashboard.schemaVersion) return;`
- *    - Since backendOutput.schemaVersion is already 41 (latest), no migration occurs
+ *    - Since backendOutput.schemaVersion is already 42 (latest), no migration occurs
  *    - This ensures we compare the final migrated state from both paths
  *
  * 4. Benefits of this approach:
@@ -32,94 +43,48 @@ import { DashboardModel } from './DashboardModel';
  *    - Avoids test brittleness from comparing raw JSON with different default value representations
  */
 
-// Set up the same datasources as backend test provider to ensure consistency
-const dataSources = {
-  default: mockDataSource({
-    name: 'Default Test Datasource Name',
-    uid: 'default-ds-uid',
-    type: 'prometheus',
-    isDefault: true,
-  }),
-  nonDefault: mockDataSource({
-    name: 'Non Default Test Datasource Name',
-    uid: 'non-default-test-ds-uid',
-    type: 'loki',
-    isDefault: false,
-  }),
-  existingRef: mockDataSource({
-    name: 'Existing Ref Name',
-    uid: 'existing-ref-uid',
-    type: 'prometheus',
-    isDefault: false,
-  }),
-  existingTarget: mockDataSource({
-    name: 'Existing Target Name',
-    uid: 'existing-target-uid',
-    type: 'elasticsearch',
-    isDefault: false,
-  }),
-  existingRefAlt: mockDataSource({
-    name: 'Existing Ref Name',
-    uid: 'existing-ref',
-    type: 'prometheus',
-    isDefault: false,
-  }),
-  mixed: mockDataSource({
-    name: MIXED_DATASOURCE_NAME,
-    type: 'mixed',
-    uid: MIXED_DATASOURCE_NAME,
-    isDefault: false,
-  }),
-};
-
-setupDataSources(...Object.values(dataSources));
+variableAdapters.register(createQueryVariableAdapter());
+variableAdapters.register(createDataSourceVariableAdapter());
+variableAdapters.register(createConstantVariableAdapter());
+variableAdapters.register(createIntervalVariableAdapter());
+variableAdapters.register(createCustomVariableAdapter());
+variableAdapters.register(createTextBoxVariableAdapter());
 
 describe('Backend / Frontend result comparison', () => {
-  const inputDir = path.join(
-    __dirname,
-    '..',
-    '..',
-    '..',
-    '..',
-    '..',
-    'apps',
-    'dashboard',
-    'pkg',
-    'migration',
-    'testdata',
-    'input'
-  );
-  const outputDir = path.join(
-    __dirname,
-    '..',
-    '..',
-    '..',
-    '..',
-    '..',
-    'apps',
-    'dashboard',
-    'pkg',
-    'migration',
-    'testdata',
-    'output'
-  );
+  beforeEach(() => {
+    jest.clearAllMocks();
+    setupTestDataSources();
+  });
 
-  const jsonInputs = readdirSync(inputDir);
+  const { inputDir } = getTestDirectories();
+  const outputDir = getOutputDirectory('latest_version');
+  const jsonInputs = getJsonInputFiles(inputDir);
 
   jsonInputs.forEach((inputFile) => {
     it(`should migrate ${inputFile} correctly`, async () => {
       const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
 
-      const backendOutput = JSON.parse(readFileSync(path.join(outputDir, inputFile), 'utf8'));
+      // Construct the backend output filename: v30.something.json -> v30.something.v41.json
+      const backendOutputFilename = constructLatestVersionOutputFilename(inputFile, DASHBOARD_SCHEMA_VERSION);
+      const backendMigrationResult = JSON.parse(readFileSync(path.join(outputDir, backendOutputFilename), 'utf8'));
 
-      // Make sure the backend output always migrates to the latest version
-      expect(backendOutput.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
+      expect(backendMigrationResult.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
 
-      // Compare both migrations, when mounted in dashboard model, after serializing to JSON are the same.
-      // This avoid issues with the default values in the frontend, wheter they were set in the input JSON or not.
-      const frontendMigrationResult = new DashboardModel(jsonInput).getSaveModelClone();
-      const backendMigrationResult = new DashboardModel(backendOutput).getSaveModelClone();
-      expect(backendMigrationResult).toMatchObject(frontendMigrationResult);
+      // Migrate dashboard in Frontend.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let migratedTemplatingList: any[] = jsonInput?.templating?.list ?? [];
+      const frontendModel = new DashboardModel(jsonInput, undefined, {
+        getVariablesFromState: () => migratedTemplatingList,
+      });
+      // Update the templating list reference after migration
+      migratedTemplatingList = frontendModel.templating?.list ?? [];
+
+      const frontendMigrationResult = frontendModel.getSaveModelClone();
+
+      // version in the backend is never added because it is returned from the backend as metadata
+      delete frontendMigrationResult.version;
+
+      expect(backendMigrationResult).toEqual(frontendMigrationResult);
     });
   });
 });

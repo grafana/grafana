@@ -24,12 +24,13 @@ export function getLibraryPanelOptionsCategory(props: OptionPaneRenderProps): Op
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.get-library-panel-options-category.title.name', 'Name'),
+          id: 'library-panel-name',
           value: panel.libraryPanel.name,
           popularRank: 1,
-          render: function renderName() {
+          render: function renderName(descriptor) {
             return (
               <Input
-                id="LibraryPanelFrameName"
+                id={descriptor.props.id}
                 defaultValue={panel.libraryPanel.name}
                 onBlur={(e) =>
                   onPanelConfigChange('libraryPanel', { ...panel.libraryPanel, name: e.currentTarget.value })
@@ -42,6 +43,7 @@ export function getLibraryPanelOptionsCategory(props: OptionPaneRenderProps): Op
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.get-library-panel-options-category.title.information', 'Information'),
+          id: 'library-panel-information',
           render: function renderLibraryPanelInformation() {
             return <LibraryPanelInformation panel={panel} formatDate={dashboard.formatDate} />;
           },

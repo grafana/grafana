@@ -6,13 +6,16 @@
 package server
 
 import (
+	"context"
 	"github.com/google/wire"
 	httpclient2 "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -27,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
-	validator2 "github.com/grafana/grafana/pkg/infra/usagestats/validator"
+	validator3 "github.com/grafana/grafana/pkg/infra/usagestats/validator"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/login/social/socialimpl"
@@ -35,9 +38,8 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	provider2 "github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
-	manager3 "github.com/grafana/grafana/pkg/plugins/manager"
+	manager4 "github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -50,32 +52,40 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
-	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences"
 	provisioning2 "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	query2 "github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
-	service11 "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
+	service4 "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
-	manager4 "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	manager2 "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/inline"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
-	service12 "github.com/grafana/grafana/pkg/registry/apis/secret/service"
-	validator3 "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
+	service5 "github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
 	"github.com/grafana/grafana/pkg/registry/apps"
 	advisor2 "github.com/grafana/grafana/pkg/registry/apps/advisor"
 	notifications2 "github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
+	correlations2 "github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
+	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/registry/apps/plugins"
+	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -88,7 +98,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
-	"github.com/grafana/grafana/pkg/services/anonymous/validator"
+	validator2 "github.com/grafana/grafana/pkg/services/anonymous/validator"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
@@ -106,18 +116,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
-	service9 "github.com/grafana/grafana/pkg/services/dashboardimport/service"
+	service11 "github.com/grafana/grafana/pkg/services/dashboardimport/service"
 	dashboards2 "github.com/grafana/grafana/pkg/services/dashboards"
 	database2 "github.com/grafana/grafana/pkg/services/dashboards/database"
-	service5 "github.com/grafana/grafana/pkg/services/dashboards/service"
+	service7 "github.com/grafana/grafana/pkg/services/dashboards/service"
+	"github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
-	database4 "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
-	service8 "github.com/grafana/grafana/pkg/services/dashboardsnapshots/service"
+	database5 "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
+	service10 "github.com/grafana/grafana/pkg/services/dashboardsnapshots/service"
 	"github.com/grafana/grafana/pkg/services/dashboardversion/dashverimpl"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
-	service7 "github.com/grafana/grafana/pkg/services/datasources/service"
+	service9 "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	encryption2 "github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/encryption/provider"
 	service2 "github.com/grafana/grafana/pkg/services/encryption/service"
@@ -133,7 +145,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	api4 "github.com/grafana/grafana/pkg/services/ldap/api"
-	service10 "github.com/grafana/grafana/pkg/services/ldap/service"
+	service12 "github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -143,7 +155,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/navtree/navtreeimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -155,7 +166,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	service6 "github.com/grafana/grafana/pkg/services/plugindashboards/service"
+	service8 "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/advisor"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
@@ -177,13 +188,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
-	service4 "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	service6 "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/renderer"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
+	"github.com/grafana/grafana/pkg/services/promtypemigration"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	api2 "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -199,7 +212,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
-	secrets2 "github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	kvstore2 "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	migrations2 "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
@@ -207,7 +220,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/migrator"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
-	manager2 "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
+	manager3 "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/proxy"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/shorturls"
@@ -224,7 +237,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
-	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
@@ -240,13 +252,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	database5 "github.com/grafana/grafana/pkg/storage/secret/database"
+	database4 "github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	migrator2 "github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -277,7 +290,7 @@ import (
 
 // Injectors from wire.go:
 
-func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
+func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
 	routeRegisterImpl := routing.ProvideRegister()
 	tracingConfig, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
@@ -332,7 +345,10 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	hooksService := hooks.ProvideService()
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
-	envVarsProvider := pluginconfig.NewEnvVarsProvider(pluginInstanceCfg, licensingService)
+	registerer := metrics.ProvideRegisterer()
+	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
+	defaultSettingsProvider := pluginsso.ProvideDefaultSettingsProvider(ssosettingsimplService)
+	envVarsProvider := pluginconfig.NewEnvVarsProvider(pluginInstanceCfg, licensingService, defaultSettingsProvider)
 	inMemory := registry.ProvideService()
 	rendererManager, err := renderer.ProvideService(pluginManagementCfg, envVarsProvider, inMemory, tracingService)
 	if err != nil {
@@ -350,10 +366,8 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	keyRetriever := dynamic.ProvideService(cfg, keystoreService)
 	keyretrieverService := keyretriever.ProvideService(keyRetriever)
 	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
-	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
-	localProvider := pluginassets.ProvideService()
-	assetpathService := assetpath.ProvideService(pluginManagementCfg, pluginscdnService, localProvider)
-	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, assetpathService)
+	localProvider := pluginassets.NewLocalProvider()
+	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, localProvider)
 	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
 	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
 	angularpatternsstoreService := angularpatternsstore.ProvideService(kvStore)
@@ -372,19 +386,23 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	cloudwatchService := cloudwatch.ProvideService()
 	cloudmonitoringService := cloudmonitoring.ProvideService(httpclientProvider)
 	elasticsearchService := elasticsearch.ProvideService(httpclientProvider)
-	graphiteService := graphite.ProvideService(httpclientProvider, tracingService)
-	influxdbService := influxdb.ProvideService(httpclientProvider, featureToggles)
 	tracer := otelTracer()
+	graphiteService := graphite.ProvideService(httpclientProvider, tracer)
+	influxdbService := influxdb.ProvideService(httpclientProvider)
 	lokiService := loki.ProvideService(httpclientProvider, tracer)
 	opentsdbService := opentsdb.ProvideService(httpclientProvider)
 	prometheusService := prometheus.ProvideService(httpclientProvider)
-	tempoService := tempo.ProvideService(httpclientProvider)
+	tempoService := tempo.ProvideService(httpclientProvider, tracer)
 	testdatasourceService := testdatasource.ProvideService()
-	postgresService := postgres.ProvideService(cfg, featureToggles)
+	postgresService := postgres.ProvideService(cfg)
 	mysqlService := mysql.ProvideService()
 	mssqlService := mssql.ProvideService(cfg)
 	entityEventsService := store.ProvideEntityEventsService(cfg, sqlStore, featureToggles)
-	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return nil, err
@@ -410,10 +428,8 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	dashboardFolderStoreImpl := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	publicDashboardStoreImpl := database3.ProvideStore(sqlStore, cfg, featureToggles)
 	publicDashboardServiceWrapperImpl := service3.ProvideServiceWrapper(publicDashboardStoreImpl)
-	registerer := metrics.ProvideRegisterer()
 	apikeyService, err := apikeyimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return nil, err
@@ -424,25 +440,67 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	client, err := authz.ProvideZanzana(cfg, sqlStore, tracingService, featureToggles, registerer)
+	zanzanaClient, err := authz.ProvideZanzana(cfg, sqlStore, tracingService, featureToggles, registerer)
 	if err != nil {
 		return nil, err
 	}
 	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
-	accessClient, err := authz.ProvideAuthZClient(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, client, eventualRestConfigProvider)
+	accessClient, err := authz.ProvideAuthZClient(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, zanzanaClient, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
 	ossDashboardStats := search.ProvideDashboardStats()
 	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
+	databaseDatabase := database4.ProvideDatabase(sqlStore, tracer)
+	clockClock := clock.ProvideClock()
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clockClock, databaseDatabase, tracer, registerer)
+	if err != nil {
+		return nil, err
+	}
+	secureValueValidator := validator.ProvideSecureValueValidator()
+	secureValueMutator := mutator.ProvideSecureValueMutator()
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, tracer, registerer)
+	if err != nil {
+		return nil, err
+	}
+	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
+	if err != nil {
+		return nil, err
+	}
+	dataKeyStorage, err := encryption.ProvideDataKeyStorage(databaseDatabase, tracer, registerer)
+	if err != nil {
+		return nil, err
+	}
+	cipher, err := service4.ProvideAESGCMCipherService(tracer, usageStats)
+	if err != nil {
+		return nil, err
+	}
+	providerConfig, err := kmsproviders.ProvideOSSKMSProviders(cfg, cipher)
+	if err != nil {
+		return nil, err
+	}
+	encryptionManager, err := manager2.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig)
+	if err != nil {
+		return nil, err
+	}
+	ossKeeperService, err := secretkeeper.ProvideService(tracer, encryptedValueStorage, encryptionManager, registerer)
+	if err != nil {
+		return nil, err
+	}
+	secureValueService := service5.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, secureValueValidator, secureValueMutator, keeperMetadataStorage, ossKeeperService, registerer)
+	inlineSecureValueSupport, err := inline.ProvideInlineSecureValueService(cfg, tracer, secureValueService, accessClient)
+	if err != nil {
+		return nil, err
+	}
 	options := &unified.Options{
-		Cfg:      cfg,
-		Features: featureToggles,
-		DB:       sqlStore,
-		Tracer:   tracingService,
-		Reg:      registerer,
-		Authzc:   accessClient,
-		Docs:     documentBuilderSupplier,
+		Cfg:          cfg,
+		Features:     featureToggles,
+		DB:           sqlStore,
+		Tracer:       tracingService,
+		Reg:          registerer,
+		Authzc:       accessClient,
+		Docs:         documentBuilderSupplier,
+		SecureValues: inlineSecureValueSupport,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -450,9 +508,12 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	dualwriteService := dualwrite.ProvideService(featureToggles, registerer, kvStore, cfg)
+	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg)
+	if err != nil {
+		return nil, err
+	}
 	sortService := sort.ProvideService()
-	folderimplService := folderimpl.ProvideService(folderStoreImpl, accessControl, inProcBus, dashboardsStore, dashboardFolderStoreImpl, userService, sqlStore, featureToggles, bundleregistryService, publicDashboardServiceWrapperImpl, cfg, registerer, tracer, resourceClient, dualwriteService, sortService, eventualRestConfigProvider)
+	folderimplService := folderimpl.ProvideService(folderStoreImpl, accessControl, inProcBus, dashboardsStore, userService, sqlStore, featureToggles, bundleregistryService, publicDashboardServiceWrapperImpl, cfg, registerer, tracer, resourceClient, dualwriteService, sortService, eventualRestConfigProvider)
 	searchService := searchV2.ProvideService(cfg, sqlStore, entityEventsService, acimplService, tracingService, featureToggles, orgService, userService, folderimplService)
 	systemUsers := store.ProvideSystemUsersService()
 	storageService, err := store.ProvideService(sqlStore, featureToggles, cfg, quotaService, systemUsers)
@@ -472,22 +533,23 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	serviceAccountsService, err := manager2.ProvideServiceAccountsService(cfg, usageStats, sqlStore, apikeyService, kvStore, userService, orgService, acimplService, serviceAccountPermissionsService, serverLockService)
+	serviceAccountsService, err := manager3.ProvideServiceAccountsService(cfg, usageStats, sqlStore, apikeyService, kvStore, userService, orgService, acimplService, serviceAccountPermissionsService, serverLockService)
 	if err != nil {
 		return nil, err
 	}
 	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, sqlStore, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
 	registryRegistry := registry2.ProvideExtSvcRegistry(cfg, extSvcAccountsService, serverLockService, featureToggles)
-	service13 := service4.ProvideService(sqlStore, secretsService)
+	service13 := service6.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service13)
-	initialize := pipeline.ProvideInitializationStage(pluginManagementCfg, inMemory, providerService, processService, serviceregistrationService, acimplService, actionSetService, envVarsProvider, tracingService)
+	noop := provisionedplugins.NewNoop()
+	initialize := pipeline.ProvideInitializationStage(pluginManagementCfg, inMemory, providerService, processService, serviceregistrationService, acimplService, actionSetService, envVarsProvider, tracingService, noop)
 	terminate, err := pipeline.ProvideTerminationStage(pluginManagementCfg, inMemory, processService)
 	if err != nil {
 		return nil, err
 	}
 	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
-	pluginstoreService, err := pluginstore.ProvideService(inMemory, sourcesService, loaderLoader)
+	pluginstoreService, err := pluginstore.ProvideService(inMemory, sourcesService, loaderLoader, featureToggles)
 	if err != nil {
 		return nil, err
 	}
@@ -497,14 +559,14 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	dashboardServiceImpl, err := service5.ProvideDashboardServiceImpl(cfg, dashboardsStore, dashboardFolderStoreImpl, featureToggles, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, eventualRestConfigProvider, userService, quotaService, orgService, publicDashboardServiceWrapperImpl, resourceClient, dualwriteService, sortService, serverLockService, kvStore)
+	k8sHandlerWithFallback := client.ProvideK8sClientWithFallback(cfg, eventualRestConfigProvider, dashboardsStore, userService, resourceClient, featureToggles, dualwriteService, sortService, registerer)
+	dashboardServiceImpl, err := service7.ProvideDashboardServiceImpl(cfg, dashboardsStore, featureToggles, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, quotaService, orgService, publicDashboardServiceWrapperImpl, dualwriteService, serverLockService, kvStore, k8sHandlerWithFallback)
 	if err != nil {
 		return nil, err
 	}
-	pluginService := service5.ProvideDashboardPluginService(featureToggles, dashboardServiceImpl)
-	service14 := service6.ProvideService(fileStoreManager, pluginService)
+	pluginService := service7.ProvideDashboardPluginService(featureToggles, dashboardServiceImpl)
+	service14 := service8.ProvideService(fileStoreManager, pluginService)
 	orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
-	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
 	socialService := socialimpl.ProvideService(cfg, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
 	loginStore := authinfoimpl.ProvideStore(sqlStore, secretsService)
 	authinfoimplService := authinfoimpl.ProvideService(loginStore, remoteCache, secretsService)
@@ -523,15 +585,15 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	pluginInstaller := manager3.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService)
+	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService)
 	ossProvider := guardian.ProvideGuardian()
-	cacheServiceImpl := service7.ProvideCacheService(cacheService, sqlStore, ossProvider)
+	cacheServiceImpl := service9.ProvideCacheService(cacheService, sqlStore, ossProvider)
 	shortURLService := shorturlimpl.ProvideService(sqlStore)
-	queryHistoryService := queryhistory.ProvideService(cfg, sqlStore, routeRegisterImpl, accessControl)
-	dashboardService := service5.ProvideDashboardService(featureToggles, dashboardServiceImpl)
-	dashverService := dashverimpl.ProvideService(cfg, sqlStore, dashboardService, dashboardsStore, featureToggles, eventualRestConfigProvider, userService, resourceClient, dualwriteService, sortService)
-	dashboardSnapshotStore := database4.ProvideStore(sqlStore, cfg)
-	serviceImpl := service8.ProvideService(dashboardSnapshotStore, secretsService, dashboardService)
+	queryHistoryService := queryhistory.ProvideService(cfg, sqlStore, routeRegisterImpl, accessControl, featureToggles, eventualRestConfigProvider)
+	dashboardService := service7.ProvideDashboardService(featureToggles, dashboardServiceImpl)
+	dashverService := dashverimpl.ProvideService(cfg, sqlStore, dashboardService, featureToggles, k8sHandlerWithFallback)
+	dashboardSnapshotStore := database5.ProvideStore(sqlStore, cfg)
+	serviceImpl := service10.ProvideService(dashboardSnapshotStore, secretsService, dashboardService)
 	dBstore, err := store2.ProvideDBStore(cfg, featureToggles, sqlStore, folderimplService, dashboardService, accessControl, inProcBus)
 	if err != nil {
 		return nil, err
@@ -539,18 +601,18 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	deleteExpiredService := image.ProvideDeleteExpiredService(dBstore)
 	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
-	cleanUpService := cleanup.ProvideService(cfg, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dashboardService, dBstore)
 	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
 	if err != nil {
 		return nil, err
 	}
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
-	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg)
+	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
-	service15, err := service7.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider)
+	service15, err := service9.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider)
 	if err != nil {
 		return nil, err
 	}
+	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService, teamService, service15)
 	correlationsService, err := correlations.ProvideService(sqlStore, routeRegisterImpl, service15, accessControl, inProcBus, quotaService, cfg)
 	if err != nil {
 		return nil, err
@@ -563,12 +625,15 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	dashboardProvisioningService := service5.ProvideDashboardProvisioningService(featureToggles, dashboardServiceImpl)
+	dashboardProvisioningService := service7.ProvideDashboardProvisioningService(featureToggles, dashboardServiceImpl)
 	receiverPermissionsService, err := ossaccesscontrol.ProvideReceiverPermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
 	}
-	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, cfg, sqlStore, pluginstoreService, dBstore, serviceService, notificationService, dashboardProvisioningService, service15, correlationsService, dashboardService, folderimplService, service13, searchService, quotaService, secretsService, orgService, receiverPermissionsService, tracingService, dualwriteService)
+	azurePromMigrationService := promtypemigration.ProvideAzurePromMigrationService(service15, inMemory, repoManager, pluginInstaller, cfg)
+	amazonPromMigrationService := promtypemigration.ProvideAmazonPromMigrationService(service15, inMemory, repoManager, pluginInstaller, cfg)
+	promTypeMigrationProviderImpl := promtypemigration.ProvidePromTypeMigrationProvider(serverLockService, featureToggles, azurePromMigrationService, amazonPromMigrationService)
+	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, cfg, sqlStore, pluginstoreService, dBstore, serviceService, notificationService, dashboardProvisioningService, service15, correlationsService, dashboardService, folderimplService, service13, searchService, quotaService, secretsService, orgService, receiverPermissionsService, tracingService, dualwriteService, promTypeMigrationProviderImpl)
 	if err != nil {
 		return nil, err
 	}
@@ -576,11 +641,10 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	starService := starimpl.ProvideService(sqlStore)
 	searchSearchService := search2.ProvideService(cfg, sqlStore, starService, dashboardService, folderimplService, featureToggles, sortService)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service15, service13, requestConfigProvider)
-	mtDatasourceClientBuilder := mtdsclient.NewNullMTDatasourceClientBuilder()
-	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, mtDatasourceClientBuilder)
-	queryServiceImpl := query.ProvideService(cfg, cacheServiceImpl, exprService, ossDataSourceRequestValidator, middlewareHandler, plugincontextProvider, mtDatasourceClientBuilder)
-	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, dBstore, dashboardService, registerer)
-	grafanaLive, err := live.ProvideService(plugincontextProvider, cfg, routeRegisterImpl, pluginstoreService, middlewareHandler, cacheService, cacheServiceImpl, sqlStore, secretsService, usageStats, queryServiceImpl, featureToggles, accessControl, dashboardService, repositoryImpl, orgService, eventualRestConfigProvider)
+	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()
+	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, qsDatasourceClientBuilder)
+	queryServiceImpl := query.ProvideService(cfg, cacheServiceImpl, exprService, ossDataSourceRequestValidator, middlewareHandler, plugincontextProvider, qsDatasourceClientBuilder)
+	grafanaLive, err := live.ProvideService(plugincontextProvider, cfg, routeRegisterImpl, pluginstoreService, middlewareHandler, cacheService, cacheServiceImpl, sqlStore, secretsService, usageStats, queryServiceImpl, featureToggles, accessControl, dashboardService, orgService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -590,6 +654,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	contexthandlerContextHandler := contexthandler.ProvideService(cfg, authnAuthenticator, featureToggles)
 	logger := loggermw.Provide(cfg, featureToggles)
 	ngAlert := metrics2.ProvideService()
+	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, dBstore, dashboardService, registerer)
 	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service15, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, quotaService, secretsService, notificationService, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, httpclientProvider, plugincontextProvider, receiverPermissionsService, userService)
 	if err != nil {
 		return nil, err
@@ -603,10 +668,9 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	noop := managedplugins.NewNoop()
-	provisionedpluginsNoop := provisionedplugins.NewNoop()
+	managedpluginsNoop := managedplugins.NewNoop()
 	preinstallImpl := pluginchecker.ProvidePreinstall(cfg)
-	plugincheckerService := pluginchecker.ProvideService(noop, provisionedpluginsNoop, preinstallImpl)
+	plugincheckerService := pluginchecker.ProvideService(managedpluginsNoop, noop, preinstallImpl)
 	pluginsService, err := updatemanager.ProvidePluginsService(cfg, pluginstoreService, pluginInstaller, tracingService, featureToggles, plugincheckerService)
 	if err != nil {
 		return nil, err
@@ -617,6 +681,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
+	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
 	pluginassetsService := pluginassets2.ProvideService(pluginManagementCfg, pluginscdnService, signatureSignature, pluginstoreService)
 	avatarCacheServer := avatar.ProvideAvatarCacheServer(cfg)
 	prefService := prefimpl.ProvideService(sqlStore, cfg)
@@ -640,10 +705,10 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	authnService := authnimpl.ProvideAuthnService(authnimplService)
 	navtreeService := navtreeimpl.ProvideService(cfg, accessControl, pluginstoreService, service13, starService, featureToggles, dashboardService, acimplService, kvStore, apikeyService, ossLicensingService, authnService)
 	searchHTTPService := searchV2.ProvideSearchHTTPService(searchService)
-	statsService := statsimpl.ProvideService(cfg, sqlStore, dashboardService, folderimplService, orgService, featureToggles)
+	statsService := statsimpl.ProvideService(cfg, sqlStore, dashboardService, folderimplService, orgService, resourceClient, featureToggles)
 	gatherer := metrics.ProvideGatherer()
-	apiAPI := api3.ProvideApi(starService, dashboardService)
-	anonUserLimitValidatorImpl := validator.ProvideAnonUserLimitValidator()
+	apiAPI := api3.ProvideApi(cfg, featureToggles, starService, eventualRestConfigProvider)
+	anonUserLimitValidatorImpl := validator2.ProvideAnonUserLimitValidator()
 	anonDeviceService := anonimpl.ProvideAnonymousDeviceService(usageStats, authnService, sqlStore, cfg, orgService, serverLockService, accessControl, routeRegisterImpl, anonUserLimitValidatorImpl)
 	signingkeysimplService, err := signingkeysimpl.ProvideEmbeddedSigningKeysService(sqlStore, secretsService, remoteCache, routeRegisterImpl)
 	if err != nil {
@@ -655,11 +720,11 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	}
 	idimplService := idimpl.ProvideService(cfg, localSigner, remoteCache, authnService, registerer, tracer)
 	verifier := userimpl.ProvideVerifier(cfg, userService, tempuserService, notificationService, idimplService)
-	httpServer, err := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, ossDataSourceRequestValidator, pluginstoreService, service14, pluginstoreService, middlewareHandler, pluginerrsStore, pluginInstaller, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, shortURLService, queryHistoryService, correlationsService, remoteCache, provisioningServiceImpl, accessControl, dataSourceProxyService, searchSearchService, grafanaLive, gateway, plugincontextProvider, contexthandlerContextHandler, logger, featureToggles, alertNG, libraryPanelService, libraryElementService, quotaService, socialService, tracingService, serviceService, grafanaService, pluginsService, ossService, service15, queryServiceImpl, filestoreService, serviceAccountsProxy, pluginassetsService, authinfoimplService, storageService, notificationService, dashboardService, dashboardProvisioningService, folderimplService, ossProvider, serviceImpl, service13, avatarCacheServer, prefService, folderPermissionsService, dashboardPermissionsService, dashverService, starService, csrfCSRF, noop, playlistService, apikeyService, kvStore, secretsMigrator, secretsService, secretMigrationProviderImpl, secretsKVStore, apiApi, userService, tempuserService, loginattemptimplService, orgService, deletionService, teamService, acimplService, navtreeService, repositoryImpl, tagimplService, searchHTTPService, oauthtokenService, statsService, authnService, pluginscdnService, gatherer, apiAPI, registerer, eventualRestConfigProvider, anonDeviceService, verifier, preinstallImpl)
+	httpServer, err := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, ossDataSourceRequestValidator, pluginstoreService, service14, pluginstoreService, middlewareHandler, pluginerrsStore, pluginInstaller, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, shortURLService, queryHistoryService, correlationsService, remoteCache, provisioningServiceImpl, accessControl, dataSourceProxyService, searchSearchService, grafanaLive, gateway, plugincontextProvider, contexthandlerContextHandler, logger, featureToggles, alertNG, libraryPanelService, libraryElementService, quotaService, socialService, tracingService, serviceService, grafanaService, pluginsService, ossService, service15, queryServiceImpl, filestoreService, serviceAccountsProxy, pluginassetsService, authinfoimplService, storageService, notificationService, dashboardService, dashboardProvisioningService, folderimplService, ossProvider, serviceImpl, service13, avatarCacheServer, prefService, folderPermissionsService, dashboardPermissionsService, dashverService, starService, csrfCSRF, managedpluginsNoop, playlistService, apikeyService, kvStore, secretsMigrator, secretsService, secretMigrationProviderImpl, secretsKVStore, apiApi, userService, tempuserService, loginattemptimplService, orgService, deletionService, teamService, acimplService, navtreeService, repositoryImpl, tagimplService, searchHTTPService, oauthtokenService, statsService, authnService, pluginscdnService, gatherer, apiAPI, registerer, eventualRestConfigProvider, anonDeviceService, verifier, preinstallImpl)
 	if err != nil {
 		return nil, err
 	}
-	validatorService, err := validator2.ProvideService(pluginstoreService)
+	validatorService, err := validator3.ProvideService(pluginstoreService)
 	if err != nil {
 		return nil, err
 	}
@@ -681,16 +746,40 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service15, cacheServiceImpl, plugincontextProvider)
+	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service15, cacheServiceImpl, plugincontextProvider, cfg)
 	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
 	playlistAppInstaller, err := playlist.RegisterAppInstaller(playlistService, cfg, featureToggles)
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(playlistAppInstaller)
+	pluginsAppInstaller, err := plugins.RegisterAppInstaller(cfg, featureToggles)
+	if err != nil {
+		return nil, err
+	}
+	shortURLAppInstaller, err := shorturl.RegisterAppInstaller(cfg, shortURLService)
+	if err != nil {
+		return nil, err
+	}
+	alertingRulesAppInstaller, err := rules.RegisterAppInstaller(cfg, alertNG)
+	if err != nil {
+		return nil, err
+	}
+	appInstaller, err := correlations2.RegisterAppInstaller(cfg, featureToggles, correlationsService)
+	if err != nil {
+		return nil, err
+	}
+	alertingNotificationsAppInstaller, err := notifications2.RegisterAppInstaller(cfg, alertNG)
+	if err != nil {
+		return nil, err
+	}
+	logsDrilldownAppInstaller, err := logsdrilldown.RegisterAppInstaller(cfg, featureToggles)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, pluginsAppInstaller, shortURLAppInstaller, alertingRulesAppInstaller, appInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics)
 	if err != nil {
 		return nil, err
 	}
@@ -702,18 +791,17 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, client, sqlStore, serverLockService, folderimplService)
+	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, zanzanaClient, sqlStore, serverLockService, folderimplService)
 	investigationsAppProvider := investigations.RegisterApp(cfg)
-	checkregistryService := checkregistry.ProvideService(service15, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, noop, provisionedpluginsNoop, ssosettingsimplService, cfg, pluginerrsStore)
+	checkregistryService := checkregistry.ProvideService(service15, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, managedpluginsNoop, noop, ssosettingsimplService, cfg, pluginerrsStore)
 	advisorAppProvider := advisor2.RegisterApp(checkregistryService, cfg)
-	alertingNotificationsAppProvider := notifications2.RegisterApp(cfg, alertNG)
-	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
+	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, advisorAppProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
-	importDashboardService := service9.ProvideService(routeRegisterImpl, quotaService, service14, pluginstoreService, libraryPanelService, dashboardService, accessControl, folderimplService, featureToggles)
-	dashboardUpdater := service6.ProvideDashboardUpdater(inProcBus, pluginstoreService, service14, importDashboardService, service13, pluginService, dashboardService)
-	sanitizerProvider := sanitizer.ProvideService(renderingService)
+	importDashboardService := service11.ProvideService(routeRegisterImpl, quotaService, service14, pluginstoreService, libraryPanelService, dashboardService, accessControl, folderimplService, featureToggles)
+	dashboardUpdater := service8.ProvideDashboardUpdater(inProcBus, pluginstoreService, service14, importDashboardService, service13, pluginService, dashboardService)
+	worker := garbagecollectionworker.ProvideWorker(cfg, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
 	healthService, err := grpcserver.ProvideHealthService(cfg, grpcserverProvider)
 	if err != nil {
 		return nil, err
@@ -724,78 +812,49 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	}
 	ossGroups := ldap.ProvideGroupsService()
 	identitySynchronizer := authnimpl.ProvideIdentitySynchronizer(authnimplService)
-	ldapImpl := service10.ProvideService(cfg, featureToggles, ssosettingsimplService)
+	ldapImpl := service12.ProvideService(cfg, featureToggles, ssosettingsimplService)
 	apiService := api4.ProvideService(cfg, routeRegisterImpl, accessControl, userService, authinfoimplService, ossGroups, identitySynchronizer, orgService, ldapImpl, userAuthTokenService, bundleregistryService)
-	dashboardsAPIBuilder := dashboard.RegisterAPIService(cfg, featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, dashboardFolderStoreImpl, libraryPanelService, eventualRestConfigProvider, userService)
+	dashboardsAPIBuilder := dashboard.RegisterAPIService(cfg, featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService)
 	snapshotsAPIBuilder := dashboardsnapshot.RegisterAPIService(serviceImpl, apiserverService, cfg, featureToggles, sqlStore, registerer)
-	featureFlagAPIBuilder := featuretoggle.RegisterAPIService(featureManager, accessControl, apiserverService, cfg, registerer)
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, accessControl, registerer)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(configProvider, featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, accessControl, registerer)
 	if err != nil {
 		return nil, err
 	}
-	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, registerer, resourceClient)
+	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl, storageBackendImpl)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, storageBackendImpl, storageBackendImpl)
 	if err != nil {
 		return nil, err
 	}
-	legacyDataSourceLookup := service7.ProvideLegacyDataSourceLookup(service15)
+	legacyDataSourceLookup := service9.ProvideLegacyDataSourceLookup(service15)
 	queryAPIBuilder, err := query2.RegisterAPIService(cfg, featureToggles, apiserverService, service15, pluginstoreService, accessControl, middlewareHandler, plugincontextProvider, registerer, tracingService, legacyDataSourceLookup, exprService)
 	if err != nil {
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	factory := github.ProvideFactory()
-	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl, featureToggles)
-	databaseDatabase := database5.ProvideDatabase(sqlStore, tracer)
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(databaseDatabase, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
-	if err != nil {
-		return nil, err
-	}
-	dataKeyStorage, err := encryption.ProvideDataKeyStorage(databaseDatabase, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	cipher, err := service11.ProvideAESGCMCipherService(tracer, usageStats)
-	if err != nil {
-		return nil, err
-	}
-	providerConfig, err := kmsproviders.ProvideOSSKMSProviders(cfg, cipher)
-	if err != nil {
-		return nil, err
-	}
-	encryptionManager, err := manager4.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig)
-	if err != nil {
-		return nil, err
-	}
-	ossKeeperService, err := secretkeeper.ProvideService(tracer, encryptedValueStorage, encryptionManager, registerer)
-	if err != nil {
-		return nil, err
-	}
-	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService, registerer)
-	secureValueValidator := validator3.ProvideSecureValueValidator()
-	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
-	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
+	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, starService, userService, apiserverService)
+	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, dashboardPermissionsService, accessControl, featureToggles)
+	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
+	v3 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
+	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
+	v4 := extras.ProvideExtraWorkers(pullRequestWorker)
+	v5 := _wireValue
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v5)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
 		return nil, err
 	}
-	v3, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
+	decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
 	if err != nil {
 		return nil, err
 	}
-	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, v3, cfg)
-	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, repositorySecrets, factory, renderingService, resourceClient, eventualRestConfigProvider)
-	v4 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v4)
+	factory := github.ProvideFactory()
+	v6 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder)
+	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v6)
+	if err != nil {
+		return nil, err
+	}
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, legacyMigrator, dualwriteService, usageStats, tracingService, v3, v4, repositoryFactory)
 	if err != nil {
 		return nil, err
 	}
@@ -808,7 +867,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, ofrepAPIBuilder, dependencyRegisterer)
+	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, provisioningAPIBuilder, ofrepAPIBuilder, dependencyRegisterer)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
@@ -824,16 +883,20 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	}
 	ossUserProtectionImpl := authinfoimpl.ProvideOSSUserProtectionService()
 	registration := authnimpl.ProvideRegistration(cfg, authnService, orgService, userAuthTokenService, acimplService, permissionRegistry, apikeyService, userService, authService, ossUserProtectionImpl, loginattemptimplService, quotaService, authinfoimplService, renderingService, featureToggles, oauthtokenService, socialService, remoteCache, ldapImpl, ossImpl, tracingService, tempuserService, notificationService)
-	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, searchService, entityEventsService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, metricService, keyRetriever, angulardetectorsproviderDynamic, apiserverService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, serviceImpl, serviceAccountsProxy, sanitizerProvider, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration)
+	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, searchService, entityEventsService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, metricService, keyRetriever, angulardetectorsproviderDynamic, apiserverService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, worker, serviceImpl, serviceAccountsProxy, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration)
 	usageStatsProvidersRegistry := usagestatssvcs.ProvideUsageStatsProvidersRegistry(acimplService, userService)
-	server, err := New(opts, cfg, httpServer, acimplService, provisioningServiceImpl, backgroundServiceRegistry, usageStatsProvidersRegistry, statscollectorService, registerer)
+	server, err := New(opts, cfg, httpServer, acimplService, provisioningServiceImpl, backgroundServiceRegistry, usageStatsProvidersRegistry, statscollectorService, tracingService, registerer)
 	if err != nil {
 		return nil, err
 	}
 	return server, nil
 }
 
-func InitializeForTest(t sqlutil.ITestDB, testingT interface {
+var (
+	_wireValue = []decrypt.ExtraOwnerDecrypter(nil)
+)
+
+func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interface {
 	Cleanup(func())
 	mock.TestingT
 }, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
@@ -891,7 +954,10 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	hooksService := hooks.ProvideService()
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
-	envVarsProvider := pluginconfig.NewEnvVarsProvider(pluginInstanceCfg, licensingService)
+	registerer := metrics.ProvideRegistererForTest()
+	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
+	defaultSettingsProvider := pluginsso.ProvideDefaultSettingsProvider(ssosettingsimplService)
+	envVarsProvider := pluginconfig.NewEnvVarsProvider(pluginInstanceCfg, licensingService, defaultSettingsProvider)
 	inMemory := registry.ProvideService()
 	rendererManager, err := renderer.ProvideService(pluginManagementCfg, envVarsProvider, inMemory, tracingService)
 	if err != nil {
@@ -909,10 +975,8 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	keyRetriever := dynamic.ProvideService(cfg, keystoreService)
 	keyretrieverService := keyretriever.ProvideService(keyRetriever)
 	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
-	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
-	localProvider := pluginassets.ProvideService()
-	assetpathService := assetpath.ProvideService(pluginManagementCfg, pluginscdnService, localProvider)
-	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, assetpathService)
+	localProvider := pluginassets.NewLocalProvider()
+	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, localProvider)
 	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
 	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
 	angularpatternsstoreService := angularpatternsstore.ProvideService(kvStore)
@@ -931,19 +995,23 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	cloudwatchService := cloudwatch.ProvideService()
 	cloudmonitoringService := cloudmonitoring.ProvideService(httpclientProvider)
 	elasticsearchService := elasticsearch.ProvideService(httpclientProvider)
-	graphiteService := graphite.ProvideService(httpclientProvider, tracingService)
-	influxdbService := influxdb.ProvideService(httpclientProvider, featureToggles)
 	tracer := otelTracer()
+	graphiteService := graphite.ProvideService(httpclientProvider, tracer)
+	influxdbService := influxdb.ProvideService(httpclientProvider)
 	lokiService := loki.ProvideService(httpclientProvider, tracer)
 	opentsdbService := opentsdb.ProvideService(httpclientProvider)
 	prometheusService := prometheus.ProvideService(httpclientProvider)
-	tempoService := tempo.ProvideService(httpclientProvider)
+	tempoService := tempo.ProvideService(httpclientProvider, tracer)
 	testdatasourceService := testdatasource.ProvideService()
-	postgresService := postgres.ProvideService(cfg, featureToggles)
+	postgresService := postgres.ProvideService(cfg)
 	mysqlService := mysql.ProvideService()
 	mssqlService := mssql.ProvideService(cfg)
 	entityEventsService := store.ProvideEntityEventsService(cfg, sqlStore, featureToggles)
-	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return nil, err
@@ -969,10 +1037,8 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	dashboardFolderStoreImpl := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	publicDashboardStoreImpl := database3.ProvideStore(sqlStore, cfg, featureToggles)
 	publicDashboardServiceWrapperImpl := service3.ProvideServiceWrapper(publicDashboardStoreImpl)
-	registerer := metrics.ProvideRegistererForTest()
 	apikeyService, err := apikeyimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return nil, err
@@ -983,25 +1049,67 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	client, err := authz.ProvideZanzana(cfg, sqlStore, tracingService, featureToggles, registerer)
+	zanzanaClient, err := authz.ProvideZanzana(cfg, sqlStore, tracingService, featureToggles, registerer)
 	if err != nil {
 		return nil, err
 	}
 	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
-	accessClient, err := authz.ProvideAuthZClient(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, client, eventualRestConfigProvider)
+	accessClient, err := authz.ProvideAuthZClient(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, zanzanaClient, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
 	ossDashboardStats := search.ProvideDashboardStats()
 	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
+	databaseDatabase := database4.ProvideDatabase(sqlStore, tracer)
+	clockClock := clock.ProvideClock()
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clockClock, databaseDatabase, tracer, registerer)
+	if err != nil {
+		return nil, err
+	}
+	secureValueValidator := validator.ProvideSecureValueValidator()
+	secureValueMutator := mutator.ProvideSecureValueMutator()
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, tracer, registerer)
+	if err != nil {
+		return nil, err
+	}
+	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
+	if err != nil {
+		return nil, err
+	}
+	dataKeyStorage, err := encryption.ProvideDataKeyStorage(databaseDatabase, tracer, registerer)
+	if err != nil {
+		return nil, err
+	}
+	cipher, err := service4.ProvideAESGCMCipherService(tracer, usageStats)
+	if err != nil {
+		return nil, err
+	}
+	providerConfig, err := kmsproviders.ProvideOSSKMSProviders(cfg, cipher)
+	if err != nil {
+		return nil, err
+	}
+	encryptionManager, err := manager2.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig)
+	if err != nil {
+		return nil, err
+	}
+	ossKeeperService, err := secretkeeper.ProvideService(tracer, encryptedValueStorage, encryptionManager, registerer)
+	if err != nil {
+		return nil, err
+	}
+	secureValueService := service5.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, secureValueValidator, secureValueMutator, keeperMetadataStorage, ossKeeperService, registerer)
+	inlineSecureValueSupport, err := inline.ProvideInlineSecureValueService(cfg, tracer, secureValueService, accessClient)
+	if err != nil {
+		return nil, err
+	}
 	options := &unified.Options{
-		Cfg:      cfg,
-		Features: featureToggles,
-		DB:       sqlStore,
-		Tracer:   tracingService,
-		Reg:      registerer,
-		Authzc:   accessClient,
-		Docs:     documentBuilderSupplier,
+		Cfg:          cfg,
+		Features:     featureToggles,
+		DB:           sqlStore,
+		Tracer:       tracingService,
+		Reg:          registerer,
+		Authzc:       accessClient,
+		Docs:         documentBuilderSupplier,
+		SecureValues: inlineSecureValueSupport,
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
@@ -1009,9 +1117,12 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	dualwriteService := dualwrite.ProvideService(featureToggles, registerer, kvStore, cfg)
+	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg)
+	if err != nil {
+		return nil, err
+	}
 	sortService := sort.ProvideService()
-	folderimplService := folderimpl.ProvideService(folderStoreImpl, accessControl, inProcBus, dashboardsStore, dashboardFolderStoreImpl, userService, sqlStore, featureToggles, bundleregistryService, publicDashboardServiceWrapperImpl, cfg, registerer, tracer, resourceClient, dualwriteService, sortService, eventualRestConfigProvider)
+	folderimplService := folderimpl.ProvideService(folderStoreImpl, accessControl, inProcBus, dashboardsStore, userService, sqlStore, featureToggles, bundleregistryService, publicDashboardServiceWrapperImpl, cfg, registerer, tracer, resourceClient, dualwriteService, sortService, eventualRestConfigProvider)
 	searchService := searchV2.ProvideService(cfg, sqlStore, entityEventsService, acimplService, tracingService, featureToggles, orgService, userService, folderimplService)
 	systemUsers := store.ProvideSystemUsersService()
 	storageService, err := store.ProvideService(sqlStore, featureToggles, cfg, quotaService, systemUsers)
@@ -1031,22 +1142,23 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	serviceAccountsService, err := manager2.ProvideServiceAccountsService(cfg, usageStats, sqlStore, apikeyService, kvStore, userService, orgService, acimplService, serviceAccountPermissionsService, serverLockService)
+	serviceAccountsService, err := manager3.ProvideServiceAccountsService(cfg, usageStats, sqlStore, apikeyService, kvStore, userService, orgService, acimplService, serviceAccountPermissionsService, serverLockService)
 	if err != nil {
 		return nil, err
 	}
 	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, sqlStore, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
 	registryRegistry := registry2.ProvideExtSvcRegistry(cfg, extSvcAccountsService, serverLockService, featureToggles)
-	service13 := service4.ProvideService(sqlStore, secretsService)
+	service13 := service6.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service13)
-	initialize := pipeline.ProvideInitializationStage(pluginManagementCfg, inMemory, providerService, processService, serviceregistrationService, acimplService, actionSetService, envVarsProvider, tracingService)
+	noop := provisionedplugins.NewNoop()
+	initialize := pipeline.ProvideInitializationStage(pluginManagementCfg, inMemory, providerService, processService, serviceregistrationService, acimplService, actionSetService, envVarsProvider, tracingService, noop)
 	terminate, err := pipeline.ProvideTerminationStage(pluginManagementCfg, inMemory, processService)
 	if err != nil {
 		return nil, err
 	}
 	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
-	pluginstoreService, err := pluginstore.ProvideService(inMemory, sourcesService, loaderLoader)
+	pluginstoreService, err := pluginstore.ProvideService(inMemory, sourcesService, loaderLoader, featureToggles)
 	if err != nil {
 		return nil, err
 	}
@@ -1056,12 +1168,13 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	dashboardServiceImpl, err := service5.ProvideDashboardServiceImpl(cfg, dashboardsStore, dashboardFolderStoreImpl, featureToggles, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, eventualRestConfigProvider, userService, quotaService, orgService, publicDashboardServiceWrapperImpl, resourceClient, dualwriteService, sortService, serverLockService, kvStore)
+	k8sHandlerWithFallback := client.ProvideK8sClientWithFallback(cfg, eventualRestConfigProvider, dashboardsStore, userService, resourceClient, featureToggles, dualwriteService, sortService, registerer)
+	dashboardServiceImpl, err := service7.ProvideDashboardServiceImpl(cfg, dashboardsStore, featureToggles, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, quotaService, orgService, publicDashboardServiceWrapperImpl, dualwriteService, serverLockService, kvStore, k8sHandlerWithFallback)
 	if err != nil {
 		return nil, err
 	}
-	pluginService := service5.ProvideDashboardPluginService(featureToggles, dashboardServiceImpl)
-	service14 := service6.ProvideService(fileStoreManager, pluginService)
+	pluginService := service7.ProvideDashboardPluginService(featureToggles, dashboardServiceImpl)
+	service14 := service8.ProvideService(fileStoreManager, pluginService)
 	oauthtokentestService := oauthtokentest.ProvideService()
 	ossCachingService := caching.ProvideCachingService()
 	middlewareHandler, err := pluginsintegration.ProvideClientWithMiddlewares(cfg, inMemory, oauthtokentestService, tracingService, ossCachingService, featureToggles, registerer)
@@ -1073,19 +1186,19 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	pluginInstaller := manager3.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService)
+	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService)
 	ossProvider := guardian.ProvideGuardian()
-	cacheServiceImpl := service7.ProvideCacheService(cacheService, sqlStore, ossProvider)
+	cacheServiceImpl := service9.ProvideCacheService(cacheService, sqlStore, ossProvider)
 	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(sqlStore, serverLockService, quotaService, secretsService, cfg, tracingService, featureToggles)
 	if err != nil {
 		return nil, err
 	}
 	shortURLService := shorturlimpl.ProvideService(sqlStore)
-	queryHistoryService := queryhistory.ProvideService(cfg, sqlStore, routeRegisterImpl, accessControl)
-	dashboardService := service5.ProvideDashboardService(featureToggles, dashboardServiceImpl)
-	dashverService := dashverimpl.ProvideService(cfg, sqlStore, dashboardService, dashboardsStore, featureToggles, eventualRestConfigProvider, userService, resourceClient, dualwriteService, sortService)
-	dashboardSnapshotStore := database4.ProvideStore(sqlStore, cfg)
-	serviceImpl := service8.ProvideService(dashboardSnapshotStore, secretsService, dashboardService)
+	queryHistoryService := queryhistory.ProvideService(cfg, sqlStore, routeRegisterImpl, accessControl, featureToggles, eventualRestConfigProvider)
+	dashboardService := service7.ProvideDashboardService(featureToggles, dashboardServiceImpl)
+	dashverService := dashverimpl.ProvideService(cfg, sqlStore, dashboardService, featureToggles, k8sHandlerWithFallback)
+	dashboardSnapshotStore := database5.ProvideStore(sqlStore, cfg)
+	serviceImpl := service10.ProvideService(dashboardSnapshotStore, secretsService, dashboardService)
 	dBstore, err := store2.ProvideDBStore(cfg, featureToggles, sqlStore, folderimplService, dashboardService, accessControl, inProcBus)
 	if err != nil {
 		return nil, err
@@ -1093,18 +1206,18 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	deleteExpiredService := image.ProvideDeleteExpiredService(dBstore)
 	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
-	cleanUpService := cleanup.ProvideService(cfg, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dashboardService, dBstore)
 	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
 	if err != nil {
 		return nil, err
 	}
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
-	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg)
+	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
-	service15, err := service7.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider)
+	service15, err := service9.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider)
 	if err != nil {
 		return nil, err
 	}
+	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService, teamService, service15)
 	correlationsService, err := correlations.ProvideService(sqlStore, routeRegisterImpl, service15, accessControl, inProcBus, quotaService, cfg)
 	if err != nil {
 		return nil, err
@@ -1117,17 +1230,19 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	dashboardProvisioningService := service5.ProvideDashboardProvisioningService(featureToggles, dashboardServiceImpl)
+	dashboardProvisioningService := service7.ProvideDashboardProvisioningService(featureToggles, dashboardServiceImpl)
 	receiverPermissionsService, err := ossaccesscontrol.ProvideReceiverPermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
 	}
-	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, cfg, sqlStore, pluginstoreService, dBstore, serviceService, notificationService, dashboardProvisioningService, service15, correlationsService, dashboardService, folderimplService, service13, searchService, quotaService, secretsService, orgService, receiverPermissionsService, tracingService, dualwriteService)
+	azurePromMigrationService := promtypemigration.ProvideAzurePromMigrationService(service15, inMemory, repoManager, pluginInstaller, cfg)
+	amazonPromMigrationService := promtypemigration.ProvideAmazonPromMigrationService(service15, inMemory, repoManager, pluginInstaller, cfg)
+	promTypeMigrationProviderImpl := promtypemigration.ProvidePromTypeMigrationProvider(serverLockService, featureToggles, azurePromMigrationService, amazonPromMigrationService)
+	provisioningServiceImpl, err := provisioning.ProvideService(accessControl, cfg, sqlStore, pluginstoreService, dBstore, serviceService, notificationService, dashboardProvisioningService, service15, correlationsService, dashboardService, folderimplService, service13, searchService, quotaService, secretsService, orgService, receiverPermissionsService, tracingService, dualwriteService, promTypeMigrationProviderImpl)
 	if err != nil {
 		return nil, err
 	}
 	orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
-	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
 	socialService := socialimpl.ProvideService(cfg, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
 	loginStore := authinfoimpl.ProvideStore(sqlStore, secretsService)
 	authinfoimplService := authinfoimpl.ProvideService(loginStore, remoteCache, secretsService)
@@ -1136,11 +1251,10 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	starService := starimpl.ProvideService(sqlStore)
 	searchSearchService := search2.ProvideService(cfg, sqlStore, starService, dashboardService, folderimplService, featureToggles, sortService)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service15, service13, requestConfigProvider)
-	mtDatasourceClientBuilder := mtdsclient.NewNullMTDatasourceClientBuilder()
-	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, mtDatasourceClientBuilder)
-	queryServiceImpl := query.ProvideService(cfg, cacheServiceImpl, exprService, ossDataSourceRequestValidator, middlewareHandler, plugincontextProvider, mtDatasourceClientBuilder)
-	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, dBstore, dashboardService, registerer)
-	grafanaLive, err := live.ProvideService(plugincontextProvider, cfg, routeRegisterImpl, pluginstoreService, middlewareHandler, cacheService, cacheServiceImpl, sqlStore, secretsService, usageStats, queryServiceImpl, featureToggles, accessControl, dashboardService, repositoryImpl, orgService, eventualRestConfigProvider)
+	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()
+	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, qsDatasourceClientBuilder)
+	queryServiceImpl := query.ProvideService(cfg, cacheServiceImpl, exprService, ossDataSourceRequestValidator, middlewareHandler, plugincontextProvider, qsDatasourceClientBuilder)
+	grafanaLive, err := live.ProvideService(plugincontextProvider, cfg, routeRegisterImpl, pluginstoreService, middlewareHandler, cacheService, cacheServiceImpl, sqlStore, secretsService, usageStats, queryServiceImpl, featureToggles, accessControl, dashboardService, orgService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1151,6 +1265,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	logger := loggermw.Provide(cfg, featureToggles)
 	notificationServiceMock := notifications.MockNotificationService()
 	ngAlert := metrics2.ProvideServiceForTest()
+	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, dBstore, dashboardService, registerer)
 	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service15, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, quotaService, secretsService, notificationServiceMock, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, httpclientProvider, plugincontextProvider, receiverPermissionsService, userService)
 	if err != nil {
 		return nil, err
@@ -1164,10 +1279,9 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	noop := managedplugins.NewNoop()
-	provisionedpluginsNoop := provisionedplugins.NewNoop()
+	managedpluginsNoop := managedplugins.NewNoop()
 	preinstallImpl := pluginchecker.ProvidePreinstall(cfg)
-	plugincheckerService := pluginchecker.ProvideService(noop, provisionedpluginsNoop, preinstallImpl)
+	plugincheckerService := pluginchecker.ProvideService(managedpluginsNoop, noop, preinstallImpl)
 	pluginsService, err := updatemanager.ProvidePluginsService(cfg, pluginstoreService, pluginInstaller, tracingService, featureToggles, plugincheckerService)
 	if err != nil {
 		return nil, err
@@ -1178,6 +1292,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
+	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
 	pluginassetsService := pluginassets2.ProvideService(pluginManagementCfg, pluginscdnService, signatureSignature, pluginstoreService)
 	avatarCacheServer := avatar.ProvideAvatarCacheServer(cfg)
 	prefService := prefimpl.ProvideService(sqlStore, cfg)
@@ -1201,10 +1316,10 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	authnService := authnimpl.ProvideAuthnService(authnimplService)
 	navtreeService := navtreeimpl.ProvideService(cfg, accessControl, pluginstoreService, service13, starService, featureToggles, dashboardService, acimplService, kvStore, apikeyService, ossLicensingService, authnService)
 	searchHTTPService := searchV2.ProvideSearchHTTPService(searchService)
-	statsService := statsimpl.ProvideService(cfg, sqlStore, dashboardService, folderimplService, orgService, featureToggles)
+	statsService := statsimpl.ProvideService(cfg, sqlStore, dashboardService, folderimplService, orgService, resourceClient, featureToggles)
 	gatherer := metrics.ProvideGathererForTest(registerer)
-	apiAPI := api3.ProvideApi(starService, dashboardService)
-	anonUserLimitValidatorImpl := validator.ProvideAnonUserLimitValidator()
+	apiAPI := api3.ProvideApi(cfg, featureToggles, starService, eventualRestConfigProvider)
+	anonUserLimitValidatorImpl := validator2.ProvideAnonUserLimitValidator()
 	anonDeviceService := anonimpl.ProvideAnonymousDeviceService(usageStats, authnService, sqlStore, cfg, orgService, serverLockService, accessControl, routeRegisterImpl, anonUserLimitValidatorImpl)
 	signingkeysimplService, err := signingkeysimpl.ProvideEmbeddedSigningKeysService(sqlStore, secretsService, remoteCache, routeRegisterImpl)
 	if err != nil {
@@ -1216,11 +1331,11 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	}
 	idimplService := idimpl.ProvideService(cfg, localSigner, remoteCache, authnService, registerer, tracer)
 	verifier := userimpl.ProvideVerifier(cfg, userService, tempuserService, notificationServiceMock, idimplService)
-	httpServer, err := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, ossDataSourceRequestValidator, pluginstoreService, service14, pluginstoreService, middlewareHandler, pluginerrsStore, pluginInstaller, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, shortURLService, queryHistoryService, correlationsService, remoteCache, provisioningServiceImpl, accessControl, dataSourceProxyService, searchSearchService, grafanaLive, gateway, plugincontextProvider, contexthandlerContextHandler, logger, featureToggles, alertNG, libraryPanelService, libraryElementService, quotaService, socialService, tracingService, serviceService, grafanaService, pluginsService, ossService, service15, queryServiceImpl, filestoreService, serviceAccountsProxy, pluginassetsService, authinfoimplService, storageService, notificationServiceMock, dashboardService, dashboardProvisioningService, folderimplService, ossProvider, serviceImpl, service13, avatarCacheServer, prefService, folderPermissionsService, dashboardPermissionsService, dashverService, starService, csrfCSRF, noop, playlistService, apikeyService, kvStore, secretsMigrator, secretsService, secretMigrationProviderImpl, secretsKVStore, apiApi, userService, tempuserService, loginattemptimplService, orgService, deletionService, teamService, acimplService, navtreeService, repositoryImpl, tagimplService, searchHTTPService, oauthtokentestService, statsService, authnService, pluginscdnService, gatherer, apiAPI, registerer, eventualRestConfigProvider, anonDeviceService, verifier, preinstallImpl)
+	httpServer, err := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, ossDataSourceRequestValidator, pluginstoreService, service14, pluginstoreService, middlewareHandler, pluginerrsStore, pluginInstaller, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, shortURLService, queryHistoryService, correlationsService, remoteCache, provisioningServiceImpl, accessControl, dataSourceProxyService, searchSearchService, grafanaLive, gateway, plugincontextProvider, contexthandlerContextHandler, logger, featureToggles, alertNG, libraryPanelService, libraryElementService, quotaService, socialService, tracingService, serviceService, grafanaService, pluginsService, ossService, service15, queryServiceImpl, filestoreService, serviceAccountsProxy, pluginassetsService, authinfoimplService, storageService, notificationServiceMock, dashboardService, dashboardProvisioningService, folderimplService, ossProvider, serviceImpl, service13, avatarCacheServer, prefService, folderPermissionsService, dashboardPermissionsService, dashverService, starService, csrfCSRF, managedpluginsNoop, playlistService, apikeyService, kvStore, secretsMigrator, secretsService, secretMigrationProviderImpl, secretsKVStore, apiApi, userService, tempuserService, loginattemptimplService, orgService, deletionService, teamService, acimplService, navtreeService, repositoryImpl, tagimplService, searchHTTPService, oauthtokentestService, statsService, authnService, pluginscdnService, gatherer, apiAPI, registerer, eventualRestConfigProvider, anonDeviceService, verifier, preinstallImpl)
 	if err != nil {
 		return nil, err
 	}
-	validatorService, err := validator2.ProvideService(pluginstoreService)
+	validatorService, err := validator3.ProvideService(pluginstoreService)
 	if err != nil {
 		return nil, err
 	}
@@ -1242,16 +1357,40 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service15, cacheServiceImpl, plugincontextProvider)
+	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service15, cacheServiceImpl, plugincontextProvider, cfg)
 	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
 	playlistAppInstaller, err := playlist.RegisterAppInstaller(playlistService, cfg, featureToggles)
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(playlistAppInstaller)
+	pluginsAppInstaller, err := plugins.RegisterAppInstaller(cfg, featureToggles)
+	if err != nil {
+		return nil, err
+	}
+	shortURLAppInstaller, err := shorturl.RegisterAppInstaller(cfg, shortURLService)
+	if err != nil {
+		return nil, err
+	}
+	alertingRulesAppInstaller, err := rules.RegisterAppInstaller(cfg, alertNG)
+	if err != nil {
+		return nil, err
+	}
+	appInstaller, err := correlations2.RegisterAppInstaller(cfg, featureToggles, correlationsService)
+	if err != nil {
+		return nil, err
+	}
+	alertingNotificationsAppInstaller, err := notifications2.RegisterAppInstaller(cfg, alertNG)
+	if err != nil {
+		return nil, err
+	}
+	logsDrilldownAppInstaller, err := logsdrilldown.RegisterAppInstaller(cfg, featureToggles)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, pluginsAppInstaller, shortURLAppInstaller, alertingRulesAppInstaller, appInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics)
 	if err != nil {
 		return nil, err
 	}
@@ -1263,18 +1402,17 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, client, sqlStore, serverLockService, folderimplService)
+	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, zanzanaClient, sqlStore, serverLockService, folderimplService)
 	investigationsAppProvider := investigations.RegisterApp(cfg)
-	checkregistryService := checkregistry.ProvideService(service15, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, noop, provisionedpluginsNoop, ssosettingsimplService, cfg, pluginerrsStore)
+	checkregistryService := checkregistry.ProvideService(service15, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, managedpluginsNoop, noop, ssosettingsimplService, cfg, pluginerrsStore)
 	advisorAppProvider := advisor2.RegisterApp(checkregistryService, cfg)
-	alertingNotificationsAppProvider := notifications2.RegisterApp(cfg, alertNG)
-	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
+	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, advisorAppProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
-	importDashboardService := service9.ProvideService(routeRegisterImpl, quotaService, service14, pluginstoreService, libraryPanelService, dashboardService, accessControl, folderimplService, featureToggles)
-	dashboardUpdater := service6.ProvideDashboardUpdater(inProcBus, pluginstoreService, service14, importDashboardService, service13, pluginService, dashboardService)
-	sanitizerProvider := sanitizer.ProvideService(renderingService)
+	importDashboardService := service11.ProvideService(routeRegisterImpl, quotaService, service14, pluginstoreService, libraryPanelService, dashboardService, accessControl, folderimplService, featureToggles)
+	dashboardUpdater := service8.ProvideDashboardUpdater(inProcBus, pluginstoreService, service14, importDashboardService, service13, pluginService, dashboardService)
+	worker := garbagecollectionworker.ProvideWorker(cfg, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
 	healthService, err := grpcserver.ProvideHealthService(cfg, grpcserverProvider)
 	if err != nil {
 		return nil, err
@@ -1285,78 +1423,49 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	}
 	ossGroups := ldap.ProvideGroupsService()
 	identitySynchronizer := authnimpl.ProvideIdentitySynchronizer(authnimplService)
-	ldapImpl := service10.ProvideService(cfg, featureToggles, ssosettingsimplService)
+	ldapImpl := service12.ProvideService(cfg, featureToggles, ssosettingsimplService)
 	apiService := api4.ProvideService(cfg, routeRegisterImpl, accessControl, userService, authinfoimplService, ossGroups, identitySynchronizer, orgService, ldapImpl, userAuthTokenService, bundleregistryService)
-	dashboardsAPIBuilder := dashboard.RegisterAPIService(cfg, featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, dashboardFolderStoreImpl, libraryPanelService, eventualRestConfigProvider, userService)
+	dashboardsAPIBuilder := dashboard.RegisterAPIService(cfg, featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService)
 	snapshotsAPIBuilder := dashboardsnapshot.RegisterAPIService(serviceImpl, apiserverService, cfg, featureToggles, sqlStore, registerer)
-	featureFlagAPIBuilder := featuretoggle.RegisterAPIService(featureManager, accessControl, apiserverService, cfg, registerer)
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, accessControl, registerer)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(configProvider, featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, accessControl, registerer)
 	if err != nil {
 		return nil, err
 	}
-	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, registerer, resourceClient)
+	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl, storageBackendImpl)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, storageBackendImpl, storageBackendImpl)
 	if err != nil {
 		return nil, err
 	}
-	legacyDataSourceLookup := service7.ProvideLegacyDataSourceLookup(service15)
+	legacyDataSourceLookup := service9.ProvideLegacyDataSourceLookup(service15)
 	queryAPIBuilder, err := query2.RegisterAPIService(cfg, featureToggles, apiserverService, service15, pluginstoreService, accessControl, middlewareHandler, plugincontextProvider, registerer, tracingService, legacyDataSourceLookup, exprService)
 	if err != nil {
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	factory := github.ProvideFactory()
-	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl, featureToggles)
-	databaseDatabase := database5.ProvideDatabase(sqlStore, tracer)
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(databaseDatabase, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
-	if err != nil {
-		return nil, err
-	}
-	dataKeyStorage, err := encryption.ProvideDataKeyStorage(databaseDatabase, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	cipher, err := service11.ProvideAESGCMCipherService(tracer, usageStats)
-	if err != nil {
-		return nil, err
-	}
-	providerConfig, err := kmsproviders.ProvideOSSKMSProviders(cfg, cipher)
-	if err != nil {
-		return nil, err
-	}
-	encryptionManager, err := manager4.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig)
-	if err != nil {
-		return nil, err
-	}
-	ossKeeperService, err := secretkeeper.ProvideService(tracer, encryptedValueStorage, encryptionManager, registerer)
-	if err != nil {
-		return nil, err
-	}
-	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService, registerer)
-	secureValueValidator := validator3.ProvideSecureValueValidator()
-	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
-	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
+	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, starService, userService, apiserverService)
+	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, dashboardPermissionsService, accessControl, featureToggles)
+	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
+	v3 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
+	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
+	v4 := extras.ProvideExtraWorkers(pullRequestWorker)
+	v5 := _wireValue
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v5)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
 		return nil, err
 	}
-	v3, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
+	decryptService, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
 	if err != nil {
 		return nil, err
 	}
-	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, v3, cfg)
-	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, repositorySecrets, factory, renderingService, resourceClient, eventualRestConfigProvider)
-	v4 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v4)
+	factory := github.ProvideFactory()
+	v6 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder)
+	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v6)
+	if err != nil {
+		return nil, err
+	}
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, legacyMigrator, dualwriteService, usageStats, tracingService, v3, v4, repositoryFactory)
 	if err != nil {
 		return nil, err
 	}
@@ -1369,7 +1478,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, ofrepAPIBuilder, dependencyRegisterer)
+	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, provisioningAPIBuilder, ofrepAPIBuilder, dependencyRegisterer)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
@@ -1385,20 +1494,20 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	}
 	ossUserProtectionImpl := authinfoimpl.ProvideOSSUserProtectionService()
 	registration := authnimpl.ProvideRegistration(cfg, authnService, orgService, userAuthTokenService, acimplService, permissionRegistry, apikeyService, userService, authService, ossUserProtectionImpl, loginattemptimplService, quotaService, authinfoimplService, renderingService, featureToggles, oauthtokentestService, socialService, remoteCache, ldapImpl, ossImpl, tracingService, tempuserService, notificationServiceMock)
-	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, searchService, entityEventsService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, metricService, keyRetriever, angulardetectorsproviderDynamic, apiserverService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, serviceImpl, serviceAccountsProxy, sanitizerProvider, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration)
+	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, searchService, entityEventsService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, metricService, keyRetriever, angulardetectorsproviderDynamic, apiserverService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, worker, serviceImpl, serviceAccountsProxy, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration)
 	usageStatsProvidersRegistry := usagestatssvcs.ProvideUsageStatsProvidersRegistry(acimplService, userService)
-	server, err := New(opts, cfg, httpServer, acimplService, provisioningServiceImpl, backgroundServiceRegistry, usageStatsProvidersRegistry, statscollectorService, registerer)
+	server, err := New(opts, cfg, httpServer, acimplService, provisioningServiceImpl, backgroundServiceRegistry, usageStatsProvidersRegistry, statscollectorService, tracingService, registerer)
 	if err != nil {
 		return nil, err
 	}
-	testEnv, err := ProvideTestEnv(testingT, server, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, resourceClient, idimplService, factory, repositorySecrets)
+	testEnv, err := ProvideTestEnv(testingT, server, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, resourceClient, idimplService, factory, decryptService)
 	if err != nil {
 		return nil, err
 	}
 	return testEnv, nil
 }
 
-func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {
+func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 	featureManager, err := featuremgmt.ProvideManagerService(cfg)
 	if err != nil {
 		return Runner{}, err
@@ -1439,7 +1548,11 @@ func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {
 		return Runner{}, err
 	}
 	secretsMigrator := migrator.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
-	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return Runner{}, err
+	}
+	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
 		return Runner{}, err
@@ -1454,7 +1567,7 @@ func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {
 		return Runner{}, err
 	}
 	tracer := otelTracer()
-	databaseDatabase := database5.ProvideDatabase(sqlStore, tracer)
+	databaseDatabase := database4.ProvideDatabase(sqlStore, tracer)
 	registerer := metrics.ProvideRegisterer()
 	globalDataKeyStorage, err := encryption.ProvideGlobalDataKeyStorage(databaseDatabase, tracer, registerer)
 	if err != nil {
@@ -1472,7 +1585,7 @@ func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {
 	if err != nil {
 		return Runner{}, err
 	}
-	cipher, err := service11.ProvideAESGCMCipherService(tracer, usageStats)
+	cipher, err := service4.ProvideAESGCMCipherService(tracer, usageStats)
 	if err != nil {
 		return Runner{}, err
 	}
@@ -1480,18 +1593,18 @@ func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {
 	if err != nil {
 		return Runner{}, err
 	}
-	encryptionManager, err := manager4.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig)
+	encryptionManager, err := manager2.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig)
 	if err != nil {
 		return Runner{}, err
 	}
-	consolidationService := service12.ProvideConsolidationService(tracer, globalDataKeyStorage, encryptedValueStorage, globalEncryptedValueStorage, encryptionManager)
+	consolidationService := service5.ProvideConsolidationService(tracer, globalDataKeyStorage, encryptedValueStorage, globalEncryptedValueStorage, encryptionManager)
 	runner := NewRunner(cfg, sqlStore, ossImpl, serviceService, featureToggles, secretsService, secretsMigrator, userService, consolidationService)
 	return runner, nil
 }
 
 // InitializeForCLITarget is a simplified set of dependencies for the CLI, used
 // by the server target subcommand to launch specific dskit modules.
-func InitializeForCLITarget(cfg *setting.Cfg) (ModuleRunner, error) {
+func InitializeForCLITarget(ctx context.Context, cfg *setting.Cfg) (ModuleRunner, error) {
 	ossImpl := setting.ProvideProvider(cfg)
 	featureManager, err := featuremgmt.ProvideManagerService(cfg)
 	if err != nil {
@@ -1524,7 +1637,12 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	}
 	hooksService := hooks.ProvideService()
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
-	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, registerer, gatherer, tracingService, ossLicensingService)
+	moduleRegisterer := ProvideNoopModuleRegisterer()
+	storageBackend, err := sql.ProvideStorageBackend(cfg)
+	if err != nil {
+		return nil, err
+	}
+	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, storageBackend)
 	if err != nil {
 		return nil, err
 	}
@@ -1572,7 +1690,7 @@ var withOTelSet = wire.NewSet(
 	otelTracer, grpcserver.ProvideService, interceptors.ProvideAuthenticator,
 )
 
-var wireBasicSet = wire.NewSet(annotationsimpl.ProvideService, wire.Bind(new(annotations.Repository), new(*annotationsimpl.RepositoryImpl)), New, api.ProvideHTTPServer, query.ProvideService, wire.Bind(new(query.Service), new(*query.ServiceImpl)), bus.ProvideBus, wire.Bind(new(bus.Bus), new(*bus.InProcBus)), rendering.ProvideService, wire.Bind(new(rendering.Service), new(*rendering.RenderingService)), routing.ProvideRegister, wire.Bind(new(routing.RouteRegister), new(*routing.RouteRegisterImpl)), hooks.ProvideService, kvstore.ProvideService, localcache.ProvideService, bundleregistry.ProvideService, wire.Bind(new(supportbundles.Service), new(*bundleregistry.Service)), updatemanager.ProvideGrafanaService, updatemanager.ProvidePluginsService, service.ProvideService, wire.Bind(new(usagestats.Service), new(*service.UsageStats)), validator2.ProvideService, legacy.ProvideLegacyMigrator, pluginsintegration.WireSet, dashboards.ProvideFileStoreManager, wire.Bind(new(dashboards.FileStore), new(*dashboards.FileStoreManager)), cloudwatch.ProvideService, cloudmonitoring.ProvideService, azuremonitor.ProvideService, postgres.ProvideService, mysql.ProvideService, mssql.ProvideService, store.ProvideEntityEventsService, dualwrite.ProvideService, httpclientprovider.New, wire.Bind(new(httpclient.Provider), new(*httpclient2.Provider)), serverlock.ProvideService, annotationsimpl.ProvideCleanupService, wire.Bind(new(annotations.Cleaner), new(*annotationsimpl.CleanupServiceImpl)), cleanup.ProvideService, shorturlimpl.ProvideService, wire.Bind(new(shorturls.Service), new(*shorturlimpl.ShortURLService)), queryhistory.ProvideService, wire.Bind(new(queryhistory.Service), new(*queryhistory.QueryHistoryService)), correlations.ProvideService, wire.Bind(new(correlations.Service), new(*correlations.CorrelationsService)), quotaimpl.ProvideService, remotecache.ProvideService, wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)), authinfoimpl.ProvideService, wire.Bind(new(login.AuthInfoService), new(*authinfoimpl.Service)), authinfoimpl.ProvideStore, datasourceproxy.ProvideService, sort.ProvideService, search2.ProvideService, searchV2.ProvideService, searchV2.ProvideSearchHTTPService, store.ProvideService, store.ProvideSystemUsersService, live.ProvideService, pushhttp.ProvideService, contexthandler.ProvideService, service10.ProvideService, wire.Bind(new(service10.LDAP), new(*service10.LDAPImpl)), jwt.ProvideService, wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)), store2.ProvideDBStore, image.ProvideDeleteExpiredService, ngalert.ProvideService, librarypanels.ProvideService, wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)), libraryelements.ProvideService, wire.Bind(new(libraryelements.Service), new(*libraryelements.LibraryElementService)), notifications.ProvideService, notifications.ProvideSmtpService, github.ProvideFactory, tracing.ProvideService, tracing.ProvideTracingConfig, wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)), withOTelSet, testdatasource.ProvideService, api4.ProvideService, opentsdb.ProvideService, socialimpl.ProvideService, influxdb.ProvideService, wire.Bind(new(social.Service), new(*socialimpl.SocialService)), tempo.ProvideService, loki.ProvideService, graphite.ProvideService, prometheus.ProvideService, elasticsearch.ProvideService, pyroscope.ProvideService, parca.ProvideService, zipkin.ProvideService, jaeger.ProvideService, service7.ProvideCacheService, wire.Bind(new(datasources.CacheService), new(*service7.CacheServiceImpl)), service2.ProvideEncryptionService, wire.Bind(new(encryption2.Internal), new(*service2.Service)), manager.ProvideSecretsService, wire.Bind(new(secrets2.Service), new(*manager.SecretsService)), database.ProvideSecretsStore, wire.Bind(new(secrets2.Store), new(*database.SecretsStoreImpl)), grafanads.ProvideService, wire.Bind(new(dashboardsnapshots.Store), new(*database4.DashboardSnapshotStore)), database4.ProvideStore, wire.Bind(new(dashboardsnapshots.Service), new(*service8.ServiceImpl)), service8.ProvideService, service7.ProvideService, wire.Bind(new(datasources.DataSourceService), new(*service7.Service)), service7.ProvideLegacyDataSourceLookup, retriever.ProvideService, wire.Bind(new(serviceaccounts.ServiceAccountRetriever), new(*retriever.Service)), ossaccesscontrol.ProvideServiceAccountPermissions, wire.Bind(new(accesscontrol.ServiceAccountPermissionsService), new(*ossaccesscontrol.ServiceAccountPermissionsService)), manager2.ProvideServiceAccountsService, proxy.ProvideServiceAccountsProxy, wire.Bind(new(serviceaccounts.Service), new(*proxy.ServiceAccountsProxy)), mtdsclient.NewNullMTDatasourceClientBuilder, expr.ProvideService, featuremgmt.ProvideManagerService, featuremgmt.ProvideToggles, service5.ProvideDashboardServiceImpl, wire.Bind(new(dashboards2.PermissionsRegistrationService), new(*service5.DashboardServiceImpl)), service5.ProvideDashboardService, service5.ProvideDashboardProvisioningService, service5.ProvideDashboardPluginService, database2.ProvideDashboardStore, folderimpl.ProvideService, wire.Bind(new(folder.Service), new(*folderimpl.Service)), folderimpl.ProvideStore, wire.Bind(new(folder.Store), new(*folderimpl.FolderStoreImpl)), folderimpl.ProvideDashboardFolderStore, wire.Bind(new(folder.FolderStore), new(*folderimpl.DashboardFolderStoreImpl)), service9.ProvideService, wire.Bind(new(dashboardimport.Service), new(*service9.ImportDashboardService)), service6.ProvideService, wire.Bind(new(plugindashboards.Service), new(*service6.Service)), service6.ProvideDashboardUpdater, sanitizer.ProvideService, kvstore2.ProvideService, avatar.ProvideAvatarCacheServer, statscollector.ProvideService, csrf.ProvideCSRFFilter, wire.Bind(new(csrf.Service), new(*csrf.CSRF)), ossaccesscontrol.ProvideTeamPermissions, wire.Bind(new(accesscontrol.TeamPermissionsService), new(*ossaccesscontrol.TeamPermissionsService)), ossaccesscontrol.ProvideFolderPermissions, wire.Bind(new(accesscontrol.FolderPermissionsService), new(*ossaccesscontrol.FolderPermissionsService)), ossaccesscontrol.ProvideDashboardPermissions, wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)), ossaccesscontrol.ProvideReceiverPermissionsService, wire.Bind(new(accesscontrol.ReceiverPermissionsService), new(*ossaccesscontrol.ReceiverPermissionsService)), starimpl.ProvideService, playlistimpl.ProvideService, apikeyimpl.ProvideService, dashverimpl.ProvideService, service3.ProvideService, wire.Bind(new(publicdashboards.Service), new(*service3.PublicDashboardServiceImpl)), database3.ProvideStore, wire.Bind(new(publicdashboards.Store), new(*database3.PublicDashboardStoreImpl)), metric.ProvideService, api2.ProvideApi, api3.ProvideApi, userimpl.ProvideService, orgimpl.ProvideService, orgimpl.ProvideDeletionService, statsimpl.ProvideService, grpccontext.ProvideContextHandler, grpcserver.ProvideHealthService, grpcserver.ProvideReflectionService, resolver.ProvideEntityReferenceResolver, teamimpl.ProvideService, teamapi.ProvideTeamAPI, tempuserimpl.ProvideService, loginattemptimpl.ProvideService, wire.Bind(new(loginattempt.Service), new(*loginattemptimpl.Service)), migrations2.ProvideDataSourceMigrationService, migrations2.ProvideSecretMigrationProvider, wire.Bind(new(migrations2.SecretMigrationProvider), new(*migrations2.SecretMigrationProviderImpl)), resourcepermissions.NewActionSetService, wire.Bind(new(accesscontrol.ActionResolver), new(resourcepermissions.ActionSetService)), wire.Bind(new(pluginaccesscontrol.ActionSetRegistry), new(resourcepermissions.ActionSetService)), permreg.ProvidePermissionRegistry, acimpl.ProvideAccessControl, dualwrite2.ProvideZanzanaReconciler, navtreeimpl.ProvideService, wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)), wire.Bind(new(notifications.TempUserStore), new(tempuser.Service)), tagimpl.ProvideService, wire.Bind(new(tag.Service), new(*tagimpl.Service)), authnimpl.ProvideService, authnimpl.ProvideIdentitySynchronizer, authnimpl.ProvideAuthnService, authnimpl.ProvideAuthnServiceAuthenticateOnly, authnimpl.ProvideRegistration, supportbundlesimpl.ProvideService, extsvcaccounts.ProvideExtSvcAccountsService, wire.Bind(new(serviceaccounts.ExtSvcAccountsService), new(*extsvcaccounts.ExtSvcAccountsService)), registry2.ProvideExtSvcRegistry, wire.Bind(new(extsvcauth.ExternalServiceRegistry), new(*registry2.Registry)), anonstore.ProvideAnonDBStore, wire.Bind(new(anonstore.AnonStore), new(*anonstore.AnonDBStore)), loggermw.Provide, slogadapter.Provide, signingkeysimpl.ProvideEmbeddedSigningKeysService, wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)), ssosettingsimpl.ProvideService, wire.Bind(new(ssosettings.Service), new(*ssosettingsimpl.Service)), idimpl.ProvideService, wire.Bind(new(auth.IDService), new(*idimpl.Service)), cloudmigrationimpl.ProvideService, userimpl.ProvideVerifier, connectors.ProvideOrgRoleMapper, wire.Bind(new(user.Verifier), new(*userimpl.Verifier)), authz.WireSet, metadata.ProvideSecureValueMetadataStorage, metadata.ProvideKeeperMetadataStorage, metadata.ProvideDecryptStorage, decrypt.ProvideDecryptAuthorizer, decrypt.ProvideDecryptService, encryption.ProvideDataKeyStorage, encryption.ProvideGlobalDataKeyStorage, encryption.ProvideEncryptedValueStorage, encryption.ProvideGlobalEncryptedValueStorage, service12.ProvideSecureValueService, validator3.ProvideKeeperValidator, validator3.ProvideSecureValueValidator, migrator2.NewWithEngine, database5.ProvideDatabase, wire.Bind(new(contracts.Database), new(*database5.Database)), manager4.ProvideEncryptionManager, service11.ProvideAESGCMCipherService, resource.ProvideStorageMetrics, resource.ProvideIndexMetrics, apiserver.WireSet, apiregistry.WireSet, appregistry.WireSet)
+var wireBasicSet = wire.NewSet(annotationsimpl.ProvideService, wire.Bind(new(annotations.Repository), new(*annotationsimpl.RepositoryImpl)), New, api.ProvideHTTPServer, query.ProvideService, wire.Bind(new(query.Service), new(*query.ServiceImpl)), bus.ProvideBus, wire.Bind(new(bus.Bus), new(*bus.InProcBus)), rendering.ProvideService, wire.Bind(new(rendering.Service), new(*rendering.RenderingService)), routing.ProvideRegister, wire.Bind(new(routing.RouteRegister), new(*routing.RouteRegisterImpl)), hooks.ProvideService, kvstore.ProvideService, localcache.ProvideService, bundleregistry.ProvideService, wire.Bind(new(supportbundles.Service), new(*bundleregistry.Service)), updatemanager.ProvideGrafanaService, updatemanager.ProvidePluginsService, service.ProvideService, wire.Bind(new(usagestats.Service), new(*service.UsageStats)), validator3.ProvideService, legacy.ProvideLegacyMigrator, pluginsintegration.WireSet, dashboards.ProvideFileStoreManager, wire.Bind(new(dashboards.FileStore), new(*dashboards.FileStoreManager)), cloudwatch.ProvideService, cloudmonitoring.ProvideService, azuremonitor.ProvideService, postgres.ProvideService, mysql.ProvideService, mssql.ProvideService, store.ProvideEntityEventsService, dualwrite.ProvideService, httpclientprovider.New, wire.Bind(new(httpclient.Provider), new(*httpclient2.Provider)), serverlock.ProvideService, annotationsimpl.ProvideCleanupService, wire.Bind(new(annotations.Cleaner), new(*annotationsimpl.CleanupServiceImpl)), cleanup.ProvideService, shorturlimpl.ProvideService, wire.Bind(new(shorturls.Service), new(*shorturlimpl.ShortURLService)), queryhistory.ProvideService, wire.Bind(new(queryhistory.Service), new(*queryhistory.QueryHistoryService)), correlations.ProvideService, wire.Bind(new(correlations.Service), new(*correlations.CorrelationsService)), quotaimpl.ProvideService, remotecache.ProvideService, wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)), authinfoimpl.ProvideService, wire.Bind(new(login.AuthInfoService), new(*authinfoimpl.Service)), authinfoimpl.ProvideStore, datasourceproxy.ProvideService, sort.ProvideService, search2.ProvideService, searchV2.ProvideService, searchV2.ProvideSearchHTTPService, store.ProvideService, store.ProvideSystemUsersService, live.ProvideService, pushhttp.ProvideService, contexthandler.ProvideService, service12.ProvideService, wire.Bind(new(service12.LDAP), new(*service12.LDAPImpl)), jwt.ProvideService, wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)), store2.ProvideDBStore, image.ProvideDeleteExpiredService, ngalert.ProvideService, librarypanels.ProvideService, wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)), libraryelements.ProvideService, wire.Bind(new(libraryelements.Service), new(*libraryelements.LibraryElementService)), notifications.ProvideService, notifications.ProvideSmtpService, github.ProvideFactory, tracing.ProvideService, tracing.ProvideTracingConfig, wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)), withOTelSet, testdatasource.ProvideService, api4.ProvideService, opentsdb.ProvideService, socialimpl.ProvideService, influxdb.ProvideService, wire.Bind(new(social.Service), new(*socialimpl.SocialService)), tempo.ProvideService, loki.ProvideService, graphite.ProvideService, prometheus.ProvideService, elasticsearch.ProvideService, pyroscope.ProvideService, parca.ProvideService, zipkin.ProvideService, jaeger.ProvideService, service9.ProvideCacheService, wire.Bind(new(datasources.CacheService), new(*service9.CacheServiceImpl)), service2.ProvideEncryptionService, wire.Bind(new(encryption2.Internal), new(*service2.Service)), manager.ProvideSecretsService, wire.Bind(new(secrets.Service), new(*manager.SecretsService)), database.ProvideSecretsStore, wire.Bind(new(secrets.Store), new(*database.SecretsStoreImpl)), garbagecollectionworker.ProvideWorker, grafanads.ProvideService, wire.Bind(new(dashboardsnapshots.Store), new(*database5.DashboardSnapshotStore)), database5.ProvideStore, wire.Bind(new(dashboardsnapshots.Service), new(*service10.ServiceImpl)), service10.ProvideService, service9.ProvideService, wire.Bind(new(datasources.DataSourceService), new(*service9.Service)), service9.ProvideLegacyDataSourceLookup, retriever.ProvideService, wire.Bind(new(serviceaccounts.ServiceAccountRetriever), new(*retriever.Service)), ossaccesscontrol.ProvideServiceAccountPermissions, wire.Bind(new(accesscontrol.ServiceAccountPermissionsService), new(*ossaccesscontrol.ServiceAccountPermissionsService)), manager3.ProvideServiceAccountsService, proxy.ProvideServiceAccountsProxy, wire.Bind(new(serviceaccounts.Service), new(*proxy.ServiceAccountsProxy)), dsquerierclient.NewNullQSDatasourceClientBuilder, expr.ProvideService, featuremgmt.ProvideManagerService, featuremgmt.ProvideToggles, service7.ProvideDashboardServiceImpl, wire.Bind(new(dashboards2.PermissionsRegistrationService), new(*service7.DashboardServiceImpl)), service7.ProvideDashboardService, service7.ProvideDashboardProvisioningService, service7.ProvideDashboardPluginService, database2.ProvideDashboardStore, folderimpl.ProvideService, wire.Bind(new(folder.Service), new(*folderimpl.Service)), wire.Bind(new(folder.LegacyService), new(*folderimpl.Service)), folderimpl.ProvideStore, wire.Bind(new(folder.Store), new(*folderimpl.FolderStoreImpl)), service11.ProvideService, wire.Bind(new(dashboardimport.Service), new(*service11.ImportDashboardService)), service8.ProvideService, wire.Bind(new(plugindashboards.Service), new(*service8.Service)), service8.ProvideDashboardUpdater, kvstore2.ProvideService, avatar.ProvideAvatarCacheServer, statscollector.ProvideService, csrf.ProvideCSRFFilter, wire.Bind(new(csrf.Service), new(*csrf.CSRF)), ossaccesscontrol.ProvideTeamPermissions, wire.Bind(new(accesscontrol.TeamPermissionsService), new(*ossaccesscontrol.TeamPermissionsService)), ossaccesscontrol.ProvideFolderPermissions, wire.Bind(new(accesscontrol.FolderPermissionsService), new(*ossaccesscontrol.FolderPermissionsService)), ossaccesscontrol.ProvideDashboardPermissions, wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)), ossaccesscontrol.ProvideReceiverPermissionsService, wire.Bind(new(accesscontrol.ReceiverPermissionsService), new(*ossaccesscontrol.ReceiverPermissionsService)), starimpl.ProvideService, playlistimpl.ProvideService, apikeyimpl.ProvideService, dashverimpl.ProvideService, service3.ProvideService, wire.Bind(new(publicdashboards.Service), new(*service3.PublicDashboardServiceImpl)), database3.ProvideStore, wire.Bind(new(publicdashboards.Store), new(*database3.PublicDashboardStoreImpl)), metric.ProvideService, api2.ProvideApi, api3.ProvideApi, userimpl.ProvideService, orgimpl.ProvideService, orgimpl.ProvideDeletionService, statsimpl.ProvideService, grpccontext.ProvideContextHandler, grpcserver.ProvideHealthService, grpcserver.ProvideReflectionService, resolver.ProvideEntityReferenceResolver, teamimpl.ProvideService, teamapi.ProvideTeamAPI, tempuserimpl.ProvideService, loginattemptimpl.ProvideService, wire.Bind(new(loginattempt.Service), new(*loginattemptimpl.Service)), migrations2.ProvideDataSourceMigrationService, migrations2.ProvideSecretMigrationProvider, wire.Bind(new(migrations2.SecretMigrationProvider), new(*migrations2.SecretMigrationProviderImpl)), promtypemigration.ProvideAzurePromMigrationService, promtypemigration.ProvideAmazonPromMigrationService, promtypemigration.ProvidePromTypeMigrationProvider, wire.Bind(new(promtypemigration.PromTypeMigrationProvider), new(*promtypemigration.PromTypeMigrationProviderImpl)), resourcepermissions.NewActionSetService, wire.Bind(new(accesscontrol.ActionResolver), new(resourcepermissions.ActionSetService)), wire.Bind(new(pluginaccesscontrol.ActionSetRegistry), new(resourcepermissions.ActionSetService)), permreg.ProvidePermissionRegistry, acimpl.ProvideAccessControl, dualwrite2.ProvideZanzanaReconciler, navtreeimpl.ProvideService, wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)), wire.Bind(new(notifications.TempUserStore), new(tempuser.Service)), tagimpl.ProvideService, wire.Bind(new(tag.Service), new(*tagimpl.Service)), authnimpl.ProvideService, authnimpl.ProvideIdentitySynchronizer, authnimpl.ProvideAuthnService, authnimpl.ProvideAuthnServiceAuthenticateOnly, authnimpl.ProvideRegistration, supportbundlesimpl.ProvideService, extsvcaccounts.ProvideExtSvcAccountsService, wire.Bind(new(serviceaccounts.ExtSvcAccountsService), new(*extsvcaccounts.ExtSvcAccountsService)), registry2.ProvideExtSvcRegistry, wire.Bind(new(extsvcauth.ExternalServiceRegistry), new(*registry2.Registry)), anonstore.ProvideAnonDBStore, wire.Bind(new(anonstore.AnonStore), new(*anonstore.AnonDBStore)), loggermw.Provide, slogadapter.Provide, signingkeysimpl.ProvideEmbeddedSigningKeysService, wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)), ssosettingsimpl.ProvideService, wire.Bind(new(ssosettings.Service), new(*ssosettingsimpl.Service)), idimpl.ProvideService, wire.Bind(new(auth.IDService), new(*idimpl.Service)), cloudmigrationimpl.ProvideService, userimpl.ProvideVerifier, connectors.ProvideOrgRoleMapper, wire.Bind(new(user.Verifier), new(*userimpl.Verifier)), authz.WireSet, metadata.ProvideSecureValueMetadataStorage, metadata.ProvideKeeperMetadataStorage, metadata.ProvideDecryptStorage, decrypt.ProvideDecryptAuthorizer, wire.Value([]decrypt.ExtraOwnerDecrypter(nil)), decrypt.ProvideDecryptService, inline.ProvideInlineSecureValueService, encryption.ProvideDataKeyStorage, encryption.ProvideGlobalDataKeyStorage, encryption.ProvideEncryptedValueStorage, encryption.ProvideGlobalEncryptedValueStorage, service5.ProvideSecureValueService, validator.ProvideKeeperValidator, validator.ProvideSecureValueValidator, mutator.ProvideKeeperMutator, mutator.ProvideSecureValueMutator, migrator2.NewWithEngine, database4.ProvideDatabase, clock.ProvideClock, wire.Bind(new(contracts.Database), new(*database4.Database)), wire.Bind(new(contracts.Clock), new(*clock.Clock)), manager2.ProvideEncryptionManager, service4.ProvideAESGCMCipherService, resource.ProvideStorageMetrics, resource.ProvideIndexMetrics, apiserver.WireSet, apiregistry.WireSet, appregistry.WireSet, client.ProvideK8sClientWithFallback)
 
 var wireSet = wire.NewSet(
 	wireBasicSet, metrics.WireSet, sqlstore.ProvideService, metrics2.ProvideService, wire.Bind(new(notifications.Service), new(*notifications.NotificationService)), wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)), wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)), wire.Bind(new(db.DB), new(*sqlstore.SQLStore)), prefimpl.ProvideService, oauthtoken.ProvideService, wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)), wire.Bind(new(cleanup.AlertRuleService), new(*store2.DBstore)),

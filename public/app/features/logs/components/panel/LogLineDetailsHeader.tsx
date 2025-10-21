@@ -58,7 +58,8 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
 
   const scrollToLogLine = useCallback(() => {
     focusLogLine?.(log);
-  }, [focusLogLine, log]);
+    reportInteractionWrapper('logs_log_line_details_header_scroll_to_clicked');
+  }, [focusLogLine, log, reportInteractionWrapper]);
 
   const copyLogLine = useCallback(() => {
     copyText(log.entry, containerRef);
@@ -153,7 +154,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
       <div className={styles.icons}>
         {isAssistantAvailable && (
           <IconButton
-            tooltip={t('logs.log-line-details.open-assistant', 'Explain this log line in Assistant')}
+            tooltip={t('logs.log-line-details.open-assistant', 'Explain log line in Assistant')}
             tooltipPlacement="top"
             size="md"
             name="ai-sparkle"
@@ -236,7 +237,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
           />
         )}
         <IconButton
-          name={detailsMode === 'inline' ? 'columns' : 'gf-layout-simple'}
+          name={detailsMode === 'inline' ? 'web-section' : 'gf-layout-simple'}
           tooltip={
             detailsMode === 'inline'
               ? t('logs.log-line-details.sidebar-mode', 'Anchor to the right')
@@ -246,7 +247,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
         />
         <IconButton
           name="times"
-          aria-label={t('logs.log-line-details.close', 'Close log details')}
+          tooltip={t('logs.log-line-details.close', 'Close log details')}
           onClick={closeDetails}
         />
       </div>
@@ -278,7 +279,8 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
   }),
   icons: css({
     display: 'flex',
-    gap: theme.spacing(0.75),
+    gap: theme.spacing(1),
+    paddingLeft: theme.spacing(1),
   }),
   copyLogButton: css({
     padding: 0,

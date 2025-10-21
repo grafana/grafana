@@ -129,6 +129,11 @@ export enum AccessControlAction {
   AlertingProvisioningReadSecrets = 'alert.provisioning.secrets:read',
   AlertingProvisioningRead = 'alert.provisioning:read',
   AlertingProvisioningWrite = 'alert.provisioning:write',
+  AlertingRulesProvisioningRead = 'alert.rules.provisioning:read',
+  AlertingRulesProvisioningWrite = 'alert.rules.provisioning:write',
+  AlertingNotificationsProvisioningRead = 'alert.notifications.provisioning:read',
+  AlertingNotificationsProvisioningWrite = 'alert.notifications.provisioning:write',
+  AlertingProvisioningSetStatus = 'alert.provisioning.provenance:write',
 
   // Alerting receivers actions
   AlertingReceiversPermissionsRead = 'receivers.permissions:read',
@@ -149,10 +154,6 @@ export enum AccessControlAction {
   AlertingTemplatesRead = 'alert.notifications.templates:read',
   AlertingTemplatesWrite = 'alert.notifications.templates:write',
   AlertingTemplatesDelete = 'alert.notifications.templates:delete',
-
-  ActionAPIKeysRead = 'apikeys:read',
-  ActionAPIKeysCreate = 'apikeys:create',
-  ActionAPIKeysDelete = 'apikeys:delete',
 
   PluginsInstall = 'plugins:install',
   PluginsWrite = 'plugins:write',

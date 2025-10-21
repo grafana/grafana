@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 // maybeNotifyProgress will only notify if a certain amount of time has passed
@@ -35,12 +35,12 @@ func maybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
 
 // FIXME: ProgressRecorder should be initialized in the queue
 type JobResourceResult struct {
-	Name     string
-	Resource string
-	Group    string
-	Path     string
-	Action   repository.FileAction
-	Error    error
+	Name   string
+	Group  string
+	Kind   string
+	Path   string
+	Action repository.FileAction
+	Error  error
 }
 
 type jobProgressRecorder struct {
@@ -53,6 +53,7 @@ type jobProgressRecorder struct {
 	resultCount         int
 	errorCount          int
 	errors              []string
+	refURLs             *provisioning.RepositoryURLs
 	notifyImmediatelyFn ProgressFn
 	maybeNotifyFn       ProgressFn
 	summaries           map[string]*provisioning.JobResourceSummary
@@ -72,7 +73,7 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.mu.Lock()
 	r.resultCount++
 
-	logger := logging.FromContext(ctx).With("path", result.Path, "resource", result.Resource, "group", result.Group, "action", result.Action, "name", result.Name)
+	logger := logging.FromContext(ctx).With("path", result.Path, "group", result.Group, "kind", result.Kind, "action", result.Action, "name", result.Name)
 	if result.Error != nil {
 		logger.Error("job resource operation failed", "err", result.Error)
 		if len(r.errors) < 20 {
@@ -115,6 +116,18 @@ func (r *jobProgressRecorder) SetFinalMessage(ctx context.Context, msg string) {
 	r.mu.Unlock()
 
 	logging.FromContext(ctx).Info("job final message", "message", msg)
+}
+
+func (r *jobProgressRecorder) SetRefURLs(ctx context.Context, refURLs *provisioning.RepositoryURLs) {
+	r.mu.Lock()
+	r.refURLs = refURLs
+	r.mu.Unlock()
+
+	if refURLs != nil {
+		logging.FromContext(ctx).Debug("job ref URLs set", "sourceURL", refURLs.SourceURL, "compareURL", refURLs.CompareURL, "newPullRequestURL", refURLs.NewPullRequestURL)
+	} else {
+		logging.FromContext(ctx).Debug("job ref URLs cleared")
+	}
 }
 
 func (r *jobProgressRecorder) SetTotal(ctx context.Context, total int) {
@@ -160,18 +173,19 @@ func (r *jobProgressRecorder) summary() []*provisioning.JobResourceSummary {
 
 func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 	// Note: This method is called from Record() which already holds the lock
-	key := result.Resource + ":" + result.Group
+	key := result.Group + ":" + result.Kind
 	summary, exists := r.summaries[key]
 	if !exists {
 		summary = &provisioning.JobResourceSummary{
-			Resource: result.Resource,
-			Group:    result.Group,
+			Group: result.Group,
+			Kind:  result.Kind,
 		}
 		r.summaries[key] = summary
 	}
 
 	if result.Error != nil {
-		summary.Errors = append(summary.Errors, result.Error.Error())
+		errorMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Error.Error(), result.Path, result.Name, result.Action)
+		summary.Errors = append(summary.Errors, errorMsg)
 		summary.Error++
 	} else {
 		switch result.Action {
@@ -252,6 +266,7 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 
 	jobStatus.Summary = r.summary()
 	jobStatus.Errors = r.errors
+	jobStatus.URLs = r.refURLs
 
 	// Check for errors during execution
 	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {

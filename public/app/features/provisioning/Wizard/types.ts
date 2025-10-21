@@ -26,8 +26,6 @@ export interface ModeOption {
   subtitle: string;
 }
 
-export type StepStatus = 'idle' | 'running' | 'error' | 'success';
-
 export const RepoTypeDisplay: { [key in RepoType]: string } = {
   github: 'GitHub',
   gitlab: 'GitLab',
@@ -41,3 +39,5 @@ export type StepStatusInfo =
   | { status: 'success'; success?: string | StatusInfo }
   | { status: 'error'; error: string | StatusInfo }
   | { status: 'warning'; warning: string | StatusInfo };
+
+export type InstructionAvailability = Extract<RepoType, 'bitbucket' | 'gitlab' | 'github'>;

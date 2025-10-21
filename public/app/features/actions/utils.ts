@@ -1,6 +1,7 @@
 import {
   Action,
   ActionModel,
+  ActionType,
   ActionVariableInput,
   AppEvents,
   DataContextScopedVar,
@@ -10,6 +11,7 @@ import {
   FieldType,
   getFieldDataContextClone,
   InterpolateFunction,
+  InfinityOptions,
   ScopedVars,
   textUtil,
   ValueLinkConfig,
@@ -19,6 +21,13 @@ import { appEvents } from 'app/core/core';
 
 import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
 import { createAbsoluteUrl, RelativeUrl } from '../alerting/unified/utils/url';
+import { getTimeSrv } from '../dashboard/services/TimeSrv';
+import { getNextRequestId } from '../query/state/PanelQueryRunner';
+
+/** @internal */
+export const isInfinityActionWithAuth = (action: Action): boolean => {
+  return (grafanaConfig.featureToggles.vizActionsAuth ?? false) && action.type === ActionType.Infinity;
+};
 
 /** @internal */
 export const genReplaceActionVars = (
@@ -56,102 +65,148 @@ export const getActions = (
     return [];
   }
 
-  const actionModels = actions.map((action: Action) => {
-    const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
-    const actionScopedVars = {
-      ...fieldScopedVars,
-      __dataContext: dataContext,
-    };
+  const actionModels = actions
+    .filter((action) => {
+      return action.type === ActionType.Fetch || isInfinityActionWithAuth(action);
+    })
+    .map((action: Action) => {
+      const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
+      const actionScopedVars = {
+        ...fieldScopedVars,
+        __dataContext: dataContext,
+      };
 
-    const boundReplaceVariables: InterpolateFunction = (value, scopedVars, format) => {
-      return replaceVariables(value, { ...actionScopedVars, ...scopedVars }, format);
-    };
+      const boundReplaceVariables: InterpolateFunction = (value, scopedVars, format) => {
+        return replaceVariables(value, { ...actionScopedVars, ...scopedVars }, format);
+      };
 
-    // We are not displaying reduction result
-    if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
-      dataContext.value.rowIndex = config.valueRowIndex;
-    } else {
-      dataContext.value.calculatedValue = config.calculatedValue;
-    }
+      // We are not displaying reduction result
+      if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
+        dataContext.value.rowIndex = config.valueRowIndex;
+      } else {
+        dataContext.value.calculatedValue = config.calculatedValue;
+      }
 
-    const actionModel: ActionModel<Field> = {
-      title: replaceVariables(action.title, actionScopedVars),
-      confirmation: (actionVars?: ActionVariableInput) =>
-        genReplaceActionVars(
-          boundReplaceVariables,
-          action,
-          actionVars
-        )(action.confirmation || `Are you sure you want to ${action.title}?`),
-      onClick: (evt: MouseEvent, origin: Field, actionVars?: ActionVariableInput) => {
-        let request = buildActionRequest(action, genReplaceActionVars(boundReplaceVariables, action, actionVars));
+      const actionModel: ActionModel<Field> = {
+        title: replaceVariables(action.title, actionScopedVars),
+        confirmation: (actionVars?: ActionVariableInput) =>
+          genReplaceActionVars(
+            boundReplaceVariables,
+            action,
+            actionVars
+          )(action.confirmation || `Are you sure you want to ${action.title}?`),
+        onClick: (evt: MouseEvent, origin: Field, actionVars?: ActionVariableInput) => {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          let request = {} as BackendSrvRequest;
+          if (isInfinityActionWithAuth(action)) {
+            request = buildActionProxyRequest(action, genReplaceActionVars(boundReplaceVariables, action, actionVars));
+          } else if (action.type === ActionType.Fetch) {
+            request = buildActionRequest(action, genReplaceActionVars(boundReplaceVariables, action, actionVars));
+          }
 
-        try {
-          getBackendSrv()
-            .fetch(request)
-            .subscribe({
-              error: (error) => {
-                appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
-                console.error(error);
-              },
-              complete: () => {
-                appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
-              },
-            });
-        } catch (error) {
-          appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
-          console.error(error);
-          return;
-        }
-      },
-      oneClick: action.oneClick ?? false,
-      style: {
-        backgroundColor: action.style?.backgroundColor ?? grafanaConfig.theme2.colors.secondary.main,
-      },
-      variables: action.variables,
-    };
+          try {
+            getBackendSrv()
+              .fetch(request)
+              .subscribe({
+                error: (error) => {
+                  appEvents.emit(AppEvents.alertError, [
+                    'An error has occurred. Check console output for more details.',
+                  ]);
+                  console.error(error);
+                },
+                complete: () => {
+                  appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
+                },
+              });
+          } catch (error) {
+            appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
+            console.error(error);
+            return;
+          }
+        },
+        oneClick: action.oneClick ?? false,
+        style: {
+          backgroundColor: action.style?.backgroundColor ?? grafanaConfig.theme2.colors.secondary.main,
+        },
+        variables: action.variables,
+      };
 
-    return actionModel;
-  });
+      return actionModel;
+    });
 
   return actionModels.filter((action): action is ActionModel => !!action);
 };
 
 /** @internal */
+const processActionConfig = (action: Action, replaceVariables: InterpolateFunction) => {
+  const config = action[action.type];
+  if (!config) {
+    throw new Error('Action does not have the correct configuration');
+  }
+
+  const url = new URL(getUrl(replaceVariables(config.url)));
+  const data = config.method === HttpRequestMethod.GET ? undefined : config.body ? replaceVariables(config.body) : '{}';
+
+  const processedHeaders: Array<[string, string]> = [];
+  const processedQueryParams: Array<[string, string]> = [];
+  let contentType = 'application/json';
+
+  if (config.headers) {
+    config.headers.forEach(([name, value]) => {
+      const processedName = replaceVariables(name);
+      const processedValue = replaceVariables(value);
+      processedHeaders.push([processedName, processedValue]);
+
+      if (processedName.toLowerCase() === 'content-type') {
+        contentType = processedValue;
+      }
+    });
+  }
+
+  if (config.queryParams) {
+    config.queryParams.forEach(([name, value]) => {
+      processedQueryParams.push([replaceVariables(name), replaceVariables(value)]);
+    });
+  }
+
+  return {
+    config,
+    url,
+    data,
+    processedHeaders,
+    processedQueryParams,
+    contentType,
+  };
+};
+
+/** @internal */
 export const buildActionRequest = (action: Action, replaceVariables: InterpolateFunction) => {
-  const url = new URL(getUrl(replaceVariables(action.fetch.url)));
+  const { config, url, data, processedHeaders, processedQueryParams } = processActionConfig(action, replaceVariables);
 
   const requestHeaders: Record<string, string> = {};
 
-  let request: BackendSrvRequest = {
-    url: url.toString(),
-    method: action.fetch.method,
-    data: getData(action, replaceVariables),
-    headers: requestHeaders,
-  };
+  processedHeaders.forEach(([name, value]) => {
+    requestHeaders[name] = value;
+  });
 
-  if (action.fetch.headers) {
-    action.fetch.headers.forEach(([name, value]) => {
-      requestHeaders[replaceVariables(name)] = replaceVariables(value);
-    });
-  }
-
-  if (action.fetch.queryParams) {
-    action.fetch.queryParams?.forEach(([name, value]) => {
-      url.searchParams.append(replaceVariables(name), replaceVariables(value));
-    });
-
-    request.url = url.toString();
-  }
+  processedQueryParams.forEach(([name, value]) => {
+    url.searchParams.append(name, value);
+  });
 
   requestHeaders['X-Grafana-Action'] = '1';
-  request.headers = requestHeaders;
+
+  const request: BackendSrvRequest = {
+    url: url.toString(),
+    method: config.method,
+    data,
+    headers: requestHeaders,
+  };
 
   return request;
 };
 
 /** @internal */
-// @TODO update return type
-export const getActionsDefaultField = (dataLinks: DataLink[] = [], actions: Action[] = []) => {
+export const getActionsDefaultField = (dataLinks: DataLink[] = [], actions: Action[] = []): Field => {
   return {
     name: 'Default field',
     type: FieldType.string,
@@ -173,11 +228,85 @@ const getUrl = (endpoint: string) => {
 };
 
 /** @internal */
-const getData = (action: Action, replaceVariables: InterpolateFunction) => {
-  let data: string | undefined = action.fetch.body ? replaceVariables(action.fetch.body) : '{}';
-  if (action.fetch.method === HttpRequestMethod.GET) {
-    data = undefined;
+interface KeyValuePair {
+  key: string;
+  value: string;
+}
+
+export const INFINITY_DATASOURCE_TYPE = 'yesoreyeram-infinity-datasource';
+
+/** @internal */
+class InfinityRequestBuilder {
+  buildRequest(
+    proxyConfig: InfinityOptions,
+    url: URL,
+    data: string | undefined,
+    headers: Array<[string, string]>,
+    queryParams: Array<[string, string]>,
+    contentType: string
+  ): BackendSrvRequest {
+    const requestId = getNextRequestId();
+    const infinityUrl = `api/ds/query?ds_type=${INFINITY_DATASOURCE_TYPE}&requestId=${requestId}`;
+    const timeRange = getTimeSrv().timeRange();
+
+    const requestHeaders: KeyValuePair[] = [];
+    headers.forEach(([name, value]) => {
+      requestHeaders.push({ key: name, value: value });
+    });
+
+    // Infinity needs [string, string] to {key: string, value: string}
+    const requestQueryParams: KeyValuePair[] = [];
+    queryParams.forEach(([name, value]) => {
+      requestQueryParams.push({ key: name, value: value });
+    });
+
+    const infinityUrlOptions = {
+      method: proxyConfig.method,
+      data,
+      headers: requestHeaders,
+      params: requestQueryParams,
+      body_type: 'raw',
+      body_content_type: contentType,
+    };
+
+    return {
+      url: infinityUrl,
+      method: HttpRequestMethod.POST,
+      data: {
+        queries: [
+          {
+            refId: 'A',
+            datasource: {
+              type: INFINITY_DATASOURCE_TYPE,
+              uid: proxyConfig.datasourceUid,
+            },
+            type: 'json',
+            source: 'url',
+            format: 'as-is',
+            url,
+            url_options: infinityUrlOptions,
+          },
+        ],
+        from: timeRange.from.valueOf().toString(),
+        to: timeRange.to.valueOf().toString(),
+      },
+    };
+  }
+}
+
+/** @internal */
+export const buildActionProxyRequest = (action: Action, replaceVariables: InterpolateFunction) => {
+  const { config, url, data, processedHeaders, processedQueryParams, contentType } = processActionConfig(
+    action,
+    replaceVariables
+  );
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const infinityConfig = config as InfinityOptions;
+  if (!infinityConfig.datasourceUid) {
+    throw new Error('Datasource not configured for Infinity action');
   }
 
-  return data;
+  const requestBuilder = new InfinityRequestBuilder();
+  return requestBuilder.buildRequest(infinityConfig, url, data, processedHeaders, processedQueryParams, contentType);
 };

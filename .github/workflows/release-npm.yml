@@ -1,0 +1,129 @@
+name: Release NPM packages
+run-name: Publish NPM ${{ inputs.version_type }} ${{ inputs.version }}
+on:
+  workflow_call:
+    inputs:
+      grafana_commit:
+        description: 'Grafana commit SHA to build against'
+        required: true
+        type: string
+      version:
+        description: 'Version to publish as'
+        required: true
+        type: string
+      build_id:
+        description: 'Run ID from the original release-build workflow'
+        required: true
+        type: string
+      version_type:
+        description: 'Version type (canary, nightly, stable)'
+        required: true
+        type: string
+
+  workflow_dispatch:
+    inputs:
+      grafana_commit:
+        description: 'Grafana commit SHA to build against'
+        required: true
+      version:
+        description: 'Version to publish as'
+        required: true
+      build_id:
+        description: 'Run ID from the original release-build workflow'
+        required: true
+      version_type:
+        description: 'Version type (canary, nightly, stable)'
+        required: true
+
+permissions: {}
+
+jobs:
+  # If called with version_type 'canary' or 'stable', build + publish to NPM
+  # If called with version_type 'nightly', do nothing (we're not yet tagging them with the nightly tag)
+
+  publish:
+    name: Publish NPM packages
+    runs-on: github-hosted-ubuntu-x64-small
+    if: inputs.version_type == 'canary' || inputs.version_type == 'stable'
+    # Required for this workflow to have permission to publish NPM packages
+    environment: npm-publish
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Info
+        env:
+          GITHUB_REF: ${{ github.ref }}
+          GRAFANA_COMMIT: ${{ inputs.grafana_commit }}
+        run: |
+          echo "GRAFANA_COMMIT: $GRAFANA_COMMIT"
+          echo "github.ref: $GITHUB_REF"
+
+      - name: Checkout workflow ref
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          fetch-depth: 100
+          fetch-tags: false
+
+      # this will fail with "{commit} is not a valid commit" if the commit is valid but
+      # not in the last 100 commits.
+      - name: Verify commit is in workflow HEAD
+        env:
+          GIT_COMMIT: ${{ inputs.grafana_commit }}
+        run: ./.github/workflows/scripts/validate-commit-in-head.sh
+        shell: bash
+
+      - name: Map version type to NPM tag
+        id: npm-tag
+        env:
+          VERSION: ${{ inputs.version }}
+          VERSION_TYPE: ${{ inputs.version_type }}
+          REFERENCE_PKG: "@grafana/runtime"
+        run: |
+          TAG=$(./.github/workflows/scripts/determine-npm-tag.sh)
+          echo "NPM_TAG=$TAG" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Checkout build commit
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.grafana_commit }}
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      # Trusted Publishing is only available in npm v11.5.1 and later
+      - name: Update npm
+        run: npm install -g npm@^11.5.1
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Typecheck packages
+        run: yarn run packages:typecheck
+
+      - name: Version, build, and pack packages
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          yarn run packages:build
+          yarn lerna version "$VERSION" \
+            --exact \
+            --no-git-tag-version \
+            --no-push \
+            --force-publish \
+            --yes
+          yarn run packages:pack
+
+      - name: Debug packed files
+        run: tree -a ./npm-artifacts
+
+      - name: Validate packages
+        run: ./scripts/validate-npm-packages.sh
+
+      - name: Publish packages
+        env:
+          NPM_TAG: ${{ steps.npm-tag.outputs.NPM_TAG }}
+        run: ./scripts/publish-npm-packages.sh --dist-tag "$NPM_TAG" --registry 'https://registry.npmjs.org/'

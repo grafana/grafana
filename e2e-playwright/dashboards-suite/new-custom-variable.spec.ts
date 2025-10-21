@@ -50,6 +50,12 @@ async function assertPreviewValues(
   }
 }
 
+test.use({
+  featureToggles: {
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+  },
+});
+
 test.describe(
   'Variables - Custom',
   {

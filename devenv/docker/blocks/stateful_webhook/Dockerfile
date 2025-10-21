@@ -1,4 +1,4 @@
-FROM golang:1.24.5
+FROM golang:1.25.3
 
 ADD main.go /go/src/webhook/main.go
 

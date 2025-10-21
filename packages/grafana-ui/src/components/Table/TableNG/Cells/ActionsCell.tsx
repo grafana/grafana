@@ -1,29 +1,16 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-
-import { useStyles2 } from '../../../../themes/ThemeContext';
 import { ActionButton } from '../../../Actions/ActionButton';
-import { ActionCellProps } from '../types';
+import { ActionCellProps, TableCellStyles } from '../types';
 
 export const ActionsCell = ({ field, rowIdx, getActions }: ActionCellProps) => {
-  const styles = useStyles2(getStyles);
+  const actions = getActions(field, rowIdx);
 
-  const actions = useMemo(() => getActions(field, rowIdx), [getActions, field, rowIdx]);
+  if (actions.length === 0) {
+    return null;
+  }
 
-  return (
-    <div className={styles.buttonsGap}>
-      {actions.map((action, i) => (
-        <ActionButton key={i} action={action} variant="secondary" />
-      ))}
-    </div>
-  );
+  return actions.map((action, i) => <ActionButton key={i} action={action} variant="secondary" />);
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  buttonsGap: css({
-    display: 'flex',
-    gap: 6,
-  }),
-});
+export const getStyles: TableCellStyles = (theme) => css({ gap: theme.spacing(0.75) });

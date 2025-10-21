@@ -5,11 +5,12 @@ import "fmt"
 var _ error = &MigrationError{}
 
 // ErrMigrationFailed is an error that is returned when a migration fails.
-func NewMigrationError(msg string, currentVersion, targetVersion int) *MigrationError {
+func NewMigrationError(msg string, currentVersion, targetVersion int, functionName string) *MigrationError {
 	return &MigrationError{
 		msg:            msg,
 		targetVersion:  targetVersion,
 		currentVersion: currentVersion,
+		functionName:   functionName,
 	}
 }
 
@@ -18,10 +19,16 @@ type MigrationError struct {
 	msg            string
 	targetVersion  int
 	currentVersion int
+	functionName   string
 }
 
 func (e *MigrationError) Error() string {
 	return fmt.Errorf("schema migration from version %d to %d failed: %v", e.currentVersion, e.targetVersion, e.msg).Error()
+}
+
+// GetFunctionName returns the name of the migration function that failed
+func (e *MigrationError) GetFunctionName() string {
+	return e.functionName
 }
 
 // MinimumVersionError is an error that is returned when the schema version is below the minimum version.

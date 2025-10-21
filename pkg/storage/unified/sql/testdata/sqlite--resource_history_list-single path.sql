@@ -24,6 +24,6 @@ SELECT
         AND maxkv."name"          = kv."name"
     WHERE kv."action"  != 3
         AND kv."namespace" = 'ns'
-    ORDER BY kv."resource_version" ASC
+    ORDER BY kv."namespace" ASC, kv."name" ASC
     LIMIT 10 OFFSET 0
 ;

@@ -2,11 +2,12 @@ package bootstrap
 
 import (
 	"fmt"
+	"net/url"
+	"path"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 )
 
@@ -17,13 +18,13 @@ type pluginFactoryFunc func(p *plugins.FoundBundle, pluginClass plugins.Class, s
 // It creates the plugin using plugin information found during the Discovery stage and makes use of the assetPath
 // service to set the plugin's BaseURL, Module, Logos and Screenshots fields.
 type DefaultPluginFactory struct {
-	assetPath *assetpath.Service
-	features  *config.Features
+	assetProvider pluginassets.Provider
+	features      *config.Features
 }
 
 // NewDefaultPluginFactory returns a new DefaultPluginFactory.
-func NewDefaultPluginFactory(features *config.Features, assetPath *assetpath.Service) *DefaultPluginFactory {
-	return &DefaultPluginFactory{assetPath: assetPath, features: features}
+func NewDefaultPluginFactory(features *config.Features, assetProvider pluginassets.Provider) *DefaultPluginFactory {
+	return &DefaultPluginFactory{assetProvider: assetProvider, features: features}
 }
 
 func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class plugins.Class,
@@ -54,11 +55,11 @@ func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class p
 
 func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Class, sig plugins.Signature,
 	info pluginassets.PluginInfo) (*plugins.Plugin, error) {
-	baseURL, err := f.assetPath.Base(info)
+	baseURL, err := f.assetProvider.AssetPath(info)
 	if err != nil {
 		return nil, fmt.Errorf("base url: %w", err)
 	}
-	moduleURL, err := f.assetPath.Module(info)
+	moduleURL, err := f.assetProvider.Module(info)
 	if err != nil {
 		return nil, fmt.Errorf("module url: %w", err)
 	}
@@ -74,35 +75,33 @@ func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Cl
 	}
 
 	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
-	if err = setImages(plugin, f.assetPath, info); err != nil {
+	if err = setImages(plugin, f.assetProvider, info); err != nil {
 		return nil, err
 	}
 
-	if f.features.LocalizationForPlugins {
-		if err := setTranslations(plugin, f.assetPath, info); err != nil {
-			return nil, err
-		}
+	if err := setTranslations(plugin, f.assetProvider, info); err != nil {
+		return nil, err
 	}
 
 	return plugin, nil
 }
 
-func setImages(p *plugins.Plugin, assetPath *assetpath.Service, info pluginassets.PluginInfo) error {
+func setImages(p *plugins.Plugin, assetProvider pluginassets.Provider, info pluginassets.PluginInfo) error {
 	var err error
 	for _, dst := range []*string{&p.Info.Logos.Small, &p.Info.Logos.Large} {
 		if len(*dst) == 0 {
-			*dst = assetPath.DefaultLogoPath(p.Type)
+			*dst = defaultLogoPath(p.Type)
 			continue
 		}
 
-		*dst, err = assetPath.RelativeURL(info, *dst)
+		*dst, err = assetProvider.AssetPath(info, *dst)
 		if err != nil {
 			return fmt.Errorf("logo: %w", err)
 		}
 	}
 	for i := 0; i < len(p.Info.Screenshots); i++ {
 		screenshot := &p.Info.Screenshots[i]
-		screenshot.Path, err = assetPath.RelativeURL(info, screenshot.Path)
+		screenshot.Path, err = assetProvider.AssetPath(info, screenshot.Path)
 		if err != nil {
 			return fmt.Errorf("screenshot %d relative url: %w", i, err)
 		}
@@ -110,12 +109,35 @@ func setImages(p *plugins.Plugin, assetPath *assetpath.Service, info pluginasset
 	return nil
 }
 
-func setTranslations(p *plugins.Plugin, assetPath *assetpath.Service, info pluginassets.PluginInfo) error {
-	translations, err := assetPath.GetTranslations(info)
+func setTranslations(p *plugins.Plugin, assetProvider pluginassets.Provider, info pluginassets.PluginInfo) error {
+	translations, err := getTranslations(assetProvider, info)
 	if err != nil {
 		return fmt.Errorf("set translations: %w", err)
 	}
 
 	p.Translations = translations
 	return nil
+}
+
+func defaultLogoPath(pluginType plugins.Type) string {
+	return path.Join("public/img", fmt.Sprintf("icn-%s.svg", string(pluginType)))
+}
+
+func getTranslations(assetProvider pluginassets.Provider, n pluginassets.PluginInfo) (map[string]string, error) {
+	pathToTranslations, err := assetProvider.AssetPath(n, "locales")
+	if err != nil {
+		return nil, fmt.Errorf("get locales: %w", err)
+	}
+
+	// loop through all the languages specified in the plugin.json and add them to the list
+	translations := map[string]string{}
+	for _, language := range n.JsonData.Languages {
+		file := fmt.Sprintf("%s.json", n.JsonData.ID)
+		translations[language], err = url.JoinPath(pathToTranslations, language, file)
+		if err != nil {
+			return nil, fmt.Errorf("join path: %w", err)
+		}
+	}
+
+	return translations, nil
 }

@@ -2,7 +2,8 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 test.use({
   featureToggles: {
-    newDashboardSharingComponent: false,
+    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+    dashboardScene: false, // this test is for the old sharing modal only used when scenes is turned off
   },
 });
 
@@ -22,10 +23,10 @@ test.describe(
       });
 
       // Open sharing modal
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.shareDashboard).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.shareButton).click();
 
       // Select public dashboards tab
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Public Dashboard')).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Public dashboard')).click();
 
       // Warning Alert dashboard cannot be made public because it has template variables
       await expect(

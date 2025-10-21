@@ -226,7 +226,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/import-datasource-managed-rules',
-      roles: () => ['Admin'],
+      roles: evaluateAccess([
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+      ]),
       component: config.featureToggles.alertingMigrationUI
         ? importAlertingComponent(
             () =>
@@ -329,6 +332,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
   ];
+
+  if (cfg.featureToggles.alertingTriage) {
+    routes.push({
+      path: '/alerting/triage',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
+      component: importAlertingComponent(
+        () => import(/* webpackChunkName: "AlertingTriage" */ 'app/features/alerting/unified/triage/Triage')
+      ),
+    });
+  }
 
   return routes;
 }

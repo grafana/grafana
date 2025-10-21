@@ -56,8 +56,8 @@
       "query-header": {
         "content-invalid-query": "クエリが無効です。詳細は下記をご確認ください。<1></1>ただし、このクエリは引き続き実行できます。",
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "ビルダー",
+          "label-code": "コード"
         },
         "label-dataset": "データセット",
         "label-filter": "フィルタリング",

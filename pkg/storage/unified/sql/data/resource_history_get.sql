@@ -29,7 +29,7 @@ WHERE 1 = 1
   AND {{ .Ident "resource_version" }} = {{ .Arg .ExactRV }}
   {{ end }}
 {{ if .SortAscending }}
-ORDER BY {{ .Ident "resource_version" }} ASC
+ORDER BY resource_version ASC
 {{ else }}
-ORDER BY {{ .Ident "resource_version" }} DESC
+ORDER BY resource_version DESC
 {{ end }}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -835,7 +836,7 @@ func (m *grafanaMetaAccessor) SetSourceProperties(v SourceProperties) {
 func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("error reading spec")
+			err = fmt.Errorf("error reading secure values")
 		}
 	}()
 
@@ -868,37 +869,85 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 	if ok {
 		vals = make(common.InlineSecureValues, len(u))
 		for k, v := range u {
-			sv, ok := v.(map[string]any)
+			inline, ok := v.(common.InlineSecureValue)
 			if !ok {
-				return nil, fmt.Errorf("unsupported nested secure value: %t", v)
-			}
-			inline := common.InlineSecureValue{}
-			inline.Name, _, _ = unstructured.NestedString(sv, "name")
-			inline.Remove, _, _ = unstructured.NestedBool(sv, "remove")
-			create, _, _ := unstructured.NestedString(sv, "create")
-			if create != "" {
-				inline.Create = common.NewSecretValue(create)
+				sv, ok := v.(map[string]any)
+				if !ok {
+					return nil, fmt.Errorf("unsupported nested secure value: %t", v)
+				}
+				inline.Name, _, _ = unstructured.NestedString(sv, "name")
+				inline.Remove, _, _ = unstructured.NestedBool(sv, "remove")
+				create, _, _ := unstructured.NestedString(sv, "create")
+				if create != "" {
+					inline.Create = common.NewSecretValue(create)
+				}
 			}
 			vals[k] = inline
 		}
 		return vals, nil
 	}
 
-	fmt.Printf("TODO PROPERTY: (%t) %+v\n", property, property)
+	if f.Kind() == reflect.Struct {
+		num := f.NumField()
+		vals = make(common.InlineSecureValues, num)
+		for i := range num {
+			val := f.Field(i)
+			if val.IsValid() && val.CanInterface() {
+				property = val.Interface()
+				inline, ok := property.(common.InlineSecureValue)
+				if !ok {
+					return nil, fmt.Errorf("secure property must be InlineSecureValue (found: %T)", property)
+				}
 
-	return nil, fmt.Errorf("support: %t", property)
+				if inline.IsZero() {
+					continue // nothing
+				}
+
+				vals[getJSONFieldName(f, i)] = inline
+				continue
+			}
+			return nil, fmt.Errorf("value not an interface")
+		}
+		return vals, nil
+	}
+
+	return nil, fmt.Errorf("secure value saved in unsupported type: %T", property)
 }
 
 // SetSecureValues implements GrafanaMetaAccessor.
 func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("error setting spec")
+			fmt.Printf("ERR: %v", r)
+			err = fmt.Errorf("error writing secure values")
 		}
 	}()
 
 	f := m.r.FieldByName("Secure")
 	if f.IsValid() && f.CanSet() {
+		if f.Kind() == reflect.Struct {
+			keys := make(map[string]bool, len(vals))
+			for k := range vals {
+				keys[k] = true
+			}
+			for i := 0; i < f.NumField(); i++ {
+				val := f.Field(i)
+				if val.IsValid() && val.CanInterface() && val.CanSet() {
+					k := getJSONFieldName(f, i)
+					sv := vals[k]
+					val.Set(reflect.ValueOf(sv))
+					delete(keys, k)
+				} else {
+					return fmt.Errorf("invalid secure value: %v", val)
+				}
+			}
+			if len(keys) > 0 {
+				return fmt.Errorf("invalid secure value key: %v", keys)
+			}
+			return
+		}
+
+		// It should be a generic map
 		f.Set(reflect.ValueOf(vals))
 		return
 	}
@@ -911,6 +960,16 @@ func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (e
 	}
 
 	return fmt.Errorf("unable to set secure values on (%T)", m.raw)
+}
+
+func getJSONFieldName(f reflect.Value, idx int) string {
+	field := f.Type().Field(idx)
+	fname := field.Tag.Get("json")
+	if fname == "" {
+		return field.Name
+	}
+	fname, _ = strings.CutSuffix(fname, ",omitempty")
+	return fname
 }
 
 func ToObjectReference(obj GrafanaMetaAccessor) common.ObjectReference {

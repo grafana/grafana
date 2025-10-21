@@ -69,6 +69,11 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
   const newSchemas: Record<string, unknown> = {};
   for (const schemaKey of Object.keys(newSpec.components.schemas)) {
     const newKey = simplifySchemaName(schemaKey);
+    if (newSchemas[newKey]) {
+      // This can happen when invalid specs are used, although ignoring the error will work
+      // it is better to fix the spec to avoid confusion.
+      throw new Error(`Duplicate schema key found: ${newKey}. from: ${schemaKey}`);
+    }
 
     const schemaObject = newSpec.components.schemas[schemaKey];
     updateRefs(schemaObject);

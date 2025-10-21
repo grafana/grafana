@@ -30,7 +30,7 @@ Related links:
 
 Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana, refer to [Roles and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 
-If you have users that belong to more than 150 groups, configure a registered application to provide an Entra ID Graph API to retrieve the groups. Refer to [Setup Entra ID Graph API applications](#configure-a-graph-api-application-in-azure-ad).
+If you have users that belong to more than 150 groups, configure a registered application to provide an Entra ID Graph API to retrieve the groups. Refer to [Setup Entra ID Graph API applications](#configure-a-graph-api-application-in-entra-id).
 
 ## Generate self-signed certificates
 
@@ -124,14 +124,16 @@ This app registration will be used as a Service Account to retrieve more informa
 1. In the **Request API permissions** pane, select **Microsoft Graph**, and click **Delegated permissions**.
 1. In the **Select permissions** pane, under the **User** section, select **User.Read**.
 1. Click the **Add permissions** button at the bottom of the page.
-1. In the **API permissions** section, select **Grant admin consent for <your-organization>**.
+1. In the **API permissions** section, select **Grant admin consent for `<directory-name>`**.
 
 The following table shows what the permissions look like from the Entra ID portal:
 
-| Permissions name | Type        | Admin consent required | Status  |
-| ---------------- | ----------- | ---------------------- | ------- |
-| `Group.Read.All` | Application | Yes                    | Granted |
-| `User.Read`      | Delegated   | No                     | Granted |
-| `User.Read.All`  | Application | Yes                    | Granted |
+| Permissions name       | Type        | Admin consent required | Status  |
+| ---------------------- | ----------- | ---------------------- | ------- |
+| `GroupMember.Read.All` | Application | Yes                    | Granted |
+| `User.Read`            | Delegated   | No                     | Granted |
+| `User.Read.All`        | Application | Yes                    | Granted |
 
-{{< figure src="/media/docs/grafana/saml/graph-api-app-permissions.png" caption="Screen shot of the permissions listed in Entra ID for the App registration" >}}
+{{< figure src="/media/docs/IAM/image.png" caption="Screen shot of the permissions listed in Entra ID for the App registration" >}}
+
+To test that Graph API has the correct permissions, refer to the [Troubleshoot Graph API calls](../troubleshoot-saml/#troubleshoot-graph-api-calls) section.

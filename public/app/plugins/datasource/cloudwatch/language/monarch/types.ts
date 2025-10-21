@@ -103,6 +103,10 @@ export enum StatementPosition {
   LikeKeyword,
   AfterLikeKeyword,
 
+  DiffKeyword,
+  AfterDiffKeyword,
+  DiffModifierArg,
+
   Function,
   FunctionArg,
   CommandArg,
@@ -171,6 +175,7 @@ export enum SuggestionKind {
   Command,
   Function,
   InKeyword,
+  DiffModifier,
 
   // PPL
   BooleanFunction,

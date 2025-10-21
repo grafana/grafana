@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const loginCookieName = "grafana_session"
@@ -35,9 +36,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationBackendPlugins(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	oauthToken := &oauth2.Token{
 		TokenType:    "bearer",

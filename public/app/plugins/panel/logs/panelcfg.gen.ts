@@ -39,10 +39,12 @@ export interface Options {
   showCommonLabels: boolean;
   showControls?: boolean;
   showLabels: boolean;
+  showLogAttributes?: boolean;
   showLogContextToggle: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
   syntaxHighlighting?: boolean;
+  timestampResolution?: ('ms' | 'ns');
   wrapLogMessage: boolean;
 }
 

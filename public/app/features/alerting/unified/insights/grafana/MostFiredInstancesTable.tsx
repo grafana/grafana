@@ -112,7 +112,9 @@ export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle
       .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
       .setOverrides((builder) =>
         // Hide the rule UID field, if we omit it in a transformation the custom cell renderer will not work
-        builder.matchFieldsWithName(RULE_UID_FIELD_NAME).overrideCustomFieldConfig('hidden', true)
+        builder
+          .matchFieldsWithName(RULE_UID_FIELD_NAME)
+          .overrideCustomFieldConfig('hideFrom', { viz: true, legend: false, tooltip: false })
       )
       .build(),
   });

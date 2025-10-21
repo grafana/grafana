@@ -15,7 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 )
 
@@ -164,7 +164,7 @@ func TestCalculate(t *testing.T) {
 		for _, tc := range tcs {
 			basePath := filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin")
 			s := provideTestServiceWithConfig(&config.PluginManagementCfg{GrafanaAppURL: tc.appURL})
-			sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
+			sig, err := s.Calculate(context.Background(), &pluginfakes.FakePluginSource{
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return plugins.ClassExternal
 				},
@@ -192,7 +192,7 @@ func TestCalculate(t *testing.T) {
 
 		runningWindows = true
 		s := provideDefaultTestService()
-		sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
+		sig, err := s.Calculate(context.Background(), &pluginfakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
@@ -260,7 +260,7 @@ func TestCalculate(t *testing.T) {
 				require.NoError(t, err)
 				pfs, err = newPathSeparatorOverrideFS(string(tc.platform.separator), pfs)
 				require.NoError(t, err)
-				sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
+				sig, err := s.Calculate(context.Background(), &pluginfakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
 						return plugins.ClassExternal
 					},
@@ -343,6 +343,10 @@ func newPathSeparatorOverrideFS(sep string, ufs plugins.FS) (fsPathSeparatorFile
 		FS:        ufs,
 		separator: sep,
 	}, nil
+}
+
+func (f fsPathSeparatorFiles) Type() string {
+	return f.FS.Type()
 }
 
 // Files returns LocalFS.Files(), but all path separators for the current platform (filepath.Separator)

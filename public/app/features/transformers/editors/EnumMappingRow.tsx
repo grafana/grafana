@@ -4,7 +4,7 @@ import { FormEvent, useState, KeyboardEvent, useRef, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Input, IconButton, HorizontalGroup, FieldValidationMessage, useStyles2 } from '@grafana/ui';
+import { Icon, Input, IconButton, FieldValidationMessage, useStyles2, Stack } from '@grafana/ui';
 
 type EnumMappingRowProps = {
   transformIndex: number;
@@ -112,7 +112,7 @@ const EnumMappingRow = ({
             </td>
           )}
           <td className={styles.textAlignCenter}>
-            <HorizontalGroup spacing="sm">
+            <Stack gap={1}>
               <IconButton
                 name="trash-alt"
                 onClick={onRemoveButtonClick}
@@ -123,7 +123,7 @@ const EnumMappingRow = ({
                 )}
                 tooltip={t('transformers.enum-mapping-row.remove-enum-row-tooltip-delete', 'Delete')}
               />
-            </HorizontalGroup>
+            </Stack>
           </td>
         </tr>
       )}

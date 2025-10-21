@@ -47,6 +47,7 @@ import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
 import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 
+import type { Options } from './panelcfg.gen';
 import {
   GetFieldLinksFn,
   isCoreApp,
@@ -63,7 +64,6 @@ import {
   isReactNodeArray,
   isSetDisplayedFields,
   onNewLogsReceivedType,
-  Options,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
 
@@ -114,7 +114,7 @@ interface LogsPanelProps extends PanelProps<Options> {
    * controlsStorageKey?: string
    *
    * If controls are enabled, this function is called when a change is made in one of the options from the controls.
-   * onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
+   * onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
    *
    * When the feature toggle newLogsPanel is enabled, you can pass extra options to the LogLineMenu component.
    * These options are an array of items with { label, onClick } or { divider: true } for dividers.
@@ -125,6 +125,14 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * Set the mode used by the Log Details panel. Displayed as a sidebar, or inline below the log line. Defaults to "inline".
    * detailsMode?: 'inline' | 'sidebar'
+   *
+   * When showing timestamps, toggle between showing nanoseconds or milliseconds.
+   * timestampResolution?: 'ms' | 'ns'
+   *
+   * Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.
+   * Requires the `otelLogsFormatting`.
+   * @alpha
+   * showLogAttributes?: boolean
    */
 }
 interface LogsPermalinkUrlState {
@@ -166,8 +174,11 @@ export const LogsPanel = ({
     syntaxHighlighting,
     detailsMode: detailsModeProp,
     noInteractions,
+    timestampResolution,
+    showLogAttributes,
     ...options
   },
+  height,
   id,
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
@@ -551,8 +562,10 @@ export const LogsPanel = ({
           getRowContext={(row, options) => getLogRowContext(row, contextRow, options)}
           getLogRowContextUi={getLogRowContextUi}
           logOptionsStorageKey={controlsStorageKey}
+          logLineMenuCustomItems={isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined}
           timeZone={timeZone}
           displayedFields={displayedFields}
+          onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
           onClickShowField={showField}
           onClickHideField={hideField}
         />
@@ -561,6 +574,7 @@ export const LogsPanel = ({
         <div
           onMouseLeave={onLogContainerMouseLeave}
           className={style.logListContainer}
+          style={height ? { minHeight: height } : undefined}
           ref={(element: HTMLDivElement) => setScrollElement(element)}
         >
           {deduplicatedRows.length > 0 && scrollElement && (
@@ -600,13 +614,17 @@ export const LogsPanel = ({
               onOpenContext={onOpenContext}
               onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
               permalinkedLogId={getLogsPanelState()?.logs?.id ?? undefined}
+              prettifyJSON={prettifyLogMessage}
               setDisplayedFields={setDisplayedFieldsFn}
               showControls={Boolean(showControls)}
+              showLogAttributes={showLogAttributes}
               showTime={showTime}
+              showUniqueLabels={showLabels}
               sortOrder={sortOrder}
               logOptionsStorageKey={storageKey}
               syntaxHighlighting={syntaxHighlighting}
               timeRange={data.timeRange}
+              timestampResolution={timestampResolution}
               timeZone={timeZone}
               wrapLogMessage={wrapLogMessage}
             />
@@ -665,6 +683,7 @@ export const LogsPanel = ({
                 logRowMenuIconsAfter={isReactNodeArray(logRowMenuIconsAfter) ? logRowMenuIconsAfter : undefined}
                 // Ascending order causes scroll to stick to the bottom, so previewing is futile
                 renderPreview={isAscending ? false : true}
+                timeRange={data.timeRange}
               />
             </InfiniteScroll>
             {showCommonLabels && isAscending && renderCommonLabels()}
@@ -718,6 +737,7 @@ export const LogsPanel = ({
             logOptionsStorageKey={controlsStorageKey}
             // Ascending order causes scroll to stick to the bottom, so previewing is futile
             renderPreview={isAscending ? false : true}
+            timeRange={data.timeRange}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>

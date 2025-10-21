@@ -34,7 +34,11 @@ export class DataSourcePluginSettings extends PureComponent<Props> {
       <div>
         {plugin.components.ConfigEditor &&
           createElement(plugin.components.ConfigEditor, {
-            options: writableProxy(dataSource, { source: 'datasource', pluginId: plugin.meta?.id }),
+            options: writableProxy(dataSource, {
+              source: 'datasource',
+              pluginId: plugin.meta?.id,
+              pluginVersion: plugin.meta?.info?.version,
+            }),
             onOptionsChange: this.onModelChanged,
           })}
       </div>
