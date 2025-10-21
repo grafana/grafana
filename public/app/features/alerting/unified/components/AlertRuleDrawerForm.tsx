@@ -1,11 +1,15 @@
+import { css } from '@emotion/css';
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Drawer } from '@grafana/ui';
+import { Drawer, useStyles2 } from '@grafana/ui';
 import { RuleDefinitionSection } from 'app/features/alerting/unified/components/RuleDefinitionSection';
 
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
+
+import { RuleConditionSection } from './RuleConditionSection';
 
 export interface AlertRuleDrawerFormProps {
   isOpen: boolean;
@@ -15,6 +19,7 @@ export interface AlertRuleDrawerFormProps {
 
 export function AlertRuleDrawerForm({ isOpen, onClose, title }: AlertRuleDrawerFormProps) {
   const methods = useForm<RuleFormValues>({ defaultValues: getDefaultFormValues(RuleFormType.grafana) });
+  const styles = useStyles2(getStyles);
 
   if (!isOpen) {
     return null;
@@ -27,7 +32,20 @@ export function AlertRuleDrawerForm({ isOpen, onClose, title }: AlertRuleDrawerF
     >
       <FormProvider {...methods}>
         <RuleDefinitionSection type={RuleFormType.grafana} />
+        <div className={styles.divider} aria-hidden="true" />
+        <RuleConditionSection type={RuleFormType.grafana} />
+        <div className={styles.divider} aria-hidden="true" />
       </FormProvider>
     </Drawer>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    divider: css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      margin: `${theme.spacing(3)} 0`,
+      width: '100%',
+    }),
+  };
 }
