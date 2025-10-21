@@ -18927,7 +18927,7 @@ __metadata:
     http-server: "npm:14.1.1"
     i18next: "npm:^25.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
-    i18next-cli: "npm:1.11.11"
+    i18next-cli: "npm:1.11.12"
     i18next-pseudo: "npm:^2.2.1"
     immer: "npm:10.1.3"
     immutable: "npm:5.1.4"
@@ -19789,9 +19789,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next-cli@npm:1.11.11":
-  version: 1.11.11
-  resolution: "i18next-cli@npm:1.11.11"
+"i18next-cli@npm:1.11.12":
+  version: 1.11.12
+  resolution: "i18next-cli@npm:1.11.12"
   dependencies:
     "@swc/core": "npm:1.13.19"
     chalk: "npm:5.6.2"
@@ -19807,7 +19807,7 @@ __metadata:
     swc-walk: "npm:1.0.0"
   bin:
     i18next-cli: dist/esm/cli.js
-  checksum: 10/18f59ef28dbc5d4161c8147af0f71ccf08efe3aa455169cdfc61aebe312c25a38304b4f048a052351930a65ea2fd4427118f6adebbff84b4b5d327cdcf43c002
+  checksum: 10/b714cddb1fc5a611541a83f54320a84f4df5bd8308cd5b0c7abf6222d6d8e8cdac1e41fd9ecbb4d2930cf994e98d60235201f22e4f15baff0defb1759b2f3541
   languageName: node
   linkType: hard
 
