@@ -5,6 +5,7 @@ import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataF
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, ListStarsApiResponse } from 'app/api/clients/preferences/v1alpha1';
+import { legacyUserAPI } from 'app/api/legacy/user/api';
 import { getAPIBaseURL } from 'app/api/utils';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/core';
@@ -89,7 +90,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
           (info) => info.group === 'dashboard.grafana.app' && info.kind === 'Dashboard'
         )?.names || [];
     } else {
-      starsIds = await getBackendSrv().get('api/user/stars');
+      starsIds = await dispatch(legacyUserAPI.endpoints.getStars.initiate()).unwrap();
     }
 
     if (starsIds?.length) {
