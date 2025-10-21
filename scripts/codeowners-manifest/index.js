@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const cliSpinners = require('cli-spinners').default;
 const { writeFile, readFile, mkdir, access } = require('node:fs/promises');
 
 const {
@@ -73,7 +74,7 @@ async function generateCodeownersManifestComplete(
 if (require.main === module) {
   (async () => {
     try {
-      console.log('📋 Generating complete codeowners manifest...');
+      console.log(cliSpinners.dots, 'Generating complete codeowners manifest...');
 
       const wasGenerated = await generateCodeownersManifestComplete(
         CODEOWNERS_FILE_PATH,

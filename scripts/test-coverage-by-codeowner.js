@@ -12,14 +12,33 @@ const JEST_CONFIG_PATH = 'jest.config.codeowner.js';
 
 const ALL_OPTION = 'All (not recommended)';
 
-async function promptCodeownerName() {
-  const TEAMS = JSON.parse(await readFile(CODEOWNERS_MANIFEST_CODEOWNERS_PATH, 'utf8'));
+let _codeownersCache = null;
+async function getCodeowners() {
+  if (_codeownersCache == null) {
+    try {
+      const codeownersJson = await readFile(CODEOWNERS_MANIFEST_CODEOWNERS_PATH, 'utf8');
+      _codeownersCache = JSON.parse(codeownersJson);
+    } catch (e) {
+      if (e.code === 'ENOENT') {
+        console.error(`Could not read ${CODEOWNERS_MANIFEST_CODEOWNERS_PATH} ...`);
+      } else {
+        console.error(e);
+      }
+      process.exit(1);
+    }
+  }
+  return _codeownersCache;
+}
+
+async function promptCodeownerName(initial) {
+  const teams = await getCodeowners();
   const prompt = new AutoComplete({
     name: 'flavor',
     message: 'Select your team to run tests by codeowner.',
+    initial,
     limit: 10,
     initial: 2,
-    choices: [ALL_OPTION, ...TEAMS.filter((team) => team.startsWith('@grafana/'))],
+    choices: [ALL_OPTION, ...teams.filter((team) => team.startsWith('@grafana/'))],
   });
   return await prompt.run();
 }
@@ -68,23 +87,18 @@ if (require.main === module) {
   (async () => {
     try {
       const argv = yargs(hideBin(process.argv)).parse();
-      const codeownerName = argv._[0] ?? (await promptCodeownerName());
+      const teams = await getCodeowners();
+      let codeownerName = argv._[0];
+      if (!codeownerName || !teams.includes(codeownerName)) {
+        codeownerName = await promptCodeownerName(codeownerName);
+      }
+
       const noOpen = argv['open'] === false;
 
-      if (!codeownerName) {
-        console.error('Codeowner argument is required ...');
-        console.error('Usage: yarn test:coverage:by-codeowner @grafana/team-name');
-        process.exit(1);
-      }
-
       console.log(`🧪 Running test coverage for codeowner: ${codeownerName}`);
-      await runTestCoverageByCodeowner(codeownerName, CODEOWNERS_MANIFEST_CODEOWNERS_PATH, JEST_CONFIG_PATH, noOpen);
+      await runTestCoverageByCodeowner(codeownerName, JEST_CONFIG_PATH, noOpen);
     } catch (e) {
-      if (e.code === 'ENOENT') {
-        console.error(`Could not read ${CODEOWNERS_MANIFEST_CODEOWNERS_PATH} ...`);
-      } else {
-        console.error(e.message);
-      }
+      console.error(e.message);
       process.exit(1);
     }
   })();
