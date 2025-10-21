@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	authlib "github.com/grafana/authlib/types"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -111,8 +112,9 @@ func addTeamMember(t *testing.T, env *testEnv, userID, orgID, teamID int64, perm
 	t.Helper()
 
 	err := env.db.WithDbSession(env.ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("INSERT INTO team_member (org_id, team_id, user_id, permission, created, updated) VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))",
-			orgID, teamID, userID, permission)
+		now := time.Now()
+		_, err := sess.Exec("INSERT INTO team_member (org_id, team_id, user_id, permission, created, updated) VALUES (?, ?, ?, ?, ?, ?)",
+			orgID, teamID, userID, permission, now, now)
 		return err
 	})
 	require.NoError(t, err)
@@ -124,8 +126,9 @@ func createRole(t *testing.T, env *testEnv, name string, orgID int64) string {
 	var roleUID string
 	err := env.db.WithDbSession(env.ctx, func(sess *db.Session) error {
 		uid := fmt.Sprintf("role-%s-%d", name, orgID)
-		_, err := sess.Exec("INSERT INTO role (uid, name, org_id, version, created, updated) VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))",
-			uid, name, orgID, 1)
+		now := time.Now()
+		_, err := sess.Exec("INSERT INTO role (uid, name, org_id, version, created, updated) VALUES (?, ?, ?, ?, ?, ?)",
+			uid, name, orgID, 1, now, now)
 		roleUID = uid
 		return err
 	})
@@ -142,8 +145,8 @@ func addUserRole(t *testing.T, env *testEnv, userID int64, roleUID string, orgID
 		if err != nil {
 			return err
 		}
-		_, err = sess.Exec("INSERT INTO user_role (org_id, user_id, role_id, created) VALUES (?, ?, ?, datetime('now'))",
-			orgID, userID, roleID)
+		_, err = sess.Exec("INSERT INTO user_role (org_id, user_id, role_id, created) VALUES (?, ?, ?, ?)",
+			orgID, userID, roleID, time.Now())
 		return err
 	})
 	require.NoError(t, err)
@@ -158,8 +161,8 @@ func addTeamRole(t *testing.T, env *testEnv, teamID int64, roleUID string, orgID
 		if err != nil {
 			return err
 		}
-		_, err = sess.Exec("INSERT INTO team_role (org_id, team_id, role_id, created) VALUES (?, ?, ?, datetime('now'))",
-			orgID, teamID, roleID)
+		_, err = sess.Exec("INSERT INTO team_role (org_id, team_id, role_id, created) VALUES (?, ?, ?, ?)",
+			orgID, teamID, roleID, time.Now())
 		return err
 	})
 	require.NoError(t, err)
@@ -174,8 +177,9 @@ func addPermission(t *testing.T, env *testEnv, roleUID, action, kind, identifier
 		if err != nil {
 			return err
 		}
-		_, err = sess.Exec("INSERT INTO permission (role_id, action, scope, kind, attribute, identifier, created, updated) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
-			roleID, action, fmt.Sprintf("%s:uid:%s", kind, identifier), kind, "uid", identifier)
+		now := time.Now()
+		_, err = sess.Exec("INSERT INTO permission (role_id, action, scope, kind, attribute, identifier, created, updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+			roleID, action, fmt.Sprintf("%s:uid:%s", kind, identifier), kind, "uid", identifier, now, now)
 		return err
 	})
 	require.NoError(t, err)
@@ -190,8 +194,9 @@ func addBuiltinRole(t *testing.T, env *testEnv, roleUID, builtinRole string, org
 		if err != nil {
 			return err
 		}
-		_, err = sess.Exec("INSERT INTO builtin_role (role_id, org_id, role, created, updated) VALUES (?, ?, ?, datetime('now'), datetime('now'))",
-			roleID, orgID, builtinRole)
+		now := time.Now()
+		_, err = sess.Exec("INSERT INTO builtin_role (role_id, org_id, role, created, updated) VALUES (?, ?, ?, ?, ?)",
+			roleID, orgID, builtinRole, now, now)
 		return err
 	})
 	require.NoError(t, err)
