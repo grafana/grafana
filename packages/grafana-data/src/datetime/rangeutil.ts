@@ -1,4 +1,4 @@
-import { formatDateRange } from '@grafana/i18n';
+import { formatDateRange, t } from '@grafana/i18n';
 
 import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange, TimeOption } from '../types/time';
 import { getFeatureToggle } from '../utils/featureToggles';
@@ -18,76 +18,321 @@ const spans: { [key: string]: { display: string; section?: number } } = {
   y: { display: 'year' },
 };
 
-const BASE_RANGE_OPTIONS: TimeOption[] = [
-  { from: 'now/d', to: 'now/d', display: 'Today' },
-  { from: 'now/d', to: 'now', display: 'Today so far' },
-  { from: 'now/w', to: 'now/w', display: 'This week' },
-  { from: 'now/w', to: 'now', display: 'This week so far' },
-  { from: 'now/M', to: 'now/M', display: 'This month' },
-  { from: 'now/M', to: 'now', display: 'This month so far' },
-  { from: 'now/y', to: 'now/y', display: 'This year' },
-  { from: 'now/y', to: 'now', display: 'This year so far' },
+const getBaseRangeOptions: () => TimeOption[] = () => [
+  { from: 'now/d', to: 'now/d', display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.today', 'Today') },
+  {
+    from: 'now/d',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.todaySoFar', 'Today so far'),
+  },
+  {
+    from: 'now/w',
+    to: 'now/w',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisWeek', 'This week'),
+  },
+  {
+    from: 'now/w',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisWeekSoFar', 'This week so far'),
+  },
+  {
+    from: 'now/M',
+    to: 'now/M',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisMonth', 'This month'),
+  },
+  {
+    from: 'now/M',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisMonthSoFar', 'This month so far'),
+  },
+  {
+    from: 'now/y',
+    to: 'now/y',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisYear', 'This year'),
+  },
+  {
+    from: 'now/y',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisYearSoFar', 'This year so far'),
+  },
 
-  { from: 'now-1d/d', to: 'now-1d/d', display: 'Yesterday' },
+  {
+    from: 'now-1d/d',
+    to: 'now-1d/d',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.yesterday', 'Yesterday'),
+  },
   {
     from: 'now-2d/d',
     to: 'now-2d/d',
-    display: 'Day before yesterday',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.dayBeforeYesterday', 'Day before yesterday'),
   },
   {
     from: 'now-7d/d',
     to: 'now-7d/d',
-    display: 'This day last week',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisDayLastWeek', 'This day last week'),
   },
-  { from: 'now-1w/w', to: 'now-1w/w', display: 'Previous week' },
-  { from: 'now-1M/M', to: 'now-1M/M', display: 'Previous month' },
-  { from: 'now-1Q/fQ', to: 'now-1Q/fQ', display: 'Previous fiscal quarter' },
-  { from: 'now-1y/y', to: 'now-1y/y', display: 'Previous year' },
-  { from: 'now-1y/fy', to: 'now-1y/fy', display: 'Previous fiscal year' },
+  {
+    from: 'now-1w/w',
+    to: 'now-1w/w',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.previousWeek', 'Previous week'),
+  },
+  {
+    from: 'now-1M/M',
+    to: 'now-1M/M',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.previousMonth', 'Previous month'),
+  },
+  {
+    from: 'now-1Q/fQ',
+    to: 'now-1Q/fQ',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.previousFiscalQuarter', 'Previous fiscal quarter'),
+  },
+  {
+    from: 'now-1y/y',
+    to: 'now-1y/y',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.previousYear', 'Previous year'),
+  },
+  {
+    from: 'now-1y/fy',
+    to: 'now-1y/fy',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.previousFiscalYear', 'Previous fiscal year'),
+  },
 
-  { from: 'now-5m', to: 'now', display: 'Last 5 minutes' },
-  { from: 'now-15m', to: 'now', display: 'Last 15 minutes' },
-  { from: 'now-30m', to: 'now', display: 'Last 30 minutes' },
-  { from: 'now-1h', to: 'now', display: 'Last 1 hour' },
-  { from: 'now-3h', to: 'now', display: 'Last 3 hours' },
-  { from: 'now-6h', to: 'now', display: 'Last 6 hours' },
-  { from: 'now-12h', to: 'now', display: 'Last 12 hours' },
-  { from: 'now-24h', to: 'now', display: 'Last 24 hours' },
-  { from: 'now-2d', to: 'now', display: 'Last 2 days' },
-  { from: 'now-7d', to: 'now', display: 'Last 7 days' },
-  { from: 'now-30d', to: 'now', display: 'Last 30 days' },
-  { from: 'now-90d', to: 'now', display: 'Last 90 days' },
-  { from: 'now-6M', to: 'now', display: 'Last 6 months' },
-  { from: 'now-1y', to: 'now', display: 'Last 1 year' },
-  { from: 'now-2y', to: 'now', display: 'Last 2 years' },
-  { from: 'now-5y', to: 'now', display: 'Last 5 years' },
-  { from: 'now/fQ', to: 'now', display: 'This fiscal quarter so far' },
-  { from: 'now/fQ', to: 'now/fQ', display: 'This fiscal quarter' },
-  { from: 'now/fy', to: 'now', display: 'This fiscal year so far' },
-  { from: 'now/fy', to: 'now/fy', display: 'This fiscal year' },
+  {
+    from: 'now-5m',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNMinutes', 'Last {{count}} minutes', {
+      count: 5,
+    }),
+  },
+  {
+    from: 'now-15m',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNMinutes', 'Last {{count}} minutes', {
+      count: 15,
+    }),
+  },
+  {
+    from: 'now-30m',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNMinutes', 'Last {{count}} minutes', {
+      count: 30,
+    }),
+  },
+  {
+    from: 'now-1h',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNHours', 'Last {{count}} hours', { count: 1 }),
+  },
+  {
+    from: 'now-3h',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNHours', 'Last {{count}} hours', { count: 3 }),
+  },
+  {
+    from: 'now-6h',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNHours', 'Last {{count}} hours', { count: 6 }),
+  },
+  {
+    from: 'now-12h',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNHours', 'Last {{count}} hours', {
+      count: 12,
+    }),
+  },
+  {
+    from: 'now-24h',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNHours', 'Last {{count}} hours', {
+      count: 24,
+    }),
+  },
+  {
+    from: 'now-2d',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNDays', 'Last {{count}} days', { count: 2 }),
+  },
+  {
+    from: 'now-7d',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNDays', 'Last {{count}} days', { count: 7 }),
+  },
+  {
+    from: 'now-30d',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNDays', 'Last {{count}} days', { count: 30 }),
+  },
+  {
+    from: 'now-90d',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNDays', 'Last {{count}} days', { count: 90 }),
+  },
+  {
+    from: 'now-6M',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNMonths', 'Last {{count}} months', {
+      count: 6,
+    }),
+  },
+  {
+    from: 'now-1y',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNYears', 'Last {{count}} years', { count: 1 }),
+  },
+  {
+    from: 'now-2y',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNYears', 'Last {{count}} years', { count: 2 }),
+  },
+  {
+    from: 'now-5y',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNYears', 'Last {{count}} years', { count: 5 }),
+  },
+  {
+    from: 'now/fQ',
+    to: 'now',
+    display: t(
+      'grafana-data.datetime.rangeutils.getBaseRangeOptions.thisFiscalQuarterSoFar',
+      'This fiscal quarter so far'
+    ),
+  },
+  {
+    from: 'now/fQ',
+    to: 'now/fQ',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisFiscalQuarter', 'This fiscal quarter'),
+  },
+  {
+    from: 'now/fy',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisFiscalYearSoFar', 'This fiscal year so far'),
+  },
+  {
+    from: 'now/fy',
+    to: 'now/fy',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisFiscalYear', 'This fiscal year'),
+  },
 ];
 
-const HIDDEN_RANGE_OPTIONS: TimeOption[] = [
-  { from: 'now', to: 'now+1m', display: 'Next minute' },
-  { from: 'now', to: 'now+5m', display: 'Next 5 minutes' },
-  { from: 'now', to: 'now+15m', display: 'Next 15 minutes' },
-  { from: 'now', to: 'now+30m', display: 'Next 30 minutes' },
-  { from: 'now', to: 'now+1h', display: 'Next hour' },
-  { from: 'now', to: 'now+3h', display: 'Next 3 hours' },
-  { from: 'now', to: 'now+6h', display: 'Next 6 hours' },
-  { from: 'now', to: 'now+12h', display: 'Next 12 hours' },
-  { from: 'now', to: 'now+24h', display: 'Next 24 hours' },
-  { from: 'now', to: 'now+2d', display: 'Next 2 days' },
-  { from: 'now', to: 'now+7d', display: 'Next 7 days' },
-  { from: 'now', to: 'now+30d', display: 'Next 30 days' },
-  { from: 'now', to: 'now+90d', display: 'Next 90 days' },
-  { from: 'now', to: 'now+6M', display: 'Next 6 months' },
-  { from: 'now', to: 'now+1y', display: 'Next year' },
-  { from: 'now', to: 'now+2y', display: 'Next 2 years' },
-  { from: 'now', to: 'now+5y', display: 'Next 5 years' },
+const getHiddenRangeOptions: () => TimeOption[] = () => [
+  {
+    from: 'now',
+    to: 'now+1m',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNMinutes', 'Next {{count}} minutes', {
+      count: 1,
+    }),
+  },
+  {
+    from: 'now',
+    to: 'now+5m',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNMinutes', 'Next {{count}} minutes', {
+      count: 5,
+    }),
+  },
+  {
+    from: 'now',
+    to: 'now+15m',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNMinutes', 'Next {{count}} minutes', {
+      count: 15,
+    }),
+  },
+  {
+    from: 'now',
+    to: 'now+30m',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNMinutes', 'Next {{count}} minutes', {
+      count: 30,
+    }),
+  },
+  {
+    from: 'now',
+    to: 'now+1h',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNHours', 'Next {{count}} hours', {
+      count: 1,
+    }),
+  },
+  {
+    from: 'now',
+    to: 'now+3h',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNHours', 'Next {{count}} hours', {
+      count: 3,
+    }),
+  },
+  {
+    from: 'now',
+    to: 'now+6h',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNHours', 'Next {{count}} hours', {
+      count: 6,
+    }),
+  },
+  {
+    from: 'now',
+    to: 'now+12h',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNHours', 'Next {{count}} hours', {
+      count: 12,
+    }),
+  },
+  {
+    from: 'now',
+    to: 'now+24h',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNHours', 'Next {{count}} hours', {
+      count: 24,
+    }),
+  },
+  {
+    from: 'now',
+    to: 'now+2d',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNDays', 'Next {{count}} days', { count: 2 }),
+  },
+  {
+    from: 'now',
+    to: 'now+7d',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNDays', 'Next {{count}} days', { count: 7 }),
+  },
+  {
+    from: 'now',
+    to: 'now+30d',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNDays', 'Next {{count}} days', {
+      count: 30,
+    }),
+  },
+  {
+    from: 'now',
+    to: 'now+90d',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNDays', 'Next {{count}} days', {
+      count: 90,
+    }),
+  },
+  {
+    from: 'now',
+    to: 'now+6M',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNMonths', 'Next {{count}} months', {
+      count: 6,
+    }),
+  },
+  {
+    from: 'now',
+    to: 'now+1y',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNYears', 'Next {{count}} years', {
+      count: 1,
+    }),
+  },
+  {
+    from: 'now',
+    to: 'now+2y',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNYears', 'Next {{count}} years', {
+      count: 2,
+    }),
+  },
+  {
+    from: 'now',
+    to: 'now+5y',
+    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNYears', 'Next {{count}} years', {
+      count: 5,
+    }),
+  },
 ];
 
-const STANDARD_RANGE_OPTIONS = BASE_RANGE_OPTIONS.concat(HIDDEN_RANGE_OPTIONS);
+const getStandardRangeOptions = () => [...getBaseRangeOptions(), ...getHiddenRangeOptions()];
 
 function findRangeInOptions(range: RawTimeRange, options: TimeOption[]) {
   return options.find((option) => option.from === range.from && option.to === range.to);
@@ -105,7 +350,7 @@ export function describeTextRange(expr: string): TimeOption {
     expr = (isLast ? 'now-' : 'now') + expr;
   }
 
-  let opt = findRangeInOptions({ from: expr, to: 'now' }, STANDARD_RANGE_OPTIONS);
+  let opt = findRangeInOptions({ from: expr, to: 'now' }, getStandardRangeOptions());
   if (opt) {
     return opt;
   }
@@ -158,7 +403,7 @@ const rangeFormatFull: Intl.DateTimeFormatOptions = {
  * @alpha
  */
 export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quickRanges?: TimeOption[]): string {
-  const rangeOptions = quickRanges ? quickRanges.concat(STANDARD_RANGE_OPTIONS) : STANDARD_RANGE_OPTIONS;
+  const rangeOptions = quickRanges ? quickRanges.concat(getStandardRangeOptions()) : getStandardRangeOptions();
   const option = findRangeInOptions(range, rangeOptions);
 
   if (option) {
