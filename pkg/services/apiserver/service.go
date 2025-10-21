@@ -248,7 +248,7 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
 }
 
-func (s *service) RegisterAPIInstaller(i appsdkapiserver.AppInstaller) {
+func (s *service) RegisterAppInstaller(i appsdkapiserver.AppInstaller) {
 	s.appInstallers = append(s.appInstallers, i)
 }
 

@@ -114,7 +114,7 @@ type APIRoutes struct {
 
 type APIRegistrar interface {
 	RegisterAPI(builder APIGroupBuilder)
-	RegisterAPIInstaller(installer appsdkapiserver.AppInstaller)
+	RegisterAppInstaller(installer appsdkapiserver.AppInstaller)
 }
 
 func getGroup(builder APIGroupBuilder) (string, error) {
