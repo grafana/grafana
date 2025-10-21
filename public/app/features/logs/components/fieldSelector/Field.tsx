@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, Icon, useStyles2 } from '@grafana/ui';
 
-import { getNormalizedFieldName } from '../processing';
+import { getNormalizedFieldName } from '../panel/processing';
 
 import { FieldWithStats } from './FieldSelector';
 

@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { DataFrame, FieldType, store, toDataFrame } from '@grafana/data';
 import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 
-import { createLogLine } from '../../mocks/logRow';
-import { LogListContext } from '../LogListContext';
-import { defaultValue } from '../__mocks__/LogListContext';
-import { LogListModel } from '../processing';
+import { createLogLine } from '../mocks/logRow';
+import { LogListContext } from '../panel/LogListContext';
+import { defaultValue } from '../panel/__mocks__/LogListContext';
+import { LogListModel } from '../panel/processing';
 
 import { LogListFieldSelector, LogsTableFieldSelector, MIN_WIDTH } from './FieldSelector';
 

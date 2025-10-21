@@ -20,7 +20,7 @@ import {
   getSidebarWidth,
   LogsTableFieldSelector,
   MIN_WIDTH,
-} from 'app/features/logs/components/panel/fields/FieldSelector';
+} from 'app/features/logs/components/fieldSelector/FieldSelector';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 

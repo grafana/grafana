@@ -10,14 +10,15 @@ import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../../LogDetailsBody';
-import { getSuggestedFieldsForLogs } from '../../otel/formats';
-import { useLogListContext } from '../LogListContext';
-import { reportInteractionOnce } from '../analytics';
-import { LogListModel } from '../processing';
+import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { getSuggestedFieldsForLogs } from '../otel/formats';
+import { useLogListContext } from '../panel/LogListContext';
+import { reportInteractionOnce } from '../panel/analytics';
+import { LogListModel } from '../panel/processing';
 
 import { FieldList } from './FieldList';
 import { FieldSearch } from './FieldSearch';
+
 
 /**
  * FieldSelector wrapper for the LogList visualization.

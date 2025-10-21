@@ -23,6 +23,8 @@ import { ConfirmModal, Icon, PopoverContent, useStyles2, useTheme2 } from '@graf
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
+import { LogListFieldSelector } from '../fieldSelector/FieldSelector';
+
 import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './InfiniteScroll';
 import { getGridTemplateColumns, LogLineTimestampResolution } from './LogLine';
 import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
@@ -31,7 +33,6 @@ import { LogListContextProvider, LogListState, useLogListContext } from './LogLi
 import { LogListControls } from './LogListControls';
 import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
 import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
-import { LogListFieldSelector } from './fields/FieldSelector';
 import { preProcessLogs, LogListModel, getLevelsFromLogs } from './processing';
 import { useKeyBindings } from './useKeyBindings';
 import { usePopoverMenu } from './usePopoverMenu';
