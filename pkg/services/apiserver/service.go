@@ -67,6 +67,26 @@ var (
 
 const MaxRequestBodyBytes = 16 * 1024 * 1024 // 16MB - determined by the size of `mediumtext` on mysql, which is used to save dashboard data
 
+type preserveContextRoundTripper struct {
+	next http.RoundTripper
+	ctx  context.Context
+}
+
+var _ http.RoundTripper = (*preserveContextRoundTripper)(nil)
+
+// newPreserveContextRoundTripper returns a new preserveContextRoundTripper that wraps the given round tripper.
+func newPreserveContextRoundTripper(ctx context.Context, next http.RoundTripper) *preserveContextRoundTripper {
+	return &preserveContextRoundTripper{
+		ctx:  ctx,
+		next: next,
+	}
+}
+
+func (p *preserveContextRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.WithContext(p.ctx)
+	return p.next.RoundTrip(req)
+}
+
 type Service interface {
 	services.NamedService
 	registry.BackgroundService
@@ -227,6 +247,9 @@ func ProvideService(
 func (s *service) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
 	if err := s.AwaitRunning(ctx); err != nil {
 		return nil, fmt.Errorf("unable to get rest config: %w", err)
+	}
+	s.restConfig.WrapTransport = func(rt http.RoundTripper) http.RoundTripper {
+		return newPreserveContextRoundTripper(ctx, rt)
 	}
 	return s.restConfig, nil
 }
