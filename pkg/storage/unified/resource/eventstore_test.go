@@ -206,6 +206,7 @@ func TestEventStore_Save_Get(t *testing.T) {
 		Name:            event.Name,
 		ResourceVersion: event.ResourceVersion,
 		Action:          event.Action,
+		Folder:          event.Folder,
 	}
 
 	retrievedEvent, err := store.Get(ctx, eventKey)
@@ -518,6 +519,7 @@ func TestEventStore_CleanupOldEvents(t *testing.T) {
 		Name:            oldEvent.Name,
 		ResourceVersion: oldEvent.ResourceVersion,
 		Action:          oldEvent.Action,
+		Folder:          oldEvent.Folder,
 	})
 	require.NoError(t, err)
 
@@ -528,6 +530,7 @@ func TestEventStore_CleanupOldEvents(t *testing.T) {
 		Name:            recentEvent.Name,
 		ResourceVersion: recentEvent.ResourceVersion,
 		Action:          recentEvent.Action,
+		Folder:          recentEvent.Folder,
 	})
 	require.NoError(t, err)
 
@@ -555,6 +558,7 @@ func TestEventStore_CleanupOldEvents(t *testing.T) {
 		Name:            recentEvent.Name,
 		ResourceVersion: recentEvent.ResourceVersion,
 		Action:          recentEvent.Action,
+		Folder:          recentEvent.Folder,
 	})
 	require.NoError(t, err, "Recent event should still exist")
 }
@@ -592,6 +596,7 @@ func TestEventStore_CleanupOldEvents_NoOldEvents(t *testing.T) {
 		Name:            event.Name,
 		ResourceVersion: event.ResourceVersion,
 		Action:          event.Action,
+		Folder:          event.Folder,
 	})
 	require.NoError(t, err, "Recent event should still exist")
 }
