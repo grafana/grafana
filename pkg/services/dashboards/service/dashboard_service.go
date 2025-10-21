@@ -1179,30 +1179,24 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 		return err
 	}
 	permissions := []accesscontrol.SetResourcePermissionCommand{}
+
+	isNested := obj.GetFolder() != ""
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
+		// Don't set any permissions for nested dashboards
+		return nil
+	}
 	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 			UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 		})
 	}
-	isNested := obj.GetFolder() != ""
-	if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) {
-		// legacy behavior
-		if !isNested {
-			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
-				{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
-			}...)
-		}
-	} else {
-		// Don't set any permissions for nested dashboards
-		if isNested {
-			return nil
-		}
+	if !isNested {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 		}...)
 	}
+
 	svc := dr.getPermissionsService(key.Resource == "folders")
 	if _, err := svc.SetPermissions(ctx, ns.OrgID, obj.GetName(), permissions...); err != nil {
 		logger.Error("Could not set default permissions", "error", err)
@@ -1468,6 +1462,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			OrgID:       query.OrgId,
 			Title:       hit.Title,
 			Slug:        slugify.Slugify(hit.Title),
+			Description: hit.Description,
 			IsFolder:    false,
 			FolderUID:   hit.Folder,
 			FolderTitle: folderTitle,
@@ -1569,6 +1564,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 			FolderUID:   item.FolderUID,
 			FolderTitle: item.FolderTitle,
 			Tags:        []string{},
+			Description: item.Description,
 		}
 
 		if item.Tags != nil {
@@ -1941,7 +1937,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	if len(query.Tags) > 0 {
 		req := []*resourcepb.Requirement{{
 			Key:      resource.SEARCH_FIELD_TAGS,
-			Operator: string(selection.In),
+			Operator: "=",
 			Values:   query.Tags,
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
@@ -2041,13 +2037,13 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 
 	dashs := make([]*dashboardProvisioningWithUID, 0)
 	for _, hit := range searchResults.Hits {
-		if utils.ParseManagerKindString(hit.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND)) != utils.ManagerKindClassicFP { // nolint:staticcheck
+		if utils.ParseManagerKindString(string(hit.ManagedBy.Kind)) != utils.ManagerKindClassicFP { // nolint:staticcheck
 			continue
 		}
 
 		provisioning := &dashboardProvisioningWithUID{
 			DashboardProvisioning: dashboards.DashboardProvisioning{
-				Name:        hit.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_ID),
+				Name:        hit.ManagedBy.ID,
 				ExternalID:  hit.Field.GetNestedString(resource.SEARCH_FIELD_SOURCE_PATH),
 				CheckSum:    hit.Field.GetNestedString(resource.SEARCH_FIELD_SOURCE_CHECKSUM),
 				Updated:     hit.Field.GetNestedInt64(resource.SEARCH_FIELD_SOURCE_TIME),

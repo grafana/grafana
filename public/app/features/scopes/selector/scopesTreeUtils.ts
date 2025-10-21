@@ -109,3 +109,33 @@ export function treeNodeAtPath(tree: TreeNode, path: string[]) {
 
   return treeNode;
 }
+
+// Path starts with root node and goes down
+export const insertPathNodesIntoTree = (tree: TreeNode, path: ScopeNode[]) => {
+  const stringPath = path.map((n) => n.metadata.name);
+  stringPath.unshift('');
+
+  let newTree = tree;
+
+  // Go down the tree, don't iterate over the last node
+  for (let index = 0; index < stringPath.length - 1; index++) {
+    const childNodeName = stringPath[index + 1];
+    // Path up to iteration point
+    const pathSlice = stringPath.slice(0, index + 1);
+    newTree = modifyTreeNodeAtPath(newTree, pathSlice, (treeNode) => {
+      treeNode.children = { ...treeNode.children };
+      if (!childNodeName) {
+        console.warn('Failed to insert full path into tree. Did not find child to' + stringPath[index]);
+        return treeNode;
+      }
+      treeNode.children[childNodeName] = {
+        expanded: false,
+        scopeNodeId: childNodeName,
+        query: '',
+        children: undefined,
+      };
+      return treeNode;
+    });
+  }
+  return newTree;
+};

@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Untergrenze für den Schrittparameter festlegen",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Auflösung auswählen",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Heatmap",
           "label-table": "Tabelle",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "Parsing-Fehler: In den Builder-Modus wechseln?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Legende",
         "placeholder-select-legend-mode": "Legendenmodus auswählen",
         "tooltip-legend": "Überschreibung des Reihennamens oder Vorlage. Beispiel: {{templateExample}} wird durch den Label-Wert für {{labelName}} ersetzt."
@@ -482,11 +486,6 @@
         "message-no-metrics-found": "Es wurden keine Metriken in der Datenquelle gefunden.",
         "name": "Name",
         "type": "Typ"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Das Abfrage-Parsing ist unklar."
-        }
       }
     }
   }

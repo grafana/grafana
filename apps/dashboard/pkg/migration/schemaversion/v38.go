@@ -112,26 +112,22 @@ func processPanelsV38(panels []interface{}) {
 			continue
 		}
 
-		defaults, ok := fieldConfig["defaults"].(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		custom, ok := defaults["custom"].(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		// Migrate displayMode to cellOptions
-		if displayMode, exists := custom["displayMode"]; exists {
-			if displayModeStr, ok := displayMode.(string); ok {
-				custom["cellOptions"] = migrateTableDisplayModeToCellOptions(displayModeStr)
+		// Process defaults.custom if it exists
+		if defaults, ok := fieldConfig["defaults"].(map[string]interface{}); ok {
+			if custom, ok := defaults["custom"].(map[string]interface{}); ok {
+				// Migrate displayMode to cellOptions in defaults
+				if displayMode, exists := custom["displayMode"]; exists {
+					if displayModeStr, ok := displayMode.(string); ok {
+						custom["cellOptions"] = migrateTableDisplayModeToCellOptions(displayModeStr)
+					}
+					// Delete the legacy field
+					delete(custom, "displayMode")
+				}
 			}
-			// Delete the legacy field
-			delete(custom, "displayMode")
 		}
 
 		// Update any overrides referencing the cell display mode
+		// This must be called regardless of whether defaults.custom exists
 		migrateOverrides(fieldConfig)
 	}
 }
@@ -167,6 +163,12 @@ func migrateOverrides(fieldConfig map[string]interface{}) {
 					if valueStr, ok := value.(string); ok {
 						prop["value"] = migrateTableDisplayModeToCellOptions(valueStr)
 					}
+				} else {
+					// If no value exists, add empty cellOptions object to match frontend behavior
+					// Frontend always assigns a value even when original displayMode had no value
+					// See: public/app/features/dashboard/state/DashboardMigrator.ts:880
+					// override.properties[j].value = migrateTableDisplayModeToCellOptions(overrideDisplayMode);
+					prop["value"] = map[string]interface{}{}
 				}
 			}
 		}

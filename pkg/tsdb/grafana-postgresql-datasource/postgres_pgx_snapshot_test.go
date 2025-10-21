@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // These tests require a real postgres database:
@@ -28,12 +29,10 @@ import (
 // Use the docker/blocks/postgres_tests/docker-compose.yaml to spin up a
 // preconfigured Postgres server suitable for running these tests.
 func TestIntegrationPostgresPGXSnapshots(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	// the logic in this function is copied from postgres_tests.go
 	shouldRunTest := func() bool {
-		if testing.Short() {
-			return false
-		}
-
 		testDbName, present := os.LookupEnv("GRAFANA_TEST_DB")
 
 		if present && testDbName == "postgres" {
@@ -127,6 +126,7 @@ func TestIntegrationPostgresPGXSnapshots(t *testing.T) {
 		{format: "table", name: "types_datetime_pgx"},
 		{format: "table", name: "types_other"},
 		{format: "table", name: "types_enum"},
+		{format: "table", name: "types_jsonb"},
 		{format: "table", name: "timestamp_convert_bigint"},
 		{format: "table", name: "timestamp_convert_integer"},
 		{format: "table", name: "timestamp_convert_real"},
@@ -185,7 +185,7 @@ func TestIntegrationPostgresPGXSnapshots(t *testing.T) {
 
 			query := makeQuery(rawSQL, test.format)
 
-			result, err := handler.QueryDataPGX(context.Background(), &query)
+			result, err := handler.QueryData(context.Background(), &query)
 			require.Len(t, result.Responses, 1)
 			response, found := result.Responses["A"]
 			require.True(t, found)

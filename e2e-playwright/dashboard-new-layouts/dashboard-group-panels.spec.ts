@@ -8,6 +8,7 @@ test.use({
   featureToggles: {
     kubernetesDashboards: true,
     dashboardNewLayouts: true,
+    dashboardUndoRedo: true,
     groupByVariable: true,
   },
 });
@@ -91,8 +92,8 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      // Ungroup
-      await ungroupPanels(dashboardPage, selectors);
+      // Ungroup using the new ungroup rows button
+      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.ungroupRows).click();
 
       // Verify Row title is gone
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))).toBeHidden();
@@ -111,7 +112,7 @@ test.describe(
       ).toHaveCount(3);
     });
 
-    test('can add and remove several rows', async ({ dashboardPage, selectors, page }) => {
+    test('can add multiple rows and ungroup them all at once', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(page, selectors, 'Add and remove rows');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
@@ -170,6 +171,7 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
+      // First test individual row deletion
       await dashboardPage
         .getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
         .locator('..')
@@ -177,29 +179,38 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.deleteButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.DashboardRow.title('New row 2'))
-        .locator('..')
-        .click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.deleteButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
-
+      // Verify one row is deleted
       await expect(firstRow).toBeVisible();
       await expect(secondRow).toBeHidden();
+      await expect(thirdRow).toBeVisible();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
+      ).toHaveCount(4); // 3 from first row + 1 from third row
+
+      // Now test ungrouping all remaining rows at once
+      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.ungroupRows).click();
+
+      // Handle the ConvertMixedGridsModal that appears when there are mixed grid types
+      // The modal asks which grid type to convert to - we'll choose "Custom" (GridLayout)
+      await page.getByRole('button', { name: 'Convert to Custom' }).click();
+
+      // Verify all remaining rows are gone and all panels are now in a single grid
+      await expect(firstRow).toBeHidden();
       await expect(thirdRow).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(3);
+      ).toHaveCount(4); // All 4 panels should be visible in the single grid
 
       await saveDashboard(dashboardPage, selectors);
       await page.reload();
 
-      await expect(firstRow).toBeVisible();
+      // Verify all rows are still gone after reload
+      await expect(firstRow).toBeHidden();
       await expect(secondRow).toBeHidden();
       await expect(thirdRow).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(3);
+      ).toHaveCount(4);
     });
 
     test('can paste a copied row', async ({ dashboardPage, selectors, page }) => {
@@ -472,7 +483,7 @@ test.describe(
 
       // Ungroup
       await ungroupPanels(dashboardPage, selectors); // ungroup tabs
-      await ungroupPanels(dashboardPage, selectors); // ungroup rows
+      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.ungroupRows).click(); // ungroup rows
 
       // Verify tab and row titles is gone
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))).toBeHidden();
@@ -803,7 +814,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
       // Ungroup
-      await ungroupPanels(dashboardPage, selectors); // ungroup rows
+      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.ungroupRows).click(); // ungroup rows
       await ungroupPanels(dashboardPage, selectors); // ungroup tabs
 
       // Verify tab and row titles is gone

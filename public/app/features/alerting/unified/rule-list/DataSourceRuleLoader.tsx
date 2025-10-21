@@ -1,8 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { memo, useMemo } from 'react';
 
-import { DataSourceRuleGroupIdentifier, Rule } from 'app/types/unified-alerting';
-
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { isCloudRulerGroup } from '../utils/rules';
@@ -10,20 +8,18 @@ import { isCloudRulerGroup } from '../utils/rules';
 import { DataSourceRuleListItem } from './DataSourceRuleListItem';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleActionsSkeleton } from './components/RuleActionsSkeleton';
+import { PromRuleWithOrigin } from './hooks/useFilteredRulesIterator';
 import { getMatchingRulerRule } from './ruleMatching';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 const { useGetRuleGroupForNamespaceQuery } = alertRuleApi;
 
 interface DataSourceRuleLoaderProps {
-  rule: Rule;
-  groupIdentifier: DataSourceRuleGroupIdentifier;
+  ruleWithOrigin: PromRuleWithOrigin;
 }
 
-export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
-  rule,
-  groupIdentifier,
-}: DataSourceRuleLoaderProps) {
+export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({ ruleWithOrigin }: DataSourceRuleLoaderProps) {
+  const { rule, groupIdentifier } = ruleWithOrigin;
   const { rulesSource, namespace, groupName } = groupIdentifier;
 
   const { data: dsFeatures } = useDiscoverDsFeaturesQuery({ uid: rulesSource.uid });
@@ -43,8 +39,8 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
       return;
     }
 
-    return getMatchingRulerRule(rulerRuleGroup, rule);
-  }, [rulerRuleGroup, rule]);
+    return getMatchingRulerRule(rulerRuleGroup, ruleWithOrigin);
+  }, [rulerRuleGroup, ruleWithOrigin]);
 
   // 1. get the rule from the ruler API with "ruleWithLocation"
   // 1.1 skip this if this datasource does not have a ruler

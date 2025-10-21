@@ -273,7 +273,7 @@ type DashboardLink struct {
 	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 	AsDropdown bool `json:"asDropdown"`
 	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
-	Placement string `json:"placement,omitempty"`
+	Placement *string `json:"placement,omitempty"`
 	// If true, the link will be opened in a new tab
 	TargetBlank bool `json:"targetBlank"`
 	// If true, includes current template variables values in the link as query params
@@ -287,7 +287,7 @@ func NewDashboardLink() *DashboardLink {
 	return &DashboardLink{
 		Tags:        []string{},
 		AsDropdown:  false,
-		Placement:   DashboardLinkPlacement,
+		Placement:   (func(input string) *string { return &input })(DashboardLinkPlacement),
 		TargetBlank: false,
 		IncludeVars: false,
 		KeepTime:    false,
@@ -845,6 +845,7 @@ func NewVariableModel() *VariableModel {
 // `textbox`: Display a free text input field with an optional default value.
 // `custom`: Define the variable options manually using a comma-separated list.
 // `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+// `switch`: Boolean variables rendered as a switch
 type VariableType string
 
 const (
@@ -858,6 +859,7 @@ const (
 	VariableTypeCustom     VariableType = "custom"
 	VariableTypeSystem     VariableType = "system"
 	VariableTypeSnapshot   VariableType = "snapshot"
+	VariableTypeSwitch     VariableType = "switch"
 )
 
 // Determine if the variable shows on dashboard

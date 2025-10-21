@@ -710,9 +710,9 @@ VariableCustomFormatterFn: {
 // `custom`: Define the variable options manually using a comma-separated list.
 // `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
 VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
-	"system" | "snapshot"
+	"system" | "snapshot" | "switch"
 
-VariableKind: QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind
+VariableKind: QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind | SwitchVariableKind
 
 // Sort variable options
 // Accepted values are:
@@ -770,7 +770,6 @@ QueryVariableSpec: {
 	refresh:      VariableRefresh
 	skipUrlSync:  bool | *false
 	description?: string
-	showInControlsMenu?: bool
 	query:        DataQueryKind
 	regex:        string | *""
 	sort:         VariableSort
@@ -783,7 +782,6 @@ QueryVariableSpec: {
 	allowCustomValue: bool | *true
 	staticOptions?: [...VariableOption]
 	staticOptionsOrder?: "before" | "after" | "sorted"
-	showInControlsMenu?: bool
 }
 
 // Query variable kind
@@ -804,7 +802,6 @@ TextVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	showInControlsMenu?: bool
 }
 
 // Text variable kind
@@ -825,7 +822,6 @@ ConstantVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	showInControlsMenu?: bool
 }
 
 // Constant variable kind
@@ -853,7 +849,6 @@ DatasourceVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
-	showInControlsMenu?: bool
 }
 
 // Datasource variable kind
@@ -879,7 +874,6 @@ IntervalVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	showInControlsMenu?: bool
 }
 
 // Interval variable kind
@@ -902,13 +896,28 @@ CustomVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
-	showInControlsMenu?: bool
 }
 
 // Custom variable kind
 CustomVariableKind: {
 	kind: "CustomVariable"
 	spec: CustomVariableSpec
+}
+
+SwitchVariableSpec: {
+	name:    	   string | *""
+	current:       string | *"false"
+	enabledValue:  string | *"true"
+	disabledValue: string | *"false"
+	label?:        string
+	hide:          VariableHide
+	skipUrlSync:   bool | *false
+	description?:  string
+}
+
+SwitchVariableKind: {
+	kind: "SwitchVariable"
+	spec: SwitchVariableSpec
 }
 
 // GroupBy variable specification
@@ -925,7 +934,6 @@ GroupByVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	showInControlsMenu?: bool
 }
 
 // Group variable kind
@@ -949,7 +957,6 @@ AdhocVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
-	showInControlsMenu?: bool
 }
 
 // Define the MetricFindValue type

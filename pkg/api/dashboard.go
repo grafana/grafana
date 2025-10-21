@@ -60,7 +60,7 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashU
 		return false, err
 	}
 
-	query := star.IsStarredByUserQuery{UserID: userID, DashboardUID: dashUID}
+	query := star.IsStarredByUserQuery{UserID: userID, OrgID: c.OrgID, DashboardUID: dashUID}
 	return hs.starService.IsStarredByUser(c.Req.Context(), &query)
 }
 

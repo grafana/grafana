@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph, SceneVariable } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
+import { DashboardLink, VariableHide } from '@grafana/schema';
 import { Box, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { DashboardLinkRenderer } from './DashboardLinkRenderer';
@@ -23,7 +23,7 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
   const variables = sceneGraph
     .getVariables(dashboard)!
     .useState()
-    .variables.filter((v) => v.state.showInControlsMenu === true);
+    .variables.filter((v) => v.state.hide === VariableHide.inControlsMenu);
 
   if ((variables.length === 0 && filteredLinks.length === 0) || !uid) {
     return null;

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // WebhookExtraBuilder is a function that returns an ExtraBuilder.
@@ -25,7 +26,7 @@ import (
 type WebhookExtraBuilder struct {
 	provisioningapis.ExtraBuilder
 	isPublic    bool
-	urlProvider func(namespace string) string
+	urlProvider func(ctx context.Context, namespace string) string
 }
 
 // FIXME: separate the URL provider from connector to simplify operators
@@ -37,7 +38,7 @@ func (b *WebhookExtraBuilder) WebhookURL(ctx context.Context, r *provisioning.Re
 	gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
 	webhookURL := fmt.Sprintf(
 		"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-		b.urlProvider(r.GetNamespace()),
+		b.urlProvider(ctx, r.GetNamespace()),
 		gvr.Group,
 		gvr.Version,
 		r.GetNamespace(),
@@ -63,11 +64,12 @@ func ProvideWebhooksWithImages(
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
+	registry prometheus.Registerer,
 ) *WebhookExtraBuilder {
-	urlProvider := func(_ string) string {
+	urlProvider := func(_ context.Context, _ string) string {
 		return cfg.AppURL
 	}
-	isPublic := isPublicURL(urlProvider(""))
+	isPublic := isPublicURL(urlProvider(context.Background(), ""))
 
 	return &WebhookExtraBuilder{
 		isPublic:    isPublic,
@@ -82,11 +84,12 @@ func ProvideWebhooksWithImages(
 				isPublic,
 				b,
 				screenshotRenderer,
+				registry,
 			)
 
-			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider)
+			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider, registry)
 			commenter := pullrequest.NewCommenter()
-			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
+			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 
 			return NewWebhookExtraWithImages(
 				render,
@@ -98,19 +101,19 @@ func ProvideWebhooksWithImages(
 	}
 }
 
-func ProvideWebhooks(provisioningURL string) *WebhookExtraBuilder {
-	urlProvider := func(_ string) string {
+func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer) *WebhookExtraBuilder {
+	urlProvider := func(_ context.Context, _ string) string {
 		return provisioningURL
 	}
 
-	isPublic := isPublicURL(urlProvider(""))
+	isPublic := isPublicURL(urlProvider(context.Background(), ""))
 
 	return &WebhookExtraBuilder{
 		isPublic:    isPublic,
 		urlProvider: urlProvider,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			screenshotRenderer := pullrequest.NewNoOpRenderer()
-			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer)
+			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer, registry)
 
 			return NewWebhookExtra(webhook)
 		},
@@ -128,7 +131,7 @@ type WebhookExtraWithImages struct {
 func NewWebhookExtraWithImages(
 	render *renderConnector,
 	webhook *webhookConnector,
-	urlProvider func(namespace string) string,
+	urlProvider func(ctx context.Context, namespace string) string,
 	workers []jobs.Worker,
 ) *WebhookExtraWithImages {
 	return &WebhookExtraWithImages{

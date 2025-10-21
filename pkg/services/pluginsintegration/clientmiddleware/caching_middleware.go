@@ -2,12 +2,14 @@ package clientmiddleware
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/caching"
@@ -34,14 +36,20 @@ func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingServic
 	if err := prometheus.Register(ResourceCachingRequestHistogram); err != nil {
 		log.Error("Error registering prometheus collector 'ResourceRequestHistogram'", "error", err)
 	}
-	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
-		return &CachingMiddleware{
+	cachingMiddlewareHandler := func(next backend.Handler) backend.Handler {
+		cachingMiddleware := &CachingMiddleware{
 			BaseHandler: backend.NewBaseHandler(next),
 			caching:     cachingService,
 			log:         log,
 			features:    features,
 		}
-	})
+		if features != nil && features.IsEnabled(context.Background(), featuremgmt.FlagQueryCacheRequestDeduplication) {
+			return newRequestDeduplicationMiddleware(log, cachingMiddleware)
+		}
+		return cachingMiddleware
+	}
+
+	return backend.HandlerMiddlewareFunc(cachingMiddlewareHandler)
 }
 
 type CachingMiddleware struct {
@@ -163,4 +171,53 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	})
 
 	return m.BaseHandler.CallResource(ctx, req, cacheSender)
+}
+
+// Given N requests happening at the same time and issuing the same query, only one request will execute
+// and the other ones will wait for the response received by the request being executed.
+type requestDeduplicationMiddleware struct {
+	backend.BaseHandler
+	log          *log.ConcreteLogger
+	singleflight *singleflight.Group
+}
+
+func newRequestDeduplicationMiddleware(log *log.ConcreteLogger, next backend.Handler) *requestDeduplicationMiddleware {
+	return &requestDeduplicationMiddleware{log: log, BaseHandler: backend.NewBaseHandler(next), singleflight: &singleflight.Group{}}
+}
+
+func (m *requestDeduplicationMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if req.PluginContext.DataSourceInstanceSettings == nil || req.PluginContext.DataSourceInstanceSettings.UID == "" {
+		return m.BaseHandler.QueryData(ctx, req)
+	}
+	key, err := caching.GetKey(req.PluginContext.DataSourceInstanceSettings.UID, req)
+	if err != nil {
+		m.log.Error("error building cache key for request deduplication, skipping request deduplication", "error", err)
+		return m.BaseHandler.QueryData(ctx, req)
+	}
+	v, err, _ := m.singleflight.Do(key, func() (interface{}, error) {
+		return m.BaseHandler.QueryData(ctx, req)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("request deduplication middleware: calling BaseHandler.QueryData: %w", err)
+	}
+	return v.(*backend.QueryDataResponse), nil
+}
+
+func (m *requestDeduplicationMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	if req.PluginContext.DataSourceInstanceSettings == nil || req.PluginContext.DataSourceInstanceSettings.UID == "" {
+		return m.BaseHandler.CallResource(ctx, req, sender)
+	}
+
+	key, err := caching.GetKey(req.PluginContext.DataSourceInstanceSettings.UID, req)
+	if err != nil {
+		m.log.Error("error building cache key for request deduplication, skipping request deduplication", "error", err)
+		return m.BaseHandler.CallResource(ctx, req, sender)
+	}
+	_, err, _ = m.singleflight.Do(key, func() (interface{}, error) {
+		return nil, m.BaseHandler.CallResource(ctx, req, sender)
+	})
+	if err != nil {
+		return fmt.Errorf("request deduplication middleware: calling BaseHandler.CallResource: %w", err)
+	}
+	return nil
 }

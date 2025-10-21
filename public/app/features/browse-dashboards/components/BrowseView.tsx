@@ -8,6 +8,7 @@ import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui'
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/core';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -32,9 +33,10 @@ interface BrowseViewProps {
   width: number;
   folderUID: string | undefined;
   permissions: BrowseDashboardsPermissions;
+  isReadOnlyRepo?: boolean;
 }
 
-export function BrowseView({ folderUID, width, height, permissions }: BrowseViewProps) {
+export function BrowseView({ folderUID, width, height, permissions, isReadOnlyRepo }: BrowseViewProps) {
   const status = useBrowseLoadingStatus(folderUID);
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
@@ -46,6 +48,8 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
   const hasNoRole = contextSrv.user.orgRole === OrgRole.None;
   const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled || hasNoRole ? skipToken : undefined);
   const rootItems = useSelector(rootItemsSelector);
+
+  const [, stateManager] = useSearchStateManager();
 
   const excludeUIDs = useMemo(() => {
     if (isProvisionedInstance || !provisioningEnabled) {
@@ -80,6 +84,13 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
       dispatch(setItemSelectionState({ item, isSelected }));
     },
     [dispatch]
+  );
+
+  const handleTagClick = useCallback(
+    (tag: string) => {
+      stateManager.onAddTag(tag);
+    },
+    [stateManager]
   );
 
   const isSelected = useCallback(
@@ -153,6 +164,7 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
                 href={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
                 icon="plus"
                 size="lg"
+                disabled={isReadOnlyRepo}
               >
                 <Trans i18nKey="browse-dashboards.empty-state.button-title">Create dashboard</Trans>
               </LinkButton>
@@ -163,7 +175,7 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
                 : t('browse-dashboards.empty-state.title', "You haven't created any dashboards yet")
             }
           >
-            {folderUID && (
+            {folderUID && !isReadOnlyRepo && (
               <Trans i18nKey="browse-dashboards.empty-state.pro-tip">
                 Add/move dashboards to your folder at{' '}
                 <TextLink external={false} href="/dashboards">
@@ -197,6 +209,7 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
       onItemSelectionChange={handleItemSelectionChange}
       isItemLoaded={isItemLoaded}
       requestLoadMore={handleLoadMore}
+      onTagClick={handleTagClick}
     />
   );
 }

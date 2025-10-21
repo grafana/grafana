@@ -13,6 +13,15 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/metadata"
+	"k8s.io/component-base/metrics/legacyregistry"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -25,14 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/grpc/metadata"
-	"k8s.io/component-base/metrics/legacyregistry"
 )
 
 var (
@@ -313,6 +314,11 @@ func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr stri
 	cfg.IndexPath = t.TempDir() + cfg.InstanceID
 	cfg.IndexFileThreshold = testIndexFileThreshold
 	cfg.Target = []string{modules.StorageServer}
+	// make sure the resource server has enough time to join the ring
+	// before the tests start sending traffic
+	// otherwise the tests will be flaky,
+	// also, tests are going to timeout after 300 seconds anyway
+	cfg.ResourceServerJoinRingTimeout = 300 * time.Second
 
 	return initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
 }
@@ -325,7 +331,7 @@ func initModuleServerForTest(
 ) testModuleServer {
 	tracer := tracing.InitializeTracerForTest()
 
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, nil)
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, nil, ProvideNoopModuleRegisterer(), nil)
 	require.NoError(t, err)
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
@@ -354,7 +360,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	tracer := noop.NewTracerProvider().Tracer("test-tracer")
 	require.NoError(t, err)
-	searchOpts, err := search.NewSearchOptions(features, cfg, tracer, docBuilders, nil)
+	searchOpts, err := search.NewSearchOptions(features, cfg, tracer, docBuilders, nil, nil)
 	require.NoError(t, err)
 	server, err := sql.NewResourceServer(sql.ServerOptions{
 		DB:             nil,

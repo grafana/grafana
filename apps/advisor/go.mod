@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/advisor
 
-go 1.24.6
+go 1.25.3
 
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
@@ -294,7 +294,6 @@ require (
 	modernc.org/sqlite v1.38.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.7.0 // indirect
 	sigs.k8s.io/yaml v1.5.0 // indirect
 	xorm.io/builder v0.3.6 // indirect
 )

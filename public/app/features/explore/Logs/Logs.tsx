@@ -30,6 +30,7 @@ import {
   serializeStateToUrlParam,
   urlUtil,
   LogLevel,
+  shallowCompare,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -53,7 +54,7 @@ import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
-import { LogList, LogListControlOptions } from 'app/features/logs/components/panel/LogList';
+import { LogList, LogListOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
 import { LogLevelColor, dedupLogRows } from 'app/features/logs/logsModel';
 import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
@@ -205,7 +206,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending
   );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
-  const [displayedFields, setDisplayedFields] = useState<string[]>([]);
+  const [displayedFields, setDisplayedFields] = useState<string[]>(panelState?.logs?.displayedFields ?? []);
+  const [defaultDisplayedFields, setDefaultDisplayedFields] = useState<string[]>([]);
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
   const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>(PINNED_LOGS_MESSAGE);
@@ -280,16 +282,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     store.set(visualisationTypeKey, visualisationType);
   }, [panelState?.logs?.visualisationType]);
 
-  useEffect(() => {
-    let displayedFields: string[] = [];
-    if (Array.isArray(panelState?.logs?.displayedFields)) {
-      displayedFields = panelState?.logs?.displayedFields;
-    } else if (panelState?.logs?.displayedFields && typeof panelState?.logs?.displayedFields === 'object') {
-      displayedFields = Object.values(panelState?.logs?.displayedFields);
-    }
-    setDisplayedFields(displayedFields);
-  }, [panelState?.logs?.displayedFields]);
-
   useUnmount(() => {
     if (flipOrderTimer) {
       window.clearTimeout(flipOrderTimer.current);
@@ -345,6 +337,15 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       visualisationType,
     ]
   );
+
+  useEffect(() => {
+    if (!shallowCompare(displayedFields, panelState?.logs?.displayedFields ?? [])) {
+      updatePanelState({
+        ...panelState?.logs,
+        displayedFields,
+      });
+    }
+  }, [displayedFields, panelState?.logs, updatePanelState]);
 
   // actions
   const onLogRowHover = useCallback(
@@ -544,13 +545,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       if (index === -1) {
         const updatedDisplayedFields = displayedFields.concat(key);
         setDisplayedFields(updatedDisplayedFields);
-        updatePanelState({
-          ...panelState?.logs,
-          displayedFields: updatedDisplayedFields,
-        });
       }
     },
-    [displayedFields, panelState?.logs, updatePanelState]
+    [displayedFields]
   );
 
   const hideField = useCallback(
@@ -559,22 +556,14 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       if (index > -1) {
         const updatedDisplayedFields = displayedFields.filter((k) => key !== k);
         setDisplayedFields(updatedDisplayedFields);
-        updatePanelState({
-          ...panelState?.logs,
-          displayedFields: updatedDisplayedFields,
-        });
       }
     },
-    [displayedFields, panelState?.logs, updatePanelState]
+    [displayedFields]
   );
 
-  const clearDetectedFields = useCallback(() => {
-    updatePanelState({
-      ...panelState?.logs,
-      displayedFields: [],
-    });
+  const clearDisplayedFields = useCallback(() => {
     setDisplayedFields([]);
-  }, [panelState?.logs, updatePanelState]);
+  }, []);
 
   const onCloseCallbackRef = useRef<() => void>(() => {});
 
@@ -703,7 +692,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const visibilityChangedRef = useRef(true);
   const onLogOptionsChange = useCallback(
-    (option: LogListControlOptions, value: string | string[] | boolean) => {
+    (option: LogListOptions, value: string | string[] | boolean) => {
       if (option === 'sortOrder' && isLogsSortOrder(value)) {
         sortOrderChanged(value);
       } else if (option === 'dedupStrategy' && isDedupStrategy(value)) {
@@ -757,6 +746,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
           return newLevels;
         });
+      } else if (option === 'defaultDisplayedFields' && Array.isArray(value)) {
+        setDefaultDisplayedFields(value);
       }
     },
     [logsVolumeData?.data, logsVolumeEnabled, sortOrderChanged]
@@ -795,32 +786,35 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           logOptionsStorageKey={SETTING_KEY_ROOT}
           timeZone={timeZone}
           displayedFields={displayedFields}
+          onPermalinkClick={onPermalinkClick}
           onClickShowField={showField}
           onClickHideField={hideField}
         />
       )}
-      <PanelChrome
-        title={t('explore.unthemed-logs.title-logs-volume', 'Logs volume')}
-        collapsible
-        collapsed={!logsVolumeEnabled}
-        onToggleCollapse={onToggleLogsVolumeCollapse}
-      >
-        {logsVolumeEnabled && (
-          <LogsVolumePanelList
-            toggleLegendRef={toggleLegendRef}
-            absoluteRange={absoluteRange}
-            width={width}
-            logsVolumeData={logsVolumeData}
-            onUpdateTimeRange={onChangeTime}
-            timeZone={timeZone}
-            splitOpen={splitOpen}
-            onLoadLogsVolume={loadLogsVolumeData}
-            onDisplayedSeriesChanged={onDisplayedSeriesChanged}
-            eventBus={logsVolumeEventBus}
-            onClose={() => onToggleLogsVolumeCollapse(true)}
-          />
-        )}
-      </PanelChrome>
+      <div className={styles.logsVolumePanel}>
+        <PanelChrome
+          title={t('explore.unthemed-logs.title-logs-volume', 'Logs volume')}
+          collapsible
+          collapsed={!logsVolumeEnabled}
+          onToggleCollapse={onToggleLogsVolumeCollapse}
+        >
+          {logsVolumeEnabled && (
+            <LogsVolumePanelList
+              toggleLegendRef={toggleLegendRef}
+              absoluteRange={absoluteRange}
+              width={width}
+              logsVolumeData={logsVolumeData}
+              onUpdateTimeRange={onChangeTime}
+              timeZone={timeZone}
+              splitOpen={splitOpen}
+              onLoadLogsVolume={loadLogsVolumeData}
+              onDisplayedSeriesChanged={onDisplayedSeriesChanged}
+              eventBus={logsVolumeEventBus}
+              onClose={() => onToggleLogsVolumeCollapse(true)}
+            />
+          )}
+        </PanelChrome>
+      </div>
       <PanelChrome
         titleItems={[
           config.featureToggles.logsExploreTableVisualisation ? (
@@ -983,7 +977,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             dedupStrategy={dedupStrategy}
             dedupCount={dedupCount}
             displayedFields={displayedFields}
-            clearDetectedFields={clearDetectedFields}
+            clearDisplayedFields={clearDisplayedFields}
+            defaultDisplayedFields={defaultDisplayedFields}
           />
         </div>
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>
@@ -1009,7 +1004,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           {(!config.featureToggles.newLogsPanel || visualisationType === 'table') &&
             config.featureToggles.logsPanelControls &&
             hasData && (
-              <div className={styles.logRowsWrapper} data-testid="logRows">
+              <div className={styles.controlledLogRowsWrapper} data-testid="logRows">
                 <ControlledLogRows
                   ref={logsContainerRef}
                   logsTableFrames={props.logsFrames}
@@ -1056,6 +1051,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   logOptionsStorageKey={SETTING_KEY_ROOT}
                   onLogOptionsChange={onLogOptionsChange}
                   filterLevels={filterLevels}
+                  timeRange={props.range}
                 />
               </div>
             )}
@@ -1113,6 +1109,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                       onPinLine={onPinToContentOutlineClick}
                       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                       renderPreview
+                      timeRange={props.range}
                     />
                   </InfiniteScroll>
                 </div>
@@ -1261,6 +1258,10 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       overflowY: 'visible',
       width: '100%',
     }),
+    controlledLogRowsWrapper: css({
+      width: '100%',
+      maxHeight: '80vh',
+    }),
     logRowsWrapper: css({
       width: '100%',
     }),
@@ -1275,6 +1276,9 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     stickyNavigation: css({
       overflow: 'visible',
       ...(config.featureToggles.logsInfiniteScrolling && { marginBottom: '0px' }),
+    }),
+    logsVolumePanel: css({
+      marginBottom: theme.spacing(1.5),
     }),
   };
 };
