@@ -59,7 +59,7 @@ describe('DashboardPicker', () => {
   });
 
   xdescribe('dashboard v2 (v2beta1 API)', () => {
-    testWithFeatureToggles(['dashboardNewLayouts', 'kubernetesDashboards']);
+    testWithFeatureToggles({ enable: ['dashboardNewLayouts', 'kubernetesDashboards'] });
     it('renders dashboard correctly', async () => {
       render(<DashboardPicker value="v2-special-case-override" />);
       expect(await screen.findByText('TODO')).toBeInTheDocument();
