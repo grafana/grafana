@@ -64,6 +64,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
 
     // Disable animation on initial rendering and enable it when component has been mounted.
     '.react-grid-item.cssTransforms': {
+      // eslint-disable-next-line @grafana/no-unreduced-motion
       transitionProperty: 'none !important',
     },
 
@@ -93,7 +94,9 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
     '.dashboard-canvas-add-button': {
       display: 'flex',
       opacity: 0.5,
-      transition: theme.transitions.create('opacity'),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create('opacity'),
+      },
       filter: `grayscale(100%)`,
       '&:hover,:focus-within': {
         opacity: 1,
