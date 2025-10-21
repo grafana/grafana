@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "11.6.7";
+export const pluginVersion = "11.6.8";
 
 export interface Options extends common.SingleStatBaseOptions {
   colorMode: common.BigValueColorMode;
