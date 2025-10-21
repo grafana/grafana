@@ -56,12 +56,15 @@ func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Servi
 		l.Error("failed to populate dashboard_uid for annotations", "error", err)
 	}
 
-	return &xormRepositoryImpl{
+	repo := &xormRepositoryImpl{
 		cfg:        cfg,
 		db:         db,
 		log:        l,
 		tagService: tagService,
-		queryRangeStart: promauto.With(reg).NewHistogramVec(
+	}
+
+	if reg != nil {
+		repo.queryRangeStart = promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: "grafana",
 				Subsystem: "annotations",
@@ -70,8 +73,8 @@ func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Servi
 				Buckets:   []float64{1, 6, 12, 24, 48, 168, 336, 720, 2160, 4320, 8760},
 			},
 			[]string{"query_type"},
-		),
-		queryRangeDuration: promauto.With(reg).NewHistogramVec(
+		)
+		repo.queryRangeDuration = promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: "grafana",
 				Subsystem: "annotations",
@@ -80,8 +83,8 @@ func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Servi
 				Buckets:   []float64{0.25, 1, 6, 12, 24, 48, 168, 336, 720, 2160},
 			},
 			[]string{"query_type"},
-		),
-		queryResultsCount: promauto.With(reg).NewHistogramVec(
+		)
+		repo.queryResultsCount = promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: "grafana",
 				Subsystem: "annotations",
@@ -90,8 +93,9 @@ func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Servi
 				Buckets:   []float64{0, 1, 10, 50, 100, 500, 1000, 5000, 10000, 50000},
 			},
 			[]string{"query_type"},
-		),
+		)
 	}
+	return repo
 }
 
 func (r *xormRepositoryImpl) Type() string {
