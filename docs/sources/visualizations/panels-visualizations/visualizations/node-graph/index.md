@@ -123,6 +123,20 @@ You can pan the view by clicking outside any node or edge and dragging your mous
 
 Use the buttons in the lower right corner to zoom in or out. You can also use the mouse wheel or touchpad scroll, together with either Ctrl or Cmd key to do so.
 
+### Grid view? Change layout
+
+Switch quickly between displaying the visualization in graph layouts (**Layered** and **Force**) or **Grid** layout.
+
+Click a node and select **Show in Grid layout** to switch to a grid layout, which provides a better overview of the most interesting nodes in the graph.
+Click a node and select **Show in Graph layout** to switch back to graph layout and focus on the selected node, to show it in context of the full graph.
+
+![Node graph grid to default](/media/docs/grafana/panels-visualizations/screenshot-node-graph-view-v11.3.png 'Node graph grid to default')
+
+Switching to grid layout this way only changes the layout temporarily.
+The visualization maintains the layout algorithm selected in the panel editor, and reverts to it when the dashboard refreshes.
+
+For more information about layouts, refer to [Layout algorithm](#layout-algorithm).
+
 ### Hidden nodes
 
 The number of nodes shown at a given time is limited to maintain a reasonable visualization performance. Nodes that are not currently visible are hidden behind clickable markers that show an approximate number of hidden nodes that are connected by a particular edge. You can click on the marker to expand the graph around that node.
@@ -153,18 +167,14 @@ Choose how the node graph should handle zoom and scroll events:
 Choose how the layout is generated:
 
 - **Layered** - Default. Creates a predictable and orderly layout, especially useful for service graphs.
-- **Force** - Uses a physics-based force layout algorithm, that's useful with a large number of nodes (500+).
+- **Force** - Uses a physics-based force layout algorithm that's useful with a large number of nodes (500+).
 - **Grid** - Arranges nodes into a grid format to provide a better overview of the most interesting nodes in the graph. Grid view shows nodes in a grid without edges and can be sorted by stats shown inside the node or by stats represented by the a colored border of the nodes.
 
    ![Node graph grid](/media/docs/grafana/panels-visualizations/screenshot-node-graph-grid-v11.3.png 'Node graph grid')
 
-   To sort the nodes, click on the stats inside the legend. The marker next to the stat name shows which stat is currently used for sorting and sorting direction.
+   - To sort the nodes, click on the stats inside the legend. The marker next to the stat name shows which stat is currently used for sorting and sorting direction.
 
-   ![Node graph legend](/media/docs/grafana/panels-visualizations/screenshot-node-graph-legend-v11.3.png 'Node graph legend')
-
-   Click on the node and select "Show in Graph layout" option to switch back to graph layout and focus on the selected node, to show it in context of the full graph.
-
-   ![Node graph grid to default](/media/docs/grafana/panels-visualizations/screenshot-node-graph-view-v11.3.png 'Node graph grid to default')
+     ![Node graph legend](/media/docs/grafana/panels-visualizations/screenshot-node-graph-legend-v11.3.png 'Node graph legend')
 
 ### Nodes options
 
