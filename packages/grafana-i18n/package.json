@@ -28,6 +28,7 @@
       "require": "./src/internal/index.ts"
     },
     "./eslint-plugin": {
+      "types": "./src/eslint/index.d.ts",
       "import": "./src/eslint/index.cjs",
       "require": "./src/eslint/index.cjs"
     }
