@@ -1008,8 +1008,8 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 	k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 		return ( // gofmt comment helper
-			req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindPlugin) &&
-				req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "testing")
+		req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindPlugin) &&
+			req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "testing")
 	})).Return(&resourcepb.ResourceSearchResponse{
 		Results: &resourcepb.ResourceTable{
 			Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -2084,7 +2084,7 @@ func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
 				Updated:    provisioningTimestamp,
 			},
 		},
-	}, res)                                // only should return the one provisioned dashboard
+	}, res) // only should return the one provisioned dashboard
 	assert.Equal(t, "dash-db", query.Type) // query type should be added as dashboards only
 }
 
