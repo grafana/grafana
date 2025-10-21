@@ -43,7 +43,10 @@ func TestSimpleServer(t *testing.T) {
 		WithInMemory(true).
 		WithLogger(nil))
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() {
+		err := db.Close()
+		require.NoError(t, err)
+	}()
 
 	kv := NewBadgerKV(db)
 	store, err := NewKVStorageBackend(KVBackendOptions{
