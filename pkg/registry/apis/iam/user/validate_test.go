@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestValidateOnCreate(t *testing.T) {
@@ -16,6 +18,7 @@ func TestValidateOnCreate(t *testing.T) {
 		name          string
 		user          *iamv0alpha1.User
 		requester     *identity.StaticRequester
+		searchClient  resourcepb.ResourceIndexClient
 		expectError   bool
 		errorContains string
 	}{
@@ -31,7 +34,8 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: true,
 			},
-			expectError: false,
+			searchClient: &FakeUserLegacySearchClient{},
+			expectError:  false,
 		},
 		{
 			name: "grafana admin creating another grafana admin",
@@ -46,7 +50,8 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: true,
 			},
-			expectError: false,
+			searchClient: &FakeUserLegacySearchClient{},
+			expectError:  false,
 		},
 		{
 			name: "non-admin trying to create a grafana admin",
@@ -61,6 +66,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
 			},
+			searchClient:  &FakeUserLegacySearchClient{},
 			expectError:   true,
 			errorContains: "only grafana admins can create grafana admins",
 		},
@@ -75,6 +81,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
 			},
+			searchClient:  &FakeUserLegacySearchClient{},
 			expectError:   true,
 			errorContains: "user must have either login or email",
 		},
@@ -90,13 +97,14 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
 			},
-			expectError: false,
+			searchClient: &FakeUserLegacySearchClient{},
+			expectError:  false,
 		},
 		{
 			name: "user with only email",
 			user: &iamv0alpha1.User{
 				Spec: iamv0alpha1.UserSpec{
-					Email: "test@test.com",
+					Email: "test@example",
 					Role:  "Viewer",
 				},
 			},
@@ -104,7 +112,8 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
 			},
-			expectError: false,
+			searchClient: &FakeUserLegacySearchClient{},
+			expectError:  false,
 		},
 		{
 			name: "user with empty role",
@@ -117,6 +126,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
 			},
+			searchClient:  &FakeUserLegacySearchClient{},
 			expectError:   true,
 			errorContains: "role is required",
 		},
@@ -132,6 +142,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
 			},
+			searchClient:  &FakeUserLegacySearchClient{},
 			expectError:   true,
 			errorContains: "invalid role 'InvalidRole'",
 		},
@@ -147,7 +158,49 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: true,
 			},
-			expectError: false,
+			searchClient: &FakeUserLegacySearchClient{},
+			expectError:  false,
+		},
+		{
+			name: "user with existing email",
+			user: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{
+					Email: "existing@example",
+					Role:  "Viewer",
+				},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: false,
+			},
+			searchClient: &FakeUserLegacySearchClient{
+				Users: []*user.UserSearchHitDTO{
+					{Email: "existing@example"},
+				},
+			},
+			expectError:   true,
+			errorContains: "email 'existing@example' is already taken",
+		},
+		{
+			name: "user with existing login",
+			user: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{
+					Login: "existinguser",
+					Email: "existinguser@example",
+					Role:  "Viewer",
+				},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: false,
+			},
+			searchClient: &FakeUserLegacySearchClient{
+				Users: []*user.UserSearchHitDTO{
+					{Login: "existinguser"},
+				},
+			},
+			expectError:   true,
+			errorContains: "login 'existinguser' is already taken",
 		},
 	}
 
@@ -158,7 +211,7 @@ func TestValidateOnCreate(t *testing.T) {
 				tt.requester,
 			)
 
-			err := ValidateOnCreate(ctx, tt.user)
+			err := ValidateOnCreate(ctx, tt.searchClient, tt.user)
 
 			if tt.expectError {
 				require.Error(t, err)
@@ -178,6 +231,7 @@ func TestValidateOnUpdate(t *testing.T) {
 		oldUser       *iamv0alpha1.User
 		newUser       *iamv0alpha1.User
 		requester     *identity.StaticRequester
+		searchClient  resourcepb.ResourceIndexClient
 		expectError   bool
 		errorContains string
 	}{
@@ -254,7 +308,7 @@ func TestValidateOnUpdate(t *testing.T) {
 		{
 			name: "update with only login",
 			oldUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Email: "test@test.com", Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Email: "test@example", Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
 				Spec: iamv0alpha1.UserSpec{Login: "testuser", Email: "", Role: "Viewer"},
@@ -263,7 +317,8 @@ func TestValidateOnUpdate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: true,
 			},
-			expectError: false,
+			searchClient: &FakeUserLegacySearchClient{},
+			expectError:  false,
 		},
 		{
 			name: "update with only email",
@@ -271,13 +326,14 @@ func TestValidateOnUpdate(t *testing.T) {
 				Spec: iamv0alpha1.UserSpec{Login: "testuser", Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
-				Spec: iamv0alpha1.UserSpec{Login: "", Email: "test@test.com", Role: "Viewer"},
+				Spec: iamv0alpha1.UserSpec{Login: "", Email: "test@example", Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: true,
 			},
-			expectError: false,
+			searchClient: &FakeUserLegacySearchClient{},
+			expectError:  false,
 		},
 		{
 			name: "service user verifies email",
@@ -408,6 +464,65 @@ func TestValidateOnUpdate(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "update with existing email",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Email: "one@example", Role: "Viewer"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Email: "two@example", Role: "Viewer"},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: true,
+			},
+			searchClient: &FakeUserLegacySearchClient{
+				Users: []*user.UserSearchHitDTO{
+					{Email: "two@example"},
+				},
+			},
+			expectError:   true,
+			errorContains: "email 'two@example' is already taken",
+		},
+		{
+			name: "update with existing login",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "one", Role: "Viewer"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "two", Role: "Viewer"},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: true,
+			},
+			searchClient: &FakeUserLegacySearchClient{
+				Users: []*user.UserSearchHitDTO{
+					{Login: "two"},
+				},
+			},
+			expectError:   true,
+			errorContains: "login 'two' is already taken",
+		},
+		{
+			name: "update with no change to login or email",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Email: "test@example", Role: "Viewer"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Email: "test@example", Role: "Editor"},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: true,
+			},
+			searchClient: &FakeUserLegacySearchClient{
+				Users: []*user.UserSearchHitDTO{
+					{Login: "testuser", Email: "test@example"},
+				},
+			},
+			expectError: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -417,7 +532,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				tt.requester,
 			)
 
-			err := ValidateOnUpdate(ctx, tt.oldUser, tt.newUser)
+			err := ValidateOnUpdate(ctx, tt.searchClient, tt.oldUser, tt.newUser)
 
 			if tt.expectError {
 				require.Error(t, err)

@@ -147,7 +147,7 @@ func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, login string) error {
 	req := createUserSearchRequest(namespace, []*resourcepb.Requirement{
 		{
-			Key:      "login",
+			Key:      "fields.login",
 			Operator: string(selection.Equals),
 			Values:   []string{login},
 		},
@@ -159,7 +159,7 @@ func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 
 	if resp.TotalHits > 0 {
 		return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
-			fmt.Sprintf("%s", namespace, login),
+			fmt.Sprintf("%s", namespace),
 			fmt.Errorf("login '%s' is already taken", login))
 	}
 

@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 
 	"google.golang.org/grpc"
@@ -14,9 +15,7 @@ import (
 )
 
 const (
-	// UserResource is the resource name for users.
-	UserResource = "users"
-	// UserResourceGroup is the group name for users.
+	UserResource      = "users"
 	UserResourceGroup = "iam.grafana.com"
 )
 
@@ -24,15 +23,19 @@ const (
 type UserLegacySearchClient struct {
 	resourcepb.ResourceIndexClient
 	userService user.Service
+	log         *slog.Logger
 }
 
 // NewUserLegacySearchClient creates a new UserLegacySearchClient.
 func NewUserLegacySearchClient(userService user.Service) *UserLegacySearchClient {
-	return &UserLegacySearchClient{userService: userService}
+	return &UserLegacySearchClient{
+		userService: userService,
+		log:         slog.Default().With("logger", "legacy-user-search-client"),
+	}
 }
 
 // Search searches for users in the legacy search engine.
-// It only supports exact matching.
+// It only supports exact matching for title, login, or email.
 func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	signedInUser, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -49,10 +52,10 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 	for _, field := range req.Options.Fields {
 		vals := field.GetValues()
 		if len(vals) != 1 {
-			return nil, fmt.Errorf("only one value supported for field %s", field.Key)
+			c.log.Warn("only single value fields are supported for legacy search, using first value", "field", field.Key, "values", vals)
 		}
 		switch field.Key {
-		case res.SEARCH_FIELD_TITLE_PHRASE:
+		case res.SEARCH_FIELD_TITLE:
 			title = vals[0]
 		case "fields.login":
 			login = vals[0]
@@ -62,11 +65,11 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 	}
 
 	if title == "" && login == "" && email == "" {
-		return nil, fmt.Errorf("at least one of title_phrase, login, or email must be provided for an exact match query")
+		return nil, fmt.Errorf("at least one of title, login, or email must be provided for the query")
 	}
 
 	// The user store's Search method combines these into an OR.
-	// We can only supply one.
+	// For legacy search we can only supply one.
 	if title != "" {
 		query.Query = title
 	} else if login != "" {
