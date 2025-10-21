@@ -30,7 +30,7 @@ export default [
     treeshake: false,
   },
   {
-    input: 'src/rtkq.ts',
+    input: 'src/clients/rtkq/index.ts',
     plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-api-clients')],
     treeshake: false,
