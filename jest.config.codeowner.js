@@ -1,6 +1,7 @@
 const child_process = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const open = require('open');
 
 const baseConfig = require('./jest.config.js');
 
@@ -127,14 +128,10 @@ function createOwnerDirectory(owner) {
  * Open the given file URL in the default browser safely, without shell injection risk.
  * @param {string} reportURL
  */
-function openCoverageReport(reportURL) {
-  const { spawn } = require('child_process');
-  if (process.platform === 'darwin') {
-    spawn('open', [reportURL], { stdio: 'inherit' });
-  } else if (process.platform === 'win32') {
-    // start "" "<url>" required; must be run via cmd.exe
-    spawn('cmd', ['/c', 'start', '""', reportURL], { stdio: 'inherit' });
-  } else {
-    spawn('xdg-open', [reportURL], { stdio: 'inherit' });
+async function openCoverageReport(reportURL) {
+  try {
+    await open(reportURL);
+  } catch (err) {
+    console.error(`Failed to open coverage report: ${err}`);
   }
 }

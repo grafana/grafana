@@ -439,7 +439,8 @@
     "uuid": "11.1.0",
     "vis-data": "^8.0.0",
     "vis-network": "10.0.1",
-    "whatwg-fetch": "3.6.20"
+    "whatwg-fetch": "3.6.20",
+    "open": "^10.2.0"
   },
   "resolutions": {
     "underscore": "1.13.7",
