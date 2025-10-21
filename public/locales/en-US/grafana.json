@@ -11760,6 +11760,11 @@
       "next": "Next",
       "previous": "Previous"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": "Progress Bar"
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Completed step",
       "label-current-step": "Current step",
