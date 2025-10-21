@@ -113,12 +113,12 @@ jest.mock('@grafana/runtime', () => ({
       Prometheus: {
         name: 'Prometheus',
         meta: { id: 'prometheus' },
-        type: 'datasource',
+        type: 'prometheus',
       },
       '-- Grafana --': {
         name: 'Grafana',
         meta: { id: 'grafana' },
-        type: 'datasource',
+        type: 'grafana',
       },
       loki: {
         name: 'Loki',
@@ -130,7 +130,7 @@ jest.mock('@grafana/runtime', () => ({
           module: 'app/plugins/datasource/loki/module',
           baseUrl: '/plugins/loki',
         },
-        type: 'datasource',
+        type: 'loki',
       },
     },
   },
