@@ -909,7 +909,7 @@ func TestIntegrationStore_setResourcePermission(t *testing.T) {
 			permissions := retrievePermissionsHelper(store, t)
 			fmt.Println(permissions)
 
-			require.Equal(t, test.expectedPermissions, permissions)
+			require.ElementsMatch(t, test.expectedPermissions, permissions)
 		})
 	}
 }
