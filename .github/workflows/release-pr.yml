@@ -133,7 +133,7 @@ jobs:
           path: .grafana-main
 
       - name: Setup nodejs environment
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
       - uses: actions/setup-go@v5.5.0

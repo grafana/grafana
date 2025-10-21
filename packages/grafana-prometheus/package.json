@@ -61,7 +61,7 @@
     "@types/react-dom": "18.3.5",
     "@types/react-highlight-words": "0.20.0",
     "@types/react-window": "1.8.8",
-    "@types/semver": "7.7.0",
+    "@types/semver": "7.7.1",
     "@types/uuid": "10.0.0",
     "debounce-promise": "3.1.2",
     "lodash": "4.17.21",
@@ -75,7 +75,7 @@
     "react-use": "17.6.0",
     "react-window": "1.8.11",
     "rxjs": "7.8.2",
-    "semver": "7.7.2",
+    "semver": "7.7.3",
     "uuid": "11.1.0"
   },
   "devDependencies": {

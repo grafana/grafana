@@ -53,7 +53,13 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
             {dropProvided.placeholder}
             {isEditing && !isClone && (
               <div className="dashboard-canvas-add-button">
-                <Button icon="layers-slash" variant="primary" fill="text" onClick={() => model.ungroupRows()}>
+                <Button
+                  icon="layers-slash"
+                  variant="primary"
+                  fill="text"
+                  onClick={() => model.ungroupRows()}
+                  data-testid={selectors.components.CanvasGridAddActions.ungroupRows}
+                >
                   <Trans i18nKey="dashboard.canvas-actions.ungroup-rows">Ungroup rows</Trans>
                 </Button>
                 <Button
