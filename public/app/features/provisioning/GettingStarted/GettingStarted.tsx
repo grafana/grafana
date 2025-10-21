@@ -149,7 +149,7 @@ export default function GettingStarted() {
       <Stack direction="column" gap={6} wrap="wrap">
         <Stack gap={10} alignItems="center">
           <div className={styles.imageContainer}>
-            {/* decorative img doesn't need alt */}
+            {/* decorative img, use empty str to skip alt*/}
             <img src={provisioningSvg} className={styles.image} alt="" />
           </div>
           <FeaturesList
