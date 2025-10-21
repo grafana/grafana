@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	eventsSection = "unified/events"
+	eventsSection        = "unified/events"
+	deleteEventBatchSize = 50
 )
 
 // eventStore is a store for events.
@@ -231,24 +232,44 @@ func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Eve
 
 // CleanupOldEvents deletes events older than the specified retention period.
 func (n *eventStore) CleanupOldEvents(ctx context.Context, cutoff time.Time) (int, error) {
-	deletedCount := 0
-
 	// Keys are stored in the format of "resource_version~namespace~group~resource~name"
 	// With a start key of "1" and an end key of the cutoff time we can get all expired events.
 	endKey := fmt.Sprintf("%d", snowflakeFromTime(cutoff))
+
+	// Collect keys to delete
+	keysToDelete := make([]string, 0, deleteEventBatchSize)
 	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{StartKey: "1", EndKey: endKey}) {
 		if err != nil {
-			return deletedCount, fmt.Errorf("failed to list event keys: %w", err)
+			return 0, fmt.Errorf("failed to list event keys: %w", err)
 		}
-
-		// TODO should use batch deletes here when available
-		if err := n.kv.Delete(ctx, eventsSection, key); err != nil {
-			return deletedCount, fmt.Errorf("failed to delete event key %s: %w", key, err)
-		}
-		deletedCount++
+		keysToDelete = append(keysToDelete, key)
 	}
 
-	return deletedCount, nil
+	// Use batch delete
+	if err := n.batchDelete(ctx, keysToDelete); err != nil {
+		return 0, fmt.Errorf("failed to batch delete events: %w", err)
+	}
+
+	return len(keysToDelete), nil
+}
+
+// batchDelete deletes multiple events in batches.
+// Keys are processed in batches (default 50).
+func (n *eventStore) batchDelete(ctx context.Context, keys []string) error {
+	// Process keys in batches
+	for i := 0; i < len(keys); i += deleteEventBatchSize {
+		end := i + deleteEventBatchSize
+		if end > len(keys) {
+			end = len(keys)
+		}
+		batch := keys[i:end]
+
+		if err := n.kv.BatchDelete(ctx, eventsSection, batch); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // snowflake id with last two sections set to 0 (machine id and sequence)
