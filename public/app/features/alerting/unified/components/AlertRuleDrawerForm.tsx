@@ -10,6 +10,7 @@ import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { RuleConditionSection } from './RuleConditionSection';
+import { RuleNotificationSection } from './RuleNotificationSection';
 
 export interface AlertRuleDrawerFormProps {
   isOpen: boolean;
@@ -34,6 +35,8 @@ export function AlertRuleDrawerForm({ isOpen, onClose, title }: AlertRuleDrawerF
         <RuleDefinitionSection type={RuleFormType.grafana} />
         <div className={styles.divider} aria-hidden="true" />
         <RuleConditionSection type={RuleFormType.grafana} />
+        <div className={styles.divider} aria-hidden="true" />
+        <RuleNotificationSection />
         <div className={styles.divider} aria-hidden="true" />
       </FormProvider>
     </Drawer>
