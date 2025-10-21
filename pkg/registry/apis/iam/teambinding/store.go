@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -19,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var bindingResource = iamv0alpha1.TeamBindingResourceInfo
@@ -99,6 +99,11 @@ func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, cre
 		return nil, fmt.Errorf("expected TeamBinding object, got %T", obj)
 	}
 
+	if teamMemberObj.GenerateName != "" {
+		teamMemberObj.Name = teamMemberObj.GenerateName + util.GenerateShortUID()
+		teamMemberObj.GenerateName = ""
+	}
+
 	if createValidation != nil {
 		if err := createValidation(ctx, teamMemberObj); err != nil {
 			return nil, err
@@ -130,6 +135,7 @@ func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, cre
 	}
 
 	createCmd := legacy.CreateTeamMemberCommand{
+		UID:        teamMemberObj.Name,
 		TeamID:     teamObj.ID,
 		TeamUID:    teamMemberObj.Spec.TeamRef.Name,
 		UserID:     userObj.ID,
@@ -154,11 +160,8 @@ func (l *LegacyBindingStore) Get(ctx context.Context, name string, options *meta
 		return nil, err
 	}
 
-	teamID, userID := mapFromBindingName(name)
-
 	res, err := l.store.ListTeamBindings(ctx, ns, legacy.ListTeamBindingsQuery{
-		TeamID:     teamID,
-		UserID:     userID,
+		UID:        name,
 		Pagination: common.Pagination{Limit: 1},
 	})
 	if err != nil {
@@ -215,7 +218,7 @@ func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alph
 
 	return iamv0alpha1.TeamBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              mapToBindingName(tm.TeamID, tm.UserID),
+			Name:              tm.UID,
 			Namespace:         ns.Value,
 			ResourceVersion:   strconv.FormatInt(rv.UnixMilli(), 10),
 			CreationTimestamp: metav1.NewTime(ct),
@@ -231,31 +234,4 @@ func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alph
 			External:   tm.External,
 		},
 	}
-}
-
-func mapToBindingName(teamID, userID int64) string {
-	return fmt.Sprintf("teambinding-%d-%d", teamID, userID)
-}
-
-func mapFromBindingName(name string) (int64, int64) {
-	parts := strings.Split(name, "-")
-	if len(parts) != 3 {
-		return 0, 0
-	}
-
-	if parts[0] != "teambinding" {
-		return 0, 0
-	}
-
-	teamID, err := strconv.ParseInt(parts[1], 10, 64)
-	if err != nil {
-		return 0, 0
-	}
-
-	userID, err := strconv.ParseInt(parts[2], 10, 64)
-	if err != nil {
-		return 0, 0
-	}
-
-	return teamID, userID
 }

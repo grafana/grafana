@@ -260,10 +260,8 @@ func doTeamBindingCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTest
 			"permission": "member"
 		}`
 
-		type legacyTeamBindingResponse struct {
-			UserID     int64  `json:"userId"`
-			TeamID     int64  `json:"teamId"`
-			Permission string `json:"permission"`
+		type legacyTeamBindingPostResponse struct {
+			Message string `json:"message"`
 		}
 
 		teamBindingRsp := apis.DoRequest(helper, apis.RequestParams{
@@ -271,10 +269,35 @@ func doTeamBindingCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTest
 			Method: "POST",
 			Path:   "/api/teams/" + teamRsp.Result.UID + "/members",
 			Body:   []byte(legacyTeamBindingPayload),
-		}, &legacyTeamBindingResponse{})
+		}, &legacyTeamBindingPostResponse{})
 
 		require.NotNil(t, teamBindingRsp)
 		require.Equal(t, 200, teamBindingRsp.Response.StatusCode)
+
+		type legacyTeamBindingGetResponse struct {
+			UID    string `json:"uid"`
+			UserID int64  `json:"userId"`
+			TeamID int64  `json:"teamId"`
+		}
+
+		// Get the binding UID using the legacy API
+		legacyTeamBindingUIDRsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: "GET",
+			Path:   "/api/teams/" + teamRsp.Result.UID + "/members",
+		}, &[]legacyTeamBindingGetResponse{})
+
+		require.NotNil(t, legacyTeamBindingUIDRsp)
+		require.Equal(t, 200, legacyTeamBindingUIDRsp.Response.StatusCode)
+
+		teamBindingName := ""
+		for _, binding := range *legacyTeamBindingUIDRsp.Result {
+			if binding.UserID == userRsp.Result.ID && binding.TeamID == teamRsp.Result.ID {
+				teamBindingName = binding.UID
+				break
+			}
+		}
+		require.NotEmpty(t, teamBindingName)
 
 		// Get team binding using new API
 		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -283,7 +306,6 @@ func doTeamBindingCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTest
 			GVR:       gvrTeamBindings,
 		})
 
-		teamBindingName := fmt.Sprintf("teambinding-%d-%d", teamRsp.Result.ID, userRsp.Result.ID)
 		teamBinding, err := teamBindingClient.Resource.Get(ctx, teamBindingName, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, teamBinding)
