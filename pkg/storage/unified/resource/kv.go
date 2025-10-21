@@ -53,6 +53,10 @@ type KV interface {
 	// Delete a value
 	Delete(ctx context.Context, section string, key string) error
 
+	// BatchDelete removes multiple keys from the store.
+	// Non-existent keys will be skipped silently without error.
+	BatchDelete(ctx context.Context, section string, keys []string) error
+
 	// UnixTimestamp returns the current time in seconds since Epoch.
 	// This is used to ensure the server and client are not too far apart in time.
 	UnixTimestamp(ctx context.Context) (int64, error)
@@ -330,4 +334,29 @@ func IsValidKey(key string) bool {
 		return false
 	}
 	return validKeyRegex.MatchString(key)
+}
+
+func (k *badgerKV) BatchDelete(ctx context.Context, section string, keys []string) error {
+	if k.db.IsClosed() {
+		return fmt.Errorf("database is closed")
+	}
+
+	if section == "" {
+		return fmt.Errorf("section is required")
+	}
+
+	txn := k.db.NewTransaction(true)
+	defer txn.Discard()
+
+	for _, key := range keys {
+		keyWithSection := section + "/" + key
+
+		// Delete the key (BadgerDB's Delete is idempotent - succeeds even if key doesn't exist)
+		err := txn.Delete([]byte(keyWithSection))
+		if err != nil {
+			return err
+		}
+	}
+
+	return txn.Commit()
 }
