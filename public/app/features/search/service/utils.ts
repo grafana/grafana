@@ -196,19 +196,19 @@ export function filterSearchResults(
         const timestampA = a.field.deletionTimestamp;
         const timestampB = b.field.deletionTimestamp;
 
-        // Handle missing timestamps - items without timestamps go to the end
-        if (!timestampA && !timestampB) {
+        // Handle missing or invalid timestamps - items without timestamps go to the end
+        if (typeof timestampA !== 'string' && typeof timestampB !== 'string') {
           return 0;
         }
-        if (!timestampA) {
+        if (typeof timestampA !== 'string') {
           return 1;
         }
-        if (!timestampB) {
+        if (typeof timestampB !== 'string') {
           return -1;
         }
 
-        const timeA = new Date(timestampA).getTime();
-        const timeB = new Date(timestampB).getTime();
+        const timeA = Date.parse(timestampA);
+        const timeB = Date.parse(timestampB);
         return mult * (timeA - timeB);
       });
     } else {
