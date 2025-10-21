@@ -3012,6 +3012,7 @@ __metadata:
   peerDependencies:
     "@grafana/runtime": ">=11.6 <= 12.x"
     "@reduxjs/toolkit": ^2.8.0
+    rxjs: 7.8.2
   languageName: unknown
   linkType: soft
 
