@@ -166,7 +166,7 @@ type internalQueryModel struct {
 func Parse(ctx context.Context, log glog.Logger, span trace.Span, query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool) (*Query, error) {
 	model := &internalQueryModel{}
 	if err := json.Unmarshal(query.JSON, model); err != nil {
-		return nil, backend.DownstreamError(fmt.Errorf("error unmarshaling query: %w", err))
+		return nil, backend.DownstreamErrorf("error unmarshaling query: %w", err)
 	}
 	span.SetAttributes(attribute.String("rawExpr", model.Expr))
 
