@@ -289,7 +289,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleCreate(obj runtime.Object,
 			"namespace", role.Namespace,
 			"roleUID", roleUID,
 			"err", err,
-			"permissionsCnt", len(corePermissions),
+			"permissionsCnt", len(interfacePermissions),
 		)
 		return
 	}
@@ -299,7 +299,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleCreate(obj runtime.Object,
 		b.logger.Debug("no valid tuples to write for role",
 			"namespace", role.Namespace,
 			"roleUID", roleUID,
-			"permissionsCnt", len(corePermissions),
+			"permissionsCnt", len(interfacePermissions),
 		)
 		return
 	}
@@ -308,7 +308,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleCreate(obj runtime.Object,
 		"namespace", role.Namespace,
 		"roleUID", roleUID,
 		"tuplesCnt", len(tuples),
-		"permissionsCnt", len(corePermissions),
+		"permissionsCnt", len(interfacePermissions),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
