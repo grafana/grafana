@@ -53,4 +53,3 @@ func TestSearchBackendBenchmark(t *testing.T) {
 
 	unitest.BenchmarkSearchBackend(t, backend, opts)
 }
-
