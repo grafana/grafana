@@ -33,7 +33,9 @@ export const LogLineDetailsLog = memo(({ log: originalLog, syntaxHighlighting }:
             <>
               {!syntaxHighlighting && <div className="field no-highlighting">{log.body}</div>}
               {syntaxHighlighting && (
-                <div className="field log-syntax-highlight">{<HighlightedLogRenderer log={log} />}</div>
+                <div className="field log-syntax-highlight">
+                  {<HighlightedLogRenderer tokens={log.highlightedBodyTokens} />}
+                </div>
               )}
             </>
           )}

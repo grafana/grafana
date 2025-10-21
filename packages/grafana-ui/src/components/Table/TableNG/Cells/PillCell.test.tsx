@@ -102,6 +102,52 @@ describe('PillCell', () => {
       );
     });
 
+    it('FieldType.other with array', () => {
+      const field = fieldWithValues([['value1', 'value2', 'value3']]);
+      field.type = FieldType.other;
+      expectHTML(
+        render(
+          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+        ),
+        `
+        <span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>
+        <span style="background-color: rgb(252, 226, 222); color: rgb(32, 34, 38);">value2</span>
+        <span style="background-color: rgb(81, 149, 206); color: rgb(247, 248, 250);">value3</span>
+        `
+      );
+    });
+
+    it('FieldType.other with array with some null values', () => {
+      const field = fieldWithValues([['value1', null, 'value2', undefined, 'value3']]);
+      field.type = FieldType.other;
+      expectHTML(
+        render(
+          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+        ),
+        `
+        <span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>
+        <span style="background-color: rgb(252, 226, 222); color: rgb(32, 34, 38);">value2</span>
+        <span style="background-color: rgb(81, 149, 206); color: rgb(247, 248, 250);">value3</span>
+        `
+      );
+    });
+
+    it('FieldType.other with non-array', () => {
+      const field = fieldWithValues([{ value1: true, value2: false, value3: 42 }]);
+      field.type = FieldType.other;
+      expectHTML(
+        render(
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={fieldWithValues([])}
+            rowIdx={0}
+            theme={theme}
+          />
+        ),
+        ''
+      );
+    });
+
     it('non-string values', () => {
       expectHTML(
         render(

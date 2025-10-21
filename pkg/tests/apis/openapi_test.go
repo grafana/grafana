@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/version"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -23,21 +24,28 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	h := NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: true,
+		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagInvestigationsBackend,
 			featuremgmt.FlagGrafanaAdvisor,
+			featuremgmt.FlagKubernetesAlertingRules,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
+			featuremgmt.FlagKubernetesShortURLs,
+			featuremgmt.FlagKubernetesCorrelations,
 		},
 	})
 
 	t.Run("check valid version response", func(t *testing.T) {
-		disco := h.NewDiscoveryClient()
-		info, err := disco.ServerVersion()
+		client, err := kubernetes.NewForConfig(h.NewAdminRestConfig())
+		require.NoError(t, err)
+
+		info, err := client.ServerVersion()
 		require.NoError(t, err)
 		require.Equal(t, runtime.Version(), info.GoVersion)
+		require.Equal(t, "1", info.Major)
+		require.Equal(t, "34", info.Minor)
 
 		// Make sure the gitVersion is parsable
 		v, err := version.Parse(info.GitVersion)
@@ -50,6 +58,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		// Removing the explicit `OneOf` properties from InlineSecureValue in:
 		// https://github.com/grafana/grafana/blob/main/pkg/apimachinery/apis/common/v0alpha1/secure_values.go#L78
 		// will consistently support V2, however kubectl and everything else continues to work
+		disco := h.NewDiscoveryClient()
 		paths, err := disco.OpenAPIV3().Paths()
 
 		require.NoError(t, err, "requesting OpenAPI v3")
@@ -86,7 +95,22 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "playlist.grafana.app",
 		Version: "v0alpha1",
 	}, {
+		Group:   "preferences.grafana.app",
+		Version: "v1alpha1",
+	}, {
 		Group:   "notifications.alerting.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "rules.alerting.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "correlations.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "shorturl.grafana.app",
+		Version: "v1alpha1",
+	}, {
+		Group:   "testdata.datasource.grafana.app",
 		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {

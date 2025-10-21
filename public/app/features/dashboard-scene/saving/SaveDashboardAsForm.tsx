@@ -1,5 +1,5 @@
 import debounce from 'debounce-promise';
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useState, useEffect } from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -30,7 +30,7 @@ export interface Props {
 export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   const { changedSaveModel } = changeInfo;
 
-  const { register, handleSubmit, setValue, formState, getValues, watch } = useForm<SaveDashboardAsFormDTO>({
+  const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({
     mode: 'onBlur',
     defaultValues: {
       title: changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`,
@@ -43,13 +43,17 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     },
   });
 
-  const { errors, isValid } = formState;
+  const { errors, isValid, validatingFields } = formState;
   const formValues = watch();
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
 
   const [contentSent, setContentSent] = useState<{ title?: string; folderUid?: string }>({});
-  const [hasFolderChanged, setHasFolderChanged] = useState(false);
+
+  // Validate title on form mount to catch invalid default values
+  useEffect(() => {
+    trigger('title');
+  }, [trigger]);
 
   const onSave = async (overwrite: boolean) => {
     const data = getValues();
@@ -84,8 +88,16 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   );
 
   const saveButton = (overwrite: boolean) => {
-    const showSaveButton = !isValid && hasFolderChanged ? true : isValid;
-    return <SaveButton isValid={showSaveButton} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />;
+    const isTitleValidating = !!validatingFields.title;
+
+    return (
+      <SaveButton
+        isValid={isValid && !isTitleValidating}
+        isLoading={state.loading}
+        onSave={onSave}
+        overwrite={overwrite}
+      />
+    );
   };
   function renderFooter(error?: Error) {
     const formValuesMatchContentSent =
@@ -151,8 +163,6 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
         <FolderPicker
           onChange={async (uid: string | undefined, title: string | undefined) => {
             setValue('folder', { uid, title });
-            const folderUid = dashboard.state.meta.folderUid;
-            setHasFolderChanged(uid !== folderUid);
             const meta = await getProvisionedMeta(uid);
             dashboard.setState({
               meta: {
@@ -160,6 +170,8 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
                 folderUid: uid,
               },
             });
+            // Re-validate title when folder changes to check for duplicates in new folder
+            trigger('title');
           }}
           value={formValues.folder?.uid}
         />

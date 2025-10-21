@@ -12,16 +12,17 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
 	"go.opentelemetry.io/otel/trace"
+
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -85,7 +86,7 @@ type RemoteLokiBackend struct {
 	ruleStore      RuleStore
 }
 
-func NewRemoteLokiBackend(logger log.Logger, cfg lokiclient.LokiConfig, req client.Requester, metrics *metrics.Historian, tracer tracing.Tracer, ruleStore RuleStore, ac AccessControl) *RemoteLokiBackend {
+func NewRemoteLokiBackend(logger log.Logger, cfg lokiclient.LokiConfig, req alertingInstrument.Requester, metrics *metrics.Historian, tracer tracing.Tracer, ruleStore RuleStore, ac AccessControl) *RemoteLokiBackend {
 	return &RemoteLokiBackend{
 		client:         lokiclient.NewLokiClient(cfg, req, metrics.BytesWritten, metrics.WriteDuration, logger, tracer, LokiClientSpanName),
 		externalLabels: cfg.ExternalLabels,
@@ -174,11 +175,11 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 		}
 		res = append(res, r.Data.Result...)
 	}
-	return merge(res, uids)
+	return h.merge(res, uids)
 }
 
 // merge will put all the results in one array sorted by timestamp.
-func merge(res []lokiclient.Stream, folderUIDToFilter []string) (*data.Frame, error) {
+func (h RemoteLokiBackend) merge(res []lokiclient.Stream, folderUIDToFilter []string) (*data.Frame, error) {
 	filterByFolderUIDMap := make(map[string]struct{}, len(folderUIDToFilter))
 	for _, uid := range folderUIDToFilter {
 		filterByFolderUIDMap[uid] = struct{}{}
@@ -240,27 +241,27 @@ func merge(res []lokiclient.Stream, folderUIDToFilter []string) (*data.Frame, er
 		if minElStreamIdx == -1 {
 			break
 		}
+		entryBytes := []byte(minEl.V)
 		var entry LokiEntry
-		err := json.Unmarshal([]byte(minEl.V), &entry)
+		err := json.Unmarshal(entryBytes, &entry)
 		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal entry: %w", err)
+			h.log.Warn("failed to unmarshal entry, continuing", "err", err, "entry", minEl.V)
+			pointers[minElStreamIdx]++
+			continue
 		}
 		// Append the minimum element to the merged slice and move the pointer.
 		tsNano := minEl.T.UnixNano()
-		// TODO: In general, perhaps we should omit the offending line and log, rather than failing the request entirely.
 		streamLbls := res[minElStreamIdx].Stream
 		lblsJson, err := json.Marshal(streamLbls)
 		if err != nil {
-			return nil, fmt.Errorf("failed to serialize stream labels: %w", err)
+			// This should in theory never happen, as we're marshalling a map[string]string.
+			h.log.Warn("failed to serialize stream labels, continuing", "err", err, "labels", streamLbls)
+			pointers[minElStreamIdx]++
+			continue
 		}
-		line, err := jsonifyRow(minEl.V)
-		if err != nil {
-			return nil, fmt.Errorf("a line was in an invalid format: %w", err)
-		}
-
 		times = append(times, time.Unix(0, tsNano))
 		labels = append(labels, lblsJson)
-		lines = append(lines, line)
+		lines = append(lines, json.RawMessage(entryBytes))
 		pointers[minElStreamIdx]++
 	}
 
@@ -356,17 +357,6 @@ func valuesAsDataBlob(state *state.State) *simplejson.Json {
 	}
 
 	return jsonifyValues(state.Values)
-}
-
-func jsonifyRow(line string) (json.RawMessage, error) {
-	// Ser/deser to validate the contents of the log line before shipping it forward.
-	// TODO: We may want to remove this in the future, as we already have the value in the form of a []byte, and json.RawMessage is also a []byte.
-	// TODO: Though, if the log line does not contain valid JSON, this can cause problems later on when rendering the dataframe.
-	var entry LokiEntry
-	if err := json.Unmarshal([]byte(line), &entry); err != nil {
-		return nil, err
-	}
-	return json.Marshal(entry)
 }
 
 // BuildLogQuery converts models.HistoryQuery and a list of folder UIDs to Loki queries.

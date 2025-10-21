@@ -36,11 +36,8 @@ func TestIntegrationMySQLSnapshots(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
-	shouldRunTest := func() bool {
-		if testing.Short() {
-			return false
-		}
 
+	shouldRunTest := func() bool {
 		testDbName, present := os.LookupEnv("GRAFANA_TEST_DB")
 
 		if present && testDbName == "mysql" {

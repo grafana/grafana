@@ -106,7 +106,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 							// If it is already SQL error with type (e.g. limit exceeded, input conversion, capture the type as that)
 							eType = errWithType.Category()
 						}
-						s.metrics.SqlCommandCount.WithLabelValues("error", eType)
+						s.metrics.SqlCommandCount.WithLabelValues("error", eType).Inc()
 						depErr = e
 					} else { // general SSE dependency error
 						depErr = MakeDependencyError(node.RefID(), neededVar)
@@ -377,7 +377,6 @@ func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]
 					// this missing dependency. But we collection the metric as there was an
 					// attempt to execute a SQL expression.
 					e := sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
-					s.metrics.SqlCommandCount.WithLabelValues("error", e.Category()).Inc()
 					return e
 				}
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)

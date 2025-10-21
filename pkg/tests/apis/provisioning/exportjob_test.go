@@ -16,10 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()

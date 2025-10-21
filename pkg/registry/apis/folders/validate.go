@@ -58,8 +58,9 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return fmt.Errorf("unable to create folder inside parent: %w", err)
 	}
 
-	// Can not create a folder that will be too deep
-	if len(parents.Items)+1 > maxDepth {
+	// Can not create a folder that will be too deep.
+	// We need to add +1 as we also have the root folder as part of the parents.
+	if len(parents.Items) > maxDepth+1 {
 		return fmt.Errorf("folder max depth exceeded, max depth is %d", maxDepth)
 	}
 
@@ -93,6 +94,11 @@ func validateOnUpdate(ctx context.Context,
 	// Validate the move operation
 	newParent := folderObj.GetFolder()
 
+	// If we move to root, we don't need to validate the depth.
+	if newParent == folder.RootFolderUID {
+		return nil
+	}
+
 	// folder cannot be moved to a k6 folder
 	if newParent == accesscontrol.K6FolderUID {
 		return fmt.Errorf("k6 project may not be moved")
@@ -115,8 +121,8 @@ func validateOnUpdate(ctx context.Context,
 	}
 
 	// if by moving a folder we exceed the max depth, return an error
-	if len(info.Items)+1 >= maxDepth {
-		return folder.ErrMaximumDepthReached
+	if len(info.Items) > maxDepth+1 {
+		return folder.ErrMaximumDepthReached.Errorf("maximum folder depth reached")
 	}
 	return nil
 }
@@ -140,7 +146,7 @@ func validateOnDelete(ctx context.Context,
 
 	for _, v := range resp.Stats {
 		if v.Count > 0 {
-			return folder.ErrFolderNotEmpty
+			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d resources", v.Count)
 		}
 	}
 	return nil

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginType } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import { config, featureEnabled } from '@grafana/runtime';
 import { LinkButton, useStyles2, Alert, TextLink, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { getExternalManageLink } from '../../helpers';
@@ -39,26 +39,14 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
     );
   }
 
-  const isOpenSource = config.buildInfo.edition === GrafanaEdition.OpenSource;
-  const isEnterprise = config.buildInfo.edition === GrafanaEdition.Enterprise;
-
-  if (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) {
-    const severity = isOpenSource ? 'info' : 'warning';
-
+  if (plugin.isEnterprise && !featureEnabled('enterprise.plugins') && isOpenSourceBuildOrUnlicenced()) {
     return (
-      <Alert severity={severity} title="" className={styles.alert}>
+      <Alert severity={'info'} title="" className={styles.alert}>
         <Stack direction="row" alignItems="center">
           <span>
-            {isOpenSource && (
-              <Trans i18nKey="plugins.install-controls-warning.enterprise-plugin-info">
-                This plugin is only available in Grafana Cloud and Grafana Enterprise.
-              </Trans>
-            )}
-            {isEnterprise && (
-              <Trans i18nKey="plugins.install-controls-warning.no-valid-grafana-enterprise-license-detected">
-                No valid Grafana Enterprise license detected.
-              </Trans>
-            )}
+            <Trans i18nKey="plugins.install-controls-warning.enterprise-plugin-info">
+              This plugin is only available in Grafana Cloud and Grafana Enterprise.
+            </Trans>
           </span>
           <LinkButton
             href={`${getExternalManageLink(plugin.id)}?utm_source=grafana_catalog_learn_more`}

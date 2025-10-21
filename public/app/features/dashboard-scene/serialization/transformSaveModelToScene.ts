@@ -23,6 +23,7 @@ import {
 import { isWeekStart } from '@grafana/ui';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import {
+  getDashboardComponentInteractionCallback,
   getDashboardInteractionCallback,
   getDashboardSceneProfiler,
 } from 'app/features/dashboard/services/DashboardProfiler';
@@ -253,7 +254,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
   const uid = oldModel.uid;
-  const serializerVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
+  const serializerVersion = config.featureToggles.dashboardNewLayouts && !oldModel.meta.isSnapshot ? 'v2' : 'v1';
 
   if (oldModel.meta.isSnapshot) {
     variables = createVariablesForSnapshot(oldModel);
@@ -305,11 +306,21 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     getDashboardSceneProfiler()
   );
 
+  const interactionTracker = new behaviors.SceneInteractionTracker(
+    {
+      enableInteractionTracking:
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
+      onInteractionComplete: getDashboardComponentInteractionCallback(oldModel.uid, oldModel.title),
+    },
+    getDashboardSceneProfiler()
+  );
+
   const behaviorList: SceneObjectState['$behaviors'] = [
     new behaviors.CursorSync({
       sync: oldModel.graphTooltip,
     }),
     queryController,
+    interactionTracker,
     registerDashboardMacro,
     registerPanelInteractionsReporter,
     new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),

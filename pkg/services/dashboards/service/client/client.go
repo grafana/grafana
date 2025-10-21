@@ -208,6 +208,33 @@ func (h *K8sClientWithFallback) List(
 	return res, nil
 }
 
+// Update updates a resource in the K8s API.
+// It will attempte to use the version of the API which is indicated in the object.
+// If the version cannot be retrieved or missing, it will fall back to the preferred version of the API.
+func (h *K8sClientWithFallback) Update(
+	ctx context.Context, obj *unstructured.Unstructured, orgID int64, options metav1.UpdateOptions,
+) (*unstructured.Unstructured, error) {
+	ctx, span := tracing.Start(ctx, "K8sClientWithFallback.Update")
+	defer span.End()
+
+	version := obj.GroupVersionKind().Version
+	h.log.Debug("using client for version", "version", version)
+
+	span.SetAttributes(
+		attribute.String("version", version),
+		attribute.String("dashboard.metadata.name", obj.GetName()),
+		attribute.Int64("org.id", orgID),
+	)
+
+	res, err := h.newClientFunc(ctx, version).Update(ctx, obj, orgID, options)
+	if err != nil {
+		h.log.Debug("failed to update object", "error", err)
+		return nil, tracing.Error(span, err)
+	}
+
+	return res, nil
+}
+
 // fetchWithVersion fetches multiple resources from the K8s API.
 // It uses concurrent Get requests, one for each name.
 //

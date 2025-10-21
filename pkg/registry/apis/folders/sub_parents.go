@@ -8,7 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/apiserver/pkg/storage"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -55,10 +54,6 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 		}
 
 		obj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
-		if storage.IsNotFound(err) {
-			responder.Object(http.StatusNotFound, nil)
-			return
-		}
 		if err != nil {
 			responder.Error(err)
 			return

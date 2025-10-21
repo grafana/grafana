@@ -32,18 +32,18 @@ func (s *Service) runTraceQlQuery(ctx context.Context, pCtx backend.PluginContex
 	err := json.Unmarshal(backendQuery.JSON, tempoQuery)
 	if err != nil {
 		ctxLogger.Error("Failed to unmarshall Tempo query model", "error", err, "function", logEntrypoint())
-		return nil, err
+		return nil, backend.DownstreamErrorf("failed to unmarshall Tempo query model: %w", err)
 	}
 
 	if isMetricsQuery(*tempoQuery.Query) {
 		return s.runTraceQlQueryMetrics(ctx, pCtx, backendQuery, tempoQuery)
 	}
 
-	return s.runTraceQlQuerySearch()
+	return s.runTraceQlQuerySearch(ctx, pCtx, backendQuery)
 }
 
-func (s *Service) runTraceQlQuerySearch() (*backend.DataResponse, error) {
-	return nil, fmt.Errorf("backend TraceQL search queries are not supported")
+func (s *Service) runTraceQlQuerySearch(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
+	return s.Search(ctx, pCtx, query)
 }
 
 func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.PluginContext, backendQuery backend.DataQuery, tempoQuery *dataquery.TempoQuery) (*backend.DataResponse, error) {
@@ -60,13 +60,13 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 	dsInfo, err := s.getDSInfo(ctx, pCtx)
 	if err != nil {
 		ctxLogger.Error("Failed to get datasource information", "error", err, "function", logEntrypoint())
-		return nil, err
+		return nil, backend.DownstreamErrorf("failed to get datasource information: %w", err)
 	}
 
 	if tempoQuery.Query == nil || *tempoQuery.Query == "" {
 		err := fmt.Errorf("query is required")
 		ctxLogger.Error("Failed to validate model query", "error", err, "function", logEntrypoint())
-		return result, err
+		return result, backend.DownstreamErrorf("failed to validate model query: %w", err)
 	}
 
 	resp, responseBody, err := s.performMetricsQuery(ctx, dsInfo, tempoQuery, backendQuery, span)
@@ -83,10 +83,16 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 
 	if resp.StatusCode != http.StatusOK {
 		ctxLogger.Error("Failed to execute TraceQL query", "error", err, "function", logEntrypoint())
-		result.Error = fmt.Errorf("failed to execute TraceQL query: %s Status: %s Body: %s", *tempoQuery.Query, resp.Status, string(responseBody))
-		span.RecordError(result.Error)
-		span.SetStatus(codes.Error, result.Error.Error())
-		return result, nil
+		err := fmt.Errorf("failed to execute TraceQL query: %s Status: %s Body: %s", *tempoQuery.Query, resp.Status, string(responseBody))
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
+			err = backend.DownstreamError(err)
+		}
+
+		return nil, err
 	}
 
 	if isInstantQuery(tempoQuery.MetricsQueryType) {
@@ -137,7 +143,7 @@ func (s *Service) performMetricsQuery(ctx context.Context, dsInfo *DatasourceInf
 		ctxLogger.Error("Failed to create request", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, err
+		return nil, nil, backend.DownstreamErrorf("failed to create request: %w", err)
 	}
 
 	resp, err := dsInfo.HTTPClient.Do(request)
@@ -145,7 +151,10 @@ func (s *Service) performMetricsQuery(ctx context.Context, dsInfo *DatasourceInf
 		ctxLogger.Error("Failed to send request to Tempo", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, fmt.Errorf("failed get to tempo: %w", err)
+		if backend.IsDownstreamHTTPError(err) {
+			return nil, nil, backend.DownstreamError(err)
+		}
+		return nil, nil, fmt.Errorf("failed to send request to Tempo: %w", err)
 	}
 
 	body, err := io.ReadAll(resp.Body)

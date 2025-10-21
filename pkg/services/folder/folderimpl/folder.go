@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -14,7 +15,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/exp/slices"
 
 	"github.com/grafana/dskit/concurrency"
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -1227,7 +1227,7 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		return descendantUIDs, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	_, err := s.Get(ctx, &folder.GetFolderQuery{
+	_, err := s.store.Get(ctx, folder.GetFolderQuery{
 		UID:          &cmd.UID,
 		OrgID:        cmd.OrgID,
 		SignedInUser: cmd.SignedInUser,
@@ -1401,13 +1401,13 @@ func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID str
 
 	// Create folder under itself is not allowed
 	if parentUID == UID {
-		return folder.ErrCircularReference
+		return folder.ErrCircularReference.Errorf("circular reference detected")
 	}
 
 	// check there is no circular reference
 	for _, ancestor := range ancestors {
 		if ancestor.UID == UID {
-			return folder.ErrCircularReference
+			return folder.ErrCircularReference.Errorf("circular reference detected")
 		}
 	}
 

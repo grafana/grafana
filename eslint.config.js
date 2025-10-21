@@ -8,6 +8,7 @@ const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
 const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
 const reactPlugin = require('eslint-plugin-react');
+const reactPreferFunctionComponentPlugin = require('eslint-plugin-react-prefer-function-component');
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
 const unicornPlugin = require('eslint-plugin-unicorn');
 
@@ -26,9 +27,13 @@ const commonTestIgnores = [
   '**/__mocks__/**',
   '**/mocks/**/*.{ts,tsx}',
   '**/public/test/**',
-  '**/mocks.{ts,tsx}',
-  '**/spec/**/*.{ts,tsx}',
+  '**/{mocks,test-utils}.{ts,tsx}',
+  '**/*.mock.{ts,tsx}',
+  '**/{test-helpers,testHelpers}.{ts,tsx}',
+  '**/{spec,test-helpers}/**/*.{ts,tsx}',
 ];
+
+const generatedFiles = ['**/*.gen.ts', '**/*_gen.ts'];
 
 const enterpriseIgnores = ['public/app/extensions/**/*', 'e2e/extensions/**/*'];
 
@@ -92,10 +97,11 @@ module.exports = [
       '.github',
       '.yarn',
       '**/.*', // dotfiles aren't ignored by default in FlatConfig
-      '**/*.gen.ts',
+      ...generatedFiles,
       '**/build/',
       '**/compiled/',
       '**/dist/',
+      'coverage/',
       'data/',
       'deployment_tools_config.json',
       'devenv',
@@ -135,6 +141,7 @@ module.exports = [
       'no-barrel-files': barrelPlugin,
       '@grafana': grafanaPlugin,
       unicorn: unicornPlugin,
+      'react-prefer-function-component': reactPreferFunctionComponentPlugin,
     },
 
     settings: {
@@ -151,6 +158,7 @@ module.exports = [
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
       '@grafana/no-restricted-img-srcs': 'error',
+      'react-prefer-function-component/react-prefer-function-component': ['error', { allowJsxUtilityClass: true }],
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
       'react/no-unknown-property': ['error', { ignore: ['css'] }],
@@ -267,10 +275,11 @@ module.exports = [
   {
     // No NPM package should import from @grafana/*/internal because it does not exist
     // outside of this repo - they're not published to NPM.
-    name: 'grafana/packages-overrides',
+    name: 'grafana/packages',
     files: ['packages/**/*.{ts,tsx}'],
     ignores: [],
     rules: {
+      'import/no-extraneous-dependencies': ['error', { includeInternal: true }],
       'no-restricted-imports': [
         'error',
         withBaseRestrictedImportsConfig({
@@ -357,7 +366,10 @@ module.exports = [
       '**/mock*.{ts,tsx}',
     ],
     rules: {
-      '@grafana/i18n/no-untranslated-strings': ['error', { calleesToIgnore: ['^css$', 'use[A-Z].*'] }],
+      '@grafana/i18n/no-untranslated-strings': [
+        'error',
+        { calleesToIgnore: ['^css$', 'use[A-Z].*'], basePaths: ['public/app/features'] },
+      ],
       '@grafana/i18n/no-translation-top-level': 'error',
     },
   },
@@ -417,6 +429,7 @@ module.exports = [
       'public/app/plugins/datasource/grafana-postgresql-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-pyroscope-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}',
+      'public/app/plugins/datasource/graphite/**/*.{ts,tsx}',
       'public/app/plugins/datasource/jaeger/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
@@ -545,6 +558,26 @@ module.exports = [
     ],
     rules: {
       'no-barrel-files/no-barrel-files': 'error',
+    },
+  },
+
+  {
+    // @grafana/i18n shouldn't import from our 'library' NPM packages
+    name: 'grafana/packages-that-i18n-cant-import',
+    files: ['packages/grafana-i18n/**/*.{ts,tsx}'],
+    ignores: [],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['@grafana/*'],
+              message: "'@grafana/* packages' should not be imported in @grafana/i18n",
+            },
+          ],
+        }),
+      ],
     },
   },
 ];

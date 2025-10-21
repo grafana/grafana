@@ -118,14 +118,14 @@ jobs:
           permissions: "{\"contents\": \"write\", \"pull_requests\": \"write\", \"workflows\":\"write\"}"
       - run: echo "RELEASE_BRANCH=release-${VERSION}" >> "$GITHUB_ENV"
       - name: Checkout Grafana
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ steps.generate_changelog_token.outputs.token }}
           ref: ${{ env.RELEASE_BRANCH }}
           fetch-tags: true
           fetch-depth: 0
       - name: Checkout Grafana (main)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ steps.generate_changelog_token.outputs.token }}
           ref: main
@@ -133,7 +133,7 @@ jobs:
           path: .grafana-main
 
       - name: Setup nodejs environment
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
       - uses: actions/setup-go@v5.5.0
@@ -196,7 +196,7 @@ jobs:
         run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
       - name: Bump versions
         if: ${{ inputs.bump == true || inputs.bump == 'true' }}
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
