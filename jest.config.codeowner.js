@@ -1,7 +1,7 @@
 const child_process = require('child_process');
 const fs = require('fs');
-const path = require('path');
 const open = require('open');
+const path = require('path');
 
 const baseConfig = require('./jest.config.js');
 
