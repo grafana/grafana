@@ -366,19 +366,17 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	}
 	// Create pull-style iterator from BatchGet
 	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, keys))
+	defer stop()
 
 	iter := kvListIterator{
 		listRV: listRV,
 		offset: offset,
 		next:   next,
-		stop:   stop,
 	}
 	err := cb(&iter)
 	if err != nil {
-		iter.stop() // Clean up the iterator
 		return 0, err
 	}
-	iter.stop() // Clean up the iterator
 
 	return listRV, nil
 }
@@ -390,7 +388,6 @@ type kvListIterator struct {
 
 	// pull-style iterator
 	next func() (DataObj, error, bool)
-	stop func()
 
 	// current item state
 	currentDataObj *DataObj
@@ -832,20 +829,18 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 
 	// Create pull-style iterator from BatchGet
 	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, pagedKeys))
+	defer stop()
 
 	iter := kvHistoryIterator{
 		listRV:        listRV,
 		sortAscending: sortAscending,
 		next:          next,
-		stop:          stop,
 	}
 
 	err := fn(&iter)
 	if err != nil {
-		iter.stop() // Clean up the iterator
 		return 0, err
 	}
-	iter.stop() // Clean up the iterator
 
 	return listRV, nil
 }
@@ -899,21 +894,19 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 
 	// Create pull-style iterator from BatchGet
 	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, pagedKeys))
+	defer stop()
 
 	iter := kvHistoryIterator{
 		listRV:          listRV,
 		sortAscending:   sortAscending,
 		skipProvisioned: true,
 		next:            next,
-		stop:            stop,
 	}
 
 	err = fn(&iter)
 	if err != nil {
-		iter.stop() // Clean up the iterator
 		return 0, err
 	}
-	iter.stop() // Clean up the iterator
 
 	return listRV, nil
 }
@@ -926,7 +919,6 @@ type kvHistoryIterator struct {
 
 	// pull-style iterator
 	next func() (DataObj, error, bool)
-	stop func()
 
 	// current item state
 	currentDataObj *DataObj
