@@ -41,7 +41,7 @@ export interface Props {
   app: CoreApp;
   containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
-  dataFrames: DataFrame[];
+  dataFrames?: DataFrame[];
   detailsMode?: LogLineDetailsMode;
   displayedFields: string[];
   enableLogDetails: boolean;
@@ -533,7 +533,7 @@ const LogListComponent = ({
           )}
         </InfiniteScroll>
       </div>
-      {showFieldSelector && processedLogs.length > 0 && (
+      {showFieldSelector && processedLogs.length > 0 && dataFrames && (
         <LogListFieldSelector containerElement={containerElement} dataFrames={dataFrames} logs={processedLogs} />
       )}
     </div>

@@ -116,7 +116,6 @@ export function LogsSamplePanel(props: Props) {
           app={CoreApp.Explore}
           containerElement={logsContainerRef.current}
           enableLogDetails
-          dataFrames={[]}
           dedupStrategy={LogsDedupStrategy.none}
           displayedFields={[]}
           logOptionsStorageKey={SETTING_KEY_ROOT}
