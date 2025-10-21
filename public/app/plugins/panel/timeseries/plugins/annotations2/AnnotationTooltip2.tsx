@@ -12,12 +12,12 @@ interface Props {
   annoIdx: number;
   timeZone: string;
   onEdit: () => void;
-  links: LinkModel[];
+  links?: LinkModel[];
 }
 
 const retFalse = () => false;
 
-export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, links }: Props) => {
+export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, links = [] }: Props) => {
   const annoId = annoVals.id?.[annoIdx];
 
   const styles = useStyles2(getStyles);
@@ -109,7 +109,8 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, links 
           </Stack>
         </div>
       </div>
-      <VizTooltipFooter dataLinks={links} />
+
+      {links.length > 0 && <VizTooltipFooter dataLinks={links} />}
     </div>
   );
 };
