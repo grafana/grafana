@@ -1,11 +1,10 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 
 import { getPanelProps } from '../test-utils';
 
@@ -39,7 +38,7 @@ describe.each([
   // Legacy APIs
   false,
 ])('DashList - app platform APIs: %s', (featureTogglesEnabled) => {
-  testWithFeatureToggles(featureTogglesEnabled ? ['unifiedStorageSearchUI'] : []);
+  testWithFeatureToggles({ enable: featureTogglesEnabled ? ['unifiedStorageSearchUI'] : [] });
 
   it('renders different groups of dashboards', async () => {
     const props = getPanelProps({
