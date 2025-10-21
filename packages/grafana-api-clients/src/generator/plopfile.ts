@@ -72,7 +72,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
           type: 'modify',
           path: '../rtkq.ts',
           pattern: '// PLOP_INJECT_IMPORT',
-          template: `import { generatedAPI as ${reducerPath} } from '${clientImportPath}/${groupName}/${version}';\n// PLOP_INJECT_IMPORT`,
+          template: `import { generatedAPI as ${reducerPath} } from '${clientImportPath}/rtkq/${groupName}/${version}';\n// PLOP_INJECT_IMPORT`,
         },
         {
           type: 'modify',
