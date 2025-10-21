@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
-import { ClickOutsideWrapper, useStyles2 } from '@grafana/ui';
+import { ClickOutsideWrapper, floatingUtils, useStyles2 } from '@grafana/ui';
 import { getDataLinks } from 'app/plugins/panel/status-history/utils';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';
@@ -53,6 +53,7 @@ export const AnnotationMarker2 = ({
   const { refs, floatingStyles } = useFloating({
     open: true,
     placement,
+    middleware: floatingUtils.getPositioningMiddleware(placement),
     whileElementsMounted: autoUpdate,
     strategy: 'fixed',
   });
