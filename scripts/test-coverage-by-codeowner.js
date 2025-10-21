@@ -54,7 +54,8 @@ async function runTestCoverageByCodeowner(
   codeownerName,
   codeownersPath,
   jestConfigPath,
-  noOpen = process.env.CI === 'true'
+  noOpen = process.env.CI === 'true',
+  jestArgs = []
 ) {
   const codeownersJson = await readFile(codeownersPath, 'utf8');
   const codeowners = JSON.parse(codeownersJson);
@@ -63,11 +64,14 @@ async function runTestCoverageByCodeowner(
     throw new Error(`Codeowner ${codeownerName} was not found in ${codeownersPath}, check spelling`);
   }
 
-  process.env.TEAM_NAME = codeownerName;
+  process.env.CODEOWNER_NAME = codeownerName;
   process.env.SHOULD_OPEN_COVERAGE_REPORT = String(!noOpen);
 
   return new Promise((resolve, reject) => {
-    const child = cp.spawn('jest', [`--config=${jestConfigPath}`], { stdio: 'inherit', shell: true });
+    const child = cp.spawn('jest', [`--config=${jestConfigPath}`, '--notify', '--watch', ...jestArgs], {
+      stdio: 'inherit',
+      shell: true,
+    });
 
     child.on('error', (error) => {
       reject(new Error(`Failed to start Jest: ${error.message}`));

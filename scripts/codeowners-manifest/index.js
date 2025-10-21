@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const cliSpinners = require('cli-spinners').default;
 const { writeFile, readFile, mkdir, access } = require('node:fs/promises');
+const ora = require('ora').default;
 
 const {
   CODEOWNERS_FILE_PATH,
@@ -73,9 +73,8 @@ async function generateCodeownersManifestComplete(
 
 if (require.main === module) {
   (async () => {
+    const spinner = ora('Generating complete codeowners manifest...').start();
     try {
-      console.log(cliSpinners.dots, 'Generating complete codeowners manifest...');
-
       const wasGenerated = await generateCodeownersManifestComplete(
         CODEOWNERS_FILE_PATH,
         CODEOWNERS_MANIFEST_DIR,
@@ -87,13 +86,12 @@ if (require.main === module) {
       );
 
       if (wasGenerated) {
-        console.log('✅ Complete manifest generated:');
-        console.log(`   • ${CODEOWNERS_MANIFEST_DIR}/`);
+        spinner.succeed(`✅ Complete manifest generated: ${CODEOWNERS_MANIFEST_DIR}/`);
       } else {
-        console.log('✅ Manifest up-to-date, skipped generation');
+        spinner.succeed('✅ Manifest up-to-date, skipped generation');
       }
     } catch (e) {
-      console.error('❌ Error generating codeowners manifest:', e.message);
+      spinner.fail(`❌ Error generating codeowners manifest: ${e.message}`);
       process.exit(1);
     }
   })();

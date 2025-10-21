@@ -7,9 +7,9 @@ const baseConfig = require('./jest.config.js');
 
 const CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH = 'codeowners-manifest/filenames-by-team.json';
 
-const teamName = process.env.TEAM_NAME;
+const teamName = process.env.CODEOWNER_NAME;
 if (!teamName) {
-  console.error('ERROR: TEAM_NAME environment variable is required');
+  console.error('ERROR: CODEOWNER_NAME environment variable is required');
   process.exit(1);
 }
 
