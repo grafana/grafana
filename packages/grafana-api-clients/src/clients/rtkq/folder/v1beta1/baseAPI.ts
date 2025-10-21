@@ -1,7 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { createBaseQuery } from '../../../../utils/createBaseQuery';
 import { getAPIBaseURL } from '../../../../utils/utils';
+import { createBaseQuery } from '../../createBaseQuery';
 
 export const API_GROUP = 'folder.grafana.app' as const;
 export const API_VERSION = 'v1beta1' as const;
