@@ -995,7 +995,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
                 panelState={panelState?.logs}
-                theme={theme}
                 updatePanelState={updatePanelState}
                 datasourceType={props.datasourceType}
               />

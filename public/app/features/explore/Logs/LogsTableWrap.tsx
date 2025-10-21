@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { getDragStyles, InlineField, Select, Themeable2, useStyles2 } from '@grafana/ui';
+import { getDragStyles, InlineField, Select, useStyles2 } from '@grafana/ui';
 import {
   getSidebarWidth,
   LogsTableFieldSelector,
@@ -27,7 +27,7 @@ import { parseLogsFrame } from '../../logs/logsFrame';
 import { LogsTable } from './LogsTable';
 import { SETTING_KEY_ROOT } from './utils/logs';
 
-interface Props extends Themeable2 {
+interface Props {
   logsFrames: DataFrame[];
   width: number;
   timeZone: string;
@@ -275,6 +275,8 @@ export function LogsTableWrap(props: Props) {
   const [sidebarWidth, setSidebarWidth] = useState(getSidebarWidth(SETTING_KEY_ROOT));
   const tableWidth = props.width - sidebarWidth;
 
+  const styles = useStyles2(getStyles, height, sidebarWidth);
+
   if (!columnsWithMeta) {
     return null;
   }
@@ -431,8 +433,6 @@ export function LogsTableWrap(props: Props) {
     props.updatePanelState({ refId: value.value, labelFieldName: logsFrame?.getLabelFieldName() ?? undefined });
   };
 
-  const styles = getStyles(props.theme, height, sidebarWidth);
-
   const getOnResize: ResizeCallback = (event, direction, ref) => {
     const newSidebarWidth = Number(ref.style.width.slice(0, -2));
     if (!isNaN(newSidebarWidth)) {
@@ -494,19 +494,23 @@ export function LogsTableWrap(props: Props) {
             toggle={toggleColumn}
           />
         </Resizable>
-        <LogsTable
-          logsFrame={logsFrame}
-          onClickFilterLabel={props.onClickFilterLabel}
-          onClickFilterOutLabel={props.onClickFilterOutLabel}
-          logsSortOrder={props.logsSortOrder}
-          range={props.range}
-          splitOpen={props.splitOpen}
-          timeZone={props.timeZone}
-          width={tableWidth}
-          dataFrame={currentDataFrame}
-          columnsWithMeta={columnsWithMeta}
-          height={height}
-        />
+        <div className={styles.tableContainer}>
+          <div className={styles.tableWrapper}>
+            <LogsTable
+              logsFrame={logsFrame}
+              onClickFilterLabel={props.onClickFilterLabel}
+              onClickFilterOutLabel={props.onClickFilterOutLabel}
+              logsSortOrder={props.logsSortOrder}
+              range={props.range}
+              splitOpen={props.splitOpen}
+              timeZone={props.timeZone}
+              width={tableWidth}
+              dataFrame={currentDataFrame}
+              columnsWithMeta={columnsWithMeta}
+              height={height}
+            />
+          </div>
+        </div>
       </div>
     </>
   );
@@ -527,6 +531,16 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
       overflowY: 'hidden',
       width: width,
       paddingRight: theme.spacing(3),
+    }),
+    tableContainer: css({
+      position: 'relative',
+      overflow: 'hidden',
+      flex: 1,
+    }),
+    tableWrapper: css({
+      position: 'absolute',
+      left: 0,
+      top: 0,
     }),
   };
 }
