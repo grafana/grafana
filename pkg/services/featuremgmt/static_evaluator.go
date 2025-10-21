@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/open-feature/go-sdk/openfeature"
 	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // StaticFlagEvaluator provides methods for evaluating static feature flags
@@ -38,7 +39,7 @@ func CreateStaticEvaluator(cfg *setting.Cfg) (StaticFlagEvaluator, error) {
 		return nil, fmt.Errorf("static provider is not of type inMemoryBulkProvider")
 	}
 
-	c := openfeature.GetApiInstance().GetClient()
+	c := openfeature.NewDefaultClient()
 
 	return &staticEvaluator{
 		provider: p,
