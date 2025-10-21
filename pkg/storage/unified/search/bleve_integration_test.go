@@ -20,7 +20,6 @@ func TestBleveSearchBackend(t *testing.T) {
 		backend, err := NewBleveBackend(BleveOptions{
 			Root:          tempDir,
 			FileThreshold: 5,
-			UseFullNgram:  false,
 		}, tracing.NewNoopTracerService(), nil)
 		require.NoError(t, err)
 		require.NotNil(t, backend)
@@ -42,7 +41,6 @@ func TestBleveSearchBackendFullNgramEnabled(t *testing.T) {
 		backend, err := NewBleveBackend(BleveOptions{
 			Root:          tempDir,
 			FileThreshold: 5,
-			UseFullNgram:  true,
 		}, tracing.NewNoopTracerService(), nil)
 		require.NoError(t, err)
 		require.NotNil(t, backend)
@@ -68,7 +66,6 @@ func TestSearchBackendBenchmark(t *testing.T) {
 	// Create a new bleve backend
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:         tempDir,
-		UseFullNgram: false,
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
@@ -91,7 +88,6 @@ func TestSearchBackendBenchmarkFullNgramEnabled(t *testing.T) {
 	// Create a new bleve backend
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:         tempDir,
-		UseFullNgram: true,
 	}, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
