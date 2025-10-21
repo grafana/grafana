@@ -1,3 +1,21 @@
+<!-- 11.6.7 START -->
+
+# 11.6.7 (2025-10-21)
+
+### Features and enhancements
+
+- **Analytics:** Apply proper batching to Loki exports and add configurable settings (Enterprise)
+- **Go:** Update to 1.25.2 + golangci-lint v2.5.0 + golang.org/x/net v0.45.0 [#112162](https://github.com/grafana/grafana/pull/112162), [@grambbledook](https://github.com/grambbledook)
+- **Go:** Update to 1.25.3 [#112365](https://github.com/grafana/grafana/pull/112365), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Auth:** Fix render user OAuth passthrough [#112094](https://github.com/grafana/grafana/pull/112094), [@mgyongyosi](https://github.com/mgyongyosi)
+- **LDAP Authentication:** Fix URL to propagate username context as parameter [#111846](https://github.com/grafana/grafana/pull/111846), [@bradleypettit](https://github.com/bradleypettit)
+- **Plugins:** Dependencies do not inherit parent URL for preinstall [#111801](https://github.com/grafana/grafana/pull/111801), [@wbrowne](https://github.com/wbrowne)
+- **URLParams:** Stringify true values as key=true always (fixes issues with variables with true value) [#112045](https://github.com/grafana/grafana/pull/112045), [@torkelo](https://github.com/torkelo)
+
+<!-- 11.6.7 END -->
 <!-- 11.5.10 START -->
 
 # 11.5.10 (2025-10-21)
