@@ -505,6 +505,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesQueryCaching",
+			Description:     "Adds support for Kubernetes querycaching",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -2104,6 +2111,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "newGauge",
+			Description:  "Enable new gauge visualization",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "preventPanelChromeOverflow",
 			Description:  "Restrict PanelChrome contents with overflow: hidden;",
 			Stage:        FeatureStagePublicPreview,
@@ -2118,6 +2133,16 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
+		},
+		{
+			Name:              "onlyStoreActionSets",
+			Description:       "When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission",
+			Stage:             FeatureStageGeneralAvailability,
+			FrontendOnly:      false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true, // this should not be a user facing change
+			Owner:             identityAccessTeam,
+			Expression:        "true",
 		},
 	}
 )

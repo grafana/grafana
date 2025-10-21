@@ -211,11 +211,19 @@ class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
     if (['ArrowDown', 'ArrowUp', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
       return;
     }
-    const { activeLabel } = this.state;
+
+    const selectionStart = e.currentTarget.selectionStart;
+    const selectionEnd = e.currentTarget.selectionEnd;
+    let inputValue = e.currentTarget.value;
+
+    if (selectionStart !== selectionEnd) {
+      inputValue = inputValue.substring(0, selectionStart ?? 0) + inputValue.substring(selectionEnd ?? 0);
+    }
+
     this.setState({
       focusCascade: false,
       isSearching: true,
-      inputValue: activeLabel,
+      inputValue: inputValue,
     });
   };
 
@@ -280,6 +288,9 @@ class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
                 placeholder={placeholder}
                 onBlur={this.onBlurCascade}
                 value={activeLabel}
+                onFocus={(e) => {
+                  e.currentTarget.select();
+                }}
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
                 suffix={
