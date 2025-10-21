@@ -187,6 +187,13 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 		return nil
 	}
 
+	effectiveReject := s.shouldRejectNonProvisionedUsers(ctx, currentIdentity)
+
+	if !effectiveReject {
+		log.Debug("Skip provisioning validation, non-provisioned users are allowed")
+		return nil
+	}
+
 	log.Debug("Validating user provisioning")
 	ctx, span := s.tracer.Start(ctx, "user.sync.ValidateUserProvisioningHook")
 	defer span.End()
@@ -226,7 +233,7 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 	}
 
 	// Reject non-provisioned users if configured to do so
-	if s.shouldRejectNonProvisionedUsers(ctx, currentIdentity) {
+	if effectiveReject {
 		log.Error("Failed to authenticate user, user is not provisioned")
 		return errUserNotProvisioned.Errorf("user is not provisioned")
 	}
@@ -506,7 +513,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 
 	ctxLogger := s.log.FromContext(ctx)
 
-	if usr.IsProvisioned && id.AuthenticatedBy != login.GrafanaComAuthModule {
+	if s.shouldRejectNonProvisionedUsers(ctx, id) && usr.IsProvisioned && id.AuthenticatedBy != login.GrafanaComAuthModule {
 		ctxLogger.Debug("User is provisioned", "id.UID", id.UID)
 		needsConnectionCreation = false
 		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})
