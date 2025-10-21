@@ -1655,6 +1655,15 @@
     "inspector-yaml-tab": {
       "apply": "Toepassen"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2314,6 +2323,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Gegevensbron"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Expressie"
     },
@@ -2559,6 +2571,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Waarschuwingsregel is toegevoegd of bijgewerkt. Het kan tot een minuut duren voordat wijzigingen worden weergegeven in de lijstweergave met waarschuwingsregels.",
         "alert-title": "Update wordt uitgevoerd"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Er ging iets mis bij het evalueren van deze waarschuwingsregel"
     },
@@ -2930,10 +2946,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "Expressie toevoegen"
@@ -4507,7 +4535,8 @@
       "paste-row": "Rij plakken",
       "paste-tab": "Tabblad plakken",
       "un-group-panels": "Groepering opheffen",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4607,7 +4636,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "Dashboard {{dashboardName}}"
+      "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Laden van het dashboard annuleren"
@@ -4800,7 +4830,11 @@
       "add-visualization-header": "Begin je nieuwe dashboard door een visualisatie toe te voegen",
       "import-a-dashboard-body": "Importeer dashboards uit bestanden of <1>grafana.com</1>.",
       "import-a-dashboard-header": "Dashboard importeren",
-      "import-dashboard-button": "Dashboard importeren"
+      "import-dashboard-button": "Dashboard importeren",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Kan dashboard niet laden"
@@ -5013,6 +5047,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Kopiëren",
         "copy-or-duplicate": "Kopiëren of dupliceren",
@@ -5022,7 +5057,10 @@
         "group-layout-disabled": "Er bestaan geen groepen op dit niveau",
         "panel-layout": "Paneelindeling",
         "panel-layout-disabled": "Selecteer een rij of tabblad om de indelingsopties van het paneel te wijzigen"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5172,7 +5210,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "Als je deze rij verwijdert, worden ook alle panelen verwijderd. Weet je zeker dat je wilt doorgaan?",
       "delete-row-title": "Rij verwijderen?",
@@ -5212,9 +5249,7 @@
         "title-not-unique": "Deze titel is niet uniek"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard opgeslagen"
@@ -5304,6 +5339,9 @@
       "delete-tab-title": "Tabblad verwijderen?",
       "delete-tab-yes": "Verwijderen",
       "description": "Panelen organiseren in horizontale tabbladen",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Tabbladen",
       "tab": {
         "new": "Nieuw tabblad",
@@ -7645,6 +7683,7 @@
   },
   "gauge": {
     "category-gauge": "Meter",
+    "category-radial-bar": "",
     "description-min-height": "Minimale rijhoogte (horizontale oriëntatie)",
     "description-min-width": "Minimale kolombreedte (verticale oriëntatie)",
     "description-neutral": "Laat leeg om Min als neutraal punt te gebruiken",
@@ -7660,7 +7699,8 @@
     "name-neutral": "Neutraal",
     "name-show-threshold-labels": "Drempellabels weergeven",
     "name-show-threshold-markers": "Drempelmarkeringen weergeven",
-    "placeholder-neutral": "automatisch"
+    "placeholder-neutral": "automatisch",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Toepassen",
@@ -9064,6 +9104,8 @@
       "make-time-range-permanent": "Tijdsbereik absoluut/permanent maken",
       "move-time-range-back": "Tijdsbereik terugzetten",
       "move-time-range-forward": "Tijdsbereik vooruitzetten",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Zoekopdracht openen",
       "open-share-embed-drawer": "Paneelinsluiting delen",
       "open-share-link-drawer": "Paneellink delen",
@@ -11792,7 +11834,8 @@
       "button-cancelling": "Annuleren…",
       "button-previous": "Vorige",
       "button-submitting": "Indienen...",
-      "error-instance-repository-exists": "Er bestaat al een instantierepository"
+      "error-instance-repository-exists": "Er bestaat al een instantierepository",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12015,6 +12058,28 @@
       "show-response": "Antwoord weergeven"
     },
     "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {

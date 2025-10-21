@@ -1,5 +1,6 @@
 SELECT
   tm.id as id,
+  tm.uid as uid,
   t.uid as team_uid,
   t.id as team_id,
   u.uid as user_uid,

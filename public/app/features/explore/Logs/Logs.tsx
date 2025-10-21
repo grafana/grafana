@@ -786,6 +786,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           logOptionsStorageKey={SETTING_KEY_ROOT}
           timeZone={timeZone}
           displayedFields={displayedFields}
+          onPermalinkClick={onPermalinkClick}
           onClickShowField={showField}
           onClickHideField={hideField}
         />

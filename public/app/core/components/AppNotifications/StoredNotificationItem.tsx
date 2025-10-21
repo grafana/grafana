@@ -32,7 +32,7 @@ export const StoredNotificationItem = ({
   const styles = getStyles(theme);
 
   return (
-    <Card className={className} onClick={onClick}>
+    <Card noMargin className={className} onClick={onClick}>
       <Card.Heading>{title}</Card.Heading>
       <Card.Description>{children}</Card.Description>
       <Card.Figure>
