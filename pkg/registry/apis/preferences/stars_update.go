@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"slices"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -110,11 +109,10 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 			return
 		}
 
-		if !apply(&obj.Spec, item, remove) {
-			responder.Object(http.StatusNoContent, &v1.Status{
-				Code: http.StatusNoContent,
-			})
-			return
+		if remove {
+			obj.Spec.Remove(item.group, item.kind, item.id)
+		} else {
+			obj.Spec.Add(item.group, item.kind, item.id)
 		}
 
 		if len(obj.Spec.Resource) == 0 {
@@ -128,9 +126,7 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 			responder.Error(err)
 			return
 		}
-		responder.Object(http.StatusOK, &v1.Status{
-			Code: http.StatusOK,
-		})
+		responder.Object(http.StatusOK, &v1.Status{Code: http.StatusOK})
 	}), nil
 }
 
@@ -150,50 +146,4 @@ func itemFromPath(urlPath, prefix string) (starItem, error) {
 		kind:  parts[1],
 		id:    parts[2],
 	}, nil
-}
-
-func apply(spec *preferences.StarsSpec, item starItem, remove bool) bool {
-	var stars *preferences.StarsResource
-	for idx, v := range spec.Resource {
-		if v.Group == item.group && v.Kind == item.kind {
-			stars = &spec.Resource[idx]
-		}
-	}
-	if stars == nil {
-		if remove {
-			return false
-		}
-		spec.Resource = append(spec.Resource, preferences.StarsResource{
-			Group: item.group,
-			Kind:  item.kind,
-			Names: []string{},
-		})
-		stars = &spec.Resource[len(spec.Resource)-1]
-	}
-
-	idx := slices.Index(stars.Names, item.id)
-	if idx < 0 { // not found
-		if remove {
-			return false
-		}
-		stars.Names = append(stars.Names, item.id)
-	} else if remove {
-		stars.Names = append(stars.Names[:idx], stars.Names[idx+1:]...)
-	} else {
-		return false
-	}
-	slices.Sort(stars.Names)
-
-	// Remove the slot if only one value
-	if len(stars.Names) == 0 {
-		tmp := preferences.StarsSpec{}
-		for _, v := range spec.Resource {
-			if v.Group == item.group && v.Kind == item.kind {
-				continue
-			}
-			tmp.Resource = append(tmp.Resource, v)
-		}
-		spec.Resource = tmp.Resource
-	}
-	return true
 }

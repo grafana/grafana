@@ -25,8 +25,9 @@ export function RecentlyDeletedActions() {
   const [isBulkRestoreLoading, setIsBulkRestoreLoading] = useState(false);
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
 
-  const showRestoreNotifications = (successful: string[], failedCount: number) => {
+  const showRestoreNotifications = (successful: string[], failed: Array<{ uid: string; error: string }>) => {
     const successCount = successful.length;
+    const failedCount = failed.length;
 
     if (successCount === 0 && failedCount === 0) {
       return;
@@ -36,6 +37,8 @@ export function RecentlyDeletedActions() {
     let message = t('browse-dashboards.restore.success', 'Dashboards restored successfully');
 
     if (failedCount > 0) {
+      const firstError = failed[0]?.error;
+
       if (successCount > 0) {
         // Partial success
         alertType = AppEvents.alertWarning.name;
@@ -48,12 +51,18 @@ export function RecentlyDeletedActions() {
           count: failedCount,
         });
         message = `${successMessage}. ${failedMessage}.`;
+        if (firstError) {
+          message += `. ${firstError}`;
+        }
       } else {
         // All failed
         alertType = AppEvents.alertError.name;
-        message = t('browse-dashboards.restore.all-failed', 'Failed to restore {{count}} dashboard', {
+        message = t('browse-dashboards.restore.all-failed', 'Failed to restore {{count}} dashboard.', {
           count: failedCount,
         });
+        if (firstError) {
+          message += `. ${firstError}`;
+        }
       }
     }
 
@@ -95,6 +104,22 @@ export function RecentlyDeletedActions() {
     stateManager.doSearchWithDebounce();
   };
 
+  const getErrorMessage = (error: unknown) => {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (typeof error === 'string') {
+      return error;
+    }
+    if (error && typeof error === 'object' && 'message' in error) {
+      return String(error.message);
+    }
+    if (error) {
+      return JSON.stringify(error);
+    }
+    return '';
+  };
+
   const onRestore = async (restoreTarget: string) => {
     const resultsView = stateManager.state.result?.view.toArray();
     if (!resultsView) {
@@ -124,20 +149,27 @@ export function RecentlyDeletedActions() {
 
     // Separate successful and failed restores
     const successful: string[] = [];
-    const failed: string[] = [];
+    const failed: Array<{ uid: string; error: string }> = [];
 
     results.forEach((result, index) => {
       const dashboardUid = selectedDashboards[index];
-      if (result.status === 'rejected' || result.value.error) {
-        failed.push(dashboardUid);
+      if (result.status === 'rejected') {
+        const errorMessage = getErrorMessage(result.reason);
+        if (errorMessage) {
+          failed.push({ uid: dashboardUid, error: errorMessage });
+        }
+      } else if (result.value.error) {
+        const errorMessage = getErrorMessage(result.value.error);
+        if (errorMessage) {
+          failed.push({ uid: dashboardUid, error: errorMessage });
+        }
       } else if ('data' in result.value && result.value.data?.name) {
         successful.push(result.value.data.name);
       }
     });
 
     // Show consolidated notification
-    const failedCount = failed.length;
-    showRestoreNotifications(successful, failedCount);
+    showRestoreNotifications(successful, failed);
 
     const parentUIDs = new Set<string | undefined>();
     for (const uid of selectedDashboards) {

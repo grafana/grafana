@@ -13,6 +13,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/alerting/receivers/webex"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -1270,7 +1271,7 @@ func CopyIntegrationWith(r Integration, mutators ...Mutator[Integration]) Integr
 func IntegrationGen(mutators ...Mutator[Integration]) func() Integration {
 	return func() Integration {
 		name := util.GenerateShortUID()
-		randomIntegrationType, _ := randomMapKey(alertingNotify.AllKnownConfigsForTesting)
+		randomIntegrationType, _ := randomMapKey(notifytest.AllKnownV1ConfigsForTesting)
 
 		c := Integration{
 			UID:                   util.GenerateShortUID(),
@@ -1280,7 +1281,7 @@ func IntegrationGen(mutators ...Mutator[Integration]) func() Integration {
 			SecureSettings:        make(map[string]string),
 		}
 
-		IntegrationMuts.WithValidConfig(schema.IntegrationType(randomIntegrationType))(&c)
+		IntegrationMuts.WithValidConfig(randomIntegrationType)(&c)
 
 		for _, mutator := range mutators {
 			mutator(&c)
@@ -1317,10 +1318,12 @@ func (n IntegrationMutators) WithName(name string) Mutator[Integration] {
 func (n IntegrationMutators) WithValidConfig(integrationType schema.IntegrationType) Mutator[Integration] {
 	return func(c *Integration) {
 		// TODO add support for v0 integrations
-		config := alertingNotify.AllKnownConfigsForTesting[string(integrationType)].GetRawNotifierConfig(c.Name)
-		typeSchema, _ := alertingNotify.GetSchemaForIntegration(integrationType)
-		integrationConfig, _ := IntegrationConfigFromSchema(typeSchema, schema.V1)
-		c.Config = integrationConfig
+		ncfg, ok := notifytest.AllKnownV1ConfigsForTesting[integrationType]
+		if !ok {
+			panic(fmt.Sprintf("unknown integration type: %s", integrationType))
+		}
+		config := ncfg.GetRawNotifierConfig(c.Name)
+		c.Config, _ = alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
 
 		var settings map[string]any
 		_ = json.Unmarshal(config.Settings, &settings)
@@ -1337,8 +1340,11 @@ func (n IntegrationMutators) WithValidConfig(integrationType schema.IntegrationT
 
 func (n IntegrationMutators) WithInvalidConfig(integrationType schema.IntegrationType) Mutator[Integration] {
 	return func(c *Integration) {
-		typeSchema, _ := alertingNotify.GetSchemaForIntegration(integrationType)
-		c.Config, _ = IntegrationConfigFromSchema(typeSchema, schema.V1)
+		var ok bool
+		c.Config, ok = alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+		if !ok {
+			panic(fmt.Sprintf("unknown integration type: %s", integrationType))
+		}
 		c.Settings = map[string]interface{}{}
 		c.SecureSettings = map[string]string{}
 		if integrationType == webex.Type {

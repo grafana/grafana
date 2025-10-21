@@ -92,7 +92,7 @@ export const CollapsableSection = ({
           {loading ? (
             <Spinner className={styles.spinner} />
           ) : (
-            <Icon name={isSectionOpen ? 'angle-up' : 'angle-down'} className={styles.icon} />
+            <Icon name={isSectionOpen ? 'angle-down' : 'angle-right'} className={styles.icon} />
           )}
         </button>
         <div className={styles.label} id={`collapse-label-${id}`} data-testid={headerDataTestId}>
@@ -107,17 +107,18 @@ export const CollapsableSection = ({
 const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   header: css({
     display: 'flex',
+    alignItems: 'center',
     cursor: 'pointer',
     boxSizing: 'border-box',
-    flexDirection: 'row-reverse',
     position: 'relative',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     fontSize: theme.typography.size.lg,
     padding: `${theme.spacing(0.5)} 0`,
     '&:focus-within': getFocusStyles(theme),
   }),
   button: css({
     all: 'unset',
+    marginRight: theme.spacing(1),
     '&:focus-visible': {
       outline: 'none',
       outlineOffset: 'unset',
@@ -143,6 +144,7 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   }),
   label: css({
     display: 'flex',
+    flex: '1 1 auto',
     fontWeight: theme.typography.fontWeightMedium,
     color: theme.colors.text.maxContrast,
   }),
