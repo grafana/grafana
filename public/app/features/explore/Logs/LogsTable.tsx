@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {
@@ -15,6 +15,7 @@ import {
   SplitOpen,
   TimeRange,
   transformDataFrame,
+  urlUtil,
   ValueLinkConfig,
   AbsoluteTimeRange,
   LogRowModel,
@@ -62,6 +63,47 @@ export function LogsTable(props: Props) {
   const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
   const timeIndex = logsFrame?.timeField.index;
+
+  // Extract selected log ID from URL parameter
+  const selectedLogInfo = useMemo(() => {
+    const { selectedLine } = urlUtil.getUrlSearchParams();
+
+    const param = Array.isArray(selectedLine) ? selectedLine[0] : selectedLine;
+
+    if (typeof param !== 'string') {
+      return undefined;
+    }
+
+    try {
+      const { id, row } = JSON.parse(param);
+      return { id, row };
+    } catch (error) {
+      return undefined;
+    }
+  }, []);
+
+  // Find the row index by log ID (matching logs-drilldown approach)
+  const initialRowIndex = useMemo(() => {
+    if (!selectedLogInfo || !logsFrame?.idField) {
+      return undefined;
+    }
+
+    // Search in logsFrame.idField.values (raw data, not transformed)
+    const lineIndex = logsFrame.idField.values.findIndex((v) => v === selectedLogInfo.id);
+    const cleanLineIndex = lineIndex && lineIndex !== -1 ? lineIndex : undefined;
+
+    return cleanLineIndex;
+  }, [selectedLogInfo, logsFrame?.idField]);
+
+  // Clear the selectedLine URL parameter after table loads
+  useEffect(() => {
+    if (initialRowIndex !== undefined && tableFrame) {
+      // Remove selectedLine from URL after initial render
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.delete('selectedLine');
+      window.history.replaceState({}, '', currentUrl.toString());
+    }
+  }, [initialRowIndex, tableFrame]);
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
@@ -250,6 +292,7 @@ export function LogsTable(props: Props) {
         ]
       }
       onSortByChange={props.onSortByChange}
+      initialRowIndex={initialRowIndex}
     />
   );
 }

@@ -75,21 +75,35 @@ interface Props extends CustomCellRendererProps {
 }
 
 export function LogsTableActionButtons(props: Props) {
+  const {
+    fieldIndex,
+    logId,
+    exploreId,
+    absoluteRange,
+    logRows,
+    rowIndex,
+    visualisationType,
+    panelState,
+    displayedFields,
+    logsFrame,
+    frame,
+  } = props;
+
   const theme = useTheme2();
   const [isInspecting, setIsInspecting] = useState(false);
 
   // Get the actual log line content from the data frame
   const getLogLineContent = () => {
     // Use the body field name from logsFrame if available, otherwise fallback to common names
-    const bodyFieldName = props.logsFrame?.bodyField?.name;
+    const bodyFieldName = logsFrame?.bodyField?.name;
 
     let bodyField;
     if (bodyFieldName) {
       // Use the exact field name from logsFrame
-      bodyField = props.frame.fields.find((field) => field.name === bodyFieldName);
+      bodyField = frame.fields.find((field) => field.name === bodyFieldName);
     } else {
       // Fallback to common field names
-      bodyField = props.frame.fields.find(
+      bodyField = frame.fields.find(
         (field) =>
           field.name === 'Line' ||
           field.name === 'body' ||
@@ -99,8 +113,8 @@ export function LogsTableActionButtons(props: Props) {
       );
     }
 
-    if (bodyField && bodyField.values[props.rowIndex] !== undefined) {
-      const rawValue = bodyField.values[props.rowIndex];
+    if (bodyField && bodyField.values[rowIndex] !== undefined) {
+      const rawValue = bodyField.values[rowIndex];
       if (React.isValidElement(rawValue)) {
         return rawValue;
       } else if (typeof rawValue === 'object') {
@@ -119,65 +133,59 @@ export function LogsTableActionButtons(props: Props) {
   const styles = getStyles(theme, isNumber);
 
   const getText = useCallback(() => {
-    if (!props.logId || !props.exploreId || !props.absoluteRange || !props.logRows) {
+    if (!logId || !exploreId || !absoluteRange || !logRows) {
       return '';
     }
 
     try {
       // Get the log row from the logRows array
-      const logRow = props.logRows[props.rowIndex];
+      const logRow = logRows[rowIndex];
       if (!logRow) {
         return '';
       }
 
       // Get the current explore state
-      const currentPaneState = getState().explore.panes[props.exploreId];
+      const currentPaneState = getState().explore.panes[exploreId];
       if (!currentPaneState) {
         return '';
       }
 
       // Create URL state with log permalink information
       const urlState = getUrlStateFromPaneState(currentPaneState);
+
+      // Preserve all panel state (columns, labelFieldName, etc.)
       urlState.panelsState = {
         ...currentPaneState.panelsState,
         logs: {
-          ...props.panelState,
-          id: props.logId,
-          visualisationType: props.visualisationType ?? 'table',
-          displayedFields: props.displayedFields ?? [],
+          ...panelState,
+          visualisationType: visualisationType ?? 'table',
+          displayedFields: displayedFields ?? [],
         },
       };
 
       // Calculate the time range for the permalink
-      urlState.range = getLogsPermalinkRange(logRow, props.logRows, props.absoluteRange);
+      urlState.range = getLogsPermalinkRange(logRow, logRows, absoluteRange);
 
-      // Create the full URL
+      // Create the full URL with selectedLine as a URL parameter (with id and row)
       const serializedState = serializeStateToUrlParam(urlState);
       const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
-      const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
+      const url = urlUtil.renderUrl(`${baseUrl}/explore`, {
+        left: serializedState,
+        selectedLine: JSON.stringify({ id: logId, row: rowIndex }),
+      });
 
       return url;
     } catch (error) {
-      console.error('Failed to create permalink:', error);
       return '';
     }
-  }, [
-    props.absoluteRange,
-    props.displayedFields,
-    props.exploreId,
-    props.logId,
-    props.logRows,
-    props.panelState,
-    props.rowIndex,
-    props.visualisationType,
-  ]);
+  }, [absoluteRange, displayedFields, exploreId, logId, logRows, rowIndex, visualisationType, panelState]);
 
   const handleViewClick = () => {
     setIsInspecting(true);
   };
 
   // Only render for the first field (actions column)
-  if (props.fieldIndex !== 0) {
+  if (fieldIndex !== 0) {
     return null;
   }
 
