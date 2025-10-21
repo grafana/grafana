@@ -248,7 +248,7 @@ func RegisterAPIService(
 	}
 
 	builder := NewAPIBuilder(
-		cfg.ProvisioningDisableControllers,
+		cfg.DisableControllers,
 		repoFactory,
 		features,
 		client,
@@ -696,7 +696,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer)
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10)
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
@@ -705,6 +705,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				syncer,
 				metrics,
 				b.tracer,
+				10,
 			)
 			signerFactory := signature.NewSignerFactory(b.clients)
 			legacyResources := migrate.NewLegacyResourcesMigrator(

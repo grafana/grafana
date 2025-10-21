@@ -23,7 +23,8 @@ export type TypedVariableModel =
   | UserVariableModel
   | OrgVariableModel
   | DashboardVariableModel
-  | SnapshotVariableModel;
+  | SnapshotVariableModel
+  | SwitchVariableModel;
 
 export enum VariableRefresh {
   never, // removed from the UI
@@ -128,6 +129,10 @@ export interface TextBoxVariableModel extends VariableWithOptions {
 
 export interface ConstantVariableModel extends VariableWithOptions {
   type: 'constant';
+}
+
+export interface SwitchVariableModel extends VariableWithOptions {
+  type: 'switch';
 }
 
 export interface VariableWithMultiSupport extends VariableWithOptions {
