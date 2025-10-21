@@ -1,3 +1,20 @@
+<!-- 12.0.6 START -->
+
+# 12.0.6 (2025-10-21)
+
+### Features and enhancements
+
+- **Go:** Update to 1.25.2 + golangci-lint v2.5.0 + golang.org/x/net v0.45.0 [#112161](https://github.com/grafana/grafana/pull/112161), [@macabu](https://github.com/macabu)
+- **Go:** Update to 1.25.3 [#112364](https://github.com/grafana/grafana/pull/112364), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Auth:** Fix render user OAuth passthrough [#112096](https://github.com/grafana/grafana/pull/112096), [@mgyongyosi](https://github.com/mgyongyosi)
+- **FlameGraph:** Ensure total is only counted once for recursive function calls [#111604](https://github.com/grafana/grafana/pull/111604), [@simonswine](https://github.com/simonswine)
+- **LDAP Authentication:** Fix URL to propagate username context as parameter [#111847](https://github.com/grafana/grafana/pull/111847), [@bradleypettit](https://github.com/bradleypettit)
+- **Plugins:** Dependencies do not inherit parent URL for preinstall [#111766](https://github.com/grafana/grafana/pull/111766), [@wbrowne](https://github.com/wbrowne)
+
+<!-- 12.0.6 END -->
 <!-- 12.0.5 START -->
 
 # 12.0.5 (2025-09-23)
