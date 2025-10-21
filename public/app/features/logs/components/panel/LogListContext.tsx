@@ -265,7 +265,7 @@ export const LogListContextProvider = ({
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(
     detailsModeProp ?? getDefaultDetailsMode(containerElement)
   );
-  const [isAssistantAvailable, openAssistant] = useAssistant();
+  const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
   const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
 

@@ -251,7 +251,8 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if !ok {
 		return fmt.Errorf("%w: failed to get secret keys for contact point type %s", ErrValidation, contactPoint.Type)
 	}
-	for _, secretKey := range typeSchema.GetSecretFieldsPaths() {
+	for _, secretPath := range typeSchema.GetSecretFieldsPaths() {
+		secretKey := secretPath.String()
 		secretValue := contactPoint.Settings.Get(secretKey).MustString()
 		if secretValue == apimodels.RedactedValue {
 			contactPoint.Settings.Set(secretKey, rawContactPoint.Settings.Get(secretKey).MustString())
@@ -526,7 +527,8 @@ func RemoveSecretsForContactPoint(e *apimodels.EmbeddedContactPoint) (map[string
 	if !ok {
 		return nil, fmt.Errorf("failed to get secret keys for contact point type %s", e.Type)
 	}
-	for _, secretKey := range typeSchema.GetSecretFieldsPaths() {
+	for _, secretPath := range typeSchema.GetSecretFieldsPaths() {
+		secretKey := secretPath.String()
 		secretValue, err := extractCaseInsensitive(e.Settings, secretKey)
 		if err != nil {
 			return nil, err

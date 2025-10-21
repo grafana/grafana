@@ -17,7 +17,6 @@ import {
   getOutputDirectory,
   getJsonInputFiles,
   constructLatestVersionOutputFilename,
-  handleAngularPanelMigration,
 } from './__tests__/migrationTestUtils';
 
 /*
@@ -72,12 +71,13 @@ describe('Backend / Frontend result comparison', () => {
       expect(backendMigrationResult.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
 
       // Migrate dashboard in Frontend.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let migratedTemplatingList: any[] = jsonInput?.templating?.list ?? [];
       const frontendModel = new DashboardModel(jsonInput, undefined, {
-        getVariablesFromState: () => jsonInput?.templating?.list ?? [],
+        getVariablesFromState: () => migratedTemplatingList,
       });
-
-      // Handle angular panel migration if needed
-      await handleAngularPanelMigration(frontendModel, jsonInput.schemaVersion, DASHBOARD_SCHEMA_VERSION);
+      // Update the templating list reference after migration
+      migratedTemplatingList = frontendModel.templating?.list ?? [];
 
       const frontendMigrationResult = frontendModel.getSaveModelClone();
 

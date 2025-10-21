@@ -235,17 +235,19 @@ func TestIsValidKey(t *testing.T) {
 		{"data key format", "ns/group/resource/name/123~created", true},
 		{"metadata key format", "group/resource/ns/name/123~created~folder", true},
 		{"metadata key format ending with a ~", "group/resource/ns/name/123~created~", true},
+		{"uppercase letters", "Valid", true},
+		{"underscores", "a_b", true},
+		{"key with underscores and mixed chars", "4_D6mSh4z", true},
+		{"complex key with underscores", "ns/group_name/resource-name/Name_123~action-type", true},
 
 		// invalid keys
 		{"empty key", "", false},
-		{"uppercase letters", "Invalid", false},
 		{"special characters", "a@b", false},
 		{"spaces", "a b", false},
 		{"leading space", " key", false},
 		{"trailing space", "key ", false},
 		{"tab character", "a\tb", false},
 		{"newline character", "a\nb", false},
-		{"underscores", "a_b", false},
 	}
 
 	for _, tt := range tests {
