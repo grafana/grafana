@@ -29,6 +29,11 @@
       "count": 1
     }
   },
+  "packages/grafana-data/src/dataframe/CircularDataFrame.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
   "packages/grafana-data/src/dataframe/DataFrameView.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
