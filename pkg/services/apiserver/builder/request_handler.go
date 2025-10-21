@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
 )
@@ -13,9 +14,11 @@ type requestHandler struct {
 	router *mux.Router
 }
 
-func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder) (http.Handler, error) {
+func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder, metricsRegistry prometheus.Registerer) (http.Handler, error) {
 	useful := false // only true if any routes exist anywhere
 	router := mux.NewRouter()
+
+	metrics := NewCustomRouteMetrics(metricsRegistry)
 
 	for _, builder := range builders {
 		provider, ok := builder.(APIGroupRouteProvider)
@@ -44,7 +47,15 @@ func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient
 				if err != nil {
 					return nil, err
 				}
-				sub.HandleFunc("/"+route.Path, route.Handler).
+
+				instrumentedHandler := metrics.InstrumentHandler(
+					gv.Group,
+					gv.Version,
+					route.Path, // Use path as resource identifier
+					route.Handler,
+				)
+
+				sub.HandleFunc("/"+route.Path, instrumentedHandler).
 					Methods(methods...)
 			}
 
@@ -62,7 +73,15 @@ func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient
 				if err != nil {
 					return nil, err
 				}
-				sub.HandleFunc("/"+route.Path, route.Handler).
+
+				instrumentedHandler := metrics.InstrumentHandler(
+					gv.Group,
+					gv.Version,
+					route.Path, // Use path as resource identifier
+					route.Handler,
+				)
+
+				sub.HandleFunc("/"+route.Path, instrumentedHandler).
 					Methods(methods...)
 			}
 		}

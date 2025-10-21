@@ -7699,7 +7699,8 @@
     "name-neutral": "Neutro",
     "name-show-threshold-labels": "Mostrar rótulos de limite",
     "name-show-threshold-markers": "Mostrar marcadores de limite",
-    "placeholder-neutral": "automático"
+    "placeholder-neutral": "automático",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Aplicar",
@@ -12076,6 +12077,7 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "threshold-labels": "",
       "threshold-markers": ""
     }
   },

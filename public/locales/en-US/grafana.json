@@ -6294,6 +6294,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "This variable is not referenced by other variables or dashboard.",
       "content-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
     },
+    "variable-controls": {
+      "add-variable": "Add"
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
       "back-to-list": "Back to list",
@@ -7699,7 +7702,8 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Show threshold labels",
     "name-show-threshold-markers": "Show threshold markers",
-    "placeholder-neutral": "auto"
+    "placeholder-neutral": "auto",
+    "threshold": "Threshold {{value}}"
   },
   "gen-ai": {
     "apply-suggestion": "Apply",
@@ -12076,6 +12080,7 @@
       "shape-circle": "Circle",
       "shape-gauge": "Gauge",
       "sparkline": "Show sparkline",
+      "threshold-labels": "Show threshold labels",
       "threshold-markers": "Show thresholds"
     }
   },

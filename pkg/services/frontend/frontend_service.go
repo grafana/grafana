@@ -127,11 +127,6 @@ func (s *frontendService) routeGet(m *web.Mux, pattern string, h ...web.Handler)
 	m.Get(pattern, handlers...)
 }
 
-func (s *frontendService) routePost(m *web.Mux, pattern string, h ...web.Handler) {
-	handlers := append([]web.Handler{middleware.ProvideRouteOperationName(pattern)}, h...)
-	m.Post(pattern, handlers...)
-}
-
 // Apply the same middleware patterns as the main HTTP server
 func (s *frontendService) addMiddlewares(m *web.Mux) {
 	loggermiddleware := loggermw.Provide(s.cfg, s.features)
@@ -164,7 +159,9 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 	})
 
 	// Frontend boot error reporting endpoint
-	s.routePost(m, "/-/fe-boot-error", s.handleBootError)
+	// GET because all POST requests are passed to the backend, even though POST is more correct. The frontend
+	// uses cache busting to ensure requests aren't cached.
+	s.routeGet(m, "/-/fe-boot-error", s.handleBootError)
 
 	// All other requests return index.html
 	s.routeGet(m, "/*", s.index.HandleRequest)

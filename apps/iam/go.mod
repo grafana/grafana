@@ -24,6 +24,8 @@ replace github.com/grafana/grafana/apps/correlations => ../correlations
 
 replace github.com/grafana/grafana/apps/investigations => ../investigations
 
+replace github.com/grafana/grafana/apps/logsdrilldown => ../logsdrilldown
+
 replace github.com/grafana/grafana/apps/playlist => ../playlist
 
 replace github.com/grafana/grafana/apps/plugins => ../plugins
@@ -293,7 +295,7 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
-	github.com/mattn/go-sqlite3 v1.14.22 // indirect
+	github.com/mattn/go-sqlite3 v1.14.32 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mdlayher/socket v0.4.1 // indirect
 	github.com/mdlayher/vsock v1.2.1 // indirect
@@ -323,9 +325,9 @@ require (
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/open-feature/go-sdk v1.14.1 // indirect
-	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.3 // indirect
-	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
+	github.com/open-feature/go-sdk v1.16.0 // indirect
+	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.6 // indirect
+	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.6 // indirect
 	github.com/openfga/api/proto v0.0.0-20250909172242-b4b2a12f5c67 // indirect
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20250428093642-7aeebe78bbfe // indirect
 	github.com/openfga/openfga v1.10.0 // indirect
