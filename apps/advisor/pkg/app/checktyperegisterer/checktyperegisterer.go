@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 	"maps"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -68,25 +66,10 @@ func (r *Runner) Run(ctx context.Context) error {
 	logger := r.log.WithContext(ctx)
 
 	// Determine namespaces based on StackID
-	var namespaces []string
-	if r.stackID != "" {
-		// Single namespace for cloud stack
-		stackId, err := strconv.ParseInt(r.stackID, 10, 64)
-		if err != nil {
-			return fmt.Errorf("invalid stack id: %s", r.stackID)
-		}
-		namespaces = []string{types.CloudNamespaceFormatter(stackId)}
-	} else {
-		// Multiple namespaces for each org
-		orgs, err := r.orgService.Search(ctx, &org.SearchOrgsQuery{})
-		if err != nil {
-			return fmt.Errorf("failed to fetch orgs: %w", err)
-		}
-		for _, o := range orgs {
-			namespaces = append(namespaces, types.OrgNamespaceFormatter(o.ID))
-		}
+	namespaces, err := checks.GetNamespaces(ctx, r.stackID, r.orgService)
+	if err != nil {
+		return fmt.Errorf("failed to get namespaces: %w", err)
 	}
-
 	logger.Debug("Registering check types", "namespaces", len(namespaces))
 
 	// Register check types in each namespace
