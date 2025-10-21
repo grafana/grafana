@@ -1,6 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
 import { KBarProvider } from 'kbar';
-import { Component } from 'react';
 import { useEffectOnce } from 'react-use';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { render } from 'test/test-utils';
@@ -34,11 +33,9 @@ jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
 });
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => {
-  class GeneralSettings extends Component<{}, {}> {
-    render() {
-      return <>general settings</>;
-    }
-  }
+  const GeneralSettings = () => {
+    return <>general settings</>;
+  };
 
   return { GeneralSettings };
 });
