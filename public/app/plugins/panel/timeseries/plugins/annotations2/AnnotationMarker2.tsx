@@ -5,7 +5,7 @@ import { useState } from 'react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 
-import { ActionModel, DataFrame, Field, GrafanaTheme2, InterpolateFunction, LinkModel } from '@grafana/data';
+import { ActionModel, DataFrame, GrafanaTheme2, InterpolateFunction, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
 import { floatingUtils, useStyles2 } from '@grafana/ui';
@@ -56,7 +56,7 @@ export const AnnotationMarker2 = ({
   });
 
   const links: LinkModel[] = [];
-  const actions: Array<ActionModel<Field>> = [];
+  const actions: ActionModel[] = [];
 
   if (STATE_HOVERED) {
     frame.fields.forEach((field) => {
