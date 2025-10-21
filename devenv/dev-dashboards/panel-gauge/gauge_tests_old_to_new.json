@@ -888,7 +888,7 @@
     {
       "id": 19,
       "type": "gauge",
-      "title": "Thresholds (min != 0, max != 100)",
+      "title": "Segmented w/ thresholds (min != 0, max != 100)",
       "gridPos": {
         "x": 16,
         "y": 26,
@@ -906,7 +906,15 @@
                 "color": "green"
               },
               {
-                "value": 80,
+                "value": 30,
+                "color": "yellow"
+              },
+              {
+                "value": 50,
+                "color": "orange"
+              },
+              {
+                "value": 70,
                 "color": "red"
               }
             ]
@@ -941,7 +949,7 @@
         "shape": "gauge",
         "gradient": "none",
         "barWidthFactor": 0.5,
-        "segmentCount": 1,
+        "segmentCount": 70,
         "segmentSpacing": 0.3,
         "sparkline": false,
         "showThresholdMarkers": true,
