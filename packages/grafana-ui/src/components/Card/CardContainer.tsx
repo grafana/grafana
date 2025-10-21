@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { th } from '@faker-js/faker/.';
 import { HTMLAttributes } from 'react';
 import * as React from 'react';
 
@@ -68,8 +69,7 @@ export const CardContainer = ({
     disableHover,
     isSelected,
     undefined,
-    noMargin,
-    undefined
+    noMargin
   );
 
   return (
@@ -134,7 +134,7 @@ export const getCardContainerStyles = (
     oldContainer: css({
       display: 'flex',
       width: '100%',
-      background: background,
+      background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
       position: 'relative',
       pointerEvents: disabled ? 'none' : 'auto',
