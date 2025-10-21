@@ -1,4 +1,4 @@
-import { each, find, findIndex, flattenDeep, isArray, isBoolean, isString, map, max, some } from 'lodash';
+import { each, find, findIndex, flattenDeep, isArray, isString, map, max, some } from 'lodash';
 
 import {
   AnnotationQuery,
@@ -119,50 +119,8 @@ export class DashboardMigrator {
         }
       }
 
-      panelUpgrades.push((panel: any) => {
-        // rename panel type
-        if (panel.type === 'graphite') {
-          panel.type = 'graph';
-        }
-
-        if (panel.type !== 'graph') {
-          return panel;
-        }
-
-        if (isBoolean(panel.legend)) {
-          panel.legend = { show: panel.legend };
-        }
-
-        if (panel.grid) {
-          if (panel.grid.min) {
-            panel.grid.leftMin = panel.grid.min;
-            delete panel.grid.min;
-          }
-
-          if (panel.grid.max) {
-            panel.grid.leftMax = panel.grid.max;
-            delete panel.grid.max;
-          }
-        }
-
-        if (panel.y_format) {
-          if (!panel.y_formats) {
-            panel.y_formats = [];
-          }
-          panel.y_formats[0] = panel.y_format;
-          delete panel.y_format;
-        }
-
-        if (panel.y2_format) {
-          if (!panel.y_formats) {
-            panel.y_formats = [];
-          }
-          panel.y_formats[1] = panel.y2_format;
-          delete panel.y2_format;
-        }
-
-        return panel;
-      });
+      // we used to have graphite panel type migration logic here
+      // but this is handled by auto migration, see public/app/features/dashboard/state/getPanelPluginToMigrateTo.ts
     }
 
     // schema version 3 changes
