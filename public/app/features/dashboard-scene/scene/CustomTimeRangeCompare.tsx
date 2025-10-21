@@ -1,6 +1,9 @@
+import { useState } from 'react';
+
 import { reportInteraction } from '@grafana/runtime';
 import { SceneTimeRangeCompare, SceneComponentProps, VizPanel, sceneGraph } from '@grafana/scenes';
 import { TimeCompareOptions } from '@grafana/schema';
+import { Button, Dropdown, Menu } from '@grafana/ui';
 
 function hasTimeCompare(options: unknown): options is TimeCompareOptions {
   return options != null && typeof options === 'object' && 'timeCompare' in options;
@@ -63,6 +66,8 @@ export class CustomTimeRangeCompare extends SceneTimeRangeCompare {
   static Component = function CustomTimeRangeCompareRenderer({ model }: SceneComponentProps<SceneTimeRangeCompare>) {
     const vizPanel = sceneGraph.getAncestor(model, VizPanel);
     const { options } = vizPanel.useState();
+    const { compareWith, compareOptions } = model.useState();
+    const [isOpen, setIsOpen] = useState(false);
 
     const isTimeCompareEnabled = hasTimeCompare(options) && options.timeCompare;
 
@@ -70,9 +75,31 @@ export class CustomTimeRangeCompare extends SceneTimeRangeCompare {
       return <></>;
     }
 
+    const currentOption = compareOptions.find((opt) => opt.value === compareWith);
+    const displayLabel = currentOption ? `Comparison: ${currentOption.label}` : 'Comparison: None';
+
+    const menu = (
+      <Menu>
+        {compareOptions.map((option) => (
+          <Menu.Item
+            key={option.value}
+            label={option.label}
+            active={option.value === compareWith}
+            onClick={() => {
+              model.onCompareWithChanged(option.value);
+            }}
+          />
+        ))}
+      </Menu>
+    );
+
     return (
       <div className="show-on-hover">
-        <SceneTimeRangeCompare.Component model={model} />
+        <Dropdown overlay={menu} placement="bottom-end" onVisibleChange={setIsOpen}>
+          <Button variant="secondary" size="sm" icon={isOpen ? 'angle-up' : 'angle-down'} iconPlacement="right">
+            {displayLabel}
+          </Button>
+        </Dropdown>
       </div>
     );
   };
