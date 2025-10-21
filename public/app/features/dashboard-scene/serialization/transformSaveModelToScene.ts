@@ -44,6 +44,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
+import { PanelTimeCompareLabel } from '../scene/PanelTimeCompareLabel';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -398,6 +399,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     : {};
 
   const titleItems: SceneObject[] = [];
+
+  titleItems.push(new PanelTimeCompareLabel());
 
   titleItems.push(
     new VizPanelLinks({
