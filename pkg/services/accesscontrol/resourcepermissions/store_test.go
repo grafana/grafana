@@ -907,7 +907,6 @@ func TestIntegrationStore_setResourcePermission(t *testing.T) {
 
 			// Get permissions directly from DB to verify
 			permissions := retrievePermissionsHelper(store, t)
-			fmt.Println(permissions)
 
 			require.ElementsMatch(t, test.expectedPermissions, permissions)
 		})
