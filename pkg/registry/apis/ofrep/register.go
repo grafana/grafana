@@ -251,6 +251,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 
 	r = r.WithContext(ctx)
 
+	b.logger.Debug("validating namespace in oneFlagHandler handler")
 	if !b.validateNamespace(r) {
 		_ = tracing.Errorf(span, namespaceMismatchMsg)
 		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
@@ -295,6 +296,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 
 	r = r.WithContext(ctx)
 
+	b.logger.Debug("validating namespace in allFlagsHandler handler")
 	if !b.validateNamespace(r) {
 		_ = tracing.Errorf(span, namespaceMismatchMsg)
 		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
