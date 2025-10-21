@@ -201,7 +201,7 @@ func indexUserDocuments(t *testing.T, index resource.ResourceIndex, key resource
 			Action: resource.ActionIndex,
 			Doc: &resource.IndexableDocument{
 				RV:   1,
-				Name: user.ObjectMeta.Name,
+				Name: user.Name,
 				Key: &resourcepb.ResourceKey{
 					Name:      user.Name,
 					Namespace: key.Namespace,

@@ -34,11 +34,11 @@ func ValidateOnCreate(ctx context.Context, userSearchClient resourcepb.ResourceI
 		return err
 	}
 
-	if err := validateEmail(ctx, userSearchClient, requester.GetNamespace(), obj.Spec.Email); err != nil {
+	if err := validateEmail(ctx, userSearchClient, requester.GetNamespace(), obj.Name, obj.Spec.Email); err != nil {
 		return err
 	}
 
-	if err := validateLogin(ctx, userSearchClient, requester.GetNamespace(), obj.Spec.Login); err != nil {
+	if err := validateLogin(ctx, userSearchClient, requester.GetNamespace(), obj.Name, obj.Spec.Login); err != nil {
 		return err
 	}
 
@@ -95,13 +95,13 @@ func ValidateOnUpdate(ctx context.Context, userSearchClient resourcepb.ResourceI
 	}
 
 	if newObj.Spec.Email != oldObj.Spec.Email {
-		if err := validateEmail(ctx, userSearchClient, requester.GetNamespace(), newObj.Spec.Email); err != nil {
+		if err := validateEmail(ctx, userSearchClient, requester.GetNamespace(), newObj.Name, newObj.Spec.Email); err != nil {
 			return err
 		}
 	}
 
 	if newObj.Spec.Login != oldObj.Spec.Login {
-		if err := validateLogin(ctx, userSearchClient, requester.GetNamespace(), newObj.Spec.Login); err != nil {
+		if err := validateLogin(ctx, userSearchClient, requester.GetNamespace(), newObj.Name, newObj.Spec.Login); err != nil {
 			return err
 		}
 	}
@@ -121,7 +121,7 @@ func validateRole(obj *iamv0alpha1.User) error {
 	return nil
 }
 
-func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, email string) error {
+func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, name, email string) error {
 	req := createUserSearchRequest(namespace, []*resourcepb.Requirement{
 		{
 			Key:      "fields.email",
@@ -137,14 +137,14 @@ func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 
 	if resp.TotalHits > 0 {
 		return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
-			fmt.Sprintf("%s", namespace),
+			name,
 			fmt.Errorf("email '%s' is already taken", email))
 	}
 
 	return nil
 }
 
-func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, login string) error {
+func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, name, login string) error {
 	req := createUserSearchRequest(namespace, []*resourcepb.Requirement{
 		{
 			Key:      "fields.login",
@@ -159,7 +159,7 @@ func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 
 	if resp.TotalHits > 0 {
 		return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
-			fmt.Sprintf("%s", namespace),
+			name,
 			fmt.Errorf("login '%s' is already taken", login))
 	}
 
