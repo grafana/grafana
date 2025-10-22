@@ -17,7 +17,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { ROUTES } from '../../constants';
 
-import { CardGrid, type CardGridItem } from './CardGrid';
+import { CardGrid, type CardGridItem } from './CardGrid/CardGrid';
 import { CategoryHeader } from './CategoryHeader';
 import { NoAccessModal } from './NoAccessModal';
 
