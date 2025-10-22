@@ -2152,6 +2152,13 @@ var (
 			Owner:             identityAccessTeam,
 			Expression:        "true",
 		},
+		{
+			Name:        "kubernetesAnnotations",
+			Description: "Enables app platform API for annotations",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendServicesSquad,
+			Expression:  "false",
+		},
 	}
 )
 
