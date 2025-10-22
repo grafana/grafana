@@ -1,6 +1,7 @@
 package filters
 
 import (
+	"fmt"
 	"net/http"
 	"slices"
 
@@ -16,7 +17,8 @@ import (
 func WithRequester(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
-		_, err := identity.GetRequester(ctx)
+		id, err := identity.GetRequester(ctx)
+		fmt.Println("id", id)
 		if err == nil {
 			handler.ServeHTTP(w, req)
 			return

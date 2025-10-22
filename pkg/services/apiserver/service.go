@@ -83,7 +83,12 @@ func newPreserveContextRoundTripper(ctx context.Context, next http.RoundTripper)
 }
 
 func (p *preserveContextRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	req = req.WithContext(p.ctx)
+	requester, err := identity.GetRequester(p.ctx)
+	if err != nil {
+		return p.next.RoundTrip(req)
+	}
+	ctx := identity.WithRequester(req.Context(), requester)
+	req = req.WithContext(ctx)
 	return p.next.RoundTrip(req)
 }
 
@@ -248,11 +253,18 @@ func (s *service) GetRestConfig(ctx context.Context) (*clientrest.Config, error)
 	if err := s.AwaitRunning(ctx); err != nil {
 		return nil, fmt.Errorf("unable to get rest config: %w", err)
 	}
-	s.restConfig.BearerToken = ""
-	s.restConfig.WrapTransport = func(rt http.RoundTripper) http.RoundTripper {
+
+	restConfig := *s.restConfig
+	restConfig.BearerToken = ""
+	restConfig.WrapTransport = func(rt http.RoundTripper) http.RoundTripper {
+		requester, err := identity.GetRequester(ctx)
+		if err != nil {
+			return rt
+		}
+		fmt.Println("requester", requester)
 		return newPreserveContextRoundTripper(ctx, rt)
 	}
-	return s.restConfig, nil
+	return &restConfig, nil
 }
 
 func (s *service) IsDisabled() bool {
