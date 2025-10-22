@@ -287,7 +287,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		dw = resourcePermissionStore
 
 		if b.enableDualWriter {
-			resourcePermissionUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
+			resourcePermissionUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, iamv0.ResourcePermissionInfo, opts.OptsGetter)
 			if err != nil {
 				return err
 			}
