@@ -11,7 +11,7 @@ import { withUniqueRefIds } from 'app/features/explore/utils/queries';
 import { ExploreItemState } from 'app/types/explore';
 import { ThunkDispatch } from 'app/types/store';
 
-import { getUrlStateFromPaneState } from '../external.utils';
+import { getUrlStateFromPaneState } from '../index';
 import { urlDiff } from '../internal.utils';
 import { ExploreURLV1 } from '../migrators/v1';
 

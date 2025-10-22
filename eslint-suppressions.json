@@ -3055,6 +3055,11 @@
       "count": 1
     }
   },
+  "public/app/features/explore/TraceView/components/utils/DraggableManager/demo/index.tsx": {
+    "no-barrel-files/no-barrel-files": {
+      "count": 1
+    }
+  },
   "public/app/features/explore/TraceView/components/utils/sort.ts": {
     "no-restricted-syntax": {
       "count": 1
@@ -3063,6 +3068,11 @@
   "public/app/features/explore/TraceView/createSpanLink.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
+    }
+  },
+  "public/app/features/explore/hooks/useStateSync/index.ts": {
+    "no-barrel-files/no-barrel-files": {
+      "count": 1
     }
   },
   "public/app/features/explore/spec/helper/setup.tsx": {

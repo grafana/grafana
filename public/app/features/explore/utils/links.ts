@@ -30,7 +30,7 @@ import { parseDataplaneLogsFrame } from 'app/features/logs/logsFrame';
 import { ExploreItemState } from 'app/types/explore';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
-import { getUrlStateFromPaneState } from '../hooks/useStateSync/external.utils';
+import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 
 type DataLinkFilter = (link: DataLink, scopedVars: ScopedVars) => boolean;
 

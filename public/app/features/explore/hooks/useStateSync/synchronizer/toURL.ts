@@ -11,7 +11,7 @@ import { runQueries } from 'app/features/explore/state/query';
 import { changeRangeAction } from 'app/features/explore/state/time';
 import { ExploreState } from 'app/types/explore';
 
-import { getUrlStateFromPaneState } from '../external.utils';
+import { getUrlStateFromPaneState } from '../index';
 import { InitState } from '../internal.utils';
 
 /*

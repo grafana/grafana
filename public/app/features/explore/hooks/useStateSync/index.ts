@@ -12,6 +12,8 @@ import { syncFromURL } from './synchronizer/fromURL';
 import { initializeFromURL } from './synchronizer/init';
 import { syncToURL, syncToURLPredicate } from './synchronizer/toURL';
 
+export { getUrlStateFromPaneState } from './external.utils';
+
 /**
  * Bi-directionally syncs URL changes with Explore's state.
  */
