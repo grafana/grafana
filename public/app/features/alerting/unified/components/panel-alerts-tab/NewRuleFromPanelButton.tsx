@@ -4,13 +4,13 @@ import { useAsync } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, locationService, logInfo } from '@grafana/runtime';
 import { Alert, Button, LinkButton } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { useSelector } from 'app/types/store';
 
-import { LogMessages, logInfo } from '../../Analytics';
+import { LogMessages } from '../../Analytics';
 import { AlertRuleDrawerForm } from '../../components/AlertRuleDrawerForm';
 import { panelToRuleFormValues } from '../../utils/rule-form';
 
@@ -58,47 +58,48 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
     );
   }
 
-  const ruleFormUrl = urlUtil.renderUrl('alerting/new', {
-    defaults: JSON.stringify(formValues),
-    returnTo: location.pathname + location.search,
-  });
+  const onContinueInAlerting = async () => {
+    logInfo(LogMessages.alertRuleFromPanel);
+    // Refresh values to ensure they're up-to-date with current panel state
+    const updateToDateFormValues = await panelToRuleFormValues(panel, dashboard);
+    const ruleFormUrl = urlUtil.renderUrl('alerting/new', {
+      defaults: JSON.stringify(updateToDateFormValues),
+      returnTo: location.pathname + location.search,
+    });
+    locationService.push(ruleFormUrl);
+  };
 
   const shouldUseDrawer = config.featureToggles.createAlertRuleFromPanel;
 
   if (shouldUseDrawer) {
-    if (isOpen) {
-      return (
-        <>
-          <Button
-            icon="bell"
-            className={className}
-            data-testid="create-alert-rule-button-drawer"
-            onClick={() => setIsOpen(true)}
-          >
-            <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
-          </Button>
-          <AlertRuleDrawerForm isOpen={isOpen} onClose={() => setIsOpen(false)} />
-        </>
-      );
-    }
-
     return (
-      <Button
-        icon="bell"
-        className={className}
-        data-testid="create-alert-rule-button-drawer"
-        onClick={() => setIsOpen(true)}
-      >
-        <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
-      </Button>
+      <>
+        <Button
+          icon="bell"
+          className={className}
+          data-testid="create-alert-rule-button-drawer"
+          onClick={() => setIsOpen(true)}
+        >
+          <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
+        </Button>
+        <AlertRuleDrawerForm
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          onContinueInAlerting={onContinueInAlerting}
+          prefill={formValues ?? undefined}
+        />
+      </>
     );
   }
 
   return (
     <LinkButton
       icon="bell"
-      onClick={() => logInfo(LogMessages.alertRuleFromPanel)}
-      href={ruleFormUrl}
+      onClick={onContinueInAlerting}
+      href={urlUtil.renderUrl('alerting/new', {
+        defaults: JSON.stringify(formValues),
+        returnTo: location.pathname + location.search,
+      })}
       className={className}
       data-testid="create-alert-rule-button"
     >
