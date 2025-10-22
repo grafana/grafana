@@ -5,12 +5,12 @@ import { AddToDashboardForm } from 'app/features/dashboard-scene/addToDashboard/
 
 import { DrilldownPanelData } from './types';
 
-interface Props {
-  onClose: () => void;
+export interface DrilldownAppToDashboardPanelProps {
+  onClose?: () => void;
   panelData?: DrilldownPanelData;
 }
 
-export function DrilldownAppToDashboardPanel(props: Props): ReactElement {
+export function DrilldownAppToDashboardPanel(props: DrilldownAppToDashboardPanelProps): ReactElement {
   // extension point panelData
   const { onClose, panelData } = props;
 
@@ -33,5 +33,14 @@ export function DrilldownAppToDashboardPanel(props: Props): ReactElement {
   // this is used eventually to navigate correctly to dashboard and not use the explore app url
   const options = panelData ? { isExternalApp: true } : undefined;
 
-  return <AddToDashboardForm onClose={onClose} buildPanel={buildPanel} timeRange={timeRange} options={options} />;
+  return (
+    <AddToDashboardForm
+      onClose={onClose ?? (() => {})}
+      buildPanel={buildPanel}
+      timeRange={timeRange}
+      options={options}
+    />
+  );
 }
+
+export default DrilldownAppToDashboardPanel;
