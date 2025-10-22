@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/spf13/pflag"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -52,9 +53,11 @@ type StorageOptions struct {
 	GrpcClientAuthenticationTokenExchangeURL string
 	GrpcClientAuthenticationTokenNamespace   string
 	GrpcClientAuthenticationAllowInsecure    bool
+	GrpcClientKeepaliveTime                  time.Duration
 
 	// Secrets Manager Configuration for InlineSecureValueSupport
 	SecretsManagerGrpcClientEnable        bool
+	SecretsManagerGrpcClientLoadBalancing bool
 	SecretsManagerGrpcServerAddress       string
 	SecretsManagerGrpcServerUseTLS        bool
 	SecretsManagerGrpcServerTLSSkipVerify bool
@@ -90,6 +93,7 @@ func NewStorageOptions() *StorageOptions {
 		Address:                                "localhost:10000",
 		GrpcClientAuthenticationTokenNamespace: "*",
 		GrpcClientAuthenticationAllowInsecure:  false,
+		GrpcClientKeepaliveTime:                0,
 		BlobThresholdBytes:                     BlobThresholdDefault,
 	}
 }
@@ -103,6 +107,7 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.GrpcClientAuthenticationTokenExchangeURL, "grpc-client-authentication-token-exchange-url", o.GrpcClientAuthenticationTokenExchangeURL, "Token exchange url for grpc client authentication")
 	fs.StringVar(&o.GrpcClientAuthenticationTokenNamespace, "grpc-client-authentication-token-namespace", o.GrpcClientAuthenticationTokenNamespace, "Token namespace for grpc client authentication")
 	fs.BoolVar(&o.GrpcClientAuthenticationAllowInsecure, "grpc-client-authentication-allow-insecure", o.GrpcClientAuthenticationAllowInsecure, "Allow insecure grpc client authentication")
+	fs.DurationVar(&o.GrpcClientKeepaliveTime, "grpc-client-keepalive-time", o.GrpcClientKeepaliveTime, "gRPC client keep-alive ping interval (e.g., 6m).")
 
 	// Secrets Manager Configuration flags
 	fs.BoolVar(&o.SecretsManagerGrpcClientEnable, "grafana.secrets-manager.grpc-client-enable", false, "Enable gRPC client for secrets manager")
@@ -111,6 +116,7 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&o.SecretsManagerGrpcServerTLSSkipVerify, "grafana.secrets-manager.grpc-server-tls-skip-verify", false, "Skip TLS verification for gRPC server")
 	fs.StringVar(&o.SecretsManagerGrpcServerTLSServerName, "grafana.secrets-manager.grpc-server-tls-server-name", "", "Server name for TLS verification")
 	fs.StringVar(&o.SecretsManagerGrpcServerTLSCAFile, "grafana.secrets-manager.grpc-server-tls-ca-file", "", "CA file for TLS verification")
+	fs.BoolVar(&o.SecretsManagerGrpcClientLoadBalancing, "grafana.secrets-manager.grpc-client-load-balancing", false, "Enable client-side load balancing for gRPC client")
 }
 
 func (o *StorageOptions) Validate() []error {
@@ -214,6 +220,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 			o.SecretsManagerGrpcServerAddress,
 			tlsCfg,
 			tracer,
+			o.SecretsManagerGrpcClientLoadBalancing,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create inline secure value service: %w", err)

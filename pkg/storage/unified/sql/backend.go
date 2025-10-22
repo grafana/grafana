@@ -20,6 +20,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/sqlite"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -36,6 +37,14 @@ const tracePrefix = "sql.resource."
 const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultPrunerHistoryLimit = 20
+
+func ProvideStorageBackend(
+	cfg *setting.Cfg,
+) (resource.StorageBackend, error) {
+	// TODO: make this the central place to provide SQL backend
+	// Currently it is skipped as we need to handle the cases of Diagnostics and Lifecycle
+	return nil, nil
+}
 
 type Backend interface {
 	resource.StorageBackend
@@ -954,4 +963,52 @@ func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, 
 		return 0, fmt.Errorf("get resource version: %w", err)
 	}
 	return res.ResourceVersion, nil
+}
+
+func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetLastImportTimes")
+	defer span.End()
+
+	rows, err := dbutil.QueryRows(ctx, b.db, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{SQLTemplate: sqltemplate.New(b.dialect)})
+	if err != nil {
+		return func(yield func(resource.ResourceLastImportTime, error) bool) {
+			yield(resource.ResourceLastImportTime{}, err)
+		}
+	}
+
+	return func(yield func(resource.ResourceLastImportTime, error) bool) {
+		closeOnDefer := true
+		defer func() {
+			if closeOnDefer {
+				_ = rows.Close() // Close while ignoring errors.
+			}
+		}()
+
+		for rows.Next() {
+			// If context has finished, return early.
+			if ctx.Err() != nil {
+				yield(resource.ResourceLastImportTime{}, ctx.Err())
+				return
+			}
+
+			row := resource.ResourceLastImportTime{}
+			err = rows.Scan(&row.Namespace, &row.Group, &row.Resource, &row.LastImportTime)
+			if err != nil {
+				yield(resource.ResourceLastImportTime{}, err)
+				return
+			}
+
+			if !yield(row, nil) {
+				return
+			}
+		}
+
+		closeOnDefer = false
+
+		// Close and report error, if any.
+		err := rows.Close()
+		if err != nil {
+			yield(resource.ResourceLastImportTime{}, err)
+		}
+	}
 }

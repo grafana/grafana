@@ -103,7 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     list: css({
       listStyle: 'none',
       display: 'grid',
-      // gap: '8px', Add back when legacy support for old Card interface is dropped
+      gap: theme.spacing(1),
     }),
   };
 };

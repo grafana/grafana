@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
@@ -72,6 +73,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	createTeamMember := func(cmd *CreateTeamMemberCommand) sqltemplate.SQLTemplate {
+		v := newCreateTeamMember(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	listTeamBindings := func(q *ListTeamBindingsQuery) sqltemplate.SQLTemplate {
 		v := newListTeamBindings(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -110,6 +117,18 @@ func TestIdentityQueries(t *testing.T) {
 
 	listServiceAccountTokens := func(q *ListServiceAccountTokenQuery) sqltemplate.SQLTemplate {
 		v := newListServiceAccountTokens(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	updateUser := func(cmd *UpdateUserCommand) sqltemplate.SQLTemplate {
+		v := newUpdateUser(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	updateOrgUser := func(cmd *UpdateOrgUserCommand) sqltemplate.SQLTemplate {
+		v := newUpdateOrgUser(nodb, cmd)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -190,12 +209,36 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
+			sqlCreateTeamMemberQuery: {
+				{
+					Name: "create_team_member",
+					Data: createTeamMember(&CreateTeamMemberCommand{
+						TeamID:     1,
+						UserID:     1,
+						Created:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						External:   false,
+						Permission: team.PermissionTypeMember,
+					}),
+				},
+				{
+					Name: "create_team_member_admin",
+					Data: createTeamMember(&CreateTeamMemberCommand{
+						TeamID:     1,
+						UserID:     1,
+						Created:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						External:   false,
+						Permission: team.PermissionTypeAdmin,
+					}),
+				},
+			},
 			sqlQueryTeamBindingsTemplate: {
 				{
-					Name: "team_1_bindings",
+					Name: "team_bindings_uid",
 					Data: listTeamBindings(&ListTeamBindingsQuery{
 						OrgID:      1,
-						UID:        "team-1",
+						UID:        "tm-1",
 						Pagination: common.Pagination{Limit: 1},
 					}),
 				},
@@ -381,8 +424,8 @@ func TestIdentityQueries(t *testing.T) {
 						Email:         "team1@example.com",
 						IsProvisioned: false,
 						OrgID:         1,
-						Created:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
-						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Created:       legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:       legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 					}),
 				},
 				{
@@ -394,8 +437,8 @@ func TestIdentityQueries(t *testing.T) {
 						IsProvisioned: true,
 						ExternalUID:   "team-2-uid",
 						OrgID:         1,
-						Created:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
-						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Created:       legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:       legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 					}),
 				},
 			},
@@ -408,7 +451,7 @@ func TestIdentityQueries(t *testing.T) {
 						Email:         "team1@example.com",
 						IsProvisioned: true,
 						ExternalUID:   "team-1-uid",
-						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:       legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 					}),
 				},
 			},
@@ -427,8 +470,8 @@ func TestIdentityQueries(t *testing.T) {
 						OrgID:   1,
 						UserID:  123,
 						Role:    "Viewer",
-						Created: NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
-						Updated: NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Created: legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated: legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 					}),
 				},
 				{
@@ -437,8 +480,8 @@ func TestIdentityQueries(t *testing.T) {
 						OrgID:   2,
 						UserID:  456,
 						Role:    "Admin",
-						Created: NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
-						Updated: NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Created: legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Updated: legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
 					}),
 				},
 			},
@@ -457,9 +500,9 @@ func TestIdentityQueries(t *testing.T) {
 						IsProvisioned: false,
 						Salt:          "randomsalt",
 						Rands:         "randomrands",
-						Created:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
-						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
-						LastSeenAt:    NewDBTime(time.Date(2013, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Created:       legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:       legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						LastSeenAt:    legacysql.NewDBTime(time.Date(2013, 1, 1, 12, 0, 0, 0, time.UTC)),
 						Role:          "Viewer",
 					}),
 				},
@@ -477,9 +520,9 @@ func TestIdentityQueries(t *testing.T) {
 						IsProvisioned: true,
 						Salt:          "adminsalt",
 						Rands:         "adminrands",
-						Created:       NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
-						Updated:       NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
-						LastSeenAt:    NewDBTime(time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Created:       legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Updated:       legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						LastSeenAt:    legacysql.NewDBTime(time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC)),
 						Role:          "Admin",
 					}),
 				},
@@ -494,8 +537,8 @@ func TestIdentityQueries(t *testing.T) {
 						Login:      "sa-1-service-account-1",
 						IsDisabled: false,
 						OrgID:      1,
-						Created:    NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
-						Updated:    NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Created:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 						LastSeenAt: time.Date(2013, 1, 1, 12, 0, 0, 0, time.UTC),
 					}),
 				},
@@ -508,9 +551,36 @@ func TestIdentityQueries(t *testing.T) {
 						Login:      "sa-2-disabled-service-account",
 						IsDisabled: true,
 						OrgID:      2,
-						Created:    NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
-						Updated:    NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Created:    legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Updated:    legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
 						LastSeenAt: time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC),
+					}),
+				},
+			},
+			sqlUpdateUserTemplate: {
+				{
+					Name: "update_user_basic",
+					Data: updateUser(&UpdateUserCommand{
+						UID:           "user-1",
+						Login:         "newuser1",
+						Email:         "newuser1@example.com",
+						Name:          "New User One",
+						IsAdmin:       true,
+						IsDisabled:    true,
+						EmailVerified: false,
+						Role:          "Editor",
+						Updated:       legacysql.NewDBTime(time.Date(2023, 1, 1, 13, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			sqlUpdateOrgUserTemplate: {
+				{
+					Name: "update_org_user_basic",
+					Data: updateOrgUser(&UpdateOrgUserCommand{
+						OrgID:   1,
+						UserID:  123,
+						Role:    "Admin",
+						Updated: legacysql.NewDBTime(time.Date(2023, 1, 1, 14, 0, 0, 0, time.UTC)),
 					}),
 				},
 			},
