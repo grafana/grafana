@@ -2398,11 +2398,6 @@
       "count": 7
     }
   },
-  "public/app/features/dashboard/components/DashExportModal/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
