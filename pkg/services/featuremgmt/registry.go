@@ -288,11 +288,11 @@ var (
 		},
 		{
 			Name:         "zosSyslogLevelMapping",
-			Description:  "Map z/OS syslog message severity letters (for example messages ending in I/W/E/S) to standard log levels in the UI",
-			Stage:        FeatureStageGeneralAvailability,
+			Description:  "Experimental: Map z/OS syslog message severity letters (for example messages ending in I/W/E/S) to standard log levels in the UI",
+			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "true", // enabled by default
+			Expression:   "false", // disabled by default
 		},
 		{
 			Name:        "awsDatasourcesTempCredentials",
