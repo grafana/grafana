@@ -65,7 +65,7 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 func (r *Runner) Run(ctx context.Context) error {
 	logger := r.log.WithContext(ctx)
 
-	// Determine namespaces based on StackID
+	// Determine namespaces based on StackID or OrgID
 	namespaces, err := checks.GetNamespaces(ctx, r.stackID, r.orgService)
 	if err != nil {
 		return fmt.Errorf("failed to get namespaces: %w", err)
