@@ -2034,11 +2034,6 @@
       "count": 2
     }
   },
-  "public/app/features/connections/tabs/ConnectData/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/correlations/CorrelationsPage.tsx": {
     "no-restricted-syntax": {
       "count": 1
