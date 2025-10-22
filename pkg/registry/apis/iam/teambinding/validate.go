@@ -48,5 +48,9 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.TeamBinding) er
 		return apierrors.NewBadRequest("external is immutable")
 	}
 
+	if obj.Spec.Permission != iamv0alpha1.TeamBindingTeamPermissionAdmin && obj.Spec.Permission != iamv0alpha1.TeamBindingTeamPermissionMember {
+		return apierrors.NewBadRequest("invalid permission")
+	}
+
 	return nil
 }

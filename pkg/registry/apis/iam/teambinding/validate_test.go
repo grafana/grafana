@@ -291,6 +291,37 @@ func TestValidateOnUpdate(t *testing.T) {
 			want: apierrors.NewBadRequest("external is immutable"),
 		},
 		{
+			name: "invalid update - invalid permission",
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			old: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   false,
+				},
+			},
+			obj: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: "invalid",
+				},
+			},
+			want: apierrors.NewBadRequest("invalid permission"),
+		},
+		{
 			name:      "invalid update - no requester in context",
 			requester: nil,
 			old: &iamv0alpha1.TeamBinding{
