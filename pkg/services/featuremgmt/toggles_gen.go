@@ -651,10 +651,6 @@ const (
 	// Enable sprinkles on unified storage search
 	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
 
-	// FlagUnifiedStorageUseFullNgram
-	// Use full n-gram indexing instead of edge n-gram for unified storage search
-	FlagUnifiedStorageUseFullNgram = "unifiedStorageUseFullNgram"
-
 	// FlagManagedDualWriter
 	// Pick the dual write mode from database configs
 	FlagManagedDualWriter = "managedDualWriter"
