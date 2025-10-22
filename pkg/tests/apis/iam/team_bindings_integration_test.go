@@ -253,6 +253,26 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		}
 	})
 
+	t.Run("should not be able to update team binding if the team binding does not exist", func(t *testing.T) {
+		ctx := context.Background()
+		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeamBindings,
+		})
+
+		toUpdate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
+		toUpdate.Object["metadata"].(map[string]interface{})["name"] = "invalid-team-binding-name"
+		toUpdate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
+		toUpdate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+		_, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "not found")
+	})
+
 	t.Run("should not be able to update team binding with teamRef change", func(t *testing.T) {
 		ctx := context.Background()
 		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
