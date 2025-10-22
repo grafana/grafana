@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Checkbox, Icon, useStyles2 } from '@grafana/ui';
 
 import { getNormalizedFieldName } from '../panel/processing';
@@ -28,8 +29,11 @@ export function Field({
   const styles = useStyles2(getStyles);
 
   const handleChange = useCallback(() => {
+    reportInteraction('logs_field_selector_toggle_fields_clicked', {
+      active,
+    });
     toggle(field.name);
-  }, [field.name, toggle]);
+  }, [active, field.name, toggle]);
 
   return (
     <>
