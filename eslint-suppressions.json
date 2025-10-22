@@ -4019,11 +4019,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/TracesQueryEditor/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/components/VariableEditor/VariableEditor.tsx": {
     "no-restricted-syntax": {
       "count": 7

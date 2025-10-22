@@ -16,7 +16,7 @@ import ArgQueryEditor from '../ArgQueryEditor/ArgQueryEditor';
 import { AzureCheatSheetModal } from '../LogsQueryEditor/AzureCheatSheetModal';
 import LogsQueryEditor from '../LogsQueryEditor/LogsQueryEditor';
 import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
-import TracesQueryEditor from '../TracesQueryEditor';
+import TracesQueryEditor from '../TracesQueryEditor/TracesQueryEditor';
 
 import { QueryHeader } from './QueryHeader';
 import usePreparedQuery from './usePreparedQuery';
