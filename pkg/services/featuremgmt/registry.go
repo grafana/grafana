@@ -2261,6 +2261,13 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
+		{
+			Name:        "kubernetesAnnotations",
+			Description: "Enables app platform API for annotations",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendServicesSquad,
+			Expression:  "false",
+		},
 	}
 )
 

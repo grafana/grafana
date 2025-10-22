@@ -2343,6 +2343,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAnnotations",
+        "resourceVersion": "1761142826172",
+        "creationTimestamp": "2025-10-22T14:20:26Z"
+      },
+      "spec": {
+        "description": "Enables app platform API for annotations",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthZHandlerRedirect",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-08-29T14:46:39Z",
