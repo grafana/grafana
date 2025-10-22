@@ -123,15 +123,17 @@ The profiling system uses profiler event's `origin` directly as the `interaction
 
 ### Panel-Level Overview
 
-The panel-level performance attribution system uses an observer pattern architecture built around `ScenePerformanceTracker` to provide visibility into individual panel operations. When dashboard profiling is enabled, `VizPanelRenderProfiler` instances are automatically attached to all panels via `PanelProfilingManager`.
+The panel-level performance attribution system uses a observer pattern architecture built around `ScenePerformanceTracker` to provide comprehensive visibility into individual panel operations. When dashboard profiling is enabled, `VizPanelRenderProfiler` instances are automatically attached to all panels, providing granular tracking of panel lifecycle operations.
 
 **Key Features:**
 
-- Tracking of individual panel operations with operation ID correlation
-- Observer pattern for distributing performance events to analytics systems
-- Chrome DevTools integration via performance marks and measurements
-- Real-time performance data aggregation for analytics reporting
-- Conditional debug logging controlled by localStorage flags
+- **Complete lifecycle tracking**: Monitors plugin load, query execution, data transformation, field configuration, and rendering phases
+- **Sub-millisecond precision timing**: Chrome DevTools integration via performance marks and measurements
+- **Operation ID correlation**: UUID-based operation IDs with crypto fallback for cross-environment compatibility
+- **Observer pattern architecture**: Clean separation between performance tracking and business logic with extensible observer support
+- **Real-time analytics aggregation**: Structured data format ready for analytics reporting
+- **Conditional profiling**: Analytics aggregator only initialized when profiling is enabled
+- **Type-safe interfaces**: Comprehensive TypeScript support with event-specific interfaces
 
 ### Panel Operations Tracked
 
@@ -147,30 +149,70 @@ The system tracks the following panel operations:
 
 Each operation is tracked with:
 
-- **Operation ID**: Unique identifier for correlating start/complete events
-- **Timing**: Start and end timestamps with duration calculation
-- **Metadata**: Operation-specific data (query types, transformation IDs, etc.)
+- **Operation ID**: UUID-based unique identifier for correlating start/complete events (e.g., `query-a1b2c3d4-e5f6-7890-abcd-ef1234567890`)
+- **Timing**: High-precision start and end timestamps with sub-millisecond duration calculation
+- **Metadata**: Operation-specific data (query types, transformation IDs, plugin information, etc.)
+
+### Operation ID Format
+
+The system generates unique operation IDs using a standardized format:
+
+```
+<operation-type>-<uuid>
+```
+
+**Examples:**
+
+- `plugin-load-550e8400-e29b-41d4-a716-446655440000`
+- `query-a1b2c3d4-e5f6-7890-abcd-ef1234567890`
+- `transform-b2c3d4e5-f6g7-8901-bcde-f23456789012`
+- `fieldConfig-c3d4e5f6-g7h8-9012-cdef-345678901234`
+- `render-d4e5f6g7-h8i9-0123-def0-456789012345`
+
+**Benefits:**
+
+- **Global Uniqueness**: UUIDs prevent ID collisions across dashboard sessions
+- **Cross-Environment Compatibility**: Crypto fallback ensures operation in all environments
+- **Operation Correlation**: Enables precise tracking of start/complete event pairs
+- **Debugging**: Human-readable prefixes make log analysis easier
 
 ### Performance Observer Architecture
 
-The system uses `ScenePerformanceTracker` as a centralized coordinator that manages performance observers:
+The system uses `ScenePerformanceTracker` as a centralized coordinator that manages performance observers through an event-driven architecture. The performance utilities are organized under the `performanceUtils` namespace.
 
 ```typescript
+// Import performance utilities from scenes
+import { performanceUtils } from '@grafana/scenes';
+
 // Observer interface implemented by analytics components
 interface ScenePerformanceObserver {
-  onDashboardInteractionStart?(data: DashboardInteractionStartData): void;
-  onDashboardInteractionMilestone?(data: DashboardInteractionMilestoneData): void;
-  onDashboardInteractionComplete?(data: DashboardInteractionCompleteData): void;
-  onPanelOperationStart?(data: PanelPerformanceData): void;
-  onPanelOperationComplete?(data: PanelPerformanceData): void;
-  onQueryStart?(data: QueryPerformanceData): void;
-  onQueryComplete?(data: QueryPerformanceData): void;
+  onDashboardInteractionStart?(data: performanceUtils.DashboardInteractionStartData): void;
+  onDashboardInteractionMilestone?(data: performanceUtils.DashboardInteractionMilestoneData): void;
+  onDashboardInteractionComplete?(data: performanceUtils.DashboardInteractionCompleteData): void;
+  onPanelOperationStart?(data: performanceUtils.PanelPerformanceData): void;
+  onPanelOperationComplete?(data: performanceUtils.PanelPerformanceData): void;
+  onQueryStart?(data: performanceUtils.QueryPerformanceData): void;
+  onQueryComplete?(data: performanceUtils.QueryPerformanceData): void;
 }
+
+// Register observers with the performance tracker
+const tracker = performanceUtils.getScenePerformanceTracker();
+tracker.addObserver(myObserver);
+```
+
+**Operation ID Generation:**
+
+The system generates unique operation IDs for correlating start/complete events using UUID with fallback support:
+
+```typescript
+// Uses crypto.randomUUID() when available, Math.random() fallback for compatibility
+const operationId = performanceUtils.generateOperationId('panel-query');
+// Result: "panel-query-550e8400-e29b-41d4-a716-446655440000"
 ```
 
 **Registered Observers:**
 
-- **`DashboardAnalyticsAggregator`**: Aggregates panel metrics for analytics reporting
+- **`DashboardAnalyticsAggregator`**: Aggregates panel metrics for analytics reporting (conditionally initialized)
 - **`ScenePerformanceLogger`**: Creates Chrome DevTools performance marks and console logs
 
 ## Profiling Implementation
@@ -318,7 +360,7 @@ Reported for each interaction via `reportInteraction` and `logMeasurement`:
 
 #### Panel-Level Metrics
 
-Aggregated by `DashboardAnalyticsAggregator` for each panel:
+Aggregated by `DashboardAnalyticsAggregator` for each panel with detailed operation tracking:
 
 ```typescript
 {
@@ -330,16 +372,37 @@ Aggregated by `DashboardAnalyticsAggregator` for each panel:
   totalRenderTime: number,      // Total render time
   totalFieldConfigTime: number, // Total field config time
   pluginLoadTime: number,       // Plugin initialization time
+
+  // Individual operations with UUID-based operation IDs
+  pluginLoadOperations: Array<{
+    operationId: string,        // e.g., "plugin-load-550e8400-e29b-41d4-a716-446655440000"
+    duration: number,
+    timestamp: number
+  }>,
   queryOperations: Array<{      // Individual query operations
+    operationId: string,        // e.g., "query-a1b2c3d4-e5f6-7890-abcd-ef1234567890"
     duration: number,
     timestamp: number,
     queryType?: string
   }>,
+  transformationOperations: Array<{
+    duration: number,
+    timestamp: number,
+    transformationType?: string
+  }>,
+  fieldConfigOperations: Array<{
+    duration: number,
+    timestamp: number
+  }>,
   renderOperations: Array<{     // Individual render operations
     duration: number,
     timestamp: number
-  }>
-  // ... similar arrays for other operations
+  }>,
+
+  // Performance analysis
+  isSlowPanel: boolean,         // true if total time > SLOW_OPERATION_THRESHOLD_MS (500ms)
+  slowOperationThreshold: number, // Current threshold value (500ms)
+  totalPanelTime: number        // Sum of all operation times
 }
 ```
 
@@ -352,6 +415,22 @@ To observe performance profiling events in the browser console:
 ```javascript
 // Enable performance debug logging
 localStorage.setItem('grafana.debug.sceneProfiling', 'true');
+```
+
+### Performance Threshold Configuration
+
+The system uses a const threshold to identify slow operations:
+
+- **Default Threshold**: `SLOW_OPERATION_THRESHOLD_MS = 500` milliseconds
+- **Applies to**: Individual panel operations and total panel performance
+- **Slow Panel Detection**: Panels exceeding threshold display ⚠️ warnings in logs
+- **Analytics Integration**: Slow panel count included in dashboard analytics reports
+
+**Example Slow Operation Warning:**
+
+```javascript
+SPL: [PANEL] timeseries-panel-1 query [query-abc123]: 125.3ms ⚠️ SLOW
+DAA: 🎨 Panel timeseries-panel-1: 125.3ms total ⚠️ SLOW
 ```
 
 ### Console Output Examples
@@ -373,38 +452,79 @@ SRP: [PROFILER] dashboard_view completed
 #### Panel Operation Logs
 
 ```
-SPL: [PANEL] timeseries-panel-1 query [q-abc123]: 45.2ms
+SPL: [PANEL] timeseries-panel-1 plugin-load: 39.0ms
+SPL: [PANEL] timeseries-panel-1 query [query-a1b2c3d4-e5f6-7890-abcd]: 45.2ms
 SPL: [PANEL] timeseries-panel-1 transform: 12.3ms
-SPL: [PANEL] timeseries-panel-1 render: 23.8ms
-VizPanelRenderProfiler: Panel render completed
-  ├─ Panel ID: panel-1
-  ├─ Duration: 23.8ms
-  └─ Operation ID: render-xyz789
+SPL: [PANEL] timeseries-panel-1 fieldConfig: 5.0ms
+SPL: [PANEL] timeseries-panel-1 render: 23.8ms ⚠️ SLOW
+```
+
+#### VizPanelRenderProfiler Logs
+
+The `VizPanelRenderProfiler` provides lifecycle and error logging (only visible with scenes debug logging enabled):
+
+```
+VizPanelRenderProfiler [My Dashboard Panel]: Plugin changed to timeseries
+VizPanelRenderProfiler [My Dashboard Panel]: Cleaned up
+VizPanelRenderProfiler: Not attached to a VizPanel
+VizPanelRenderProfiler: Panel has no key, skipping tracking
 ```
 
 #### Analytics Aggregator Summary
 
+The `DashboardAnalyticsAggregator` creates structured **collapsible console groups** for detailed analysis. Each panel gets its own expandable group in the browser console:
+
 ```
 DAA: [ANALYTICS] dashboard_view | 4 panels analyzed | 1 slow panels ⚠️
-DAA: 📊 Dashboard (ms): {
-  duration: 156.8,
-  network: 45.2,
-  interactionType: "dashboard_view",
-  slowPanels: 1
-}
-DAA: 🎨 Panel timeseries-panel-1: 125.3ms total ⚠️ SLOW
-  ├─ ⚡ Performance (ms): {
-  │     totalTime: 125.3,
-  │     breakdown: {
-  │       query: 45.2,
-  │       transform: 12.3,
-  │       render: 23.8,
-  │       fieldConfig: 5.0,
-  │       pluginLoad: 39.0
-  │     }
-  │   }
-  └─ 📊 Queries: { count: 2, details: [...] }
+  DAA: 📊 Dashboard (ms): {
+    duration: 156.8,
+    network: 45.2,
+    interactionType: "dashboard_view",
+    slowPanels: 1
+  }
+  DAA: 📈 Analytics payload: { /* comprehensive analytics data */ }
+
+  // Per-panel detailed breakdown (console group for each panel)
+  DAA: 🎨 Panel timeseries-panel-1: 125.3ms total ⚠️ SLOW
+    DAA: 🔧 Plugin: {
+      id: "timeseries",
+      version: "10.0.0",
+      panelId: "panel-1",
+      panelKey: "panel-1"
+    }
+    DAA: ⚡ Performance (ms): {
+      totalTime: 125.3,
+      isSlowPanel: true,
+      breakdown: {
+        query: 45.2,
+        transform: 12.3,
+        render: 23.8,
+        fieldConfig: 5.0,
+        pluginLoad: 39.0
+      }
+    }
+    DAA: 📊 Queries: {
+      count: 2,
+      details: [
+        { operation: 1, duration: 25.1, timestamp: 1729692845100.123 },
+        { operation: 2, duration: 20.1, timestamp: 1729692845125.456 }
+      ]
+    }
+    DAA: 🔄 Transformations: {
+      count: 1,
+      details: [
+        { operation: 1, duration: 12.3, timestamp: 1729692845150.789 }
+      ]
+    }
+    DAA: 🎨 Renders: {
+      count: 1,
+      details: [
+        { operation: 1, duration: 23.8, timestamp: 1729692845163.012 }
+      ]
+    }
 ```
+
+**Note**: The indentation shows the **console group hierarchy**. In the browser console, each panel creates a collapsible group that can be expanded to see detailed operation breakdowns. The main dashboard analytics group contains nested panel groups for organized analysis.
 
 ### Enable Echo Service Debug Logging
 
@@ -429,20 +549,25 @@ Dashboard and panel operations are recorded in the Chrome DevTools Performance t
 **Dashboard Marks:**
 
 ```
-Dashboard Interaction Start: op-dashboard-123456
-Dashboard Interaction End: op-dashboard-123456
-Dashboard Milestone: op-dashboard-123456:queries_complete
+Dashboard Interaction Start: dashboard-550e8400-e29b-41d4-a716-446655440000
+Dashboard Interaction End: dashboard-550e8400-e29b-41d4-a716-446655440000
+Dashboard Milestone: dashboard-550e8400-e29b-41d4-a716-446655440000:queries_complete
+Dashboard Milestone: dashboard-550e8400-e29b-41d4-a716-446655440000:actual_interaction_complete
 ```
 
 **Panel Marks:**
 
 ```
-Panel Query Start: panel-1:q-abc123
-Panel Query End: panel-1:q-abc123
-Panel Transform Start: panel-1:merge+organize:tr-def456
-Panel Transform End: panel-1:merge+organize:tr-def456
-Panel Render Start: panel-1:render-ghi789
-Panel Render End: panel-1:render-ghi789
+Panel Plugin Load Start: panel-1:plugin-load-a1b2c3d4-e5f6-7890-abcd-ef1234567890
+Panel Plugin Load End: panel-1:plugin-load-a1b2c3d4-e5f6-7890-abcd-ef1234567890
+Panel Query Start: panel-1:query-b2c3d4e5-f6g7-8901-bcde-f23456789012
+Panel Query End: panel-1:query-b2c3d4e5-f6g7-8901-bcde-f23456789012
+Panel Transform Start: panel-1:transform-c3d4e5f6-g7h8-9012-cdef-345678901234
+Panel Transform End: panel-1:transform-c3d4e5f6-g7h8-9012-cdef-345678901234
+Panel Field Config Start: panel-1:fieldConfig-d4e5f6g7-h8i9-0123-def0-456789012345
+Panel Field Config End: panel-1:fieldConfig-d4e5f6g7-h8i9-0123-def0-456789012345
+Panel Render Start: panel-1:render-e5f6g7h8-i9j0-1234-ef01-567890123456
+Panel Render End: panel-1:render-e5f6g7h8-i9j0-1234-ef01-567890123456
 ```
 
 These marks enable visual timeline analysis of:
@@ -456,38 +581,42 @@ These marks enable visual timeline analysis of:
 
 ### Architecture Overview
 
-The performance tracking system consists of multiple integrated components:
+The performance tracking system consists of multiple integrated components with observer pattern architecture:
 
-1. **SceneRenderProfiler** (Scenes library)
+1. **SceneRenderProfiler** (Scenes library - `performanceUtils` namespace)
    - Singleton profiler instance shared across dashboard reloads
    - Tracks dashboard interactions and manages long frame detection
-   - Integrates with PanelProfilingManager for panel-level tracking
+   - Integrates with VizPanelRenderProfiler for comprehensive panel-level tracking
 
-2. **ScenePerformanceTracker** (Scenes library)
-   - Central coordinator implementing observer pattern
-   - Distributes performance events to registered observers
+2. **ScenePerformanceTracker** (Scenes library - `performanceUtils` namespace)
+   - Central coordinator implementing observer pattern architecture
+   - Distributes performance events to registered observers without coupling
    - Provides type-safe interfaces for different event types
+   - Supports extensible observer registration with clean separation of concerns
 
-3. **VizPanelRenderProfiler** (Scenes library)
-   - Attached to individual panels when profiling is enabled
-   - Tracks panel operations: plugin-load, query, transform, fieldConfig, render
-   - Reports to ScenePerformanceTracker
+3. **VizPanelRenderProfiler** (Scenes library - `performanceUtils` namespace)
+   - Automatically attached to individual panels when profiling is enabled
+   - Tracks complete panel lifecycle: plugin-load, query, transform, fieldConfig, render
+   - Uses UUID-based operation IDs with crypto fallback for cross-environment compatibility
+   - Reports structured performance data to ScenePerformanceTracker
 
 4. **DashboardAnalyticsAggregator** (Grafana)
-   - Aggregates panel metrics for analytics reporting
-   - Detects slow panels (>100ms total time)
-   - Sends reports via reportInteraction and logMeasurement
+   - **Conditionally initialized**: Only activated when `enableProfiling` is true
+   - Aggregates panel metrics for analytics reporting with slow panel detection
+   - Uses configurable threshold (SLOW_OPERATION_THRESHOLD_MS = 100ms)
+   - Sends comprehensive reports via reportInteraction and logMeasurement
 
 5. **ScenePerformanceLogger** (Grafana)
    - Creates Chrome DevTools performance marks and measurements
-   - Provides structured console logging for debugging
+   - Provides structured console logging for debugging with localStorage controls
    - Maps operations to standardized performance mark names
+   - Integrates with browser Performance Timeline API
 
 ### Tab Inactivity Handling
 
 To prevent meaningless profiling data when users switch browser tabs, the `SceneRenderProfiler` implements dual protection mechanisms:
 
-#### Primary Protection: Page Visibility API
+#### Page Visibility API
 
 The profiler automatically cancels active profiling sessions when the browser tab becomes inactive:
 
@@ -501,19 +630,16 @@ document.addEventListener('visibilitychange', () => {
 
 This provides immediate response to tab switches using the browser's native visibility change events.
 
-#### Fallback Protection: Frame Length Detection
+#### Frame Length Measurement for Performance Analysis
 
-As a backup mechanism, the profiler detects tab inactivity by monitoring frame duration:
+The profiler measures frame lengths during the post-interaction recording window for performance analysis:
 
 ```javascript
-if (frameLength > TAB_INACTIVE_THRESHOLD) {
-  // 1000ms
-  this.cancelProfile();
-  return;
-}
+const frameLength = currentFrameTime - lastFrameTime;
+this.#recordedTrailingSpans.push(frameLength);
 ```
 
-This fallback catches cases where visibility events might be missed and prevents recording of artificially long frame times (hours instead of milliseconds) that occur when `requestAnimationFrame` callbacks resume after tab reactivation.
+**Note**: Frame length measurement is used for performance analytics only. The profiler does **not** use frame length thresholds for tab inactivity detection. Tab inactivity protection relies exclusively on the Page Visibility API for accurate and immediate response to tab changes.
 
 ### Profile Isolation
 
@@ -539,17 +665,36 @@ This ensures each interaction gets isolated measurements, preventing data contam
 
 ## Related Documentation
 
-- [PR #858 - Add SceneRenderProfiler to scenes](https://github.com/grafana/scenes/pull/858)
-- [PR #99629 - Dashboard render performance metrics](https://github.com/grafana/grafana/pull/99629)
-- [PR #108658 - Dashboard: Tweak interaction tracking](https://github.com/grafana/grafana/pull/108658)
-- [PR #1195 - Enhance SceneRenderProfiler with additional interaction tracking](https://github.com/grafana/scenes/pull/1195)
-- [PR #1198 - Make SceneRenderProfiler optional and injectable](https://github.com/grafana/scenes/pull/1198)
-- [PR #1199 - SceneRenderProfiler: add start and end timestamps to profile events](https://github.com/grafana/scenes/pull/1199)
-- [PR #1205 - SceneRenderProfiler: Handle tab inactivity](https://github.com/grafana/scenes/pull/1205)
-- [PR #1209 - SceneRenderProfiler: Only capture network requests within measurement window](https://github.com/grafana/scenes/pull/1209)
-- [PR #1211 - SceneRenderProfiler: Improve profiler accuracy by adding cancellation and skipping inactive tabs](https://github.com/grafana/scenes/pull/1211)
-- [PR #1212 - SceneQueryController: Fix profiler query controller registration on scene re-activation](https://github.com/grafana/scenes/pull/1212)
-- [PR #1225 - SceneRenderProfiler: Handle overlapping profiles by cancelling previous profile](https://github.com/grafana/scenes/pull/1225)
-- [PR #1235 - Implement long frame detection with LoAF API and manual fallback](https://github.com/grafana/scenes/pull/1235)
-- [PR #1265 - Panel-level performance attribution system](https://github.com/grafana/scenes/pull/1265)
-- [PR #112137 - Dashboard performance analytics system with Scenes integration](https://github.com/grafana/grafana/pull/112137)
+### Foundational Performance System
+
+- [PR #858 - Add SceneRenderProfiler to scenes](https://github.com/grafana/scenes/pull/858) ✅ Merged
+- [PR #99629 - Dashboard render performance metrics](https://github.com/grafana/grafana/pull/99629) ✅ Merged
+- [PR #108658 - Dashboard: Tweak interaction tracking](https://github.com/grafana/grafana/pull/108658) ✅ Merged
+
+### Enhanced Profiling Features
+
+- [PR #1195 - Enhance SceneRenderProfiler with additional interaction tracking](https://github.com/grafana/scenes/pull/1195) ✅ Merged
+- [PR #1198 - Make SceneRenderProfiler optional and injectable](https://github.com/grafana/scenes/pull/1198) ✅ Merged
+- [PR #1199 - SceneRenderProfiler: add start and end timestamps to profile events](https://github.com/grafana/scenes/pull/1199) ✅ Merged
+- [PR #1205 - SceneRenderProfiler: Handle tab inactivity](https://github.com/grafana/scenes/pull/1205) ✅ Merged
+- [PR #1209 - SceneRenderProfiler: Only capture network requests within measurement window](https://github.com/grafana/scenes/pull/1209) ✅ Merged
+- [PR #1211 - SceneRenderProfiler: Improve profiler accuracy by adding cancellation and skipping inactive tabs](https://github.com/grafana/scenes/pull/1211) ✅ Merged
+- [PR #1212 - SceneQueryController: Fix profiler query controller registration on scene re-activation](https://github.com/grafana/scenes/pull/1212) ✅ Merged
+- [PR #1225 - SceneRenderProfiler: Handle overlapping profiles by cancelling previous profile](https://github.com/grafana/scenes/pull/1225) ✅ Merged
+- [PR #1235 - Implement long frame detection with LoAF API and manual fallback](https://github.com/grafana/scenes/pull/1235) ✅ Merged
+
+### Panel-Level Performance Attribution System
+
+- [PR #1265 - Panel-level performance attribution system](https://github.com/grafana/scenes/pull/1265) 🔄 **In Review**
+  - Modern observer pattern architecture with ScenePerformanceTracker
+  - Complete panel lifecycle tracking (plugin-load, query, transform, fieldConfig, render)
+  - UUID-based operation IDs with crypto fallback for cross-environment compatibility
+  - performanceUtils namespace organization for clean API separation
+  - Type-safe performance interfaces with comprehensive TypeScript support
+  - Chrome DevTools integration via performance marks and measurements
+- [PR #112137 - Dashboard performance analytics system with Scenes integration](https://github.com/grafana/grafana/pull/112137) 🔄 **In Review**
+  - DashboardAnalyticsAggregator with conditional initialization
+  - ScenePerformanceLogger for debugging and Chrome DevTools integration
+  - Configurable performance thresholds (SLOW_OPERATION_THRESHOLD_MS)
+  - Comprehensive analytics reporting via reportInteraction and logMeasurement
+  - Integration with the panel-level performance attribution system from PR #1265
