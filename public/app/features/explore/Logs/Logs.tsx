@@ -73,7 +73,7 @@ import {
   contentOutlineTrackUnpinClicked,
 } from '../ContentOutline/ContentOutlineAnalyticEvents';
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
-import { getUrlStateFromPaneState } from '../hooks/useStateSync';
+import { getUrlStateFromPaneState } from '../hooks/useStateSync/external.utils';
 import { changePanelState } from '../state/explorePane';
 import { changeQueries, runQueries } from '../state/query';
 
