@@ -8008,16 +8008,6 @@
       "rangeutils": {
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Day before yesterday",
-          "lastNDays_one": "Last {{count}} day",
-          "lastNDays_other": "Last {{count}} days",
-          "lastNHours_one": "Last {{count}} hour",
-          "lastNHours_other": "Last {{count}} hours",
-          "lastNMinutes_one": "Last {{count}} minute",
-          "lastNMinutes_other": "Last {{count}} minutes",
-          "lastNMonths_one": "Last {{count}} month",
-          "lastNMonths_other": "Last {{count}} months",
-          "lastNYears_one": "Last {{count}} year",
-          "lastNYears_other": "Last {{count}} years",
           "previousFiscalQuarter": "Previous fiscal quarter",
           "previousFiscalYear": "Previous fiscal year",
           "previousMonth": "Previous month",
@@ -8038,18 +8028,26 @@
           "todaySoFar": "Today so far",
           "yesterday": "Yesterday"
         },
-        "getHiddenRangeOptions": {
-          "nextNDays_one": "Next {{count}} day",
-          "nextNDays_other": "Next {{count}} days",
-          "nextNHours_one": "Next {{count}} hour",
-          "nextNHours_other": "Next {{count}} hours",
-          "nextNMinutes_one": "Next {{count}} minute",
-          "nextNMinutes_other": "Next {{count}} minutes",
-          "nextNMonths_one": "Next {{count}} month",
-          "nextNMonths_other": "Next {{count}} months",
-          "nextNYears_one": "Next {{count}} year",
-          "nextNYears_other": "Next {{count}} years"
-        }
+        "lastNDays_one": "Last {{count}} day",
+        "lastNDays_other": "Last {{count}} days",
+        "lastNHours_one": "Last {{count}} hour",
+        "lastNHours_other": "Last {{count}} hours",
+        "lastNMinutes_one": "Last {{count}} minute",
+        "lastNMinutes_other": "Last {{count}} minutes",
+        "lastNMonths_one": "Last {{count}} month",
+        "lastNMonths_other": "Last {{count}} months",
+        "lastNYears_one": "Last {{count}} year",
+        "lastNYears_other": "Last {{count}} years",
+        "nextNDays_one": "Next {{count}} day",
+        "nextNDays_other": "Next {{count}} days",
+        "nextNHours_one": "Next {{count}} hour",
+        "nextNHours_other": "Next {{count}} hours",
+        "nextNMinutes_one": "Next {{count}} minute",
+        "nextNMinutes_other": "Next {{count}} minutes",
+        "nextNMonths_one": "Next {{count}} month",
+        "nextNMonths_other": "Next {{count}} months",
+        "nextNYears_one": "Next {{count}} year",
+        "nextNYears_other": "Next {{count}} years"
       }
     },
     "valueFormats": {

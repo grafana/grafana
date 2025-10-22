@@ -18,6 +18,76 @@ const spans: { [key: string]: { display: string; section?: number } } = {
   y: { display: 'year' },
 };
 
+const getLastNMinutesDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.lastNMinutes', 'Last {{count}} minutes', {
+    count,
+    defaultValue_one: 'Last {{count}} minute',
+  });
+};
+
+const getLastNHoursDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.lastNHours', 'Last {{count}} hours', {
+    count,
+    defaultValue_one: 'Last {{count}} hour',
+  });
+};
+
+const getLastNDaysDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.lastNDays', 'Last {{count}} days', {
+    count,
+    defaultValue_one: 'Last {{count}} day',
+  });
+};
+
+const getLastNMonthsDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.lastNMonths', 'Last {{count}} months', {
+    count,
+    defaultValue_one: 'Last {{count}} month',
+  });
+};
+
+const getLastNYearsDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.lastNYears', 'Last {{count}} years', {
+    count,
+    defaultValue_one: 'Last {{count}} year',
+  });
+};
+
+const getNextNMinutesDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.nextNMinutes', 'Next {{count}} minutes', {
+    count,
+    defaultValue_one: 'Next {{count}} minute',
+  });
+};
+
+const getNextNHoursDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.nextNHours', 'Next {{count}} hours', {
+    count,
+    defaultValue_one: 'Next {{count}} hour',
+  });
+};
+
+const getNextNDaysDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.nextNDays', 'Next {{count}} days', {
+    count,
+    defaultValue_one: 'Next {{count}} day',
+  });
+};
+
+const getNextNMonthsDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.nextNMonths', 'Next {{count}} months', {
+    count,
+    defaultValue_one: 'Next {{count}} month',
+  });
+};
+
+const getNextNYearsDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.nextNYears', 'Next {{count}} years', {
+    count,
+    defaultValue_one: 'Next {{count}} year',
+  });
+};
+
 const getBaseRangeOptions: () => TimeOption[] = () => [
   { from: 'now/d', to: 'now/d', display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.today', 'Today') },
   {
@@ -100,94 +170,82 @@ const getBaseRangeOptions: () => TimeOption[] = () => [
   {
     from: 'now-5m',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNMinutes', 'Last {{count}} minutes', {
-      count: 5,
-    }),
+    display: getLastNMinutesDisplay(5),
   },
   {
     from: 'now-15m',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNMinutes', 'Last {{count}} minutes', {
-      count: 15,
-    }),
+    display: getLastNMinutesDisplay(15),
   },
   {
     from: 'now-30m',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNMinutes', 'Last {{count}} minutes', {
-      count: 30,
-    }),
+    display: getLastNMinutesDisplay(30),
   },
   {
     from: 'now-1h',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNHours', 'Last {{count}} hours', { count: 1 }),
+    display: getLastNHoursDisplay(1),
   },
   {
     from: 'now-3h',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNHours', 'Last {{count}} hours', { count: 3 }),
+    display: getLastNHoursDisplay(3),
   },
   {
     from: 'now-6h',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNHours', 'Last {{count}} hours', { count: 6 }),
+    display: getLastNHoursDisplay(6),
   },
   {
     from: 'now-12h',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNHours', 'Last {{count}} hours', {
-      count: 12,
-    }),
+    display: getLastNHoursDisplay(12),
   },
   {
     from: 'now-24h',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNHours', 'Last {{count}} hours', {
-      count: 24,
-    }),
+    display: getLastNHoursDisplay(24),
   },
   {
     from: 'now-2d',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNDays', 'Last {{count}} days', { count: 2 }),
+    display: getLastNDaysDisplay(2),
   },
   {
     from: 'now-7d',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNDays', 'Last {{count}} days', { count: 7 }),
+    display: getLastNDaysDisplay(7),
   },
   {
     from: 'now-30d',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNDays', 'Last {{count}} days', { count: 30 }),
+    display: getLastNDaysDisplay(30),
   },
   {
     from: 'now-90d',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNDays', 'Last {{count}} days', { count: 90 }),
+    display: getLastNDaysDisplay(90),
   },
   {
     from: 'now-6M',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNMonths', 'Last {{count}} months', {
-      count: 6,
-    }),
+    display: getLastNMonthsDisplay(6),
   },
   {
     from: 'now-1y',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNYears', 'Last {{count}} years', { count: 1 }),
+    display: getLastNYearsDisplay(1),
   },
   {
     from: 'now-2y',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNYears', 'Last {{count}} years', { count: 2 }),
+    display: getLastNYearsDisplay(2),
   },
   {
     from: 'now-5y',
     to: 'now',
-    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.lastNYears', 'Last {{count}} years', { count: 5 }),
+    display: getLastNYearsDisplay(5),
   },
   {
     from: 'now/fQ',
@@ -218,117 +276,87 @@ const getHiddenRangeOptions: () => TimeOption[] = () => [
   {
     from: 'now',
     to: 'now+1m',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNMinutes', 'Next {{count}} minutes', {
-      count: 1,
-    }),
+    display: getNextNMinutesDisplay(1),
   },
   {
     from: 'now',
     to: 'now+5m',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNMinutes', 'Next {{count}} minutes', {
-      count: 5,
-    }),
+    display: getNextNMinutesDisplay(5),
   },
   {
     from: 'now',
     to: 'now+15m',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNMinutes', 'Next {{count}} minutes', {
-      count: 15,
-    }),
+    display: getNextNMinutesDisplay(15),
   },
   {
     from: 'now',
     to: 'now+30m',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNMinutes', 'Next {{count}} minutes', {
-      count: 30,
-    }),
+    display: getNextNMinutesDisplay(30),
   },
   {
     from: 'now',
     to: 'now+1h',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNHours', 'Next {{count}} hours', {
-      count: 1,
-    }),
+    display: getNextNHoursDisplay(1),
   },
   {
     from: 'now',
     to: 'now+3h',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNHours', 'Next {{count}} hours', {
-      count: 3,
-    }),
+    display: getNextNHoursDisplay(3),
   },
   {
     from: 'now',
     to: 'now+6h',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNHours', 'Next {{count}} hours', {
-      count: 6,
-    }),
+    display: getNextNHoursDisplay(6),
   },
   {
     from: 'now',
     to: 'now+12h',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNHours', 'Next {{count}} hours', {
-      count: 12,
-    }),
+    display: getNextNHoursDisplay(12),
   },
   {
     from: 'now',
     to: 'now+24h',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNHours', 'Next {{count}} hours', {
-      count: 24,
-    }),
+    display: getNextNHoursDisplay(24),
   },
   {
     from: 'now',
     to: 'now+2d',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNDays', 'Next {{count}} days', { count: 2 }),
+    display: getNextNDaysDisplay(2),
   },
   {
     from: 'now',
     to: 'now+7d',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNDays', 'Next {{count}} days', { count: 7 }),
+    display: getNextNDaysDisplay(7),
   },
   {
     from: 'now',
     to: 'now+30d',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNDays', 'Next {{count}} days', {
-      count: 30,
-    }),
+    display: getNextNDaysDisplay(30),
   },
   {
     from: 'now',
     to: 'now+90d',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNDays', 'Next {{count}} days', {
-      count: 90,
-    }),
+    display: getNextNDaysDisplay(90),
   },
   {
     from: 'now',
     to: 'now+6M',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNMonths', 'Next {{count}} months', {
-      count: 6,
-    }),
+    display: getNextNMonthsDisplay(6),
   },
   {
     from: 'now',
     to: 'now+1y',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNYears', 'Next {{count}} years', {
-      count: 1,
-    }),
+    display: getNextNYearsDisplay(1),
   },
   {
     from: 'now',
     to: 'now+2y',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNYears', 'Next {{count}} years', {
-      count: 2,
-    }),
+    display: getNextNYearsDisplay(2),
   },
   {
     from: 'now',
     to: 'now+5y',
-    display: t('grafana-data.datetime.rangeutils.getHiddenRangeOptions.nextNYears', 'Next {{count}} years', {
-      count: 5,
-    }),
+    display: getNextNYearsDisplay(5),
   },
 ];
 
