@@ -260,10 +260,21 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 		}
 	}
 
+	sectionChildren := []*navtree.NavLink{appLink}
+	// asserts pages expand to root Observability section instead of it's own node
+	if plugin.ID == "grafana-asserts-app" {
+		sectionChildren = appLink.Children
+
+		// keep current sorting if the pages, but above all the other apps
+		for _, child := range sectionChildren {
+			child.SortWeight = -100 + child.SortWeight
+		}
+	}
+
 	if sectionID == navtree.NavIDRoot {
 		treeRoot.AddSection(appLink)
 	} else if navNode := treeRoot.FindById(sectionID); navNode != nil {
-		navNode.Children = append(navNode.Children, appLink)
+		navNode.Children = append(navNode.Children, sectionChildren...)
 	} else {
 		switch sectionID {
 		case navtree.NavIDApps:
@@ -272,7 +283,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Icon:       "layer-group",
 				SubTitle:   "App plugins that extend the Grafana experience",
 				Id:         navtree.NavIDApps,
-				Children:   []*navtree.NavLink{appLink},
+				Children:   sectionChildren,
 				SortWeight: navtree.WeightApps,
 				Url:        s.cfg.AppSubURL + "/apps",
 			})
@@ -283,7 +294,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				SubTitle:   "Monitor infrastructure and applications in real time with Grafana Cloud's fully managed observability suite",
 				Icon:       "heart-rate",
 				SortWeight: navtree.WeightObservability,
-				Children:   []*navtree.NavLink{appLink},
+				Children:   sectionChildren,
 				Url:        s.cfg.AppSubURL + "/observability",
 			})
 		case navtree.NavIDInfrastructure:
@@ -293,18 +304,8 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				SubTitle:   "Understand your infrastructure's health",
 				Icon:       "heart-rate",
 				SortWeight: navtree.WeightInfrastructure,
-				Children:   []*navtree.NavLink{appLink},
+				Children:   sectionChildren,
 				Url:        s.cfg.AppSubURL + "/infrastructure",
-			})
-		case navtree.NavIDFrontend:
-			treeRoot.AddSection(&navtree.NavLink{
-				Text:       "Frontend",
-				Id:         navtree.NavIDFrontend,
-				SubTitle:   "Gain real user monitoring insights",
-				Icon:       "frontend-observability",
-				SortWeight: navtree.WeightFrontend,
-				Children:   []*navtree.NavLink{appLink},
-				Url:        s.cfg.AppSubURL + "/frontend",
 			})
 		case navtree.NavIDAlertsAndIncidents:
 			alertsAndIncidentsChildren := []*navtree.NavLink{}
@@ -332,7 +333,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				SubTitle:   "Optimize performance with k6 and Synthetic Monitoring insights",
 				Icon:       "k6",
 				SortWeight: navtree.WeightTestingAndSynthetics,
-				Children:   []*navtree.NavLink{appLink},
+				Children:   sectionChildren,
 				Url:        s.cfg.AppSubURL + "/testing-and-synthetics",
 			})
 		case navtree.NavIDAdaptiveTelemetry:
@@ -342,7 +343,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				SubTitle:   "Reduce noise, cut costs, and accelerate troubleshooting by intelligently ingesting only the telemetry data that matters most.",
 				Icon:       "adaptive-telemetry",
 				SortWeight: navtree.WeightAIAndML + 1, // Place under "AI & Machine Learning"
-				Children:   []*navtree.NavLink{appLink},
+				Children:   sectionChildren,
 				Url:        "adaptive-telemetry",
 				// Use the icon URL from the first "Adaptive Telemetry" plugin in the list (they will all be the same)
 				Img:   s.cfg.AppSubURL + plugin.Info.Logos.Large,
