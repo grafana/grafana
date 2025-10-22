@@ -290,7 +290,7 @@ func transformLinks(dashboard map[string]interface{}) []dashv2alpha1.DashboardDa
 					}
 				}
 
-				result = append(result, *dashLink)
+				result = append(result, dashLink)
 			}
 		}
 		return result
