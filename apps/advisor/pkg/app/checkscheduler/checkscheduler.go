@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"sort"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -99,56 +98,33 @@ func (r *Runner) Run(ctx context.Context) error {
 
 	logger.Debug("Scheduling checks", "namespaces", len(namespaces))
 
-	// Start a goroutine for each namespace
-	var wg sync.WaitGroup
-	errChan := make(chan error, len(namespaces))
-
-	for _, namespace := range namespaces {
-		wg.Add(1)
-		go func(ns string) {
-			defer wg.Done()
-			if err := r.runScheduler(ctxWithoutCancel, logger, ns); err != nil {
-				errChan <- err
-			}
-		}(namespace)
-	}
-
-	// Wait for all namespace goroutines to complete
-	go func() {
-		wg.Wait()
-		close(errChan)
-	}()
-
-	// Check for any errors from the goroutines
-	select {
-	case err := <-errChan:
-		return err
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-}
-
-// runScheduler runs the check scheduler for a single namespace
-func (r *Runner) runScheduler(ctx context.Context, logger logging.Logger, namespace string) error {
-	logger = logger.With("namespace", namespace)
-
 	// Get the last created time for this specific namespace
-	lastCreated, err := r.checkLastCreated(ctx, logger, namespace)
+	lastCreatedMap, err := r.checkLastCreated(ctx, logger, namespaces)
 	if err != nil {
 		logger.Error("Error getting last check creation time", "error", err)
 		return err
 	}
 
 	// If there are checks already created, run an initial cleanup
-	if !lastCreated.IsZero() {
-		err = r.cleanupChecks(ctx, logger, namespace)
-		if err != nil {
-			logger.Error("Error cleaning up old check reports", "error", err)
-			return err
+	for _, namespace := range namespaces {
+		logger = logger.With("namespace", namespace)
+		lastCreated := lastCreatedMap[namespace]
+
+		if !lastCreated.IsZero() {
+			err = r.cleanupChecks(ctx, logger, namespace)
+			if err != nil {
+				logger.Error("Error cleaning up old check reports", "error", err)
+				return err
+			}
+			err = r.markUnprocessedChecks(ctx, logger, namespace)
+			if err != nil {
+				logger.Error("Error marking unprocessed checks", "error", err)
+				return err
+			}
 		}
 	}
 
-	nextEvalTime := r.getNextEvalTime(r.defaultEvalInterval, lastCreated)
+	nextEvalTime := r.getNextEvalTime(r.defaultEvalInterval, lastCreatedMap)
 	ticker := time.NewTicker(nextEvalTime)
 	defer ticker.Stop()
 
@@ -156,30 +132,36 @@ func (r *Runner) runScheduler(ctx context.Context, logger logging.Logger, namesp
 		select {
 		case <-ticker.C:
 			// Get the current last created time for this namespace
-			lastCreated, err := r.checkLastCreated(ctx, logger, namespace)
+			lastCreatedMap, err := r.checkLastCreated(ctx, logger, namespaces)
 			if err != nil {
 				logger.Error("Error getting last check creation time", "error", err)
 				return err
 			}
 
-			// If there are checks already created, then we can automatically create more
-			if !lastCreated.IsZero() {
-				err = r.createChecks(ctx, logger, namespace)
-				if err != nil {
-					logger.Error("Error creating new check reports", "error", err)
-					return err
-				}
+			for _, namespace := range namespaces {
+				logger = logger.With("namespace", namespace)
+				lastCreated := lastCreatedMap[namespace]
 
-				// Clean up old checks to avoid going over the limit
-				err = r.cleanupChecks(ctx, logger, namespace)
-				if err != nil {
-					logger.Error("Error cleaning up old check reports", "error", err)
-					return err
+				// If there are checks already created and they are older than the evaluation interval
+				// then we can automatically create more
+				if !lastCreated.IsZero() && lastCreated.Before(time.Now().Add(-r.defaultEvalInterval)) {
+					err = r.createChecks(ctx, logger, namespace)
+					if err != nil {
+						logger.Error("Error creating new check reports", "error", err)
+						return err
+					}
+
+					// Clean up old checks to avoid going over the limit
+					err = r.cleanupChecks(ctx, logger, namespace)
+					if err != nil {
+						logger.Error("Error cleaning up old check reports", "error", err)
+						return err
+					}
 				}
 			}
 
 			// Reset the ticker to the next send interval
-			nextEvalTime = r.getNextEvalTime(r.defaultEvalInterval, lastCreated)
+			nextEvalTime = r.getNextEvalTime(r.defaultEvalInterval, lastCreatedMap)
 			ticker.Reset(nextEvalTime)
 		case <-ctx.Done():
 			return ctx.Err()
@@ -210,28 +192,39 @@ func (r *Runner) listChecks(ctx context.Context, logger logging.Logger, namespac
 // checkLastCreated returns the creation time of the last check created for a specific namespace.
 // This assumes that the checks are created in batches so a batch will have a similar creation time.
 // In case it finds an unprocessed check from a previous run, it will set it to error.
-func (r *Runner) checkLastCreated(ctx context.Context, log logging.Logger, namespace string) (time.Time, error) {
-	lastCreated := time.Time{}
+func (r *Runner) checkLastCreated(ctx context.Context, log logging.Logger, namespaces []string) (map[string]time.Time, error) {
+	lastCreated := map[string]time.Time{}
+	for _, namespace := range namespaces {
+		checkList, err := r.listChecks(ctx, log, namespace)
+		if err != nil {
+			return nil, err
+		}
+		for _, item := range checkList {
+			itemCreated := item.GetCreationTimestamp().Time
+			if itemCreated.After(lastCreated[namespace]) {
+				lastCreated[namespace] = itemCreated
+			}
+		}
+	}
+	return lastCreated, nil
+}
+
+func (r *Runner) markUnprocessedChecks(ctx context.Context, log logging.Logger, namespace string) error {
 	checkList, err := r.listChecks(ctx, log, namespace)
 	if err != nil {
-		return time.Time{}, err
+		return err
 	}
 	for _, item := range checkList {
-		itemCreated := item.GetCreationTimestamp().Time
-		if itemCreated.After(lastCreated) {
-			lastCreated = itemCreated
-		}
-
-		// If the check is unprocessed, set it to error
 		if checks.GetStatusAnnotation(item) == "" {
 			log.Info("Check is unprocessed, marking as error", "check", item.GetStaticMetadata().Identifier())
 			err := checks.SetStatusAnnotation(ctx, r.checksClient, item, checks.StatusAnnotationError)
 			if err != nil {
 				log.Error("Error setting check status to error", "error", err)
+				return err
 			}
 		}
 	}
-	return lastCreated, nil
+	return nil
 }
 
 // createChecks creates a new check for each check type in the registry.
@@ -341,12 +334,15 @@ func getEvaluationInterval(pluginConfig map[string]string) (time.Duration, error
 	return evaluationInterval, nil
 }
 
-func (r *Runner) getNextEvalTime(defaultEvaluationInterval time.Duration, lastCreated time.Time) time.Duration {
+func (r *Runner) getNextEvalTime(defaultEvaluationInterval time.Duration, lastCreated map[string]time.Time) time.Duration {
 	nextEvalTime := defaultEvaluationInterval
 
-	baseTime := lastCreated
-	if lastCreated.IsZero() {
-		baseTime = time.Now()
+	// Get the oldest last created time
+	baseTime := time.Now()
+	for _, lastNamespacedCreated := range lastCreated {
+		if !lastNamespacedCreated.IsZero() && lastNamespacedCreated.Before(baseTime) {
+			baseTime = lastNamespacedCreated
+		}
 	}
 
 	// Calculate the next evaluation time and add random variation

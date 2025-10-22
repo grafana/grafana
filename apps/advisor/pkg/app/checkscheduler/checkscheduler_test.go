@@ -213,7 +213,8 @@ func TestRunner_Run_UnprocessedChecks(t *testing.T) {
 					Items: []advisorv0alpha1.Check{
 						{
 							ObjectMeta: metav1.ObjectMeta{
-								Name: "unprocessed-check",
+								Name:              "unprocessed-check",
+								CreationTimestamp: metav1.NewTime(time.Now().Add(-1 * time.Hour)),
 								// No status annotation - unprocessed
 							},
 						},
