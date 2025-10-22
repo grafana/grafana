@@ -7,6 +7,7 @@ package server
 
 import (
 	"context"
+
 	"github.com/google/wire"
 	httpclient2 "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
@@ -291,9 +292,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
-)
 
-import (
 	_ "github.com/grafana/grafana/pkg/extensions"
 )
 
