@@ -278,3 +278,4 @@ pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,f
 onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
 panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
 dashboardTemplates,experimental,@grafana/sharing-squad,false,false,false
+kubernetesAnnotations,experimental,@grafana/grafana-backend-services-squad,false,false,false

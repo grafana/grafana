@@ -67,9 +67,10 @@ func ProvideAppInstallers(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesLogsDrilldown) {
 		installers = append(installers, logsdrilldownAppInstaller)
 	}
-	// if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
-	installers = append(installers, annotationAppInstaller)
-	// }
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
+		installers = append(installers, annotationAppInstaller)
+	}
+
 	return installers
 }
 

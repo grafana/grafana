@@ -1121,4 +1121,8 @@ const (
 	// FlagDashboardTemplates
 	// Enable template dashboards
 	FlagDashboardTemplates = "dashboardTemplates"
+
+	// FlagKubernetesAnnotations
+	// Enables app platform API for annotations
+	FlagKubernetesAnnotations = "kubernetesAnnotations"
 )
