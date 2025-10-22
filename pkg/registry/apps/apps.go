@@ -78,10 +78,6 @@ func ProvideAppInstallers(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesLogsDrilldown) {
 		installers = append(installers, logsdrilldownAppInstaller)
 	}
-	//nolint:staticcheck
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
-		installers = append(installers, annotationAppInstaller)
-	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
 		installers = append(installers, advisorAppInstaller)
@@ -100,6 +96,10 @@ func ProvideAppInstallers(
 	if features.IsEnabledGlobally(featuremgmt.FlagDashboardValidatorApp) {
 		installers = append(installers, dashvalidatorAppInstaller)
 	}
+	// if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
+	installers = append(installers, annotationAppInstaller)
+	// }
+
 	return installers
 }
 
