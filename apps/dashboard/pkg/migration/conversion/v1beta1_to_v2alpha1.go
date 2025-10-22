@@ -1797,111 +1797,140 @@ func extractFieldConfigSource(fieldConfig map[string]interface{}) dashv2alpha1.D
 	return fieldConfigSource
 }
 
+// Helper functions for extracting field config values
+func extractFloat64Field(defaults map[string]interface{}, key string) (*float64, bool) {
+	if val, exists := defaults[key]; exists {
+		if floatVal, ok := val.(float64); ok {
+			return &floatVal, true
+		}
+	}
+	return nil, false
+}
+
+func extractStringField(defaults map[string]interface{}, key string) (*string, bool) {
+	if val, exists := defaults[key]; exists {
+		if strVal, ok := val.(string); ok {
+			return &strVal, true
+		}
+	}
+	return nil, false
+}
+
+func extractBoolField(defaults map[string]interface{}, key string) (*bool, bool) {
+	if val, exists := defaults[key]; exists {
+		if boolVal, ok := val.(bool); ok {
+			return &boolVal, true
+		}
+	}
+	return nil, false
+}
+
+func extractArrayField(defaults map[string]interface{}, key string) ([]interface{}, bool) {
+	if val, exists := defaults[key]; exists {
+		if arrayVal, ok := val.([]interface{}); ok {
+			return arrayVal, true
+		}
+	}
+	return nil, false
+}
+
+func extractMapField(defaults map[string]interface{}, key string) (map[string]interface{}, bool) {
+	if val, exists := defaults[key]; exists {
+		if mapVal, ok := val.(map[string]interface{}); ok {
+			return mapVal, true
+		}
+	}
+	return nil, false
+}
+
 func extractFieldConfigDefaults(defaults map[string]interface{}) dashv2alpha1.DashboardFieldConfig {
 	fieldConfigDefaults := dashv2alpha1.DashboardFieldConfig{}
 	hasDefaults := false
 
-	// Map each field individually
-	if color, exists := defaults["color"]; exists {
-		if colorMap, ok := color.(map[string]interface{}); ok {
-			fieldConfigDefaults.Color = buildFieldColor(colorMap)
-			hasDefaults = true
-		}
+	// Extract color
+	if colorMap, ok := extractMapField(defaults, "color"); ok {
+		fieldConfigDefaults.Color = buildFieldColor(colorMap)
+		hasDefaults = true
 	}
-	if custom, exists := defaults["custom"]; exists {
-		if customMap, ok := custom.(map[string]interface{}); ok {
-			fieldConfigDefaults.Custom = customMap
-			hasDefaults = true
-		}
+
+	// Extract custom
+	if customMap, ok := extractMapField(defaults, "custom"); ok {
+		fieldConfigDefaults.Custom = customMap
+		hasDefaults = true
 	}
-	if decimals, exists := defaults["decimals"]; exists {
-		if dec, ok := decimals.(float64); ok {
-			fieldConfigDefaults.Decimals = &dec
-			hasDefaults = true
-		}
+
+	// Extract numeric fields
+	if val, ok := extractFloat64Field(defaults, "decimals"); ok {
+		fieldConfigDefaults.Decimals = val
+		hasDefaults = true
 	}
-	if description, exists := defaults["description"]; exists {
-		if desc, ok := description.(string); ok {
-			fieldConfigDefaults.Description = &desc
-			hasDefaults = true
-		}
+	if val, ok := extractFloat64Field(defaults, "max"); ok {
+		fieldConfigDefaults.Max = val
+		hasDefaults = true
 	}
-	if displayName, exists := defaults["displayName"]; exists {
-		if name, ok := displayName.(string); ok {
-			fieldConfigDefaults.DisplayName = &name
-			hasDefaults = true
-		}
+	if val, ok := extractFloat64Field(defaults, "min"); ok {
+		fieldConfigDefaults.Min = val
+		hasDefaults = true
 	}
-	if displayNameFromDS, exists := defaults["displayNameFromDS"]; exists {
-		if name, ok := displayNameFromDS.(string); ok {
-			fieldConfigDefaults.DisplayNameFromDS = &name
-			hasDefaults = true
-		}
+
+	// Extract string fields
+	if val, ok := extractStringField(defaults, "description"); ok {
+		fieldConfigDefaults.Description = val
+		hasDefaults = true
 	}
-	if filterable, exists := defaults["filterable"]; exists {
-		if filter, ok := filterable.(bool); ok {
-			fieldConfigDefaults.Filterable = &filter
-			hasDefaults = true
-		}
+	if val, ok := extractStringField(defaults, "displayName"); ok {
+		fieldConfigDefaults.DisplayName = val
+		hasDefaults = true
 	}
-	if links, exists := defaults["links"]; exists {
-		if linksArray, ok := links.([]interface{}); ok {
-			fieldConfigDefaults.Links = linksArray
-			hasDefaults = true
-		}
+	if val, ok := extractStringField(defaults, "displayNameFromDS"); ok {
+		fieldConfigDefaults.DisplayNameFromDS = val
+		hasDefaults = true
 	}
+	if val, ok := extractStringField(defaults, "noValue"); ok {
+		fieldConfigDefaults.NoValue = val
+		hasDefaults = true
+	}
+	if val, ok := extractStringField(defaults, "path"); ok {
+		fieldConfigDefaults.Path = val
+		hasDefaults = true
+	}
+	if val, ok := extractStringField(defaults, "unit"); ok {
+		fieldConfigDefaults.Unit = val
+		hasDefaults = true
+	}
+
+	// Extract bool fields
+	if val, ok := extractBoolField(defaults, "filterable"); ok {
+		fieldConfigDefaults.Filterable = val
+		hasDefaults = true
+	}
+	if val, ok := extractBoolField(defaults, "writeable"); ok {
+		fieldConfigDefaults.Writeable = val
+		hasDefaults = true
+	}
+
+	// Extract array field
+	if linksArray, ok := extractArrayField(defaults, "links"); ok {
+		fieldConfigDefaults.Links = linksArray
+		hasDefaults = true
+	}
+
+	// Extract mappings
 	if mappings, exists := defaults["mappings"]; exists {
 		resultMappings := buildValueMappings(mappings)
 		fieldConfigDefaults.Mappings = resultMappings
 		hasDefaults = true
 	}
-	if max, exists := defaults["max"]; exists {
-		if maxVal, ok := max.(float64); ok {
-			fieldConfigDefaults.Max = &maxVal
-			hasDefaults = true
-		}
-	}
-	if min, exists := defaults["min"]; exists {
-		if minVal, ok := min.(float64); ok {
-			fieldConfigDefaults.Min = &minVal
-			hasDefaults = true
-		}
-	}
-	if noValue, exists := defaults["noValue"]; exists {
-		if noVal, ok := noValue.(string); ok {
-			fieldConfigDefaults.NoValue = &noVal
-			hasDefaults = true
-		}
-	}
-	if path, exists := defaults["path"]; exists {
-		if pathVal, ok := path.(string); ok {
-			fieldConfigDefaults.Path = &pathVal
-			hasDefaults = true
-		}
-	}
-	if thresholds, exists := defaults["thresholds"]; exists {
-		if thresholdsMap, ok := thresholds.(map[string]interface{}); ok {
-			thresholdsConfig := buildThresholdsConfig(thresholdsMap)
-			fieldConfigDefaults.Thresholds = thresholdsConfig
-			hasDefaults = true
-		}
-	}
-	if unit, exists := defaults["unit"]; exists {
-		if unitVal, ok := unit.(string); ok {
-			fieldConfigDefaults.Unit = &unitVal
-			hasDefaults = true
-		}
-	}
-	if writeable, exists := defaults["writeable"]; exists {
-		if write, ok := writeable.(bool); ok {
-			fieldConfigDefaults.Writeable = &write
-			hasDefaults = true
-		}
+
+	// Extract thresholds
+	if thresholdsMap, ok := extractMapField(defaults, "thresholds"); ok {
+		thresholdsConfig := buildThresholdsConfig(thresholdsMap)
+		fieldConfigDefaults.Thresholds = thresholdsConfig
+		hasDefaults = true
 	}
 
 	// Add frontend-style default custom field to match frontend behavior
 	if !hasDefaults {
-		// Add default custom field like frontend does
 		fieldConfigDefaults.Custom = map[string]interface{}{}
 	}
 
