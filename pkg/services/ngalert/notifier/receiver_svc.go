@@ -2,7 +2,6 @@ package notifier
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
@@ -687,28 +686,12 @@ func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, i
 
 // decryptor returns a models.DecryptFn that decrypts a secure setting. If decryption fails, the fallback value is used.
 func (rs *ReceiverService) decryptor(ctx context.Context) models.DecryptFn {
-	return func(value string) (string, error) {
-		decoded, err := base64.StdEncoding.DecodeString(value)
-		if err != nil {
-			return "", err
-		}
-		decrypted, err := rs.encryptionService.Decrypt(ctx, decoded)
-		if err != nil {
-			return "", err
-		}
-		return string(decrypted), nil
-	}
+	return DecryptIntegrationSettings(ctx, rs.encryptionService)
 }
 
 // encryptor creates an encrypt function that delegates to secrets.Service and returns the base64 encoded result.
 func (rs *ReceiverService) encryptor(ctx context.Context) models.EncryptFn {
-	return func(payload string) (string, error) {
-		s, err := rs.encryptionService.Encrypt(ctx, []byte(payload), secrets.WithoutScope())
-		if err != nil {
-			return "", err
-		}
-		return base64.StdEncoding.EncodeToString(s), nil
-	}
+	return EncryptIntegrationSettings(ctx, rs.encryptionService)
 }
 
 // checkOptimisticConcurrency checks if the existing receiver's version matches the desired version.
