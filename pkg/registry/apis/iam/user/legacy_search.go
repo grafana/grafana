@@ -37,6 +37,7 @@ func NewUserLegacySearchClient(userService user.Service) *UserLegacySearchClient
 
 // Search searches for users in the legacy search engine.
 // It only supports exact matching for title, login, or email.
+// FIXME: This implementation only supports a single field query and will be extended in the future.
 func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	signedInUser, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -50,7 +51,7 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		req.Limit = 1
 	}
 
-	if req.Page > math.MaxInt32 {
+	if req.Page > math.MaxInt32 || req.Page < 0 {
 		return nil, fmt.Errorf("invalid page number: %d", req.Page)
 	}
 
