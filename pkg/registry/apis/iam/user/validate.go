@@ -128,14 +128,22 @@ func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 			Operator: string(selection.Equals),
 			Values:   []string{email},
 		},
-	})
+	}, []string{"name", "email", "login"})
 
 	resp, err := searchClient.Search(ctx, req)
 	if err != nil {
 		return err
 	}
 
+	// FIXME(mgyongyosi): Improve the exact match validation
+
 	if resp.TotalHits > 0 {
+		// If the found user is the same as the one being created/updated, it's not a conflict.
+		// This is required for Mode 2 when the resource is written to LegacyStorage and UnifiedStorage.
+		rows := resp.Results.Rows
+		if len(rows) > 0 && rows[0].Key.Name == name {
+			return nil
+		}
 		return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
 			name,
 			fmt.Errorf("email '%s' is already taken", email))
@@ -151,13 +159,21 @@ func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 			Operator: string(selection.Equals),
 			Values:   []string{login},
 		},
-	})
+	}, []string{"name", "email", "login"})
 	resp, err := searchClient.Search(ctx, req)
 	if err != nil {
 		return err
 	}
 
+	// FIXME(mgyongyosi): Improve the exact match validation
+
 	if resp.TotalHits > 0 {
+		// If the found user is the same as the one being created/updated, it's not a conflict.
+		// This is required for Mode 2 when the resource is written to LegacyStorage and UnifiedStorage.
+		rows := resp.Results.Rows
+		if len(rows) > 0 && rows[0].Key.Name == name {
+			return nil
+		}
 		return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
 			name,
 			fmt.Errorf("login '%s' is already taken", login))
@@ -166,7 +182,7 @@ func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 	return nil
 }
 
-func createUserSearchRequest(namespace string, requirements []*resourcepb.Requirement) *resourcepb.ResourceSearchRequest {
+func createUserSearchRequest(namespace string, requirements []*resourcepb.Requirement, fields []string) *resourcepb.ResourceSearchRequest {
 	userGvr := iamv0alpha1.UserResourceInfo.GroupResource()
 	return &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
@@ -177,5 +193,6 @@ func createUserSearchRequest(namespace string, requirements []*resourcepb.Requir
 			},
 			Fields: requirements,
 		},
+		Fields: fields,
 	}
 }

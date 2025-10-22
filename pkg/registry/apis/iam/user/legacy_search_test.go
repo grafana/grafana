@@ -77,6 +77,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 						{Key: tc.fieldKey, Values: tc.fieldValues},
 					},
 				},
+				Fields: []string{"email", "login"},
 			}
 
 			mockUsers := []*user.UserSearchHitDTO{
@@ -97,7 +98,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 			require.Len(t, resp.Results.Rows, 1)
 
 			// Verify columns
-			expectedColumns := getColumns()
+			expectedColumns := getColumns(req.Fields)
 			require.Equal(t, len(expectedColumns), len(resp.Results.Columns))
 			for i, col := range resp.Results.Columns {
 				require.Equal(t, expectedColumns[i].Name, col.Name)
@@ -112,11 +113,11 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 				require.Equal(t, u.UID, row.Key.Name)
 
 				expectedCells := createBaseCells(&user.UserSearchHitDTO{
+					UID:   u.UID,
 					Name:  u.Name,
-					ID:    u.ID,
 					Email: u.Email,
 					Login: u.Login,
-				})
+				}, req.Fields)
 				require.Equal(t, expectedCells, row.Cells)
 			}
 		})

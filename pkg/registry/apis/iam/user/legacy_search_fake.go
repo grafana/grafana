@@ -43,13 +43,13 @@ func (c *FakeUserLegacySearchClient) Search(ctx context.Context, req *resourcepb
 	for _, u := range filteredUsers {
 		rows = append(rows, &resourcepb.ResourceTableRow{
 			Key:   getResourceKey(u, req.Options.Key.Namespace),
-			Cells: createBaseCells(u),
+			Cells: createBaseCells(u, req.Fields),
 		})
 	}
 
 	return &resourcepb.ResourceSearchResponse{
 		Results: &resourcepb.ResourceTable{
-			Columns: getColumns(),
+			Columns: getColumns(req.Fields),
 			Rows:    rows,
 		},
 		TotalHits: int64(len(filteredUsers)),

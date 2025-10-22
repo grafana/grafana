@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestValidateOnCreate(t *testing.T) {
@@ -164,6 +165,9 @@ func TestValidateOnCreate(t *testing.T) {
 		{
 			name: "user with existing email",
 			user: &iamv0alpha1.User{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "userx",
+				},
 				Spec: iamv0alpha1.UserSpec{
 					Email: "existing@example",
 					Role:  "Viewer",
@@ -184,6 +188,9 @@ func TestValidateOnCreate(t *testing.T) {
 		{
 			name: "user with existing login",
 			user: &iamv0alpha1.User{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "userx",
+				},
 				Spec: iamv0alpha1.UserSpec{
 					Login: "existinguser",
 					Email: "existinguser@example",
@@ -467,9 +474,15 @@ func TestValidateOnUpdate(t *testing.T) {
 		{
 			name: "update with existing email",
 			oldUser: &iamv0alpha1.User{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "userx",
+				},
 				Spec: iamv0alpha1.UserSpec{Email: "one@example", Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "userx",
+				},
 				Spec: iamv0alpha1.UserSpec{Email: "two@example", Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
@@ -487,9 +500,15 @@ func TestValidateOnUpdate(t *testing.T) {
 		{
 			name: "update with existing login",
 			oldUser: &iamv0alpha1.User{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "userx",
+				},
 				Spec: iamv0alpha1.UserSpec{Login: "one", Role: "Viewer"},
 			},
 			newUser: &iamv0alpha1.User{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "userx",
+				},
 				Spec: iamv0alpha1.UserSpec{Login: "two", Role: "Viewer"},
 			},
 			requester: &identity.StaticRequester{
@@ -498,7 +517,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			},
 			searchClient: &FakeUserLegacySearchClient{
 				Users: []*user.UserSearchHitDTO{
-					{Login: "two"},
+					{Name: "other", UID: "uid456", Login: "two"},
 				},
 			},
 			expectError:   true,

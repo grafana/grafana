@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
-	"strconv"
 
 	"google.golang.org/grpc"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 const (
@@ -87,7 +87,7 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		query.Query = email
 	}
 
-	columns := getColumns()
+	columns := getColumns(req.Fields)
 	list := &resourcepb.ResourceSearchResponse{
 		Results: &resourcepb.ResourceTable{
 			Columns: columns,
@@ -100,7 +100,7 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 	}
 
 	for _, u := range res.Users {
-		cells := createBaseCells(u)
+		cells := createBaseCells(u, req.Fields)
 		list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
 			Key:   getResourceKey(u, req.Options.Key.Namespace),
 			Cells: cells,
@@ -120,19 +120,75 @@ func getResourceKey(item *user.UserSearchHitDTO, namespace string) *resourcepb.R
 	}
 }
 
-func getColumns() []*resourcepb.ResourceTableColumnDefinition {
-	searchFields := res.StandardSearchFields()
-	return []*resourcepb.ResourceTableColumnDefinition{
-		searchFields.Field(res.SEARCH_FIELD_TITLE),
-		searchFields.Field(res.SEARCH_FIELD_LEGACY_ID),
+func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
+	columns := defaultColumns()
+	for _, field := range fields {
+		switch field {
+		case "email":
+			columns = append(columns, search.TableColumnDefinitions[search.USER_EMAIL])
+		case "login":
+			columns = append(columns, search.TableColumnDefinitions[search.USER_LOGIN])
+		}
+	}
+	return columns
+}
+
+func createBaseCells(u *user.UserSearchHitDTO, fields []string) [][]byte {
+	cells := createDefaultCells(u)
+	for _, field := range fields {
+		switch field {
+		case "email":
+			cells = append(cells, []byte(u.Email))
+		case "login":
+			cells = append(cells, []byte(u.Login))
+		}
+	}
+	return cells
+}
+
+func createDefaultCells(u *user.UserSearchHitDTO) [][]byte {
+	return [][]byte{
+		[]byte(u.UID),
+		[]byte(u.Name),
 	}
 }
 
-func createBaseCells(u *user.UserSearchHitDTO) [][]byte {
-	return [][]byte{
-		[]byte(u.Name),
-		[]byte(strconv.FormatInt(u.ID, 10)),
-		[]byte(u.Email),
-		[]byte(u.Login),
+func defaultColumns() []*resourcepb.ResourceTableColumnDefinition {
+	searchFields := res.StandardSearchFields()
+	return []*resourcepb.ResourceTableColumnDefinition{
+		searchFields.Field(res.SEARCH_FIELD_NAME),
+		searchFields.Field(res.SEARCH_FIELD_TITLE),
+	}
+}
+
+var _ user.Filter = &exactMatchFilter{}
+
+type exactMatchFilter struct {
+	Field     string
+	Parameter any
+}
+
+func newExactMatchFilter(field string, parameter any) user.Filter {
+	return &exactMatchFilter{
+		Field:     field,
+		Parameter: parameter,
+	}
+}
+
+// InCondition implements user.Filter.
+func (f *exactMatchFilter) InCondition() *user.InCondition {
+	return nil
+}
+
+// JoinCondition implements user.Filter.
+func (f *exactMatchFilter) JoinCondition() *user.JoinCondition {
+	return nil
+}
+
+// WhereCondition implements user.Filter.
+func (f *exactMatchFilter) WhereCondition() *user.WhereCondition {
+	return &user.WhereCondition{
+		Condition: fmt.Sprintf("%s = ?", f.Field),
+		Params:    f.Parameter,
 	}
 }

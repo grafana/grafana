@@ -16,27 +16,33 @@ const (
 	USER_LOGIN = "login"
 )
 
+var TableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
+	USER_EMAIL: {
+		Name:        USER_EMAIL,
+		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+		Description: "The email address of the user",
+		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
+			UniqueValues: true,
+			Filterable:   true,
+		},
+	},
+	USER_LOGIN: {
+		Name:        USER_LOGIN,
+		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+		Description: "The login of the user",
+		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
+			UniqueValues: true,
+			Filterable:   true,
+		},
+	},
+}
+
 func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
-	fields, err := resource.NewSearchableDocumentFields([]*resourcepb.ResourceTableColumnDefinition{
-		{
-			Name:        USER_EMAIL,
-			Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-			Description: "The email address of the user",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				UniqueValues: true,
-				Filterable:   true,
-			},
-		},
-		{
-			Name:        USER_LOGIN,
-			Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-			Description: "The login of the user",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				UniqueValues: true,
-				Filterable:   true,
-			},
-		},
-	})
+	values := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(TableColumnDefinitions))
+	for _, v := range TableColumnDefinitions {
+		values = append(values, v)
+	}
+	fields, err := resource.NewSearchableDocumentFields(values)
 	return resource.DocumentBuilderInfo{
 		GroupResource: iamv0.UserResourceInfo.GroupResource(),
 		Fields:        fields,
