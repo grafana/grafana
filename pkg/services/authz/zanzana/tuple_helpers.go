@@ -47,7 +47,7 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 		tuple, ok := TranslateToResourceTuple(subject, perm.Action, perm.Kind, perm.Identifier)
 		if !ok {
 			// Skip permissions that can't be translated
-			log.New("zanzana").Warn("skipping permission that can't be translated", "permission", perm)
+			log.New("zanzana").Debug("skipping permission that can't be translated", "permission", perm)
 			continue
 		}
 
