@@ -273,13 +273,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 )}
               />
             </Field>
-            <Field
-              id="repository-type"
-              noMargin
-              label={gitFields.pathConfig.label}
-              description={gitFields.pathConfig.description}
-            >
-              <Input {...register('path')} />
+            <Field noMargin label={gitFields.pathConfig.label} description={gitFields.pathConfig.description}>
+              <Input id="repository-path" {...register('path')} />
             </Field>
           </>
         )}
