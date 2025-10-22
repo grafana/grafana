@@ -9,6 +9,7 @@ import (
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	schemaversion "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
 func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope) error {
@@ -43,7 +44,7 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 	dashboardDefaults := getDefaultDashboardV2Spec()
 
 	// Transform basic fields
-	out.Title = getStringField(dashboard, "title", "")
+	out.Title = schemaversion.GetStringValue(dashboard, "title")
 	out.Description = getStringPtr(dashboard, "description")
 	out.Tags = getStringSlice(dashboard, "tags")
 	out.CursorSync = transformCursorSyncToEnum(getIntField(dashboard, "graphTooltip", 0))
@@ -105,16 +106,6 @@ func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *das
 	out.Annotations = annotations
 
 	return nil
-}
-
-// Helper functions for extracting values from maps
-func getStringField(m map[string]interface{}, key string, defaultValue string) string {
-	if val, ok := m[key]; ok {
-		if str, ok := val.(string); ok {
-			return str
-		}
-	}
-	return defaultValue
 }
 
 func getStringPtr(m map[string]interface{}, key string) *string {
@@ -206,10 +197,10 @@ func transformTimeSettings(dashboard map[string]interface{}, defaults *dashv2alp
 
 	// Extract time range
 	if timeRange, ok := dashboard["time"].(map[string]interface{}); ok {
-		if from := getStringField(timeRange, "from", ""); from != "" {
+		if from := schemaversion.GetStringValue(timeRange, "from"); from != "" {
 			timeSettings.From = from
 		}
-		if to := getStringField(timeRange, "to", ""); to != "" {
+		if to := schemaversion.GetStringValue(timeRange, "to"); to != "" {
 			timeSettings.To = to
 		}
 	}
@@ -220,7 +211,7 @@ func transformTimeSettings(dashboard map[string]interface{}, defaults *dashv2alp
 			timeSettings.Timezone = &timezoneStr
 		}
 	}
-	if refresh := getStringField(dashboard, "refresh", ""); refresh != "" {
+	if refresh := schemaversion.GetStringValue(dashboard, "refresh"); refresh != "" {
 		timeSettings.AutoRefresh = refresh
 	}
 
@@ -259,9 +250,9 @@ func transformTimeSettings(dashboard map[string]interface{}, defaults *dashv2alp
 			for _, qr := range quickRanges {
 				if qrMap, ok := qr.(map[string]interface{}); ok {
 					quickRange := dashv2alpha1.DashboardTimeRangeOption{
-						Display: getStringField(qrMap, "display", ""),
-						From:    getStringField(qrMap, "from", ""),
-						To:      getStringField(qrMap, "to", ""),
+						Display: schemaversion.GetStringValue(qrMap, "display"),
+						From:    schemaversion.GetStringValue(qrMap, "from"),
+						To:      schemaversion.GetStringValue(qrMap, "to"),
 					}
 					ranges = append(ranges, quickRange)
 				}
@@ -281,10 +272,10 @@ func transformLinks(dashboard map[string]interface{}) []dashv2alpha1.DashboardDa
 			if linkMap, ok := link.(map[string]interface{}); ok {
 				// Required fields with defaults
 				dashLink := dashv2alpha1.DashboardDashboardLink{
-					Title:       getStringField(linkMap, "title", ""),
-					Type:        dashv2alpha1.DashboardDashboardLinkType(getStringField(linkMap, "type", "link")),
-					Icon:        getStringField(linkMap, "icon", ""),
-					Tooltip:     getStringField(linkMap, "tooltip", ""),
+					Title:       schemaversion.GetStringValue(linkMap, "title"),
+					Type:        dashv2alpha1.DashboardDashboardLinkType(schemaversion.GetStringValue(linkMap, "type", "link")),
+					Icon:        schemaversion.GetStringValue(linkMap, "icon"),
+					Tooltip:     schemaversion.GetStringValue(linkMap, "tooltip"),
 					Tags:        getStringSlice(linkMap, "tags"),
 					AsDropdown:  getBoolField(linkMap, "asDropdown", false),
 					TargetBlank: getBoolField(linkMap, "targetBlank", false),
@@ -330,7 +321,7 @@ func transformPanelsToElementsAndLayout(dashboard map[string]interface{}) (map[s
 	hasRowPanels := false
 	for _, p := range panels {
 		if panelMap, ok := p.(map[string]interface{}); ok {
-			if getStringField(panelMap, "type", "") == "row" {
+			if schemaversion.GetStringValue(panelMap, "type") == "row" {
 				hasRowPanels = true
 				break
 			}
@@ -388,7 +379,7 @@ func convertToRowsLayout(panels []interface{}) (map[string]dashv2alpha1.Dashboar
 			continue
 		}
 
-		if getStringField(panelMap, "type", "") == "row" {
+		if schemaversion.GetStringValue(panelMap, "type") == "row" {
 			// This is a row panel
 			if gridPos, ok := panelMap["gridPos"].(map[string]interface{}); ok {
 				legacyRowY = int64(getIntField(gridPos, "y", 0))
@@ -488,11 +479,11 @@ func buildElement(panelMap map[string]interface{}) (dashv2alpha1.DashboardElemen
 			Kind: "LibraryPanel",
 			Spec: dashv2alpha1.DashboardLibraryPanelKindSpec{
 				LibraryPanel: dashv2alpha1.DashboardLibraryPanelRef{
-					Uid:  getStringField(libraryPanel, "uid", ""),
-					Name: getStringField(libraryPanel, "name", ""),
+					Uid:  schemaversion.GetStringValue(libraryPanel, "uid"),
+					Name: schemaversion.GetStringValue(libraryPanel, "name"),
 				},
 				Id:    float64(panelID),
-				Title: getStringField(panelMap, "title", ""),
+				Title: schemaversion.GetStringValue(panelMap, "title"),
 			},
 		}
 
@@ -538,8 +529,8 @@ func buildPanelKind(panelMap map[string]interface{}) (*dashv2alpha1.DashboardPan
 		Kind: "Panel",
 		Spec: dashv2alpha1.DashboardPanelSpec{
 			Id:          panelID,
-			Title:       getStringField(panelMap, "title", ""),
-			Description: getStringField(panelMap, "description", ""),
+			Title:       schemaversion.GetStringValue(panelMap, "title"),
+			Description: schemaversion.GetStringValue(panelMap, "description"),
 			Links:       links,
 			Data: dashv2alpha1.DashboardQueryGroupKind{
 				Kind: "QueryGroup",
@@ -593,13 +584,13 @@ func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOve
 	}
 
 	// Handle repeat options
-	if repeat := getStringField(panelMap, "repeat", ""); repeat != "" {
+	if repeat := schemaversion.GetStringValue(panelMap, "repeat"); repeat != "" {
 		repeatOptions := &dashv2alpha1.DashboardRepeatOptions{
 			Mode:  "variable",
 			Value: repeat,
 		}
 
-		if repeatDirection := getStringField(panelMap, "repeatDirection", ""); repeatDirection != "" {
+		if repeatDirection := schemaversion.GetStringValue(panelMap, "repeatDirection"); repeatDirection != "" {
 			switch repeatDirection {
 			case "h":
 				direction := dashv2alpha1.DashboardRepeatOptionsDirectionH
@@ -623,7 +614,7 @@ func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOve
 
 func buildRowKind(rowPanelMap map[string]interface{}, elements []dashv2alpha1.DashboardGridLayoutItemKind) *dashv2alpha1.DashboardRowsLayoutRowKind {
 	collapsed := getBoolField(rowPanelMap, "collapsed", false)
-	title := getStringField(rowPanelMap, "title", "")
+	title := schemaversion.GetStringValue(rowPanelMap, "title")
 
 	row := &dashv2alpha1.DashboardRowsLayoutRowKind{
 		Kind: "RowsLayoutRow",
@@ -642,7 +633,7 @@ func buildRowKind(rowPanelMap map[string]interface{}, elements []dashv2alpha1.Da
 	}
 
 	// Handle repeat options for rows
-	if repeat := getStringField(rowPanelMap, "repeat", ""); repeat != "" {
+	if repeat := schemaversion.GetStringValue(rowPanelMap, "repeat"); repeat != "" {
 		row.Spec.Repeat = &dashv2alpha1.DashboardRowRepeatOptions{
 			Mode:  "variable",
 			Value: repeat,
@@ -793,7 +784,7 @@ func transformVariables(dashboard map[string]interface{}) ([]dashv2alpha1.Dashbo
 
 		// Extract common properties
 		commonProps := extractCommonVariableProperties(varMap)
-		varType := getStringField(varMap, "type", "")
+		varType := schemaversion.GetStringValue(varMap, "type")
 
 		switch varType {
 		case "query":
@@ -848,16 +839,16 @@ type CommonVariableProperties struct {
 
 func extractCommonVariableProperties(varMap map[string]interface{}) CommonVariableProperties {
 	props := CommonVariableProperties{
-		Name:        getStringField(varMap, "name", ""),
+		Name:        schemaversion.GetStringValue(varMap, "name"),
 		Hide:        transformVariableHideToEnum(varMap["hide"]),
 		SkipUrlSync: getBoolField(varMap, "skipUrlSync", false),
 	}
 
-	if label := getStringField(varMap, "label", ""); label != "" {
+	if label := schemaversion.GetStringValue(varMap, "label"); label != "" {
 		props.Label = &label
 	}
 
-	if description := getStringField(varMap, "description", ""); description != "" {
+	if description := schemaversion.GetStringValue(varMap, "description"); description != "" {
 		props.Description = &description
 	}
 
@@ -986,8 +977,8 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 	var datasourceType, datasourceUID string
 
 	if ds, ok := datasource.(map[string]interface{}); ok {
-		datasourceUID = getStringField(ds, "uid", "")
-		datasourceType = getStringField(ds, "type", "")
+		datasourceUID = schemaversion.GetStringValue(ds, "uid")
+		datasourceType = schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
 		if datasourceUID != "" {
@@ -1013,7 +1004,7 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 			IncludeAll:       getBoolField(varMap, "includeAll", false),
 			Refresh:          transformVariableRefreshToEnum(varMap["refresh"]),
 			Sort:             transformVariableSortToEnum(varMap["sort"]),
-			Regex:            getStringField(varMap, "regex", ""),
+			Regex:            schemaversion.GetStringValue(varMap, "regex"),
 			Query:            buildDataQueryKind(varMap["query"], datasourceType),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},
@@ -1038,7 +1029,7 @@ func buildQueryVariable(varMap map[string]interface{}, commonProps CommonVariabl
 	// Always set options (matching frontend behavior)
 	queryVar.Spec.Options = buildVariableOptions(varMap["options"])
 
-	if allValue := getStringField(varMap, "allValue", ""); allValue != "" {
+	if allValue := schemaversion.GetStringValue(varMap, "allValue"); allValue != "" {
 		queryVar.Spec.AllValue = &allValue
 	}
 
@@ -1069,7 +1060,7 @@ func buildDatasourceVariable(varMap map[string]interface{}, commonProps CommonVa
 			Multi:            getBoolField(varMap, "multi", false),
 			IncludeAll:       getBoolField(varMap, "includeAll", false),
 			Refresh:          transformVariableRefreshToEnum(varMap["refresh"]),
-			Regex:            getStringField(varMap, "regex", ""),
+			Regex:            schemaversion.GetStringValue(varMap, "regex"),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},
 	}
@@ -1077,7 +1068,7 @@ func buildDatasourceVariable(varMap map[string]interface{}, commonProps CommonVa
 	// Always set options (matching frontend behavior)
 	dsVar.Spec.Options = buildVariableOptions(varMap["options"])
 
-	if allValue := getStringField(varMap, "allValue", ""); allValue != "" {
+	if allValue := schemaversion.GetStringValue(varMap, "allValue"); allValue != "" {
 		dsVar.Spec.AllValue = &allValue
 	}
 
@@ -1096,7 +1087,7 @@ func buildCustomVariable(varMap map[string]interface{}, commonProps CommonVariab
 			Description:      commonProps.Description,
 			Hide:             commonProps.Hide,
 			SkipUrlSync:      commonProps.SkipUrlSync,
-			Query:            getStringField(varMap, "query", ""),
+			Query:            schemaversion.GetStringValue(varMap, "query"),
 			Current:          buildVariableCurrent(varMap["current"]),
 			Multi:            getBoolField(varMap, "multi", false),
 			IncludeAll:       getBoolField(varMap, "includeAll", false),
@@ -1107,7 +1098,7 @@ func buildCustomVariable(varMap map[string]interface{}, commonProps CommonVariab
 	// Always set options (matching frontend behavior)
 	customVar.Spec.Options = buildVariableOptions(varMap["options"])
 
-	if allValue := getStringField(varMap, "allValue", ""); allValue != "" {
+	if allValue := schemaversion.GetStringValue(varMap, "allValue"); allValue != "" {
 		customVar.Spec.AllValue = &allValue
 	}
 
@@ -1126,7 +1117,7 @@ func buildConstantVariable(varMap map[string]interface{}, commonProps CommonVari
 			Description: commonProps.Description,
 			Hide:        commonProps.Hide,
 			SkipUrlSync: commonProps.SkipUrlSync,
-			Query:       getStringField(varMap, "query", ""),
+			Query:       schemaversion.GetStringValue(varMap, "query"),
 			Current:     buildVariableCurrent(varMap["current"]),
 		},
 	}
@@ -1146,11 +1137,11 @@ func buildIntervalVariable(varMap map[string]interface{}, commonProps CommonVari
 			Description: commonProps.Description,
 			Hide:        commonProps.Hide,
 			SkipUrlSync: commonProps.SkipUrlSync,
-			Query:       getStringField(varMap, "query", ""),
+			Query:       schemaversion.GetStringValue(varMap, "query"),
 			Current:     buildVariableCurrent(varMap["current"]),
 			Refresh:     dashv2alpha1.DashboardVariableRefreshOnTimeRangeChanged, // Always onTimeRangeChanged for interval
 			Auto:        getBoolField(varMap, "auto", false),
-			AutoMin:     getStringField(varMap, "auto_min", ""),
+			AutoMin:     schemaversion.GetStringValue(varMap, "auto_min"),
 			AutoCount:   int64(getIntField(varMap, "auto_count", 0)),
 		},
 	}
@@ -1173,7 +1164,7 @@ func buildTextVariable(varMap map[string]interface{}, commonProps CommonVariable
 			Description: commonProps.Description,
 			Hide:        commonProps.Hide,
 			SkipUrlSync: commonProps.SkipUrlSync,
-			Query:       getStringField(varMap, "query", ""),
+			Query:       schemaversion.GetStringValue(varMap, "query"),
 			Current:     buildVariableCurrent(varMap["current"]),
 		},
 	}
@@ -1189,8 +1180,8 @@ func buildAdhocVariable(varMap map[string]interface{}, commonProps CommonVariabl
 	var datasourceType, datasourceUID string
 
 	if ds, ok := datasource.(map[string]interface{}); ok {
-		datasourceUID = getStringField(ds, "uid", "")
-		datasourceType = getStringField(ds, "type", "")
+		datasourceUID = schemaversion.GetStringValue(ds, "uid")
+		datasourceType = schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
 		if datasourceUID != "" {
@@ -1260,16 +1251,16 @@ func transformAdHocFilters(filters []interface{}) []dashv2alpha1.DashboardAdHocF
 			// This matches the frontend validateFiltersOrigin logic
 			if origin, exists := filterMap["origin"]; !exists || origin == "dashboard" {
 				adhocFilter := dashv2alpha1.DashboardAdHocFilterWithLabels{
-					Key:      getStringField(filterMap, "key", ""),
-					Operator: getStringField(filterMap, "operator", "="),
-					Value:    getStringField(filterMap, "value", ""),
+					Key:      schemaversion.GetStringValue(filterMap, "key"),
+					Operator: schemaversion.GetStringValue(filterMap, "operator", "="),
+					Value:    schemaversion.GetStringValue(filterMap, "value"),
 				}
 
 				// Handle optional fields
-				if keyLabel := getStringField(filterMap, "keyLabel", ""); keyLabel != "" {
+				if keyLabel := schemaversion.GetStringValue(filterMap, "keyLabel"); keyLabel != "" {
 					adhocFilter.KeyLabel = &keyLabel
 				}
-				if condition := getStringField(filterMap, "condition", ""); condition != "" {
+				if condition := schemaversion.GetStringValue(filterMap, "condition"); condition != "" {
 					adhocFilter.Condition = &condition
 				}
 
@@ -1318,7 +1309,7 @@ func transformMetricFindValues(values []interface{}) []dashv2alpha1.DashboardMet
 	for _, value := range values {
 		if valueMap, ok := value.(map[string]interface{}); ok {
 			// Convert object format to string format to match frontend behavior
-			text := getStringField(valueMap, "text", "")
+			text := schemaversion.GetStringValue(valueMap, "text")
 			if text != "" {
 				// Use text as the string value to match frontend behavior
 				metricFindValue := dashv2alpha1.DashboardMetricFindValue{
@@ -1350,8 +1341,8 @@ func buildGroupByVariable(varMap map[string]interface{}, commonProps CommonVaria
 	var datasourceType, datasourceUID string
 
 	if ds, ok := datasource.(map[string]interface{}); ok {
-		datasourceUID = getStringField(ds, "uid", "")
-		datasourceType = getStringField(ds, "type", "")
+		datasourceUID = schemaversion.GetStringValue(ds, "uid")
+		datasourceType = schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
 		if datasourceUID != "" {
@@ -1429,8 +1420,8 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 	var datasourceType, datasourceUID string
 
 	if datasource, ok := annotationMap["datasource"].(map[string]interface{}); ok {
-		datasourceUID = getStringField(datasource, "uid", "")
-		datasourceType = getStringField(datasource, "type", "")
+		datasourceUID = schemaversion.GetStringValue(datasource, "uid")
+		datasourceType = schemaversion.GetStringValue(datasource, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
 		if datasourceUID != "" && datasourceType == "" {
@@ -1486,19 +1477,19 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 	}
 
 	spec := dashv2alpha1.DashboardAnnotationQuerySpec{
-		Name:       getStringField(annotationMap, "name", ""),
+		Name:       schemaversion.GetStringValue(annotationMap, "name"),
 		Datasource: datasourceRef,
 		Query:      query,
 		Enable:     getBoolField(annotationMap, "enable", true),
 		Hide:       getBoolField(annotationMap, "hide", false),
-		IconColor:  getStringField(annotationMap, "iconColor", ""),
+		IconColor:  schemaversion.GetStringValue(annotationMap, "iconColor"),
 		BuiltIn:    builtInPtr,
 		Filter:     filter,
 	}
 
 	// Handle any additional properties in LegacyOptions
 	legacyOptions := make(map[string]interface{})
-	if annotationType := getStringField(annotationMap, "type", ""); annotationType != "" {
+	if annotationType := schemaversion.GetStringValue(annotationMap, "type"); annotationType != "" {
 		legacyOptions["type"] = annotationType
 	}
 
@@ -1562,8 +1553,8 @@ func transformPanelQueries(panelMap map[string]interface{}) []dashv2alpha1.Dashb
 	// Get panel datasource
 	var panelDatasource *dashv2alpha1.DashboardDataSourceRef
 	if ds, ok := panelMap["datasource"].(map[string]interface{}); ok {
-		dsUID := getStringField(ds, "uid", "")
-		dsType := getStringField(ds, "type", "")
+		dsUID := schemaversion.GetStringValue(ds, "uid")
+		dsType := schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
 		if dsUID != "" {
@@ -1591,15 +1582,15 @@ func transformPanelQueries(panelMap map[string]interface{}) []dashv2alpha1.Dashb
 }
 
 func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef) dashv2alpha1.DashboardPanelQueryKind {
-	refId := getStringField(targetMap, "refId", "A")
+	refId := schemaversion.GetStringValue(targetMap, "refId", "A")
 	hidden := getBoolField(targetMap, "hide", false)
 
 	// Extract datasource from query or use panel datasource
 	var queryDatasourceType string
 	var queryDatasourceUID string
 	if ds, ok := targetMap["datasource"].(map[string]interface{}); ok {
-		queryDatasourceUID = getStringField(ds, "uid", "")
-		queryDatasourceType = getStringField(ds, "type", "")
+		queryDatasourceUID = schemaversion.GetStringValue(ds, "uid")
+		queryDatasourceType = schemaversion.GetStringValue(ds, "type")
 
 		// If we have a UID, use it to get the correct type from the datasource service
 		if queryDatasourceUID != "" {
@@ -1663,7 +1654,7 @@ func transformPanelTransformations(panelMap map[string]interface{}) []dashv2alph
 	for _, t := range transformations {
 		if tMap, ok := t.(map[string]interface{}); ok {
 			// Extract the transformation ID
-			transformationId := getStringField(tMap, "id", "")
+			transformationId := schemaversion.GetStringValue(tMap, "id")
 
 			// Extract the options field specifically
 			var options interface{}
@@ -1688,14 +1679,14 @@ func transformPanelTransformations(panelMap map[string]interface{}) []dashv2alph
 func buildQueryOptions(panelMap map[string]interface{}) dashv2alpha1.DashboardQueryOptionsSpec {
 	queryOptions := dashv2alpha1.DashboardQueryOptionsSpec{}
 
-	if cacheTimeout := getStringField(panelMap, "cacheTimeout", ""); cacheTimeout != "" {
+	if cacheTimeout := schemaversion.GetStringValue(panelMap, "cacheTimeout"); cacheTimeout != "" {
 		queryOptions.CacheTimeout = &cacheTimeout
 	}
 	if maxDataPoints := getIntField(panelMap, "maxDataPoints", 0); maxDataPoints > 0 {
 		maxDP := int64(maxDataPoints)
 		queryOptions.MaxDataPoints = &maxDP
 	}
-	if interval := getStringField(panelMap, "interval", ""); interval != "" {
+	if interval := schemaversion.GetStringValue(panelMap, "interval"); interval != "" {
 		queryOptions.Interval = &interval
 	}
 	if hideTimeOverride := getBoolField(panelMap, "hideTimeOverride", false); hideTimeOverride {
@@ -1718,10 +1709,10 @@ func buildQueryOptions(panelMap map[string]interface{}) dashv2alpha1.DashboardQu
 			queryOptions.QueryCachingTTL = &ttl
 		}
 	}
-	if timeFrom := getStringField(panelMap, "timeFrom", ""); timeFrom != "" {
+	if timeFrom := schemaversion.GetStringValue(panelMap, "timeFrom"); timeFrom != "" {
 		queryOptions.TimeFrom = &timeFrom
 	}
-	if timeShift := getStringField(panelMap, "timeShift", ""); timeShift != "" {
+	if timeShift := schemaversion.GetStringValue(panelMap, "timeShift"); timeShift != "" {
 		queryOptions.TimeShift = &timeShift
 	}
 
@@ -1738,8 +1729,8 @@ func transformDataLinks(panelMap map[string]interface{}) []dashv2alpha1.Dashboar
 	for _, link := range links {
 		if linkMap, ok := link.(map[string]interface{}); ok {
 			dataLink := dashv2alpha1.DashboardDataLink{
-				Title: getStringField(linkMap, "title", ""),
-				Url:   getStringField(linkMap, "url", ""),
+				Title: schemaversion.GetStringValue(linkMap, "title"),
+				Url:   schemaversion.GetStringValue(linkMap, "url"),
 			}
 			if _, exists := linkMap["targetBlank"]; exists {
 				targetBlank := getBoolField(linkMap, "targetBlank", false)
@@ -1754,8 +1745,8 @@ func transformDataLinks(panelMap map[string]interface{}) []dashv2alpha1.Dashboar
 }
 
 func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizConfigKind {
-	panelType := getStringField(panelMap, "type", "graph")
-	pluginVersion := getStringField(panelMap, "pluginVersion", "")
+	panelType := schemaversion.GetStringValue(panelMap, "type", "graph")
+	pluginVersion := schemaversion.GetStringValue(panelMap, "pluginVersion")
 
 	// Extract field config and options
 	fieldConfig := make(map[string]interface{})
@@ -2166,7 +2157,7 @@ func extractFieldConfigOverrides(fieldConfig map[string]interface{}) []dashv2alp
 		if matcher, exists := overrideMap["matcher"]; exists {
 			if matcherMap, ok := matcher.(map[string]interface{}); ok {
 				fieldOverride.Matcher = dashv2alpha1.DashboardMatcherConfig{
-					Id:      getStringField(matcherMap, "id", ""),
+					Id:      schemaversion.GetStringValue(matcherMap, "id"),
 					Options: matcherMap["options"],
 				}
 			}
@@ -2177,7 +2168,7 @@ func extractFieldConfigOverrides(fieldConfig map[string]interface{}) []dashv2alp
 				for _, property := range propertiesArray {
 					if propertyMap, ok := property.(map[string]interface{}); ok {
 						fieldOverride.Properties = append(fieldOverride.Properties, dashv2alpha1.DashboardDynamicConfigValue{
-							Id:    getStringField(propertyMap, "id", ""),
+							Id:    schemaversion.GetStringValue(propertyMap, "id"),
 							Value: propertyMap["value"],
 						})
 					}
