@@ -157,6 +157,9 @@ func (r *Runner) Run(ctx context.Context) error {
 						logger.Error("Error cleaning up old check reports", "error", err)
 						return err
 					}
+
+					// Update the last created time with the new created checks
+					lastCreatedMap[namespace] = time.Now()
 				}
 			}
 
