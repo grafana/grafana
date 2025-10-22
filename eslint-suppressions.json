@@ -2023,11 +2023,6 @@
       "count": 1
     }
   },
-  "public/app/features/connections/components/ConnectionsRedirectNotice/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/connections/tabs/ConnectData/CardGrid/index.tsx": {
     "no-barrel-files/no-barrel-files": {
       "count": 1
