@@ -23,7 +23,11 @@ const labelWidth = 15;
 type NonClassicExpressionType = Exclude<ExpressionQueryType, ExpressionQueryType.classic>;
 type ExpressionTypeConfigStorage = Partial<Record<NonClassicExpressionType, string>>;
 
-// Help text for each expression type - can be expanded with more detailed content
+/**
+ * Get the configuration for an expression type (helper text and feature state).
+ * @param type - The expression type.
+ * @returns The configuration for the expression type.
+ */
 const getExpressionTypeConfig = (
   type: ExpressionQueryType
 ): { helperText: PopoverContent; featureState: FeatureState | undefined } => {
