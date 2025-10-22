@@ -439,7 +439,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 		}
 
 		if query.From > 0 && query.To > 0 {
-			startOffsetHours := float64(now-query.To) / (1000.0 * 3600.0)
+			startOffsetHours := float64(time.Duration(now-query.To)*time.Millisecond / time.Hour)
 			if startOffsetHours < 0 {
 				startOffsetHours = 0
 			}
