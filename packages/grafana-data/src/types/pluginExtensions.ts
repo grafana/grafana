@@ -230,6 +230,7 @@ export enum PluginExtensionPointPatterns {
 // Extension Points available in plugins
 export enum PluginExtensionExposedComponents {
   CentralAlertHistorySceneV1 = 'grafana/central-alert-history-scene/v1',
+  DrilldownAddToDashboardPanelV1 = 'grafana/drilldown-add-to-dashboard-panel/v1',
 }
 
 export type PluginExtensionPanelContext = {
