@@ -4014,11 +4014,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/ResourcePicker/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/components/TracesQueryEditor/Filters.tsx": {
     "no-restricted-syntax": {
       "count": 1
