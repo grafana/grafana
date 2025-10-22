@@ -19,7 +19,7 @@ import { ROUTES } from '../../constants';
 
 import { CardGrid, type CardGridItem } from './CardGrid/CardGrid';
 import { CategoryHeader } from './CategoryHeader/CategoryHeader';
-import { NoAccessModal } from './NoAccessModal';
+import { NoAccessModal } from './NoAccessModal/NoAccessModal';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   searchContainer: css({

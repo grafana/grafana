@@ -2034,11 +2034,6 @@
       "count": 2
     }
   },
-  "public/app/features/connections/tabs/ConnectData/NoAccessModal/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/connections/tabs/ConnectData/Search/index.tsx": {
     "no-barrel-files/no-barrel-files": {
       "count": 1
