@@ -1,7 +1,7 @@
-buf.build/gen/go/parca-dev/parca/connectrpc/go v1.18.1-20250703125925-3f0fcf4bff96.1 h1:MXQkdpJwbCwskYLQ3dUv/5gmk8fSsUwu78u+kXebbek=
-buf.build/gen/go/parca-dev/parca/connectrpc/go v1.18.1-20250703125925-3f0fcf4bff96.1/go.mod h1:pjl83IqpNF7Lm/lOPMLQ5IIfCg+yTu2A9OgYTcEncCs=
-buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.2-20250703125925-3f0fcf4bff96.1 h1:9nqE/pDc/HXAXiD5pZncPywjAzWgKuBkFFYgdK2lVU8=
-buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.2-20250703125925-3f0fcf4bff96.1/go.mod h1:1M7nlq2ljfzb95x9LaA2j1gYIvDkVZii58mGvTa9ExM=
+buf.build/gen/go/parca-dev/parca/connectrpc/go v1.19.1-20251021111352-8328e0e94621.2 h1:/I/99swn2eTCOysciz6dqfBSP0PdefKJ7cUkMVtY6IY=
+buf.build/gen/go/parca-dev/parca/connectrpc/go v1.19.1-20251021111352-8328e0e94621.2/go.mod h1:hf8SY/W7IKtH4jrPyokIfWb379Ag7k0pLi26cYYmKLA=
+buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.10-20251021111352-8328e0e94621.1 h1:e14Gfkc3g4pOBfydTgLN6woCWpXdD9etjNQ+zV+a6b4=
+buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.10-20251021111352-8328e0e94621.1/go.mod h1:5enZD+ezsVK1m/ZM9AMEUxQMxsKGWc5MJx0gt9ho+tc=
 c2sp.org/CCTV/age v0.0.0-20240306222714-3ec4d716e805 h1:u2qwJeEvnypw+OCPUHmoZE3IqwfuN5kgDfo5MLzpNM0=
 c2sp.org/CCTV/age v0.0.0-20240306222714-3ec4d716e805/go.mod h1:FomMrUJ2Lxt5jCLmZkG3FHa72zUprnhd3v/Z18Snm4w=
 cel.dev/expr v0.24.0 h1:56OvJKSH3hDGL0ml5uSxZmz3/3Pq4tJ+fb1unVLAFcY=
@@ -627,8 +627,8 @@ cloud.google.com/go/workflows v1.7.0/go.mod h1:JhSrZuVZWuiDfKEFxU0/F1PQjmpnpcoIS
 cloud.google.com/go/workflows v1.8.0/go.mod h1:ysGhmEajwZxGn1OhGOGKsTXc5PyxOc0vfKf5Af+to4M=
 cloud.google.com/go/workflows v1.9.0/go.mod h1:ZGkj1aFIOd9c8Gerkjjq7OW7I5+l6cSvT3ujaO/WwSA=
 cloud.google.com/go/workflows v1.10.0/go.mod h1:fZ8LmRmZQWacon9UCX1r/g/DfAXx5VcPALq2CxzdePw=
-connectrpc.com/connect v1.18.1 h1:PAg7CjSAGvscaf6YZKUefjoih5Z/qYkyaTrBW8xvYPw=
-connectrpc.com/connect v1.18.1/go.mod h1:0292hj1rnx8oFrStN7cB4jjVBeqs+Yx5yDIC2prWDO8=
+connectrpc.com/connect v1.19.1 h1:R5M57z05+90EfEvCY1b7hBxDVOUl45PrtXtAV2fOC14=
+connectrpc.com/connect v1.19.1/go.mod h1:tN20fjdGlewnSFeZxLKb0xwIZ6ozc3OQs2hTXy4du9w=
 contrib.go.opencensus.io/exporter/ocagent v0.6.0/go.mod h1:zmKjrJcdo0aYcVS7bmEeSEBLPA9YJp5bjrofdU3pIXs=
 cuelabs.dev/go/oci/ociregistry v0.0.0-20240906074133-82eb438dd565 h1:R5wwEcbEZSBmeyg91MJZTxfd7WpBo2jPof3AYjRbxwY=
 cuelabs.dev/go/oci/ociregistry v0.0.0-20240906074133-82eb438dd565/go.mod h1:5A4xfTzHTXfeVJBU6RAUf+QrlfTCW+017q/QiW+sMLg=

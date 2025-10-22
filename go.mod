@@ -3,11 +3,11 @@ module github.com/grafana/grafana
 go 1.25.3
 
 require (
-	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.18.1-20250703125925-3f0fcf4bff96.1 // @grafana/observability-traces-and-profiling
-	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.2-20250703125925-3f0fcf4bff96.1 // @grafana/observability-traces-and-profiling
+	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.19.1-20251021111352-8328e0e94621.2 // @grafana/observability-traces-and-profiling
+	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.10-20251021111352-8328e0e94621.1 // @grafana/observability-traces-and-profiling
 	cloud.google.com/go/kms v1.22.0 // @grafana/grafana-backend-group
 	cloud.google.com/go/storage v1.55.0 // @grafana/grafana-backend-group
-	connectrpc.com/connect v1.18.1 // @grafana/observability-traces-and-profiling
+	connectrpc.com/connect v1.19.1 // @grafana/observability-traces-and-profiling
 	cuelang.org/go v0.11.1 // @grafana/grafana-as-code
 	dario.cat/mergo v1.0.2 // @grafana/grafana-app-platform-squad
 	filippo.io/age v1.2.1 // @grafana/identity-access-team
