@@ -87,8 +87,9 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 			fmt.Errorf("watching provisioned resources is OK allowed (for now)")
 	}
 
-	requester := types.WithAuthInfo(context.Background(), u)
-	cfg, err := b.configProvider.GetRestConfig(requester)
+	ctx = types.WithAuthInfo(context.Background(), u)
+	ctx = identity.WithRequester(ctx, u)
+	cfg, err := b.configProvider.GetRestConfig(ctx)
 	if err != nil {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
 	}
@@ -102,7 +103,7 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 	if len(name) > 1 {
 		opts.FieldSelector = "metadata.name=" + name
 	}
-	watch, err := client.Watch(requester, opts)
+	watch, err := client.Watch(ctx, opts)
 	if err != nil {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
 	}
