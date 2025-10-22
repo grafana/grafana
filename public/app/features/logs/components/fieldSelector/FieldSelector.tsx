@@ -4,7 +4,7 @@ import { startTransition, useCallback, useLayoutEffect, useMemo, useState } from
 
 import { DataFrame, fuzzySearch, GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
 import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
@@ -60,20 +60,33 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
 
   const clearFields = useCallback(() => {
     setDisplayedFields?.([]);
-  }, [setDisplayedFields]);
+    reportInteraction('logs_field_selector_clear_fields_clicked', {
+      fields: displayedFields.length,
+      mode: 'logs',
+    });
+  }, [displayedFields.length, setDisplayedFields]);
 
   const collapse = useCallback(() => {
     setSidebarWidthWrapper(MIN_WIDTH);
+    reportInteraction('logs_field_selector_collapse_clicked', {
+      mode: 'logs',
+    });
   }, [setSidebarWidthWrapper]);
 
   const expand = useCallback(() => {
     const width = getSidebarWidth(logOptionsStorageKey);
     setSidebarWidthWrapper(width < 2 * MIN_WIDTH ? DEFAULT_WIDTH : width);
+    reportInteraction('logs_field_selector_expand_clicked', {
+      mode: 'logs',
+    });
   }, [logOptionsStorageKey, setSidebarWidthWrapper]);
 
   const handleResize: ResizeCallback = useCallback(
     (event, direction, ref) => {
       setSidebarWidthWrapper(ref.clientWidth);
+      reportInteractionOnce('logs_field_selector_resized', {
+        mode: 'logs',
+      });
     },
     [setSidebarWidthWrapper]
   );
@@ -168,7 +181,7 @@ interface LogsTableFieldSelectorProps {
 
 export const LogsTableFieldSelector = ({
   columnsWithMeta,
-  clear,
+  clear: clearProp,
   dataFrames,
   logs,
   reorder,
@@ -186,11 +199,17 @@ export const LogsTableFieldSelector = ({
 
   const collapse = useCallback(() => {
     setSidebarWidthWrapper(MIN_WIDTH);
+    reportInteraction('logs_field_selector_collapse_clicked', {
+      mode: 'table',
+    });
   }, [setSidebarWidthWrapper]);
 
   const expand = useCallback(() => {
     const width = getSidebarWidth(SETTING_KEY_ROOT);
     setSidebarWidthWrapper(width < 2 * MIN_WIDTH ? DEFAULT_WIDTH : width);
+    reportInteraction('logs_field_selector_expand_clicked', {
+      mode: 'table',
+    });
   }, [setSidebarWidthWrapper]);
 
   const displayedColumns = useMemo(
@@ -204,6 +223,14 @@ export const LogsTableFieldSelector = ({
         ),
     [columnsWithMeta]
   );
+
+  const clear = useCallback(() => {
+    clearProp();
+    reportInteraction('logs_field_selector_clear_fields_clicked', {
+      fields: displayedColumns.length,
+      mode: 'table',
+    });
+  }, [clearProp, displayedColumns.length]);
 
   const defaultColumns = useMemo(
     () =>
@@ -283,7 +310,7 @@ export const FieldSelector = ({
     startTransition(() => {
       setSearchValue(e.currentTarget.value);
     });
-    reportInteractionOnce('grafana_explore_logs_table_text_search');
+    reportInteractionOnce('logs_field_selector_text_search');
   }, []);
 
   const filteredFields = useMemo(() => {
@@ -418,6 +445,6 @@ export function getSidebarState(logOptionsStorageKey?: string): boolean | undefi
   if (!logOptionsStorageKey) {
     return undefined;
   }
-  const width = parseInt(store.get(`${logOptionsStorageKey}.fieldSelector.width`) ?? DEFAULT_WIDTH, 10)
-  return width <= (MIN_WIDTH * 2) ? false : true;
+  const width = parseInt(store.get(`${logOptionsStorageKey}.fieldSelector.width`) ?? DEFAULT_WIDTH, 10);
+  return width <= MIN_WIDTH * 2 ? false : true;
 }

@@ -21,6 +21,7 @@ import {
   LogsTableFieldSelector,
   MIN_WIDTH,
 } from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
@@ -438,6 +439,9 @@ export function LogsTableWrap(props: Props) {
     if (!isNaN(newSidebarWidth)) {
       setSidebarWidth(newSidebarWidth);
       store.set(`${SETTING_KEY_ROOT}.fieldSelector.width`, newSidebarWidth);
+      reportInteractionOnce('logs_field_selector_resized', {
+        mode: 'table',
+      });
     }
   };
 
