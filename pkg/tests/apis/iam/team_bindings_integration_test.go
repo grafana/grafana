@@ -285,7 +285,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
 		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
 		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
-		teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		_, _ = teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 
 		toUpdate := toCreate.DeepCopy()
 		toUpdate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = "test-team-2"
@@ -309,7 +309,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
 		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
 		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
-		teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		_, _ = teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 
 		toUpdate := toCreate.DeepCopy()
 		toUpdate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = "test-user-2"
@@ -334,7 +334,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
 		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
 		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
-		teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		_, _ = teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 
 		toUpdate := toCreate.DeepCopy()
 		toUpdate.Object["spec"].(map[string]interface{})["external"] = true
@@ -358,7 +358,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
 		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
 		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
-		teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		_, _ = teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 
 		toUpdate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
 		toUpdate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
