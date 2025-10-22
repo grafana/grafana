@@ -353,7 +353,7 @@ func convertGrpcEventsToLogs(events []types.GrpcSpanEvent) []types.TraceLog {
 	for _, event := range events {
 		timestamp, err := strconv.Atoi(event.TimeUnixNano)
 		if err == nil {
-			timestamp = timestamp / 1000 // converting from nanoseconds to miliseconds
+			timestamp = timestamp / 1000 // converting from nanoseconds to milliseconds
 		}
 		log := types.TraceLog{
 			Name:      event.Name,
