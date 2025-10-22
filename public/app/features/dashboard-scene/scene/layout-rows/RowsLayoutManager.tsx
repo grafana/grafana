@@ -56,7 +56,9 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public readonly descriptor = RowsLayoutManager.descriptor;
 
-  public addPanel(vizPanel: VizPanel) {}
+  public addPanel(vizPanel: VizPanel) {
+    this.state.rows[0]?.getLayout().addPanel(vizPanel);
+  }
 
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
