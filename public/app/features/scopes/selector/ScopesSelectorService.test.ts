@@ -719,11 +719,11 @@ describe('ScopesSelectorService', () => {
           parentName: '',
           nodeType: 'leaf',
           title: 'test-scope-node',
-          redirectUrl: '/custom-redirect-url',
+          redirectPath: '/custom-redirect-url',
         },
       };
 
-      // Mock fetchNodes to return the node with redirectUrl
+      // Mock fetchNodes to return the node with redirectPath
       apiClient.fetchNodes = jest
         .fn()
         .mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
@@ -755,7 +755,7 @@ describe('ScopesSelectorService', () => {
           parentName: '',
           nodeType: 'leaf',
           title: 'test-scope-node',
-          redirectUrl: '/priority-redirect',
+          redirectPath: '/priority-redirect',
         },
       };
 
@@ -767,7 +767,7 @@ describe('ScopesSelectorService', () => {
         },
       ];
 
-      // Mock fetchNodes to return the node with redirectUrl
+      // Mock fetchNodes to return the node with redirectPath
       apiClient.fetchNodes = jest
         .fn()
         .mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
@@ -790,7 +790,7 @@ describe('ScopesSelectorService', () => {
       // Then apply to trigger the redirect
       await service.apply();
 
-      // Should use redirectUrl, not scope navigation
+      // Should use redirectPath, not scope navigation
       expect(locationService.push).toHaveBeenCalledWith('/priority-redirect');
       expect(locationService.push).toHaveBeenCalledTimes(1);
     });
