@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { UrlSyncContextProvider } from '@grafana/scenes';
+import { sceneGraph, SceneObject, UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -77,10 +77,33 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
 
   return (
     <div className={styles.container}>
+      {renderHiddenVariables(dashboard)}
       <SoloPanelContextProvider value={soloPanelContext} dashboard={dashboard} singleMatch={true}>
         <body.Component model={body} />
       </SoloPanelContextProvider>
     </div>
+  );
+}
+
+// Some variables like ScopesVariable needs
+// to be rendered for their logic to work even if hidden
+function renderHiddenVariables(dashboard: DashboardScene) {
+  if (!dashboard.state.$variables) {
+    return null;
+  }
+
+  const variables = dashboard.state.$variables.state.variables;
+
+  return (
+    <>
+      {variables.map((variable) => {
+        if (variable.UNSAFE_renderAsHidden) {
+          return <variable.Component model={variable} key={variable.state.key} />;
+        }
+
+        return null;
+      })}
+    </>
   );
 }
 
