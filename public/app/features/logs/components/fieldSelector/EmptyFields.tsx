@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { useTheme2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 function getStyles(theme: GrafanaTheme2) {
   return {
@@ -14,9 +14,8 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export function LogsTableEmptyFields() {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+export function EmptyFields() {
+  const styles = useStyles2(getStyles);
   return (
     <div className={styles.empty}>
       <Trans i18nKey="explore.logs-table-empty-fields.no-fields">No fields</Trans>
