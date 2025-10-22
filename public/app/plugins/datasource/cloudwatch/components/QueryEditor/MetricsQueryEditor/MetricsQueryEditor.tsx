@@ -21,7 +21,7 @@ import { MetricStatEditor } from '../../shared/MetricStatEditor';
 
 import { DynamicLabelsField } from './DynamicLabelsField';
 import { MathExpressionQueryField } from './MathExpressionQueryField';
-import { SQLBuilderEditor } from './SQLBuilderEditor';
+import { SQLBuilderEditor } from './SQLBuilderEditor/SQLBuilderEditor';
 import { SQLCodeEditor } from './SQLCodeEditor';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {

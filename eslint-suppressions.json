@@ -4118,11 +4118,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/SQLBuilderEditor/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/cloudwatch/components/shared/LogGroups/LegacyLogGroupNamesSelection.tsx": {
     "no-restricted-syntax": {
       "count": 1
