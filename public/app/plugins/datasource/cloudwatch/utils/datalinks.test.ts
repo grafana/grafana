@@ -104,7 +104,7 @@ describe('addDataLinksToLogsResponse', () => {
     });
   });
 
-  it('should add data links to response from log groups, trimming :*', async () => {
+  it('should add a data link field to response from log groups, trimming :*', async () => {
     const mockResponse: DataQueryResponse = {
       data: [
         {
@@ -148,6 +148,11 @@ describe('addDataLinksToLogsResponse', () => {
           fields: [
             {
               name: '@message',
+            },
+            {
+              name: '',
+              type: FieldType.string,
+              values: [],
               config: {
                 links: [
                   {
@@ -156,7 +161,7 @@ describe('addDataLinksToLogsResponse', () => {
                   },
                 ],
               },
-            },
+            }
           ],
           refId: 'A',
         },
