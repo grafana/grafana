@@ -367,7 +367,7 @@ func convertGrpcEventsToLogs(events []types.GrpcSpanEvent) []types.TraceLog {
 }
 
 // this is to help ensure backwards compatibility between references and links with the current non OTLP based Jaeger trace format
-// There is no convccept of RefType in the new OTLP based SpanLink, so we are only converting the SpanID and TraceID
+// There is no concept of RefType in the new OTLP based SpanLink, so we are only converting the SpanID and TraceID
 func convertGrpcLinkToReference(links []types.GrpcSpanLink) []types.TraceSpanReference {
 	references := []types.TraceSpanReference{}
 
