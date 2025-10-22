@@ -1194,11 +1194,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/AccessControl/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/core/components/DynamicImports/SafeDynamicImport.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
