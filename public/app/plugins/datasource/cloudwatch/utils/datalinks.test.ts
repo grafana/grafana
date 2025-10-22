@@ -161,7 +161,7 @@ describe('addDataLinksToLogsResponse', () => {
                   },
                 ],
               },
-            }
+            },
           ],
           refId: 'A',
         },
