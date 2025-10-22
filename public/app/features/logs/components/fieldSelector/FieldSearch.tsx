@@ -7,7 +7,7 @@ import { Field, IconButton, Input, useStyles2 } from '@grafana/ui';
 
 interface Props {
   collapse(): void;
-  onChange(e: React.FormEvent<HTMLInputElement>): void;
+  onChange(e?: React.FormEvent<HTMLInputElement>): void;
   value: string;
 }
 
@@ -28,6 +28,15 @@ export function FieldSearch({ collapse, onChange, value }: Props) {
           type="text"
           placeholder={t('logs.field-selector.placeholder-search-fields-by-name', 'Search fields by name')}
           onChange={onChange}
+          suffix={
+            value ? (
+              <IconButton
+                name="times"
+                aria-label={t('logs.field-selector.clear-button', 'Clear')}
+                onClick={() => onChange()}
+              />
+            ) : undefined
+          }
         />
       </Field>
     </>

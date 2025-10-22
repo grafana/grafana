@@ -306,7 +306,11 @@ export const FieldSelector = ({
   const [searchValue, setSearchValue] = useState<string>('');
   const styles = useStyles2(getStyles);
 
-  const onSearchInputChange = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+  const onSearchInputChange = useCallback((e?: React.FormEvent<HTMLInputElement>) => {
+    if (e === undefined) {
+      setSearchValue('');
+      return;
+    }
     startTransition(() => {
       setSearchValue(e.currentTarget.value);
     });
