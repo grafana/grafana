@@ -604,7 +604,6 @@ Grafana encrypts secure settings in the database.
 | `singleEmail` |                |
 | `addresses`   |                |
 
-
 #### Alert notification `opsgenie`
 
 | Name               | Secure setting |
