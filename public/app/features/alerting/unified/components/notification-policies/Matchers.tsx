@@ -55,7 +55,7 @@ interface MatcherBadgeProps {
   formatter?: MatcherFormatter;
 }
 
-const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher, formatter = 'default' }) => {
+export const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher, formatter = 'default' }) => {
   const styles = useStyles2(getStyles);
 
   return (

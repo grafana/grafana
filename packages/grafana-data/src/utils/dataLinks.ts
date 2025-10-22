@@ -47,6 +47,20 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
   const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
 
+  const interpolatedParams = interpolatedQuery
+    ? {
+        query: {
+          ...interpolatedQuery,
+          // data source is defined in a separate property in DataLink, we ensure it's put back together after interpolation
+          datasource: {
+            ...interpolatedQuery.datasource,
+            uid: internalLink.datasourceUid,
+          },
+        },
+        ...(range && { timeRange: range }),
+      }
+    : undefined;
+
   return {
     title: replaceVariables(title, scopedVars),
     // In this case this is meant to be internal link (opens split view by default) the href will also points
@@ -72,6 +86,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
       : undefined,
     target: link?.targetBlank ? '_blank' : '_self',
     origin: field,
+    ...(interpolatedParams && { interpolatedParams }),
   };
 }
 

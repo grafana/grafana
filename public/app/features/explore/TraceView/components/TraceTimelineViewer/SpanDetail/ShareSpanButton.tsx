@@ -8,12 +8,13 @@ type Props = {
 
 export function ShareSpanButton(props: Props) {
   const { focusSpanLink } = props;
+  const { interpolatedParams, ...linkProps } = focusSpanLink ?? {};
   return (
     <span>
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <a
         data-testid="share-span-button"
-        {...focusSpanLink}
+        {...linkProps}
         onClick={(e) => {
           // click handling logic copied from react router:
           // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s

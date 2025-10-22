@@ -9,30 +9,29 @@ import { LogsPanelSuggestionsSupplier } from './suggestions';
 export const plugin = new PanelPlugin<Options>(LogsPanel)
   .setPanelOptions((builder, context) => {
     const category = [t('logs.category-logs', 'Logs')];
-    builder.addBooleanSwitch({
-      path: 'showTime',
-      name: t('logs.name-time', 'Show timestamps'),
-      category,
-      description: '',
-      defaultValue: false,
-    });
+    builder
+      .addBooleanSwitch({
+        path: 'showTime',
+        name: t('logs.name-time', 'Show timestamps'),
+        category,
+        description: '',
+        defaultValue: false,
+      })
+      .addBooleanSwitch({
+        path: 'showLabels',
+        name: t('logs.name-unique-labels', 'Unique labels'),
+        category,
+        description: '',
+      });
 
     if (!config.featureToggles.newLogsPanel) {
-      builder
-        .addBooleanSwitch({
-          path: 'showLabels',
-          name: t('logs.name-unique-labels', 'Unique labels'),
-          category,
-          description: '',
-          defaultValue: false,
-        })
-        .addBooleanSwitch({
-          path: 'showCommonLabels',
-          name: t('logs.name-common-labels', 'Common labels'),
-          category,
-          description: '',
-          defaultValue: false,
-        });
+      builder.addBooleanSwitch({
+        path: 'showCommonLabels',
+        name: t('logs.name-common-labels', 'Common labels'),
+        category,
+        description: '',
+        defaultValue: false,
+      });
     } else if (context.options?.showTime) {
       builder.addRadio({
         path: 'timestampResolution',
@@ -60,23 +59,26 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       defaultValue: false,
     });
 
-    if (config.featureToggles.newLogsPanel) {
-      builder.addBooleanSwitch({
-        path: 'syntaxHighlighting',
-        name: t('logs.name-enable-syntax-highlighting', 'Enable syntax highlighting'),
-        category,
-        description: t(
-          'logs.description-enable-syntax-highlighting',
-          'Use a predefined syntax coloring grammar to highlight relevant parts of the log lines'
-        ),
-      });
-    } else {
+    // In the old panel this is an independent option, in the new panel is linked to wrapLogMessage
+    if (!config.featureToggles.newLogsPanel || context.options?.wrapLogMessage) {
       builder.addBooleanSwitch({
         path: 'prettifyLogMessage',
         name: t('logs.name-prettify-json', 'Prettify JSON'),
         category,
         description: '',
         defaultValue: false,
+      });
+    }
+
+    if (config.featureToggles.newLogsPanel) {
+      builder.addBooleanSwitch({
+        path: 'syntaxHighlighting',
+        name: t('logs.name-enable-logs-highlighting', 'Enable logs highlighting'),
+        category,
+        description: t(
+          'logs.description-enable-logs-highlighting',
+          'Use a predefined coloring scheme to highlight relevant parts of the log lines'
+        ),
       });
     }
 
@@ -91,7 +93,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
     if (config.featureToggles.newLogsPanel && context.options?.enableLogDetails) {
       builder.addRadio({
         path: 'detailsMode',
-        name: t('logs.name-details-mode', 'Log Details panel mode'),
+        name: t('logs.name-details-mode', 'Log details panel mode'),
         category,
         description: '',
         settings: {
@@ -116,6 +118,19 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       ),
       defaultValue: false,
     });
+
+    if (config.featureToggles.otelLogsFormatting) {
+      builder.addBooleanSwitch({
+        path: 'showLogAttributes',
+        name: t('logs.show-log-attributes', 'Display log attributes for OTel logs'),
+        category,
+        description: t(
+          'logs.description-show-log-attributes',
+          'Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.'
+        ),
+        defaultValue: true,
+      });
+    }
 
     if (config.featureToggles.newLogsPanel) {
       builder

@@ -17,9 +17,6 @@ import (
 )
 
 func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
-	// TODO: fix flaky test
-	t.Skip("skipping flaky test")
-
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)

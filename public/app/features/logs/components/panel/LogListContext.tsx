@@ -28,12 +28,13 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
+import { getSidebarState } from '../fieldSelector/FieldSelector';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { LogLineTimestampResolution } from './LogLine';
 import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
-import { LogListControlOptions, LogListFontSize } from './LogList';
+import { LogListOptions, LogListFontSize } from './LogList';
 import { reportInteractionOnce } from './analytics';
 import { LogListModel } from './processing';
 import { getScrollbarWidth, LOG_LIST_CONTROLS_WIDTH, LOG_LIST_MIN_WIDTH } from './virtualization';
@@ -151,8 +152,6 @@ export type LogListState = Pick<
   | 'timestampResolution'
 >;
 
-export type LogListOption = keyof LogListState | 'wrapLogMessage' | 'prettifyJSON';
-
 export interface Props {
   app: CoreApp;
   children?: ReactNode;
@@ -178,7 +177,7 @@ export interface Props {
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
@@ -190,6 +189,7 @@ export interface Props {
   prettifyJSON?: boolean;
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
+  showLogAttributes?: boolean;
   showUniqueLabels?: boolean;
   showTime: boolean;
   sortOrder: LogsSortOrder;
@@ -205,7 +205,7 @@ export const LogListContextProvider = ({
   enableLogDetails,
   logOptionsStorageKey,
   detailsMode: detailsModeProp = logOptionsStorageKey
-    ? store.get(`${logOptionsStorageKey}.detailsMode`)
+    ? (store.get(`${logOptionsStorageKey}.detailsMode`) ?? getDefaultDetailsMode(containerElement))
     : getDefaultDetailsMode(containerElement),
   dedupStrategy,
   displayedFields,
@@ -233,11 +233,10 @@ export const LogListContextProvider = ({
   permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
-  prettifyJSON: prettifyJSONProp = logOptionsStorageKey
-    ? store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true)
-    : true,
+  prettifyJSON: prettifyJSONProp,
   setDisplayedFields,
   showControls,
+  showLogAttributes,
   showTime,
   showUniqueLabels,
   sortOrder,
@@ -267,7 +266,7 @@ export const LogListContextProvider = ({
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(
     detailsModeProp ?? getDefaultDetailsMode(containerElement)
   );
-  const [isAssistantAvailable, openAssistant] = useAssistant();
+  const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
   const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
 
@@ -279,9 +278,12 @@ export const LogListContextProvider = ({
       dedupStrategy,
       fontSize,
       forceEscape: logListState.forceEscape,
+      fieldSelectorOpen: getSidebarState(logOptionsStorageKey),
       showTime,
+      showUniqueLabels,
       syntaxHighlighting,
       wrapLogMessage,
+      prettifyJSON,
       detailsWidth,
       detailsMode,
       withDisplayedFields: displayedFields.length > 0,
@@ -291,16 +293,28 @@ export const LogListContextProvider = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const otelDisplayedFields = useMemo(() => {
+    if (!config.featureToggles.otelLogsFormatting || !setDisplayedFields || showLogAttributes === false) {
+      return [];
+    }
+    return getDisplayedFieldsForLogs(logs);
+  }, [logs, setDisplayedFields, showLogAttributes]);
+
   // OTel displayed fields
   useEffect(() => {
-    if (displayedFields.length > 0 || !config.featureToggles.otelLogsFormatting || !setDisplayedFields) {
+    if (config.featureToggles.otelLogsFormatting && showLogAttributes !== false) {
+      onLogOptionsChange?.('defaultDisplayedFields', otelDisplayedFields);
+    }
+  }, [onLogOptionsChange, otelDisplayedFields, showLogAttributes]);
+
+  useEffect(() => {
+    if (displayedFields.length > 0 || !setDisplayedFields) {
       return;
     }
-    const otelDisplayedFields = getDisplayedFieldsForLogs(logs);
     if (otelDisplayedFields.length) {
       setDisplayedFields(otelDisplayedFields);
     }
-  }, [displayedFields.length, logs, setDisplayedFields]);
+  }, [displayedFields.length, otelDisplayedFields, setDisplayedFields]);
 
   // Sync state
   useEffect(() => {
@@ -312,24 +326,14 @@ export const LogListContextProvider = ({
       ...logListState,
       dedupStrategy,
       showTime,
+      showUniqueLabels,
       sortOrder,
       syntaxHighlighting,
-      wrapLogMessage,
     };
     if (!shallowCompare(logListState, newState)) {
       setLogListState(newState);
     }
-  }, [
-    app,
-    dedupStrategy,
-    logListState,
-    pinnedLogs,
-    showControls,
-    showTime,
-    sortOrder,
-    syntaxHighlighting,
-    wrapLogMessage,
-  ]);
+  }, [app, dedupStrategy, logListState, showControls, showTime, showUniqueLabels, sortOrder, syntaxHighlighting]);
 
   // Sync filter levels
   useEffect(() => {
@@ -343,6 +347,13 @@ export const LogListContextProvider = ({
       return logListState;
     });
   }, [filterLevels]);
+
+  // Sync details mode
+  useEffect(() => {
+    if (detailsModeProp) {
+      setDetailsMode(detailsModeProp);
+    }
+  }, [detailsModeProp]);
 
   // Sync font size
   useEffect(() => {
@@ -389,6 +400,18 @@ export const LogListContextProvider = ({
     return () => observer.disconnect();
   }, [containerElement, detailsMode, logOptionsStorageKey, showControls]);
 
+  // Sync prettifyJSON
+  useEffect(() => {
+    if (prettifyJSONProp !== undefined) {
+      setPrettifyJSONState(prettifyJSONProp);
+    }
+  }, [prettifyJSONProp]);
+
+  // Sync wrapLogMessage
+  useEffect(() => {
+    setWrapLogMessageState(wrapLogMessageProp);
+  }, [wrapLogMessageProp]);
+
   // Sync timestamp resolution
   useEffect(() => {
     setLogListState((state) => ({
@@ -396,6 +419,13 @@ export const LogListContextProvider = ({
       timestampResolution,
     }));
   }, [timestampResolution]);
+
+  // Sync showLogAttributes
+  useEffect(() => {
+    if (showLogAttributes === false && setDisplayedFields) {
+      setDisplayedFields([]);
+    }
+  }, [setDisplayedFields, showLogAttributes]);
 
   const controlsExpandedFromStore = store.getBool(
     `${logOptionsStorageKey}.controlsExpanded`,
@@ -485,7 +515,7 @@ export const LogListContextProvider = ({
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.prettifyLogMessage`, prettifyJSON);
       }
-      onLogOptionsChange?.('prettifyJSON', prettifyJSON);
+      onLogOptionsChange?.('prettifyLogMessage', prettifyJSON);
     },
     [logOptionsStorageKey, onLogOptionsChange]
   );

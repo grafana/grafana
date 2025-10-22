@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { VariableHide, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import {
   sceneGraph,
   useSceneObjectState,
@@ -9,10 +10,12 @@ import {
   SceneVariableState,
   ControlsLabel,
   ControlsLayout,
+  sceneUtils,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
+import { AddVariableButton } from './VariableControlsAddButton';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
@@ -20,10 +23,11 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   return (
     <>
       {variables
-        .filter((v) => !v.state.showInControlsMenu)
+        .filter((v) => v.state.hide !== VariableHide.inControlsMenu)
         .map((variable) => (
           <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
         ))}
+      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
   );
 }
@@ -63,6 +67,18 @@ export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectP
       onSelect(evt);
     }
   };
+
+  // For switch variables in menu, we want to show the switch on the left and the label on the right
+  if (inMenu && sceneUtils.isSwitchVariable(variable)) {
+    return (
+      <div className={styles.switchMenuContainer} data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}>
+        <div className={styles.switchControl}>
+          <variable.Component model={variable} />
+        </div>
+        <VariableLabel variable={variable} layout={'vertical'} className={styles.switchLabel} />
+      </div>
+    );
+  }
 
   if (inMenu) {
     return (
@@ -133,6 +149,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
   verticalContainer: css({
     display: 'flex',
     flexDirection: 'column',
+  }),
+  switchMenuContainer: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  switchControl: css({
+    '& > div': {
+      border: 'none',
+      background: 'transparent',
+      paddingRight: theme.spacing(0.5),
+    },
+  }),
+  switchLabel: css({
+    marginTop: theme.spacing(0.5),
   }),
   labelWrapper: css({
     display: 'flex',

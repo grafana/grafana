@@ -18,7 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// DualReadWriter is a wrapper around a repository that can read and write resources
+// DualReadWriter is a wrapper around a repository that can read from and write resources
+// into both the Git repository as well as in Grafana. It isn't a dual writer in the sense of what unistore handling calls dual writing.
+
+// Standard provisioning Authorizer has already run by the time DualReadWriter is called
+// for incoming requests from actors, external or internal. However, since it is the files
+// connector that redirects here, the external resources such as dashboards
+// end up requiring additional authorization checks which the DualReadWriter performs here.
+
 // TODO: it does not support folders yet
 type DualReadWriter struct {
 	repo    repository.ReaderWriter
@@ -496,24 +503,31 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 		return apierrors.NewUnauthorized(err.Error())
 	}
 
-	// Use configured permissions for get+delete
-	if parsed.Existing != nil && (verb == utils.VerbGet || verb == utils.VerbDelete) {
-		rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
-			Group:     parsed.GVR.Group,
-			Resource:  parsed.GVR.Resource,
-			Namespace: parsed.Existing.GetNamespace(),
-			Name:      parsed.Existing.GetName(),
-			Folder:    parsed.Meta.GetFolder(),
-			Verb:      utils.VerbGet,
-		})
-		if err != nil || !rsp.Allowed {
-			return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
-				fmt.Errorf("no access to read the embedded file"))
-		}
+	var name string
+	if parsed.Existing != nil {
+		name = parsed.Existing.GetName()
+	} else {
+		name = parsed.Obj.GetName()
 	}
 
-	// Simple role based access for now
-	if id.GetOrgRole().Includes(identity.RoleEditor) {
+	rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
+		Group:     parsed.GVR.Group,
+		Resource:  parsed.GVR.Resource,
+		Namespace: id.GetNamespace(),
+		Name:      name,
+		Verb:      verb,
+	}, parsed.Meta.GetFolder())
+	if err != nil || !rsp.Allowed {
+		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
+			fmt.Errorf("no access to read the embedded file"))
+	}
+
+	idType, _, err := authlib.ParseTypeID(id.GetID())
+	if err != nil {
+		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(), fmt.Errorf("could not determine identity type to check access"))
+	}
+	// only apply role based access if identity is not of type access policy
+	if idType == authlib.TypeAccessPolicy || id.GetOrgRole().Includes(identity.RoleEditor) {
 		return nil
 	}
 
@@ -539,7 +553,7 @@ func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) er
 func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
 	// if the ref is set, it is not the active branch, so just delete the files from the branch
 	// and do not delete the items from grafana itself
-	if r.shouldUpdateGrafanaDB(opts, nil) {
+	if !r.shouldUpdateGrafanaDB(opts, nil) {
 		err := r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
 		if err != nil {
 			return nil, fmt.Errorf("error deleting folder from repository: %w", err)

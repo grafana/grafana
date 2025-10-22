@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { getConfigDashboards } from './utils';
+import { getConfigDashboards, trackDashboardReloadRequests, checkDashboardReloadBehavior } from './utils';
 
 test.use({
   featureToggles: {
@@ -27,7 +27,13 @@ test.describe(
 
       for (const db of dashboards) {
         await test.step('1.Loads dashboard successfully - ' + db, async () => {
+          const { getRequests, waitForExpectedRequests } = await trackDashboardReloadRequests(page);
           const dashboardPage = await gotoDashboardPage({ uid: db });
+          await waitForExpectedRequests();
+          await page.waitForLoadState('networkidle');
+
+          const requests = getRequests();
+          expect(checkDashboardReloadBehavior(requests)).toBe(true);
 
           const panelTitle = dashboardPage.getByGrafanaSelector(
             selectors.components.Panels.Panel.title(PANEL_UNDER_TEST)
@@ -134,8 +140,8 @@ test.describe(
 
           expect.soft(await timePickerButton.textContent()).toContain('2024-01-01 08:30:00 to 2024-01-01 08:40:00');
 
-          const forwardBtn = page.locator('button[aria-label="Move time range forwards"]');
-          const backwardBtn = page.locator('button[aria-label="Move time range backwards"]');
+          const forwardBtn = page.locator('button[aria-label*="Move"][aria-label*="forward"]');
+          const backwardBtn = page.locator('button[aria-label*="Move"][aria-label*="backward"]');
 
           await forwardBtn.click();
 

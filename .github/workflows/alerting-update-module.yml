@@ -29,7 +29,7 @@ jobs:
           fi
 
       - name: Setup Go
-        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # 5.5.0
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # 6.0.0
         with:
           "go-version-file": "go.mod"
 
@@ -148,7 +148,7 @@ jobs:
             echo "🔗 [View Pull Request]($PR_URL)"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Send Slack Message
-        uses: grafana/shared-workflows/actions/send-slack-message@send-slack-message/v2.0.3
+        uses: grafana/shared-workflows/actions/send-slack-message@send-slack-message/v2.0.4
         with:
           method: 'chat.postMessage'
           # send to alerting-reviews channel

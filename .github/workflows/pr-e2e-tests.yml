@@ -65,7 +65,7 @@ jobs:
       # If no cache hit, build Grafana
       - name: Build Grafana
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
@@ -122,7 +122,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5.5.0
+        uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
           cache: ${{ !github.event.pull_request.head.repo.fork }}
@@ -149,25 +149,17 @@ jobs:
     needs:
       - build-grafana
     steps:
-      - id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - id: get-github-token
+        name: "create github app token"
+        uses: grafana/shared-workflows/actions/create-github-app-token@eb02241ed0a92aff205feab8ac3afcdf51c757c8 # create-github-app-token-v0.2.0
         with:
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          repositories: '["grafana"]'
-          permissions: '{"checks": "write"}'
+          github_app: "delivery-bot-app"
       - uses: grafana/shared-workflows/actions/login-to-gar@main
         id: login-to-gar
         with:
           registry: 'us-docker.pkg.dev'
           environment: 'dev'
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - uses: actions/download-artifact@4a24838f3d5601fd639834081e118c2995d51e1c
         with:
           name: grafana-docker-tar-gz
           path: .
@@ -184,7 +176,7 @@ jobs:
           echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_ENV"
       - name: Add PR status check
         env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GH_TOKEN: ${{ steps.get-github-token.outputs.token }}
           SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           gh api \
@@ -229,16 +221,16 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: grafana-tar-gz
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: ${{ needs.build-e2e-runner.outputs.artifact }}
       - name: chmod +x
         run: chmod +x ./e2e-runner
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
@@ -275,7 +267,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
 
@@ -306,11 +298,11 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: grafana-tar-gz
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
@@ -323,7 +315,7 @@ jobs:
           retention-days: 1
 
   run-azure-monitor-e2e:
-    if: needs.detect-changes.outputs.cloud_plugins_changed == 'true' && github.event.pull_request.head.repo.fork == false
+    if: needs.detect-changes.outputs.cloud_plugins_changed == 'true' && github.event.pull_request.head.repo.fork == false && github.event_name == 'pull_request'
     runs-on: ubuntu-x64-large
     needs:
       - build-grafana
@@ -368,12 +360,12 @@ jobs:
         run: |
           docker cp cpp-e2e-deploy:/outputs.json /tmp/outputs.json
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: grafana-tar-gz
 
       - name: Run E2E tests
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
@@ -403,12 +395,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
 
       - name: Download blob reports from GitHub Actions Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: blobs
           pattern: playwright-blob-*
@@ -487,19 +479,19 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: grafana-tar-gz
       - name: Run PR a11y test
         if: github.event_name == 'pull_request'
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
           args: go run ./pkg/build/a11y --package=grafana.tar.gz
       - name: Run non-PR a11y test
         if: github.event_name != 'pull_request'
-        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
         with:
           version: 0.18.8
           verb: run
@@ -533,13 +525,13 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
       - name: Install dependencies
         run: yarn install --immutable
       - name: Get pa11y results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: pa11y-ci-results
       - name: Extract and publish metrics

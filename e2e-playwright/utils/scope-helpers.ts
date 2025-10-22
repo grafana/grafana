@@ -19,6 +19,7 @@ export type TestScope = {
   type?: string;
   category?: string;
   addLinks?: boolean;
+  redirectPath?: string;
 };
 
 type ScopeDashboardBinding = Resource<ScopeDashboardBindingSpec, ScopeDashboardBindingStatus, 'ScopeDashboardBinding'>;
@@ -54,6 +55,9 @@ export async function scopeNodeChildrenRequest(
             ...((scope.addLinks || scope.children) && {
               linkType: 'scope',
               linkId: `scope-${scope.name}`,
+            }),
+            ...(scope.redirectPath && {
+              redirectPath: scope.redirectPath,
             }),
           },
         })),
@@ -262,13 +266,15 @@ export async function getScopeLeafName(page: Page, nth: number): Promise<string>
 }
 
 export async function getScopeLeafTitle(page: Page, nth: number): Promise<string> {
-  const locator = page.getByTestId(/^scopes-tree-.*-(checkbox|radio)/).nth(nth);
-  const scopeTitle = await locator.locator('../..').textContent();
-
+  const leafLocator = page.getByTestId(/^scopes-tree-.*-(checkbox|radio)/).nth(nth);
+  // Find the closest ancestor element that has the main tree item test id
+  const titleLocator = leafLocator.locator(
+    'xpath=ancestor::*[@data-testid][starts-with(@data-testid, "scopes-tree-") and not(contains(@data-testid, "-checkbox")) and not(contains(@data-testid, "-radio")) and not(contains(@data-testid, "-expand"))]'
+  );
+  const scopeTitle = await titleLocator.textContent();
   if (!scopeTitle) {
     throw new Error('There are no scopes in the selector');
   }
-
   return scopeTitle;
 }
 

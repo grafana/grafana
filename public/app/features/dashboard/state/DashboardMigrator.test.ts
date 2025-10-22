@@ -2492,3 +2492,57 @@ function getGridPositions(dashboard: DashboardModel) {
     return panel.gridPos;
   });
 }
+
+describe('when migrating to specific target versions', () => {
+  it('should migrate dashboard to exactly the specified target version', () => {
+    const oldDashboard = {
+      panels: [
+        {
+          id: 1,
+          type: 'graphite',
+          targets: [{ refId: 'A' }],
+        },
+      ],
+      schemaVersion: 1,
+    };
+
+    const model = new DashboardModel(oldDashboard, undefined, { targetSchemaVersion: 5 });
+
+    expect(model.schemaVersion).toBe(5);
+  });
+
+  it('should not run migrations when target version equals current schema version', () => {
+    const dashboard = {
+      panels: [],
+      schemaVersion: 20,
+    };
+
+    const model = new DashboardModel(dashboard, undefined, { targetSchemaVersion: 20 });
+
+    expect(model.schemaVersion).toBe(20);
+  });
+
+  it('should migrate to latest version when no target version specified', () => {
+    const dashboard = {
+      panels: [],
+      schemaVersion: 1,
+    };
+
+    const model = new DashboardModel(dashboard);
+
+    expect(model.schemaVersion).toBe(DASHBOARD_SCHEMA_VERSION);
+  });
+
+  it('should not change schema version when target version equals current schema version', () => {
+    const dashboard = { panels: [], schemaVersion: 20 };
+    const model = new DashboardModel(dashboard, undefined, { targetSchemaVersion: 20 });
+    expect(model.schemaVersion).toBe(20);
+  });
+
+  it('should not change schema version when target version is lower than current', () => {
+    const dashboard = { panels: [], schemaVersion: 25 };
+    const model = new DashboardModel(dashboard, undefined, { targetSchemaVersion: 20 });
+    // Schema version should remain unchanged when no migrations are needed
+    expect(model.schemaVersion).toBe(25);
+  });
+});

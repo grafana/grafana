@@ -1,11 +1,11 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Drawer, Field, Input, Spinner, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
@@ -19,7 +19,9 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
+import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { StatusInfo } from '../../types';
 import { ProvisionedDashboardFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
@@ -73,6 +75,7 @@ export function MoveProvisionedDashboardForm({
   const [targetPath, setTargetPath] = useState<string>('');
   const [job, setJob] = useState<Job>();
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [jobError, setJobError] = useState<string | StatusInfo>();
 
   const navigate = useNavigate();
 
@@ -119,6 +122,12 @@ export function MoveProvisionedDashboardForm({
       showError();
       return;
     }
+
+    reportInteraction('grafana_provisioning_dashboard_move_submitted', {
+      workflow,
+      repositoryName: repo,
+      repositoryType: repository?.type ?? 'unknown',
+    });
 
     // Branch workflow: use /files API for direct file operations
     if (workflow === 'branch') {
@@ -197,13 +206,20 @@ export function MoveProvisionedDashboardForm({
     navigate(url);
   };
 
-  const handleJobStatusChange = (statusInfo: StepStatusInfo) => {
-    if (statusInfo.status === 'success') {
-      dashboard.setState({ isDirty: false });
-      panelEditor?.onDiscard();
-      navigate('/dashboards');
-    }
-  };
+  const handleJobStatusChange = useCallback(
+    (statusInfo: StepStatusInfo) => {
+      if (statusInfo.status === 'success') {
+        dashboard.setState({ isDirty: false });
+        panelEditor?.onDiscard();
+        navigate('/dashboards');
+      }
+
+      if (statusInfo.status === 'error' && statusInfo.error) {
+        setJobError(statusInfo.error);
+      }
+    },
+    [dashboard, panelEditor, navigate]
+  );
 
   useProvisionedRequestHandler({
     request: moveRequest,
@@ -229,7 +245,10 @@ export function MoveProvisionedDashboardForm({
       onClose={onDismiss}
     >
       {hasSubmitted && job ? (
-        <JobStatus watch={job} jobType="move" onStatusChange={handleJobStatusChange} />
+        <>
+          <ProvisioningAlert error={jobError} />
+          <JobStatus watch={job} jobType="move" onStatusChange={handleJobStatusChange} />
+        </>
       ) : (
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitForm)}>

@@ -21,12 +21,12 @@ type URLParams struct {
 }
 
 type GraphiteQuery struct {
-	QueryType       string   `json:"queryType"`
-	TextEditor      *bool    `json:"textEditor,omitempty"`
-	Target          string   `json:"target,omitempty"`
-	TargetFull      string   `json:"targetFull,omitempty"`
-	Tags            []string `json:"tags,omitempty"`
-	FromAnnotations *bool    `json:"fromAnnotations,omitempty"`
+	QueryType       string `json:"queryType"`
+	TextEditor      *bool  `json:"textEditor,omitempty"`
+	Target          string `json:"target,omitempty"`
+	TargetFull      string `json:"targetFull,omitempty"`
+	FromAnnotations *bool  `json:"fromAnnotations,omitempty"`
+	IsMetricTank    bool   `json:"isMetricTank,omitempty"`
 }
 
 type GraphiteEventsRequest struct {

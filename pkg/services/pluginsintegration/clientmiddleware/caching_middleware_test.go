@@ -327,6 +327,8 @@ func TestCachingMiddleware(t *testing.T) {
 }
 
 func TestRequestDeduplicationMiddleware(t *testing.T) {
+	t.Parallel()
+
 	t.Run("deduplicates requests issuing the same query", func(t *testing.T) {
 		t.Parallel()
 
@@ -357,6 +359,35 @@ func TestRequestDeduplicationMiddleware(t *testing.T) {
 
 		require.EqualValues(t, 1, handler.QueryDataCalls)
 	})
+
+	t.Run("requests where DataSourceInstanceSettings is nil bypass request deduplication", func(t *testing.T) {
+		t.Parallel()
+
+		handler := newMockMiddlewareHandler()
+		middleware := newRequestDeduplicationMiddleware(nil, handler)
+
+		{
+			req := backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: nil,
+				},
+			}
+
+			resp, err := middleware.QueryData(t.Context(), &req)
+			require.NoError(t, err)
+			require.Empty(t, resp)
+		}
+
+		{
+			req := backend.CallResourceRequest{
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: nil,
+				},
+			}
+
+			require.NoError(t, middleware.CallResource(t.Context(), &req, nil))
+		}
+	})
 }
 
 type mockMiddlewareHandler struct {
@@ -372,4 +403,8 @@ func (m *mockMiddlewareHandler) QueryData(ctx context.Context, req *backend.Quer
 	atomic.AddInt32(&m.QueryDataCalls, 1)
 	time.Sleep(10 * time.Millisecond)
 	return &backend.QueryDataResponse{}, nil
+}
+
+func (m *mockMiddlewareHandler) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return nil
 }
