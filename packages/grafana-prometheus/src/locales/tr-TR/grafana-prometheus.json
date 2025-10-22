@@ -486,11 +486,6 @@
         "message-no-metrics-found": "Veri kaynağında metrik bulunamadı.",
         "name": "Ad",
         "type": "Tür"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Sorgu ayrıştırma belirsiz."
-        }
       }
     }
   }

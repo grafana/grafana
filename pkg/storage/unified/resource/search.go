@@ -236,6 +236,11 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 		ret.minBuildTime = b.minBuildTime
 	}
 
+	// Using higher "last import time" is stricter condition, and causes more indexes to be rebuilt.
+	if a.lastImportTime.IsZero() || (!b.lastImportTime.IsZero() && b.lastImportTime.After(a.lastImportTime)) {
+		ret.lastImportTime = b.lastImportTime
+	}
+
 	return ret, true
 }
 
@@ -540,12 +545,16 @@ func (s *searchSupport) runPeriodicScanForIndexesToRebuild(ctx context.Context) 
 			s.log.Info("stopping periodic index rebuild due to context cancellation")
 			return
 		case <-ticker.C:
-			s.findIndexesToRebuild(time.Now())
+			importTimes, err := s.getLastImportTimes(ctx)
+			if err != nil {
+				s.log.Error("failed to get import times", "error", err)
+			}
+			s.findIndexesToRebuild(importTimes, time.Now())
 		}
 	}
 }
 
-func (s *searchSupport) findIndexesToRebuild(now time.Time) {
+func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, now time.Time) {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
 
@@ -567,17 +576,20 @@ func (s *searchSupport) findIndexesToRebuild(now time.Time) {
 			minBuildTime = now.Add(-maxAge)
 		}
 
+		lastImportTime := lastImportTimes[key] // Will be time.Time{} if not found.
+
 		bi, err := idx.BuildInfo()
 		if err != nil {
 			s.log.Error("failed to get build info for index to rebuild", "key", key, "error", err)
 			continue
 		}
 
-		if shouldRebuildIndex(s.minBuildVersion, bi, minBuildTime, nil) {
+		if shouldRebuildIndex(bi, s.minBuildVersion, minBuildTime, lastImportTime, nil) {
 			s.rebuildQueue.Add(rebuildRequest{
 				NamespacedResource: key,
 				minBuildTime:       minBuildTime,
 				minBuildVersion:    s.minBuildVersion,
+				lastImportTime:     lastImportTime,
 			})
 
 			if s.indexMetrics != nil {
@@ -585,6 +597,18 @@ func (s *searchSupport) findIndexesToRebuild(now time.Time) {
 			}
 		}
 	}
+}
+
+func (s *searchSupport) getLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
+	result := map[NamespacedResource]time.Time{}
+	for importTime, err := range s.storage.GetResourceLastImportTimes(ctx) {
+		if err != nil {
+			// We return times that we have collected so far, if any.
+			return result, err
+		}
+		result[importTime.NamespacedResource] = importTime.LastImportTime
+	}
+	return result, nil
 }
 
 // runIndexRebuilder is a goroutine waiting for rebuild requests, and rebuilds indexes specified in those requests.
@@ -626,7 +650,7 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		l.Error("failed to get build info for index to rebuild", "error", err)
 	}
 
-	rebuild := shouldRebuildIndex(req.minBuildVersion, bi, req.minBuildTime, l)
+	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, req.minBuildTime, req.lastImportTime, l)
 	if !rebuild {
 		span.AddEvent("index not rebuilt")
 		l.Info("index doesn't need to be rebuilt")
@@ -662,11 +686,21 @@ func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 }
 
-func shouldRebuildIndex(minBuildVersion *semver.Version, buildInfo IndexBuildInfo, minBuildTime time.Time, rebuildLogger *slog.Logger) bool {
+func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, rebuildLogger *slog.Logger) bool {
 	if !minBuildTime.IsZero() {
 		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(minBuildTime) {
 			if rebuildLogger != nil {
 				rebuildLogger.Info("index build time is before minBuildTime, rebuilding the index", "indexBuildTime", buildInfo.BuildTime, "minBuildTime", minBuildTime)
+			}
+			return true
+		}
+	}
+
+	// This is technically the same as minBuildTime, but we want to log a different message to make the rebuild reason clear.
+	if !lastImportTime.IsZero() {
+		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(lastImportTime) {
+			if rebuildLogger != nil {
+				rebuildLogger.Info("index build time is before lastImportTime, rebuilding the index", "indexBuildTime", buildInfo.BuildTime, "lastImportTime", lastImportTime)
 			}
 			return true
 		}
@@ -687,8 +721,9 @@ func shouldRebuildIndex(minBuildVersion *semver.Version, buildInfo IndexBuildInf
 type rebuildRequest struct {
 	NamespacedResource
 
-	minBuildTime    time.Time       // if not zero, only rebuild index if it has been built before this timestamp
-	minBuildVersion *semver.Version // if not nil, only rebuild index with build version older than this.
+	minBuildTime    time.Time       // if not zero, rebuild index if it has been built before this timestamp
+	lastImportTime  time.Time       // if not zero, rebuild index if it has been built before this timestamp.
+	minBuildVersion *semver.Version // if not nil, rebuild index with build version older than this.
 }
 
 func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource, reason string) (ResourceIndex, error) {

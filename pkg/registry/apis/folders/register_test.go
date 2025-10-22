@@ -336,21 +336,21 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace:   "stacks-123",
 					Name:        "valid-name",
-					Annotations: map[string]string{"grafana.app/folder": "new-parent"},
+					Annotations: map[string]string{"grafana.app/folder": "p5"},
 				},
 			},
 			setupFn: func(m *grafanarest.MockStorage) {
-				m.On("Get", mock.Anything, "new-parent", mock.Anything).Return(
+				m.On("Get", mock.Anything, "p5", mock.Anything).Return(
 					&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:        "p1",
-							Annotations: map[string]string{"grafana.app/folder": "p2"},
+							Name:        "p5",
+							Annotations: map[string]string{"grafana.app/folder": "p4"},
 						},
 					}, nil)
-				m.On("Get", mock.Anything, "p2", mock.Anything).Return(
+				m.On("Get", mock.Anything, "p4", mock.Anything).Return(
 					&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:        "p2",
+							Name:        "p4",
 							Annotations: map[string]string{"grafana.app/folder": "p3"},
 						},
 					}, nil)
@@ -358,13 +358,27 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 					&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
 							Name:        "p3",
-							Annotations: map[string]string{"grafana.app/folder": "p4"},
+							Annotations: map[string]string{"grafana.app/folder": "p2"},
 						},
 					}, nil)
-				m.On("Get", mock.Anything, "p4", mock.Anything).Return(
+				m.On("Get", mock.Anything, "p2", mock.Anything).Return(
 					&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
-							Name: "p4",
+							Name:        "p2",
+							Annotations: map[string]string{"grafana.app/folder": "p1"},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, "p1", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p1",
+							Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, folder.GeneralFolderUID, mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: folder.GeneralFolderUID,
 						},
 					}, nil)
 			},
@@ -396,7 +410,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
 				searcher:   sm,
-				parents:    newParentsGetter(us, 2), // Max Depth of 2
+				parents:    newParentsGetter(us, folder.MaxNestedFolderDepth),
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -490,7 +504,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
 				searcher:   sm,
-				parents:    newParentsGetter(us, 2), // Max Depth of 2
+				parents:    newParentsGetter(us, folder.MaxNestedFolderDepth),
 			}
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
@@ -596,7 +610,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 		folderSvc:  foldertest.NewFakeService(),
 		storage:    us,
 		searcher:   sm,
-		parents:    newParentsGetter(us, 2), // Max Depth of 2
+		parents:    newParentsGetter(us, folder.MaxNestedFolderDepth),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

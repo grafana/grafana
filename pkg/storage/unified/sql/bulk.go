@@ -170,7 +170,7 @@ func (b *backend) processBulk(ctx context.Context, setting resource.BulkSettings
 		// Calculate the RV based on incoming request timestamps
 		rv := newBulkRV()
 
-		summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection)*4)
+		summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
 
 		// First clear everything in the transaction
 		if setting.RebuildCollection {
@@ -181,6 +181,14 @@ func (b *backend) processBulk(ctx context.Context, setting resource.BulkSettings
 				}
 				summaries[resource.NSGR(key)] = summary
 				rsp.Summary = append(rsp.Summary, summary)
+			}
+		} else {
+			for _, key := range setting.Collection {
+				summaries[resource.NSGR(key)] = &resourcepb.BulkResponse_Summary{
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				}
 			}
 		}
 
@@ -253,6 +261,12 @@ func (b *backend) processBulk(ctx context.Context, setting resource.BulkSettings
 			if err != nil {
 				b.log.Warn("error increasing RV", "error", err)
 			}
+
+			// Update the last import time. This is important to trigger reindexing
+			// of the resource for a given namespace.
+			if err := b.updateLastImportTime(ctx, tx, key, time.Now()); err != nil {
+				return rollbackWithError(err)
+			}
 		}
 		return nil
 	})
@@ -260,6 +274,19 @@ func (b *backend) processBulk(ctx context.Context, setting resource.BulkSettings
 		rsp.Error = resource.AsErrorResult(err)
 	}
 	return rsp
+}
+
+func (b *backend) updateLastImportTime(ctx context.Context, tx db.Tx, key *resourcepb.ResourceKey, now time.Time) error {
+	if _, err := dbutil.Exec(ctx, tx, sqlResourceLastImportTimeInsert, sqlResourceLastImportTimeInsertRequest{
+		SQLTemplate:    sqltemplate.New(b.dialect),
+		Namespace:      key.Namespace,
+		Group:          key.Group,
+		Resource:       key.Resource,
+		LastImportTime: now.UTC(),
+	}); err != nil {
+		return fmt.Errorf("insert resource last import time: %w", err)
+	}
+	return nil
 }
 
 type bulkWroker struct {

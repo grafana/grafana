@@ -47,7 +47,7 @@ describe('fieldColorModeRegistry', () => {
 
   it('Palette classic with series index 1', () => {
     const calcFn = getCalculator({ mode: FieldColorModeId.PaletteClassic, seriesIndex: 1, name: 'series2' });
-    expect(calcFn(70, 0, undefined)).toEqual('#FADE2A');
+    expect(calcFn(70, 0, undefined)).toEqual('#F2CC0C');
   });
 
   it('Palette uses name', () => {

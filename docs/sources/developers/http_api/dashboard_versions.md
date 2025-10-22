@@ -24,7 +24,7 @@ title: 'Dashboard Versions HTTP API '
 
 Query parameters:
 
-- **limit** - Maximum number of results to return
+- **limit** - Maximum number of results to return. Defaults to 1000 if not set, or if an invalid value is passed in.
 - **start** - Version to start from when returning queries
 
 `GET /api/dashboards/uid/:uid/versions`

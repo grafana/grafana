@@ -2,7 +2,7 @@ import { AsyncState } from 'react-use/lib/useAsync';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
+import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Alert, Label, RadioButtonGroup, Stack, Switch } from '@grafana/ui';
 import { DashboardJson } from 'app/features/manage-dashboards/types';

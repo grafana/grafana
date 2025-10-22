@@ -5,30 +5,21 @@ import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { GrafanaTheme2, IconName, locationUtil } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
+import { isCurrentPath } from './scopeNavgiationUtils';
+
 export interface ScopesNavigationTreeLinkProps {
   to: string;
   title: string;
   id: string;
 }
 
-// Helper function to get the base path for a dashboard URL for comparison purposes.
-// e.g., /d/dashboardId/slug -> /d/dashboardId
-//       /d/dashboardId      -> /d/dashboardId
-function getDashboardPathForComparison(pathname: string): string {
-  return pathname.split('/').slice(0, 3).join('/');
-}
-
 export function ScopesNavigationTreeLink({ to, title, id }: ScopesNavigationTreeLinkProps) {
   const styles = useStyles2(getStyles);
   const linkIcon = useMemo(() => getLinkIcon(to), [to]);
-  const isDashboard = to.startsWith('/d/');
   const locPathname = useLocation().pathname;
 
-  // For dashboards, the title is appended to the path when we navigate to just the dashboard id, hence we need to disregard this
-  const currentPath = isDashboard ? getDashboardPathForComparison(locPathname) : locPathname;
-
   // Ignore query params
-  const isCurrent = to.split('?')[0] === currentPath;
+  const isCurrent = isCurrentPath(locPathname, to);
 
   return (
     <Link

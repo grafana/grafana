@@ -1,5 +1,5 @@
 // Libraries
-import { PureComponent } from 'react';
+import { memo } from 'react';
 
 import { PluginConfigPageProps, DataSourcePluginMeta, DataSourceJsonData } from '@grafana/data';
 import { LinkButton } from '@grafana/ui';
@@ -8,27 +8,23 @@ import { LinkButton } from '@grafana/ui';
 
 interface Props extends PluginConfigPageProps<DataSourcePluginMeta<DataSourceJsonData>> {}
 
-export class TestInfoTab extends PureComponent<Props> {
-  constructor(props: Props) {
-    super(props);
-  }
+export const TestInfoTab = memo<Props>(() => {
+  return (
+    <div>
+      See github for more information about setting up a reproducible test environment.
+      <br />
+      <br />
+      <LinkButton
+        variant="secondary"
+        href="https://github.com/grafana/grafana/tree/main/devenv"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        GitHub
+      </LinkButton>
+      <br />
+    </div>
+  );
+});
 
-  render() {
-    return (
-      <div>
-        See github for more information about setting up a reproducible test environment.
-        <br />
-        <br />
-        <LinkButton
-          variant="secondary"
-          href="https://github.com/grafana/grafana/tree/main/devenv"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          GitHub
-        </LinkButton>
-        <br />
-      </div>
-    );
-  }
-}
+TestInfoTab.displayName = 'TestInfoTab';

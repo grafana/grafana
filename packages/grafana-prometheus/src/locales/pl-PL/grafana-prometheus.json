@@ -486,11 +486,6 @@
         "message-no-metrics-found": "W źródle danych nie znaleziono żadnych metryk.",
         "name": "Imię",
         "type": "Typ"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Analiza zapytania jest niejednoznaczna."
-        }
       }
     }
   }

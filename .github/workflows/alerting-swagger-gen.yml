@@ -15,7 +15,7 @@ jobs:
           fetch-depth: 2
           persist-credentials: false
       - name: Set go version
-        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
         with:
           go-version-file: go.mod
       - name: Build swagger

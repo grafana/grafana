@@ -36,6 +36,7 @@ import { ScrollDirection } from '../InfiniteScroll';
 import { LoadingIndicator } from '../LoadingIndicator';
 
 import { LogLineDetailsLog } from './LogLineDetailsLog';
+import { LogLineMenuCustomItem } from './LogLineMenu';
 import { LogList } from './LogList';
 import { LogListModel } from './processing';
 import { ScrollToLogsEvent } from './virtualization';
@@ -56,6 +57,8 @@ interface LogLineContextProps {
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   displayedFields?: string[];
+  logLineMenuCustomItems?: LogLineMenuCustomItem[];
+  onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
 }
@@ -77,6 +80,8 @@ export const LogLineContext = memo(
     onClose,
     getRowContext,
     displayedFields = [],
+    logLineMenuCustomItems,
+    onPermalinkClick,
     onClickShowField,
     onClickHideField,
   }: LogLineContextProps) => {
@@ -391,9 +396,11 @@ export const LogLineContext = memo(
                 eventBus={eventBusRef.current}
                 infiniteScrollMode="unlimited"
                 loadMore={handleLoadMore}
+                logLineMenuCustomItems={logLineMenuCustomItems}
                 logs={allLogs}
                 loading={aboveState === LoadingState.Loading || belowState === LoadingState.Loading}
                 permalinkedLogId={log.uid}
+                onPermalinkClick={onPermalinkClick}
                 onClickHideField={onClickHideField}
                 onClickShowField={onClickShowField}
                 showControls
@@ -431,14 +438,11 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     modal: css({
       width: '85vw',
-      height: '80%',
+      height: '80vh',
       [theme.breakpoints.down('md')]: {
         width: '100%',
-        minHeight: '100%',
+        height: '100vh',
       },
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
     }),
     loadingIndicator: css({
       height: theme.spacing(3),

@@ -75,7 +75,7 @@ export const InfiniteScroll = ({
   const styles = useStyles2(getStyles, virtualization);
   const resetStateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollToLogLineRef = useRef<LogListModel | undefined>(undefined);
-  const noScrollRef = useRef(false);
+  const noScrollRef = useRef<undefined | boolean>(undefined);
 
   useEffect(() => {
     // Logs have not changed, ignore effect
@@ -144,7 +144,13 @@ export const InfiniteScroll = ({
     }
 
     function handleScroll(event: Event | WheelEvent) {
-      if (!scrollElement || !loadMore || !logs.length) {
+      if (
+        !scrollElement ||
+        !loadMore ||
+        !logs.length ||
+        noScrollRef.current === undefined ||
+        noScrollRef.current === true
+      ) {
         return;
       }
       const scrollDirection = shouldLoadMore(event, lastEvent.current, countRef, scrollElement, lastScroll.current);

@@ -81,6 +81,7 @@ export class DashboardModel implements TimeModel {
   graphTooltip: DashboardCursorSync;
   time: any;
   liveNow?: boolean;
+  preload?: boolean;
   private originalTime: any;
   timepicker: any;
   templating: { list: any[] };
@@ -154,6 +155,7 @@ export class DashboardModel implements TimeModel {
     this.timezone = data.timezone ?? '';
     this.weekStart = data.weekStart ?? '';
     this.editable = data.editable !== false;
+    this.preload = data.preload;
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time ?? { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker ?? {};

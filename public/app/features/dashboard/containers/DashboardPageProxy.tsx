@@ -32,7 +32,9 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   }
 
   const isScenesSupportedRoute = Boolean(
-    props.route.routeName === DashboardRoutes.Home || (props.route.routeName === DashboardRoutes.Normal && params.uid)
+    props.route.routeName === DashboardRoutes.Home ||
+      props.route.routeName === DashboardRoutes.Template ||
+      (props.route.routeName === DashboardRoutes.Normal && params.uid)
   );
 
   // We pre-fetch dashboard to render dashboard page component depending on dashboard permissions.

@@ -200,6 +200,22 @@ export class AutoGridLayoutManager
     });
   }
 
+  public merge(other: DashboardLayoutManager) {
+    if (!(other instanceof AutoGridLayoutManager)) {
+      throw new Error('Cannot merge non-auto grid layout');
+    }
+
+    const sourceLayout = other.state.layout;
+    const movedChildren = [...sourceLayout.state.children];
+
+    // Remove from source and append to destination
+    sourceLayout.setState({ children: [] });
+    movedChildren.forEach((child) => {
+      child.clearParent();
+    });
+    this.state.layout.setState({ children: [...this.state.layout.state.children, ...movedChildren] });
+  }
+
   public duplicatePanel(panel: VizPanel) {
     const gridItem = panel.parent;
     if (!(gridItem instanceof AutoGridItem)) {

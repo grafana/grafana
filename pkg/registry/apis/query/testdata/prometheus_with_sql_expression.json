@@ -13,7 +13,7 @@
                 "type": "number",
                 "typeInfo": {
                   "frame": "float64",
-                  "nullable": false
+                  "nullable": true
                 }
               }
             ]

@@ -99,7 +99,7 @@ Keys:
 Query parameters:
 
 - **query** – Search Query
-- **limit** – Limit the number of returned results
+- **limit** – Limit the number of returned results. Default is 1000 is not set or provided an invalid value.
 
 **Example Request**:
 

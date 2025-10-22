@@ -1,6 +1,7 @@
 import { HttpHandler } from 'msw';
 import { setupServer } from 'msw/node';
 
+import { resetFixtures } from '../fixtures';
 import allHandlers from '../handlers/all-handlers';
 
 const server = setupServer(...allHandlers);
@@ -19,6 +20,10 @@ export function setupMockServer(
       server.use(...additionalHandlers);
     });
   }
+
+  beforeEach(() => {
+    resetFixtures();
+  });
 
   afterEach(() => {
     server.resetHandlers();

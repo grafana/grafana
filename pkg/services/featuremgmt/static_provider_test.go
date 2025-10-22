@@ -22,7 +22,7 @@ func Test_StaticProvider(t *testing.T) {
 	t.Run("empty config loads standard flags", func(t *testing.T) {
 		setup(t, []byte(``))
 		// Check for one of the standard flags
-		feat, err := openfeature.GetApiInstance().GetClient().BooleanValueDetails(ctx, stFeatName, !stFeatValue, evalCtx)
+		feat, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, stFeatName, !stFeatValue, evalCtx)
 		assert.NoError(t, err)
 		assert.True(t, stFeatValue == feat.Value)
 	})
@@ -33,14 +33,14 @@ func Test_StaticProvider(t *testing.T) {
 featureOne = true
 `)
 		setup(t, conf)
-		feat, err := openfeature.GetApiInstance().GetClient().BooleanValueDetails(ctx, "featureOne", false, evalCtx)
+		feat, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, "featureOne", false, evalCtx)
 		assert.NoError(t, err)
 		assert.True(t, feat.Value)
 	})
 
 	t.Run("missing feature should return default evaluation value and an error", func(t *testing.T) {
 		setup(t, []byte(``))
-		missingFeature, err := openfeature.GetApiInstance().GetClient().BooleanValueDetails(ctx, "missingFeature", true, evalCtx)
+		missingFeature, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, "missingFeature", true, evalCtx)
 		assert.Error(t, err)
 		assert.True(t, missingFeature.Value)
 		assert.Equal(t, openfeature.ErrorCode("FLAG_NOT_FOUND"), missingFeature.ErrorCode)

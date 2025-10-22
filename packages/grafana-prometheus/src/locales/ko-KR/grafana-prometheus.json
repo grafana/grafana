@@ -486,11 +486,6 @@
         "message-no-metrics-found": "데이터 소스에서 메트릭을 찾을 수 없습니다.",
         "name": "이름",
         "type": "유형"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "쿼리 구문 분석이 모호합니다."
-        }
       }
     }
   }

@@ -19,10 +19,8 @@ import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { calculateAnnotationLaneSizes } from '../../../core/components/TimeSeries/utils';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
-import { getAnnotationFrames } from '../timeseries/plugins/utils';
 
 import { HeatmapTooltip } from './HeatmapTooltip';
 import { prepareHeatmapData } from './fields';
@@ -111,8 +109,6 @@ export const HeatmapPanel = ({
   const dataRef = useRef(info);
   dataRef.current = info;
 
-  const annotationsLength = getAnnotationFrames(data.annotations).length;
-
   const builder = useMemo(() => {
     const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
 
@@ -128,11 +124,10 @@ export const HeatmapPanel = ({
       yAxisConfig: options.yAxis,
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
       selectionMode: options.selectionMode,
-      xAxisConfig: calculateAnnotationLaneSizes(annotationsLength, options.annotations),
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, timeZone, data.structureRev, cursorSync, annotationsLength]);
+  }, [options, timeZone, data.structureRev, cursorSync]);
 
   const renderLegend = () => {
     if (!info.heatmap || !options.legend.show) {
@@ -235,7 +230,7 @@ export const HeatmapPanel = ({
               />
             )}
             <AnnotationsPlugin2
-              annotationsConfig={options.annotations}
+              replaceVariables={replaceVariables}
               annotations={data.annotations ?? []}
               config={builder}
               timeZone={timeZone}

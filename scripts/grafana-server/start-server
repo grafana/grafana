@@ -12,6 +12,8 @@ fi
 
 ./scripts/grafana-server/kill-server
 
+docker ps -q --filter "name=grafana-image-renderer" | xargs docker stop || true
+
 mkdir $RUNDIR
 
 echo -e "Copying grafana backend files to temp dir..."
@@ -26,7 +28,7 @@ echo starting server
 # see https://github.com/air-verse/air/issues/525
 # if this gets resolved, we could remove the go build and rely on the binary being present as before
 if [[ ! -f ./bin/"$ARCH"grafana ]]; then
-  make GO_BUILD_DEV=1 build-go-fast
+  make GO_BUILD_DEV=1 build-go
 fi
 
 cp -r ./bin $RUNDIR
@@ -55,9 +57,17 @@ elif [ -d "../e2e-playwright/test-plugins" ]; then
   cp -r "../e2e-playwright/test-plugins" "$RUNDIR/data/plugins"
 fi
 
-if [ "$INSTALL_IMAGE_RENDERER" ]; then
-  echo -e "Installing image renderer"
-  $RUNDIR/bin/"$ARCH"grafana cli --pluginsDir "$RUNDIR/data/plugins" plugins install grafana-image-renderer
+if [ "$START_IMAGE_RENDERER" ]; then
+  echo -e "Starting image renderer container"
+  docker run -d --rm --name=grafana-image-renderer -p ${IR_DEFAULT_PORT}:${IR_DEFAULT_PORT} grafana/grafana-image-renderer:${IMAGE_RENDERER_VERSION:-latest}
+
+  if [[ "$(uname)" == "Darwin" ]]; then
+    DOCKER_HOST="host.docker.internal"
+    echo "Detected Mac host, using $DOCKER_HOST as the Docker host"
+  else
+    DOCKER_HOST="172.17.0.1"
+    echo "Detected Linux host, using $DOCKER_HOST as the Docker host"
+  fi
 fi
 
 echo -e "Copy provisioning setup from devenv"
@@ -74,10 +84,20 @@ echo -e "Starting Grafana server port $PORT"
 # We get a lot of "context canceled" errors from navigating away from pages,
 # so filter them out because they're not useful
 {
-  exec "$RUNDIR/bin/${ARCH}grafana" server \
-    --homepath="$HOME_PATH" \
-    --pidfile="$RUNDIR/pid" \
-    cfg:server.http_port="$PORT" \
-    cfg:enterprise.license_path="$1" \
-    2>&1
+  CMD=(
+    "$RUNDIR/bin/${ARCH}grafana" server
+    --homepath="$HOME_PATH"
+    --pidfile="$RUNDIR/pid"
+    cfg:server.http_port="$PORT"
+    cfg:enterprise.license_path="$1"
+  )
+
+  if [ "$START_IMAGE_RENDERER" ]; then
+    CMD+=(
+      cfg:rendering.callback_url="http://$DOCKER_HOST:$PORT"
+      cfg:rendering.server_url="http://localhost:$IR_DEFAULT_PORT/render"
+    )
+  fi
+
+  exec "${CMD[@]}" 2>&1
 } | grep -v -i "context canceled"

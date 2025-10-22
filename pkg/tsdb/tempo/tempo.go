@@ -67,7 +67,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
 			ctxLogger.Error("Failed to get HTTP client options", "error", err, "function", logEntrypoint())
-			return nil, err
+			return nil, backend.DownstreamErrorf("error reading settings: %w", err)
 		}
 
 		opts.ForwardHTTPHeaders = true
@@ -112,7 +112,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			res, err = s.getTrace(ctx, req.PluginContext, q)
 			if err != nil {
 				ctxLogger.Error("Error processing TraceId query", "error", err)
-				return response, err
+				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
+				continue
 			}
 
 		case string(dataquery.TempoQueryTypeTraceqlSearch):
@@ -121,7 +122,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			res, err = s.runTraceQlQuery(ctx, req.PluginContext, q)
 			if err != nil {
 				ctxLogger.Error("Error processing TraceQL query", "error", err)
-				return response, err
+				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
+				continue
 			}
 
 		default:

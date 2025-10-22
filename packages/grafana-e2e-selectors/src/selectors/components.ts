@@ -33,6 +33,9 @@ export const versionedComponents = {
     ungroup: {
       '12.1.0': 'data-testid CanvasGridAddActions ungroup',
     },
+    ungroupRows: {
+      '12.1.0': 'data-testid CanvasGridAddActions ungroup-rows',
+    },
     addRow: {
       '12.1.0': 'data-testid CanvasGridAddActions add-row',
     },
@@ -668,6 +671,11 @@ export const versionedComponents = {
         },
         fillScreen: {
           '12.1.0': 'data-testid fill screen switch',
+        },
+      },
+      TabsLayout: {
+        titleInput: {
+          '12.2.0': 'data-testid tab title input',
         },
       },
     },

@@ -16,4 +16,7 @@ func AddMigration(mg *migrator.Migrator) {
 	}
 
 	mg.AddMigration("create sso_setting table", migrator.NewAddTableMigration(ssoSettingV1))
+
+	mg.AddMigration("update settings column to MEDIUMTEXT", migrator.NewRawSQLMigration("").
+		Mysql("ALTER TABLE sso_setting MODIFY COLUMN settings MEDIUMTEXT NOT NULL;"))
 }

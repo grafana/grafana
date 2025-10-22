@@ -196,7 +196,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         '.thumb-vertical, .thumb-horizontal': {
           opacity: 1,
-          transition: 'opacity 0.3s ease-in-out',
+          [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+            transition: 'opacity 0.3s ease-in-out',
+          },
         },
       },
     }),

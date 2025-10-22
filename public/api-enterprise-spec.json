@@ -10068,6 +10068,10 @@
         "$ref": "#/definitions/publicError"
       }
     },
+    "interpolateDashboardResponse": {
+      "description": "",
+      "schema": {}
+    },
     "jwksResponse": {
       "description": "",
       "schema": {

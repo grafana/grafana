@@ -38,6 +38,7 @@ type TeamBindingSpec struct {
 	TeamRef TeamBindingTeamRef     `json:"teamRef"`
 	// permission of the identity in the team
 	Permission TeamBindingTeamPermission `json:"permission"`
+	External   bool                      `json:"external"`
 }
 
 // NewTeamBindingSpec creates a new TeamBindingSpec object.

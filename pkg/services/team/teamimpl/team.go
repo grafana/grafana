@@ -25,9 +25,15 @@ type Service struct {
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
+	store := &xormStore{db: db, cfg: cfg, deletes: []string{}}
+
+	if err := store.teamMemberUidMigration(); err != nil {
+		return nil, err
+	}
+
 	return &Service{
 		cache:  localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
-		store:  &xormStore{db: db, cfg: cfg, deletes: []string{}},
+		store:  store,
 		tracer: tracer,
 	}, nil
 }

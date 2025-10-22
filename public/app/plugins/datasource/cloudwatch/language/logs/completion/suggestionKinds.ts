@@ -7,6 +7,9 @@ export function getSuggestionKinds(statementPosition: StatementPosition): Sugges
     case StatementPosition.AfterSortKeyword:
     case StatementPosition.SortArg:
       return [SuggestionKind.SortOrderDirectionKeyword, SuggestionKind.Function];
+    case StatementPosition.AfterDiffKeyword:
+    case StatementPosition.DiffModifierArg:
+      return [SuggestionKind.DiffModifier];
     case StatementPosition.AfterDisplayKeyword:
     case StatementPosition.AfterFieldsKeyword:
     case StatementPosition.AfterFilterKeyword:

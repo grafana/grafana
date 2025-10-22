@@ -15,6 +15,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -113,6 +114,7 @@ type APIRoutes struct {
 
 type APIRegistrar interface {
 	RegisterAPI(builder APIGroupBuilder)
+	RegisterAppInstaller(installer appsdkapiserver.AppInstaller)
 }
 
 func getGroup(builder APIGroupBuilder) (string, error) {

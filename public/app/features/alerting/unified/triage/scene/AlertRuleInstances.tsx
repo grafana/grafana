@@ -90,6 +90,7 @@ export function AlertRuleInstances({ ruleUID, depth = 0 }: AlertRuleInstancesPro
           commonLabels={commonLabels}
           leftColumnWidth={leftColumnWidth}
           timeRange={timeRange}
+          ruleUID={ruleUID}
           depth={depth}
         />
       ))}

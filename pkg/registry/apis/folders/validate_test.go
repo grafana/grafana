@@ -203,7 +203,7 @@ func TestValidateUpdate(t *testing.T) {
 			expectedErr: "k6 project may not be moved",
 		},
 		{
-			name: "no error when moving to max depth",
+			name: "can move a folder to max depth",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -230,11 +230,10 @@ func TestValidateUpdate(t *testing.T) {
 					{Name: folder.GeneralFolderUID},
 				},
 			},
-			maxDepth:    folder.MaxNestedFolderDepth,
-			expectedErr: "[folder.maximum-depth-reached]",
+			maxDepth: folder.MaxNestedFolderDepth,
 		},
 		{
-			name: "error when moving too deep",
+			name: "error when moving exceeds max depth",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",

@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
@@ -262,7 +262,7 @@ func TestPluginUpdateChecker_updateAll(t *testing.T) {
 			availableUpdates: availableUpdates,
 			log:              log.NewNopLogger(),
 			tracer:           tracing.InitializeTracerForTest(),
-			pluginInstaller: &fakes.FakePluginInstaller{
+			pluginInstaller: &pluginfakes.FakePluginInstaller{
 				AddFunc: func(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
 					pluginsFakeStore[pluginID] = version
 					return nil

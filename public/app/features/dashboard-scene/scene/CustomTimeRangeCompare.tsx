@@ -61,17 +61,19 @@ export class CustomTimeRangeCompare extends SceneTimeRangeCompare {
   }
 
   static Component = function CustomTimeRangeCompareRenderer({ model }: SceneComponentProps<SceneTimeRangeCompare>) {
-    // Get the parent VizPanel to check timeCompare option
     const vizPanel = sceneGraph.getAncestor(model, VizPanel);
     const { options } = vizPanel.useState();
 
-    // Check if timeCompare is enabled
     const isTimeCompareEnabled = hasTimeCompare(options) && options.timeCompare;
 
     if (!isTimeCompareEnabled) {
       return <></>;
     }
 
-    return <SceneTimeRangeCompare.Component model={model} />;
+    return (
+      <div className="show-on-hover">
+        <SceneTimeRangeCompare.Component model={model} />
+      </div>
+    );
   };
 }

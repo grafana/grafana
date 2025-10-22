@@ -120,6 +120,7 @@ export const rulerRuleType = {
     recordingRule: isCloudRecordingRulerRule,
   },
   any: {
+    rule: (rule?: RulerRuleDTO) => isCloudRulerRule(rule) || isGrafanaRulerRule(rule),
     recordingRule: (rule?: RulerRuleDTO) => isCloudRecordingRulerRule(rule) || isGrafanaRecordingRule(rule),
     alertingRule: (rule?: RulerRuleDTO) => isAlertingRulerRule(rule) || isGrafanaAlertingRule(rule),
   },

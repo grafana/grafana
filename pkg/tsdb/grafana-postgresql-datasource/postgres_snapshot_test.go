@@ -35,10 +35,6 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 
 	// the logic in this function is copied from postgres_tests.go
 	shouldRunTest := func() bool {
-		if testing.Short() {
-			return false
-		}
-
 		testDbName, present := os.LookupEnv("GRAFANA_TEST_DB")
 
 		if present && testDbName == "postgres" {

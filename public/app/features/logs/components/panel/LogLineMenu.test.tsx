@@ -15,7 +15,10 @@ jest.mock('./LogListContext');
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
-  useAssistant: jest.fn(() => [true, jest.fn()]),
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: true,
+    openAssistant: jest.fn(),
+  }),
 }));
 
 jest.mock('@grafana/runtime', () => ({

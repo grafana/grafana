@@ -122,7 +122,9 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
     '&:focus-visible': {
       outline: 'none',
       outlineOffset: 'unset',
-      transition: 'none',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'none',
+      },
       boxShadow: 'none',
     },
   }),

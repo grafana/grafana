@@ -17,7 +17,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	playlistInstaller := &playlist.PlaylistAppInstaller{}
 	pluginsInstaller := &plugins.PluginsAppInstaller{}
 	rulesInstaller := &rules.AlertingRulesAppInstaller{}
-	correlationsAppInstaller := &correlations.CorrelationsAppInstaller{}
+	correlationsAppInstaller := &correlations.AppInstaller{}
 	notificationsAppInstaller := &notifications.AlertingNotificationsAppInstaller{}
 
 	tests := []struct {
@@ -35,7 +35,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			features := featuremgmt.WithFeatures(tt.flags...)
-			got := ProvideAppInstallers(features, playlistInstaller, pluginsInstaller, nil, tt.rulesInst, correlationsAppInstaller, notificationsAppInstaller)
+			got := ProvideAppInstallers(features, playlistInstaller, pluginsInstaller, nil, tt.rulesInst, correlationsAppInstaller, notificationsAppInstaller, nil)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)
 			} else {

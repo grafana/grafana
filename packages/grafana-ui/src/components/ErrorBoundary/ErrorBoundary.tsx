@@ -44,8 +44,8 @@ export class ErrorBoundary extends PureComponent<Props, State> {
       this.props.errorLogger(error);
     } else {
       faro?.api?.pushError(error, {
-        type: 'boundary',
         context: {
+          type: 'boundary',
           source: this.props.boundaryName ?? 'unknown',
         },
       });

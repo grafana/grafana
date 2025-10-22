@@ -1,4 +1,5 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
+import clsx from 'clsx';
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
@@ -29,6 +30,7 @@ enum LabelValueTypes {
 const SUCCESSFULLY_COPIED_TEXT = 'Copied to clipboard';
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 const HORIZONTAL_PX_PER_CHAR = 7;
+const CAN_COPY = Boolean(navigator.clipboard && window.isSecureContext);
 
 export const VizTooltipRow = ({
   label,
@@ -36,9 +38,9 @@ export const VizTooltipRow = ({
   color,
   colorIndicator,
   colorPlacement = ColorPlacement.first,
-  justify = 'flex-start',
+  justify,
   isActive = false,
-  marginRight = '0px',
+  marginRight,
   isPinned,
   lineStyle,
   showValueScroll,
@@ -82,7 +84,7 @@ export const VizTooltipRow = ({
   }, [showCopySuccess]);
 
   const copyToClipboard = async (text: string, type: LabelValueTypes) => {
-    if (!(navigator?.clipboard && window.isSecureContext)) {
+    if (!CAN_COPY) {
       fallbackCopyToClipboard(text, type);
       return;
     }
@@ -131,18 +133,20 @@ export const VizTooltipRow = ({
 
   return (
     <div className={styles.contentWrapper}>
-      {(color || label) && (
-        <div className={styles.valueWrapper}>
-          {color && colorPlacement === ColorPlacement.first && (
-            <VizTooltipColorIndicator
-              color={color}
-              colorIndicator={colorIndicator}
-              lineStyle={lineStyle}
-              isHollow={isHiddenFromViz}
-            />
-          )}
+      {color && colorPlacement === ColorPlacement.first && (
+        <div className={styles.colorWrapper}>
+          <VizTooltipColorIndicator
+            color={color}
+            colorIndicator={colorIndicator}
+            lineStyle={lineStyle}
+            isHollow={isHiddenFromViz}
+          />
+        </div>
+      )}
+      {label && (
+        <div className={styles.labelWrapper}>
           {!isPinned ? (
-            <div className={cx(styles.label, isActive && styles.activeSeries)}>{label}</div>
+            <div className={clsx(styles.label, isActive ? styles.activeSeries : '')}>{label}</div>
           ) : (
             <>
               <Tooltip content={label} interactive={false} show={showLabelTooltip}>
@@ -154,7 +158,7 @@ export const VizTooltipRow = ({
                   )}
                   {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
                   <div
-                    className={cx(styles.label, isActive && styles.activeSeries, navigator?.clipboard && styles.copy)}
+                    className={clsx(styles.label, isActive ? styles.activeSeries : '', CAN_COPY ? styles.copy : '')}
                     onMouseEnter={onMouseEnterLabel}
                     onMouseLeave={onMouseLeaveLabel}
                     onClick={() => copyToClipboard(label, LabelValueTypes.label)}
@@ -180,7 +184,7 @@ export const VizTooltipRow = ({
         )}
 
         {!isPinned ? (
-          <div className={cx(styles.value, isActive)} style={innerValueScrollStyle}>
+          <div className={styles.value} style={innerValueScrollStyle}>
             {value}
           </div>
         ) : (
@@ -192,7 +196,7 @@ export const VizTooltipRow = ({
             )}
             {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
             <div
-              className={cx(styles.value, isActive, navigator?.clipboard && styles.copy)}
+              className={clsx(styles.value, CAN_COPY ? styles.copy : '')}
               style={innerValueScrollStyle}
               onClick={() => copyToClipboard(value ? value.toString() : '', LabelValueTypes.value)}
               ref={valueRef}
@@ -215,28 +219,38 @@ export const VizTooltipRow = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) => ({
+const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string) => ({
   contentWrapper: css({
     display: 'flex',
+    maxWidth: '100%',
     alignItems: 'start',
     justifyContent: justify,
-    marginRight: marginRight,
+    columnGap: '6px',
   }),
-  label: css({
-    color: theme.colors.text.secondary,
-    fontWeight: 400,
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-    marginRight: theme.spacing(2),
-  }),
+  label: css({ display: 'inline' }),
   value: css({
     fontWeight: 500,
     textOverflow: 'ellipsis',
     overflow: 'hidden',
   }),
+  colorWrapper: css({
+    alignSelf: 'center',
+    position: 'relative',
+    flexShrink: 0,
+    top: -2, // half the height of the color indicator, since the top is aligned with flex center.
+    marginRight: '-6px', // account for the built-in column-gap in relation to the color indicator's margin
+  }),
+  labelWrapper: css({
+    flexGrow: 1,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    color: theme.colors.text.secondary,
+    fontWeight: 400,
+  }),
   valueWrapper: css({
-    display: 'flex',
-    alignItems: 'center',
+    flexShrink: 0,
+    alignSelf: 'center',
+    marginRight,
   }),
   activeSeries: css({
     fontWeight: theme.typography.fontWeightBold,

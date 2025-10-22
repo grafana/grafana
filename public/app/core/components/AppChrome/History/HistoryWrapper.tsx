@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { FieldType, GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2, Icon } from '@grafana/ui';
+import { Box, Button, Card, Icon, IconButton, Space, Sparkline, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { formatDate } from 'app/core/internationalization/dates';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
@@ -123,6 +123,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
             className={isExpanded ? styles.iconButtonDot : styles.iconButtonCircle}
           />
           <Card
+            noMargin
             onClick={() => {
               store.setObject('CLICKING_HISTORY', true);
               onClick();
@@ -182,6 +183,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
               return (
                 <Card
                   key={index}
+                  noMargin
                   href={view.url}
                   onClick={() => {
                     store.setObject('CLICKING_HISTORY', true);

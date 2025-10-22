@@ -1,4 +1,5 @@
 import { store } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
@@ -50,9 +51,25 @@ export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
 export function trackDashboardSceneCreatedOrSaved(
   isNew: boolean,
   dashboard: DashboardScene,
-  initialProperties: { name: string; url: string }
+  initialProperties: { name: string; url: string; expression_types?: string[] }
 ) {
+  // url values for dashboard library experiment
+  const urlParams = new URLSearchParams(window.location.search);
+  const pluginId = urlParams.get('pluginId') || undefined;
+  const sourceEntryPoint = urlParams.get('sourceEntryPoint') || undefined;
+  const libraryItemId = urlParams.get('libraryItemId') || undefined;
+  const creationOrigin = urlParams.get('creationOrigin') || undefined;
+
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
+
+  const dashboardLibraryProperties = config.featureToggles.dashboardLibrary
+    ? {
+        datasourceTypes: [pluginId],
+        sourceEntryPoint,
+        libraryItemId,
+        creationOrigin,
+      }
+    : {};
 
   DashboardInteractions.dashboardCreatedOrSaved(isNew, {
     ...initialProperties,
@@ -64,7 +81,10 @@ export function trackDashboardSceneCreatedOrSaved(
           autoLayoutCount: dynamicDashboardsTrackingInformation.autoLayoutCount,
           customGridLayoutCount: dynamicDashboardsTrackingInformation.customGridLayoutCount,
           panelsByDatasourceType: dynamicDashboardsTrackingInformation.panelsByDatasourceType,
+          ...dashboardLibraryProperties,
         }
-      : {}),
+      : {
+          ...dashboardLibraryProperties,
+        }),
   });
 }

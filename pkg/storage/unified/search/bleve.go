@@ -65,10 +65,6 @@ type BleveOptions struct {
 	// The resource count where values switch from memory to file based
 	FileThreshold int64
 
-	// How big should a batch get before flushing
-	// ?? not totally sure the units
-	BatchSize int
-
 	// Index cache TTL for bleve indices. 0 disables expiration for in-memory indexes.
 	// Also used for file-based indexes, if they are not owned by this instance, and they are not fetched from the cache recently.
 	IndexCacheTTL time.Duration

@@ -48,7 +48,54 @@ type LegacyStore struct {
 
 // Update implements rest.Updater.
 func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+	if !s.enableAuthnMutation {
+		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	oldObj, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	newObj, err := objInfo.UpdatedObject(ctx, oldObj)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if updateValidation != nil {
+		if err := updateValidation(ctx, newObj, oldObj); err != nil {
+			return nil, false, err
+		}
+	}
+
+	userObj, ok := newObj.(*iamv0alpha1.User)
+	if !ok {
+		return nil, false, fmt.Errorf("expected User object, got %T", newObj)
+	}
+
+	updateCmd := legacy.UpdateUserCommand{
+		UID:           name,
+		Login:         userObj.Spec.Login,
+		Email:         userObj.Spec.Email,
+		Name:          userObj.Spec.Name,
+		IsAdmin:       userObj.Spec.GrafanaAdmin,
+		IsDisabled:    userObj.Spec.Disabled,
+		EmailVerified: userObj.Spec.EmailVerified,
+		Role:          userObj.Spec.Role,
+	}
+
+	result, err := s.store.UpdateUser(ctx, ns, updateCmd)
+	if err != nil {
+		return nil, false, err
+	}
+
+	iamUser := toUserItem(&result.User, ns.Value)
+	return &iamUser, false, nil
 }
 
 // DeleteCollection implements rest.CollectionDeleter.

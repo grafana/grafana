@@ -1649,6 +1649,65 @@ func TestV16(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "should correctly calculate panel width from fractional spans",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"collapse": false,
+						"height":   55.625 * 38, // Original height from oldest-historical-1913-dashboard-nobreak.json
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":    3,
+								"type":  "text",
+								"title": "Nobreak APC Modulo - X",
+								"span":  6.070139911634757, // Fractional span from real dashboard
+							},
+							map[string]interface{}{
+								"id":    5,
+								"type":  "text",
+								"title": "Nobreak APC Modulo - Y",
+								"span":  5.929860088365242, // Fractional span from real dashboard
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    3,
+						"type":  "text",
+						"title": "Nobreak APC Modulo - X",
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 0,
+							// Critical: Frontend logic Math.floor(6.070139911634757) * 2 = 6 * 2 = 12
+							// NOT Math.floor(6.070139911634757 * 2) = Math.floor(12.140279823269514) = 12
+							// Both give same result here, but test documents the correct order
+							"w": 12,
+							"h": 56, // ceil(55.625 * 38 / 38) = 56
+						},
+					},
+					map[string]interface{}{
+						"id":    5,
+						"type":  "text",
+						"title": "Nobreak APC Modulo - Y",
+						"gridPos": map[string]interface{}{
+							"x": 12,
+							"y": 0,
+							// Critical: Frontend logic Math.floor(5.929860088365242) * 2 = 5 * 2 = 10
+							// NOT Math.floor(5.929860088365242 * 2) = Math.floor(11.859720176730484) = 11
+							// This is the actual bug we fixed - old backend would give w: 11, new gives w: 10
+							"w": 10,
+							"h": 56,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	runMigrationTests(t, tests, schemaversion.V16)

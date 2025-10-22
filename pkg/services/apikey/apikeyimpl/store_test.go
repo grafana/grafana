@@ -56,9 +56,6 @@ func seedApiKeys(t *testing.T, store store, num int) {
 }
 
 func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
 	t.Helper()
 
 	mockTimeNow()
