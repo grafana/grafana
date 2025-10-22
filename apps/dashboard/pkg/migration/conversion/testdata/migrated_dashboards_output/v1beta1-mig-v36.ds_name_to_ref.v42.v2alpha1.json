@@ -148,7 +148,7 @@
             }
           },
           "vizConfig": {
-            "kind": "graph",
+            "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
               "options": {},
@@ -192,7 +192,7 @@
             }
           },
           "vizConfig": {
-            "kind": "graph",
+            "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
               "options": {},
@@ -236,7 +236,7 @@
             }
           },
           "vizConfig": {
-            "kind": "graph",
+            "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
               "options": {},
@@ -280,7 +280,7 @@
             }
           },
           "vizConfig": {
-            "kind": "graph",
+            "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
               "options": {},
@@ -324,7 +324,7 @@
             }
           },
           "vizConfig": {
-            "kind": "graph",
+            "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
               "options": {},
@@ -368,7 +368,7 @@
             }
           },
           "vizConfig": {
-            "kind": "graph",
+            "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
               "options": {},
@@ -427,7 +427,7 @@
             }
           },
           "vizConfig": {
-            "kind": "graph",
+            "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
               "options": {},
@@ -471,7 +471,7 @@
             }
           },
           "vizConfig": {
-            "kind": "graph",
+            "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
               "options": {},
@@ -515,7 +515,7 @@
             }
           },
           "vizConfig": {
-            "kind": "graph",
+            "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
               "options": {},
@@ -574,7 +574,7 @@
             }
           },
           "vizConfig": {
-            "kind": "graph",
+            "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
               "options": {},
@@ -618,7 +618,7 @@
             }
           },
           "vizConfig": {
-            "kind": "graph",
+            "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
               "options": {},
@@ -662,7 +662,7 @@
             }
           },
           "vizConfig": {
-            "kind": "graph",
+            "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
               "options": {},
