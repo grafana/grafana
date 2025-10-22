@@ -1228,7 +1228,7 @@ export interface FeatureToggles {
   */
   preventPanelChromeOverflow?: boolean;
   /**
-  * Load plugins during store service startup instead of wire provider
+  * Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
   * @default false
   */
   pluginStoreServiceLoading?: boolean;

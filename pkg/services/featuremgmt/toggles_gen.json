@@ -2997,11 +2997,14 @@
     {
       "metadata": {
         "name": "pluginStoreServiceLoading",
-        "resourceVersion": "1760712768362",
-        "creationTimestamp": "2025-10-17T14:52:48Z"
+        "resourceVersion": "1761144346944",
+        "creationTimestamp": "2025-10-17T14:52:48Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-22 14:45:46.944669 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Load plugins during store service startup instead of wire provider",
+        "description": "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "expression": "false"
