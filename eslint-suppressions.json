@@ -2967,11 +2967,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TracePageHeader/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/ListView/index.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
