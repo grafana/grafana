@@ -3757,9 +3757,9 @@
             "default": ""
           },
           "value": {
+            "description": "Value null means -Infinity",
             "type": "number",
-            "format": "double",
-            "default": 0
+            "format": "double"
           }
         }
       },
