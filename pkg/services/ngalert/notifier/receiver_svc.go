@@ -133,30 +133,33 @@ func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (ma
 	return rs.provisioningStore.GetProvenances(ctx, orgID, (&models.Integration{}).ResourceType())
 }
 
-// GetReceiver returns a receiver by name.
+// GetReceiver returns a receiver by its UID.
 // The receiver's secure settings are decrypted if requested and the user has access to do so.
-func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (*models.Receiver, error) {
+func (rs *ReceiverService) GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error) {
+	if user == nil {
+		return nil, errors.New("user is required")
+	}
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.get", trace.WithAttributes(
-		attribute.Int64("query_org_id", q.OrgID),
-		attribute.String("query_name", q.Name),
-		attribute.Bool("query_decrypt", q.Decrypt),
+		attribute.Int64("query_org_id", user.GetOrgID()),
+		attribute.String("query_uid", uid),
+		attribute.Bool("query_decrypt", decrypt),
 	))
 	defer span.End()
 
-	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
+	revision, err := rs.cfgStore.Get(ctx, user.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
 
-	prov, err := rs.loadProvenances(ctx, q.OrgID)
+	prov, err := rs.loadProvenances(ctx, user.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
 
-	rcv, err := revision.GetReceiver(legacy_storage.NameToUid(q.Name), prov)
+	rcv, err := revision.GetReceiver(uid, prov)
 	if err != nil {
 		if errors.Is(err, legacy_storage.ErrReceiverNotFound) && rs.includeImported {
-			imported := rs.getImportedReceivers(ctx, span, []string{legacy_storage.NameToUid(q.Name)}, revision)
+			imported := rs.getImportedReceivers(ctx, span, []string{uid}, revision)
 			if len(imported) > 0 {
 				rcv = imported[0]
 			}
@@ -171,14 +174,14 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	))
 
 	auth := rs.authz.AuthorizeReadDecrypted
-	if !q.Decrypt {
+	if !decrypt {
 		auth = rs.authz.AuthorizeRead
 	}
 	if err := auth(ctx, user, rcv); err != nil {
 		return nil, err
 	}
 
-	if q.Decrypt {
+	if decrypt {
 		err := rcv.Decrypt(rs.decryptor(ctx))
 		if err != nil {
 			rs.log.FromContext(ctx).Warn("Failed to decrypt secure settings", "name", rcv.Name, "error", err)
