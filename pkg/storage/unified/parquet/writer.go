@@ -114,6 +114,8 @@ func (w *parquetWriter) Close() error {
 // writes the current buffer to parquet and re-inits the arrow buffer
 func (w *parquetWriter) flush() error {
 	w.logger.Info("flush", "count", w.rv.Len())
+	//TODO: fix deprecation warning
+	//nolint:staticcheck
 	rec := array.NewRecord(w.schema, []arrow.Array{
 		w.rv.NewArray(),
 		w.namespace.NewArray(),

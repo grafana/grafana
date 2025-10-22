@@ -278,6 +278,8 @@ func flamegraphResponse() *connect.Response[v1alpha1.QueryResponse] {
 		builderFlat.Append(columns.flat[i])
 	}
 
+	//TODO: fix deprecation warning
+	//nolint:staticcheck
 	record := array.NewRecord(
 		arrow.NewSchema(fields, nil),
 		[]arrow.Array{
