@@ -1,31 +1,14 @@
-import {
-  type ScenePerformanceObserver,
-  type DashboardInteractionStartData,
-  type DashboardInteractionMilestoneData,
-  type DashboardInteractionCompleteData,
-  type PanelPerformanceData,
-  type QueryPerformanceData,
-  writePerformanceLog,
-} from '@grafana/scenes';
+import { performanceUtils, writePerformanceLog } from '@grafana/scenes';
 
-import {
-  PERFORMANCE_MARKS,
-  PERFORMANCE_MEASURES,
-  createPerformanceMark,
-  createPerformanceMeasure,
-} from './performanceConstants';
-import { registerPerformanceObserver } from './performanceUtils';
+import { PERFORMANCE_MARKS, PERFORMANCE_MEASURES, SLOW_OPERATION_THRESHOLD_MS } from './performanceConstants';
+import { registerPerformanceObserver, createPerformanceMark, createPerformanceMeasure } from './performanceUtils';
 
 /**
  * Grafana logger that subscribes to Scene performance events
  * and logs them to console with Chrome DevTools performance marks and measurements for debugging.
  */
-export class ScenePerformanceLogger implements ScenePerformanceObserver {
+export class ScenePerformanceLogger implements performanceUtils.ScenePerformanceObserver {
   private panelGroupsOpen = new Set<string>(); // Track which panels we've seen
-
-  constructor() {
-    // Arrow methods automatically preserve 'this' context - no binding needed
-  }
 
   public initialize() {
     writePerformanceLog('SPL', 'Performance logger ready');
@@ -37,7 +20,7 @@ export class ScenePerformanceLogger implements ScenePerformanceObserver {
   }
 
   // Dashboard-level events
-  onDashboardInteractionStart = (data: DashboardInteractionStartData): void => {
+  onDashboardInteractionStart = (data: performanceUtils.DashboardInteractionStartData): void => {
     const dashboardStartMark = PERFORMANCE_MARKS.DASHBOARD_INTERACTION_START(data.operationId);
     createPerformanceMark(dashboardStartMark, data.timestamp);
 
@@ -46,13 +29,13 @@ export class ScenePerformanceLogger implements ScenePerformanceObserver {
     writePerformanceLog('SPL', `[DASHBOARD] ${data.interactionType} started: ${title}`);
   };
 
-  onDashboardInteractionMilestone = (data: DashboardInteractionMilestoneData): void => {
+  onDashboardInteractionMilestone = (data: performanceUtils.DashboardInteractionMilestoneData): void => {
     const milestone = data.milestone || 'unknown';
     const dashboardMilestoneMark = PERFORMANCE_MARKS.DASHBOARD_MILESTONE(data.operationId, milestone);
     createPerformanceMark(dashboardMilestoneMark, data.timestamp);
   };
 
-  onDashboardInteractionComplete = (data: DashboardInteractionCompleteData): void => {
+  onDashboardInteractionComplete = (data: performanceUtils.DashboardInteractionCompleteData): void => {
     const dashboardEndMark = PERFORMANCE_MARKS.DASHBOARD_INTERACTION_END(data.operationId);
     const dashboardStartMark = PERFORMANCE_MARKS.DASHBOARD_INTERACTION_START(data.operationId);
     const dashboardMeasureName = PERFORMANCE_MEASURES.DASHBOARD_INTERACTION(data.operationId);
@@ -63,19 +46,19 @@ export class ScenePerformanceLogger implements ScenePerformanceObserver {
     this.panelGroupsOpen.clear();
   };
 
-  onPanelOperationStart = (data: PanelPerformanceData): void => {
+  onPanelOperationStart = (data: performanceUtils.PanelPerformanceData): void => {
     this.createStandardizedPanelMark(data, 'start');
 
     // Track panel for summary logging later
     this.panelGroupsOpen.add(data.panelKey);
   };
 
-  onPanelOperationComplete = (data: PanelPerformanceData): void => {
+  onPanelOperationComplete = (data: performanceUtils.PanelPerformanceData): void => {
     this.createStandardizedPanelMark(data, 'end');
     this.createStandardizedPanelMeasure(data);
 
     const duration = (data.duration || 0).toFixed(1);
-    const slowWarning = (data.duration || 0) > 100 ? ' ⚠️ SLOW' : '';
+    const slowWarning = (data.duration || 0) > SLOW_OPERATION_THRESHOLD_MS ? ' ⚠️ SLOW' : '';
 
     // For query operations, include the queryId for correlation
     let operationDisplay: string = data.operation;
@@ -90,12 +73,12 @@ export class ScenePerformanceLogger implements ScenePerformanceObserver {
   };
 
   // Query-level events
-  onQueryStart = (data: QueryPerformanceData): void => {
+  onQueryStart = (data: performanceUtils.QueryPerformanceData): void => {
     const queryStartMark = PERFORMANCE_MARKS.QUERY_START(data.origin, data.queryId);
     createPerformanceMark(queryStartMark, data.timestamp);
   };
 
-  onQueryComplete = (data: QueryPerformanceData): void => {
+  onQueryComplete = (data: performanceUtils.QueryPerformanceData): void => {
     const queryEndMark = PERFORMANCE_MARKS.QUERY_END(data.origin, data.queryId);
     const queryStartMark = PERFORMANCE_MARKS.QUERY_START(data.origin, data.queryId);
     const queryMeasureName = PERFORMANCE_MEASURES.QUERY(data.origin, data.queryId);
@@ -104,13 +87,13 @@ export class ScenePerformanceLogger implements ScenePerformanceObserver {
     createPerformanceMeasure(queryMeasureName, queryStartMark, queryEndMark);
 
     const duration = (data.duration || 0).toFixed(1);
-    const slowWarning = (data.duration || 0) > 100 ? ' ⚠️ SLOW' : '';
+    const slowWarning = (data.duration || 0) > SLOW_OPERATION_THRESHOLD_MS ? ' ⚠️ SLOW' : '';
 
     const queryType = data.queryType.replace(/^(getDataSource\/|AnnotationsDataLayer\/)/, ''); // Remove prefixes
     writePerformanceLog('SPL', `[QUERY ${data.origin}] ${queryType} [${data.queryId}]: ${duration}ms${slowWarning}`);
   };
 
-  private createStandardizedPanelMark(data: PanelPerformanceData, phase: 'start' | 'end'): void {
+  private createStandardizedPanelMark(data: performanceUtils.PanelPerformanceData, phase: 'start' | 'end'): void {
     const { operation, panelKey, operationId } = data;
 
     switch (operation) {
@@ -167,7 +150,7 @@ export class ScenePerformanceLogger implements ScenePerformanceObserver {
     }
   }
 
-  private createStandardizedPanelMeasure(data: PanelPerformanceData): void {
+  private createStandardizedPanelMeasure(data: performanceUtils.PanelPerformanceData): void {
     const { operation, panelKey, operationId } = data;
 
     switch (operation) {

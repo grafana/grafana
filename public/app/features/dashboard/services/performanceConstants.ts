@@ -77,37 +77,6 @@ export const PERFORMANCE_MEASURES = {
 };
 
 /**
- * Safely creates a performance mark, ignoring errors if the Performance API is not available.
+ * Threshold in milliseconds for determining slow operations (panels, queries, transformations, etc.)
  */
-export function createPerformanceMark(name: string, timestamp?: number): void {
-  try {
-    if (typeof performance !== 'undefined' && performance.mark) {
-      if (timestamp !== undefined) {
-        performance.mark(name, { startTime: timestamp });
-      } else {
-        performance.mark(name);
-      }
-      // writePerformanceLog('PerformanceConstants', `🎯 Created performance mark: ${name}`, { timestamp });
-    }
-  } catch (error) {
-    console.error(`❌ Failed to create performance mark: ${name}`, { timestamp, error });
-  }
-}
-
-/**
- * Safely creates a performance measure, ignoring errors if the Performance API is not available.
- */
-export function createPerformanceMeasure(name: string, startMark: string, endMark?: string): void {
-  try {
-    if (typeof performance !== 'undefined' && performance.measure) {
-      if (endMark) {
-        performance.measure(name, startMark, endMark);
-      } else {
-        performance.measure(name, startMark);
-      }
-      // writePerformanceLog('PerformanceConstants', `✅ Created performance measure: ${name}`, { startMark, endMark });
-    }
-  } catch (error) {
-    console.error(`❌ Failed to create performance measure: ${name}`, { startMark, endMark, error });
-  }
-}
+export const SLOW_OPERATION_THRESHOLD_MS = 500;

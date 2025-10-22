@@ -103,3 +103,37 @@ export function writePerformanceGroupEnd(): void {
     console.groupEnd();
   }
 }
+
+/**
+ * Safely creates a performance mark, ignoring errors if the Performance API is not available.
+ */
+export function createPerformanceMark(name: string, timestamp?: number): void {
+  try {
+    if (typeof performance !== 'undefined' && performance.mark) {
+      if (timestamp !== undefined) {
+        performance.mark(name, { startTime: timestamp });
+      } else {
+        performance.mark(name);
+      }
+    }
+  } catch (error) {
+    console.error(`❌ Failed to create performance mark: ${name}`, { timestamp, error });
+  }
+}
+
+/**
+ * Safely creates a performance measure, ignoring errors if the Performance API is not available.
+ */
+export function createPerformanceMeasure(name: string, startMark: string, endMark?: string): void {
+  try {
+    if (typeof performance !== 'undefined' && performance.measure) {
+      if (endMark) {
+        performance.measure(name, startMark, endMark);
+      } else {
+        performance.measure(name, startMark);
+      }
+    }
+  } catch (error) {
+    console.error(`❌ Failed to create performance measure: ${name}`, { startMark, endMark, error });
+  }
+}

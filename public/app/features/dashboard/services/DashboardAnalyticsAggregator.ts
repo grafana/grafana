@@ -1,13 +1,7 @@
 import { logMeasurement, reportInteraction } from '@grafana/runtime';
-import {
-  type ScenePerformanceObserver,
-  type DashboardInteractionStartData,
-  type DashboardInteractionMilestoneData,
-  type DashboardInteractionCompleteData,
-  type PanelPerformanceData,
-  type QueryPerformanceData,
-} from '@grafana/scenes';
+import { performanceUtils } from '@grafana/scenes';
 
+import { SLOW_OPERATION_THRESHOLD_MS } from './performanceConstants';
 import {
   registerPerformanceObserver,
   getPerformanceMemory,
@@ -56,7 +50,7 @@ interface PanelAnalyticsMetrics {
 /**
  * Aggregates Scene performance events into analytics-ready panel metrics
  */
-export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
+export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerformanceObserver {
   private panelMetrics = new Map<string, PanelAnalyticsMetrics>();
   private dashboardUID = '';
   private dashboardTitle = '';
@@ -90,27 +84,27 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   }
 
   // Dashboard-level events (we don't need to track these for panel analytics)
-  onDashboardInteractionStart = (data: DashboardInteractionStartData): void => {
+  onDashboardInteractionStart = (data: performanceUtils.DashboardInteractionStartData): void => {
     // Clear metrics when new dashboard interaction starts
     this.clearMetrics();
   };
 
-  onDashboardInteractionMilestone = (_data: DashboardInteractionMilestoneData): void => {
+  onDashboardInteractionMilestone = (_data: performanceUtils.DashboardInteractionMilestoneData): void => {
     // No action needed for milestones in analytics
   };
 
-  onDashboardInteractionComplete = (data: DashboardInteractionCompleteData): void => {
+  onDashboardInteractionComplete = (data: performanceUtils.DashboardInteractionCompleteData): void => {
     // Send analytics report for dashboard interaction completion
     this.sendAnalyticsReport(data);
   };
 
   // Panel-level events
-  onPanelOperationStart = (data: PanelPerformanceData): void => {
+  onPanelOperationStart = (data: performanceUtils.PanelPerformanceData): void => {
     // Start events don't need aggregation, just ensure panel exists
     this.ensurePanelExists(data.panelKey, data.panelId, data.pluginId, data.pluginVersion);
   };
 
-  onPanelOperationComplete = (data: PanelPerformanceData): void => {
+  onPanelOperationComplete = (data: performanceUtils.PanelPerformanceData): void => {
     // Aggregate panel metrics without verbose logging (handled by ScenePerformanceLogger)
     const panel = this.panelMetrics.get(data.panelKey);
     if (!panel) {
@@ -163,16 +157,12 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   };
 
   // Query-level events
-  onQueryStart = (_data: QueryPerformanceData): void => {
-    // Non-panel queries (annotations, variables, datasources) don't need aggregation
-    // These are infrastructure queries that don't belong to specific panels
-    // Logging handled by ScenePerformanceLogger to avoid duplication
+  onQueryStart = (_data: performanceUtils.QueryPerformanceData): void => {
+    // no-op
   };
 
-  onQueryComplete = (_data: QueryPerformanceData): void => {
-    // Non-panel queries (annotations, variables, datasources) don't need panel aggregation
-    // These are infrastructure queries that don't belong to specific panels
-    // Logging handled by ScenePerformanceLogger to avoid duplication
+  onQueryComplete = (_data: performanceUtils.QueryPerformanceData): void => {
+    // no-op
   };
 
   /**
@@ -209,7 +199,7 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
   /**
    * Send analytics report for dashboard interactions
    */
-  private sendAnalyticsReport(data: DashboardInteractionCompleteData): void {
+  private sendAnalyticsReport(data: performanceUtils.DashboardInteractionCompleteData): void {
     const payload = {
       duration: data.duration || 0,
       networkDuration: data.networkDuration || 0,
@@ -242,7 +232,7 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
    * Log dashboard analytics event with panel metrics and performance insights
    */
   private logDashboardAnalyticsEvent(
-    data: DashboardInteractionCompleteData,
+    data: performanceUtils.DashboardInteractionCompleteData,
     payload: Record<string, unknown>,
     panelMetrics: PanelAnalyticsMetrics[] | null
   ): void {
@@ -254,7 +244,7 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
       panelMetrics?.filter(
         (p) =>
           p.totalQueryTime + p.totalTransformationTime + p.totalRenderTime + p.totalFieldConfigTime + p.pluginLoadTime >
-          100
+          SLOW_OPERATION_THRESHOLD_MS
       ).length || 0;
 
     writePerformanceGroupStart(
@@ -283,7 +273,7 @@ export class DashboardAnalyticsAggregator implements ScenePerformanceObserver {
           panel.totalFieldConfigTime +
           panel.pluginLoadTime;
 
-        const isSlowPanel = totalPanelTime > 100;
+        const isSlowPanel = totalPanelTime > SLOW_OPERATION_THRESHOLD_MS;
         const slowWarning = isSlowPanel ? ' ⚠️ SLOW' : '';
 
         writePerformanceGroupStart(
