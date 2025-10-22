@@ -67,7 +67,7 @@ func (s *Server) deletePermission(ctx context.Context, store *storeInfo, req *au
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		Deletes: &openfgav1.WriteRequestDeletes{
-			TupleKeys: []*openfgav1.TupleKeyWithoutCondition{&openfgav1.TupleKeyWithoutCondition{
+			TupleKeys: []*openfgav1.TupleKeyWithoutCondition{{
 				User:     tuple.GetUser(),
 				Relation: tuple.GetRelation(),
 				Object:   tuple.GetObject(),
