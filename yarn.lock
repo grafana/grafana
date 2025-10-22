@@ -3546,12 +3546,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@link:/Users/leventebalogh/grafana/scenes/packages/scenes::locator=grafana%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@grafana/scenes@link:/Users/leventebalogh/grafana/scenes/packages/scenes::locator=grafana%40workspace%3A."
-  languageName: node
-  linkType: soft
-
 "@grafana/scenes@npm:6.39.5":
   version: 6.39.5
   resolution: "@grafana/scenes@npm:6.39.5"
@@ -18304,7 +18298,7 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.10.10"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "link:/Users/leventebalogh/grafana/scenes/packages/scenes"
+    "@grafana/scenes": "npm:6.39.5"
     "@grafana/scenes-react": "npm:6.39.5"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
