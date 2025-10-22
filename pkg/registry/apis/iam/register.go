@@ -265,7 +265,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 		if enableZanzanaSync {
 			b.logger.Info("Enabling AfterCreate hook for CoreRole to sync to Zanzana")
-			coreRoleStore.AfterCreate = b.AfterCoreRoleCreate
+			coreRoleStore.AfterCreate = b.AfterRoleCreate
 		}
 		storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
 

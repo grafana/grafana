@@ -178,7 +178,7 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 		}
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testCoreRoleEntries}
-		b.AfterCoreRoleCreate(&coreRole, nil)
+		b.AfterRoleCreate(&coreRole, nil)
 	})
 
 	t.Run("should create zanzana entries for core role with dashboard permissions", func(t *testing.T) {
@@ -222,7 +222,7 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 		}
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashboardRoleEntries}
-		b.AfterCoreRoleCreate(&coreRole, nil)
+		b.AfterRoleCreate(&coreRole, nil)
 	})
 
 	t.Run("should handle wildcard scopes", func(t *testing.T) {
@@ -261,7 +261,7 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 		}
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testWildcardEntries}
-		b.AfterCoreRoleCreate(&coreRole, nil)
+		b.AfterRoleCreate(&coreRole, nil)
 	})
 
 	t.Run("should skip untranslatable permissions", func(t *testing.T) {
@@ -301,7 +301,7 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 		}
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testMixedEntries}
-		b.AfterCoreRoleCreate(&coreRole, nil)
+		b.AfterRoleCreate(&coreRole, nil)
 	})
 }
 
