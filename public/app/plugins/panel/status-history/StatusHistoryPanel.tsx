@@ -164,6 +164,7 @@ export const StatusHistoryPanel = ({
               )}
               {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
                 <AnnotationsPlugin2
+                  replaceVariables={replaceVariables}
                   annotations={data.annotations ?? []}
                   config={builder}
                   timeZone={timeZone}

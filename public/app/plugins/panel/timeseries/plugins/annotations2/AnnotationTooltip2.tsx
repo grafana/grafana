@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2, dateTimeFormat, systemDateFormats, textUtil, LinkModel } from '@grafana/data';
+import { GrafanaTheme2, dateTimeFormat, systemDateFormats, textUtil, LinkModel, ActionModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Stack, IconButton, Tag, usePanelContext, useStyles2 } from '@grafana/ui';
 import { VizTooltipFooter } from '@grafana/ui/internal';
@@ -13,11 +13,12 @@ interface Props {
   timeZone: string;
   onEdit: () => void;
   links?: LinkModel[];
+  actions?: ActionModel[];
 }
 
 const retFalse = () => false;
 
-export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, links = [] }: Props) => {
+export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, links = [], actions = [] }: Props) => {
   const annoId = annoVals.id?.[annoIdx];
 
   const styles = useStyles2(getStyles);
@@ -110,7 +111,7 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, links 
         </div>
       </div>
 
-      {links.length > 0 && <VizTooltipFooter dataLinks={links} />}
+      {(links.length > 0 || actions.length > 0) && <VizTooltipFooter dataLinks={links} actions={actions} />}
     </div>
   );
 };
