@@ -153,7 +153,6 @@ func (j *JaegerClient) GrpcSearch(query *JaegerQuery, start, end time.Time) (*da
 	jaegerURL.RawQuery = urlQuery.Encode()
 	// jaeger will not be able to process the request if the time is encoded, all other parameters are encoded except for the start and end time
 	jaegerURL.RawQuery += fmt.Sprintf("&query.start_time_min=%s&query.start_time_max=%s", start.Format(time.RFC3339Nano), end.Format(time.RFC3339Nano))
-	backend.Logger.Warn("gRPC Search URL", "url", jaegerURL.String())
 	resp, err := j.httpClient.Get(jaegerURL.String())
 	if err != nil {
 		if backend.IsDownstreamHTTPError(err) {
