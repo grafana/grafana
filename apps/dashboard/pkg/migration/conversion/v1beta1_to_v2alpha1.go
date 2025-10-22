@@ -271,17 +271,7 @@ func transformLinks(dashboard map[string]interface{}) []dashv2alpha1.DashboardDa
 		for _, link := range links {
 			if linkMap, ok := link.(map[string]interface{}); ok {
 				// Required fields with defaults
-				dashLink := dashv2alpha1.DashboardDashboardLink{
-					Title:       schemaversion.GetStringValue(linkMap, "title"),
-					Type:        dashv2alpha1.DashboardDashboardLinkType(schemaversion.GetStringValue(linkMap, "type", "link")),
-					Icon:        schemaversion.GetStringValue(linkMap, "icon"),
-					Tooltip:     schemaversion.GetStringValue(linkMap, "tooltip"),
-					Tags:        getStringSlice(linkMap, "tags"),
-					AsDropdown:  getBoolField(linkMap, "asDropdown", false),
-					TargetBlank: getBoolField(linkMap, "targetBlank", false),
-					IncludeVars: getBoolField(linkMap, "includeVars", false),
-					KeepTime:    getBoolField(linkMap, "keepTime", false),
-				}
+				dashLink := dashv2alpha1.NewDashboardDashboardLink()
 
 				// Optional field - only set if present
 				if url, exists := linkMap["url"]; exists {
@@ -290,7 +280,7 @@ func transformLinks(dashboard map[string]interface{}) []dashv2alpha1.DashboardDa
 					}
 				}
 
-				result = append(result, dashLink)
+				result = append(result, *dashLink)
 			}
 		}
 		return result
@@ -1745,7 +1735,7 @@ func transformDataLinks(panelMap map[string]interface{}) []dashv2alpha1.Dashboar
 }
 
 func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizConfigKind {
-	panelType := schemaversion.GetStringValue(panelMap, "type", "graph")
+	panelType := schemaversion.GetStringValue(panelMap, "type", "timeseries")
 	pluginVersion := schemaversion.GetStringValue(panelMap, "pluginVersion")
 
 	// Extract field config and options

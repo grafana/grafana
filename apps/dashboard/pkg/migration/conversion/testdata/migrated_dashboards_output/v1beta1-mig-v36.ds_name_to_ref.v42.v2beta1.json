@@ -156,7 +156,7 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "graph",
+            "group": "timeseries",
             "version": "",
             "spec": {
               "options": {},
@@ -202,7 +202,7 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "graph",
+            "group": "timeseries",
             "version": "",
             "spec": {
               "options": {},
@@ -248,7 +248,7 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "graph",
+            "group": "timeseries",
             "version": "",
             "spec": {
               "options": {},
@@ -294,7 +294,7 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "graph",
+            "group": "timeseries",
             "version": "",
             "spec": {
               "options": {},
@@ -340,7 +340,7 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "graph",
+            "group": "timeseries",
             "version": "",
             "spec": {
               "options": {},
@@ -386,7 +386,7 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "graph",
+            "group": "timeseries",
             "version": "",
             "spec": {
               "options": {},
@@ -448,7 +448,7 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "graph",
+            "group": "timeseries",
             "version": "",
             "spec": {
               "options": {},
@@ -494,7 +494,7 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "graph",
+            "group": "timeseries",
             "version": "",
             "spec": {
               "options": {},
@@ -540,7 +540,7 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "graph",
+            "group": "timeseries",
             "version": "",
             "spec": {
               "options": {},
@@ -602,7 +602,7 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "graph",
+            "group": "timeseries",
             "version": "",
             "spec": {
               "options": {},
@@ -648,7 +648,7 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "graph",
+            "group": "timeseries",
             "version": "",
             "spec": {
               "options": {},
@@ -694,7 +694,7 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "graph",
+            "group": "timeseries",
             "version": "",
             "spec": {
               "options": {},
