@@ -38,6 +38,7 @@ import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/uti
 
 import { getDataframeFields } from './components/logParser';
 import { GetRowContextQueryFn } from './components/panel/LogLineMenu';
+import { config } from '@grafana/runtime';
 
 /**
  * Returns the log level of a log line.
@@ -67,28 +68,30 @@ export function getLogLevel(line: string): LogLevel {
   // e.g. "... MSGID I" or "... (I)" where I=informational, W=warning, E=error, S=severe
   // Try to detect a trailing severity letter if no other token matched earlier in the line.
   if (level === LogLevel.unknown) {
-    const zosRegexp = /(?:\b|\()([IWEFCS])(?:\b|\))/i; // include common letters used in syslog variants
-    const match = zosRegexp.exec(line);
-    if (match) {
-      // map z/OS letters to LogLevel where reasonable
-      const letter = match[1].toUpperCase();
-      switch (letter) {
-        case 'I':
-          level = LogLevel.info;
-          break;
-        case 'W':
-          level = LogLevel.warning;
-          break;
-        case 'E':
-          level = LogLevel.error;
-          break;
-        case 'C': // critical
-        case 'S': // severe
-        case 'F': // fatal
-          level = LogLevel.critical;
-          break;
-        default:
-          level = LogLevel.unknown;
+    if (config.featureToggles['zosSyslogLevelMapping']) {
+      const zosRegexp = /(?:\b|\()([IWEFCS])(?:\b|\))/i; // include common letters used in syslog variants
+      const match = zosRegexp.exec(line);
+      if (match) {
+        // map z/OS letters to LogLevel where reasonable
+        const letter = match[1].toUpperCase();
+        switch (letter) {
+          case 'I':
+            level = LogLevel.info;
+            break;
+          case 'W':
+            level = LogLevel.warning;
+            break;
+          case 'E':
+            level = LogLevel.error;
+            break;
+          case 'C': // critical
+          case 'S': // severe
+          case 'F': // fatal
+            level = LogLevel.critical;
+            break;
+          default:
+            level = LogLevel.unknown;
+        }
       }
     }
   }
