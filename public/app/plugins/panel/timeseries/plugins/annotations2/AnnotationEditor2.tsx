@@ -5,7 +5,7 @@ import { useAsyncFn, useClickAway } from 'react-use';
 
 import { AnnotationEventUIModel, GrafanaTheme2, dateTimeFormat, systemDateFormats } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Stack, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
+import { Button, Field, IconButton, Stack, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { annotationServer } from 'app/features/annotations/api';
@@ -15,6 +15,7 @@ interface Props {
   annoIdx: number;
   timeZone: string;
   dismiss: () => void;
+  isPinned: boolean;
 }
 
 interface AnnotationEditFormDTO {
@@ -22,7 +23,7 @@ interface AnnotationEditFormDTO {
   tags: string[];
 }
 
-export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...otherProps }: Props) => {
+export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, isPinned, ...otherProps }: Props) => {
   const styles = useStyles2(getStyles);
   const { onAnnotationCreate, onAnnotationUpdate } = usePanelContext();
 
@@ -77,6 +78,18 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
               : t('timeseries.annotation-editor2.add-annotation', 'Add annotation')}
           </div>
           <div>{time}</div>
+          {isPinned && (
+            <IconButton
+              name={'times'}
+              size={'sm'}
+              onClick={(e) => {
+                // Don't trigger onClick
+                e.stopPropagation();
+                dismiss();
+              }}
+              tooltip={t('timeseries.annotation-editor2.tooltip-close', 'Close')}
+            />
+          )}
         </Stack>
       </div>
       <Form<AnnotationEditFormDTO>
@@ -88,6 +101,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
             <>
               <div className={styles.content}>
                 <Field
+                  autoFocus={true}
                   label={t('timeseries.annotation-editor2.label-description', 'Description')}
                   invalid={!!errors.description}
                   error={errors?.description?.message}

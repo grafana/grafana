@@ -13137,9 +13137,11 @@
       "label-tags": "Tags",
       "placeholder-add-tags": "Add tags",
       "save": "Save",
-      "saving": "Saving"
+      "saving": "Saving",
+      "tooltip-close": "Close"
     },
     "annotation-tooltip2": {
+      "tooltip-close": "Close",
       "tooltip-delete": "Delete",
       "tooltip-edit": "Edit"
     },

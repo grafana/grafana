@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
-import { floatingUtils, useStyles2 } from '@grafana/ui';
+import { ClickOutsideWrapper, floatingUtils, useStyles2 } from '@grafana/ui';
 import { getDataLinks } from 'app/plugins/panel/status-history/utils';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';
@@ -23,6 +23,9 @@ interface AnnoBoxProps {
   timeZone: TimeZone;
   exitWipEdit?: null | (() => void);
   portalRoot: HTMLElement;
+  pinAnnotation: (pin: boolean) => void;
+  isPinned: boolean;
+  showOnHover: boolean;
 }
 
 const STATE_DEFAULT = 0;
@@ -38,11 +41,15 @@ export const AnnotationMarker2 = ({
   exitWipEdit,
   timeZone,
   portalRoot,
+  pinAnnotation,
+  showOnHover,
+  isPinned,
 }: AnnoBoxProps) => {
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
 
   const [state, setState] = useState(exitWipEdit != null ? STATE_EDITING : STATE_DEFAULT);
+  const [isHovering, setIsHovering] = useState(false);
   const { refs, floatingStyles } = useFloating({
     open: true,
     placement,
@@ -51,6 +58,10 @@ export const AnnotationMarker2 = ({
     strategy: 'fixed',
   });
 
+  const onClose = () => {
+    pinAnnotation(false);
+    setIsHovering(false);
+  };
   const links: LinkModel[] = [];
 
   if (STATE_HOVERED) {
@@ -60,43 +71,52 @@ export const AnnotationMarker2 = ({
   }
 
   const contents =
-    state === STATE_HOVERED ? (
+    (isPinned && !(state === STATE_EDITING)) || (showOnHover && isHovering && !(state === STATE_EDITING)) ? (
       <AnnotationTooltip2
         annoIdx={annoIdx}
         annoVals={annoVals}
         timeZone={timeZone}
+        onClose={onClose}
+        isPinned={isPinned}
         onEdit={() => setState(STATE_EDITING)}
         links={links}
       />
     ) : state === STATE_EDITING ? (
       <AnnotationEditor2
+        isPinned={isPinned}
         annoIdx={annoIdx}
         annoVals={annoVals}
         timeZone={timeZone}
         dismiss={() => {
           exitWipEdit?.();
           setState(STATE_DEFAULT);
+          onClose();
         }}
       />
     ) : null;
 
   return (
-    <div
+    <button
       ref={refs.setReference}
       className={className}
       style={style!}
-      onMouseEnter={() => state !== STATE_EDITING && setState(STATE_HOVERED)}
-      onMouseLeave={() => state !== STATE_EDITING && setState(STATE_DEFAULT)}
+      onFocus={() => setIsHovering(true)}
+      onBlur={() => setIsHovering(false)}
+      onClick={() => pinAnnotation(true)}
+      onMouseEnter={() => showOnHover && setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
       data-testid={selectors.pages.Dashboard.Annotations.marker}
     >
       {contents &&
         createPortal(
           <div ref={refs.setFloating} className={styles.annoBox} style={floatingStyles} data-testid="annotation-marker">
-            {contents}
+            <ClickOutsideWrapper includeButtonPress={false} useCapture={true} onClick={() => pinAnnotation(false)}>
+              {contents}
+            </ClickOutsideWrapper>
           </div>,
           portalRoot
         )}
-    </div>
+    </button>
   );
 };
 
