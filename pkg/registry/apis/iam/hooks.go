@@ -94,6 +94,16 @@ func NewResourceTuple(object string, resource iamv0.ResourcePermissionspecResour
 	return key, nil
 }
 
+// tupleToTupleKeyWithoutCondition converts a TupleKey to TupleKeyWithoutCondition
+// This is needed for delete operations which don't support conditions
+func tupleToTupleKeyWithoutCondition(tuple *v1.TupleKey) *v1.TupleKeyWithoutCondition {
+	return &v1.TupleKeyWithoutCondition{
+		User:     tuple.User,
+		Relation: tuple.Relation,
+		Object:   tuple.Object,
+	}
+}
+
 // AfterResourcePermissionCreate is a post-create hook that writes the resource permission to Zanzana (openFGA)
 func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj runtime.Object, _ *metav1.CreateOptions) {
 	if b.zClient == nil {
@@ -101,20 +111,30 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 	}
 
 	// Grab a ticket to write to Zanzana
-	// This limits the amount of concurrent writes to Zanzana
+	// This limits the amount of concurrent connections to Zanzana
+	resourceType := "resourcepermission"
+	operation := "create"
+
 	wait := time.Now()
 	b.zTickets <- true
-	hooksWaitHistogram.Observe(time.Since(wait).Seconds()) // Record wait time
+	hooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds()) // Record wait time
 
 	rp, ok := obj.(*iamv0.ResourcePermission)
 	if !ok {
+		<-b.zTickets
 		return
 	}
 
 	go func(rp *iamv0.ResourcePermission) {
+		start := time.Now()
+		status := "success"
+
 		defer func() {
 			// Release the ticket after write is done
 			<-b.zTickets
+			// Record operation duration and count
+			hooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
+			hooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
 		}()
 
 		resource := rp.Spec.Resource
@@ -140,6 +160,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 		// Avoid writing if there are no valid tuples
 		if len(tuples) == 0 {
 			b.logger.Warn("no valid tuples to write", "namespace", rp.Namespace, "resource", object)
+			status = "failure"
 			return
 		}
 
@@ -159,12 +180,247 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 			},
 		})
 		if err != nil {
+			status = "failure"
 			b.logger.Error("failed to write resource permission to zanzana",
 				"err", err,
 				"namespace", rp.Namespace,
 				"object", object,
 				"tuplesCnt", len(tuples),
 			)
+		} else {
+			// Record successful tuple writes
+			hooksTuplesCounter.WithLabelValues(resourceType, operation, "write").Add(float64(len(tuples)))
+		}
+	}(rp.DeepCopy()) // Pass a copy of the object
+}
+
+// AfterResourcePermissionUpdate is a post-update hook that updates the resource permission in Zanzana (openFGA)
+// It uses a query-then-replace approach: query existing tuples, delete all, then write new ones
+// This can be optimized by using BeforeResourcePermissionUpdate hook, which has access to the old and new permissions
+// and can directly write the new tuples without querying the existing ones
+func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionUpdate(obj runtime.Object, _ *metav1.UpdateOptions) {
+	if b.zClient == nil {
+		return
+	}
+
+	// Grab a ticket to write to Zanzana
+	// This limits the amount of concurrent connections to Zanzana
+	resourceType := "resourcepermission"
+	operation := "update"
+
+	wait := time.Now()
+	b.zTickets <- true
+	hooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds()) // Record wait time
+
+	rp, ok := obj.(*iamv0.ResourcePermission)
+	if !ok {
+		<-b.zTickets
+		return
+	}
+
+	go func(rp *iamv0.ResourcePermission) {
+		start := time.Now()
+		status := "success"
+
+		defer func() {
+			// Release the ticket after write is done
+			<-b.zTickets
+			// Record operation duration and count
+			hooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
+			hooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
+		}()
+
+		resource := rp.Spec.Resource
+		object := zanzana.NewObjectEntry(toZanzanaType(resource.ApiGroup), resource.ApiGroup, resource.Resource, "", resource.Name)
+
+		// Query Zanzana to get all existing tuples for this resource object
+		readCtx, readCancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+		defer readCancel()
+
+		readResp, err := b.zClient.Read(readCtx, &v1.ReadRequest{
+			Namespace: rp.Namespace,
+			TupleKey: &v1.ReadRequestTupleKey{
+				Object: object,
+			},
+		})
+
+		var deleteTuples []*v1.TupleKeyWithoutCondition
+		if err != nil {
+			b.logger.Error("failed to read existing tuples from zanzana",
+				"err", err,
+				"namespace", rp.Namespace,
+				"object", object,
+			)
+			// Continue anyway - we'll just write new tuples without deleting old ones
+			// An operator will handle deletion of the old tuples
+		} else if readResp != nil && len(readResp.Tuples) > 0 {
+			// Convert existing tuples to TupleKeyWithoutCondition for deletion
+			deleteTuples = make([]*v1.TupleKeyWithoutCondition, 0, len(readResp.Tuples))
+			for _, existingTuple := range readResp.Tuples {
+				deleteTuples = append(deleteTuples, &v1.TupleKeyWithoutCondition{
+					User:     existingTuple.Key.User,
+					Relation: existingTuple.Key.Relation,
+					Object:   existingTuple.Key.Object,
+				})
+			}
+		}
+
+		// Generate write tuples from new permissions
+		writeTuples := make([]*v1.TupleKey, 0, len(rp.Spec.Permissions))
+		for _, p := range rp.Spec.Permissions {
+			tuple, err := NewResourceTuple(object, resource, p)
+			if err != nil {
+				b.logger.Error("failed to create resource permission tuple",
+					"namespace", rp.Namespace,
+					"object", object,
+					"err", err,
+				)
+				continue
+			}
+			writeTuples = append(writeTuples, tuple)
+		}
+
+		// If nothing to delete or write, skip
+		if len(deleteTuples) == 0 && len(writeTuples) == 0 {
+			b.logger.Debug("no tuples to update", "namespace", rp.Namespace, "resource", object)
+			return
+		}
+
+		b.logger.Debug("updating resource permission in zanzana",
+			"namespace", rp.Namespace,
+			"object", object,
+			"deleteCnt", len(deleteTuples),
+			"writeCnt", len(writeTuples),
+		)
+
+		writeCtx, writeCancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+		defer writeCancel()
+
+		// Create write request with both deletes and writes
+		req := &v1.WriteRequest{
+			Namespace: rp.Namespace,
+		}
+
+		if len(deleteTuples) > 0 {
+			req.Deletes = &v1.WriteRequestDeletes{
+				TupleKeys: deleteTuples,
+			}
+		}
+
+		if len(writeTuples) > 0 {
+			req.Writes = &v1.WriteRequestWrites{
+				TupleKeys: writeTuples,
+			}
+		}
+
+		err = b.zClient.Write(writeCtx, req)
+		if err != nil {
+			status = "failure"
+			b.logger.Error("failed to update resource permission in zanzana",
+				"err", err,
+				"namespace", rp.Namespace,
+				"object", object,
+				"deleteCnt", len(deleteTuples),
+				"writeCnt", len(writeTuples),
+			)
+		} else {
+			// Record successful tuple operations
+			if len(deleteTuples) > 0 {
+				hooksTuplesCounter.WithLabelValues(resourceType, operation, "delete").Add(float64(len(deleteTuples)))
+			}
+			if len(writeTuples) > 0 {
+				hooksTuplesCounter.WithLabelValues(resourceType, operation, "write").Add(float64(len(writeTuples)))
+			}
+		}
+	}(rp.DeepCopy()) // Pass a copy of the object
+}
+
+// AfterResourcePermissionDelete is a post-delete hook that removes the resource permission from Zanzana (openFGA)
+func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
+	if b.zClient == nil {
+		return
+	}
+
+	// Grab a ticket to write to Zanzana
+	// This limits the amount of concurrent connections to Zanzana
+	resourceType := "resourcepermission"
+	operation := "delete"
+
+	wait := time.Now()
+	b.zTickets <- true
+	hooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds()) // Record wait time
+
+	rp, ok := obj.(*iamv0.ResourcePermission)
+	if !ok {
+		<-b.zTickets
+		return
+	}
+
+	go func(rp *iamv0.ResourcePermission) {
+		start := time.Now()
+		status := "success"
+
+		defer func() {
+			// Release the ticket after write is done
+			<-b.zTickets
+			// Record operation duration and count
+			hooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
+			hooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
+		}()
+
+		resource := rp.Spec.Resource
+		permissions := rp.Spec.Permissions
+
+		object := zanzana.NewObjectEntry(toZanzanaType(resource.ApiGroup), resource.ApiGroup, resource.Resource, "", resource.Name)
+
+		// Generate delete tuples from the permissions
+		deleteTuples := make([]*v1.TupleKeyWithoutCondition, 0, len(permissions))
+		for _, p := range permissions {
+			tuple, err := NewResourceTuple(object, resource, p)
+			if err != nil {
+				b.logger.Error("failed to create resource permission tuple for deletion",
+					"namespace", rp.Namespace,
+					"object", object,
+					"err", err,
+				)
+				continue
+			}
+			deleteTuples = append(deleteTuples, tupleToTupleKeyWithoutCondition(tuple))
+		}
+
+		// Avoid writing if there are no valid tuples
+		if len(deleteTuples) == 0 {
+			b.logger.Warn("no valid tuples to delete", "namespace", rp.Namespace, "resource", object)
+			status = "failure"
+			return
+		}
+
+		b.logger.Debug("deleting resource permission from zanzana",
+			"namespace", rp.Namespace,
+			"object", object,
+			"tuplesCnt", len(deleteTuples),
+		)
+
+		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+		defer cancel()
+
+		err := b.zClient.Write(ctx, &v1.WriteRequest{
+			Namespace: rp.Namespace,
+			Deletes: &v1.WriteRequestDeletes{
+				TupleKeys: deleteTuples,
+			},
+		})
+		if err != nil {
+			status = "failure"
+			b.logger.Error("failed to delete resource permission from zanzana",
+				"err", err,
+				"namespace", rp.Namespace,
+				"object", object,
+				"tuplesCnt", len(deleteTuples),
+			)
+		} else {
+			// Record successful tuple deletions
+			hooksTuplesCounter.WithLabelValues(resourceType, operation, "delete").Add(float64(len(deleteTuples)))
 		}
 	}(rp.DeepCopy()) // Pass a copy of the object
 }
