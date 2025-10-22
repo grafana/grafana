@@ -111,14 +111,14 @@ export const testScopesWithRedirect = (): TestScope[] => {
     {
       name: 'sn-redirect-custom',
       title: 'Custom Redirect',
-      redirectUrl: '/d/cuj-dashboard-2', // Use existing dashboard
+      redirectPath: '/d/cuj-dashboard-2', // Use existing dashboard
       filters: [{ key: 'namespace', operator: 'equals', value: 'custom-redirect' }],
       addLinks: true,
     },
     {
       name: 'sn-redirect-fallback',
       title: 'Fallback Navigation',
-      // No redirectUrl - should fall back to scope navigation
+      // No redirectPath - should fall back to scope navigation
       filters: [{ key: 'namespace', operator: 'equals', value: 'fallback-nav' }],
       dashboardUid: 'cuj-dashboard-2', // Use existing dashboard
       dashboardTitle: 'CUJ Dashboard 2',

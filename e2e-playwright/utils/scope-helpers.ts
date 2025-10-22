@@ -19,7 +19,7 @@ export type TestScope = {
   type?: string;
   category?: string;
   addLinks?: boolean;
-  redirectUrl?: string;
+  redirectPath?: string;
 };
 
 type ScopeDashboardBinding = Resource<ScopeDashboardBindingSpec, ScopeDashboardBindingStatus, 'ScopeDashboardBinding'>;
@@ -56,8 +56,8 @@ export async function scopeNodeChildrenRequest(
               linkType: 'scope',
               linkId: `scope-${scope.name}`,
             }),
-            ...(scope.redirectUrl && {
-              redirectUrl: scope.redirectUrl,
+            ...(scope.redirectPath && {
+              redirectPath: scope.redirectPath,
             }),
           },
         })),

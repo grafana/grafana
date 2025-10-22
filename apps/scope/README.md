@@ -9,3 +9,5 @@ go test --tags "pro" -timeout 30s -run ^TestIntegrationOpenAPIs$ github.com/graf
 ```
 ./hack/update-codegen.sh scope
 ```
+
+This should generate a diff in the Enterprise repo. Make sure to open a PR there too.
