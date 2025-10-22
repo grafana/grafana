@@ -5986,6 +5986,12 @@
       "usage-count_one": "Used on {{count}} dashboards",
       "usage-count_other": "Used on {{count}} dashboards"
     },
+    "managed-badge": {
+      "kubectl": "Managed by: Kubectl",
+      "plugin": "Managed by: Plugin: {{id}}",
+      "repository": "Managed by: Repository",
+      "terraform": "Managed by: Terraform"
+    },
     "move-provisioned-dashboard-form": {
       "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
