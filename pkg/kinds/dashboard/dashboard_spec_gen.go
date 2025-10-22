@@ -965,7 +965,7 @@ type AnnotationQuery struct {
 	// Set to 1 for the standard annotation query all dashboards have by default.
 	BuiltIn *float64 `json:"builtIn,omitempty"`
 	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
-	Placement string `json:"placement,omitempty"`
+	Placement *string `json:"placement,omitempty"`
 }
 
 // NewAnnotationQuery creates a new AnnotationQuery object.
@@ -975,7 +975,7 @@ func NewAnnotationQuery() *AnnotationQuery {
 		Enable:     true,
 		Hide:       (func(input bool) *bool { return &input })(false),
 		BuiltIn:    (func(input float64) *float64 { return &input })(0),
-		Placement:  AnnotationQueryPlacement,
+		Placement:  (func(input string) *string { return &input })(AnnotationQueryPlacement),
 	}
 }
 
