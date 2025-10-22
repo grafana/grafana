@@ -128,47 +128,55 @@ func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[str
 	}
 	storedSecureFields := make(map[string][]string, len(receiver.Spec.Integrations))
 	for _, integration := range receiver.Spec.Integrations {
-		t, err := alertingNotify.IntegrationTypeFromString(integration.Type)
+		grafanaIntegration, secureFields, err := convertReceiverIntegrationToIntegration(receiver.Spec.Title, integration)
 		if err != nil {
 			return nil, nil, err
 		}
-		var config schema.IntegrationSchemaVersion
-		typeSchema, _ := alertingNotify.GetSchemaForIntegration(t)
-		if integration.Version != "" {
-			var ok bool
-			config, ok = typeSchema.GetVersion(schema.Version(integration.Version))
-			if !ok {
-				return nil, nil, fmt.Errorf("invalid version %s for integration type %s", integration.Version, integration.Type)
-			}
-		} else {
-			config = typeSchema.GetCurrentVersion()
-		}
-		grafanaIntegration := ngmodels.Integration{
-			Name:           receiver.Spec.Title,
-			Config:         config,
-			Settings:       maps.Clone(integration.Settings),
-			SecureSettings: make(map[string]string),
-		}
-		if integration.Uid != nil {
-			grafanaIntegration.UID = *integration.Uid
-		}
-		if integration.DisableResolveMessage != nil {
-			grafanaIntegration.DisableResolveMessage = *integration.DisableResolveMessage
-		}
-
 		domain.Integrations = append(domain.Integrations, &grafanaIntegration)
-
-		if grafanaIntegration.UID != "" {
-			// This is an existing integration, so we track the secure fields being requested to copy over from existing values.
-			secureFields := make([]string, 0, len(integration.SecureFields))
-			for k, isSecure := range integration.SecureFields {
-				if isSecure {
-					secureFields = append(secureFields, k)
-				}
-			}
-			storedSecureFields[grafanaIntegration.UID] = secureFields
-		}
+		storedSecureFields[grafanaIntegration.UID] = secureFields
 	}
 
 	return domain, storedSecureFields, nil
+}
+
+func convertReceiverIntegrationToIntegration(receiverTitle string, integration model.ReceiverIntegration) (ngmodels.Integration, []string, error) {
+	t, err := alertingNotify.IntegrationTypeFromString(integration.Type)
+	if err != nil {
+		return ngmodels.Integration{}, nil, err
+	}
+	var config schema.IntegrationSchemaVersion
+	typeSchema, _ := alertingNotify.GetSchemaForIntegration(t)
+	if integration.Version != "" {
+		var ok bool
+		config, ok = typeSchema.GetVersion(schema.Version(integration.Version))
+		if !ok {
+			return ngmodels.Integration{}, nil, fmt.Errorf("invalid version %s for integration type %s", integration.Version, integration.Type)
+		}
+	} else {
+		config = typeSchema.GetCurrentVersion()
+	}
+	grafanaIntegration := ngmodels.Integration{
+		Name:           receiverTitle,
+		Config:         config,
+		Settings:       maps.Clone(integration.Settings),
+		SecureSettings: make(map[string]string),
+	}
+	if integration.Uid != nil {
+		grafanaIntegration.UID = *integration.Uid
+	}
+	if integration.DisableResolveMessage != nil {
+		grafanaIntegration.DisableResolveMessage = *integration.DisableResolveMessage
+	}
+
+	var secureFields []string
+	if grafanaIntegration.UID != "" {
+		// This is an existing integration, so we track the secure fields being requested to copy over from existing values.
+		secureFields = make([]string, 0, len(integration.SecureFields))
+		for k, isSecure := range integration.SecureFields {
+			if isSecure {
+				secureFields = append(secureFields, k)
+			}
+		}
+	}
+	return grafanaIntegration, secureFields, nil
 }
