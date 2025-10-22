@@ -73,7 +73,12 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
         >
           <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
         </Button>
-        <AlertRuleDrawerForm isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        <AlertRuleDrawerForm
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          onContinueInAlerting={onClick}
+          prefill={formValues ?? undefined}
+        />
       </>
     );
   }
