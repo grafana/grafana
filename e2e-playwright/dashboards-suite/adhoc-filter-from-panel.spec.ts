@@ -48,10 +48,17 @@ test.describe(
     }) => {
       // Handle query and query_range API calls
       await page.route(/\/api\/ds\/query/, async (route) => {
+        const fixture = require('../fixtures/prometheus-response.json');
+        // during the test, we select the "inner_eval" slice to filter; this simulates the behavior
+        // of prometheus applying that filter and removing dataframes from the response.
+        if (route.request().postData()?.includes('{slice=\\\"inner_eval\\\"}')) {
+          delete fixture.results.A.frames[1];
+        }
+
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify(require('../fixtures/prometheus-response.json')),
+          body: JSON.stringify(fixture),
         });
       });
 
@@ -73,6 +80,11 @@ test.describe(
       const labelValue = await labelValueCell.textContent();
       expect(labelValue).toBeTruthy();
 
+      const otherValueCell = await getCell(panel, 2, 1);
+      const otherValueLabel = await otherValueCell.textContent();
+      expect(otherValueLabel).toBeTruthy();
+      expect(otherValueLabel).not.toBe(labelValue);
+
       // Hover over the first cell to trigger the appearance of filter actions
       await labelValueCell.hover();
 
@@ -92,6 +104,9 @@ test.describe(
       const hasFilterValue = await submenuItems.filter({ hasText: labelValue! }).count();
       expect(hasFilterValue).toBeGreaterThan(0);
 
+      const hasOtherValue = await submenuItems.filter({ hasText: otherValueLabel! }).count();
+      expect(hasOtherValue).toBe(0);
+
       // Check if the URL contains the var-PromAdHoc parameter with the filtered value
       const currentUrl = page.url();
       expect(currentUrl).toContain('var-PromAdHoc');
@@ -101,6 +116,10 @@ test.describe(
       const promAdHocParam = urlParams.get('var-PromAdHoc');
       expect(promAdHocParam).toBeTruthy();
       expect(promAdHocParam).toContain(labelValue!);
+      expect(promAdHocParam).not.toContain(otherValueLabel!);
+
+      // finally, let's check that the table was updated and that the value was filtered out when the query was re-run
+      await expect(otherValueCell).toBeHidden();
     });
   }
 );

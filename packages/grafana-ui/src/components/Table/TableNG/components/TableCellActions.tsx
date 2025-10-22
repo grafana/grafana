@@ -59,7 +59,7 @@ export const TableCellActions = memo(
             aria-label={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
             onClick={() => {
               onCellFilterAdded?.({
-                key: displayName,
+                key: field.name,
                 operator: FILTER_FOR_OPERATOR,
                 value: String(value ?? ''),
               });
@@ -70,7 +70,7 @@ export const TableCellActions = memo(
             aria-label={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
             onClick={() => {
               onCellFilterAdded?.({
-                key: displayName,
+                key: field.name,
                 operator: FILTER_OUT_OPERATOR,
                 value: String(value ?? ''),
               });
