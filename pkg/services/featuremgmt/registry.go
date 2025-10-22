@@ -505,6 +505,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesQueryCaching",
+			Description:     "Adds support for Kubernetes querycaching",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -1060,6 +1067,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "zanzanaNoLegacyClient",
+			Description:       "Use openFGA as main authorization engine and disable legacy RBAC clietn.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:              "reloadDashboardsOnParamsChange",
 			Description:       "Enables reload of dashboards on scopes, time range and variables changes",
 			FrontendOnly:      false,
@@ -1207,14 +1222,6 @@ var (
 		{
 			Name:              "unifiedStorageSearchSprinkles",
 			Description:       "Enable sprinkles on unified storage search",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSearchAndStorageSquad,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
-			Name:              "unifiedStorageUseFullNgram",
-			Description:       "Use full n-gram indexing instead of edge n-gram for unified storage search",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromDocs:      true,
@@ -2032,8 +2039,8 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "grafanaPathfinder",
-			Description: "Enables Pathfinder app",
+			Name:        "interactiveLearning",
+			Description: "Enables the interactive learning app",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaPathfinderSquad,
 		},
@@ -2104,6 +2111,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "newGauge",
+			Description:  "Enable new gauge visualization",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "preventPanelChromeOverflow",
 			Description:  "Restrict PanelChrome contents with overflow: hidden;",
 			Stage:        FeatureStagePublicPreview,
@@ -2119,7 +2134,7 @@ var (
 		},
 		{
 			Name:         "pluginStoreServiceLoading",
-			Description:  "Load plugins during store service startup instead of wire provider",
+			Description:  "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,

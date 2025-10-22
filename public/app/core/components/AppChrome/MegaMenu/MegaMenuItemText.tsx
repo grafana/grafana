@@ -124,7 +124,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       boxShadow: 'none',
       outline: `2px solid ${theme.colors.primary.main}`,
       outlineOffset: '-2px',
-      transition: 'none',
     },
   }),
   linkContent: css({

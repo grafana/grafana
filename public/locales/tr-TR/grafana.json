@@ -6294,6 +6294,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "Bu değişkene diğer değişkenler veya panolar tarafından başvurulmuyor.",
       "content-variable-referenced-other-variables-dashboard": "Bu değişkene diğer değişkenler veya panolar tarafından başvuruluyor."
     },
+    "variable-controls": {
+      "add-variable": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Değişken düzenleyici formu",
       "back-to-list": "Listeye geri dön",
@@ -10754,11 +10757,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -12711,6 +12712,10 @@
     "sql-suggestion-history": "",
     "suggestions": "",
     "view-explanation": ""
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {
