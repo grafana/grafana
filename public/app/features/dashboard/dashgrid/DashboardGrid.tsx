@@ -12,7 +12,7 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget/AddLibraryPanelWidget';
-import { DashboardRow } from '../components/DashboardRow';
+import { DashboardRow } from '../components/DashboardRow/DashboardRow';
 import { DashboardModel } from '../state/DashboardModel';
 import { GridPos, PanelModel } from '../state/PanelModel';
 

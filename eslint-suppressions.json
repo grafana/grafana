@@ -2426,11 +2426,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/DashboardRow/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/DashboardSettings/AutoRefreshIntervals.tsx": {
     "no-restricted-syntax": {
       "count": 1
