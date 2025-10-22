@@ -844,7 +844,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		secretStore:            ss,
 		pluginRequestValidator: rv,
 		queryService:           queryService,
-		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: identity.RoleAdmin},
+		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: identity.RoleAdmin, Namespace: "ns1"},
 	}
 }
 
@@ -928,12 +928,15 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 }
 
 type testClient struct {
-	queryDataLastCalledWith  data.QueryDataRequest
+	queryDataLastCalledWith data.QueryDataRequest
+	// The number of times the QueryData method has been called
+	queryDataCalls           int
 	queryDataStubbedResponse *backend.QueryDataResponse
 	queryDataStubbedError    error
 }
 
 func (c *testClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	c.queryDataCalls++
 	c.queryDataLastCalledWith = req
 	if c.queryDataStubbedError != nil {
 		return nil, c.queryDataStubbedError
