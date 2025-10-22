@@ -65,6 +65,10 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 		}, nil
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
 	users, err := GetUserBuilder()
 	if err != nil {
 		return nil, err

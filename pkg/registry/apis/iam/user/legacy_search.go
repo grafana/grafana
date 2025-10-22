@@ -163,35 +163,3 @@ func defaultColumns() []*resourcepb.ResourceTableColumnDefinition {
 		searchFields.Field(res.SEARCH_FIELD_TITLE),
 	}
 }
-
-var _ user.Filter = &exactMatchFilter{}
-
-type exactMatchFilter struct {
-	Field     string
-	Parameter any
-}
-
-func newExactMatchFilter(field string, parameter any) user.Filter {
-	return &exactMatchFilter{
-		Field:     field,
-		Parameter: parameter,
-	}
-}
-
-// InCondition implements user.Filter.
-func (f *exactMatchFilter) InCondition() *user.InCondition {
-	return nil
-}
-
-// JoinCondition implements user.Filter.
-func (f *exactMatchFilter) JoinCondition() *user.JoinCondition {
-	return nil
-}
-
-// WhereCondition implements user.Filter.
-func (f *exactMatchFilter) WhereCondition() *user.WhereCondition {
-	return &user.WhereCondition{
-		Condition: fmt.Sprintf("%s = ?", f.Field),
-		Params:    f.Parameter,
-	}
-}

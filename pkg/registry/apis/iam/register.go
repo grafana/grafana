@@ -445,27 +445,6 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 	return nil
 }
 
-// func (b *IdentityAccessManagementAPIBuilder) getClientFor(ctx context.Context, obj runtime.Object) (resource.Client, error) {
-// 	kubeConfig, err := b.restConfigProvider.GetRestConfig(ctx)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	clientGenerator := k8s.NewClientRegistry(*kubeConfig, k8s.ClientConfig{})
-// 	switch obj.(type) {
-// 	case *iamv0.User:
-// 		return iamv0.NewUserClientFromGenerator(clientGenerator)
-// 	case *iamv0.Team:
-// 		return iamv0.NewTeamClientFromGenerator(clientGenerator)
-// 	case *iamv0.ServiceAccount:
-// 		return iamv0.NewServiceAccountClientFromGenerator(clientGenerator)
-// 	}
-// 	return nil, fmt.Errorf("unsupported type %T", obj)
-// }
-
-// func (b *IdentityAccessManagementAPIBuilder) getClientGenerator(ctx context.Context) (*k8s.ClientRegistry, error) {
-
-// }
-
 func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter,
 	reg prometheus.Registerer, ac types.AccessClient, storageBackend resource.StorageBackend) (*registry.Store, error) {
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
