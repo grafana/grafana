@@ -27,6 +27,8 @@ import {
   checkLogsSampled,
 } from './utils';
 
+import { config } from '@grafana/runtime';
+
 describe('getLoglevel()', () => {
   it('returns no log level on empty line', () => {
     expect(getLogLevel('')).toBe(LogLevel.unknown);
@@ -82,6 +84,38 @@ describe('getLogLevelFromKey()', () => {
     expect(getLogLevelFromKey('S')).toBe(LogLevel.critical);
     expect(getLogLevelFromKey('C')).toBe(LogLevel.critical);
   });
+  
+describe('getLogLevel with z/OS syslog feature flag', () => {
+  const testLine = 'log message IEF403I JOB STARTED I';
+
+  afterEach(() => {
+    // Reset feature toggle after each test
+    config.featureToggles['zosSyslogLevelMapping'] = false;
+  });
+
+  it('should not parse z/OS syslog when flag is disabled', () => {
+    config.featureToggles['zosSyslogLevelMapping'] = false;
+    const level = getLogLevel(testLine);
+    expect(level).toBe(LogLevel.unknown);
+  });
+
+  it('should parse z/OS syslog when flag is enabled', () => {
+    config.featureToggles['zosSyslogLevelMapping'] = true;
+    const level = getLogLevel(testLine);
+    expect(level).toBe(LogLevel.info);
+  });
+
+  it('should map other z/OS letters correctly when flag is enabled', () => {
+    config.featureToggles['zosSyslogLevelMapping'] = true;
+
+    expect(getLogLevel('Message W')).toBe(LogLevel.warning);
+    expect(getLogLevel('Message E')).toBe(LogLevel.error);
+    expect(getLogLevel('Message C')).toBe(LogLevel.critical);
+    expect(getLogLevel('Message S')).toBe(LogLevel.critical);
+    expect(getLogLevel('Message F')).toBe(LogLevel.critical);
+  });
+});
+  
   describe('Numeric log levels', () => {
     it('returns critical', () => {
       expect(getLogLevelFromKey(0)).toBe(LogLevel.critical);
