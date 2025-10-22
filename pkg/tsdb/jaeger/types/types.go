@@ -40,6 +40,7 @@ type TraceProcess struct {
 }
 
 type TraceSpanReference struct {
+	// RefType is not supported for OTLP-based traces and may be empty.
 	RefType string `json:"refType"`
 	SpanID  string `json:"spanID"`
 	TraceID string `json:"traceID"`
