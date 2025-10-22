@@ -377,6 +377,14 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
+  * Run the annotations API server
+  */
+  kubernetesAnnotations?: boolean;
+  /**
+  * read annotations from the APIServer
+  */
+  annotationsFromAPIServer?: boolean;
+  /**
   * Make sure extracted field names are unique in the dataframe
   */
   extractFieldsNameDeduplication?: boolean;
