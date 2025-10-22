@@ -1,11 +1,10 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 
 import { getPanelProps } from '../test-utils';
 
@@ -33,13 +32,19 @@ const defaultOptions: Options = {
 const findStarButton = (title: string, isStarred: boolean) =>
   screen.findByRole('button', { name: new RegExp(`^${isStarred ? 'unmark' : 'mark'} "${title}" as favorite`, 'i') });
 
-describe.each([
-  // App platform APIs
-  true,
-  // Legacy APIs
-  false,
-])('DashList - app platform APIs: %s', (featureTogglesEnabled) => {
-  testWithFeatureToggles(featureTogglesEnabled ? ['unifiedStorageSearchUI'] : []);
+const fixtures: Array<
+  [
+    // Test title
+    string,
+    // Feature toggle setup
+    Parameters<typeof testWithFeatureToggles>[0],
+  ]
+> = [
+  ['DashList - app platform APIs enabled', { enable: ['unifiedStorageSearchUI', 'starsFromAPIServer'] }],
+  ['DashList - app platform APIs disabled', {}],
+];
+describe.each(fixtures)('%s', (_title, featureTogglesSetup) => {
+  testWithFeatureToggles(featureTogglesSetup);
 
   it('renders different groups of dashboards', async () => {
     const props = getPanelProps({
