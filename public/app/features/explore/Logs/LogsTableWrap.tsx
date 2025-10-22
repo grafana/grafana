@@ -93,6 +93,9 @@ export function LogsTableWrap(props: Props) {
             fieldNames[key].index = index;
           }
         });
+
+        // Reorder to ensure special fields come first
+        fieldNames = reorderColumnsToEnsureSpecialFieldsFirst(fieldNames);
       }
       return fieldNames;
     },
@@ -110,6 +113,9 @@ export function LogsTableWrap(props: Props) {
             fieldNames[key].index = columnIndex;
           }
         });
+
+        // Reorder to ensure special fields come first
+        fieldNames = reorderColumnsToEnsureSpecialFieldsFirst(fieldNames);
       }
       return fieldNames;
     },
@@ -388,16 +394,23 @@ export function LogsTableWrap(props: Props) {
   }
 
   const clearSelection = () => {
-    const pendingLabelState = { ...columnsWithMeta };
+    let pendingLabelState = { ...columnsWithMeta };
     let index = 0;
     Object.keys(pendingLabelState).forEach((key) => {
       const isDefaultField = !!pendingLabelState[key].type;
-      // after reset the only active fields are the special time and body fields
+      // after reset the only active fields are the special time, level, and body fields
       pendingLabelState[key].active = isDefaultField;
-      // reset the index
+      // set temporary index for reordering
       pendingLabelState[key].index = isDefaultField ? index++ : undefined;
     });
+
+    // Reorder to ensure special fields come first in correct order (time, level, body)
+    pendingLabelState = reorderColumnsToEnsureSpecialFieldsFirst(pendingLabelState);
+
     setColumnsWithMeta(pendingLabelState);
+
+    // Update explore state to sync with URL
+    updateExploreState(pendingLabelState);
   };
 
   const reorderColumn = (sourceIndex: number, destinationIndex: number) => {
@@ -492,6 +505,7 @@ export function LogsTableWrap(props: Props) {
 
     let pendingLabelState: FieldNameMetaStore;
     if (isActive) {
+      // Activating a column - set temporary index and let reorder function handle proper placement
       pendingLabelState = {
         ...columnsWithMeta,
         [columnName]: {
@@ -500,7 +514,11 @@ export function LogsTableWrap(props: Props) {
           index: length,
         },
       };
+
+      // Reorder to ensure special fields come first
+      pendingLabelState = reorderColumnsToEnsureSpecialFieldsFirst(pendingLabelState);
     } else {
+      // Deactivating a column
       pendingLabelState = {
         ...columnsWithMeta,
         [columnName]: {
@@ -509,6 +527,9 @@ export function LogsTableWrap(props: Props) {
           index: undefined,
         },
       };
+
+      // Reorder to ensure proper sequential indices
+      pendingLabelState = reorderColumnsToEnsureSpecialFieldsFirst(pendingLabelState);
     }
 
     // Analytics
@@ -521,6 +542,7 @@ export function LogsTableWrap(props: Props) {
     if (filteredColumnsWithMeta) {
       const active = !filteredColumnsWithMeta[columnName]?.active;
       let pendingFilteredLabelState: FieldNameMetaStore;
+
       if (active) {
         pendingFilteredLabelState = {
           ...filteredColumnsWithMeta,
@@ -530,6 +552,9 @@ export function LogsTableWrap(props: Props) {
             index: length,
           },
         };
+
+        // Reorder to ensure special fields come first
+        pendingFilteredLabelState = reorderColumnsToEnsureSpecialFieldsFirst(pendingFilteredLabelState);
       } else {
         pendingFilteredLabelState = {
           ...filteredColumnsWithMeta,
@@ -539,6 +564,9 @@ export function LogsTableWrap(props: Props) {
             index: undefined,
           },
         };
+
+        // Reorder to ensure proper sequential indices
+        pendingFilteredLabelState = reorderColumnsToEnsureSpecialFieldsFirst(pendingFilteredLabelState);
       }
 
       setFilteredColumnsWithMeta(pendingFilteredLabelState);
@@ -677,6 +705,59 @@ export function LogsTableWrap(props: Props) {
 
 const normalize = (value: number, total: number): number => {
   return Math.ceil((100 * value) / total);
+};
+
+/**
+ * Reorders columns to ensure special fields (TIME_FIELD, LEVEL_FIELD, BODY_FIELD) always come first
+ */
+const reorderColumnsToEnsureSpecialFieldsFirst = (fieldNames: FieldNameMetaStore): FieldNameMetaStore => {
+  // Get all active columns sorted by their current index
+  const activeColumns = Object.keys(fieldNames)
+    .filter((key) => fieldNames[key].active && fieldNames[key].index !== undefined)
+    .sort((a, b) => {
+      const indexA = fieldNames[a].index!;
+      const indexB = fieldNames[b].index!;
+      return indexA - indexB;
+    });
+
+  // Separate special fields from regular fields
+  const specialFields: Array<{ key: string; type: string; priority: number }> = [];
+  const regularFields: string[] = [];
+
+  activeColumns.forEach((key) => {
+    const type = fieldNames[key].type;
+    if (type === 'TIME_FIELD') {
+      specialFields.push({ key, type, priority: 0 });
+    } else if (type === 'LEVEL_FIELD') {
+      specialFields.push({ key, type, priority: 1 });
+    } else if (type === 'BODY_FIELD') {
+      specialFields.push({ key, type, priority: 2 });
+    } else {
+      regularFields.push(key);
+    }
+  });
+
+  // Sort special fields by their priority
+  specialFields.sort((a, b) => a.priority - b.priority);
+
+  // Combine special fields first, then regular fields
+  const orderedColumns = [...specialFields.map((f) => f.key), ...regularFields];
+
+  // Create new fieldNames with updated indices
+  const reorderedFieldNames = { ...fieldNames };
+  orderedColumns.forEach((key, index) => {
+    const field = reorderedFieldNames[key];
+    if (field.active && field.index !== undefined) {
+      reorderedFieldNames[key] = {
+        percentOfLinesWithLabel: field.percentOfLinesWithLabel,
+        type: field.type,
+        active: true,
+        index,
+      };
+    }
+  });
+
+  return reorderedFieldNames;
 };
 
 const getLevelFieldName = (columnsWithMeta: FieldNameMetaStore): string | undefined => {
