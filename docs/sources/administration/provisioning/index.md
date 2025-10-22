@@ -604,13 +604,6 @@ Grafana encrypts secure settings in the database.
 | `singleEmail` |                |
 | `addresses`   |                |
 
-#### Alert notification `hipchat`
-
-| Name     | Secure setting |
-| -------- | -------------- |
-| `url`    |                |
-| `apikey` |                |
-| `roomid` |                |
 
 #### Alert notification `opsgenie`
 
