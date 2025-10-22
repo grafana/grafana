@@ -2380,11 +2380,6 @@
       "count": 3
     }
   },
-  "public/app/features/dashboard/components/AddLibraryPanelWidget/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/AnnotationSettings/AnnotationSettingsEdit.tsx": {
     "no-restricted-syntax": {
       "count": 7

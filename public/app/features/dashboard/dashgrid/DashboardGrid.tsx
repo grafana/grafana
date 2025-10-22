@@ -11,7 +11,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
-import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget';
+import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget/AddLibraryPanelWidget';
 import { DashboardRow } from '../components/DashboardRow';
 import { DashboardModel } from '../state/DashboardModel';
 import { GridPos, PanelModel } from '../state/PanelModel';
