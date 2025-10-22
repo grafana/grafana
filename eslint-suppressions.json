@@ -3027,11 +3027,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/model/ddg/types.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/model/link-patterns.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
