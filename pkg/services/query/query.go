@@ -331,9 +331,12 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 }
 
 func getTimeRange(query *simplejson.Json, globalFrom string, globalTo string) (string, string, error) {
-	tr, ok := query.CheckGet("timeRange")
-	if !ok { // timeRange json node does not exist, use global from/to
-		return globalFrom, globalTo, nil
+	tr, ok := query.CheckGet("_timeRange")
+	if !ok { // timeRange json node does not exist
+		tr, ok = query.CheckGet("timeRange") // try the old name for backward compatibility
+		if !ok {                             // timeRange json node does not exist, use global from/to
+			return globalFrom, globalTo, nil
+		}
 	}
 	from, err := tr.Get("from").String()
 	if err != nil {

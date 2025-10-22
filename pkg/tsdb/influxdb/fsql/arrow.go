@@ -26,6 +26,8 @@ const rowLimit = 1_000_000
 type recordReader interface {
 	Next() bool
 	Schema() *arrow.Schema
+	//TODO: fix deprecation warning
+	//nolint:staticcheck
 	Record() arrow.Record
 	Err() error
 }

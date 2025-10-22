@@ -77,10 +77,33 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
 
   return (
     <div className={styles.container}>
+      {renderHiddenVariables(dashboard)}
       <SoloPanelContextProvider value={soloPanelContext} dashboard={dashboard} singleMatch={true}>
         <body.Component model={body} />
       </SoloPanelContextProvider>
     </div>
+  );
+}
+
+// Some variables like ScopesVariable needs
+// to be rendered for their logic to work even if hidden
+function renderHiddenVariables(dashboard: DashboardScene) {
+  if (!dashboard.state.$variables) {
+    return null;
+  }
+
+  const variables = dashboard.state.$variables.state.variables;
+
+  return (
+    <>
+      {variables.map((variable) => {
+        if (variable.UNSAFE_renderAsHidden) {
+          return <variable.Component model={variable} key={variable.state.key} />;
+        }
+
+        return null;
+      })}
+    </>
   );
 }
 

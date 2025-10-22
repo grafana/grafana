@@ -866,9 +866,9 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
-					"redirectUrl": {
+					"redirectPath": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Redirect to a specific URL when this node is selected.",
+							Description: "Redirect to a specific path when this node is selected.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

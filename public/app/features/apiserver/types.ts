@@ -27,6 +27,8 @@ export interface ObjectMeta {
   generation?: number;
   // The first time this was saved
   creationTimestamp: string;
+  // The time this resource was marked for deletion
+  deletionTimestamp?: string;
   // General resource annotations -- including the common grafana.app values
   annotations?: GrafanaAnnotations & GrafanaClientAnnotations;
   // General application level key+value pairs

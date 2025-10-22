@@ -1,17 +1,18 @@
 const fs = require('fs');
+const open = require('open').default;
 const path = require('path');
 
 const baseConfig = require('./jest.config.js');
 
 const CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH = 'codeowners-manifest/filenames-by-team.json';
 
-const teamName = process.env.TEAM_NAME;
-if (!teamName) {
-  console.error('ERROR: TEAM_NAME environment variable is required');
+const codeownerName = process.env.CODEOWNER_NAME;
+if (!codeownerName) {
+  console.error('ERROR: CODEOWNER_NAME environment variable is required');
   process.exit(1);
 }
 
-const outputDir = `./coverage/by-team/${createOwnerDirectory(teamName)}`;
+const outputDir = `./coverage/by-team/${createOwnerDirectory(codeownerName)}`;
 
 const codeownersFilePath = path.join(__dirname, CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH);
 
@@ -22,10 +23,10 @@ if (!fs.existsSync(codeownersFilePath)) {
 }
 
 const codeownersData = JSON.parse(fs.readFileSync(codeownersFilePath, 'utf8'));
-const teamFiles = codeownersData[teamName] || [];
+const teamFiles = codeownersData[codeownerName] || [];
 
 if (teamFiles.length === 0) {
-  console.error(`ERROR: No files found for team "${teamName}"`);
+  console.error(`ERROR: No files found for team "${codeownerName}"`);
   console.error('Available teams:', Object.keys(codeownersData).join(', '));
   process.exit(1);
 }
@@ -34,10 +35,15 @@ const sourceFiles = teamFiles.filter((file) => {
   const ext = path.extname(file);
   return (
     ['.ts', '.tsx', '.js', '.jsx'].includes(ext) &&
+    // exclude all tests
+    !path.matchesGlob(file, '**/test/**/*') &&
     !file.includes('.test.') &&
     !file.includes('.spec.') &&
+    // and storybook stories
     !file.includes('.story.') &&
+    // and generated files
     !file.includes('.gen.ts') &&
+    // and type definitions
     !file.includes('.d.ts') &&
     !file.endsWith('/types.ts')
   );
@@ -49,12 +55,12 @@ const testFiles = teamFiles.filter((file) => {
 });
 
 if (testFiles.length === 0) {
-  console.log(`No test files found for team ${teamName}`);
+  console.log(`No test files found for team ${codeownerName}`);
   process.exit(0);
 }
 
 console.log(
-  `🧪 Collecting coverage for ${sourceFiles.length} testable files and running ${testFiles.length} test files of ${teamFiles.length} files owned by ${teamName}.`
+  `🧪 Collecting coverage for ${sourceFiles.length} testable files and running ${testFiles.length} test files of ${teamFiles.length} files owned by ${codeownerName}.`
 );
 
 module.exports = {
@@ -71,7 +77,7 @@ module.exports = {
     [
       'jest-monocart-coverage',
       {
-        name: `Coverage Report - ${teamName} owned files`,
+        name: `Coverage Report - ${codeownerName} owned files`,
         outputDir: outputDir,
         reports: ['console-summary', 'v8', 'json', 'lcov'],
         sourceFilter: (coveredFile) => sourceFiles.includes(coveredFile),
@@ -84,7 +90,13 @@ module.exports = {
         },
         cleanCache: true,
         onEnd: (coverageResults) => {
-          console.log(`📄 Coverage report saved to file://${path.resolve(outputDir)}/index.html`);
+          const reportURL = `file://${path.resolve(outputDir)}/index.html`;
+          console.log(`📄 Coverage report saved to ${reportURL}`);
+
+          if (process.env.SHOULD_OPEN_COVERAGE_REPORT === 'true') {
+            openCoverageReport(reportURL);
+          }
+
           // TODO: Emit coverage metrics https://github.com/grafana/grafana/issues/111208
         },
       },
@@ -113,5 +125,17 @@ function createOwnerDirectory(owner) {
     // Example: user@domain.tld
     const [user, domain] = owner.split('@');
     return `emails/${user}-at-${domain}`;
+  }
+}
+
+/**
+ * Open the given file URL in the default browser safely, without shell injection risk.
+ * @param {string} reportURL
+ */
+async function openCoverageReport(reportURL) {
+  try {
+    await open(reportURL);
+  } catch (err) {
+    console.error(`Failed to open coverage report: ${err}`);
   }
 }

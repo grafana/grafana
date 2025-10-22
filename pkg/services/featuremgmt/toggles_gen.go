@@ -651,10 +651,6 @@ const (
 	// Enable sprinkles on unified storage search
 	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
 
-	// FlagUnifiedStorageUseFullNgram
-	// Use full n-gram indexing instead of edge n-gram for unified storage search
-	FlagUnifiedStorageUseFullNgram = "unifiedStorageUseFullNgram"
-
 	// FlagManagedDualWriter
 	// Pick the dual write mode from database configs
 	FlagManagedDualWriter = "managedDualWriter"
@@ -1062,9 +1058,9 @@ const (
 	// Enables team folders functionality
 	FlagTeamFolders = "teamFolders"
 
-	// FlagGrafanaPathfinder
-	// Enables Pathfinder app
-	FlagGrafanaPathfinder = "grafanaPathfinder"
+	// FlagInteractiveLearning
+	// Enables the interactive learning app
+	FlagInteractiveLearning = "interactiveLearning"
 
 	// FlagAlertingTriage
 	// Enables the alerting triage feature
@@ -1107,7 +1103,7 @@ const (
 	FlagPreventPanelChromeOverflow = "preventPanelChromeOverflow"
 
 	// FlagPluginStoreServiceLoading
-	// Load plugins during store service startup instead of wire provider
+	// Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
 	FlagPluginStoreServiceLoading = "pluginStoreServiceLoading"
 
 	// FlagOnlyStoreActionSets

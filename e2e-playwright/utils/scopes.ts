@@ -105,3 +105,24 @@ export const testScopes = (scopeBindingSetting?: { uid: string; title: string })
     },
   ];
 };
+
+export const testScopesWithRedirect = (): TestScope[] => {
+  return [
+    {
+      name: 'sn-redirect-custom',
+      title: 'Custom Redirect',
+      redirectPath: '/d/cuj-dashboard-2', // Use existing dashboard
+      filters: [{ key: 'namespace', operator: 'equals', value: 'custom-redirect' }],
+      addLinks: true,
+    },
+    {
+      name: 'sn-redirect-fallback',
+      title: 'Fallback Navigation',
+      // No redirectPath - should fall back to scope navigation
+      filters: [{ key: 'namespace', operator: 'equals', value: 'fallback-nav' }],
+      dashboardUid: 'cuj-dashboard-2', // Use existing dashboard
+      dashboardTitle: 'CUJ Dashboard 2',
+      addLinks: true,
+    },
+  ];
+};

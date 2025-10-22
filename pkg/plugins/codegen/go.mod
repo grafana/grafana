@@ -19,8 +19,8 @@ require (
 	github.com/emicklei/proto v1.13.2 // indirect
 	github.com/expr-lang/expr v1.17.6 // indirect
 	github.com/getkin/kin-openapi v0.133.0 // indirect
-	github.com/go-openapi/jsonpointer v0.21.0 // indirect
-	github.com/go-openapi/swag v0.23.0 // indirect
+	github.com/go-openapi/jsonpointer v0.22.1 // indirect
+	github.com/go-openapi/swag/jsonname v0.25.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect

@@ -132,7 +132,9 @@ export const XYChartTooltip = ({
 
     if (isPinned || hasOneClickLink) {
       const yFieldFrame = data.find((frame) => frame.fields.includes(yField))!;
-      const actions = canExecuteActions ? getFieldActions(yFieldFrame, yField, replaceVariables, rowIndex) : [];
+      const actions = canExecuteActions
+        ? getFieldActions(yFieldFrame, yField, replaceVariables, rowIndex, 'xychart')
+        : [];
 
       footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} />;
     }

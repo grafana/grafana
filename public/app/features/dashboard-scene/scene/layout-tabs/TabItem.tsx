@@ -19,7 +19,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
-import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
@@ -162,14 +162,6 @@ export class TabItem
     return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
   }
 
-  public onAddPanel(panel = getDefaultVizPanel()) {
-    this.getLayout().addPanel(panel);
-  }
-
-  public onAddTab() {
-    this.getParentLayout().addNewTab();
-  }
-
   public onChangeTitle(title: string) {
     this.setState({ title });
     const currentTabSlug = this.getSlug();
@@ -201,7 +193,6 @@ export class TabItem
 
   public draggedPanelInside(panel: VizPanel) {
     panel.clearParent();
-
     this.getLayout().addPanel(panel);
     this.setIsDropTarget(false);
 

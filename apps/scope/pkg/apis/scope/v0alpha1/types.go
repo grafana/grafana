@@ -154,8 +154,8 @@ type ScopeNodeSpec struct {
 	LinkID   string   `json:"linkId,omitempty"`   // the k8s name
 	// ?? should this be a slice of links
 
-	// Redirect to a specific URL when this node is selected.
-	RedirectUrl string `json:"redirectUrl,omitempty"`
+	// Redirect to a specific path when this node is selected.
+	RedirectPath string `json:"redirectPath,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
