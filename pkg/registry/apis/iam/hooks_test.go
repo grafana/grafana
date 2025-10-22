@@ -23,9 +23,25 @@ func (f *FakeZanzanaClient) Write(ctx context.Context, req *v1.WriteRequest) err
 	return f.writeCallback(ctx, req)
 }
 
-func TestAfterResourcePermissionCreate(t *testing.T) {
-	t.Skip("Need to fix its flaky behavior in CI")
+func requireTuplesMatch(t *testing.T, actual []*v1.TupleKey, expected []*v1.TupleKey, msgAndArgs ...interface{}) {
+	t.Helper()
+	for _, exp := range expected {
+		found := false
+		for _, act := range actual {
+			if act.User == exp.User &&
+				act.Relation == exp.Relation &&
+				act.Object == exp.Object {
+				found = true
+				break
+			}
+		}
+		if !found {
+			require.Fail(t, "Expected tuple not found", "Tuple: %+v\n%v", exp, msgAndArgs)
+		}
+	}
+}
 
+func TestAfterResourcePermissionCreate(t *testing.T) {
 	b := &IdentityAccessManagementAPIBuilder{
 		logger:   log.NewNopLogger(),
 		zTickets: make(chan bool, 1),
@@ -51,25 +67,22 @@ func TestAfterResourcePermissionCreate(t *testing.T) {
 			require.NotNil(t, req.Writes)
 			require.Len(t, req.Writes.TupleKeys, 2)
 			require.Equal(t, "org-2", req.Namespace)
-			require.Equal(
-				t,
-				req.Writes.TupleKeys[0],
-				&v1.TupleKey{User: "user:u1", Relation: "view", Object: "folder:fold1"},
-			)
-			require.Equal(
-				t,
-				req.Writes.TupleKeys[1],
-				&v1.TupleKey{User: "role:basic_editor#assignee", Relation: "edit", Object: "folder:fold1"},
-			)
+
+			expectedTuples := []*v1.TupleKey{
+				{User: "user:u1", Relation: "view", Object: "folder:fold1"},
+				{User: "role:basic_editor#assignee", Relation: "edit", Object: "folder:fold1"},
+			}
+
+			requireTuplesMatch(t, req.Writes.TupleKeys, expectedTuples)
 			return nil
 		}
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testFolderEntries}
 		b.AfterResourcePermissionCreate(&folderPerm, nil)
-	})
 
-	// Wait for the ticket to be released
-	<-b.zTickets
+		// Wait for the ticket to be released
+		<-b.zTickets
+	})
 
 	t.Run("should create zanzana entries for dashboard resource permissions", func(t *testing.T) {
 		dashPerm := iamv0.ResourcePermission{
@@ -95,37 +108,33 @@ func TestAfterResourcePermissionCreate(t *testing.T) {
 			require.Len(t, req.Writes.TupleKeys, 2)
 			require.Equal(t, "default", req.Namespace)
 
-			tuple1 := req.Writes.TupleKeys[0]
-			require.NotNil(t, tuple1.Condition)
-			require.Equal(t, "group_filter", tuple1.Condition.Name)
-			tuple1.Condition = nil
-			require.Equal(
-				t,
-				tuple1,
-				&v1.TupleKey{User: "service-account:sa1", Relation: "view", Object: object},
-			)
+			// Verify all tuples have the group_filter condition
+			for _, tuple := range req.Writes.TupleKeys {
+				require.NotNil(t, tuple.Condition, "Condition should not be nil for tuple %+v", tuple)
+				require.Equal(t, "group_filter", tuple.Condition.Name)
+			}
 
-			tuple2 := req.Writes.TupleKeys[1]
-			require.NotNil(t, tuple2.Condition)
-			require.Equal(t, "group_filter", tuple2.Condition.Name)
-			tuple2.Condition = nil
-			require.Equal(
-				t,
-				tuple2,
-				&v1.TupleKey{User: "team:team1", Relation: "edit", Object: object},
-			)
+			expectedTuples := []*v1.TupleKey{
+				{User: "service-account:sa1", Relation: "view", Object: object},
+				{User: "team:team1", Relation: "edit", Object: object},
+			}
 
+			requireTuplesMatch(t, req.Writes.TupleKeys, expectedTuples)
 			return nil
 		}
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashEntries}
 		b.AfterResourcePermissionCreate(&dashPerm, nil)
+
+		// Wait for the ticket to be released
+		<-b.zTickets
 	})
 }
 
 func TestAfterCoreRoleCreate(t *testing.T) {
 	b := &IdentityAccessManagementAPIBuilder{
-		logger: log.NewNopLogger(),
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
 	}
 
 	t.Run("should create zanzana entries for core role with folder permissions", func(t *testing.T) {
@@ -150,22 +159,20 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 			require.Len(t, req.Writes.TupleKeys, 2)
 			require.Equal(t, "org-1", req.Namespace)
 
-			// Check subject is role with assignee relation
-			for _, tuple := range req.Writes.TupleKeys {
-				require.Equal(t, "role:test-role-uid#assignee", tuple.User)
-				require.Equal(t, "folder:folder1", tuple.Object)
+			expectedTuples := []*v1.TupleKey{
+				{User: "role:test-role-uid#assignee", Relation: "get", Object: "folder:folder1"},
+				{User: "role:test-role-uid#assignee", Relation: "update", Object: "folder:folder1"},
 			}
 
-			// Check relations
-			relations := []string{req.Writes.TupleKeys[0].Relation, req.Writes.TupleKeys[1].Relation}
-			require.Contains(t, relations, "get")
-			require.Contains(t, relations, "update")
-
+			requireTuplesMatch(t, req.Writes.TupleKeys, expectedTuples)
 			return nil
 		}
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testCoreRoleEntries}
 		b.AfterCoreRoleCreate(&coreRole, nil)
+
+		// Wait for the ticket to be released
+		<-b.zTickets
 	})
 
 	t.Run("should create zanzana entries for core role with dashboard permissions", func(t *testing.T) {
@@ -202,6 +209,9 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashboardRoleEntries}
 		b.AfterCoreRoleCreate(&coreRole, nil)
+
+		// Wait for the ticket to be released
+		<-b.zTickets
 	})
 
 	t.Run("should handle wildcard scopes", func(t *testing.T) {
@@ -233,6 +243,9 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testWildcardEntries}
 		b.AfterCoreRoleCreate(&coreRole, nil)
+
+		// Wait for the ticket to be released
+		<-b.zTickets
 	})
 
 	t.Run("should skip untranslatable permissions", func(t *testing.T) {
@@ -265,12 +278,16 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testMixedEntries}
 		b.AfterCoreRoleCreate(&coreRole, nil)
+
+		// Wait for the ticket to be released
+		<-b.zTickets
 	})
 }
 
 func TestAfterRoleCreate(t *testing.T) {
 	b := &IdentityAccessManagementAPIBuilder{
-		logger: log.NewNopLogger(),
+		logger:   log.NewNopLogger(),
+		zTickets: make(chan bool, 1),
 	}
 
 	t.Run("should create zanzana entries for role with folder permissions", func(t *testing.T) {
@@ -295,22 +312,20 @@ func TestAfterRoleCreate(t *testing.T) {
 			require.Len(t, req.Writes.TupleKeys, 2)
 			require.Equal(t, "org-3", req.Namespace)
 
-			// Check subject is role with assignee relation
-			for _, tuple := range req.Writes.TupleKeys {
-				require.Equal(t, "role:custom-role-uid#assignee", tuple.User)
-				require.Equal(t, "folder:folder2", tuple.Object)
+			expectedTuples := []*v1.TupleKey{
+				{User: "role:custom-role-uid#assignee", Relation: "get", Object: "folder:folder2"},
+				{User: "role:custom-role-uid#assignee", Relation: "delete", Object: "folder:folder2"},
 			}
 
-			// Check relations
-			relations := []string{req.Writes.TupleKeys[0].Relation, req.Writes.TupleKeys[1].Relation}
-			require.Contains(t, relations, "get")
-			require.Contains(t, relations, "delete")
-
+			requireTuplesMatch(t, req.Writes.TupleKeys, expectedTuples)
 			return nil
 		}
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testRoleEntries}
 		b.AfterRoleCreate(&role, nil)
+
+		// Wait for the ticket to be released
+		<-b.zTickets
 	})
 
 	t.Run("should create zanzana entries for role with dashboard permissions", func(t *testing.T) {
@@ -346,6 +361,9 @@ func TestAfterRoleCreate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testDashRoleEntries}
 		b.AfterRoleCreate(&role, nil)
+
+		// Wait for the ticket to be released
+		<-b.zTickets
 	})
 
 	t.Run("should merge folder resource tuples with same object and user", func(t *testing.T) {
@@ -379,5 +397,8 @@ func TestAfterRoleCreate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{writeCallback: testMergedEntries}
 		b.AfterRoleCreate(&role, nil)
+
+		// Wait for the ticket to be released
+		<-b.zTickets
 	})
 }

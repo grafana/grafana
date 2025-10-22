@@ -204,65 +204,69 @@ func (b *IdentityAccessManagementAPIBuilder) AfterCoreRoleCreate(obj runtime.Obj
 		return
 	}
 
+	wait := time.Now()
+	b.zTickets <- true
+	hooksWaitHistogram.Observe(time.Since(wait).Seconds())
+
 	role, ok := obj.(*iamv0.CoreRole)
 	if !ok {
 		return
 	}
 
-	roleUID := role.Name
-	permissions := role.Spec.Permissions
+	go func(role *iamv0.CoreRole) {
+		defer func() {
+			<-b.zTickets
+		}()
 
-	b.logger.Debug("converting core role permissions",
-		"namespace", role.Namespace,
-		"roleUID", roleUID,
-		"permissionsCnt", len(permissions),
-	)
+		roleUID := role.Name
+		permissions := role.Spec.Permissions
 
-	tuples, err := convertRolePermissionsToTuples(roleUID, permissions)
-	if err != nil {
-		b.logger.Error("failed to convert core role permissions to tuples",
-			"namespace", role.Namespace,
-			"roleUID", roleUID,
-			"err", err,
-			"permissionsCnt", len(permissions),
-		)
-		return
-	}
+		tuples, err := convertRolePermissionsToTuples(roleUID, permissions)
+		if err != nil {
+			b.logger.Error("failed to convert core role permissions to tuples",
+				"namespace", role.Namespace,
+				"roleUID", roleUID,
+				"err", err,
+				"permissionsCnt", len(permissions),
+			)
+			return
+		}
 
-	// Avoid writing if there are no valid tuples
-	if len(tuples) == 0 {
-		b.logger.Warn("no valid tuples to write for core role",
-			"namespace", role.Namespace,
-			"roleUID", roleUID,
-			"permissionsCnt", len(permissions),
-		)
-		return
-	}
+		// Avoid writing if there are no valid tuples
+		if len(tuples) == 0 {
+			b.logger.Warn("no valid tuples to write for core role",
+				"namespace", role.Namespace,
+				"roleUID", roleUID,
+				"permissionsCnt", len(permissions),
+			)
+			return
+		}
 
-	b.logger.Debug("writing core role permissions to zanzana",
-		"namespace", role.Namespace,
-		"roleUID", roleUID,
-		"tuplesCnt", len(tuples),
-		"permissionsCnt", len(permissions),
-	)
-
-	ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
-	defer cancel()
-
-	err = b.zClient.Write(ctx, &v1.WriteRequest{
-		Namespace: role.Namespace,
-		Writes: &v1.WriteRequestWrites{
-			TupleKeys: tuples,
-		},
-	})
-	if err != nil {
-		b.logger.Error("failed to write core role permissions to zanzana",
-			"err", err,
+		b.logger.Debug("writing core role permissions to zanzana",
 			"namespace", role.Namespace,
 			"roleUID", roleUID,
 			"tuplesCnt", len(tuples),
+			"permissionsCnt", len(permissions),
 		)
-	}
+
+		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+		defer cancel()
+
+		err = b.zClient.Write(ctx, &v1.WriteRequest{
+			Namespace: role.Namespace,
+			Writes: &v1.WriteRequestWrites{
+				TupleKeys: tuples,
+			},
+		})
+		if err != nil {
+			b.logger.Error("failed to write core role permissions to zanzana",
+				"err", err,
+				"namespace", role.Namespace,
+				"roleUID", roleUID,
+				"tuplesCnt", len(tuples),
+			)
+		}
+	}(role.DeepCopy())
 }
 
 // AfterRoleCreate is a post-create hook that writes the role permissions to Zanzana (openFGA)
@@ -271,61 +275,71 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleCreate(obj runtime.Object,
 		return
 	}
 
+	wait := time.Now()
+	b.zTickets <- true
+	hooksWaitHistogram.Observe(time.Since(wait).Seconds())
+
 	role, ok := obj.(*iamv0.Role)
 	if !ok {
 		return
 	}
 
-	roleUID := role.Name
+	go func(role *iamv0.Role) {
+		defer func() {
+			<-b.zTickets
+		}()
 
-	interfacePermissions := make([]iamv0.CoreRolespecPermission, len(role.Spec.Permissions))
-	for i, p := range role.Spec.Permissions {
-		interfacePermissions[i] = iamv0.CoreRolespecPermission(p)
-	}
+		roleUID := role.Name
 
-	tuples, err := convertRolePermissionsToTuples(roleUID, interfacePermissions)
-	if err != nil {
-		b.logger.Error("failed to convert role permissions to tuples",
-			"namespace", role.Namespace,
-			"roleUID", roleUID,
-			"err", err,
-			"permissionsCnt", len(interfacePermissions),
-		)
-		return
-	}
+		interfacePermissions := make([]iamv0.CoreRolespecPermission, len(role.Spec.Permissions))
+		for i, p := range role.Spec.Permissions {
+			interfacePermissions[i] = iamv0.CoreRolespecPermission(p)
+		}
 
-	// Avoid writing if there are no valid tuples
-	if len(tuples) == 0 {
-		b.logger.Debug("no valid tuples to write for role",
-			"namespace", role.Namespace,
-			"roleUID", roleUID,
-			"permissionsCnt", len(interfacePermissions),
-		)
-		return
-	}
+		tuples, err := convertRolePermissionsToTuples(roleUID, interfacePermissions)
+		if err != nil {
+			b.logger.Error("failed to convert role permissions to tuples",
+				"namespace", role.Namespace,
+				"roleUID", roleUID,
+				"err", err,
+				"permissionsCnt", len(interfacePermissions),
+			)
+			return
+		}
 
-	b.logger.Debug("writing role permissions to zanzana",
-		"namespace", role.Namespace,
-		"roleUID", roleUID,
-		"tuplesCnt", len(tuples),
-		"permissionsCnt", len(interfacePermissions),
-	)
+		// Avoid writing if there are no valid tuples
+		if len(tuples) == 0 {
+			b.logger.Debug("no valid tuples to write for role",
+				"namespace", role.Namespace,
+				"roleUID", roleUID,
+				"permissionsCnt", len(interfacePermissions),
+			)
+			return
+		}
 
-	ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
-	defer cancel()
-
-	err = b.zClient.Write(ctx, &v1.WriteRequest{
-		Namespace: role.Namespace,
-		Writes: &v1.WriteRequestWrites{
-			TupleKeys: tuples,
-		},
-	})
-	if err != nil {
-		b.logger.Error("failed to write role permissions to zanzana",
-			"err", err,
+		b.logger.Debug("writing role permissions to zanzana",
 			"namespace", role.Namespace,
 			"roleUID", roleUID,
 			"tuplesCnt", len(tuples),
+			"permissionsCnt", len(interfacePermissions),
 		)
-	}
+
+		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+		defer cancel()
+
+		err = b.zClient.Write(ctx, &v1.WriteRequest{
+			Namespace: role.Namespace,
+			Writes: &v1.WriteRequestWrites{
+				TupleKeys: tuples,
+			},
+		})
+		if err != nil {
+			b.logger.Error("failed to write role permissions to zanzana",
+				"err", err,
+				"namespace", role.Namespace,
+				"roleUID", roleUID,
+				"tuplesCnt", len(tuples),
+			)
+		}
+	}(role.DeepCopy())
 }
