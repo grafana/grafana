@@ -102,16 +102,16 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 		return
 	}
 
+	rp, ok := obj.(*iamv0.ResourcePermission)
+	if !ok {
+		return
+	}
+
 	// Grab a ticket to write to Zanzana
 	// This limits the amount of concurrent writes to Zanzana
 	wait := time.Now()
 	b.zTickets <- true
 	hooksWaitHistogram.Observe(time.Since(wait).Seconds()) // Record wait time
-
-	rp, ok := obj.(*iamv0.ResourcePermission)
-	if !ok {
-		return
-	}
 
 	go func(rp *iamv0.ResourcePermission) {
 		defer func() {
@@ -204,14 +204,14 @@ func (b *IdentityAccessManagementAPIBuilder) AfterCoreRoleCreate(obj runtime.Obj
 		return
 	}
 
-	wait := time.Now()
-	b.zTickets <- true
-	hooksWaitHistogram.Observe(time.Since(wait).Seconds())
-
 	role, ok := obj.(*iamv0.CoreRole)
 	if !ok {
 		return
 	}
+
+	wait := time.Now()
+	b.zTickets <- true
+	hooksWaitHistogram.Observe(time.Since(wait).Seconds())
 
 	go func(role *iamv0.CoreRole) {
 		defer func() {
@@ -275,14 +275,14 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleCreate(obj runtime.Object,
 		return
 	}
 
-	wait := time.Now()
-	b.zTickets <- true
-	hooksWaitHistogram.Observe(time.Since(wait).Seconds())
-
 	role, ok := obj.(*iamv0.Role)
 	if !ok {
 		return
 	}
+
+	wait := time.Now()
+	b.zTickets <- true
+	hooksWaitHistogram.Observe(time.Since(wait).Seconds())
 
 	go func(role *iamv0.Role) {
 		defer func() {
