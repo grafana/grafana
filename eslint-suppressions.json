@@ -3974,11 +3974,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/ArgQueryEditor/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/AppRegistrationCredentials.tsx": {
     "no-restricted-syntax": {
       "count": 5
