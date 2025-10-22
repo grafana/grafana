@@ -398,6 +398,7 @@ export const LogLineContext = memo(
                 infiniteScrollMode="unlimited"
                 loadMore={handleLoadMore}
                 logLineMenuCustomItems={logLineMenuCustomItems}
+                logOptionsStorageKey={logOptionsStorageKey}
                 logs={allLogs}
                 loading={aboveState === LoadingState.Loading || belowState === LoadingState.Loading}
                 permalinkedLogId={log.uid}
