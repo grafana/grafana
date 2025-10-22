@@ -377,6 +377,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         onDataSourceChange={model.onChangeDataSource}
         onOptionsChange={model.onQueryOptionsChange}
         onOpenQueryInspector={model.onOpenInspector}
+        onSelectQueryFromLibrary={onSelectQueryFromLibrary}
       />
 
       <QueryEditorRows

@@ -63,7 +63,17 @@ export type QueryLibraryContextType = {
     onUpdateSuccess?: () => void,
     onSelectQuery?: (query: DataQuery) => void
   ) => ReactNode;
-
+  /**
+   * Returns a toggletip wrapper component to show the number of saved queries for a given datasource.
+   * @param datasource
+   * @param children
+   */
+  renderSavedQueryToggletip: (
+    datasource: string,
+    children: JSX.Element,
+    app: CoreApp,
+    onSelectQuery: (query: DataQuery) => void
+  ) => ReactNode;
   queryLibraryEnabled: boolean;
   context: string;
   triggerAnalyticsEvent: (
@@ -87,6 +97,8 @@ export type QueryLibraryContextType = {
   activeDatasources: string[];
   /** Set a guard function that returns true to allow closing, false to prevent closing */
   setCloseGuard: (shouldAllowClose: () => boolean) => void;
+  shouldOpenToggletip: boolean;
+  setShouldOpenToggletip: (shouldOpenToggletip: boolean) => void;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
@@ -103,6 +115,10 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
 
   renderQueryLibraryEditingHeader: () => {
     return null;
+  },
+
+  renderSavedQueryToggletip: (datasource: string, children: JSX.Element) => {
+    return children;
   },
 
   queryLibraryEnabled: false,
@@ -122,6 +138,8 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   newQuery: undefined,
   activeDatasources: [],
   setCloseGuard: () => {},
+  shouldOpenToggletip: false,
+  setShouldOpenToggletip: () => {},
 });
 
 export function useQueryLibraryContext() {
