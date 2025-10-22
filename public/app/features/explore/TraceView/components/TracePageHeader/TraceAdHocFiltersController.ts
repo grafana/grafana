@@ -127,8 +127,11 @@ export class TraceAdHocFiltersController implements AdHocFiltersController {
     }
     if (this.wip?.key === 'duration') {
       return [
+        { label: '=', value: '=' },
         { label: '>=', value: '>=' },
         { label: '<=', value: '<=' },
+        { label: '>', value: '>' },
+        { label: '<', value: '<' },
       ];
     }
     return TRACE_OPERATORS;
