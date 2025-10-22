@@ -520,7 +520,7 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
   });
 }
 
-export function buildPanelKind(p: Panel & { transparent?: boolean }): PanelKind {
+export function buildPanelKind(p: Panel): PanelKind {
   const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource ?? { type: '', uid: '' });
 
   const transformations = getPanelTransformations(p.transformations || []);

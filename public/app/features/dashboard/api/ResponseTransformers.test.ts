@@ -51,6 +51,7 @@ jest.mock('@grafana/runtime', () => ({
         },
         isDefault: true,
         apiVersion: 'v2',
+        type: 'prometheus',
       },
       '-- Grafana --': {
         uid: 'grafana',
@@ -62,6 +63,7 @@ jest.mock('@grafana/runtime', () => ({
           type: 'datasource',
         },
         isDefault: false,
+        type: 'datasource',
       },
     },
 
