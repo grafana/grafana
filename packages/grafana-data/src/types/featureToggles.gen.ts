@@ -1178,9 +1178,9 @@ export interface FeatureToggles {
   */
   teamFolders?: boolean;
   /**
-  * Enables Pathfinder app
+  * Enables the interactive learning app
   */
-  grafanaPathfinder?: boolean;
+  interactiveLearning?: boolean;
   /**
   * Enables the alerting triage feature
   * @default false

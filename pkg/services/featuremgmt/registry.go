@@ -2047,8 +2047,8 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "grafanaPathfinder",
-			Description: "Enables Pathfinder app",
+			Name:        "interactiveLearning",
+			Description: "Enables the interactive learning app",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaPathfinderSquad,
 		},
