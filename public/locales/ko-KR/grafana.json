@@ -6271,6 +6271,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "이 변수는 다른 변수 또는 대시보드에서 참조되지 않습니다.",
       "content-variable-referenced-other-variables-dashboard": "이 변수는 다른 변수 또는 대시보드에서 참조됩니다."
     },
+    "variable-controls": {
+      "add-variable": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "변수 편집기 양식",
       "back-to-list": "목록으로 돌아가기",
@@ -10720,11 +10723,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -12667,6 +12668,10 @@
     "sql-suggestion-history": "SQL 제안 내역",
     "suggestions": "제안",
     "view-explanation": "설명 보기"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {

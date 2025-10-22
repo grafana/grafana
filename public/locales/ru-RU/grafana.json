@@ -6340,6 +6340,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "На эту переменную не ссылается ни одна другая переменная или дашборд.",
       "content-variable-referenced-other-variables-dashboard": "На эту переменную ссылаются другие переменные или дашборд."
     },
+    "variable-controls": {
+      "add-variable": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Форма редактора переменных",
       "back-to-list": "Назад к списку",
@@ -10822,11 +10825,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -12799,6 +12800,10 @@
     "sql-suggestion-history": "История рекомендаций по SQL",
     "suggestions": "Рекомендации",
     "view-explanation": "Просмотреть объяснение"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {

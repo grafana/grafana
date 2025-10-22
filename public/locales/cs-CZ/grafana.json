@@ -6340,6 +6340,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "Na tuto proměnnou neodkazují jiné proměnné nebo nástěnka.",
       "content-variable-referenced-other-variables-dashboard": "Na tuto proměnnou odkazují jiné proměnné nebo nástěnka."
     },
+    "variable-controls": {
+      "add-variable": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulář editoru proměnné",
       "back-to-list": "Zpět na seznam",
@@ -10822,11 +10825,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -12799,6 +12800,10 @@
     "sql-suggestion-history": "Historie návrhů SQL",
     "suggestions": "Návrhy",
     "view-explanation": "Zobrazit vysvětlení"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {

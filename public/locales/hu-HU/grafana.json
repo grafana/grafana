@@ -6294,6 +6294,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "Erre a változóra más változó vagy irányítópult nem hivatkozik.",
       "content-variable-referenced-other-variables-dashboard": "Erre a változóra más változó vagy irányítópult hivatkozik."
     },
+    "variable-controls": {
+      "add-variable": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Változószerkesztő űrlap",
       "back-to-list": "Vissza a listához",
@@ -10754,11 +10757,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -12711,6 +12712,10 @@
     "sql-suggestion-history": "SQL-javaslatok előzményei",
     "suggestions": "Javaslatok",
     "view-explanation": "Magyarázat megtekintése"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {

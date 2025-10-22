@@ -6294,6 +6294,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "Questa variabile non ha riferimenti da altre variabili o dashboard.",
       "content-variable-referenced-other-variables-dashboard": "Questa variabile ha riferimenti da altre variabili o dashboard."
     },
+    "variable-controls": {
+      "add-variable": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Modulo di modifica delle variabili",
       "back-to-list": "Torna all'elenco",
@@ -10754,11 +10757,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -12711,6 +12712,10 @@
     "sql-suggestion-history": "Cronologia dei suggerimenti SQL",
     "suggestions": "Suggerimenti",
     "view-explanation": "Visualizza spiegazione"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {
