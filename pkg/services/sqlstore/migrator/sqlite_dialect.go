@@ -1,12 +1,19 @@
 package migrator
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/grafana/dskit/backoff"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
+
+var sqliteLogger = log.New("migrator.sqlite_dialect")
 
 type SQLite3 struct {
 	BaseDialect
@@ -112,6 +119,25 @@ func (db *SQLite3) CleanDB(engine *xorm.Engine) error {
 // TruncateDBTables deletes all data from all the tables and resets the sequences.
 // A special case is the dashboard_acl table where we keep the default permissions.
 func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
+	// Helper providing retry/backoff on busy/locked to reduce flakiness
+	execWithRetry := func(sess *xorm.Session, query string) error {
+		b := backoff.New(context.Background(), backoff.Config{
+			MinBackoff: 100 * time.Millisecond,
+			MaxBackoff: time.Second,
+			MaxRetries: 5,
+		})
+		var lastErr error
+		for b.Ongoing() {
+			_, lastErr = sess.Exec(query)
+			if !sqlite.IsBusyOrLocked(lastErr) {
+				break
+			}
+			sqliteLogger.Warn(fmt.Sprintf("retrying busy or locked error: query=%s, error=%s", query, lastErr))
+			b.Wait()
+		}
+		return errors.Join(lastErr, b.Err())
+	}
+
 	tables, err := engine.Dialect().GetTables()
 	if err != nil {
 		return err
@@ -126,19 +152,19 @@ func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
 			continue
 		case "dashboard_acl":
 			// keep default dashboard permissions
-			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %q WHERE dashboard_id != -1 AND org_id != -1;", table.Name)); err != nil {
+			if err := execWithRetry(sess, fmt.Sprintf("DELETE FROM %q WHERE dashboard_id != -1 AND org_id != -1;", table.Name)); err != nil {
 				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
 			}
-			if _, err := sess.Exec("UPDATE sqlite_sequence SET seq = 2 WHERE name = '%s';", table.Name); err != nil {
+			if err = execWithRetry(sess, fmt.Sprintf("UPDATE sqlite_sequence SET seq = 2 WHERE name = '%s';", table.Name)); err != nil {
 				return fmt.Errorf("failed to cleanup sqlite_sequence: %w", err)
 			}
 		default:
-			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %s;", table.Name)); err != nil {
+			if err := execWithRetry(sess, fmt.Sprintf("DELETE FROM %s;", table.Name)); err != nil {
 				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
 			}
 		}
 	}
-	if _, err := sess.Exec("UPDATE sqlite_sequence SET seq = 0 WHERE name != 'dashboard_acl';"); err != nil {
+	if err := execWithRetry(sess, "UPDATE sqlite_sequence SET seq = 0 WHERE name != 'dashboard_acl';"); err != nil {
 		// if we have not created any autoincrement columns in the database this will fail, the error is expected and we can ignore it
 		// we can't discriminate based on code because sqlite returns a generic error code
 		if err.Error() != "no such table: sqlite_sequence" {
