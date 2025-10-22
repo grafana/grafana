@@ -41,8 +41,18 @@ export const exprQuerySchema = z.object({
 // Schema for regular datasource queries
 export const alertingQuerySchema = z.object({
   refId: z.string().describe('Reference ID for the query, e.g., "A", "B", etc.'),
-  expr: z.string().describe('Query expression to be executed. This can not include variables (e.g. $var).'),
-  interval: z.string().default('1m').describe('Time interval for the query, e.g., "5m", "1h", "1d"'),
+  queryType: z.string().optional().default('alerting').describe('Type of query (e.g., "alerting", "recording")'),
+  expression: z
+    .string()
+    .optional()
+    .default('')
+    .describe('Query expression to be executed. This can not include variables (e.g. $var).'),
+  instant: z.boolean().optional().default(true).describe('Whether the query is an instant query'),
+  range: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('Whether the query is a range query, should be false if instant is true'),
   datasource: z.object({
     type: z.string().describe('Datasource type, should be "prometheus", "loki", or "__expr__"'),
     uid: z.string().describe('Datasource UID'),
