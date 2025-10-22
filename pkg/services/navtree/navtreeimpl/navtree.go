@@ -188,8 +188,9 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
 	}
 
-	enabled := openfeature.GetApiInstance().GetClient().Boolean(ctx, featuremgmt.FlagPinNavItems, true, openfeature.TransactionContext(ctx))
-	if enabled && c.IsSignedIn {
+	flagDetails, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, featuremgmt.FlagPinNavItems, true, openfeature.TransactionContext(ctx))
+	s.log.Debug("flag evaluation: ", "flagDetails", flagDetails, "err", err)
+	if flagDetails.Value && c.IsSignedIn {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Bookmarks",
 			Id:             navtree.NavIDBookmarks,

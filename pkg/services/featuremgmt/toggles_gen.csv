@@ -65,6 +65,7 @@ useKubernetesShortURLsAPI,experimental,@grafana/sharing-squad,false,false,true
 kubernetesAlertingRules,experimental,@grafana/alerting-squad,false,true,false
 kubernetesCorrelations,experimental,@grafana/datapro,false,true,false
 kubernetesLogsDrilldown,experimental,@grafana/observability-logs,false,true,false
+kubernetesQueryCaching,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardSchemaValidationLogging,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -138,6 +139,7 @@ pinNavItems,GA,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
 ssoSettingsLDAP,GA,@grafana/identity-access-team,false,true,false
 zanzana,experimental,@grafana/identity-access-team,false,false,false
+zanzanaNoLegacyClient,experimental,@grafana/identity-access-team,false,false,false
 reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,false,false
 enableScopesInMetricsExplore,experimental,@grafana/dashboards-squad,false,false,false
 cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
@@ -270,5 +272,7 @@ pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,fal
 tempoSearchBackendMigration,GA,@grafana/oss-big-tent,false,true,false
 cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
 cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
+newGauge,experimental,@grafana/dataviz-squad,false,false,true
 preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
+onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
