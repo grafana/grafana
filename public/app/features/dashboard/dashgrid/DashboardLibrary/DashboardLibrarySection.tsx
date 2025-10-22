@@ -91,11 +91,6 @@ export const DashboardLibrarySection = () => {
   return (
     <Box borderColor="strong" borderStyle="dashed" padding={4} flex={1}>
       <Stack direction="column" alignItems="center" gap={2}>
-        <Text element="h3" textAlignment="center" weight="medium">
-          <Trans i18nKey="dashboard.empty.start-with-suggested-dashboards">
-            Start with a pre-made dashboard from your data source
-          </Trans>
-        </Text>
         <Box marginTop={2}>
           <Grid
             gap={4}

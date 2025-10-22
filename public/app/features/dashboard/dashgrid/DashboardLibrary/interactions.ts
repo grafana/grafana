@@ -2,9 +2,9 @@ import { reportInteraction } from '@grafana/runtime';
 
 const SCHEMA_VERSION = 1;
 
-type ContentKind = 'datasource_dashboard';
-// in future this could be "template_dashboard" if/when items become templates or "community_dashboard"
-// | 'template_dashboard' | 'community_dashboard';
+type ContentKind = 'datasource_dashboard' | 'community_dashboard';
+// in future this could also include "template_dashboard" if/when items become templates
+// | 'template_dashboard';
 
 type SourceEntryPoint = 'datasource_page';
 // possible future flows onboarding, create-dashboard, empty states
