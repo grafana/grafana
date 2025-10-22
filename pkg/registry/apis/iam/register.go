@@ -399,6 +399,12 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 				return fmt.Errorf("expected old object to be a Team, got %T", oldTeamObj)
 			}
 			return team.ValidateOnUpdate(ctx, typedObj, oldTeamObj)
+		case *iamv0.TeamBinding:
+			oldTeamBindingObj, ok := a.GetOldObject().(*iamv0.TeamBinding)
+			if !ok {
+				return fmt.Errorf("expected old object to be a TeamBinding, got %T", oldTeamBindingObj)
+			}
+			return teambinding.ValidateOnUpdate(ctx, typedObj, oldTeamBindingObj)
 		}
 		return nil
 	case admission.Delete:
