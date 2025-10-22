@@ -72,6 +72,7 @@ import {
   getDefaultVizPanel,
   getLayoutManagerFor,
   getPanelIdForVizPanel,
+  hasActualSaveChanges,
 } from '../utils/utils';
 import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
@@ -316,9 +317,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    const hasActualChanges = this.hasActualSaveChanges();
-
-    if (!this.state.isDirty || skipConfirm || !hasActualChanges || this.managedResourceCannotBeEdited()) {
+    if (!this.state.isDirty || skipConfirm || !hasActualSaveChanges(this) || this.managedResourceCannotBeEdited()) {
       this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
       return;
     }
@@ -815,12 +814,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (this._prevScrollPos !== undefined) {
       this._scrollRef?.scrollTo(0, this._prevScrollPos!);
     }
-  }
-
-  public hasActualSaveChanges() {
-    // changes without time range, refresh rate and default variable values
-    const changes = this.serializer.getDashboardChangesFromScene(this, {});
-    return !!changes.diffCount;
   }
 
   getSaveModel(): Dashboard | DashboardV2Spec {

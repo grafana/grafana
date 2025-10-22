@@ -16,7 +16,7 @@ import { DashboardMeta } from 'app/types/dashboard';
 
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
 import { DashboardScene } from '../scene/DashboardScene';
-import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
+import { getLibraryPanelBehavior, hasActualSaveChanges, isLibraryPanel } from '../utils/utils';
 
 interface DashboardPromptProps {
   dashboard: DashboardScene;
@@ -200,10 +200,7 @@ export function ignoreChanges(scene: DashboardScene | null) {
     return true;
   }
 
-  // changes other than time range, refresh rate or variable option change
-  const hasActualChanges = scene.hasActualSaveChanges();
-
-  return !canSave || fromScript || fromFile || (scene.state.isEditing && !hasActualChanges);
+  return !canSave || fromScript || fromFile || (scene.state.isEditing && !hasActualSaveChanges(scene));
 }
 
 export function isEmptyDashboard(
