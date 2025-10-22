@@ -6271,6 +6271,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "其他變數或儀表板參照不會使用此變數。",
       "content-variable-referenced-other-variables-dashboard": "其他變數或儀表板參照會使用此變數。"
     },
+    "variable-controls": {
+      "add-variable": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "變數編輯器表單",
       "back-to-list": "返回清單",
@@ -10720,11 +10723,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -12667,6 +12668,10 @@
     "sql-suggestion-history": "SQL 建議歷史紀錄",
     "suggestions": "建議",
     "view-explanation": "檢視解釋"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {

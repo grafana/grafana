@@ -621,6 +621,10 @@ export interface FeatureToggles {
   */
   zanzana?: boolean;
   /**
+  * Use openFGA as main authorization engine and disable legacy RBAC clietn.
+  */
+  zanzanaNoLegacyClient?: boolean;
+  /**
   * Enables reload of dashboards on scopes, time range and variables changes
   */
   reloadDashboardsOnParamsChange?: boolean;
@@ -707,10 +711,6 @@ export interface FeatureToggles {
   * Enable sprinkles on unified storage search
   */
   unifiedStorageSearchSprinkles?: boolean;
-  /**
-  * Use full n-gram indexing instead of edge n-gram for unified storage search
-  */
-  unifiedStorageUseFullNgram?: boolean;
   /**
   * Pick the dual write mode from database configs
   */
@@ -1174,9 +1174,9 @@ export interface FeatureToggles {
   */
   teamFolders?: boolean;
   /**
-  * Enables Pathfinder app
+  * Enables the interactive learning app
   */
-  grafanaPathfinder?: boolean;
+  interactiveLearning?: boolean;
   /**
   * Enables the alerting triage feature
   * @default false
@@ -1228,7 +1228,7 @@ export interface FeatureToggles {
   */
   preventPanelChromeOverflow?: boolean;
   /**
-  * Load plugins during store service startup instead of wire provider
+  * Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
   * @default false
   */
   pluginStoreServiceLoading?: boolean;
