@@ -356,11 +356,7 @@ func (s *legacySQLStore) UpdateTeamMember(ctx context.Context, ns claims.Namespa
 			return fmt.Errorf("failed to update team member: %w", err)
 		}
 
-		result = UpdateTeamMemberResult{
-			UID:        cmd.UID,
-			Permission: cmd.Permission,
-			Updated:    cmd.Updated,
-		}
+		result = UpdateTeamMemberResult(cmd)
 
 		return nil
 	})
