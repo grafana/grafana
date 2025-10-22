@@ -55,6 +55,7 @@ For more information:
 | Attribute  | Type | Description  | Examples  | [Requirement Level](https://opentelemetry.io/docs/specs/semconv/general/attribute-requirement-level/) | Stability |
 |---|---|---|---|---|---|
 | `grafana.plugin.id` | string | The plugin ID. | `prometheus`; `loki`; `grafana-github-datasource` | `Recommended` | ![Stable](https://img.shields.io/badge/-stable-lightgreen) |
+| `grafana.plugin.source.class` | string | The plugin source class. | `core` | `Recommended` | ![Stable](https://img.shields.io/badge/-stable-lightgreen) |
 | `grafana.plugin.type` | string | The plugin type. | `datasource` | `Recommended` | ![Stable](https://img.shields.io/badge/-stable-lightgreen) |
 <!-- endsemconv -->
 

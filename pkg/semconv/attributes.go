@@ -120,6 +120,29 @@ func GrafanaPluginId(val string) attribute.KeyValue {
 	return grafanaPluginIdKey.String(val)
 }
 
+// Describes Grafana plugin source attributes.
+const (
+	// GrafanaPluginSourceClassKey is the attribute Key conforming to the
+	// "grafana.plugin.source.class" semantic conventions. It represents the
+	// plugin source class.
+	//
+	// Type: Enum
+	// RequirementLevel: Optional
+	// Stability: stable
+	grafanaPluginSourceClassKey = attribute.Key("grafana.plugin.source.class")
+)
+
+var (
+	// Core Plugin
+	GrafanaPluginSourceClassCore = grafanaPluginSourceClassKey.String("core")
+	// CDN Plugin
+	GrafanaPluginSourceClassCdn = grafanaPluginSourceClassKey.String("cdn")
+	// External Plugin
+	GrafanaPluginSourceClassExternal = grafanaPluginSourceClassKey.String("external")
+	// Unknown Plugin Source
+	GrafanaPluginSourceClassUnknown = grafanaPluginSourceClassKey.String("unknown")
+)
+
 // Describes Grafana service attributes.
 const (
 	// GrafanaServiceNameKey is the attribute Key conforming to the
