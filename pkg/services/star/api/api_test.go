@@ -8,16 +8,18 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestStarDashboardUID(t *testing.T) {
-	svc := dashboards.NewFakeDashboardService(t)
-	svc.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: "test", OrgID: 1}, nil)
-	api := ProvideApi(startest.NewStarServiceFake(), svc)
+	client := NewMockK8sClients(t)
+	client.On("GetDashboardID", mock.Anything, mock.Anything).Return(int64(123), nil)
+	api := &API{
+		starService: startest.NewStarServiceFake(),
+		client:      client,
+	}
 
 	testCases := []struct {
 		name           string

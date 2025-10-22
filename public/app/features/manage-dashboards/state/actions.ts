@@ -310,20 +310,15 @@ export async function processV2DatasourceInput(
   spec: PanelQueryKind['spec'] | QueryVariableKind['spec'] | AnnotationQueryKind['spec'],
   inputs: Record<string, DataSourceInput> = {}
 ) {
-  const datasourceRef = spec.query.datasource;
   let dataSourceInput: DataSourceInput | undefined;
   const dsType = spec.query.group;
 
-  if (!datasourceRef) {
-    // if dsType is grafana, it means we are using a built-in annotation or default grafana datasource, in those
-    // cases we don't need to map it
-    // "datasource" type is what we call "--Dashboard--" datasource <.-.>
-    if (dsType === 'grafana' || dsType === 'datasource') {
-      return inputs;
-    }
+  const datasource = await getDatasourceSrv().get({ type: dsType });
+
+  if (datasource.meta?.builtIn) {
+    return inputs;
   }
 
-  const datasource = await getDatasourceSrv().get({ type: dsType });
   if (datasource) {
     dataSourceInput = {
       name: datasource.name,

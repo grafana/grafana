@@ -259,11 +259,13 @@ func (m *mockResponder) Error(err error) {
 
 type mockClient struct {
 	stubbedFrame *data.Frame
+	logger       log.Logger
 }
 
-func (m mockClient) GetInstance(ctx context.Context, headers map[string]string) (clientapi.Instance, error) {
+func (m mockClient) GetInstance(ctx context.Context, logger log.Logger, headers map[string]string) (clientapi.Instance, error) {
 	mclient := mockClient{
 		stubbedFrame: m.stubbedFrame,
+		logger:       logger,
 	}
 	return mclient, nil
 }
@@ -271,8 +273,8 @@ func (m mockClient) GetInstance(ctx context.Context, headers map[string]string) 
 func (m mockClient) ReportMetrics() {
 }
 
-func (m mockClient) GetLogger(parent log.Logger) log.Logger {
-	return parent.New()
+func (m mockClient) GetLogger() log.Logger {
+	return m.logger
 }
 
 func (m mockClient) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef) (clientapi.QueryDataClient, error) {

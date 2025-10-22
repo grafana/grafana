@@ -116,7 +116,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     const { links } = dashboard.state;
     const hasControlMenuVariables = sceneGraph
       .getVariables(dashboard)
-      ?.state.variables.some((v) => v.state.showInControlsMenu === true);
+      ?.state.variables.some((v) => v.state.hide === VariableHide.inControlsMenu);
     const hasControlMenuLinks = links.some((link) => link.placement === 'inControlsMenu');
 
     return hasControlMenuVariables || hasControlMenuLinks;

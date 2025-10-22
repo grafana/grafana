@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "設定步驟參數的下限",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "選擇解決方案",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "熱度圖",
           "label-table": "表格",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "剖析錯誤：要切換至編輯器模式嗎？"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "圖例",
         "placeholder-select-legend-mode": "選擇圖例模式",
         "tooltip-legend": "序列名稱覆寫或範本。例如：{{templateExample}} 將替換為{{labelName}}的標籤值。"
@@ -482,11 +486,6 @@
         "message-no-metrics-found": "在資料來源中未找到任何指標。",
         "name": "名稱（名字）",
         "type": "類型"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "查詢剖析不明確。"
-        }
       }
     }
   }

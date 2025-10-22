@@ -28,21 +28,25 @@ type HealthCheckerProvider interface {
 	GetHealthChecker() *controller.HealthChecker
 }
 
+type ConnectorDependencies interface {
+	RepoGetter
+	HealthCheckerProvider
+	GetRepoFactory() repository.Factory
+}
+
 type testConnector struct {
 	getter         RepoGetter
 	factory        repository.Factory
 	healthProvider HealthCheckerProvider
+	tester         repository.RepositoryTesterWithExistingChecker
 }
 
-func NewTestConnector(
-	getter RepoGetter,
-	factory repository.Factory,
-	healthProvider HealthCheckerProvider,
-) *testConnector {
+func NewTestConnector(deps ConnectorDependencies, tester repository.RepositoryTesterWithExistingChecker) *testConnector {
 	return &testConnector{
-		factory:        factory,
-		getter:         getter,
-		healthProvider: healthProvider,
+		factory:        deps.GetRepoFactory(),
+		getter:         deps,
+		healthProvider: deps,
+		tester:         tester,
 	}
 }
 
@@ -181,7 +185,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 			}
 		} else {
 			// Testing temporary repository - just run test without status update
-			rsp, err = repository.TestRepository(ctx, repo)
+			rsp, err = s.tester.TestRepositoryAndCheckExisting(ctx, repo)
 			if err != nil {
 				responder.Error(err)
 				return

@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "设置步长参数的下限",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "选择分辨率",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "热图",
           "label-table": "表格",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "解析错误：切换到构建器模式？"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "图例",
         "placeholder-select-legend-mode": "选择图例模式",
         "tooltip-legend": "序列名称覆盖或模板。例如，{{templateExample}} 将替换为 {{labelName}} 的标签值。"
@@ -482,11 +486,6 @@
         "message-no-metrics-found": "数据源中未找到指标。",
         "name": "名称",
         "type": "类型"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "查询解析不明确。"
-        }
       }
     }
   }

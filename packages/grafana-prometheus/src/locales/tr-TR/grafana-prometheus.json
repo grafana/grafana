@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Adım parametresi için alt sınırı ayarlayın",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Çözüm seçin",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Isı Haritası",
           "label-table": "Tablo",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "Ayrıştırma hatası: Oluşturucu moduna geçilsin mi?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Gösterge",
         "placeholder-select-legend-mode": "Gösterge modunu seçin",
         "tooltip-legend": "Seri adı geçersiz kılma veya şablon. Ör: {{templateExample}}, {{labelName}} etiketinin değeriyle değiştirilecektir."
@@ -482,11 +486,6 @@
         "message-no-metrics-found": "Veri kaynağında metrik bulunamadı.",
         "name": "Ad",
         "type": "Tür"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Sorgu ayrıştırma belirsiz."
-        }
       }
     }
   }

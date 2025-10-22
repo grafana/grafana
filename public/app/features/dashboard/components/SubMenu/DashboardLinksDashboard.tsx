@@ -9,14 +9,14 @@ import { t } from '@grafana/i18n';
 import { DashboardLink } from '@grafana/schema';
 import { Dropdown, Icon, LinkButton, Button, Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { ButtonLinkProps } from '@grafana/ui/internal';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { DashboardSearchItem } from 'app/features/search/types';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { DashboardQueryResult } from 'app/features/search/service/types';
 
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 
 interface Props {
   link: DashboardLink;
-  linkInfo: { title: string; href: string };
+  linkInfo: { title: string };
   dashboardUID: string;
   scopedVars?: ScopedVars;
 }
@@ -30,8 +30,15 @@ function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
   const styles = useStyles2(getStyles);
   const resolvedLinks = useResolvedLinks({ dashboardUID, link });
 
-  if (!resolvedLinks || resolveLinks.length === 0) {
-    return null;
+  if (!resolvedLinks || resolvedLinks.length === 0) {
+    return (
+      <Menu>
+        <Menu.Item
+          disabled
+          label={t('dashboard.dashboard-links-menu.label-no-dashboards-found', 'No dashboards found')}
+        />
+      </Menu>
+    );
   }
 
   return (
@@ -60,9 +67,9 @@ function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
   );
 }
 
-export const DashboardLinksDashboard = (props: Props) => {
-  const { link, linkInfo, dashboardUID } = props;
-  const resolvedLinks = useResolvedLinks(props);
+export const DashboardLinksDashboard = ({ link, linkInfo, dashboardUID }: Props) => {
+  const { title } = linkInfo;
+  const resolvedLinks = useResolvedLinks({ link, dashboardUID });
   const styles = useStyles2(getStyles);
 
   if (link.asDropdown) {
@@ -78,7 +85,7 @@ export const DashboardLinksDashboard = (props: Props) => {
           data-testid={selectors.components.DashboardLinks.dropDown}
         >
           <Icon aria-hidden name="bars" className={styles.iconMargin} />
-          <span>{linkInfo.title}</span>
+          <span>{title}</span>
         </DashboardLinkButton>
       </Dropdown>
     );
@@ -113,7 +120,7 @@ const useResolvedLinks = ({ link, dashboardUID }: Pick<Props, 'link' | 'dashboar
   if (!result.value) {
     return [];
   }
-  return resolveLinks(dashboardUID, link, result.value);
+  return resolveLinks(dashboardUID, link, result.value.view);
 };
 
 interface ResolvedLinkDTO {
@@ -122,36 +129,32 @@ interface ResolvedLinkDTO {
   title: string;
 }
 
-export async function searchForTags(
-  tags: string[],
-  dependencies: { getBackendSrv: typeof getBackendSrv } = { getBackendSrv }
-): Promise<DashboardSearchItem[]> {
-  const limit = 100;
-  const searchHits: DashboardSearchItem[] = await dependencies.getBackendSrv().search({ tag: tags, limit });
-
-  return searchHits;
+export async function searchForTags(tags: string[]) {
+  return getGrafanaSearcher().search({ limit: 100, tags, kind: ['dashboard'] });
 }
 
 export function resolveLinks(
   dashboardUID: string,
   link: DashboardLink,
-  searchHits: DashboardSearchItem[],
+  searchHits: DashboardQueryResult[],
   dependencies: { getLinkSrv: typeof getLinkSrv; sanitize: typeof sanitize; sanitizeUrl: typeof sanitizeUrl } = {
     getLinkSrv,
     sanitize,
     sanitizeUrl,
   }
 ): ResolvedLinkDTO[] {
-  return searchHits
-    .filter((searchHit) => searchHit.uid !== dashboardUID)
-    .map((searchHit) => {
-      const uid = searchHit.uid;
-      const title = dependencies.sanitize(searchHit.title);
-      const resolvedLink = dependencies.getLinkSrv().getLinkUrl({ ...link, url: searchHit.url });
-      const url = dependencies.sanitizeUrl(resolvedLink);
-
-      return { uid, title, url };
-    });
+  const hits: ResolvedLinkDTO[] = [];
+  for (const searchHit of searchHits) {
+    if (searchHit.uid === dashboardUID) {
+      continue;
+    }
+    const uid = searchHit.uid;
+    const title = dependencies.sanitize(searchHit.name);
+    const resolvedLink = dependencies.getLinkSrv().getLinkUrl({ ...link, url: searchHit.url });
+    const url = dependencies.sanitizeUrl(resolvedLink);
+    hits.push({ uid, title, url });
+  }
+  return hits;
 }
 
 function getStyles(theme: GrafanaTheme2) {

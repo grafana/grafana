@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
+	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
@@ -34,7 +35,9 @@ func ProvideAppInstallers(
 	pluginsApplInstaller *plugins.PluginsAppInstaller,
 	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
 	rulesAppInstaller *rules.AlertingRulesAppInstaller,
-	correlationsAppInstaller *correlations.CorrelationsAppInstaller,
+	correlationsAppInstaller *correlations.AppInstaller,
+	alertingNotificationAppInstaller *notifications.AlertingNotificationsAppInstaller,
+	logsdrilldownAppInstaller *logsdrilldown.LogsDrilldownAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
@@ -48,6 +51,12 @@ func ProvideAppInstallers(
 	}
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCorrelations) {
 		installers = append(installers, correlationsAppInstaller)
+	}
+	if alertingNotificationAppInstaller != nil {
+		installers = append(installers, alertingNotificationAppInstaller)
+	}
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesLogsDrilldown) {
+		installers = append(installers, logsdrilldownAppInstaller)
 	}
 	return installers
 }
@@ -69,7 +78,6 @@ func ProvideBuilderRunners(
 	features featuremgmt.FeatureToggles,
 	investigationAppProvider *investigations.InvestigationsAppProvider,
 	advisorAppProvider *advisor.AdvisorAppProvider,
-	alertingNotificationsAppProvider *notifications.AlertingNotificationsAppProvider,
 	grafanaCfg *setting.Cfg,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) (*rest.Config, error) {
@@ -96,9 +104,6 @@ func ProvideBuilderRunners(
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) &&
 		!slices.Contains(grafanaCfg.DisablePlugins, "grafana-advisor-app") {
 		providers = append(providers, advisorAppProvider)
-	}
-	if alertingNotificationsAppProvider != nil {
-		providers = append(providers, alertingNotificationsAppProvider)
 	}
 	apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, providers...)
 

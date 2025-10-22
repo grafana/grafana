@@ -65,6 +65,7 @@ export function NoAccessModal({ item, isOpen, onDismiss }: NoAccessModalProps) {
       className={styles.modal}
       contentClassName={styles.modalContent}
       title={<NoAccessModalHeader item={item} />}
+      ariaLabel={item.name}
       isOpen={isOpen}
       onDismiss={onDismiss}
     >

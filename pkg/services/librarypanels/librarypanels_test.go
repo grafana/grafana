@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -656,12 +655,12 @@ func toLibraryElement(t *testing.T, res model.LibraryElementDTO) libraryElement 
 			ConnectedDashboards: res.Meta.ConnectedDashboards,
 			Created:             res.Meta.Created,
 			Updated:             res.Meta.Updated,
-			CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+			CreatedBy: model.LibraryElementDTOMetaUser{
 				Id:        res.Meta.CreatedBy.Id,
 				Name:      res.Meta.CreatedBy.Name,
 				AvatarUrl: res.Meta.CreatedBy.AvatarUrl,
 			},
-			UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+			UpdatedBy: model.LibraryElementDTOMetaUser{
 				Id:        res.Meta.UpdatedBy.Id,
 				Name:      res.Meta.UpdatedBy.Name,
 				AvatarUrl: res.Meta.UpdatedBy.AvatarUrl,
@@ -694,12 +693,12 @@ func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name str
 			ConnectedDashboards: 0,
 			Created:             res.Meta.Created,
 			Updated:             res.Meta.Updated,
-			CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+			CreatedBy: model.LibraryElementDTOMetaUser{
 				Id:        1,
 				Name:      userInDbName,
 				AvatarUrl: userInDbAvatar,
 			},
-			UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+			UpdatedBy: model.LibraryElementDTOMetaUser{
 				Id:        1,
 				Name:      userInDbName,
 				AvatarUrl: userInDbAvatar,

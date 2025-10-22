@@ -451,6 +451,38 @@ func TestChanges(t *testing.T) {
 			Path:   "folder2/",
 		}, changes[2])
 	})
+
+	t.Run("report correct changes with .keep files", func(t *testing.T) {
+		// Replicating how `source` is actually being passed in `Changes` function
+		source := []repository.FileTreeEntry{
+			{Path: "folder1/", Hash: "abc", Blob: false},
+			{Path: "folder1/.keep", Hash: "abc", Blob: true},
+			{Path: "folder1/dashboard.json", Hash: "def", Blob: true},
+			{Path: "folder2/", Hash: "ghi", Blob: false},
+			{Path: "folder2/.keep", Hash: "ghi", Blob: true},
+		}
+		target := &provisioning.ResourceList{}
+
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		// 2 folders and 1 file, so 3 changes in total
+		require.Len(t, changes, 3)
+
+		require.Equal(t, ResourceFileChange{
+			Action: repository.FileActionCreated,
+			Path:   "folder1/dashboard.json",
+		}, changes[0])
+
+		require.Equal(t, ResourceFileChange{
+			Action: repository.FileActionCreated,
+			Path:   "folder1/",
+		}, changes[1])
+
+		require.Equal(t, ResourceFileChange{
+			Action: repository.FileActionCreated,
+			Path:   "folder2/",
+		}, changes[2])
+	})
 }
 
 func TestCompare(t *testing.T) {

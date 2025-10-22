@@ -24,7 +24,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	h := NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: true,
+		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
@@ -33,6 +33,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesAlertingRules,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
 			featuremgmt.FlagKubernetesShortURLs,
+			featuremgmt.FlagKubernetesCorrelations,
 		},
 	})
 
@@ -94,14 +95,23 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "playlist.grafana.app",
 		Version: "v0alpha1",
 	}, {
+		Group:   "preferences.grafana.app",
+		Version: "v1alpha1",
+	}, {
 		Group:   "notifications.alerting.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "rules.alerting.grafana.app",
 		Version: "v0alpha1",
 	}, {
+		Group:   "correlations.grafana.app",
+		Version: "v0alpha1",
+	}, {
 		Group:   "shorturl.grafana.app",
 		Version: "v1alpha1",
+	}, {
+		Group:   "testdata.datasource.grafana.app",
+		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {
 		VerifyOpenAPISnapshots(t, dir, gv, h)

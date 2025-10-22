@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "Nastavit dolní limit pro parametr kroku",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "Vyberte rozlišení",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "Teplotní mapa",
           "label-table": "Tabulka",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "Chyba analýzy: Přepnout do režimu nástroje pro tvorbu?"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "Legenda",
         "placeholder-select-legend-mode": "Vyberte režim legendy",
         "tooltip-legend": "Přepsání názvu řady nebo šablony. Např. {{templateExample}} bude nahrazeno hodnotou štítku pro {{labelName}}."
@@ -482,11 +486,6 @@
         "message-no-metrics-found": "Ve zdroji dat nebyly nalezeny žádné metriky.",
         "name": "Název",
         "type": "Typ"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "Analýza dotazu je nejednoznačná."
-        }
       }
     }
   }

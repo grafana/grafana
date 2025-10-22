@@ -76,7 +76,7 @@ func (c *FolderClient) Patch(ctx context.Context, identifier resource.Identifier
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *FolderClient) UpdateStatus(ctx context.Context, newStatus FolderStatus, opts resource.UpdateOptions) (*Folder, error) {
+func (c *FolderClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus FolderStatus, opts resource.UpdateOptions) (*Folder, error) {
 	return c.client.Update(ctx, &Folder{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       FolderKind().Kind(),
@@ -84,6 +84,8 @@ func (c *FolderClient) UpdateStatus(ctx context.Context, newStatus FolderStatus,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: opts.ResourceVersion,
+			Namespace:       identifier.Namespace,
+			Name:            identifier.Name,
 		},
 		Status: newStatus,
 	}, resource.UpdateOptions{

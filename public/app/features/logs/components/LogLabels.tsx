@@ -5,7 +5,7 @@ import { GrafanaTheme2, Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
+import { getNormalizedFieldName } from './panel/processing';
 
 // Levels are already encoded in color, filename is a Loki-ism
 const HIDDEN_LABELS = ['detected_level', 'level', 'lvl', 'filename'];
@@ -111,7 +111,7 @@ export const LogLabelsList = memo(({ labels }: LogLabelsArrayProps) => {
     <span className={styles.logsLabels}>
       {labels.map((label) => (
         <LogLabel key={label} styles={styles} tooltip={label}>
-          {label === LOG_LINE_BODY_FIELD_NAME ? t('logs.log-labels-list.log-line', 'log line') : label}
+          {getNormalizedFieldName(label)}
         </LogLabel>
       ))}
     </span>

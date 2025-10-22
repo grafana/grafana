@@ -24,6 +24,7 @@ import (
 	_ "github.com/hashicorp/golang-lru/v2"
 	_ "github.com/m3db/prometheus_remote_client_golang/promremote"
 	_ "github.com/phpdave11/gofpdi"
+	_ "github.com/puzpuzpuz/xsync/v4"
 	_ "github.com/robfig/cron/v3"
 	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/spf13/cobra" // used by the standalone apiserver cli

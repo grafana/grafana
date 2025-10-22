@@ -186,7 +186,7 @@ func newRequestDeduplicationMiddleware(log *log.ConcreteLogger, next backend.Han
 }
 
 func (m *requestDeduplicationMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	if req.PluginContext.DataSourceInstanceSettings.UID == "" {
+	if req.PluginContext.DataSourceInstanceSettings == nil || req.PluginContext.DataSourceInstanceSettings.UID == "" {
 		return m.BaseHandler.QueryData(ctx, req)
 	}
 	key, err := caching.GetKey(req.PluginContext.DataSourceInstanceSettings.UID, req)
@@ -198,13 +198,13 @@ func (m *requestDeduplicationMiddleware) QueryData(ctx context.Context, req *bac
 		return m.BaseHandler.QueryData(ctx, req)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("singleflight: calling next.QueryData: %w", err)
+		return nil, fmt.Errorf("request deduplication middleware: calling BaseHandler.QueryData: %w", err)
 	}
 	return v.(*backend.QueryDataResponse), nil
 }
 
 func (m *requestDeduplicationMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	if req.PluginContext.DataSourceInstanceSettings.UID == "" {
+	if req.PluginContext.DataSourceInstanceSettings == nil || req.PluginContext.DataSourceInstanceSettings.UID == "" {
 		return m.BaseHandler.CallResource(ctx, req, sender)
 	}
 
@@ -217,7 +217,7 @@ func (m *requestDeduplicationMiddleware) CallResource(ctx context.Context, req *
 		return nil, m.BaseHandler.CallResource(ctx, req, sender)
 	})
 	if err != nil {
-		return fmt.Errorf("singleflight: calling next.CallResource: %w", err)
+		return fmt.Errorf("request deduplication middleware: calling BaseHandler.CallResource: %w", err)
 	}
 	return nil
 }

@@ -59,6 +59,9 @@ type StorageOptions struct {
 	// Allow writing objects with metadata.annotations[grafana.app/folder]
 	EnableFolderSupport bool
 
+	// Some resources should not allow the absolute maximum (254 characters)
+	MaximumNameLength int
+
 	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
 
@@ -290,13 +293,6 @@ func (s *Storage) Delete(
 		if err := preconditions.Check(key, out); err != nil {
 			return err
 		}
-
-		if preconditions.ResourceVersion != nil {
-			cmd.ResourceVersion, err = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
-			if err != nil {
-				return err
-			}
-		}
 		if preconditions.UID != nil {
 			cmd.Uid = string(*preconditions.UID)
 		}
@@ -316,6 +312,10 @@ func (s *Storage) Delete(
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
 	}
 
+	cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
+	if err != nil {
+		return resource.GetError(resource.AsErrorResult(err))
+	}
 	rsp, err := s.store.Delete(ctx, cmd)
 	if err != nil {
 		return resource.GetError(resource.AsErrorResult(err))
@@ -533,6 +533,18 @@ func (s *Storage) GuaranteedUpdate(
 	if err != nil {
 		return err
 	}
+	// NOTE: by default, the RV will **not** be set in the preconditions (it is removed here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/rest/update.go#L187)
+	// instead, the RV check is done with the object from the request itself.
+	//
+	// the object from the request is retrieved in the tryUpdate function (we use the generic k8s store one). this function calls the UpdateObject function here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/generic/registry/store.go#L653
+	// and that will run a series of transformations: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/rest/update.go#L219
+	//
+	// the specific transformations it runs depends on what type of update it is.
+	// for patch, the transformers are set here and use the patchBytes from the request: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/endpoints/handlers/patch.go#L697
+	// for put, it uses the object from the request here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/endpoints/handlers/update.go#L163
+	//
+	// after those transformations, the RV will then be on the object so that the RV check can properly be done here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/generic/registry/store.go#L662
+	// it will be compared to the current object that we pass in below from storage.
 	if preconditions != nil && preconditions.ResourceVersion != nil {
 		req.ResourceVersion, err = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
 		if err != nil {
@@ -608,41 +620,45 @@ func (s *Storage) GuaranteedUpdate(
 			}
 			continue
 		}
-		break
-	}
 
-	v, err := s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
-	if err != nil {
-		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
-	}
-
-	// Only update (for real) if the bytes have changed
-	var rv uint64
-	req.Value = v.raw.Bytes()
-	if !bytes.Equal(req.Value, existingBytes) {
-		updateResponse, err := s.store.Update(ctx, req)
+		v, err := s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 		if err != nil {
-			err = resource.GetError(resource.AsErrorResult(err))
-		} else if updateResponse.Error != nil {
-			err = resource.GetError(updateResponse.Error)
+			return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
 		}
 
-		// Cleanup secure values
-		if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
+		// Only update (for real) if the bytes have changed
+		var rv uint64
+		req.Value = v.raw.Bytes()
+		if !bytes.Equal(req.Value, existingBytes) {
+			req.ResourceVersion = readResponse.ResourceVersion
+			updateResponse, err := s.store.Update(ctx, req)
+			if err != nil {
+				err = resource.GetError(resource.AsErrorResult(err))
+			} else if updateResponse.Error != nil {
+				if attempt < MaxUpdateAttempts && updateResponse.Error.Code == http.StatusConflict {
+					continue // try the read again
+				}
+				err = resource.GetError(updateResponse.Error)
+			}
+
+			// Cleanup secure values
+			if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
+				return err
+			}
+
+			rv = uint64(updateResponse.ResourceVersion)
+		}
+
+		if _, err := s.convertToObject(req.Value, destination); err != nil {
 			return err
 		}
 
-		rv = uint64(updateResponse.ResourceVersion)
-	}
-
-	if _, err := s.convertToObject(req.Value, destination); err != nil {
-		return err
-	}
-
-	if rv > 0 {
-		if err := s.versioner.UpdateObject(destination, rv); err != nil {
-			return err
+		if rv > 0 {
+			if err := s.versioner.UpdateObject(destination, rv); err != nil {
+				return err
+			}
 		}
+		return nil
 	}
 
 	return nil

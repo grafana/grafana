@@ -1,4 +1,5 @@
 import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Badge, Button, LinkButton, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -8,7 +9,6 @@ import { getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
 
-import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
 
 interface RepositoryActionsProps {
@@ -34,10 +34,19 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
         </Button>
       )}
       <SyncRepository repository={repository} />
-      <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
+      <LinkButton
+        variant="secondary"
+        icon="cog"
+        href={`${PROVISIONING_URL}/${name}/edit`}
+        onClick={() => {
+          reportInteraction('grafana_provisioning_repository_settings_opened', {
+            repositoryName: name,
+            repositoryType: repository.spec?.type ?? 'unknown',
+          });
+        }}
+      >
         <Trans i18nKey="provisioning.repository-actions.settings">Settings</Trans>
       </LinkButton>
-      <DeleteRepositoryButton name={name} repository={repository} redirectTo={PROVISIONING_URL} />
     </Stack>
   );
 }

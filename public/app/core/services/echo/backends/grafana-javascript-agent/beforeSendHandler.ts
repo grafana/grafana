@@ -1,24 +1,55 @@
 import { TransportItem } from '@grafana/faro-core';
-import { config } from '@grafana/runtime';
 
 // as listed in https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/filter-bots/#filter-out-bots-from-collecting-data-for-frontend-observability
 const bots =
-  '(googlebot|Googlebot-Mobile|Googlebot-Image|Google favicon|Mediapartners-Google|bingbot|slurp|Commons-HttpClient|Python-urllib|libwww|httpunit|nutch|phpcrawl|msnbot|jyxobot|FAST-WebCrawler|FAST Enterprise Crawler|biglotron|teoma|convera|seekbot|gigablast|exabot|ngbot|ia_archiver|GingerCrawler|webmon |httrack|webcrawler|grub.org|UsineNouvelleCrawler|antibot|netresearchserver|speedy|fluffy|bibnum.bnf|findlink|msrbot|panscient|yacybot|AISearchBot|IOI|ips-agent|tagoobot|MJ12bot|dotbot|woriobot|yanga|buzzbot|mlbot|yandexbot|purebot|Linguee Bot|Voyager|CyberPatrol|voilabot|baiduspider|citeseerxbot|spbot|twengabot|postrank|turnitinbot|scribdbot|page2rss|sitebot|linkdex|Adidxbot|blekkobot|ezooms|Mail.RU_Bot|discobot|heritrix|findthatfile|europarchive.org|NerdByNature.Bot|sistrix crawler|ahrefsbot|Aboundex|domaincrawler|wbsearchbot|summify|ccbot|edisterbot|seznambot|ec2linkfinder|gslfbot|aihitbot|intelium_bot|facebookexternalhit|yeti|RetrevoPageAnalyzer|lb-spider|sogou|lssbot|careerbot|wotbox|wocbot|ichiro|DuckDuckBot|lssrocketcrawler|drupact|webcompanycrawler|acoonbot|openindexspider|gnam gnam spider|web-archive-net.com.bot|backlinkcrawler|coccoc|integromedb|content crawler spider|toplistbot|seokicks-robot|it2media-domain-crawler|ip-web-crawler.com|siteexplorer.info|elisabot|proximic|changedetection|blexbot|arabot|WeSEE:Search|niki-bot|CrystalSemanticsBot|rogerbot|360Spider|psbot|InterfaxScanBot|Lipperhey SEO Service|CC Metadata Scaper|g00g1e.net|GrapeshotCrawler|urlappendbot|brainobot|fr-crawler|binlar|SimpleCrawler|Livelapbot|Twitterbot|cXensebot|smtbot|bnf.fr_bot|A6-Indexer|ADmantX|Facebot|OrangeBot|memorybot|AdvBot|MegaIndex|SemanticScholarBot|ltx71|nerdybot|xovibot|BUbiNG|Qwantify|archive.org_bot|Applebot|TweetmemeBot|crawler4j|findxbot|SemrushBot|yoozBot|lipperhey|y!j-asr|Domain Re-Animator Bot|AddThis)';
+  '(googlebot|googlebot-mobile|googlebot-image|google favicon|mediapartners-google|' +
+  'bingbot|slurp|commons-httpclient|python-urllib|libwww|httpunit|nutch|phpcrawl|' +
+  'msnbot|jyxobot|fast-webcrawler|fast enterprise crawler|biglotron|teoma|convera|' +
+  'seekbot|gigablast|exabot|ngbot|ia_archiver|gingercrawler|webmon |httrack|' +
+  'webcrawler|grub.org|usinenouvellecrawler|antibot|netresearchserver|speedy|fluffy|' +
+  'bibnum.bnf|findlink|msrbot|panscient|yacybot|aisearchbot|ioi|ips-agent|tagoobot|' +
+  'mj12bot|dotbot|woriobot|yanga|buzzbot|mlbot|yandexbot|purebot|linguee bot|voyager|' +
+  'cyberpatrol|voilabot|baiduspider|citeseerxbot|spbot|twengabot|postrank|turnitinbot|' +
+  'scribdbot|page2rss|sitebot|linkdex|adidxbot|blekkobot|ezooms|mail.ru_bot|discobot|' +
+  'heritrix|findthatfile|europarchive.org|nerdbynature.bot|sistrix crawler|ahrefsbot|' +
+  'aboundex|domaincrawler|wbsearchbot|summify|ccbot|edisterbot|seznambot|ec2linkfinder|' +
+  'gslfbot|aihitbot|intelium_bot|facebookexternalhit|yeti|retrevopageanalyzer|lb-spider|' +
+  'sogou|lssbot|careerbot|wotbox|wocbot|ichiro|duckduckbot|lssrocketcrawler|drupact|' +
+  'webcompanycrawler|acoonbot|openindexspider|gnam gnam spider|web-archive-net.com.bot|' +
+  'backlinkcrawler|coccoc|integromedb|content crawler spider|toplistbot|seokicks-robot|' +
+  'it2media-domain-crawler|ip-web-crawler.com|siteexplorer.info|elisabot|proximic|' +
+  'changedetection|blexbot|arabot|wesee:search|niki-bot|crystalsemanticsbot|rogerbot|' +
+  '360spider|psbot|interfaxscanbot|lipperhey seo service|cc metadata scraper|g00g1e.net|' +
+  'grapeshotcrawler|urlappendbot|brainobot|fr-crawler|binlar|simplecrawler|livelapbot|' +
+  'twitterbot|cxensebot|smtbot|bnf.fr_bot|a6-indexer|admantx|facebot|orangebot|' +
+  'memorybot|advbot|megaindex|semanticscholarbot|ltx71|nerdybot|xovibot|bubing|' +
+  'qwantify|archive.org_bot|applebot|tweetmemebot|crawler4j|findxbot|semrushbot|' +
+  'yoozbot|lipperhey|y!j-asr|domain re-animator bot|addthis)';
 
-const botsRegex = new RegExp(bots, 'i');
+const botsRegex = new RegExp(bots);
 
-export function beforeSendHandler(item: TransportItem): TransportItem | null {
-  if (!config.featureToggles.filterOutBotsFromFrontendLogs) {
+export function beforeSendHandler(botFilterEnabled: boolean, item: TransportItem): TransportItem | null {
+  if (!botFilterEnabled) {
     return item;
   }
 
-  if (!item.meta.browser?.userAgent) {
-    return item;
-  }
-
-  if (botsRegex.test(item.meta.browser.userAgent)) {
+  if (typeof item.meta.browser?.userAgent !== 'string') {
     return null;
   }
 
-  return item;
+  const userAgent = item.meta.browser?.userAgent?.trim().toLowerCase();
+  if (!userAgent) {
+    return null;
+  }
+
+  if (userAgent.length > 512) {
+    return null;
+  }
+
+  try {
+    const isBot = botsRegex.test(userAgent);
+    return isBot ? null : item;
+  } catch (error) {
+    return null;
+  }
 }
