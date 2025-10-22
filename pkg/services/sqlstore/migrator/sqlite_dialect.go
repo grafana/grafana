@@ -126,15 +126,13 @@ func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
 			MaxBackoff: time.Second,
 			MaxRetries: 5,
 		})
-		attempts := 0
 		var lastErr error
 		for b.Ongoing() {
-			attempts++
 			_, lastErr = sess.Exec(query)
 			if !sqlite.IsBusyOrLocked(lastErr) {
 				break
 			}
-			sqliteLogger.Warn(fmt.Sprintf("retrying busy or locked error: query=%s, error=%s, attempts=%d", query, lastErr, attempts))
+			sqliteLogger.Warn(fmt.Sprintf("retrying busy or locked error: query=%s, error=%s", query, lastErr))
 			b.Wait()
 		}
 		return errors.Join(lastErr, b.Err())
