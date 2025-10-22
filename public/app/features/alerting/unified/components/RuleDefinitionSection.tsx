@@ -83,7 +83,8 @@ export function RuleDefinitionSection({ type }: { type: RuleFormType }) {
                 isOpen={showLabelsEditor}
                 onClose={(labelsToUpdate) => {
                   if (labelsToUpdate) {
-                    setValue('labels', labelsToUpdate);
+                    const filtered = labelsToUpdate.filter((l) => (l?.key ?? '').length > 0 || (l?.value ?? '').length > 0);
+                    setValue('labels', filtered, { shouldDirty: true, shouldValidate: true });
                   }
                   setShowLabelsEditor(false);
                 }}

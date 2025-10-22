@@ -1,4 +1,4 @@
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Stack, Text, Tooltip } from '@grafana/ui';
@@ -20,9 +20,10 @@ export function LabelsFieldInForm({
   labelVariant = 'default',
   showHelpTooltip = false,
 }: LabelsFieldInFormProps) {
-  const { watch } = useFormContext<RuleFormValues>();
+  const { control, watch } = useFormContext<RuleFormValues>();
 
-  const labels = watch('labels');
+  // Subscribe to label changes so UI updates when modal saves
+  const labels = useWatch({ control, name: 'labels' }) ?? [];
   const type = watch('type');
 
   const isRecordingRule = type ? isRecordingRuleByType(type) : false;
@@ -35,7 +36,7 @@ export function LabelsFieldInForm({
         'Add labels to your rule for searching, silencing, or routing to a notification policy.'
       );
 
-  const hasLabels = Object.keys(labels).length > 0 && labels.some((label) => label.key || label.value);
+  const hasLabels = Array.isArray(labels) && labels.length > 0 && labels.some((label) => label?.key || label?.value);
 
   return (
     <Stack direction="column" gap={2}>
