@@ -14,11 +14,20 @@ GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
+
+## Always include gms_pure_go for go-mysql-server dependency
+ifneq (,$(findstring gms_pure_go,$(GO_BUILD_TAGS)))
+  GO_BUILD_TAGS := $(GO_BUILD_TAGS)
+else ifneq (,$(strip $(GO_BUILD_TAGS)))
+  GO_BUILD_TAGS := $(GO_BUILD_TAGS),gms_pure_go
+else
+  GO_BUILD_TAGS := gms_pure_go
+endif
+
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_CGO),-cgo-enabled=$(GO_BUILD_CGO))
-GO_BUILD_FLAGS += -build-tags=gms_pure_go
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
 
