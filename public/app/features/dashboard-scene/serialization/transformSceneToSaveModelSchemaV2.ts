@@ -517,11 +517,7 @@ export function getDefaultDataSourceRef(): DataSourceRef {
     return { type: 'grafana', uid: '-- Grafana --' };
   }
 
-  // Try to get the type from different possible locations
-  const dsType = ds.type || ds.meta?.id || 'grafana';
-  const dsUid = ds.uid || ds.name || '-- Grafana --';
-
-  return { type: dsType, uid: dsUid };
+  return { type: ds.type, uid: ds.uid };
 }
 
 export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: DashboardV2Spec, panel?: VizPanel) {
