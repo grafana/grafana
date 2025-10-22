@@ -50,7 +50,7 @@ type GrpcScopeSpans struct {
 type GrpcInstrumentationScope struct {
 	Name                   string         `json:"name"`
 	Version                string         `json:"version"`
-	Atrributes             []GrpcKeyValue `json:"attributes"`
+	Attributes             []GrpcKeyValue `json:"attributes"`
 	DroppedAttributesCount int64          `json:"droppedAttributesCount"`
 }
 
