@@ -172,18 +172,18 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   // Create profiler once and reuse to avoid duplicate metadata setting
   const dashboardProfiler = getDashboardSceneProfilerWithMetadata(metadata.name, dashboard.title);
 
+  const enableProfiling =
+    config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1;
   const queryController = new behaviors.SceneQueryController(
     {
-      enableProfiling:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
+      enableProfiling,
     },
     dashboardProfiler
   );
 
   const interactionTracker = new behaviors.SceneInteractionTracker(
     {
-      enableInteractionTracking:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
+      enableInteractionTracking: enableProfiling,
       onInteractionComplete: getDashboardComponentInteractionCallback(metadata.name, dashboard.title),
     },
     dashboardProfiler
@@ -226,9 +226,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
           uid: dashboardId?.toString(),
         }),
-        // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
-        dashboardAnalyticsInitializer,
-        // Panel profiling is now handled by composed SceneRenderProfiler
+        ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
       ],
       $data: new DashboardDataLayerSet({
         annotationLayers,

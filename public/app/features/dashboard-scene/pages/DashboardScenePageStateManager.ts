@@ -308,8 +308,13 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       trackDashboardSceneLoaded(dashboard, measure?.duration);
 
-      // Initialize both performance services before starting profiling to ensure observers are registered
-      initializeDashboardPerformanceServices();
+      const enableProfiling =
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === options.uid) !== -1;
+
+      if (enableProfiling) {
+        // Initialize both performance services before starting profiling to ensure observers are registered
+        initializeDashboardPerformanceServices();
+      }
 
       // Start dashboard_view profiling (both services are now guaranteed to be listening)
       queryController?.startProfile('dashboard_view');

@@ -302,18 +302,18 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   // Create profiler once and reuse to avoid duplicate metadata setting
   const dashboardProfiler = getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title);
 
+  const enableProfiling =
+    config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1;
   const queryController = new behaviors.SceneQueryController(
     {
-      enableProfiling:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
+      enableProfiling,
     },
     dashboardProfiler
   );
 
   const interactionTracker = new behaviors.SceneInteractionTracker(
     {
-      enableInteractionTracking:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
+      enableInteractionTracking: enableProfiling,
       onInteractionComplete: getDashboardComponentInteractionCallback(oldModel.uid, oldModel.title),
     },
     dashboardProfiler
@@ -333,11 +333,12 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
       uid,
     }),
-    // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
-    dashboardAnalyticsInitializer,
   ];
 
-  // Panel profiling is now handled by composed SceneRenderProfiler
+  if (enableProfiling) {
+    // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
+    behaviorList.push(dashboardAnalyticsInitializer);
+  }
   // Will be enabled in the dashboard creation below
 
   let body: DashboardLayoutManager;
