@@ -3842,11 +3842,6 @@
       "count": 1
     }
   },
-  "public/app/features/variables/pickers/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/pickers/shared/VariableInput.tsx": {
     "no-restricted-syntax": {
       "count": 1
