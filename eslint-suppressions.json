@@ -4958,11 +4958,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/nodeGraph/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/nodeGraph/layout.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
