@@ -171,26 +171,6 @@ func getIntField(m map[string]interface{}, key string, defaultValue int) int {
 	return defaultValue
 }
 
-func getUInt16Field(m map[string]interface{}, key string, defaultValue uint16) uint16 {
-	if val, ok := m[key]; ok {
-		switch v := val.(type) {
-		case int:
-			if v >= 0 && v <= 65535 {
-				return uint16(v)
-			}
-		case float64:
-			if v >= 0 && v <= 65535 {
-				return uint16(v)
-			}
-		case string:
-			if i, err := strconv.Atoi(v); err == nil && i >= 0 && i <= 65535 {
-				return uint16(i)
-			}
-		}
-	}
-	return defaultValue
-}
-
 // Enum transformation functions
 func transformCursorSyncToEnum(cursorSync int) dashv2alpha1.DashboardDashboardCursorSync {
 	switch cursorSync {
@@ -596,10 +576,6 @@ func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOve
 	// Frontend recalculates positions based on row structure
 	if yOverride != nil {
 		y = *yOverride
-	} else {
-		// Frontend scene processing normalizes positions to 0 for simple layouts
-		// Don't apply position adjustments - let frontend handle position calculations
-		// Keep original y position as-is to match frontend behavior
 	}
 
 	item := dashv2alpha1.DashboardGridLayoutItemKind{
@@ -1800,355 +1776,7 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 	}
 
 	// Build field config by mapping each field individually
-	// Always initialize with empty defaults to match frontend behavior
-	fieldConfigSource := dashv2alpha1.DashboardFieldConfigSource{
-		Defaults:  dashv2alpha1.DashboardFieldConfig{},
-		Overrides: []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{},
-	}
-
-	if defaults, ok := fieldConfig["defaults"].(map[string]interface{}); ok {
-		fieldConfigDefaults := dashv2alpha1.DashboardFieldConfig{}
-
-		// Track if we have any defaults to set
-		hasDefaults := false
-
-		// Map each field individually
-		if color, exists := defaults["color"]; exists {
-			if colorMap, ok := color.(map[string]interface{}); ok {
-				var fieldColor dashv2alpha1.DashboardFieldColor
-
-				// mode (required)
-				if mode, ok := colorMap["mode"].(string); ok {
-					fieldColor.Mode = dashv2alpha1.DashboardFieldColorModeId(mode)
-				}
-
-				// fixedColor (optional)
-				if fixedColor, ok := colorMap["fixedColor"].(string); ok {
-					fieldColor.FixedColor = &fixedColor
-				}
-
-				// seriesBy (optional)
-				if seriesBy, ok := colorMap["seriesBy"].(string); ok {
-					sb := dashv2alpha1.DashboardFieldColorSeriesByMode(seriesBy)
-					fieldColor.SeriesBy = &sb
-				}
-
-				fieldConfigDefaults.Color = &fieldColor
-				hasDefaults = true
-			}
-		}
-		if custom, exists := defaults["custom"]; exists {
-			if customMap, ok := custom.(map[string]interface{}); ok {
-				fieldConfigDefaults.Custom = customMap
-				hasDefaults = true
-			}
-		}
-		if decimals, exists := defaults["decimals"]; exists {
-			if dec, ok := decimals.(float64); ok {
-				fieldConfigDefaults.Decimals = &dec
-				hasDefaults = true
-			}
-		}
-		if description, exists := defaults["description"]; exists {
-			if desc, ok := description.(string); ok {
-				fieldConfigDefaults.Description = &desc
-				hasDefaults = true
-			}
-		}
-		if displayName, exists := defaults["displayName"]; exists {
-			if name, ok := displayName.(string); ok {
-				fieldConfigDefaults.DisplayName = &name
-				hasDefaults = true
-			}
-		}
-		if displayNameFromDS, exists := defaults["displayNameFromDS"]; exists {
-			if name, ok := displayNameFromDS.(string); ok {
-				fieldConfigDefaults.DisplayNameFromDS = &name
-				hasDefaults = true
-			}
-		}
-		if filterable, exists := defaults["filterable"]; exists {
-			if filter, ok := filterable.(bool); ok {
-				fieldConfigDefaults.Filterable = &filter
-				hasDefaults = true
-			}
-		}
-		if links, exists := defaults["links"]; exists {
-			if linksArray, ok := links.([]interface{}); ok {
-				fieldConfigDefaults.Links = linksArray
-				hasDefaults = true
-			}
-		}
-		if mappings, exists := defaults["mappings"]; exists {
-			var resultMappings []dashv2alpha1.DashboardValueMapping
-			if mappingsArr, ok := mappings.([]interface{}); ok && len(mappingsArr) > 0 {
-				for _, mapping := range mappingsArr {
-					if mappingMap, ok := mapping.(map[string]interface{}); ok {
-						// Check for type field
-						if typ, ok := mappingMap["type"].(string); ok {
-							switch typ {
-							case "value":
-								// Convert to DashboardValueMap
-								valMap := &dashv2alpha1.DashboardValueMap{}
-								valMap.Type = dashv2alpha1.DashboardMappingTypeValue
-								if opts, ok := mappingMap["options"].(map[string]interface{}); ok {
-									valMap.Options = make(map[string]dashv2alpha1.DashboardValueMappingResult)
-									for k, v := range opts {
-										if resMap, ok := v.(map[string]interface{}); ok {
-											res := dashv2alpha1.DashboardValueMappingResult{}
-											if text, ok := resMap["text"].(string); ok {
-												res.Text = &text
-											}
-											if color, ok := resMap["color"].(string); ok {
-												res.Color = &color
-											}
-											if icon, ok := resMap["icon"].(string); ok {
-												res.Icon = &icon
-											}
-											if idx, ok := resMap["index"].(float64); ok {
-												idx32 := int32(idx)
-												res.Index = &idx32
-											}
-											valMap.Options[k] = res
-										}
-									}
-								}
-								resultMappings = append(resultMappings, dashv2alpha1.DashboardValueMapping{
-									ValueMap: valMap,
-								})
-							case "range":
-								rangeMap := &dashv2alpha1.DashboardRangeMap{}
-								rangeMap.Type = dashv2alpha1.DashboardMappingTypeRange
-								if opts, ok := mappingMap["options"].([]interface{}); ok && len(opts) > 0 {
-									if optMap, ok := opts[0].(map[string]interface{}); ok {
-										r := dashv2alpha1.DashboardV2alpha1RangeMapOptions{}
-										if from, ok := optMap["from"].(float64); ok {
-											r.From = &from
-										}
-										if to, ok := optMap["to"].(float64); ok {
-											r.To = &to
-										}
-										// Result is a DashboardValueMappingResult
-										if resMap, ok := optMap["result"].(map[string]interface{}); ok {
-											res := dashv2alpha1.DashboardValueMappingResult{}
-											if text, ok := resMap["text"].(string); ok {
-												res.Text = &text
-											}
-											if color, ok := resMap["color"].(string); ok {
-												res.Color = &color
-											}
-											if icon, ok := resMap["icon"].(string); ok {
-												res.Icon = &icon
-											}
-											if idx, ok := resMap["index"].(float64); ok {
-												idx32 := int32(idx)
-												res.Index = &idx32
-											}
-											// r.Result is a DashboardValueMappingResult, not a pointer
-											r.Result = res
-										}
-										// Assign the struct directly, not append
-										rangeMap.Options = r
-									}
-									resultMappings = append(resultMappings, dashv2alpha1.DashboardValueMapping{
-										RangeMap: rangeMap,
-									})
-								}
-							case "regex":
-								// Convert to DashboardRegexMap
-								regexMap := &dashv2alpha1.DashboardRegexMap{}
-								regexMap.Type = dashv2alpha1.DashboardMappingTypeRegex
-								if opts, ok := mappingMap["options"].([]interface{}); ok && len(opts) > 0 {
-									if optMap, ok := opts[0].(map[string]interface{}); ok {
-										r := dashv2alpha1.DashboardV2alpha1RegexMapOptions{}
-										if pattern, ok := optMap["regex"].(string); ok {
-											r.Pattern = pattern
-										}
-										// Result is a DashboardValueMappingResult
-										if resMap, ok := optMap["result"].(map[string]interface{}); ok {
-											res := dashv2alpha1.DashboardValueMappingResult{}
-											if text, ok := resMap["text"].(string); ok {
-												res.Text = &text
-											}
-											if color, ok := resMap["color"].(string); ok {
-												res.Color = &color
-											}
-											if icon, ok := resMap["icon"].(string); ok {
-												res.Icon = &icon
-											}
-											if idx, ok := resMap["index"].(float64); ok {
-												idx32 := int32(idx)
-												res.Index = &idx32
-											}
-											r.Result = res
-										}
-										// Assign the struct directly, not append
-										regexMap.Options = r
-									}
-									resultMappings = append(resultMappings, dashv2alpha1.DashboardValueMapping{
-										RegexMap: regexMap,
-									})
-								}
-							case "special":
-								// Convert to DashboardSpecialValueMap
-								specialMap := &dashv2alpha1.DashboardSpecialValueMap{}
-								specialMap.Type = dashv2alpha1.DashboardMappingTypeSpecial
-								if opts, ok := mappingMap["options"].([]interface{}); ok && len(opts) > 0 {
-									if optMap, ok := opts[0].(map[string]interface{}); ok {
-										r := dashv2alpha1.DashboardV2alpha1SpecialValueMapOptions{}
-										if match, ok := optMap["match"].(string); ok {
-											r.Match = dashv2alpha1.DashboardSpecialValueMatch(match)
-										}
-										// Result is a DashboardValueMappingResult
-										if resMap, ok := optMap["result"].(map[string]interface{}); ok {
-											res := dashv2alpha1.DashboardValueMappingResult{}
-											if text, ok := resMap["text"].(string); ok {
-												res.Text = &text
-											}
-											if color, ok := resMap["color"].(string); ok {
-												res.Color = &color
-											}
-											if icon, ok := resMap["icon"].(string); ok {
-												res.Icon = &icon
-											}
-											if idx, ok := resMap["index"].(float64); ok {
-												idx32 := int32(idx)
-												res.Index = &idx32
-											}
-											r.Result = res
-										}
-										// Assign the struct directly, not append
-										specialMap.Options = r
-									}
-									resultMappings = append(resultMappings, dashv2alpha1.DashboardValueMapping{
-										SpecialValueMap: specialMap,
-									})
-								}
-							}
-						}
-					}
-				}
-			}
-			fieldConfigDefaults.Mappings = resultMappings
-			hasDefaults = true
-		}
-		if max, exists := defaults["max"]; exists {
-			if maxVal, ok := max.(float64); ok {
-				fieldConfigDefaults.Max = &maxVal
-				hasDefaults = true
-			}
-		}
-		if min, exists := defaults["min"]; exists {
-			if minVal, ok := min.(float64); ok {
-				fieldConfigDefaults.Min = &minVal
-				hasDefaults = true
-			}
-		}
-		if noValue, exists := defaults["noValue"]; exists {
-			if noVal, ok := noValue.(string); ok {
-				fieldConfigDefaults.NoValue = &noVal
-				hasDefaults = true
-			}
-		}
-		if path, exists := defaults["path"]; exists {
-			if pathVal, ok := path.(string); ok {
-				fieldConfigDefaults.Path = &pathVal
-				hasDefaults = true
-			}
-		}
-		if thresholds, exists := defaults["thresholds"]; exists {
-			if thresholdsMap, ok := thresholds.(map[string]interface{}); ok {
-				thresholdsConfig := &dashv2alpha1.DashboardThresholdsConfig{}
-
-				// Convert mode
-				if mode, ok := thresholdsMap["mode"].(string); ok {
-					thresholdsConfig.Mode = dashv2alpha1.DashboardThresholdsMode(mode)
-				}
-
-				// Convert steps
-				if steps, ok := thresholdsMap["steps"].([]interface{}); ok {
-					thresholdsConfig.Steps = make([]dashv2alpha1.DashboardThreshold, 0, len(steps))
-					for _, step := range steps {
-						if stepMap, ok := step.(map[string]interface{}); ok {
-							threshold := dashv2alpha1.DashboardThreshold{}
-							if value, ok := stepMap["value"].(float64); ok {
-								threshold.Value = &value
-							}
-							if color, ok := stepMap["color"].(string); ok {
-								threshold.Color = color
-							}
-							thresholdsConfig.Steps = append(thresholdsConfig.Steps, threshold)
-						}
-					}
-				}
-
-				fieldConfigDefaults.Thresholds = thresholdsConfig
-				hasDefaults = true
-			}
-		}
-		if unit, exists := defaults["unit"]; exists {
-			if unitVal, ok := unit.(string); ok {
-				fieldConfigDefaults.Unit = &unitVal
-				hasDefaults = true
-			}
-		}
-		if writeable, exists := defaults["writeable"]; exists {
-			if write, ok := writeable.(bool); ok {
-				fieldConfigDefaults.Writeable = &write
-				hasDefaults = true
-			}
-		}
-
-		// Add frontend-style default custom field to match frontend behavior
-		if !hasDefaults {
-			// Add default custom field like frontend does
-			fieldConfigDefaults.Custom = map[string]interface{}{}
-			hasDefaults = true
-		}
-
-		// Only set defaults if we actually have defaults to set
-		if hasDefaults {
-			fieldConfigSource.Defaults = fieldConfigDefaults
-		}
-	}
-
-	// Handle overrides
-	if overrides, ok := fieldConfig["overrides"].([]interface{}); ok && len(overrides) > 0 {
-		fieldConfigSource.Overrides = make([]dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides, 0, len(overrides))
-		for _, override := range overrides {
-			if overrideMap, ok := override.(map[string]interface{}); ok {
-				fieldOverride := dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{}
-
-				// Map override fields individually
-				if matcher, exists := overrideMap["matcher"]; exists {
-					if matcherMap, ok := matcher.(map[string]interface{}); ok {
-						fieldOverride.Matcher = dashv2alpha1.DashboardMatcherConfig{
-							Id:      getStringField(matcherMap, "id", ""),
-							Options: matcherMap["options"],
-						}
-					}
-				}
-				if properties, exists := overrideMap["properties"]; exists {
-					if propertiesArray, ok := properties.([]interface{}); ok {
-						fieldOverride.Properties = make([]dashv2alpha1.DashboardDynamicConfigValue, 0, len(propertiesArray))
-						for _, property := range propertiesArray {
-							if propertyMap, ok := property.(map[string]interface{}); ok {
-								fieldOverride.Properties = append(fieldOverride.Properties, dashv2alpha1.DashboardDynamicConfigValue{
-									Id:    getStringField(propertyMap, "id", ""),
-									Value: propertyMap["value"],
-								})
-							}
-						}
-					}
-				}
-
-				fieldConfigSource.Overrides = append(fieldConfigSource.Overrides, fieldOverride)
-			}
-		}
-	} else {
-		// Use empty array to match frontend behavior
-		fieldConfigSource.Overrides = []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{}
-	}
+	fieldConfigSource := extractFieldConfigSource(fieldConfig)
 
 	return dashv2alpha1.DashboardVizConfigKind{
 		Kind: panelType, // Use panelType as Kind (plugin ID) to match schema comment
@@ -2158,4 +1786,407 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 			Options:       options,
 		},
 	}
+}
+
+func extractFieldConfigSource(fieldConfig map[string]interface{}) dashv2alpha1.DashboardFieldConfigSource {
+	// Always initialize with empty defaults to match frontend behavior
+	fieldConfigSource := dashv2alpha1.DashboardFieldConfigSource{
+		Defaults:  dashv2alpha1.DashboardFieldConfig{},
+		Overrides: []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{},
+	}
+
+	if defaults, ok := fieldConfig["defaults"].(map[string]interface{}); ok {
+		fieldConfigDefaults := extractFieldConfigDefaults(defaults)
+		fieldConfigSource.Defaults = fieldConfigDefaults
+	}
+
+	// Handle overrides
+	fieldConfigSource.Overrides = extractFieldConfigOverrides(fieldConfig)
+
+	return fieldConfigSource
+}
+
+func extractFieldConfigDefaults(defaults map[string]interface{}) dashv2alpha1.DashboardFieldConfig {
+	fieldConfigDefaults := dashv2alpha1.DashboardFieldConfig{}
+	hasDefaults := false
+
+	// Map each field individually
+	if color, exists := defaults["color"]; exists {
+		if colorMap, ok := color.(map[string]interface{}); ok {
+			fieldConfigDefaults.Color = buildFieldColor(colorMap)
+			hasDefaults = true
+		}
+	}
+	if custom, exists := defaults["custom"]; exists {
+		if customMap, ok := custom.(map[string]interface{}); ok {
+			fieldConfigDefaults.Custom = customMap
+			hasDefaults = true
+		}
+	}
+	if decimals, exists := defaults["decimals"]; exists {
+		if dec, ok := decimals.(float64); ok {
+			fieldConfigDefaults.Decimals = &dec
+			hasDefaults = true
+		}
+	}
+	if description, exists := defaults["description"]; exists {
+		if desc, ok := description.(string); ok {
+			fieldConfigDefaults.Description = &desc
+			hasDefaults = true
+		}
+	}
+	if displayName, exists := defaults["displayName"]; exists {
+		if name, ok := displayName.(string); ok {
+			fieldConfigDefaults.DisplayName = &name
+			hasDefaults = true
+		}
+	}
+	if displayNameFromDS, exists := defaults["displayNameFromDS"]; exists {
+		if name, ok := displayNameFromDS.(string); ok {
+			fieldConfigDefaults.DisplayNameFromDS = &name
+			hasDefaults = true
+		}
+	}
+	if filterable, exists := defaults["filterable"]; exists {
+		if filter, ok := filterable.(bool); ok {
+			fieldConfigDefaults.Filterable = &filter
+			hasDefaults = true
+		}
+	}
+	if links, exists := defaults["links"]; exists {
+		if linksArray, ok := links.([]interface{}); ok {
+			fieldConfigDefaults.Links = linksArray
+			hasDefaults = true
+		}
+	}
+	if mappings, exists := defaults["mappings"]; exists {
+		resultMappings := buildValueMappings(mappings)
+		fieldConfigDefaults.Mappings = resultMappings
+		hasDefaults = true
+	}
+	if max, exists := defaults["max"]; exists {
+		if maxVal, ok := max.(float64); ok {
+			fieldConfigDefaults.Max = &maxVal
+			hasDefaults = true
+		}
+	}
+	if min, exists := defaults["min"]; exists {
+		if minVal, ok := min.(float64); ok {
+			fieldConfigDefaults.Min = &minVal
+			hasDefaults = true
+		}
+	}
+	if noValue, exists := defaults["noValue"]; exists {
+		if noVal, ok := noValue.(string); ok {
+			fieldConfigDefaults.NoValue = &noVal
+			hasDefaults = true
+		}
+	}
+	if path, exists := defaults["path"]; exists {
+		if pathVal, ok := path.(string); ok {
+			fieldConfigDefaults.Path = &pathVal
+			hasDefaults = true
+		}
+	}
+	if thresholds, exists := defaults["thresholds"]; exists {
+		if thresholdsMap, ok := thresholds.(map[string]interface{}); ok {
+			thresholdsConfig := buildThresholdsConfig(thresholdsMap)
+			fieldConfigDefaults.Thresholds = thresholdsConfig
+			hasDefaults = true
+		}
+	}
+	if unit, exists := defaults["unit"]; exists {
+		if unitVal, ok := unit.(string); ok {
+			fieldConfigDefaults.Unit = &unitVal
+			hasDefaults = true
+		}
+	}
+	if writeable, exists := defaults["writeable"]; exists {
+		if write, ok := writeable.(bool); ok {
+			fieldConfigDefaults.Writeable = &write
+			hasDefaults = true
+		}
+	}
+
+	// Add frontend-style default custom field to match frontend behavior
+	if !hasDefaults {
+		// Add default custom field like frontend does
+		fieldConfigDefaults.Custom = map[string]interface{}{}
+	}
+
+	return fieldConfigDefaults
+}
+
+func buildFieldColor(colorMap map[string]interface{}) *dashv2alpha1.DashboardFieldColor {
+	var fieldColor dashv2alpha1.DashboardFieldColor
+
+	// mode (required)
+	if mode, ok := colorMap["mode"].(string); ok {
+		fieldColor.Mode = dashv2alpha1.DashboardFieldColorModeId(mode)
+	}
+
+	// fixedColor (optional)
+	if fixedColor, ok := colorMap["fixedColor"].(string); ok {
+		fieldColor.FixedColor = &fixedColor
+	}
+
+	// seriesBy (optional)
+	if seriesBy, ok := colorMap["seriesBy"].(string); ok {
+		sb := dashv2alpha1.DashboardFieldColorSeriesByMode(seriesBy)
+		fieldColor.SeriesBy = &sb
+	}
+
+	return &fieldColor
+}
+
+func buildValueMappings(mappings interface{}) []dashv2alpha1.DashboardValueMapping {
+	var resultMappings []dashv2alpha1.DashboardValueMapping
+
+	mappingsArr, ok := mappings.([]interface{})
+	if !ok || len(mappingsArr) == 0 {
+		return resultMappings
+	}
+
+	for _, mapping := range mappingsArr {
+		mappingMap, ok := mapping.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		typ, ok := mappingMap["type"].(string)
+		if !ok {
+			continue
+		}
+
+		switch typ {
+		case "value":
+			if valueMapping := buildValueMap(mappingMap); valueMapping != nil {
+				resultMappings = append(resultMappings, dashv2alpha1.DashboardValueMapping{
+					ValueMap: valueMapping,
+				})
+			}
+		case "range":
+			if rangeMapping := buildRangeMap(mappingMap); rangeMapping != nil {
+				resultMappings = append(resultMappings, dashv2alpha1.DashboardValueMapping{
+					RangeMap: rangeMapping,
+				})
+			}
+		case "regex":
+			if regexMapping := buildRegexMap(mappingMap); regexMapping != nil {
+				resultMappings = append(resultMappings, dashv2alpha1.DashboardValueMapping{
+					RegexMap: regexMapping,
+				})
+			}
+		case "special":
+			if specialMapping := buildSpecialValueMap(mappingMap); specialMapping != nil {
+				resultMappings = append(resultMappings, dashv2alpha1.DashboardValueMapping{
+					SpecialValueMap: specialMapping,
+				})
+			}
+		}
+	}
+
+	return resultMappings
+}
+
+func buildValueMap(mappingMap map[string]interface{}) *dashv2alpha1.DashboardValueMap {
+	valMap := &dashv2alpha1.DashboardValueMap{}
+	valMap.Type = dashv2alpha1.DashboardMappingTypeValue
+
+	opts, ok := mappingMap["options"].(map[string]interface{})
+	if !ok {
+		return valMap
+	}
+
+	valMap.Options = make(map[string]dashv2alpha1.DashboardValueMappingResult)
+	for k, v := range opts {
+		resMap, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		res := buildValueMappingResult(resMap)
+		valMap.Options[k] = res
+	}
+
+	return valMap
+}
+
+func buildRangeMap(mappingMap map[string]interface{}) *dashv2alpha1.DashboardRangeMap {
+	rangeMap := &dashv2alpha1.DashboardRangeMap{}
+	rangeMap.Type = dashv2alpha1.DashboardMappingTypeRange
+
+	opts, ok := mappingMap["options"].([]interface{})
+	if !ok || len(opts) == 0 {
+		return nil
+	}
+
+	optMap, ok := opts[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := dashv2alpha1.DashboardV2alpha1RangeMapOptions{}
+	if from, ok := optMap["from"].(float64); ok {
+		r.From = &from
+	}
+	if to, ok := optMap["to"].(float64); ok {
+		r.To = &to
+	}
+
+	// Result is a DashboardValueMappingResult
+	if resMap, ok := optMap["result"].(map[string]interface{}); ok {
+		r.Result = buildValueMappingResult(resMap)
+	}
+
+	rangeMap.Options = r
+	return rangeMap
+}
+
+func buildRegexMap(mappingMap map[string]interface{}) *dashv2alpha1.DashboardRegexMap {
+	regexMap := &dashv2alpha1.DashboardRegexMap{}
+	regexMap.Type = dashv2alpha1.DashboardMappingTypeRegex
+
+	opts, ok := mappingMap["options"].([]interface{})
+	if !ok || len(opts) == 0 {
+		return nil
+	}
+
+	optMap, ok := opts[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := dashv2alpha1.DashboardV2alpha1RegexMapOptions{}
+	if pattern, ok := optMap["regex"].(string); ok {
+		r.Pattern = pattern
+	}
+
+	// Result is a DashboardValueMappingResult
+	if resMap, ok := optMap["result"].(map[string]interface{}); ok {
+		r.Result = buildValueMappingResult(resMap)
+	}
+
+	regexMap.Options = r
+	return regexMap
+}
+
+func buildSpecialValueMap(mappingMap map[string]interface{}) *dashv2alpha1.DashboardSpecialValueMap {
+	specialMap := &dashv2alpha1.DashboardSpecialValueMap{}
+	specialMap.Type = dashv2alpha1.DashboardMappingTypeSpecial
+
+	opts, ok := mappingMap["options"].([]interface{})
+	if !ok || len(opts) == 0 {
+		return nil
+	}
+
+	optMap, ok := opts[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := dashv2alpha1.DashboardV2alpha1SpecialValueMapOptions{}
+	if match, ok := optMap["match"].(string); ok {
+		r.Match = dashv2alpha1.DashboardSpecialValueMatch(match)
+	}
+
+	// Result is a DashboardValueMappingResult
+	if resMap, ok := optMap["result"].(map[string]interface{}); ok {
+		r.Result = buildValueMappingResult(resMap)
+	}
+
+	specialMap.Options = r
+	return specialMap
+}
+
+func buildValueMappingResult(resMap map[string]interface{}) dashv2alpha1.DashboardValueMappingResult {
+	res := dashv2alpha1.DashboardValueMappingResult{}
+
+	if text, ok := resMap["text"].(string); ok {
+		res.Text = &text
+	}
+	if color, ok := resMap["color"].(string); ok {
+		res.Color = &color
+	}
+	if icon, ok := resMap["icon"].(string); ok {
+		res.Icon = &icon
+	}
+	if idx, ok := resMap["index"].(float64); ok {
+		idx32 := int32(idx)
+		res.Index = &idx32
+	}
+
+	return res
+}
+
+func buildThresholdsConfig(thresholdsMap map[string]interface{}) *dashv2alpha1.DashboardThresholdsConfig {
+	thresholdsConfig := &dashv2alpha1.DashboardThresholdsConfig{}
+
+	// Convert mode
+	if mode, ok := thresholdsMap["mode"].(string); ok {
+		thresholdsConfig.Mode = dashv2alpha1.DashboardThresholdsMode(mode)
+	}
+
+	// Convert steps
+	if steps, ok := thresholdsMap["steps"].([]interface{}); ok {
+		thresholdsConfig.Steps = make([]dashv2alpha1.DashboardThreshold, 0, len(steps))
+		for _, step := range steps {
+			if stepMap, ok := step.(map[string]interface{}); ok {
+				threshold := dashv2alpha1.DashboardThreshold{}
+				if value, ok := stepMap["value"].(float64); ok {
+					threshold.Value = &value
+				}
+				if color, ok := stepMap["color"].(string); ok {
+					threshold.Color = color
+				}
+				thresholdsConfig.Steps = append(thresholdsConfig.Steps, threshold)
+			}
+		}
+	}
+
+	return thresholdsConfig
+}
+
+func extractFieldConfigOverrides(fieldConfig map[string]interface{}) []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides {
+	overrides, ok := fieldConfig["overrides"].([]interface{})
+	if !ok || len(overrides) == 0 {
+		// Use empty array to match frontend behavior
+		return []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{}
+	}
+
+	result := make([]dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides, 0, len(overrides))
+	for _, override := range overrides {
+		overrideMap, ok := override.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		fieldOverride := dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{}
+
+		// Map override fields individually
+		if matcher, exists := overrideMap["matcher"]; exists {
+			if matcherMap, ok := matcher.(map[string]interface{}); ok {
+				fieldOverride.Matcher = dashv2alpha1.DashboardMatcherConfig{
+					Id:      getStringField(matcherMap, "id", ""),
+					Options: matcherMap["options"],
+				}
+			}
+		}
+		if properties, exists := overrideMap["properties"]; exists {
+			if propertiesArray, ok := properties.([]interface{}); ok {
+				fieldOverride.Properties = make([]dashv2alpha1.DashboardDynamicConfigValue, 0, len(propertiesArray))
+				for _, property := range propertiesArray {
+					if propertyMap, ok := property.(map[string]interface{}); ok {
+						fieldOverride.Properties = append(fieldOverride.Properties, dashv2alpha1.DashboardDynamicConfigValue{
+							Id:    getStringField(propertyMap, "id", ""),
+							Value: propertyMap["value"],
+						})
+					}
+				}
+			}
+		}
+
+		result = append(result, fieldOverride)
+	}
+
+	return result
 }

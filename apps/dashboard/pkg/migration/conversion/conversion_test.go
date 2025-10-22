@@ -30,7 +30,6 @@ import (
 )
 
 func TestConversionMatrixExist(t *testing.T) {
-
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	migration.Initialize(dsProvider)
