@@ -84,8 +84,8 @@ export interface ScopeNodeSpec {
   // Id of the parent node.
   parentName?: string;
 
-  // Redirect to a specific URL when this node is selected.
-  redirectUrl?: string;
+  // Redirect to a specific path when this node is selected.
+  redirectPath?: string;
 }
 
 // TODO: Use Resource from apiserver when we export the types

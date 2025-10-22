@@ -389,9 +389,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   // Redirect to the scope node's redirect URL if it exists, otherwise redirect to the first scope navigation.
   private redirectAfterApply = (scopeNode: ScopeNode | undefined) => {
-    // Check if the selected scope has a redirect URL
-    if (scopeNode && scopeNode.spec.redirectUrl && typeof scopeNode.spec.redirectUrl === 'string') {
-      locationService.push(scopeNode.spec.redirectUrl);
+    // Check if the selected scope has a redirect path
+    if (scopeNode && scopeNode.spec.redirectPath && typeof scopeNode.spec.redirectPath === 'string') {
+      locationService.push(scopeNode.spec.redirectPath);
       return;
     }
 
