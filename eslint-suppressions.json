@@ -1983,11 +1983,6 @@
       "count": 1
     }
   },
-  "public/app/features/auth-config/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/auth-config/utils/data.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
