@@ -413,3 +413,11 @@ export function getSidebarWidth(logOptionsStorageKey?: string): number {
 
   return width < MIN_WIDTH ? MIN_WIDTH : width;
 }
+
+export function getSidebarState(logOptionsStorageKey?: string): boolean | undefined {
+  if (!logOptionsStorageKey) {
+    return undefined;
+  }
+  const width = parseInt(store.get(`${logOptionsStorageKey}.fieldSelector.width`) ?? DEFAULT_WIDTH, 10)
+  return width <= (MIN_WIDTH * 2) ? false : true;
+}
