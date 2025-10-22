@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag"
@@ -64,36 +64,34 @@ func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Servi
 	}
 
 	if reg != nil {
-		repo.queryRangeStart = promauto.With(reg).NewHistogramVec(
+		repo.queryRangeStart = metricutil.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: "grafana",
 				Subsystem: "annotations",
 				Name:      "query_range_start_hours",
 				Help:      "How far back in time (hours from now) annotation queries request",
-				Buckets:   []float64{1, 6, 12, 24, 48, 168, 336, 720, 2160, 4320, 8760},
 			},
 			[]string{"query_type"},
 		)
-		repo.queryRangeDuration = promauto.With(reg).NewHistogramVec(
+		repo.queryRangeDuration = metricutil.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: "grafana",
 				Subsystem: "annotations",
 				Name:      "query_range_duration_hours",
 				Help:      "Time range duration (hours) of annotation queries",
-				Buckets:   []float64{0.25, 1, 6, 12, 24, 48, 168, 336, 720, 2160},
 			},
 			[]string{"query_type"},
 		)
-		repo.queryResultsCount = promauto.With(reg).NewHistogramVec(
+		repo.queryResultsCount = metricutil.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: "grafana",
 				Subsystem: "annotations",
 				Name:      "query_results_count",
 				Help:      "Number of annotation results returned per query",
-				Buckets:   []float64{0, 1, 10, 50, 100, 500, 1000, 5000, 10000, 50000},
 			},
 			[]string{"query_type"},
 		)
+		reg.MustRegister(repo.queryRangeStart, repo.queryRangeDuration, repo.queryResultsCount)
 	}
 	return repo
 }
@@ -292,7 +290,6 @@ func tagSet[T any](fn func(T) int64, list []T) map[int64]struct{} {
 	return set
 }
 
-//nolint:gocyclo
 func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
@@ -425,36 +422,44 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 	},
 	)
 
-	if err == nil && (query.From > 0 || query.To > 0) {
-		now := time.Now().UnixMilli()
-		queryType := "all"
-		if query.AnnotationID != 0 {
-			queryType = "by_id"
-		} else if query.AlertID != 0 || query.AlertUID != "" {
-			queryType = "by_alert"
-		} else if query.DashboardUID != "" || query.DashboardID != 0 { // nolint: staticcheck
-			queryType = "by_dashboard"
-		} else if len(query.Tags) > 0 {
-			queryType = "by_tags"
-		}
-
-		if query.From > 0 && query.To > 0 {
-			startOffsetHours := float64(time.Duration(now-query.To)*time.Millisecond / time.Hour)
-			if startOffsetHours < 0 {
-				startOffsetHours = 0
-			}
-			r.queryRangeStart.WithLabelValues(queryType).Observe(startOffsetHours)
-
-			durationHours := float64(query.To-query.From) / (1000.0 * 3600.0)
-			if durationHours < 0 {
-				durationHours = 0
-			}
-			r.queryRangeDuration.WithLabelValues(queryType).Observe(durationHours)
-		}
-		r.queryResultsCount.WithLabelValues(queryType).Observe(float64(len(items)))
+	if err == nil {
+		r.recordQueryMetrics(query, len(items))
 	}
 
 	return items, err
+}
+
+func (r *xormRepositoryImpl) recordQueryMetrics(query annotations.ItemQuery, resultCount int) {
+	if r.queryRangeStart == nil || query.From == 0 && query.To == 0 {
+		return
+	}
+
+	queryType := "all"
+	if query.AnnotationID != 0 {
+		queryType = "by_id"
+	} else if query.AlertID != 0 || query.AlertUID != "" {
+		queryType = "by_alert"
+	} else if query.DashboardUID != "" || query.DashboardID != 0 { // nolint: staticcheck
+		queryType = "by_dashboard"
+	} else if len(query.Tags) > 0 {
+		queryType = "by_tags"
+	}
+
+	if query.From > 0 && query.To > 0 {
+		now := time.Now().UnixMilli()
+		startOffsetHours := float64(now-query.To) / (1000.0 * 3600.0)
+		if startOffsetHours < 0 {
+			startOffsetHours = 0
+		}
+		r.queryRangeStart.WithLabelValues(queryType).Observe(startOffsetHours)
+
+		durationHours := float64(query.To-query.From) / (1000.0 * 3600.0)
+		if durationHours < 0 {
+			durationHours = 0
+		}
+		r.queryRangeDuration.WithLabelValues(queryType).Observe(durationHours)
+	}
+	r.queryResultsCount.WithLabelValues(queryType).Observe(float64(resultCount))
 }
 
 func (r *xormRepositoryImpl) getAccessControlFilter(accessResources *accesscontrol.AccessResources, dashboardUID string) (string, []any) {
