@@ -379,7 +379,7 @@ func TestJaegerClient_Trace(t *testing.T) {
 			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
 
-			trace, err := client.Trace(context.Background(), tt.traceId, tt.start, tt.end)
+			trace, err := client.Trace(context.Background(), tt.traceId, tt.start, tt.end, "A")
 
 			if tt.expectError {
 				assert.Error(t, err)
