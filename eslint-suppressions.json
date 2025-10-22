@@ -2449,11 +2449,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/DashboardSettings/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/HelpWizard/HelpWizard.tsx": {
     "no-restricted-syntax": {
       "count": 3
