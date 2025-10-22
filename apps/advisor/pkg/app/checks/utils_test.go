@@ -12,33 +12,33 @@ import (
 func TestGetNamespaces(t *testing.T) {
 	tests := []struct {
 		name        string
-		input       string
+		stackID     string
 		orgs        []string
 		expected    []string
 		expectedErr string
 	}{
 		{
 			name:     "empty stack ID",
-			input:    "",
+			stackID:  "",
 			orgs:     []string{"default"},
 			expected: []string{metav1.NamespaceDefault},
 		},
 		{
 			name:     "valid stack ID",
-			input:    "1234567890",
+			stackID:  "1234567890",
 			orgs:     []string{"default"},
 			expected: []string{"stacks-1234567890"},
 		},
 		{
 			name:        "invalid stack ID",
-			input:       "invalid",
+			stackID:     "invalid",
 			orgs:        []string{"default"},
 			expected:    nil,
 			expectedErr: "invalid stack id: invalid",
 		},
 		{
-			name:     "multiple orgs",
-			input:    "",
+			name:     "multiple orgs and no stack ID",
+			stackID:  "",
 			orgs:     []string{"default", "org-2"},
 			expected: []string{"default", "org-2"},
 		},
@@ -55,7 +55,7 @@ func TestGetNamespaces(t *testing.T) {
 					return orgs, nil
 				},
 			}
-			result, err := GetNamespaces(context.Background(), tt.input, fakeOrgService)
+			result, err := GetNamespaces(context.Background(), tt.stackID, fakeOrgService)
 			if tt.expectedErr != "" {
 				assert.EqualError(t, err, tt.expectedErr)
 			} else {
