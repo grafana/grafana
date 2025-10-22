@@ -25,6 +25,7 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
+	zServer "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -56,12 +57,12 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, fea
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		openfga, err := zanzana.NewOpenFGAServer(cfg.ZanzanaServer, store)
+		openfga, err := zServer.NewOpenFGAServer(cfg.ZanzanaServer, store)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		srv, err := zanzana.NewServer(cfg.ZanzanaServer, openfga, logger, tracer, reg)
+		srv, err := zServer.NewServer(cfg.ZanzanaServer, openfga, logger, tracer, reg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
@@ -190,12 +191,12 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to initilize zanana store: %w", err)
 	}
 
-	openfgaServer, err := zanzana.NewOpenFGAServer(z.cfg.ZanzanaServer, store)
+	openfgaServer, err := zServer.NewOpenFGAServer(z.cfg.ZanzanaServer, store)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	zanzanaServer, err := zanzana.NewServer(z.cfg.ZanzanaServer, openfgaServer, z.logger, tracer, z.reg)
+	zanzanaServer, err := zServer.NewServer(z.cfg.ZanzanaServer, openfgaServer, z.logger, tracer, z.reg)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -239,7 +240,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 	authzextv1.RegisterAuthzExtentionServiceServer(grpcServer, zanzanaServer)
 
 	// register grpc health server
-	healthServer := zanzana.NewHealthServer(zanzanaServer)
+	healthServer := zServer.NewHealthServer(zanzanaServer)
 	healthv1pb.RegisterHealthServer(grpcServer, healthServer)
 
 	if _, err := grpcserver.ProvideReflectionService(z.cfg, z.handle); err != nil {
@@ -252,7 +253,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 func (z *Zanzana) running(ctx context.Context) error {
 	if z.cfg.Env == setting.Dev && z.cfg.ZanzanaServer.OpenFGAHttpAddr != "" {
 		go func() {
-			srv, err := zanzana.NewOpenFGAHttpServer(z.cfg.ZanzanaServer, z.handle)
+			srv, err := zServer.NewOpenFGAHttpServer(z.cfg.ZanzanaServer, z.handle)
 			if err != nil {
 				z.logger.Error("failed to create OpenFGA HTTP server", "error", err)
 			} else {

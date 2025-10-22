@@ -82,3 +82,11 @@ func (c *Client) WriteNew(ctx context.Context, req *authzextv1.WriteRequest) err
 	_, err := c.authzext.Write(ctx, req)
 	return err
 }
+
+func (c *Client) Mutate(ctx context.Context, req *authzextv1.MutateRequest) error {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Mutate")
+	defer span.End()
+
+	_, err := c.authzext.Mutate(ctx, req)
+	return err
+}
