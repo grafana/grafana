@@ -83,9 +83,9 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       return true;
     }
 
-    const changes = dashboard.serializer.getDashboardChangesFromScene(dashboard, {});
+    const hasActualChanges = dashboard.hasActualSaveChanges();
 
-    if (!dashboard.state.isDirty || !changes.diffCount) {
+    if (!dashboard.state.isDirty || !hasActualChanges) {
       return true;
     }
 
