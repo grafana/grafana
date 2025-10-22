@@ -2023,11 +2023,6 @@
       "count": 1
     }
   },
-  "public/app/features/connections/tabs/ConnectData/CategoryHeader/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/connections/tabs/ConnectData/ConnectData.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
