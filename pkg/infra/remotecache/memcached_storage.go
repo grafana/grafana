@@ -57,6 +57,29 @@ func (s *memcachedStorage) Get(ctx context.Context, key string) ([]byte, error) 
 	return memcachedItem.Value, nil
 }
 
+func (s *memcachedStorage) MGet(ctx context.Context, keys ...string) ([][]byte, error) {
+	if len(keys) == 0 {
+		return [][]byte{}, nil
+	}
+
+	items, err := s.c.GetMulti(keys)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build result in the same order as keys
+	result := make([][]byte, len(keys))
+	for i, key := range keys {
+		if item, ok := items[key]; ok {
+			result[i] = item.Value
+		} else {
+			result[i] = nil
+		}
+	}
+
+	return result, nil
+}
+
 // Delete delete a key from the cache
 func (s *memcachedStorage) Delete(ctx context.Context, key string) error {
 	return s.c.Delete(key)

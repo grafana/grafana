@@ -64,6 +64,9 @@ type CacheStorage interface {
 	// Get gets the cache value as an byte array
 	Get(ctx context.Context, key string) ([]byte, error)
 
+	// MGet gets multiple cache values in a single operation (nil values indicate cache miss)
+	MGet(ctx context.Context, keys ...string) ([][]byte, error)
+
 	// Set saves the value as an byte array. if `expire` is set to zero it will default to 24h
 	Set(ctx context.Context, key string, value []byte, expire time.Duration) error
 
@@ -81,6 +84,11 @@ type RemoteCache struct {
 // Get returns the cached value as an byte array
 func (ds *RemoteCache) Get(ctx context.Context, key string) ([]byte, error) {
 	return ds.client.Get(ctx, key)
+}
+
+// MGet returns multiple cached values as byte arrays in a single operation
+func (ds *RemoteCache) MGet(ctx context.Context, keys ...string) ([][]byte, error) {
+	return ds.client.MGet(ctx, keys...)
 }
 
 // Set stored the byte array in the cache
@@ -151,6 +159,27 @@ func (pcs *encryptedCacheStorage) Get(ctx context.Context, key string) ([]byte, 
 
 	return pcs.secretsService.Decrypt(ctx, data)
 }
+
+func (pcs *encryptedCacheStorage) MGet(ctx context.Context, keys ...string) ([][]byte, error) {
+	values, err := pcs.cache.MGet(ctx, keys...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Decrypt each non-nil value
+	for i, value := range values {
+		if value != nil {
+			decrypted, err := pcs.secretsService.Decrypt(ctx, value)
+			if err != nil {
+				return nil, err
+			}
+			values[i] = decrypted
+		}
+	}
+
+	return values, nil
+}
+
 func (pcs *encryptedCacheStorage) Set(ctx context.Context, key string, value []byte, expire time.Duration) error {
 	encrypted, err := pcs.secretsService.Encrypt(ctx, value, secrets.WithoutScope())
 	if err != nil {
@@ -171,6 +200,16 @@ type prefixCacheStorage struct {
 func (pcs *prefixCacheStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	return pcs.cache.Get(ctx, pcs.prefix+key)
 }
+
+func (pcs *prefixCacheStorage) MGet(ctx context.Context, keys ...string) ([][]byte, error) {
+	// Add prefix to all keys
+	prefixedKeys := make([]string, len(keys))
+	for i, key := range keys {
+		prefixedKeys[i] = pcs.prefix + key
+	}
+	return pcs.cache.MGet(ctx, prefixedKeys...)
+}
+
 func (pcs *prefixCacheStorage) Set(ctx context.Context, key string, value []byte, expire time.Duration) error {
 	return pcs.cache.Set(ctx, pcs.prefix+key, value, expire)
 }

@@ -83,6 +83,49 @@ func (dc *databaseCache) Get(ctx context.Context, key string) ([]byte, error) {
 	return cacheHit.Data, err
 }
 
+func (dc *databaseCache) MGet(ctx context.Context, keys ...string) ([][]byte, error) {
+	if len(keys) == 0 {
+		return [][]byte{}, nil
+	}
+
+	var cacheHits []CacheData
+	result := make([][]byte, len(keys))
+
+	err := dc.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
+		err := session.In("cache_key", keys).Find(&cacheHits)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Build map of key -> data for quick lookup
+	now := getTime().Unix()
+	cacheMap := make(map[string][]byte)
+	for _, hit := range cacheHits {
+		// Check if expired
+		if hit.Expires > 0 && (now-hit.CreatedAt >= hit.Expires) {
+			continue
+		}
+		cacheMap[hit.CacheKey] = hit.Data
+	}
+
+	// Populate result in the same order as keys
+	for i, key := range keys {
+		if data, ok := cacheMap[key]; ok {
+			result[i] = data
+		} else {
+			result[i] = nil
+		}
+	}
+
+	return result, nil
+}
+
 func (dc *databaseCache) Set(ctx context.Context, key string, data []byte, expire time.Duration) error {
 	return dc.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		var expiresInSeconds int64

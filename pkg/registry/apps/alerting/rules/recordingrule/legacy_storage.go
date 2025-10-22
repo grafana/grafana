@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -15,11 +16,14 @@ import (
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"k8s.io/apimachinery/pkg/types"
 )
+
+var logger = log.New("alerting.recordingrules.k8s")
 
 var (
 	_ grafanarest.Storage = (*legacyStorage)(nil)
@@ -54,6 +58,8 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOptions) (runtime.Object, error) {
+	startTotal := time.Now()
+
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -64,18 +70,46 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
+	// Extract filter parameters from request context or query parameters
+	filters := extractFiltersFromListOptions(ctx, opts)
+
+	// Time: Provisioning layer (DB + authorization + filtering)
+	startProvisioning := time.Now()
 	rules, provenanceMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
 		RuleType:      ngmodels.RuleTypeFilterRecording,
 		Limit:         opts.Limit,
 		ContinueToken: opts.Continue,
-		// TODO: add field selectors for filtering
-		// TODO: add label selectors for filtering on group and folders
+
+		// Filter options
+		Namespace:        filters.Namespace,
+		GroupName:        filters.GroupName,
+		RuleName:         filters.RuleName,
+		Labels:           filters.Labels,
+		DashboardUID:     filters.DashboardUID,
+		ContactPointName: filters.ContactPointName,
+		HidePluginRules:  filters.HidePluginRules,
 	})
+	provisioningDuration := time.Since(startProvisioning)
+
 	if err != nil {
 		return nil, err
 	}
 
-	return convertToK8sResources(info.OrgID, rules, provenanceMap, s.namespacer, continueToken)
+	// Time: K8s conversion
+	startConversion := time.Now()
+	result, err := convertToK8sResources(info.OrgID, rules, provenanceMap, s.namespacer, continueToken)
+	conversionDuration := time.Since(startConversion)
+
+	totalDuration := time.Since(startTotal)
+
+	logger.Info("K8s RecordingRules List performance",
+		"rule_count", len(rules),
+		"total_ms", totalDuration.Milliseconds(),
+		"provisioning_ms", provisioningDuration.Milliseconds(),
+		"conversion_ms", conversionDuration.Milliseconds(),
+		"org_id", info.OrgID)
+
+	return result, err
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -246,4 +280,43 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 func (s *legacyStorage) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
 	// TODO: support this once a pattern is established for bulk delete operations
 	return nil, k8serrors.NewMethodNotSupported(ResourceInfo.GroupResource(), "delete")
+}
+
+// filterOptions holds filter parameters for listing rules
+type filterOptions struct {
+	Namespace        string
+	GroupName        string
+	RuleName         string
+	Labels           []string
+	DashboardUID     string
+	ContactPointName string
+	HidePluginRules  bool
+}
+
+// extractFiltersFromListOptions extracts filter parameters from K8s ListOptions
+// Filters are expected to be passed as query parameters in the HTTP request
+func extractFiltersFromListOptions(ctx context.Context, opts *internalversion.ListOptions) filterOptions {
+	// For now, we extract from field selectors or label selectors
+	// In the future, these might come from custom query parameters
+	filters := filterOptions{}
+
+	// Extract filters from field selector if present
+	if opts != nil && opts.FieldSelector != nil {
+		// Field selectors could be used for exact matches like namespace or dashboardUID
+		// Format: metadata.namespace=value, spec.title=value, etc.
+		// For now, we'll leave this empty and expect filters from query params
+	}
+
+	// Extract filters from label selector if present
+	if opts != nil && opts.LabelSelector != nil {
+		// Label selectors could be used for label matching
+		// Format: severity=critical, team=backend, etc.
+	}
+
+	// TODO: Extract from actual HTTP request query parameters
+	// This would require access to the HTTP request context
+	// For now, return empty filters - frontend team will need to implement
+	// the query parameter extraction based on how K8s API passes custom params
+
+	return filters
 }

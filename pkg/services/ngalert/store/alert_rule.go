@@ -3,13 +3,16 @@ package store
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
+	"runtime"
 	"slices"
 	"strings"
+	"sync"
+	"time"
 
+	json "github.com/goccy/go-json"
 	"github.com/google/uuid"
 	"golang.org/x/exp/maps"
 
@@ -28,6 +31,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// json is imported as an alias from goccy/go-json for better performance than encoding/json
 
 // AlertRuleMaxTitleLength is the maximum length of the alert rule title
 const AlertRuleMaxTitleLength = 190
@@ -59,6 +64,8 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
 				RuleKeys: keys,
 			})
+			// Invalidate cache for the affected organization
+			st.invalidateAlertRulesCache(orgID)
 		}
 
 		rows, err = sess.Table("alert_instance").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
@@ -397,6 +404,10 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
 				RuleKeys: keys,
 			})
+			// Invalidate cache for the affected organization
+			if len(newRules) > 0 {
+				st.invalidateAlertRulesCache(newRules[0].OrgID)
+			}
 		}
 		return nil
 	})
@@ -461,6 +472,10 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
 				RuleKeys: keys,
 			})
+			// Invalidate cache for the affected organization
+			if len(rules) > 0 {
+				st.invalidateAlertRulesCache(rules[0].New.OrgID)
+			}
 		}
 		return nil
 	})
@@ -585,82 +600,370 @@ func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []
 }
 
 func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (result ngmodels.RulesGroup, nextToken string, err error) {
-	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		q, groupsSet, err := st.buildListAlertRulesQuery(sess, query)
-		if err != nil {
-			return err
-		}
+	// Determine if we can use cache:
+	// - DisableCache must not be set
+	// - Must not have specific rule UIDs (those bypass cache)
+	canUseCache := !query.DisableCache && len(query.RuleUIDs) == 0
 
-		var cursor ngmodels.GroupCursor
-		if query.ContinueToken != "" {
-			// only set the cursor if it's valid, otherwise we'll start from the beginning
-			if cur, err := ngmodels.DecodeGroupCursor(query.ContinueToken); err == nil {
-				cursor = cur
+	st.Logger.Info("ListAlertRulesByGroup cache check",
+		"canUseCache", canUseCache,
+		"disableCache", query.DisableCache,
+		"ruleUIDs_count", len(query.RuleUIDs),
+		"ruleType", query.RuleType,
+		"org_id", query.OrgID)
+
+	var matchingUIDs []string
+
+	// STAGE 1: Try to filter using lite rules from cache
+	if canUseCache {
+		if cachedLiteRules, found := st.getCachedLiteRules(query.OrgID, query.RuleType); found {
+			st.Logger.Info("Cache HIT: filtering lite rules",
+				"orgID", query.OrgID,
+				"cachedCount", len(cachedLiteRules))
+
+			// Filter lite rules to get matching lite rules (not just UIDs)
+			filteredLiteRules := filterLiteRules(cachedLiteRules, query)
+
+			st.Logger.Info("After filtering lite rules",
+				"matchingCount", len(filteredLiteRules))
+
+			// Paginate on lite rules BEFORE fetching from DB
+			var paginatedLiteRules []*ngmodels.AlertRuleLite
+			paginatedLiteRules, nextToken = st.paginateLiteRulesByGroup(filteredLiteRules, query.Limit, query.ContinueToken)
+
+			st.Logger.Info("After paginating lite rules",
+				"paginatedCount", len(paginatedLiteRules),
+				"hasNextToken", nextToken != "")
+
+			// Extract UIDs from paginated lite rules
+			matchingUIDs = make([]string, len(paginatedLiteRules))
+			for i, lite := range paginatedLiteRules {
+				matchingUIDs[i] = lite.UID
 			}
+
+			// Fetch ONLY paginated rules from DB and return immediately
+			if len(matchingUIDs) > 0 {
+				err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+					fetchQuery := &ngmodels.ListAlertRulesExtendedQuery{
+						ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
+							OrgID:    query.OrgID,
+							RuleUIDs: matchingUIDs,
+						},
+					}
+
+					q, groupsSet, err := st.buildListAlertRulesQuery(sess, fetchQuery)
+					if err != nil {
+						return err
+					}
+
+					queryStart := time.Now()
+					rows, err := q.Rows(new(alertRule))
+					if err != nil {
+						return err
+					}
+					if collector := getTimingCollectorFromContext(ctx); collector != nil {
+						collector.RecordDBQuery(time.Since(queryStart))
+					}
+					defer rows.Close()
+
+					result = st.convertAlertRulesBatched(rows, fetchQuery, groupsSet, len(matchingUIDs))
+					result = st.reorderByUIDs(result, matchingUIDs)
+
+					return nil
+				})
+
+				if err != nil {
+					return nil, "", err
+				}
+
+				st.Logger.Info("ListAlertRulesByGroup returning results (cache hit path)",
+					"resultCount", len(result),
+					"hasNextToken", nextToken != "")
+
+				return result, nextToken, nil
+			}
+
+			// No results after filtering/pagination
+			return []*ngmodels.AlertRule{}, nextToken, nil
+		}
+	}
+
+	// STAGE 2: If no cache hit, fetch all rules from DB and build lite cache
+	if matchingUIDs == nil {
+		st.Logger.Info("Cache MISS: fetching all rules from DB", "orgID", query.OrgID)
+
+		dbStart := time.Now()
+		err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+			// Build query for ALL rules (no filters except org/type)
+			dbQuery := &ngmodels.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
+					OrgID: query.OrgID,
+				},
+				RuleType: query.RuleType,
+			}
+
+			q, groupsSet, err := st.buildListAlertRulesQuery(sess, dbQuery)
+			if err != nil {
+				return err
+			}
+
+			queryStart := time.Now()
+			rows, err := q.Rows(new(alertRule))
+			if err != nil {
+				return err
+			}
+			if collector := getTimingCollectorFromContext(ctx); collector != nil {
+				collector.RecordDBQuery(time.Since(queryStart))
+			}
+			defer func() {
+				_ = rows.Close()
+			}()
+
+			// Convert to full rules
+			allRules := st.convertAlertRulesBatched(rows, dbQuery, groupsSet, 1000)
+
+			// Convert to lite and cache
+			liteRules := make([]*ngmodels.AlertRuleLite, len(allRules))
+			for i, rule := range allRules {
+				liteRules[i] = rule.ToLite()
+			}
+
+			if canUseCache {
+				st.setCachedLiteRules(query.OrgID, query.RuleType, liteRules)
+				st.Logger.Info("Cached lite rules", "count", len(liteRules))
+			}
+
+			// Filter and paginate lite rules
+			filteredLiteRules := filterLiteRules(liteRules, query)
+			var paginatedLiteRules []*ngmodels.AlertRuleLite
+			paginatedLiteRules, nextToken = st.paginateLiteRulesByGroup(filteredLiteRules, query.Limit, query.ContinueToken)
+
+			st.Logger.Info("After filtering and paginating lite rules",
+				"filteredCount", len(filteredLiteRules),
+				"paginatedCount", len(paginatedLiteRules))
+
+			// Extract UIDs from paginated lite rules
+			matchingUIDs = make([]string, len(paginatedLiteRules))
+			for i, lite := range paginatedLiteRules {
+				matchingUIDs[i] = lite.UID
+			}
+
+			return nil
+		})
+
+		if collector := getTimingCollectorFromContext(ctx); collector != nil {
+			dbDuration := time.Since(dbStart)
+			st.Logger.Debug("Database operation completed", "duration_ms", float64(dbDuration.Microseconds())/1000.0)
 		}
 
-		// Build group cursor condition
-		if cursor.NamespaceUID != "" {
-			q = buildGroupCursorCondition(q, cursor)
+		if err != nil {
+			return nil, "", err
 		}
 
-		// No arbitrary fetch limit - let the loop control pagination
-		alertRules := make([]*ngmodels.AlertRule, 0)
-		rule := new(alertRule)
-		rows, err := q.Rows(rule)
+		// Early return if we took the non-cached path
+		if result != nil {
+			return result, nextToken, nil
+		}
+	}
+
+	// STAGE 3: Fetch full rules for the already-paginated UIDs
+	if len(matchingUIDs) == 0 {
+		return []*ngmodels.AlertRule{}, nextToken, nil
+	}
+
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		fetchQuery := &ngmodels.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
+				OrgID:    query.OrgID,
+				RuleUIDs: matchingUIDs,
+			},
+		}
+
+		q, groupsSet, err := st.buildListAlertRulesQuery(sess, fetchQuery)
 		if err != nil {
 			return err
+		}
+
+		queryStart := time.Now()
+		rows, err := q.Rows(new(alertRule))
+		if err != nil {
+			return err
+		}
+		if collector := getTimingCollectorFromContext(ctx); collector != nil {
+			collector.RecordDBQuery(time.Since(queryStart))
 		}
 		defer func() {
 			_ = rows.Close()
 		}()
 
-		// Process rules and implement per-group pagination
-		var groupsFetched int64
-		for rows.Next() {
-			rule := new(alertRule)
-			err = rows.Scan(rule)
-			if err != nil {
-				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "ListAlertRulesByGroup", "error", err)
-				continue
-			}
+		result = st.convertAlertRulesBatched(rows, fetchQuery, groupsSet, len(matchingUIDs))
 
-			converted, err := alertRuleToModelsAlertRule(*rule, st.Logger)
-			if err != nil {
-				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "ListAlertRulesByGroup", "error", err)
-				continue
-			}
+		// Maintain UID order from pagination
+		result = st.reorderByUIDs(result, matchingUIDs)
 
-			// Check if we've moved to a new group
-			key := ngmodels.GroupCursor{
-				NamespaceUID: converted.NamespaceUID,
-				RuleGroup:    converted.RuleGroup,
-			}
-			if key != cursor {
-				// Check if we've reached the group limit
-				if query.Limit > 0 && groupsFetched == query.Limit {
-					// Generate next token for the next group
-					nextToken = ngmodels.EncodeGroupCursor(cursor)
-					break
-				}
-
-				// Reset for new group
-				cursor = key
-				groupsFetched++
-			}
-
-			// Apply post-query filters
-			if !shouldIncludeRule(&converted, query, groupsSet) {
-				continue
-			}
-
-			alertRules = append(alertRules, &converted)
-		}
-
-		result = alertRules
 		return nil
 	})
-	return result, nextToken, err
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	st.Logger.Info("ListAlertRulesByGroup returning results (cache miss path)",
+		"resultCount", len(result),
+		"hasNextToken", nextToken != "")
+
+	return result, nextToken, nil
+}
+
+// paginateRulesByGroup applies group-based pagination to a list of rules
+func (st DBstore) paginateRulesByGroup(rules ngmodels.RulesGroup, limit int64, continueToken string) (ngmodels.RulesGroup, string) {
+	if limit <= 0 {
+		// No pagination
+		return rules, ""
+	}
+
+	// Parse continue token
+	var cursor ngmodels.GroupCursor
+	if continueToken != "" {
+		if cur, err := ngmodels.DecodeGroupCursor(continueToken); err == nil {
+			cursor = cur
+		}
+	}
+
+	result := make([]*ngmodels.AlertRule, 0)
+	var groupsFetched int64
+	var currentGroup ngmodels.GroupCursor
+	var nextToken string
+
+	for _, rule := range rules {
+		ruleGroup := ngmodels.GroupCursor{
+			NamespaceUID: rule.NamespaceUID,
+			RuleGroup:    rule.RuleGroup,
+		}
+
+		// Skip until we reach the cursor position
+		if cursor.NamespaceUID != "" {
+			// Skip groups before cursor
+			if ruleGroup.NamespaceUID < cursor.NamespaceUID {
+				continue
+			}
+			if ruleGroup.NamespaceUID == cursor.NamespaceUID && ruleGroup.RuleGroup <= cursor.RuleGroup {
+				continue
+			}
+		}
+
+		// Check if we've moved to a new group
+		if ruleGroup != currentGroup {
+			// Check if we've reached the group limit
+			if groupsFetched >= limit {
+				// Return next token for the next group (the one we're about to skip)
+				nextToken = ngmodels.EncodeGroupCursor(ruleGroup)
+				break
+			}
+
+			currentGroup = ruleGroup
+			groupsFetched++
+		}
+
+		result = append(result, rule)
+	}
+
+	return result, nextToken
+}
+
+// filterLiteRules filters lite rules and returns matching lite rules (not just UIDs)
+func filterLiteRules(liteRules []*ngmodels.AlertRuleLite, query *ngmodels.ListAlertRulesExtendedQuery) []*ngmodels.AlertRuleLite {
+	if !hasAnyFilters(query) && query.RuleType == ngmodels.RuleTypeFilterAll {
+		// No filters: return all
+		return liteRules
+	}
+
+	result := make([]*ngmodels.AlertRuleLite, 0, len(liteRules))
+	for _, lite := range liteRules {
+		if matchesAllFiltersLite(lite, query) {
+			result = append(result, lite)
+		}
+	}
+	return result
+}
+
+// paginateLiteRulesByGroup applies group-based pagination to lite rules
+func (st DBstore) paginateLiteRulesByGroup(liteRules []*ngmodels.AlertRuleLite, limit int64, continueToken string) ([]*ngmodels.AlertRuleLite, string) {
+	if limit <= 0 {
+		// No pagination
+		return liteRules, ""
+	}
+
+	// Parse continue token
+	var cursor ngmodels.GroupCursor
+	if continueToken != "" {
+		if cur, err := ngmodels.DecodeGroupCursor(continueToken); err == nil {
+			cursor = cur
+		}
+	}
+
+	result := make([]*ngmodels.AlertRuleLite, 0)
+	var groupsFetched int64
+	var currentGroup ngmodels.GroupCursor
+	var nextToken string
+
+	for _, lite := range liteRules {
+		ruleGroup := ngmodels.GroupCursor{
+			NamespaceUID: lite.NamespaceUID,
+			RuleGroup:    lite.RuleGroup,
+		}
+
+		// Skip until we reach the cursor position
+		if cursor.NamespaceUID != "" {
+			// Skip groups before cursor
+			if ruleGroup.NamespaceUID < cursor.NamespaceUID {
+				continue
+			}
+			if ruleGroup.NamespaceUID == cursor.NamespaceUID && ruleGroup.RuleGroup <= cursor.RuleGroup {
+				continue
+			}
+		}
+
+		// Check if we've moved to a new group
+		if ruleGroup != currentGroup {
+			// Check if we've reached the group limit
+			if groupsFetched >= limit {
+				// Return next token for the next group (the one we're about to skip)
+				nextToken = ngmodels.EncodeGroupCursor(ruleGroup)
+				break
+			}
+
+			currentGroup = ruleGroup
+			groupsFetched++
+		}
+
+		result = append(result, lite)
+	}
+
+	return result, nextToken
+}
+
+// reorderByUIDs reorders rules to match the order of the provided UID list
+func (st DBstore) reorderByUIDs(rules ngmodels.RulesGroup, orderedUIDs []string) ngmodels.RulesGroup {
+	if len(rules) == 0 {
+		return rules
+	}
+
+	// Build UID to rule map
+	uidToRule := make(map[string]*ngmodels.AlertRule, len(rules))
+	for _, rule := range rules {
+		uidToRule[rule.UID] = rule
+	}
+
+	// Reconstruct in the order of orderedUIDs
+	result := make([]*ngmodels.AlertRule, 0, len(orderedUIDs))
+	for _, uid := range orderedUIDs {
+		if rule, ok := uidToRule[uid]; ok {
+			result = append(result, rule)
+		}
+	}
+
+	return result
 }
 
 func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm.Session {
@@ -707,6 +1010,7 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		ContinueToken:       "",
 		Limit:               0,
 		RuleType:            ngmodels.RuleTypeFilterAll,
+		DisableCache:        true, // Ruler API requires real-time data, never use cache
 	})
 	// This should never happen, as Limit is 0, which means no pagination.
 	if nextToken != "" {
@@ -716,9 +1020,303 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 	return result, err
 }
 
+// convertAlertRulesInParallel converts a slice of raw alertRule structs to models.AlertRule
+// using parallel processing for improved performance with large result sets.
+// It maintains the order of results and handles per-rule errors gracefully.
+func (st DBstore) convertAlertRulesInParallel(rawRules []alertRule, query *ngmodels.ListAlertRulesExtendedQuery, groupsSet map[string]struct{}) []*ngmodels.AlertRule {
+	if len(rawRules) == 0 {
+		return nil
+	}
+
+	// Determine optimal worker count based on CPU cores and workload size
+	// Use all available CPUs, but cap at the number of rules to avoid idle workers
+	numCPU := runtime.NumCPU()
+	workerCount := numCPU
+	if len(rawRules) < numCPU {
+		workerCount = len(rawRules)
+	}
+	// Cap at reasonable maximum to avoid excessive goroutine overhead
+	if workerCount > 32 {
+		workerCount = 32
+	}
+
+	// Allocate result slices - maintain order by index
+	results := make([]*ngmodels.AlertRule, len(rawRules))
+
+	// Create work channel and worker pool
+	type workItem struct {
+		index int
+		rule  alertRule
+	}
+	workChan := make(chan workItem, len(rawRules))
+
+	var wg sync.WaitGroup
+
+	// Start workers
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for item := range workChan {
+				// Convert the alertRule to models.AlertRule
+				converted, err := alertRuleToModelsAlertRule(item.rule, st.Logger)
+				if err != nil {
+					st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "convertAlertRulesInParallel", "error", err)
+					continue
+				}
+
+				// Apply post-conversion filters
+				if !shouldIncludeRule(&converted, query, groupsSet) {
+					continue
+				}
+
+				// Store result at the correct index to maintain order
+				results[item.index] = &converted
+			}
+		}()
+	}
+
+	// Send work to workers
+	for i, rule := range rawRules {
+		workChan <- workItem{index: i, rule: rule}
+	}
+	close(workChan)
+
+	// Wait for all workers to complete
+	wg.Wait()
+
+	// Compact results by removing nil entries (filtered or errored rules)
+	compacted := make([]*ngmodels.AlertRule, 0, len(results))
+	for _, r := range results {
+		if r != nil {
+			compacted = append(compacted, r)
+		}
+	}
+
+	return compacted
+}
+
+// Batch size for streaming conversion - process this many rows before sending to unmarshaling goroutine
+const alertRuleBatchSize = 100
+
+// convertAlertRulesStreaming converts alert rules from a database rows iterator to models.AlertRule
+// using simple streaming. It processes rows one at a time as they arrive from the database,
+// reducing memory usage by not buffering all raw rows before processing.
+// This is simpler than parallel processing and maintains strict ordering naturally.
+func (st DBstore) convertAlertRulesStreaming(rows *xorm.Rows, query *ngmodels.ListAlertRulesExtendedQuery, groupsSet map[string]struct{}, expectedSize int) []*ngmodels.AlertRule {
+	results := make([]*ngmodels.AlertRule, 0, expectedSize)
+
+	for rows.Next() {
+		rule := new(alertRule)
+		err := rows.Scan(rule)
+		if err != nil {
+			st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "convertAlertRulesStreaming", "error", err)
+			continue
+		}
+
+		// Convert the alertRule to models.AlertRule
+		converted, err := alertRuleToModelsAlertRule(*rule, st.Logger)
+		if err != nil {
+			st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "convertAlertRulesStreaming", "error", err)
+			continue
+		}
+
+		// Apply post-conversion filters
+		if !shouldIncludeRule(&converted, query, groupsSet) {
+			continue
+		}
+
+		results = append(results, &converted)
+	}
+
+	return results
+}
+
+// convertAlertRulesBatched converts alert rules from a database rows iterator using a batched
+// producer-consumer pattern. The producer goroutine reads from the database and batches rows,
+// while the consumer goroutine unmarshals JSON (the expensive operation).
+// This overlaps database I/O with CPU-intensive JSON unmarshaling for better performance.
+func (st DBstore) convertAlertRulesBatched(rows *xorm.Rows, query *ngmodels.ListAlertRulesExtendedQuery, groupsSet map[string]struct{}, expectedSize int) []*ngmodels.AlertRule {
+	// Channels for producer-consumer communication
+	// Buffer 2 batches to keep both goroutines busy
+	batchChan := make(chan []alertRule, 2)
+	resultsChan := make(chan []*ngmodels.AlertRule, 2)
+
+	// Producer goroutine: Read from database and batch rows
+	go func() {
+		defer close(batchChan)
+
+		batch := make([]alertRule, 0, alertRuleBatchSize)
+		for rows.Next() {
+			rule := new(alertRule)
+			err := rows.Scan(rule)
+			if err != nil {
+				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "convertAlertRulesBatched", "error", err)
+				continue
+			}
+
+			batch = append(batch, *rule)
+
+			// Send full batch and start new one
+			if len(batch) == alertRuleBatchSize {
+				batchChan <- batch
+				batch = make([]alertRule, 0, alertRuleBatchSize)
+			}
+		}
+
+		// Send final partial batch if any
+		if len(batch) > 0 {
+			batchChan <- batch
+		}
+	}()
+
+	// Consumer coordinator: Launch a goroutine for each batch
+	go func() {
+		defer close(resultsChan)
+
+		var wg sync.WaitGroup
+		for batch := range batchChan {
+			wg.Add(1)
+			go func(batch []alertRule) {
+				defer wg.Done()
+
+				batchResults := make([]*ngmodels.AlertRule, 0, len(batch))
+
+				for _, rawRule := range batch {
+					// This is the expensive operation: multiple json.Unmarshal calls
+					converted, err := alertRuleToModelsAlertRule(rawRule, st.Logger)
+					if err != nil {
+						st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "convertAlertRulesBatched", "error", err)
+						continue
+					}
+
+					// Apply post-conversion filters
+					if !shouldIncludeRule(&converted, query, groupsSet) {
+						continue
+					}
+
+					batchResults = append(batchResults, &converted)
+				}
+
+				// Send batch results
+				if len(batchResults) > 0 {
+					resultsChan <- batchResults
+				}
+			}(batch)
+		}
+		wg.Wait()
+	}()
+
+	// Collect all results in order
+	allResults := make([]*ngmodels.AlertRule, 0, expectedSize)
+	for batchResults := range resultsChan {
+		allResults = append(allResults, batchResults...)
+	}
+
+	return allResults
+}
+
 // ListAlertRulesPaginated is a handler for retrieving alert rules of specific organization paginated.
 func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (result ngmodels.RulesGroup, nextToken string, err error) {
+	startTotal := time.Now()
+	var queryBuildDuration, rowScanDuration, conversionDuration, cacheRetrievalDuration, filteringDuration time.Duration
+	cacheHit := false
+
+	// Check if we can use cache
+	// Cache can be used as long as:
+	// - DisableCache is not set (e.g., Ruler API always disables cache)
+	// - We're not doing continuation-based pagination
+	// - We're not filtering by specific rule UIDs
+	// Note: NamespaceUIDs and DashboardUID are applied as in-memory filters, so they don't prevent caching
+	canUseCache := !query.DisableCache && len(query.RuleUIDs) == 0 && query.ContinueToken == ""
+
+	st.Logger.Info("Cache check",
+		"canUseCache", canUseCache,
+		"disableCache", query.DisableCache,
+		"ruleUIDs_count", len(query.RuleUIDs),
+		"continueToken", query.ContinueToken,
+		"ruleType", query.RuleType,
+		"org_id", query.OrgID)
+
+	if canUseCache {
+		startCache := time.Now()
+		if cachedLiteRules, found := st.getCachedLiteRules(query.OrgID, query.RuleType); found {
+			cacheRetrievalDuration = time.Since(startCache)
+			cacheHit = true
+
+			// Filter lite rules to get matching UIDs
+			startFiltering := time.Now()
+			matchingUIDs := filterLiteRuleUIDs(cachedLiteRules, query)
+			filteringDuration = time.Since(startFiltering)
+
+			// Fetch full rules by UID
+			var fetchedRules ngmodels.RulesGroup
+			if len(matchingUIDs) > 0 {
+				fetchErr := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+					fetchQuery := &ngmodels.ListAlertRulesExtendedQuery{
+						ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
+							OrgID:    query.OrgID,
+							RuleUIDs: matchingUIDs,
+						},
+					}
+
+					q, groupsSet, err := st.buildListAlertRulesQuery(sess, fetchQuery)
+					if err != nil {
+						return err
+					}
+
+					rows, err := q.Rows(new(alertRule))
+					if err != nil {
+						return err
+					}
+					defer rows.Close()
+
+					fetchedRules = st.convertAlertRulesBatched(rows, fetchQuery, groupsSet, len(matchingUIDs))
+					fetchedRules = st.reorderByUIDs(fetchedRules, matchingUIDs)
+					return nil
+				})
+
+				if fetchErr != nil {
+					// Fall through to normal path
+					st.Logger.Warn("Failed to fetch full rules from cache hit", "error", fetchErr)
+					cacheHit = false
+				} else {
+					// Apply pagination to fetched results
+					result = fetchedRules
+					if query.Limit > 0 && len(result) > int(query.Limit) {
+						// Generate next token
+						result = result[:query.Limit]
+						lastRule := result[len(result)-1]
+						cursor := continueCursor{
+							NamespaceUID: lastRule.NamespaceUID,
+							RuleGroup:    lastRule.RuleGroup,
+							RuleGroupIdx: int64(lastRule.RuleGroupIndex),
+							ID:           lastRule.ID,
+						}
+						nextToken = encodeCursor(cursor)
+					}
+
+					totalDuration := time.Since(startTotal)
+					st.Logger.Info("Store ListAlertRulesPaginated performance",
+						"cache_hit", true,
+						"cache_retrieval_ms", cacheRetrievalDuration.Milliseconds(),
+						"filtering_ms", filteringDuration.Milliseconds(),
+						"total_ms", totalDuration.Milliseconds(),
+						"cached_lite_count", len(cachedLiteRules),
+						"matching_uid_count", len(matchingUIDs),
+						"returned_rule_count", len(result),
+						"org_id", query.OrgID)
+
+					return result, nextToken, nil
+				}
+			}
+		}
+		cacheRetrievalDuration = time.Since(startCache)
+	}
+
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		// Time: Query building
+		startQueryBuild := time.Now()
 		q, groupsSet, err := st.buildListAlertRulesQuery(sess, query)
 		if err != nil {
 			return err
@@ -734,14 +1332,22 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 			q = buildCursorCondition(q, cursor)
 		}
 
+		var expectedSize int
 		if query.Limit > 0 {
 			// Ensure we clamp to the max int available on the platform
 			lim := min(query.Limit, math.MaxInt)
 			// Fetch one extra rule to determine if there are more results
 			q = q.Limit(int(lim) + 1)
+			expectedSize = int(lim) + 1
+		} else {
+			// No limit - estimate a reasonable initial capacity to reduce allocations
+			// For large datasets, this will still grow but avoids many small reallocations
+			expectedSize = 1000
 		}
+		queryBuildDuration = time.Since(startQueryBuild)
 
-		alertRules := make([]*ngmodels.AlertRule, 0)
+		// Time: Row scanning and conversion (overlapped with streaming)
+		startRowScan := time.Now()
 		rule := new(alertRule)
 		rows, err := q.Rows(rule)
 		if err != nil {
@@ -751,21 +1357,34 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 			_ = rows.Close()
 		}()
 
-		// Deserialize each rule separately in case any of them contain invalid JSON.
-		for rows.Next() {
-			converted, ok := st.handleRuleRow(rows, query, groupsSet)
-			if ok {
-				alertRules = append(alertRules, converted)
+		// Use batched conversion: overlaps DB I/O with JSON unmarshaling
+		alertRules := st.convertAlertRulesBatched(rows, query, groupsSet, expectedSize)
+
+		// Combined duration includes both row scanning and conversion (overlapped)
+		conversionDuration = time.Since(startRowScan)
+		rowScanDuration = conversionDuration // They're now overlapped, report same duration
+
+		// Cache lite rules if this was a cacheable query
+		if canUseCache {
+			liteRules := make([]*ngmodels.AlertRuleLite, len(alertRules))
+			for i, rule := range alertRules {
+				liteRules[i] = rule.ToLite()
 			}
+			st.setCachedLiteRules(query.OrgID, query.RuleType, liteRules)
 		}
 
-		genToken := query.Limit > 0 && len(alertRules) > int(query.Limit)
+		// Apply in-memory filters to rules (for both cache miss path and non-cacheable queries)
+		startFiltering := time.Now()
+		filteredRules := applyInMemoryFilters(alertRules, query)
+		filteringDuration = time.Since(startFiltering)
+
+		genToken := query.Limit > 0 && len(filteredRules) > int(query.Limit)
 		if genToken {
 			// Remove the extra item we fetched
-			alertRules = alertRules[:query.Limit]
+			filteredRules = filteredRules[:query.Limit]
 
 			// Generate next continue token from the last item
-			lastRule := alertRules[len(alertRules)-1]
+			lastRule := filteredRules[len(filteredRules)-1]
 			cursor := continueCursor{
 				NamespaceUID: lastRule.NamespaceUID,
 				RuleGroup:    lastRule.RuleGroup,
@@ -776,9 +1395,23 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 			nextToken = encodeCursor(cursor)
 		}
 
-		result = alertRules
+		result = filteredRules
 		return nil
 	})
+
+	totalDuration := time.Since(startTotal)
+
+	st.Logger.Info("Store ListAlertRulesPaginated performance",
+		"cache_hit", cacheHit,
+		"cache_retrieval_ms", cacheRetrievalDuration.Milliseconds(),
+		"query_build_ms", queryBuildDuration.Milliseconds(),
+		"row_scan_ms", rowScanDuration.Milliseconds(),
+		"conversion_ms", conversionDuration.Milliseconds(),
+		"filtering_ms", filteringDuration.Milliseconds(),
+		"total_ms", totalDuration.Milliseconds(),
+		"rule_count", len(result),
+		"org_id", query.OrgID)
+
 	return result, nextToken, err
 }
 
