@@ -2128,7 +2128,7 @@ var (
 		},
 		{
 			Name:         "pluginStoreServiceLoading",
-			Description:  "Load plugins during store service startup instead of wire provider",
+			Description:  "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
