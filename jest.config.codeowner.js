@@ -1,19 +1,18 @@
-const child_process = require('child_process');
 const fs = require('fs');
-const open = require('open');
+const open = require('open').default;
 const path = require('path');
 
 const baseConfig = require('./jest.config.js');
 
 const CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH = 'codeowners-manifest/filenames-by-team.json';
 
-const teamName = process.env.CODEOWNER_NAME;
-if (!teamName) {
+const codeownerName = process.env.CODEOWNER_NAME;
+if (!codeownerName) {
   console.error('ERROR: CODEOWNER_NAME environment variable is required');
   process.exit(1);
 }
 
-const outputDir = `./coverage/by-team/${createOwnerDirectory(teamName)}`;
+const outputDir = `./coverage/by-team/${createOwnerDirectory(codeownerName)}`;
 
 const codeownersFilePath = path.join(__dirname, CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH);
 
@@ -24,10 +23,10 @@ if (!fs.existsSync(codeownersFilePath)) {
 }
 
 const codeownersData = JSON.parse(fs.readFileSync(codeownersFilePath, 'utf8'));
-const teamFiles = codeownersData[teamName] || [];
+const teamFiles = codeownersData[codeownerName] || [];
 
 if (teamFiles.length === 0) {
-  console.error(`ERROR: No files found for team "${teamName}"`);
+  console.error(`ERROR: No files found for team "${codeownerName}"`);
   console.error('Available teams:', Object.keys(codeownersData).join(', '));
   process.exit(1);
 }
@@ -56,12 +55,12 @@ const testFiles = teamFiles.filter((file) => {
 });
 
 if (testFiles.length === 0) {
-  console.log(`No test files found for team ${teamName}`);
+  console.log(`No test files found for team ${codeownerName}`);
   process.exit(0);
 }
 
 console.log(
-  `🧪 Collecting coverage for ${sourceFiles.length} testable files and running ${testFiles.length} test files of ${teamFiles.length} files owned by ${teamName}.`
+  `🧪 Collecting coverage for ${sourceFiles.length} testable files and running ${testFiles.length} test files of ${teamFiles.length} files owned by ${codeownerName}.`
 );
 
 module.exports = {
@@ -78,7 +77,7 @@ module.exports = {
     [
       'jest-monocart-coverage',
       {
-        name: `Coverage Report - ${teamName} owned files`,
+        name: `Coverage Report - ${codeownerName} owned files`,
         outputDir: outputDir,
         reports: ['console-summary', 'v8', 'json', 'lcov'],
         sourceFilter: (coveredFile) => sourceFiles.includes(coveredFile),
