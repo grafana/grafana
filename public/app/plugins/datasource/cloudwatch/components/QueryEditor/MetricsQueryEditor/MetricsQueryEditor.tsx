@@ -17,7 +17,7 @@ import {
   MetricQueryType,
   MetricStat,
 } from '../../../types';
-import { MetricStatEditor } from '../../shared/MetricStatEditor';
+import { MetricStatEditor } from '../../shared/MetricStatEditor/MetricStatEditor';
 
 import { DynamicLabelsField } from './DynamicLabelsField';
 import { MathExpressionQueryField } from './MathExpressionQueryField';
