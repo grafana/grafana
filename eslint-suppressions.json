@@ -1457,11 +1457,6 @@
       "count": 1
     }
   },
-  "public/app/core/utils/richHistory.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 3
-    }
-  },
   "public/app/core/utils/ticks.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
