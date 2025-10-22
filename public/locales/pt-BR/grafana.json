@@ -4535,7 +4535,8 @@
       "paste-row": "Colar linha",
       "paste-tab": "Colar aba",
       "un-group-panels": "Desagrupar",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -5046,6 +5047,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Copiar",
         "copy-or-duplicate": "Copiar ou duplicar",
@@ -5055,7 +5057,10 @@
         "group-layout-disabled": "Não há grupos neste nível",
         "panel-layout": "Layout do painel",
         "panel-layout-disabled": "Selecione uma linha ou aba para alterar as opções de layout do painel"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5205,7 +5210,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "A exclusão desta linha também removerá todos os painéis. Tem certeza de que deseja continuar?",
       "delete-row-title": "Deseja excluir a linha?",
@@ -5245,9 +5249,7 @@
         "title-not-unique": "Este título não é exclusivo"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Painel de controle salvo"
@@ -5337,6 +5339,9 @@
       "delete-tab-title": "Deseja excluir a aba?",
       "delete-tab-yes": "Excluir",
       "description": "Organizar painéis em abas horizontais",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Abas",
       "tab": {
         "new": "Nova aba",
@@ -6288,6 +6293,9 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Esta variável é referenciada por outras variáveis ou painel.",
       "content-variable-not-referenced-other-variables-dashboard": "Esta variável não é referenciada por outras variáveis ou painel.",
       "content-variable-referenced-other-variables-dashboard": "Esta variável é referenciada por outras variáveis ou painel."
+    },
+    "variable-controls": {
+      "add-variable": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulário do editor de variáveis",
@@ -7678,6 +7686,7 @@
   },
   "gauge": {
     "category-gauge": "Medidor",
+    "category-radial-bar": "",
     "description-min-height": "Altura mínima da linha (orientação horizontal)",
     "description-min-width": "Largura mínima da coluna (orientação vertical)",
     "description-neutral": "Deixar em branco para usar o mínimo como ponto neutro",
@@ -7693,7 +7702,8 @@
     "name-neutral": "Neutro",
     "name-show-threshold-labels": "Mostrar rótulos de limite",
     "name-show-threshold-markers": "Mostrar marcadores de limite",
-    "placeholder-neutral": "automático"
+    "placeholder-neutral": "automático",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Aplicar",
@@ -9097,6 +9107,8 @@
       "make-time-range-permanent": "Tornar o intervalo de tempo absoluto/permanente",
       "move-time-range-back": "Mover intervalo de tempo para trás",
       "move-time-range-forward": "Avançar intervalo de tempo",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Abrir busca",
       "open-share-embed-drawer": "Compartilhar incorporação do painel",
       "open-share-link-drawer": "Compartilhar link do painel",
@@ -10745,11 +10757,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -11825,7 +11835,8 @@
       "button-cancelling": "Cancelando… ",
       "button-previous": "Voltar",
       "button-submitting": "Enviando…",
-      "error-instance-repository-exists": "O repositório de instâncias já existe"
+      "error-instance-repository-exists": "O repositório de instâncias já existe",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12048,6 +12059,28 @@
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12679,6 +12712,10 @@
     "sql-suggestion-history": "Histórico de sugestões de SQL",
     "suggestions": "Sugestões",
     "view-explanation": "Ver explicação"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {

@@ -5,6 +5,7 @@ import { commonOptionsBuilder } from '@grafana/ui';
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
 
 import { EffectsEditor } from './EffectsEditor';
+import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './GaugeMigrations';
 import { RadialBarPanel } from './RadialBarPanel';
 import { defaultGaugePanelEffects, defaultOptions, Options } from './panelcfg.gen';
 import { GaugeSuggestionsSupplier } from './suggestions';
@@ -94,6 +95,13 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       defaultValue: defaultOptions.showThresholdMarkers,
     });
 
+    builder.addBooleanSwitch({
+      path: 'showThresholdLabels',
+      name: t('radialbar.config.threshold-labels', 'Show threshold labels'),
+      category,
+      defaultValue: defaultOptions.showThresholdLabels,
+    });
+
     builder.addCustomEditor({
       id: 'radialbar-effects',
       path: 'effects',
@@ -104,4 +112,6 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       defaultValue: defaultGaugePanelEffects,
     });
   })
-  .setSuggestionsSupplier(new GaugeSuggestionsSupplier());
+  .setSuggestionsSupplier(new GaugeSuggestionsSupplier())
+  .setMigrationHandler(gaugePanelMigrationHandler, shouldMigrateGauge)
+  .setPanelChangeHandler(gaugePanelChangedHandler);

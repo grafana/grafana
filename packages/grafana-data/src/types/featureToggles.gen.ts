@@ -299,6 +299,14 @@ export interface FeatureToggles {
   */
   kubernetesCorrelations?: boolean;
   /**
+  * Adds support for Kubernetes logs drilldown
+  */
+  kubernetesLogsDrilldown?: boolean;
+  /**
+  * Adds support for Kubernetes querycaching
+  */
+  kubernetesQueryCaching?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -613,6 +621,10 @@ export interface FeatureToggles {
   */
   zanzana?: boolean;
   /**
+  * Use openFGA as main authorization engine and disable legacy RBAC clietn.
+  */
+  zanzanaNoLegacyClient?: boolean;
+  /**
   * Enables reload of dashboards on scopes, time range and variables changes
   */
   reloadDashboardsOnParamsChange?: boolean;
@@ -699,10 +711,6 @@ export interface FeatureToggles {
   * Enable sprinkles on unified storage search
   */
   unifiedStorageSearchSprinkles?: boolean;
-  /**
-  * Use full n-gram indexing instead of edge n-gram for unified storage search
-  */
-  unifiedStorageUseFullNgram?: boolean;
   /**
   * Pick the dual write mode from database configs
   */
@@ -1166,9 +1174,9 @@ export interface FeatureToggles {
   */
   teamFolders?: boolean;
   /**
-  * Enables Pathfinder app
+  * Enables the interactive learning app
   */
-  grafanaPathfinder?: boolean;
+  interactiveLearning?: boolean;
   /**
   * Enables the alerting triage feature
   * @default false
@@ -1209,4 +1217,24 @@ export interface FeatureToggles {
   * @default false
   */
   cdnPluginsUrls?: boolean;
+  /**
+  * Enable new gauge visualization
+  * @default false
+  */
+  newGauge?: boolean;
+  /**
+  * Restrict PanelChrome contents with overflow: hidden;
+  * @default true
+  */
+  preventPanelChromeOverflow?: boolean;
+  /**
+  * Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
+  * @default false
+  */
+  pluginStoreServiceLoading?: boolean;
+  /**
+  * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
+  * @default true
+  */
+  onlyStoreActionSets?: boolean;
 }

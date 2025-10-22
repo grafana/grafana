@@ -3692,7 +3692,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "Alphabetically (A–Z)",
-        "alphabetically-za": "Alphabetically (Z–A)"
+        "alphabetically-za": "Alphabetically (Z–A)",
+        "deleted-newest": "Deleted (newest first)",
+        "deleted-oldest": "Deleted (oldest first)"
       }
     }
   },
@@ -6294,6 +6296,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "This variable is not referenced by other variables or dashboard.",
       "content-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
     },
+    "variable-controls": {
+      "add-variable": "Add"
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
       "back-to-list": "Back to list",
@@ -7151,9 +7156,6 @@
       "title-failed-sample-query": "Failed to load logs sample for this query",
       "tooltip": "Show log lines that contributed to visualized metrics"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} appears in {{percentage}}% of log lines"
-    },
     "logs-table-empty-fields": {
       "no-fields": "No fields"
     },
@@ -7161,10 +7163,6 @@
       "fields": "Fields",
       "reset": "Reset",
       "selected-fields": "Selected fields"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "Drag and drop icon",
-      "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Select query by name",
@@ -7699,7 +7697,8 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Show threshold labels",
     "name-show-threshold-markers": "Show threshold markers",
-    "placeholder-neutral": "auto"
+    "placeholder-neutral": "auto",
+    "threshold": "Threshold {{value}}"
   },
   "gen-ai": {
     "apply-suggestion": "Apply",
@@ -8000,6 +7999,52 @@
     "select-group": "Select group"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "Day before yesterday",
+          "previousFiscalQuarter": "Previous fiscal quarter",
+          "previousFiscalYear": "Previous fiscal year",
+          "previousMonth": "Previous month",
+          "previousWeek": "Previous week",
+          "previousYear": "Previous year",
+          "thisDayLastWeek": "This day last week",
+          "thisFiscalQuarter": "This fiscal quarter",
+          "thisFiscalQuarterSoFar": "This fiscal quarter so far",
+          "thisFiscalYear": "This fiscal year",
+          "thisFiscalYearSoFar": "This fiscal year so far",
+          "thisMonth": "This month",
+          "thisMonthSoFar": "This month so far",
+          "thisWeek": "This week",
+          "thisWeekSoFar": "This week so far",
+          "thisYear": "This year",
+          "thisYearSoFar": "This year so far",
+          "today": "Today",
+          "todaySoFar": "Today so far",
+          "yesterday": "Yesterday"
+        },
+        "lastNDays_one": "Last {{count}} day",
+        "lastNDays_other": "Last {{count}} days",
+        "lastNHours_one": "Last {{count}} hour",
+        "lastNHours_other": "Last {{count}} hours",
+        "lastNMinutes_one": "Last {{count}} minute",
+        "lastNMinutes_other": "Last {{count}} minutes",
+        "lastNMonths_one": "Last {{count}} month",
+        "lastNMonths_other": "Last {{count}} months",
+        "lastNYears_one": "Last {{count}} year",
+        "lastNYears_other": "Last {{count}} years",
+        "nextNDays_one": "Next {{count}} day",
+        "nextNDays_other": "Next {{count}} days",
+        "nextNHours_one": "Next {{count}} hour",
+        "nextNHours_other": "Next {{count}} hours",
+        "nextNMinutes_one": "Next {{count}} minute",
+        "nextNMinutes_other": "Next {{count}} minutes",
+        "nextNMonths_one": "Next {{count}} month",
+        "nextNMonths_other": "Next {{count}} months",
+        "nextNYears_one": "Next {{count}} year",
+        "nextNYears_other": "Next {{count}} years"
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9535,6 +9580,15 @@
     "description-enable-logs-highlighting": "Use a predefined coloring scheme to highlight relevant parts of the log lines",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
     "description-show-log-attributes": "Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "Drag and drop icon",
+      "clear-button": "Clear",
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar",
+      "label-title": "{{fieldName}} appears in {{percentage}}% of log lines",
+      "placeholder-search-fields-by-name": "Search fields by name",
+      "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
+    },
     "fields": {
       "type": {
         "loki": {
@@ -10753,11 +10807,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "No dashboard groups configured",
-      "mark-as-starred": "Mark \"{{title}}\" as favorite",
       "recently-viewed-dashboards": "Recently viewed dashboards",
       "search": "Search",
-      "starred-dashboards": "Starred dashboards",
-      "unmark-as-starred": "Unmark \"{{title}}\" as favorite"
+      "starred-dashboards": "Starred dashboards"
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -12076,6 +12128,7 @@
       "shape-circle": "Circle",
       "shape-gauge": "Gauge",
       "sparkline": "Show sparkline",
+      "threshold-labels": "Show threshold labels",
       "threshold-markers": "Show thresholds"
     }
   },
@@ -12709,6 +12762,10 @@
     "sql-suggestion-history": "SQL Suggestion History",
     "suggestions": "Suggestions",
     "view-explanation": "View explanation"
+  },
+  "stars": {
+    "mark-as-starred": "Mark \"{{title}}\" as favorite",
+    "unmark-as-starred": "Unmark \"{{title}}\" as favorite"
   },
   "stat": {
     "add-orientation-option": {

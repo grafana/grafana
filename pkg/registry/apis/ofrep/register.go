@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -250,8 +251,10 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 
 	r = r.WithContext(ctx)
 
+	b.logger.Debug("validating namespace in oneFlagHandler handler")
 	if !b.validateNamespace(r) {
 		_ = tracing.Errorf(span, namespaceMismatchMsg)
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
 		b.logger.Error(namespaceMismatchMsg)
 		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
@@ -260,6 +263,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	flagKey := mux.Vars(r)["flagKey"]
 	if flagKey == "" {
 		_ = tracing.Errorf(span, "flagKey parameter is required")
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
 		http.Error(w, "flagKey parameter is required", http.StatusBadRequest)
 		return
 	}
@@ -272,6 +276,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	// Unless the request is authenticated, we only allow public flags evaluations
 	if !isAuthedReq && !isPublicFlag(flagKey) {
 		_ = tracing.Errorf(span, "unauthorized to evaluate flag: %s", flagKey)
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
 		b.logger.Error("Unauthorized to evaluate flag", "flagKey", flagKey)
 		http.Error(w, "unauthorized to evaluate flag", http.StatusUnauthorized)
 		return
@@ -291,8 +296,10 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 
 	r = r.WithContext(ctx)
 
+	b.logger.Debug("validating namespace in allFlagsHandler handler")
 	if !b.validateNamespace(r) {
 		_ = tracing.Errorf(span, namespaceMismatchMsg)
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
 		b.logger.Error(namespaceMismatchMsg)
 		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
@@ -357,7 +364,9 @@ func (b *APIBuilder) isAuthenticatedRequest(r *http.Request) bool {
 
 // validateNamespace checks if the namespace in the evaluation context matches the namespace in the request
 func (b *APIBuilder) validateNamespace(r *http.Request) bool {
-	// Extract namespace from request context or URL path
+	_, span := tracer.Start(r.Context(), "ofrep.validateNamespace")
+	defer span.End()
+
 	var namespace string
 	user, ok := types.AuthInfoFrom(r.Context())
 	if !ok {
@@ -370,19 +379,25 @@ func (b *APIBuilder) validateNamespace(r *http.Request) bool {
 		namespace = mux.Vars(r)["namespace"]
 	}
 
-	// Extract namespace from feature flag evaluation context
+	// Read request body for namespace validation and tracing
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		_ = tracing.Errorf(span, "failed to read request body: %w", err)
 		b.logger.Error("Error reading evaluation request body", "error", err)
+		span.SetAttributes(attribute.Bool("validation.success", false))
 		return false
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
+	span.SetAttributes(attribute.String("request.body", string(body)))
+
 	evalCtxNamespace := b.namespaceFromEvalCtx(body)
 	// "default" namespace case can only occur in on-prem grafana
 	if (namespace == "default" && evalCtxNamespace == "") || (evalCtxNamespace == namespace) {
+		span.SetAttributes(attribute.Bool("validation.success", true))
 		return true
 	}
 
+	span.SetAttributes(attribute.Bool("validation.success", false))
 	return false
 }

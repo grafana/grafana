@@ -4575,7 +4575,8 @@
       "paste-row": "Wklej wiersz",
       "paste-tab": "Wklej kartę",
       "un-group-panels": "Rozłącz grupę",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -5086,6 +5087,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Kopiuj",
         "copy-or-duplicate": "Kopiuj lub duplikuj",
@@ -5095,7 +5097,10 @@
         "group-layout-disabled": "Brak grup na tym poziomie",
         "panel-layout": "Układ panelu",
         "panel-layout-disabled": "Wybierz wiersz lub kartę, aby zmienić opcje układu panelu"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5247,7 +5252,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "Usunięcie tego wiersza spowoduje również usunięcie wszystkich paneli. Na pewno chcesz kontynuować?",
       "delete-row-title": "Usunąć wiersz?",
@@ -5287,9 +5291,7 @@
         "title-not-unique": "Ten tytuł nie jest unikalny"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Pulpit został zapisany"
@@ -5379,6 +5381,9 @@
       "delete-tab-title": "Usunąć kartę?",
       "delete-tab-yes": "Usuń",
       "description": "Organizuj panele w poziome karty",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Karty",
       "tab": {
         "new": "Nowa karta",
@@ -6334,6 +6339,9 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Do tej zmiennej odwołują się inne zmienne lub pulpit.",
       "content-variable-not-referenced-other-variables-dashboard": "Do tej zmiennej nie odwołują się inne zmienne ani pulpit.",
       "content-variable-referenced-other-variables-dashboard": "Do tej zmiennej odwołują się inne zmienne lub pulpit."
+    },
+    "variable-controls": {
+      "add-variable": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formularz edytora zmiennych",
@@ -7724,6 +7732,7 @@
   },
   "gauge": {
     "category-gauge": "Wskaźnik",
+    "category-radial-bar": "",
     "description-min-height": "Minimalna wysokość wiersza (orientacja pozioma)",
     "description-min-width": "Minimalna szerokość kolumny (orientacja pionowa)",
     "description-neutral": "Pozostaw puste, aby użyć wartości minimalnej jako punktu neutralnego",
@@ -7739,7 +7748,8 @@
     "name-neutral": "Neutralne",
     "name-show-threshold-labels": "Pokaż etykiety progów",
     "name-show-threshold-markers": "Pokaż znaczniki progów",
-    "placeholder-neutral": "automatycznie"
+    "placeholder-neutral": "automatycznie",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Zastosuj",
@@ -9143,6 +9153,8 @@
       "make-time-range-permanent": "Ustaw bezwzględny/stały zakres czasu",
       "move-time-range-back": "Przesuń zakres czasu wstecz",
       "move-time-range-forward": "Przesuń zakres czasu do przodu",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Otwórz wyszukiwanie",
       "open-share-embed-drawer": "Udostępnij osadzenie panelu",
       "open-share-link-drawer": "Udostępnij link do panelu",
@@ -10813,11 +10825,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -11905,7 +11915,8 @@
       "button-cancelling": "Anulowanie…",
       "button-previous": "Wstecz",
       "button-submitting": "Zgłaszanie…",
-      "error-instance-repository-exists": "Repozytorium instancji już istnieje"
+      "error-instance-repository-exists": "Repozytorium instancji już istnieje",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12130,6 +12141,28 @@
       "show-response": "Pokaż odpowiedź"
     },
     "query-editor-not-exported": "Wtyczka źródła danych nie eksportuje żadnego komponentu Edytora zapytań"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12767,6 +12800,10 @@
     "sql-suggestion-history": "Historia sugestii SQL",
     "suggestions": "Sugestie",
     "view-explanation": "Pokaż wyjaśnienie"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {

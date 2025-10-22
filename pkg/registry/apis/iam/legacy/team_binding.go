@@ -15,8 +15,7 @@ import (
 )
 
 type ListTeamBindingsQuery struct {
-	TeamID     int64
-	UserID     int64
+	UID        string
 	OrgID      int64
 	Pagination common.Pagination
 }
@@ -29,6 +28,7 @@ type ListTeamBindingsResult struct {
 
 type TeamMember struct {
 	ID         int64
+	UID        string
 	TeamID     int64
 	TeamUID    string
 	UserID     int64
@@ -109,7 +109,7 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 
 	for rows.Next() {
 		m := TeamMember{}
-		err = rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Created, &m.Updated, &m.Permission, &m.External)
+		err = rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Created, &m.Updated, &m.Permission, &m.External)
 		if err != nil {
 			return res, err
 		}
@@ -127,13 +127,14 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 }
 
 type CreateTeamMemberCommand struct {
+	UID        string
 	TeamID     int64
 	TeamUID    string
 	UserID     int64
 	UserUID    string
 	OrgID      int64
-	Created    DBTime
-	Updated    DBTime
+	Created    legacysql.DBTime
+	Updated    legacysql.DBTime
 	External   bool
 	Permission team.PermissionType
 }
@@ -164,8 +165,8 @@ func (r createTeamMemberQuery) Validate() error {
 
 func (s *legacySQLStore) CreateTeamMember(ctx context.Context, ns claims.NamespaceInfo, cmd CreateTeamMemberCommand) (*CreateTeamMemberResult, error) {
 	now := time.Now().UTC()
-	cmd.Created = NewDBTime(now)
-	cmd.Updated = NewDBTime(now)
+	cmd.Created = legacysql.NewDBTime(now)
+	cmd.Updated = legacysql.NewDBTime(now)
 	cmd.OrgID = ns.OrgID
 
 	if cmd.OrgID == 0 {
@@ -193,6 +194,7 @@ func (s *legacySQLStore) CreateTeamMember(ctx context.Context, ns claims.Namespa
 
 		createdTeamMember = TeamMember{
 			ID:         teamMemberID,
+			UID:        cmd.UID,
 			TeamID:     cmd.TeamID,
 			TeamUID:    cmd.TeamUID,
 			UserID:     cmd.UserID,
@@ -301,6 +303,6 @@ func (s *legacySQLStore) ListTeamMembers(ctx context.Context, ns claims.Namespac
 
 func scanMember(rows *sql.Rows) (TeamMember, error) {
 	m := TeamMember{}
-	err := rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Name, &m.Email, &m.Username, &m.External, &m.Created, &m.Updated, &m.Permission)
+	err := rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Name, &m.Email, &m.Username, &m.External, &m.Created, &m.Updated, &m.Permission)
 	return m, err
 }
