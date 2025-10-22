@@ -83,9 +83,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       return true;
     }
 
-    const hasActualChanges = dashboard.hasActualSaveChanges();
-
-    if (!dashboard.state.isDirty || !hasActualChanges) {
+    if (!dashboard.state.isDirty) {
       return true;
     }
 
@@ -202,7 +200,10 @@ export function ignoreChanges(scene: DashboardScene | null) {
     return true;
   }
 
-  return !canSave || fromScript || fromFile;
+  // changes other than time range, refresh rate or variable option change
+  const hasActualChanges = scene.hasActualSaveChanges();
+
+  return !canSave || fromScript || fromFile || (scene.state.isEditing && !hasActualChanges);
 }
 
 export function isEmptyDashboard(
