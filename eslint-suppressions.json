@@ -4009,11 +4009,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/LogsQueryEditor/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/components/QueryEditor/QueryEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
