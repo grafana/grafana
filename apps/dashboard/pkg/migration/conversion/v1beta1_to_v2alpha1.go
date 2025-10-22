@@ -553,14 +553,14 @@ func buildPanelKind(panelMap map[string]interface{}) (*dashv2alpha1.DashboardPan
 }
 
 func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOverride *int64) dashv2alpha1.DashboardGridLayoutItemKind {
-	// Default grid position
-	x, y, width, height := int64(0), int64(0), int64(12), int64(8)
+	// Default grid position (matches frontend PanelModel defaults: w=6, h=3)
+	x, y, width, height := int64(0), int64(0), int64(6), int64(3)
 
 	if gridPos, ok := panelMap["gridPos"].(map[string]interface{}); ok {
 		x = int64(getIntField(gridPos, "x", 0))
 		y = int64(getIntField(gridPos, "y", 0))
-		width = int64(getIntField(gridPos, "w", 12))
-		height = int64(getIntField(gridPos, "h", 8))
+		width = int64(getIntField(gridPos, "w", 6))
+		height = int64(getIntField(gridPos, "h", 3))
 	}
 
 	// Apply frontend-style grid position calculations

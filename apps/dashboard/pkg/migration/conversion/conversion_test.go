@@ -224,6 +224,120 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 	}
 }
 
+// TestMigratedDashboardsConversion tests conversion of already-migrated dashboards
+// from the migration package's latest_version output directory
+func TestMigratedDashboardsConversion(t *testing.T) {
+	// Initialize the migrator with a test data source provider
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	migration.Initialize(dsProvider)
+	SetDataSourceProvider(dsProvider)
+
+	// Set up conversion scheme
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme)
+	require.NoError(t, err)
+
+	// Read all files from migration package's latest_version directory
+	inputDir := filepath.Join("..", "testdata", "output", "latest_version")
+	files, err := os.ReadDir(inputDir)
+	require.NoError(t, err, "Failed to read latest_version directory")
+
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+
+		t.Run(fmt.Sprintf("Convert_%s", file.Name()), func(t *testing.T) {
+			// Read input dashboard file
+			inputFile := filepath.Join(inputDir, file.Name())
+			// ignore gosec G304 as this function is only used in the test process
+			//nolint:gosec
+			inputData, err := os.ReadFile(inputFile)
+			require.NoError(t, err, "Failed to read input file")
+
+			// Parse the raw dashboard JSON
+			var rawDash map[string]interface{}
+			err = json.Unmarshal(inputData, &rawDash)
+			require.NoError(t, err, "Failed to unmarshal dashboard JSON")
+
+			// These files are from the old migration system and are raw dashboard JSON
+			// We need to wrap them in the proper v1beta1 API structure
+			sourceDash := &dashv1.Dashboard{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Dashboard",
+					APIVersion: dashv1.APIVERSION,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: strings.TrimSuffix(file.Name(), ".json"),
+				},
+				Spec: common.Unstructured{Object: rawDash},
+			}
+
+			// Ensure output directory exists
+			outDir := filepath.Join("testdata", "migrated_dashboards_output")
+			// ignore gosec G301 as this function is only used in the test process
+			//nolint:gosec
+			err = os.MkdirAll(outDir, 0755)
+			require.NoError(t, err, "Failed to create output directory")
+
+			// Get target versions from the dashboard manifest
+			manifest := apis.LocalManifest()
+			targetVersions := make(map[string]runtime.Object)
+
+			// Get original filename without extension
+			originalName := strings.TrimSuffix(file.Name(), ".json")
+
+			// Get all Dashboard versions from the manifest
+			for _, kind := range manifest.ManifestData.Kinds() {
+				if kind.Kind == "Dashboard" {
+					for _, version := range kind.Versions {
+						// Skip v1beta1 since that's our source version
+						if version.VersionName == "v1beta1" {
+							continue
+						}
+
+						// Prefix with v1beta1-mig- to indicate these came from v1beta1 dashboards
+						// that went through the migration pipeline
+						filename := fmt.Sprintf("v1beta1-mig-%s.%s.json", originalName, version.VersionName)
+						typeMeta := metav1.TypeMeta{
+							APIVersion: fmt.Sprintf("%s/%s", dashv0.APIGroup, version.VersionName),
+							Kind:       kind.Kind, // Dashboard
+						}
+
+						// Create target object based on version
+						switch version.VersionName {
+						case "v0alpha1":
+							targetVersions[filename] = &dashv0.Dashboard{TypeMeta: typeMeta}
+						case "v2alpha1":
+							targetVersions[filename] = &dashv2alpha1.Dashboard{TypeMeta: typeMeta}
+						case "v2beta1":
+							targetVersions[filename] = &dashv2beta1.Dashboard{TypeMeta: typeMeta}
+						default:
+							t.Logf("Unknown version %s, skipping", version.VersionName)
+						}
+					}
+					break
+				}
+			}
+
+			// Convert to each target version
+			for filename, target := range targetVersions {
+				t.Run(fmt.Sprintf("Convert_to_%s", filename), func(t *testing.T) {
+					// Create a copy of the input dashboard for conversion
+					inputCopy := sourceDash.DeepCopyObject()
+
+					// Convert to target version
+					err := scheme.Convert(inputCopy, target, nil)
+					require.NoError(t, err, "Conversion failed for %s", filename)
+
+					// Test the changes in the conversion result
+					testConversion(t, target.(metav1.Object), filename, outDir)
+				})
+			}
+		})
+	}
+}
+
 func testConversion(t *testing.T, convertedDash metav1.Object, filename, outputDir string) {
 	t.Helper()
 
