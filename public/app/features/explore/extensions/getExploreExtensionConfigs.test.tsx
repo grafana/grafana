@@ -30,15 +30,6 @@ describe('getExploreExtensionConfigs', () => {
           configure: expect.any(Function),
           onClick: expect.any(Function),
         },
-        {
-          title: 'Add metrics drilldown panel to dashboard',
-          description: 'Use the panel from metrics drilldown and create/add it to a dashboard',
-          targets: ['grafana-metricsdrilldown-app/add-to-dashboard/v1'],
-          icon: 'apps',
-          category: 'Dashboards',
-          configure: expect.any(Function),
-          onClick: expect.any(Function),
-        },
       ]);
     });
   });
