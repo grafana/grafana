@@ -266,7 +266,7 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) respo
 	query := c.Query("query")
 	limit := c.QueryInt("limit")
 
-	if limit == 0 {
+	if limit <= 0 {
 		limit = 1000
 	}
 

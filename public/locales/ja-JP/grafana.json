@@ -6271,6 +6271,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "この変数は他の変数やダッシュボードから参照されていません。",
       "content-variable-referenced-other-variables-dashboard": "この変数は他の変数やダッシュボードから参照されています。"
     },
+    "variable-controls": {
+      "add-variable": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "変数エディタフォーム",
       "back-to-list": "一覧に戻る",
@@ -10720,11 +10723,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -12667,6 +12668,10 @@
     "sql-suggestion-history": "SQL提案履歴",
     "suggestions": "提案",
     "view-explanation": "説明を表示"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {

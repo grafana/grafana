@@ -1824,6 +1824,7 @@
         "name": "grafanaPathfinder",
         "resourceVersion": "1760434668782",
         "creationTimestamp": "2025-08-20T12:30:29Z",
+        "deletionTimestamp": "2025-10-21T16:10:16Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-10-14 09:37:48.782577 +0000 UTC"
         }
@@ -2006,6 +2007,18 @@
         "description": "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
         "stage": "experimental",
         "codeowner": "@grafana/partner-datasources"
+      }
+    },
+    {
+      "metadata": {
+        "name": "interactiveLearning",
+        "resourceVersion": "1761063016739",
+        "creationTimestamp": "2025-10-21T16:10:16Z"
+      },
+      "spec": {
+        "description": "Enables the interactive learning app",
+        "stage": "preview",
+        "codeowner": "@grafana/pathfinder"
       }
     },
     {
@@ -4168,6 +4181,23 @@
       },
       "spec": {
         "description": "Use openFGA as authorization engine.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "zanzanaNoLegacyClient",
+        "resourceVersion": "1761063016739",
+        "creationTimestamp": "2025-10-20T09:52:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-21 16:10:16.739546 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use openFGA as main authorization engine and disable legacy RBAC clietn.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromAdminPage": true,

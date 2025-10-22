@@ -1067,6 +1067,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "zanzanaNoLegacyClient",
+			Description:       "Use openFGA as main authorization engine and disable legacy RBAC clietn.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:              "reloadDashboardsOnParamsChange",
 			Description:       "Enables reload of dashboards on scopes, time range and variables changes",
 			FrontendOnly:      false,
@@ -2039,8 +2047,8 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "grafanaPathfinder",
-			Description: "Enables Pathfinder app",
+			Name:        "interactiveLearning",
+			Description: "Enables the interactive learning app",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaPathfinderSquad,
 		},
