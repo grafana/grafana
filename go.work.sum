@@ -2254,6 +2254,7 @@ k8s.io/kms v0.34.0/go.mod h1:s1CFkLG7w9eaTYvctOxosx88fl4spqmixnNpys0JAtM=
 k8s.io/kube-aggregator v0.33.1/go.mod h1:16/wlU5Lj7hNJSv7JSu5FLvxyrgiJVLCHzfVoECAsuI=
 k8s.io/kube-aggregator v0.33.2/go.mod h1:qQbliLwcdmx7/8mtvkc/9QV/ON2M6ZBMcffEUmrqKFw=
 k8s.io/kube-aggregator v0.33.3/go.mod h1:hwvkUoQ8q6gv0+SgNnlmQ3eUue1zHhJKTHsX7BwxwSE=
+k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b/go.mod h1:UZ2yyWbFTpuhSbFhv24aGNOdoRdJZgsIObGBUaYVsts=
 k8s.io/utils v0.0.0-20240711033017-18e509b52bc8/go.mod h1:OLgZIPagt7ERELqWJFomSt595RzquPNLL48iOWgYOg0=
 k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738/go.mod h1:OLgZIPagt7ERELqWJFomSt595RzquPNLL48iOWgYOg0=
 knative.dev/hack v0.0.0-20250514121446-f525e187efdc h1:8HmclJlA0zNE/G1SkgdC3/IFSSyhaSz2iIhihU6YbEo=
