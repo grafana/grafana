@@ -48,7 +48,7 @@ func (b *WatchRunner) GetHandlerForPath(_ string) (model.ChannelHandler, error) 
 // Valid paths look like: {version}/{resource}[={name}]/{user.uid}
 // * v0alpha1/dashboards/u12345
 // * v0alpha1/dashboards=ABCD/u12345
-func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	// To make sure we do not share resources across users, in clude the UID in the path
 	userID := u.GetIdentifier()
 	if userID == "" {
@@ -87,12 +87,14 @@ func (b *WatchRunner) OnSubscribe(ctx context.Context, u identity.Requester, e m
 			fmt.Errorf("watching provisioned resources is OK allowed (for now)")
 	}
 
-	ctx = types.WithAuthInfo(context.Background(), u)
-	ctx = identity.WithRequester(ctx, u)
-	cfg, err := b.configProvider.GetRestConfig(ctx)
+	// doesn't matter what GetRestConfig sees for context, matters for watch below
+	cfg, err := b.configProvider.GetRestConfig(context.Background())
 	if err != nil {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
 	}
+
+	// add user to both requester and authInfo context keys, older implementations are still using requester
+	ctx := identity.WithRequester(types.WithAuthInfo(context.Background(), u), u)
 	uclient, err := dynamic.NewForConfig(cfg)
 	if err != nil {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
