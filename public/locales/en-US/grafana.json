@@ -9536,6 +9536,7 @@
     "description-show-log-attributes": "Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata.",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Drag and drop icon",
+      "clear-button": "Clear",
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
       "label-title": "{{fieldName}} appears in {{percentage}}% of log lines",
