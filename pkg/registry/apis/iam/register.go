@@ -42,7 +42,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	legacyuser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -61,6 +63,9 @@ func RegisterAPIService(
 	coreRolesStorage CoreRoleStorageBackend,
 	rolesStorage RoleStorageBackend,
 	roleBindingsStorage RoleBindingStorageBackend,
+	dual dualwrite.Service,
+	unified resource.ResourceClient,
+	userService legacyuser.Service,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
@@ -85,6 +90,9 @@ func RegisterAPIService(
 		logger:                     log.New("iam.apis"),
 		features:                   features,
 		enableDualWriter:           true,
+		dual:                       dual,
+		unified:                    unified,
+		userSearchClient:           resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), unified, user.NewUserLegacySearchClient(userService), features),
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -380,7 +388,7 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 	case admission.Create:
 		switch typedObj := a.GetObject().(type) {
 		case *iamv0.User:
-			return user.ValidateOnCreate(ctx, typedObj)
+			return user.ValidateOnCreate(ctx, b.userSearchClient, typedObj)
 		case *iamv0.ServiceAccount:
 			return serviceaccount.ValidateOnCreate(ctx, typedObj)
 		case *iamv0.Team:
@@ -398,7 +406,7 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			if !ok {
 				return fmt.Errorf("expected old object to be a User, got %T", oldUserObj)
 			}
-			return user.ValidateOnUpdate(ctx, oldUserObj, typedObj)
+			return user.ValidateOnUpdate(ctx, b.userSearchClient, oldUserObj, typedObj)
 		case *iamv0.ResourcePermission:
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
 		case *iamv0.Team:
