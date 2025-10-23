@@ -1,7 +1,7 @@
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, VizPanel } from '@grafana/scenes';
-import { Icon, PanelChrome, Text } from '@grafana/ui';
+import { Icon, PanelChrome, Tooltip } from '@grafana/ui';
 
 import { CustomTimeRangeCompare } from './CustomTimeRangeCompare';
 
@@ -61,11 +61,14 @@ function PanelTimeCompareLabelRenderer({ model }: SceneComponentProps<PanelTimeC
   const label = option?.label || compareWith;
 
   return (
-    <PanelChrome.TitleItem>
-      <Icon name="clock-nine" size="sm" />
-      <Text variant="bodySmall">
+    <Tooltip
+      content={
         <Trans i18nKey="dashboard-scene.panel-time-compare-label.comparison-text">{{ label }} (comparison)</Trans>
-      </Text>
-    </PanelChrome.TitleItem>
+      }
+    >
+      <PanelChrome.TitleItem>
+        <Icon name="clock-nine" size="sm" />
+      </PanelChrome.TitleItem>
+    </Tooltip>
   );
 }
