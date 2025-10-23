@@ -134,7 +134,7 @@ export const VizTooltipRow = ({
   return (
     <div className={styles.contentWrapper}>
       {color && colorPlacement === ColorPlacement.first && (
-        <div className={clsx(styles.colorWrapper, styles.colorIndicatorFirst)}>
+        <div className={styles.colorWrapper}>
           <VizTooltipColorIndicator
             color={color}
             colorIndicator={colorIndicator}
