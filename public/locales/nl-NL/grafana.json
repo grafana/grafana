@@ -3692,7 +3692,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "Alfabetisch (a-z)",
-        "alphabetically-za": "Alfabetisch (z-a)"
+        "alphabetically-za": "Alfabetisch (z-a)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -7154,9 +7156,6 @@
       "title-failed-sample-query": "Kan logvoorbeeld voor deze query niet laden",
       "tooltip": "Loglijnen weergeven die hebben bijgedragen aan gevisualiseerde statistieken"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} verschijnt in {{percentage}}% van de loglijnen"
-    },
     "logs-table-empty-fields": {
       "no-fields": "Geen velden"
     },
@@ -7164,10 +7163,6 @@
       "fields": "Velden",
       "reset": "Resetten",
       "selected-fields": "Geselecteerde velden"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "Pictogram slepen en neerzetten",
-      "title-drag-and-drop-to-reorder": "Versleep om opnieuw te rangschikken"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Query selecteren op naam",
@@ -8004,6 +7999,52 @@
     "select-group": "Groep selecteren"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_one": "",
+        "lastNDays_other": "",
+        "lastNHours_one": "",
+        "lastNHours_other": "",
+        "lastNMinutes_one": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_one": "",
+        "lastNMonths_other": "",
+        "lastNYears_one": "",
+        "lastNYears_other": "",
+        "nextNDays_one": "",
+        "nextNDays_other": "",
+        "nextNHours_one": "",
+        "nextNHours_other": "",
+        "nextNMinutes_one": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_one": "",
+        "nextNMonths_other": "",
+        "nextNYears_one": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9539,6 +9580,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Weergavebesturingselementen om naar de laatste of eerste logregel te gaan en filters op logniveau",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
