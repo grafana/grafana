@@ -265,7 +265,7 @@ export const getStyles = (theme: GrafanaTheme2, showSpanFilters: boolean) => {
     }),
     tooltip: css({
       color: '#aaa',
-      margin: '0 0 0 5px',
+      marginLeft: theme.spacing(0.5),
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',

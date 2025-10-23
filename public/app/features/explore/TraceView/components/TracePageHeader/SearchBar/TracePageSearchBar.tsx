@@ -98,7 +98,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       verticalAlign: 'middle',
       alignItems: 'center',
       cursor: 'pointer',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
     }),
     clearMatchesButton: css({
       color: theme.colors.text.primary,
