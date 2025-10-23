@@ -36,6 +36,7 @@ message MutateOperation {
 message SetFolderParentOperation {
   string folder = 1;
   string parent = 2;
+  bool delete_existing = 3;
 }
 
 message DeleteFolderParentsOperation {

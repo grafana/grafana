@@ -20,6 +20,14 @@ func (s *Server) setFolderParent(ctx context.Context, store *storeInfo, req *aut
 		return nil
 	}
 
+	if req.GetDeleteExisting() {
+		if err := s.deleteFolderParents(ctx, store, &authzextv1.DeleteFolderParentsOperation{
+			Folder: req.GetFolder(),
+		}); err != nil {
+			return fmt.Errorf("failed to delete existing folder parents: %w", err)
+		}
+	}
+
 	if strings.ContainsAny(req.GetFolder(), "#:") {
 		return fmt.Errorf("folder UID contains invalid characters: %s", req.GetFolder())
 	}
