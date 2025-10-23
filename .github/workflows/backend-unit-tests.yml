@@ -63,6 +63,7 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Run unit tests
+        shell: bash
         env:
           SHARD: ${{ matrix.shard }}
         run: |
@@ -108,6 +109,7 @@ jobs:
 
       # Run code
       - name: Run unit tests
+        shell: bash
         env:
           SHARD: ${{ matrix.shard }}
         run: |
@@ -135,6 +137,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check test suites
+        shell: bash
         env:
           NEEDS: ${{ toJson(needs) }}
         run: |
