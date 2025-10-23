@@ -6,6 +6,6 @@ metadata:
 spec:
   email: testuser-login-1@example.com
   login: testuser-login-1
-  name: Test User Login 1
+  title: Test User Login 1
   provisioned: false
   role: None
