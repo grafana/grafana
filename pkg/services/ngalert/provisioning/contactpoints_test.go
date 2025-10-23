@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/notifytest"
 	"github.com/grafana/alerting/receivers/schema"
+	"github.com/grafana/alerting/receivers/slack"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -146,6 +147,21 @@ func TestIntegrationContactPointService(t *testing.T) {
 		require.ErrorIs(t, err, ErrValidation)
 	})
 
+	t.Run("create accepts contact point with type in different cases", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		newCp := createTestContactPoint()
+		newCp.Type = "Slack"
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+		assert.EqualValues(t, slack.Type, created.Type)
+
+		got, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		assert.EqualValues(t, slack.Type, got[0].Type)
+	})
+
 	t.Run("update rejects contact points with no settings", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
@@ -180,6 +196,22 @@ func TestIntegrationContactPointService(t *testing.T) {
 		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 
 		require.ErrorIs(t, err, ErrValidation)
+	})
+
+	t.Run("update accepts contact points with type in another case", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		newCp := createTestContactPoint()
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+		newCp.Type = "Slack"
+
+		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		got, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		assert.EqualValues(t, slack.Type, got[0].Type)
 	})
 
 	t.Run("update renames references when group is renamed", func(t *testing.T) {

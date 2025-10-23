@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func EmbeddedContactPointToGrafanaIntegrationConfig(e definitions.EmbeddedContactPoint) (alertingModels.IntegrationConfig, error) {
+func EmbeddedContactPointToGrafanaIntegrationConfig(e *definitions.EmbeddedContactPoint) (alertingModels.IntegrationConfig, error) {
 	data, err := e.Settings.MarshalJSON()
 	if err != nil {
 		return alertingModels.IntegrationConfig{}, err
