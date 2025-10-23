@@ -42,21 +42,7 @@
           "data": {
             "kind": "QueryGroup",
             "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "",
-                      "version": "v0",
-                      "spec": {}
-                    },
-                    "refId": "A",
-                    "hidden": false
-                  }
-                }
-              ],
+              "queries": [],
               "transformations": [],
               "queryOptions": {}
             }
