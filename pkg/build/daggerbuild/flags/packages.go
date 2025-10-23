@@ -19,6 +19,7 @@ const (
 	GoTags        pipeline.FlagOption = "go-tag"
 	GoExperiments pipeline.FlagOption = "go-experiments"
 	Sign          pipeline.FlagOption = "sign"
+	CGODisabled   pipeline.FlagOption = "nocgo"
 
 	// Pretty much only used to set the deb or RPM internal package name (and file name) to `{}-nightly` and/or `{}-rpi`
 	Nightly pipeline.FlagOption = "nightly"
@@ -78,6 +79,13 @@ var SignFlag = pipeline.Flag{
 	Name: "sign",
 	Options: map[pipeline.FlagOption]any{
 		Sign: true,
+	},
+}
+
+var CGODisabledFlag = pipeline.Flag{
+	Name: "nocgo",
+	Options: map[pipeline.FlagOption]any{
+		CGODisabled: true,
 	},
 }
 
