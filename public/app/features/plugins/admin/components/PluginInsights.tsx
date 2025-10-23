@@ -89,7 +89,7 @@ export function PluginInsights(props: Props): React.ReactElement | null {
       <Stack direction="column" gap={0.5} shrink={0} grow={0} data-testid="plugin-insights-container">
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Text color="secondary" variant="body" data-testid="plugin-insights-header">
-            <Trans i18nKey="plugins.details.labels.pluginInsights">Plugin insights</Trans>
+            <Trans i18nKey="plugins.details.labels.pluginInsights.header">Plugin insights</Trans>
           </Text>
           <Tooltip content={tooltipInfo} placement="right-end" interactive>
             <Icon name="info-circle" size="xs" />
@@ -113,7 +113,7 @@ export function PluginInsights(props: Props): React.ReactElement | null {
                       data-testid={`plugin-insight-color-${insightItem.name.toLowerCase()}`}
                     />
                     <Text color="primary" variant="body">
-                      <Trans i18nKey="plugins.details.labels.pluginInsights">{insightItem.name}</Trans>
+                      <Trans i18nKey="plugins.details.labels.pluginInsights.name">{insightItem.name}</Trans>
                     </Text>
                   </Stack>
                 }

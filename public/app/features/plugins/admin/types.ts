@@ -110,8 +110,24 @@ export const INSIGHT_LEVELS = {
 } as const;
 
 export type InsightItems = {
-  [INSIGHT_CATEGORIES.SECURITY]: 'signature_verified' | 'unsafe_js';
-  [INSIGHT_CATEGORIES.QUALITY]: 'screenshots_available';
+  [INSIGHT_CATEGORIES.SECURITY]:
+    | 'signature'
+    | 'manifest'
+    | 'osv-scanner'
+    | 'trackingscripts'
+    | 'unsafe-svg'
+    | 'virus-scan'
+    | 'binarypermissions';
+  [INSIGHT_CATEGORIES.QUALITY]:
+    | 'code-rules'
+    | 'sdk-usage'
+    | 'jsMap'
+    | 'gosec'
+    | 'legacy-builder'
+    | 'legacy-platform'
+    | 'circular-dependency'
+    | 'restrictive-dep'
+    | 'metadatavalid';
 };
 
 type ItemsForCategory<T extends keyof InsightItems> = Array<{

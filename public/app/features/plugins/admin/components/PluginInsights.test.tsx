@@ -11,37 +11,37 @@ const mockPluginInsights: CatalogPluginInsights = {
   version: '1.0.0',
   insights: [
     {
-      name: 'Security',
+      name: 'security',
       scoreValue: 90,
       scoreLevel: 'Excellent' as ScoreLevel,
       items: [
         {
-          id: 'signature_verified',
+          id: 'signature',
           name: 'Signature verified',
           description: 'Plugin signature is valid',
           level: 'ok' as InsightLevel,
         },
         {
-          id: 'no_unsafe_js',
+          id: 'trackingscripts',
           name: 'No unsafe JavaScript detected',
           level: 'good' as InsightLevel,
         },
       ],
     },
     {
-      name: 'Quality',
+      name: 'quality',
       scoreValue: 60,
       scoreLevel: 'Fair' as ScoreLevel,
       items: [
         {
-          id: 'screenshots_available',
-          name: 'Screenshots available',
+          id: 'metadatavalid',
+          name: 'Metadata is valid',
           level: 'ok' as InsightLevel,
         },
         {
-          id: 'missing_documentation',
-          name: 'Missing documentation',
-          description: 'Plugin lacks comprehensive documentation',
+          id: 'code-rules',
+          name: 'Missing code rules',
+          description: 'Plugin lacks comprehensive code rules',
           level: 'warning' as InsightLevel,
         },
       ],
@@ -55,12 +55,12 @@ const mockPluginInsightsWithDangerLevel: CatalogPluginInsights = {
   version: '0.5.0',
   insights: [
     {
-      name: 'Security',
+      name: 'security',
       scoreValue: 20,
       scoreLevel: 'Critical' as ScoreLevel,
       items: [
         {
-          id: 'critical_vulnerability',
+          id: 'virus-scan',
           name: 'Critical vulnerability detected',
           description: 'Severe security issue found',
           level: 'danger' as InsightLevel,
@@ -76,12 +76,12 @@ const mockPluginInsightsWithPoorLevel: CatalogPluginInsights = {
   version: '0.8.0',
   insights: [
     {
-      name: 'Quality',
+      name: 'quality',
       scoreValue: 35,
       scoreLevel: 'Poor' as ScoreLevel,
       items: [
         {
-          id: 'quality_issue',
+          id: 'legacy-platform',
           name: 'Quality issues detected',
           level: 'warning' as InsightLevel,
         },
@@ -110,19 +110,19 @@ describe('PluginInsights', () => {
     const qualityCategory = screen.getByTestId('plugin-insight-quality');
 
     expect(securityCategory).toBeInTheDocument();
-    expect(securityCategory).toHaveTextContent('Security');
+    expect(securityCategory).toHaveTextContent('security');
     expect(qualityCategory).toBeInTheDocument();
-    expect(qualityCategory).toHaveTextContent('Quality');
+    expect(qualityCategory).toHaveTextContent('quality');
   });
 
   it('should render individual insight items with test ids', async () => {
     render(<PluginInsights pluginInsights={mockPluginInsights} />);
-    await userEvent.click(screen.getByText('Security'));
-    expect(screen.getByTestId('plugin-insight-item-signature_verified')).toBeInTheDocument();
-    expect(screen.getByTestId('plugin-insight-item-no_unsafe_js')).toBeInTheDocument();
-    await userEvent.click(screen.getByText('Quality'));
-    expect(screen.getByTestId('plugin-insight-item-screenshots_available')).toBeInTheDocument();
-    expect(screen.getByTestId('plugin-insight-item-missing_documentation')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('security'));
+    expect(screen.getByTestId('plugin-insight-item-signature')).toBeInTheDocument();
+    expect(screen.getByTestId('plugin-insight-item-trackingscripts')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('quality'));
+    expect(screen.getByTestId('plugin-insight-item-metadatavalid')).toBeInTheDocument();
+    expect(screen.getByTestId('plugin-insight-item-code-rules')).toBeInTheDocument();
   });
 
   it('should display correct colors for Excellent and Fair score levels', () => {
@@ -160,7 +160,7 @@ describe('PluginInsights', () => {
       version: '1.0.0',
       insights: [],
     };
-    const { container } = render(<PluginInsights pluginInsights={emptyInsights} />);
+    render(<PluginInsights pluginInsights={emptyInsights} />);
     const insightsSection = screen.getByTestId('plugin-insights-container');
     expect(insightsSection).toBeInTheDocument();
     expect(screen.getByText('Plugin insights')).toBeInTheDocument();
@@ -173,32 +173,32 @@ describe('PluginInsights', () => {
       version: '2.0.0',
       insights: [
         {
-          name: 'Mixed Items',
+          name: 'quality',
           scoreValue: 75,
           scoreLevel: 'Good' as ScoreLevel,
           items: [
             {
-              id: 'info_item',
+              id: 'code-rules',
               name: 'Info level item',
               level: 'info' as InsightLevel,
             },
             {
-              id: 'ok_item',
+              id: 'sdk-usage',
               name: 'OK level item',
               level: 'ok' as InsightLevel,
             },
             {
-              id: 'good_item',
+              id: 'jsMap',
               name: 'Good level item',
               level: 'good' as InsightLevel,
             },
             {
-              id: 'warning_item',
+              id: 'gosec',
               name: 'Warning level item',
               level: 'warning' as InsightLevel,
             },
             {
-              id: 'danger_item',
+              id: 'legacy-builder',
               name: 'Danger level item',
               level: 'danger' as InsightLevel,
             },
@@ -207,7 +207,7 @@ describe('PluginInsights', () => {
       ],
     };
     render(<PluginInsights pluginInsights={multiLevelInsights} />);
-    await userEvent.click(screen.getByText('Mixed Items'));
+    await userEvent.click(screen.getByText('quality'));
     expect(screen.getByText('Info level item')).toBeInTheDocument();
     expect(screen.getByText('OK level item')).toBeInTheDocument();
     expect(screen.getByText('Good level item')).toBeInTheDocument();
