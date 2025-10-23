@@ -14,7 +14,6 @@ import {
 import { LOADING_FRAME_NAME } from './querySplitting';
 
 function getFrameKey(frame: DataFrame): string | undefined {
-  console.log('get key!');
   // Metric range query data
   if (frame.meta?.type === DataFrameType.TimeSeriesMulti) {
     const field = frame.fields.find((f) => f.type === FieldType.number);
