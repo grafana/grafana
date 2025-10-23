@@ -11,7 +11,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,8 +33,6 @@ import (
 var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
 var _ builder.APIGroupRouteProvider = (*APIBuilder)(nil)
 var _ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
-
-var tracer = otel.Tracer("github.com/grafana/grafana/pkg/registry/apis/ofrep")
 
 const ofrepPath = "/ofrep/v1/evaluate/flags"
 
@@ -246,13 +243,14 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 }
 
 func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracer.Start(r.Context(), "ofrep.handler.evalFlag")
+	ctx, span := tracing.Start(r.Context(), "ofrep.handler.evalFlag")
 	defer span.End()
 
 	r = r.WithContext(ctx)
 
-	b.logger.Debug("validating namespace in oneFlagHandler handler")
-	if !b.validateNamespace(r) {
+	valid := b.validateNamespace(r)
+	b.logger.Debug("validating namespace in oneFlagHandler handler", "valid", valid)
+	if !valid {
 		_ = tracing.Errorf(span, namespaceMismatchMsg)
 		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
 		b.logger.Error(namespaceMismatchMsg)
@@ -291,13 +289,15 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracer.Start(r.Context(), "ofrep.handler.evalAllFlags")
+	ctx, span := tracing.Start(r.Context(), "ofrep.handler.evalAllFlags")
 	defer span.End()
 
 	r = r.WithContext(ctx)
 
-	b.logger.Debug("validating namespace in allFlagsHandler handler")
-	if !b.validateNamespace(r) {
+	valid := b.validateNamespace(r)
+	b.logger.Debug("validating namespace in allFlagsHandler handler", "valid", valid)
+
+	if !valid {
 		_ = tracing.Errorf(span, namespaceMismatchMsg)
 		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
 		b.logger.Error(namespaceMismatchMsg)
@@ -327,8 +327,7 @@ func writeResponse(statusCode int, result any, logger log.Logger, w http.Respons
 
 func (b *APIBuilder) namespaceFromEvalCtx(body []byte) string {
 	// TODO: eval ctx should be added to span attributes, not log
-	// Adding it temporary for debugging
-	b.logger.Debug("evaluation context from request", "ctx", body)
+	b.logger.Debug("evaluation context from request", "ctx", string(body))
 
 	var evalCtx struct {
 		// Extract namespace from request body without consuming it
@@ -341,9 +340,6 @@ func (b *APIBuilder) namespaceFromEvalCtx(body []byte) string {
 		b.logger.Debug("Failed to unmarshal evaluation context", "error", err, "body", string(body))
 		return ""
 	}
-
-	// Adding it temporary for debugging
-	b.logger.Debug("evaluation context decoded", "namespace", evalCtx.Context.Namespace)
 
 	if evalCtx.Context.Namespace == "" {
 		b.logger.Debug("namespace missing from evaluation context", "namespace", evalCtx.Context.Namespace)
@@ -364,7 +360,7 @@ func (b *APIBuilder) isAuthenticatedRequest(r *http.Request) bool {
 
 // validateNamespace checks if the namespace in the evaluation context matches the namespace in the request
 func (b *APIBuilder) validateNamespace(r *http.Request) bool {
-	_, span := tracer.Start(r.Context(), "ofrep.validateNamespace")
+	_, span := tracing.Start(r.Context(), "ofrep.validateNamespace")
 	defer span.End()
 
 	var namespace string
