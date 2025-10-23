@@ -1,7 +1,17 @@
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
-import { getDataSourceSrv, FetchResponse, CorrelationData, CorrelationsData } from '@grafana/runtime';
+import {
+  getDataSourceSrv,
+  FetchResponse,
+  CorrelationData,
+  CorrelationsData,
+  config,
+  CorrelationExternal,
+  CorrelationQuery,
+} from '@grafana/runtime';
+import { correlationAPIv0alpha1 } from 'app/api/clients/correlations/v0alpha1';
+import { CorrelationList, Correlation as CorrelationK8s } from 'app/api/clients/correlations/v0alpha1/endpoints.gen';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import {
@@ -67,12 +77,46 @@ const toEnrichedCorrelationData = ({ sourceUID, ...correlation }: Correlation): 
   return undefined;
 };
 
+const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationData | undefined => {
+  if (item.metadata.name !== undefined) {
+    const baseCor = {
+      uid: item.metadata.name,
+      sourceUID: item.spec.source.name, //todo
+      label: item.spec.label,
+      description: item.spec.description,
+      provisioned: false, // todo
+      type: item.spec.type,
+    };
+
+    if (item.spec.type === 'external') {
+      const extCorr: CorrelationExternal = {
+        ...baseCor,
+      };
+      return toEnrichedCorrelationData(extCorr);
+    } else {
+      const queryCorr: CorrelationQuery = {
+        ...baseCor,
+      };
+      return toEnrichedCorrelationData(queryCorr);
+    }
+  } else {
+    return undefined;
+  }
+};
+
 const validSourceFilter = (correlation: CorrelationData | undefined): correlation is CorrelationData => !!correlation;
 
 export const toEnrichedCorrelationsData = (correlationsResponse: CorrelationsResponse): CorrelationsData => {
   return {
     ...correlationsResponse,
     correlations: correlationsResponse.correlations.map(toEnrichedCorrelationData).filter(validSourceFilter),
+  };
+};
+
+export const toEnrichedCorrelationDataK8s = (correlationsResponse: CorrelationList): CorrelationsData => {
+  return {
+    ...correlationsResponse,
+    correlations: correlationsResponse.items.map(toEnrichedCorrelationDataK8s).filter(validSourceFilter),
   };
 };
 
@@ -90,17 +134,23 @@ export const useCorrelations = () => {
   const { backend } = useGrafana();
 
   const [getInfo, get] = useAsyncFn<(params: GetCorrelationsParams) => Promise<CorrelationsData>>(
-    (params) =>
-      lastValueFrom(
-        backend.fetch<CorrelationsResponse>({
-          url: '/api/datasources/correlations',
-          params: { page: params.page },
-          method: 'GET',
-          showErrorAlert: false,
-        })
-      )
-        .then(getData)
-        .then(toEnrichedCorrelationsData),
+    (params) => {
+      if (config.featureToggles.kubernetesCorrelations) {
+        return toEnrichedCorrelationDataK8s(correlationAPIv0alpha1.endpoints.listCorrelation.select({}));
+      } else {
+        return lastValueFrom(
+          backend.fetch<CorrelationsResponse>({
+            url: '/api/datasources/correlations',
+            params: { page: params.page },
+            method: 'GET',
+            showErrorAlert: false,
+          })
+        )
+          .then(getData)
+          .then(toEnrichedCorrelationsData);
+      }
+    },
+
     [backend]
   );
 
