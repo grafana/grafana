@@ -200,7 +200,11 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
     let uniqueMins = [...new Set(yMinField.values)].sort((a, b) => a - b);
 
     // useLogScale is assumed for native histograms, we get the multiplier from first bucket's min/max bounds
-    let bucketFactor = roundDecimals(uniqueMaxs[0] / uniqueMins[0], 9);
+    let bucketFactor = uniqueMaxs[0] / uniqueMins[0];
+
+    // NOTES:
+    // native histograms default bucket growth factor is 8th root of 2 (schema 3) -> (2 ** (2 ** -3)) = 1.0905077326652577
+    // the by-division inference from data results in 1.090507732665258
 
     // densify the buckets with 0 counts (consumers of this fn assume a dense structure)
     let denseMins: number[] = [];
@@ -216,15 +220,15 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
       let nextMax = uniqueMaxs[i + 1];
 
       if (nextMax != null) {
-        curMax = roundDecimals(curMax * bucketFactor);
-        curMin = roundDecimals(curMin * bucketFactor);
+        curMax = curMax * bucketFactor;
+        curMin = curMin * bucketFactor;
 
-        while (curMax < nextMax) {
+        while (curMax < nextMax * 0.999999) {
           denseMaxs.push(curMax);
           denseMins.push(curMin);
 
-          curMax = roundDecimals(curMax * bucketFactor);
-          curMin = roundDecimals(curMin * bucketFactor);
+          curMax = curMax * bucketFactor;
+          curMin = curMin * bucketFactor;
         }
       }
     }
