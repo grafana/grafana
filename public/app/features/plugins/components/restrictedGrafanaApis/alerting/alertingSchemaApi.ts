@@ -1,12 +1,14 @@
 import { z } from 'zod';
 
+import alertDef from 'app/features/alerting/state/alertDef';
 import { RuleFormType } from 'app/features/alerting/unified/types/rule-form';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 // Schema for __expr__ type queries (reduce, threshold, etc.)
 export const exprQuerySchema = z.object({
   refId: z.string().describe('Reference ID for the query, e.g., "B", "C", etc.'),
-  type: z.string().describe('Expression type, e.g., "reduce", "threshold", "math"'),
+  type: z.enum(ExpressionQueryType).describe('Expression type'),
   datasource: z.object({
     uid: z.literal('__expr__').describe('Must be "__expr__" for expression queries'),
     type: z.literal('__expr__').describe('Must be "__expr__" for expression queries'),
@@ -17,10 +19,10 @@ export const exprQuerySchema = z.object({
         type: z.string().describe('Condition type, e.g., "query"'),
         evaluator: z.object({
           params: z.array(z.any()).describe('Parameters for the evaluator'),
-          type: z.string().describe('Evaluator type, e.g., "gt", "lt", "within_range", "outside_range"'),
+          type: z.enum(alertDef.evalFunctions.map((ef) => ef.value)).describe('Evaluator type'),
         }),
         operator: z.object({
-          type: z.string().describe('Operator type, e.g., "and", "or"'),
+          type: z.enum(alertDef.evalOperators.map((eo) => eo.value)).describe('Operator type'),
         }),
         query: z.object({
           params: z.array(z.string()).describe('Query parameters, typically the refId to evaluate'),
@@ -54,7 +56,7 @@ export const alertingQuerySchema = z.object({
     .default(false)
     .describe('Whether the query is a range query, should be false if instant is true'),
   datasource: z.object({
-    type: z.string().optional().describe('Datasource type, should be "prometheus", "loki", or "__expr__"'),
+    type: z.string().optional().describe('Datasource type or "__expr__" when it is an expression query'),
     uid: z.string().optional().describe('Datasource UID'),
   }),
 });
@@ -184,13 +186,6 @@ export const navigateToAlertFormSchema = z.object({
   // Additional fields
   metric: z.string().optional().describe('Metric name for Grafana recording rules'),
   targetDatasourceUid: z.string().optional().describe('Target datasource UID for Grafana recording rules'),
-  namespace: z.string().optional().describe('Namespace for cloud rules'),
-  forTime: z.number().optional().describe('For time duration'),
-  forTimeUnit: z.string().optional().describe('For time unit'),
-  keepFiringForTime: z.number().optional().describe('Keep firing for time duration'),
-  keepFiringForTimeUnit: z.string().optional().describe('Keep firing for time unit'),
-  expression: z.string().optional().describe('Expression for cloud rules'),
-  missingSeriesEvalsToResolve: z.number().optional().describe('Missing series evaluations to resolve'),
 
   // Navigation
   returnTo: z.string().optional().describe('Optional URL to return to after creating the alert'),
