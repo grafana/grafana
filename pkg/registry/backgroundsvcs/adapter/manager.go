@@ -83,10 +83,10 @@ func (m *ManagerAdapter) starting(ctx context.Context) error {
 	manager.RegisterModule(BackgroundServices, nil)
 
 	m.manager = manager
-	if err := m.manager.StartAsync(ctx); err != nil {
+	if err := m.manager.StartAsync(spanCtx); err != nil {
 		return err
 	}
-	return m.manager.AwaitRunning(ctx)
+	return m.manager.AwaitRunning(spanCtx)
 }
 
 func (m *ManagerAdapter) running(ctx context.Context) error {

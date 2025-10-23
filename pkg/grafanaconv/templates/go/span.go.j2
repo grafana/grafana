@@ -1,0 +1,29 @@
+{% import 'helpers.j2' as h -%}
+// Code generated from semantic convention specification. DO NOT EDIT.
+
+package grafanaconv
+
+import (
+	"context"
+	"go.opentelemetry.io/otel/trace"
+)
+
+// Span names for Grafana semantic conventions
+const (
+{%- for span in ctx.spans %}
+	// {{ h.to_go_name(span.id, ctx.root_namespace) }}SpanName is the span name for {{ span.id }}
+	//
+	// Brief: {{ span.brief }}
+	// Span Kind: {{ span.span_kind }}
+	// Stability: {{ span.stability }}
+	{{ h.to_go_name(span.id, ctx.root_namespace) }}SpanName = "{{ span.id }}"
+{% endfor %}
+)
+
+// Span helper functions
+{%- for span in ctx.spans %}
+// {{ h.to_go_name(span.id, ctx.root_namespace) }}Span creates a span for {{ span.brief }}
+func {{ h.to_go_name(span.id, ctx.root_namespace) }}Span(ctx context.Context, tracer trace.Tracer, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	return tracer.Start(ctx, {{ h.to_go_name(span.id, ctx.root_namespace) }}SpanName, opts...)
+}
+{% endfor %}

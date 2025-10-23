@@ -41,7 +41,7 @@ linters:
             - ./pkg/aggregator/**/*
           allow:
             - github.com/grafana/grafana/pkg/aggregator
-            - github.com/grafana/grafana/pkg/semconv
+            - github.com/grafana/grafana/pkg/grafanaconv
             - github.com/grafana/grafana/pkg/apimachinery
           deny:
             - pkg: github.com/grafana/grafana/pkg

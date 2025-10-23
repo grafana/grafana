@@ -17,6 +17,7 @@ groups:
         brief: The datasource unique identifier.
         examples: abcdefg-123456
         stability: stable
+
   - id: registry.grafana.datasource.request
     type: attribute_group
     display_name: Grafana Data Source Request Attributes

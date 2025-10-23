@@ -139,7 +139,7 @@
 /pkg/middleware/ @grafana/grafana-backend-group
 /pkg/mocks/ @grafana/grafana-backend-group
 /pkg/models/ @grafana/grafana-backend-group
-/pkg/semconv/ @grafana/grafana-backend-group
+/pkg/grafanaconv/ @grafana/grafana-backend-group
 /pkg/server/ @grafana/grafana-backend-group
 /pkg/apiserver @grafana/grafana-app-platform-squad
 /pkg/aggregator @grafana/grafana-app-platform-squad

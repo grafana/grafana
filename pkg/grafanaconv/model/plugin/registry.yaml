@@ -34,3 +34,31 @@ groups:
         brief: The plugin type.
         examples: datasource
         stability: stable
+      - id: grafana.plugin.class
+        type:
+          members:
+            - id: core
+              value: "core"
+              brief: 'Core plugin bundled with Grafana'
+              stability: stable
+            - id: external
+              value: "external"
+              brief: 'External plugin'
+              stability: stable
+            - id: cdn
+              value: "cdn"
+              brief: 'Plugin loaded from CDN'
+              stability: stable
+        brief: The plugin class indicating the plugin source.
+        examples: external
+        stability: stable
+      - id: grafana.plugin.count
+        type: int
+        brief: The number of plugins processed in an operation.
+        examples: 5
+        stability: stable
+      - id: grafana.plugin.error_code
+        type: string
+        brief: The error code when a plugin operation fails.
+        examples: "plugin_not_found"
+        stability: stable

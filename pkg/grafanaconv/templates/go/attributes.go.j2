@@ -1,0 +1,17 @@
+{#- Copyright The OpenTelemetry Authors -#}
+{#- SPDX-License-Identifier: Apache-2.0 -#}
+{% import 'helpers.j2' as h -%}
+// Code generated from semantic convention specification. DO NOT EDIT.
+
+package grafanaconv // import "github.com/grafana/grafana/pkg/grafanaconv"
+
+import (
+	"fmt"
+
+	"go.opentelemetry.io/otel/attribute"
+)
+{%- for group in ctx %}
+{{- h.generate_consts(group, group.root_namespace) }}
+{{- h.generate_funcs(group, group.root_namespace) }}
+{{- h.generate_vars(group, group.root_namespace) }}
+{%- endfor %}

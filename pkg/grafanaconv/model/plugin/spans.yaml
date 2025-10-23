@@ -1,0 +1,60 @@
+groups:
+  - id: grafana.plugin.load
+    type: span
+    brief: "Plugin loading operation that covers the entire plugin loading pipeline"
+    span_kind: internal
+    stability: stable
+    attributes:
+      - ref: grafana.plugin.class
+      - ref: grafana.plugin.count
+
+  - id: grafana.plugin.discover
+    type: span
+    brief: "Plugin discovery stage where plugins are found from a source"
+    span_kind: internal
+    stability: stable
+    attributes:
+      - ref: grafana.plugin.class
+
+  - id: grafana.plugin.bootstrap
+    type: span
+    brief: "Plugin bootstrap stage where individual plugins are bootstrapped"
+    span_kind: internal
+    stability: stable
+    attributes:
+      - ref: grafana.plugin.class
+      - ref: grafana.plugin.id
+      - ref: grafana.plugin.type
+      - ref: grafana.plugin.error_code
+
+  - id: grafana.plugin.validate
+    type: span
+    brief: "Plugin validation stage where individual plugins are validated"
+    span_kind: internal
+    stability: stable
+    attributes:
+      - ref: grafana.plugin.class
+      - ref: grafana.plugin.id
+      - ref: grafana.plugin.type
+      - ref: grafana.plugin.error_code
+
+  - id: grafana.plugin.initialize
+    type: span
+    brief: "Plugin initialization stage where individual plugins are initialized"
+    span_kind: internal
+    stability: stable
+    attributes:
+      - ref: grafana.plugin.class
+      - ref: grafana.plugin.id
+      - ref: grafana.plugin.type
+      - ref: grafana.plugin.error_code
+
+  - id: grafana.plugin.unload
+    type: span
+    brief: "Plugin unloading operation"
+    span_kind: internal
+    stability: stable
+    attributes:
+      - ref: grafana.plugin.id
+      - ref: grafana.plugin.type
+      - ref: grafana.plugin.error_code

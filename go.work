@@ -28,9 +28,9 @@ use (
 	./pkg/build
 	./pkg/build/wire // skip:golangci-lint
 	./pkg/codegen
+	./pkg/grafanaconv
 	./pkg/plugins/codegen
 	./pkg/promlib
-	./pkg/semconv
 )
 
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604

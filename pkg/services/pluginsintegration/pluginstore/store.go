@@ -6,16 +6,20 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/services"
+	"go.opentelemetry.io/otel"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"golang.org/x/sync/errgroup"
 )
 
 var _ Store = (*Service)(nil)
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore/store")
 
 const ServiceName = "plugins.store"
 
@@ -97,6 +101,8 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginSou
 }
 
 func (s *Service) starting(ctx context.Context) error {
+	ctx, span := tracer.Start(ctx, "plugins.store.starting")
+	defer span.End()
 	if !s.loadOnStartup {
 		return nil
 	}
