@@ -101,7 +101,8 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          # ionice since tests are IO intensive
+          CGO_ENABLED=0 ionice -c2 -n7 go test -p=4 -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
   mysql:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
