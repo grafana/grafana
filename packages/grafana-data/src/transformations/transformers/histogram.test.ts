@@ -1,5 +1,6 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { Field, FieldType } from '../../types/dataFrame';
+import { DataFrameType } from '../../types/dataFrameTypes';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 
 import {
@@ -8,6 +9,7 @@ import {
   histogramFieldsToFrame,
   HistogramFields,
   joinHistograms,
+  getHistogramFields,
 } from './histogram';
 
 describe('histogram frames frames', () => {
@@ -284,6 +286,60 @@ describe('histogram frames frames', () => {
         },
       ]
     `);
+  });
+});
+
+describe('getHistogramFields', () => {
+  it('densifies sparse native histograms (heatmap-cells)', () => {
+    expect(
+      getHistogramFields(
+        toDataFrame({
+          meta: {
+            type: DataFrameType.HeatmapCells,
+          },
+          fields: [
+            { name: 'yMin', type: FieldType.number, values: [512, 2048] },
+            { name: 'yMax', type: FieldType.number, values: [1024, 4096] },
+            { name: 'count', type: FieldType.number, values: [10, 10] },
+          ],
+        })
+      )
+    ).toMatchInlineSnapshot(`
+      {
+        "counts": [
+          {
+            "config": {},
+            "name": "count",
+            "type": "number",
+            "values": [
+              10,
+              0,
+              10,
+            ],
+          },
+        ],
+        "xMax": {
+          "config": {},
+          "name": "xMax",
+          "type": "number",
+          "values": [
+            1024,
+            2048,
+            4096,
+          ],
+        },
+        "xMin": {
+          "config": {},
+          "name": "xMin",
+          "type": "number",
+          "values": [
+            512,
+            1024,
+            2048,
+          ],
+        },
+      }
+  `);
   });
 });
 
