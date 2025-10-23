@@ -309,7 +309,7 @@ This approach ensures that a schema exists even when one query returns no data.
 
 ### Regular Expressions
 
-Regular expressions are not fully compatible with MySQL standards. SQL expressions the use has regular expressions functions will have limitations such as:
+Regular expressions are not fully compatible with MySQL standards. SQL expressions that use regular expressions functions will have limitations such as:
 
 - Lack of back-references
 - No before/after text matching
