@@ -11045,14 +11045,12 @@
         "downloads": "Downloads",
         "from": "From",
         "installedVersion": "Installed Version",
-        "item": "{item.name}",
         "latestReleaseDate": "Latest release date:",
         "latestVersion": "Latest Version",
         "license": "License",
         "moreDetails": "Plese find more information <2>here</2>.",
         "pluginInsights": {
-          "header": "Plugin insights",
-          "name": "{insightItem.name}"
+          "header": "Plugin insights"
         },
         "pluginInsightsErrorTooltip": "Poor or critical data quality",
         "pluginInsightsNodataTooltip": "No available data to determine the status yet",

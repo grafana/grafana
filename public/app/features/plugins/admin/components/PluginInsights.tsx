@@ -113,7 +113,7 @@ export function PluginInsights(props: Props): React.ReactElement | null {
                       data-testid={`plugin-insight-color-${insightItem.name.toLowerCase()}`}
                     />
                     <Text color="primary" variant="body">
-                      <Trans i18nKey="plugins.details.labels.pluginInsights.name">{insightItem.name}</Trans>
+                      {insightItem.name}
                     </Text>
                   </Stack>
                 }
@@ -128,7 +128,7 @@ export function PluginInsights(props: Props): React.ReactElement | null {
                       element="li"
                       data-testid={`plugin-insight-item-${item.id}`}
                     >
-                      <Trans i18nKey="plugins.details.labels.item">{item.name}</Trans>
+                      {item.name}
                     </Text>
                   ))}
                 </Stack>

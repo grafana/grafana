@@ -153,19 +153,6 @@ describe('PluginInsights', () => {
     expect(criticalColorButton).toHaveStyle({ background: '#d10e5c' });
   });
 
-  it('should render empty insights array without errors', () => {
-    const emptyInsights: CatalogPluginInsights = {
-      id: 4,
-      name: 'empty-plugin',
-      version: '1.0.0',
-      insights: [],
-    };
-    render(<PluginInsights pluginInsights={emptyInsights} />);
-    const insightsSection = screen.getByTestId('plugin-insights-container');
-    expect(insightsSection).toBeInTheDocument();
-    expect(screen.getByText('Plugin insights')).toBeInTheDocument();
-  });
-
   it('should handle multiple items with different insight levels', async () => {
     const multiLevelInsights: CatalogPluginInsights = {
       id: 5,

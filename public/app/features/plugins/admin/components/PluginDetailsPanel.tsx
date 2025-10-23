@@ -71,9 +71,11 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   return (
     <>
       <Stack direction="column" gap={3} shrink={0} grow={0} width={width} data-testid="plugin-details-panel">
-        <Box borderRadius="lg" padding={2} borderColor="medium" borderStyle="solid">
-          <PluginInsights pluginInsights={plugin.insights} />
-        </Box>
+        {plugin.insights && plugin.insights?.insights?.length > 0 && (
+          <Box borderRadius="lg" padding={2} borderColor="medium" borderStyle="solid">
+            <PluginInsights pluginInsights={plugin.insights} />
+          </Box>
+        )}
         <Box borderRadius="lg" padding={2} borderColor="medium" borderStyle="solid">
           <Stack direction="column" gap={2}>
             {pluginExtentionsInfo.map((infoItem, index) => {
