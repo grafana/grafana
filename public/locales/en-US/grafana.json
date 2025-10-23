@@ -5988,8 +5988,8 @@
     },
     "managed-badge": {
       "kubectl": "Managed by: Kubectl",
-      "plugin": "Managed by: Plugin: {{id}}",
-      "repository": "Managed by: Repository",
+      "plugin": "Managed by: Plugin - {{id}}",
+      "repository": "Managed by: Repository - {{id}}",
       "terraform": "Managed by: Terraform"
     },
     "move-provisioned-dashboard-form": {

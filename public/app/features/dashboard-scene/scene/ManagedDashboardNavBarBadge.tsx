@@ -21,10 +21,10 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
       text = t('dashboard-scene.managed-badge.kubectl', 'Managed by: Kubectl');
       break;
     case ManagerKind.Plugin:
-      text = t('dashboard-scene.managed-badge.plugin', 'Managed by: Plugin: {{id}}', { id });
+      text = t('dashboard-scene.managed-badge.plugin', 'Managed by: Plugin - {{id}}', { id });
       break;
     case ManagerKind.Repo:
-      text = t('dashboard-scene.managed-badge.repository', 'Managed by: Repository');
+      text = t('dashboard-scene.managed-badge.repository', 'Managed by: Repository - {{id}}', { id });
       break;
     default:
       console.error('Unknown kind ' + kind);
