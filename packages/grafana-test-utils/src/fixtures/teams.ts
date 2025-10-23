@@ -23,3 +23,14 @@ export const MOCK_TEAMS = [
     status: {},
   },
 ];
+
+export const setupMockTeams = () => {
+  mockTeamsMap.clear();
+  MOCK_TEAMS.forEach((team) => {
+    mockTeamsMap.set(team.metadata.name, team);
+  });
+};
+
+export const mockTeamsMap = new Map<string, (typeof MOCK_TEAMS)[number]>(
+  MOCK_TEAMS.map((team) => [team.metadata.name, team])
+);
