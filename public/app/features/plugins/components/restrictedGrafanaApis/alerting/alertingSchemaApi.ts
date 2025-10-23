@@ -54,8 +54,8 @@ export const alertingQuerySchema = z.object({
     .default(false)
     .describe('Whether the query is a range query, should be false if instant is true'),
   datasource: z.object({
-    type: z.string().describe('Datasource type, should be "prometheus", "loki", or "__expr__"'),
-    uid: z.string().describe('Datasource UID'),
+    type: z.string().optional().describe('Datasource type, should be "prometheus", "loki", or "__expr__"'),
+    uid: z.string().optional().describe('Datasource UID'),
   }),
 });
 
@@ -122,6 +122,7 @@ export const navigateToAlertFormSchema = z.object({
       })
     )
     .optional()
+    .default([])
     .describe('Array of queries that form the alert rule'),
 
   // Alert rule configuration
@@ -134,7 +135,11 @@ export const navigateToAlertFormSchema = z.object({
   isPaused: z.boolean().optional().default(false).describe('Whether the rule is paused'),
 
   // Manual routing and contact points
-  manualRouting: z.boolean().optional().describe('Whether to use manual routing. If true, contactPoints are used.'),
+  manualRouting: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('Whether to use manual routing. If true, contactPoints are used.'),
   contactPoints: z
     .record(
       z.string(),
@@ -151,6 +156,19 @@ export const navigateToAlertFormSchema = z.object({
       })
     )
     .optional()
+    .default({
+      GRAFANA_RULES_SOURCE_NAME: {
+        selectedContactPoint: 'default',
+        overrideGrouping: false,
+        groupBy: [],
+        overrideTimings: false,
+        groupWaitValue: '',
+        groupIntervalValue: '',
+        repeatIntervalValue: '',
+        muteTimeIntervals: [],
+        activeTimeIntervals: [],
+      },
+    })
     .describe('Contact points configuration'),
 
   // Editor settings
@@ -160,6 +178,7 @@ export const navigateToAlertFormSchema = z.object({
       simplifiedNotificationEditor: z.boolean(),
     })
     .optional()
+    .default({ simplifiedQueryEditor: true, simplifiedNotificationEditor: true })
     .describe('Editor settings'),
 
   // Additional fields

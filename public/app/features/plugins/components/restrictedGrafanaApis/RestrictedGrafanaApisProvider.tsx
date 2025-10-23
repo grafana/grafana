@@ -3,7 +3,7 @@ import { PropsWithChildren, ReactElement } from 'react';
 import { RestrictedGrafanaApisContextProvider, RestrictedGrafanaApisContextType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { navigateToAlertFormSchemaApi } from './alertingSchemaApi';
+import { navigateToAlertFormSchemaApi } from './alerting/alertingSchemaApi';
 
 const restrictedGrafanaApis: RestrictedGrafanaApisContextType = config.featureToggles.restrictedPluginApis
   ? {

@@ -1,7 +1,7 @@
 import { clamp } from 'lodash';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { navigateToAlertFormSchema } from 'app/features/plugins/components/restrictedGrafanaApis/alertingSchemaApi';
+import { navigateToAlertFormSchema } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertingSchemaApi';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import { GrafanaAlertStateDecision, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
