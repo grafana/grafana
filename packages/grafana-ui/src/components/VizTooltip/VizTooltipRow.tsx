@@ -248,6 +248,8 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     fontWeight: 400,
   }),
   valueWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
     flexShrink: 0,
     alignSelf: 'center',
     marginRight,
