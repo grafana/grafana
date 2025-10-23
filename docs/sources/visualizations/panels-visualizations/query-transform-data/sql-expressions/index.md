@@ -307,6 +307,16 @@ FULL OUTER JOIN (
 
 This approach ensures that a schema exists even when one query returns no data.
 
+### Regular Expressions
+
+Regular expressions are not fully compatible with MySQL standards. SQL expressions the use has regular expressions functions will have limitations such as:
+
+- Lack of back-references
+- No before/after text matching
+- Differences in handling CR ('\r')
+
+There may be other minor differences as well.
+
 ## SQL expressions examples
 
 1. Create the following Prometheus query:
