@@ -1,5 +1,3 @@
-import { stat } from 'fs';
-
 import { test, expect } from '@grafana/plugin-e2e';
 
 const DASHBOARD_UID = 'Kce7z9TVz';
