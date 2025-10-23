@@ -30,9 +30,18 @@ func (s *frontendService) contextMiddleware() web.Middleware {
 			// This modifies both r and reqContext.Req since they point to the same value
 			*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
+			// add traceID to logger context
 			traceID := tracing.TraceIDFromContext(ctx, false)
 			if traceID != "" {
 				reqContext.Logger = reqContext.Logger.New("traceID", traceID)
+				// set trace ID in response headers as well
+				w.Header().Set("Trace-ID", traceID)
+			}
+
+			// add hostname to logger context
+			hostname := r.Host
+			if hostname != "" {
+				reqContext.Logger = reqContext.Logger.New("hostname", hostname)
 			}
 
 			next.ServeHTTP(w, r.WithContext(ctx))
