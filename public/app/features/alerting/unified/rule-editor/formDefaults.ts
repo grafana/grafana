@@ -1,4 +1,5 @@
 import { clamp } from 'lodash';
+import z from 'zod';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { navigateToAlertFormSchema } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertingSchemaApi';
@@ -156,10 +157,99 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
     )
   );
 }
+// schema for cloud rule form values. This is necessary because the cloud rule form values are not the same as the grafana rule form values.
+// schema for grafana rule values is navigateToAlertFormSchema , shared in the restrictedGrafanaApis.
+// TODO: add this to the DMA new plugin.
+
+const cloudRuleFormValuesSchema = z.looseObject({
+  name: z.string().optional(),
+  type: z.enum(RuleFormType).catch(RuleFormType.grafana),
+  dataSourceName: z.string().optional().default(''),
+  group: z.string().optional(),
+  labels: z
+    .array(
+      z.object({
+        key: z.string(),
+        value: z.string(),
+      })
+    )
+    .optional()
+    .default([]),
+  annotations: z
+    .array(
+      z.object({
+        key: z.string(),
+        value: z.string(),
+      })
+    )
+    .optional()
+    .default([]),
+  queries: z.array(z.any()).optional(),
+  condition: z.string().optional(),
+  noDataState: z
+    .enum(GrafanaAlertStateDecision)
+    .optional()
+    .default(GrafanaAlertStateDecision.NoData)
+    .catch(GrafanaAlertStateDecision.NoData),
+  execErrState: z
+    .enum(GrafanaAlertStateDecision)
+    .optional()
+    .default(GrafanaAlertStateDecision.Error)
+    .catch(GrafanaAlertStateDecision.Error),
+  folder: z
+    .union([
+      z.object({
+        title: z.string(),
+        uid: z.string(),
+      }),
+      z.undefined(),
+    ])
+    .optional(),
+  evaluateEvery: z.string().optional(),
+  evaluateFor: z.string().optional().default('0s'),
+  keepFiringFor: z.string().optional(),
+  isPaused: z.boolean().optional().default(false),
+  manualRouting: z.boolean().optional(),
+  contactPoints: z
+    .record(
+      z.string(),
+      z.object({
+        selectedContactPoint: z.string(),
+        overrideGrouping: z.boolean(),
+        groupBy: z.array(z.string()),
+        overrideTimings: z.boolean(),
+        groupWaitValue: z.string(),
+        groupIntervalValue: z.string(),
+        repeatIntervalValue: z.string(),
+        muteTimeIntervals: z.array(z.string()),
+        activeTimeIntervals: z.array(z.string()),
+      })
+    )
+    .optional(),
+  editorSettings: z
+    .object({
+      simplifiedQueryEditor: z.boolean(),
+      simplifiedNotificationEditor: z.boolean(),
+    })
+    .optional(),
+  metric: z.string().optional(),
+  targetDatasourceUid: z.string().optional(),
+  namespace: z.string().optional(),
+  expression: z.string().optional(),
+  missingSeriesEvalsToResolve: z.number().optional(),
+});
 
 export function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
-  // coerce prefill params to a valid RuleFormValues interface
-  const parsedRule = navigateToAlertFormSchema.parse(rule);
+  let parsedRule: z.infer<typeof navigateToAlertFormSchema> | z.infer<typeof cloudRuleFormValuesSchema>;
+  // differencitate between cloud and grafana prefill
+  if (rule.type === RuleFormType.cloudAlerting) {
+    // we use this schema to coerce prefilled query params into a valid "FormValues" interface
+    parsedRule = cloudRuleFormValuesSchema.parse(rule);
+  } else {
+    // grafana prefill
+    // coerce prefill params to a valid RuleFormValues interface
+    parsedRule = navigateToAlertFormSchema.parse(rule);
+  }
 
   return revealHiddenQueries({
     ...getDefaultFormValues(rule.type),
