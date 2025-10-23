@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	zServer "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -52,7 +53,7 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, fea
 
 	case setting.ZanzanaModeEmbedded:
 		logger := log.New("zanzana.server")
-		store, err := zanzana.NewEmbeddedStore(cfg, db, logger)
+		store, err := zStore.NewEmbeddedStore(cfg, db, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
@@ -186,7 +187,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return err
 	}
 
-	store, err := zanzana.NewStore(z.cfg, z.logger)
+	store, err := zStore.NewStore(z.cfg, z.logger)
 	if err != nil {
 		return fmt.Errorf("failed to initilize zanana store: %w", err)
 	}
