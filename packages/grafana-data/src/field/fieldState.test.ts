@@ -50,9 +50,9 @@ describe('getFieldDisplayName', () => {
       ],
     });
 
-    expect(getFieldDisplayName(frame.fields[1], frame)).toBe('ServerA (comparison)');
-    expect(getFieldDisplayName(frame.fields[2], frame)).toBe('ServerB (comparison)');
-    expect(getFieldDisplayName(frame.fields[3], frame)).toBe('Value 3 (comparison)');
+    expect(getFieldDisplayName(frame.fields[1], frame)).toBe('ServerA (-1d)');
+    expect(getFieldDisplayName(frame.fields[2], frame)).toBe('ServerB (-1d)');
+    expect(getFieldDisplayName(frame.fields[3], frame)).toBe('Value 3 (-1d)');
   });
 });
 
