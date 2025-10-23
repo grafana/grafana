@@ -132,6 +132,7 @@ type NewBackendOpts struct {
 	Tags           []string
 	Static         bool
 	WireTag        string
+	CGOEnabled     bool
 	GoBuildCache   *dagger.CacheVolume
 	GoModCache     *dagger.CacheVolume
 }
@@ -198,6 +199,12 @@ func NewBackendFromString(ctx context.Context, log *slog.Logger, artifact string
 		goCacheProg = val
 	}
 
+	cgoDisabled, err := options.Bool(flags.CGODisabled)
+	if err != nil {
+		return nil, err
+	}
+	cgoEnabled := !cgoDisabled
+
 	bopts := &backend.BuildOpts{
 		Version:           p.Version,
 		Enterprise:        p.Enterprise,
@@ -206,6 +213,7 @@ func NewBackendFromString(ctx context.Context, log *slog.Logger, artifact string
 		Static:            static,
 		WireTag:           wireTag,
 		Tags:              tags,
+		CGOEnabled:        cgoEnabled,
 	}
 
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
@@ -233,6 +241,7 @@ func NewBackend(ctx context.Context, log *slog.Logger, artifact string, opts *Ne
 		Tags:              opts.Tags,
 		Static:            opts.Static,
 		WireTag:           opts.WireTag,
+		CGOEnabled:        opts.CGOEnabled,
 	}
 
 	log.Info("Initializing backend artifact with options", "static", opts.Static, "version", opts.Version, "name", opts.Name, "distro", opts.Distribution)
