@@ -35,7 +35,7 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       path: 'gradient',
       name: t('radialbar.config.gradient', 'Gradient'),
       category,
-      defaultValue: 'none',
+      defaultValue: defaultOptions.gradient,
       settings: {
         options: [
           { value: 'none', label: t('radialbar.config.gradient-none', 'None') },

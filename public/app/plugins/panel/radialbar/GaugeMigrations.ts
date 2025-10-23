@@ -20,6 +20,7 @@ export function gaugePanelMigrationHandler(panel: PanelModel<Options>): Partial<
 
     // This option is enabled by default in new gauge but does not exist in old gauge
     newOptions.sparkline = false;
+    newOptions.gradient = 'none';
 
     // Remove deprecated sizing options
     if ('sizing' in newOptions) {
