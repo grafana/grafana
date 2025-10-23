@@ -1262,7 +1262,7 @@ type GetHomeDashboardResponseBody struct {
 // swagger:response dashboardVersionsResponse
 type DashboardVersionsResponse struct {
 	// in: body
-	Body []dashver.DashboardVersionMeta `json:"body"`
+	Body *dashver.DashboardVersionResponseMeta `json:"body"`
 }
 
 // swagger:response dashboardVersionResponse
