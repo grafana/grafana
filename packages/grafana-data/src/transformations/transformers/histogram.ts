@@ -206,7 +206,7 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
     // native histograms default bucket growth factor is 8th root of 2 (schema 3) -> (2 ** (2 ** -3)) = 1.0905077326652577
     // the by-division inference from data results in 1.090507732665258
 
-    // densify the buckets with 0 counts (consumers of this fn assume a dense structure)
+    // densify the buckets using 0 counts (consumers of this fn assume a dense structure)
     let denseMins: number[] = [];
     let denseMaxs: number[] = [];
 
