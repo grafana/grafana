@@ -3,7 +3,7 @@ import { initPluginTranslations } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 
 import { ConfigEditor } from './components/ConfigEditor/ConfigEditor';
-import AzureMonitorQueryEditor from './components/QueryEditor';
+import AzureMonitorQueryEditor from './components/QueryEditor/QueryEditor';
 import Datasource from './datasource';
 import pluginJson from './plugin.json';
 import { trackAzureMonitorDashboardLoaded } from './tracking';
