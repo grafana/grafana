@@ -21,7 +21,7 @@ jobs:
         id: detect-changes
         uses: ./.github/actions/change-detection
         with:
-          self: .github/workflows/pr-test-integration.yml
+          self: .github/workflows/pr-test-docker.yml
 
   build-dockerfile:
     needs: detect-changes
