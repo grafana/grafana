@@ -47,6 +47,25 @@ describe('pluginImporter', () => {
       expect(result).toEqual({ ...panelPlugin, meta: { ...panelPlugin } });
     });
 
+    it('should import a panel plugin returning a Promise<PanelPlugin> successfully', async () => {
+      const spy = jest
+        .spyOn(importPluginModule, 'importPluginModule')
+        .mockResolvedValue({ plugin: Promise.resolve({ ...panelPlugin }) });
+
+      const result = await pluginImporter.importPanel({ ...panelPlugin });
+
+      expect(spy).toHaveBeenCalledWith({
+        path: 'public/plugins/test-plugin/module.js',
+        version: '1.0.0',
+        loadingStrategy: 'fetch',
+        pluginId: 'test-plugin',
+        moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
+        translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
+      });
+
+      expect(result).toEqual({ ...panelPlugin, meta: { ...panelPlugin } });
+    });
+
     it('should set correct loading strategy', async () => {
       const spy = jest
         .spyOn(importPluginModule, 'importPluginModule')
