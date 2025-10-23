@@ -12,8 +12,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 var (
@@ -100,16 +102,16 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 		return
 	}
 
+	rp, ok := obj.(*iamv0.ResourcePermission)
+	if !ok {
+		return
+	}
+
 	// Grab a ticket to write to Zanzana
 	// This limits the amount of concurrent writes to Zanzana
 	wait := time.Now()
 	b.zTickets <- true
 	hooksWaitHistogram.Observe(time.Since(wait).Seconds()) // Record wait time
-
-	rp, ok := obj.(*iamv0.ResourcePermission)
-	if !ok {
-		return
-	}
 
 	go func(rp *iamv0.ResourcePermission) {
 		defer func() {
@@ -167,4 +169,128 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 			)
 		}
 	}(rp.DeepCopy()) // Pass a copy of the object
+}
+
+// convertRolePermissionsToTuples converts role permissions (action/scope) to v1 TupleKey format
+// using the shared zanzana.ConvertRolePermissionsToTuples utility and common.ToAuthzExtTupleKeys
+func convertRolePermissionsToTuples(roleUID string, permissions []iamv0.CoreRolespecPermission) ([]*v1.TupleKey, error) {
+	// Convert IAM permissions to zanzana.RolePermission format
+	rolePerms := make([]zanzana.RolePermission, 0, len(permissions))
+	for _, perm := range permissions {
+		// Split the scope to get kind, attribute, identifier
+		kind, _, identifier := accesscontrol.SplitScope(perm.Scope)
+		rolePerms = append(rolePerms, zanzana.RolePermission{
+			Action:     perm.Action,
+			Kind:       kind,
+			Identifier: identifier,
+		})
+	}
+
+	// Translate to Zanzana tuples
+	openfgaTuples, err := zanzana.ConvertRolePermissionsToTuples(roleUID, rolePerms)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert directly to v1 tuples using common utility
+	v1Tuples := common.ToAuthzExtTupleKeys(openfgaTuples)
+
+	return v1Tuples, nil
+}
+
+// AfterRoleCreate is a post-create hook that writes the role permissions to Zanzana (openFGA)
+// It handles both Role and CoreRole types
+func (b *IdentityAccessManagementAPIBuilder) AfterRoleCreate(obj runtime.Object, _ *metav1.CreateOptions) {
+	if b.zClient == nil {
+		return
+	}
+
+	// Extract permissions based on the object type
+	var roleUID, namespace string
+	var permissions []iamv0.CoreRolespecPermission
+	var roleType string
+
+	// Try CoreRole first
+	if coreRole, ok := obj.(*iamv0.CoreRole); ok {
+		roleUID = coreRole.Name
+		namespace = coreRole.Namespace
+		// Deep copy permissions to avoid race conditions
+		permissions = make([]iamv0.CoreRolespecPermission, len(coreRole.Spec.Permissions))
+		copy(permissions, coreRole.Spec.Permissions)
+		roleType = "core role"
+	} else if role, ok := obj.(*iamv0.Role); ok {
+		// Try Role
+		roleUID = role.Name
+		namespace = role.Namespace
+
+		// Convert and copy permissions to avoid race conditions
+		permissions = make([]iamv0.CoreRolespecPermission, len(role.Spec.Permissions))
+		for i, p := range role.Spec.Permissions {
+			permissions[i] = iamv0.CoreRolespecPermission(p)
+		}
+		roleType = "role"
+	} else {
+		// Not a supported role type
+		return
+	}
+
+	wait := time.Now()
+	b.zTickets <- true
+	hooksWaitHistogram.Observe(time.Since(wait).Seconds())
+
+	go func() {
+		defer func() {
+			<-b.zTickets
+		}()
+
+		tuples, err := convertRolePermissionsToTuples(roleUID, permissions)
+		if err != nil {
+			b.logger.Error("failed to convert role permissions to tuples",
+				"namespace", namespace,
+				"roleUID", roleUID,
+				"roleType", roleType,
+				"err", err,
+				"permissionsCnt", len(permissions),
+			)
+			return
+		}
+
+		// Avoid writing if there are no valid tuples
+		if len(tuples) == 0 {
+			b.logger.Debug("no valid tuples to write for role",
+				"namespace", namespace,
+				"roleUID", roleUID,
+				"roleType", roleType,
+				"permissionsCnt", len(permissions),
+			)
+			return
+		}
+
+		b.logger.Debug("writing role permissions to zanzana",
+			"namespace", namespace,
+			"roleUID", roleUID,
+			"roleType", roleType,
+			"tuplesCnt", len(tuples),
+			"permissionsCnt", len(permissions),
+		)
+
+		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+		defer cancel()
+
+		err = b.zClient.Write(ctx, &v1.WriteRequest{
+			Namespace: namespace,
+			Writes: &v1.WriteRequestWrites{
+				TupleKeys: tuples,
+			},
+		})
+		if err != nil {
+			b.logger.Error("failed to write role permissions to zanzana",
+				"err", err,
+				"namespace", namespace,
+				"roleUID", roleUID,
+				"roleType", roleType,
+				"tuplesCnt", len(tuples),
+			)
+		}
+	}()
 }
