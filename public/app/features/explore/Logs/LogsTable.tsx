@@ -101,7 +101,7 @@ export function LogsTable(props: Props) {
 
     // Search in logsFrame.idField.values (raw data, not transformed)
     const lineIndex = logsFrame.idField.values.findIndex((v) => v === selectedLogInfo.id);
-    const cleanLineIndex = lineIndex && lineIndex !== -1 ? lineIndex : undefined;
+    const cleanLineIndex = lineIndex !== -1 ? lineIndex : undefined;
 
     return cleanLineIndex;
   }, [selectedLogInfo, logsFrame?.idField]);
