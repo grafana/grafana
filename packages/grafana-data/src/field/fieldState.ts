@@ -1,3 +1,4 @@
+import { secondsToHms } from '../datetime/rangeutil';
 import { getFieldMatcher } from '../transformations/matchers';
 import {
   DataFrame,
@@ -130,12 +131,23 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
   const isComparisonSeries = Boolean(frame?.meta?.timeCompare?.isTimeShiftQuery);
   let displayName = hasConfigTitle ? field.config!.displayName! : field.name;
 
+  let displayNameSuffix = '';
+
+  if (isComparisonSeries) {
+    const diffMs = frame?.meta?.timeCompare?.diffMs ?? 0;
+    displayNameSuffix = ' (comparison)';
+    if (diffMs !== 0) {
+      const intervalStr = secondsToHms(Math.abs(diffMs) / 1000);
+      displayNameSuffix = ` (-${intervalStr})`;
+    }
+  }
+
   if (hasConfigTitle) {
-    return isComparisonSeries ? `${displayName} (comparison)` : displayName;
+    return `${displayName}${displayNameSuffix}`;
   }
 
   if (frame && field.config?.displayNameFromDS) {
-    return isComparisonSeries ? `${field.config.displayNameFromDS} (comparison)` : field.config.displayNameFromDS;
+    return `${field.config.displayNameFromDS}${displayNameSuffix}`;
   }
 
   // This is an ugly exception for time field
@@ -207,7 +219,7 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
   }
 
   if (isComparisonSeries) {
-    displayName = `${displayName} (comparison)`;
+    displayName = `${displayName}${displayNameSuffix}`;
   }
   return displayName;
 }
