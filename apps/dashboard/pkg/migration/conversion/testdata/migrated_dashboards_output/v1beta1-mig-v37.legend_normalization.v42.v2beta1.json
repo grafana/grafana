@@ -117,7 +117,7 @@
               "options": {
                 "legend": {
                   "displayMode": "list",
-                  "showLegend": true
+                  "showLegend": false
                 }
               },
               "fieldConfig": {
@@ -151,7 +151,7 @@
               "options": {
                 "legend": {
                   "displayMode": "list",
-                  "showLegend": true
+                  "showLegend": false
                 }
               },
               "fieldConfig": {
@@ -216,7 +216,7 @@
               "options": {
                 "legend": {
                   "displayMode": "list",
-                  "showLegend": true
+                  "showLegend": false
                 }
               },
               "fieldConfig": {
@@ -250,7 +250,7 @@
               "options": {
                 "legend": {
                   "displayMode": "list",
-                  "showLegend": true
+                  "showLegend": false
                 }
               },
               "fieldConfig": {

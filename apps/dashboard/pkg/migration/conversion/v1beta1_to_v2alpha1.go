@@ -1762,7 +1762,8 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 	// Add frontend-style default options to match frontend behavior
 	if legend, ok := options["legend"].(map[string]interface{}); ok {
 		// Add showLegend: true to match frontend behavior
-		legend["showLegend"] = true
+		showLegend := getBoolField(legend, "showLegend", true)
+		legend["showLegend"] = showLegend
 		options["legend"] = legend
 	}
 

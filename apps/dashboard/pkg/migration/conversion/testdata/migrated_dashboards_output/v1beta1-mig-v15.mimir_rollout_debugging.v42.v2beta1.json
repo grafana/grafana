@@ -266,7 +266,7 @@
                 "groupWidth": 0.7,
                 "legend": {
                   "displayMode": "list",
-                  "showLegend": true
+                  "showLegend": false
                 },
                 "orientation": "horizontal",
                 "showValue": "auto",
@@ -390,7 +390,7 @@
                 "groupWidth": 0.7,
                 "legend": {
                   "displayMode": "list",
-                  "showLegend": true
+                  "showLegend": false
                 },
                 "orientation": "horizontal",
                 "showValue": "auto",
@@ -604,7 +604,7 @@
                 "groupWidth": 0.7,
                 "legend": {
                   "displayMode": "list",
-                  "showLegend": true
+                  "showLegend": false
                 },
                 "orientation": "horizontal",
                 "showValue": "auto",
@@ -728,7 +728,7 @@
                 "groupWidth": 0.7,
                 "legend": {
                   "displayMode": "list",
-                  "showLegend": true
+                  "showLegend": false
                 },
                 "orientation": "horizontal",
                 "showValue": "auto",

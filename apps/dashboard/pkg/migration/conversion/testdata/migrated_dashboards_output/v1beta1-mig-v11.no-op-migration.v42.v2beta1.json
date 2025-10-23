@@ -27,24 +27,6 @@
             "type": "dashboard"
           }
         }
-      },
-      {
-        "kind": "AnnotationQuery",
-        "spec": {
-          "query": {
-            "kind": "DataQuery",
-            "group": "prometheus",
-            "version": "v0",
-            "datasource": {
-              "name": "grafana"
-            },
-            "spec": {}
-          },
-          "enable": true,
-          "hide": false,
-          "iconColor": "",
-          "name": "Annotations \u0026 Alerts"
-        }
       }
     ],
     "cursorSync": "Off",
