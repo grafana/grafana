@@ -5,8 +5,8 @@ import { SelectableValue, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { AsyncSelect, Button, Modal } from '@grafana/ui';
+import { DashboardQueryResult } from 'app/features/search/service/types';
 
-import { DashboardSearchItem } from '../../../search/types';
 import { getConnectedDashboards, getLibraryPanelConnectedDashboards } from '../../state/api';
 import { LibraryElementDTO } from '../../types';
 
@@ -18,7 +18,7 @@ export interface OpenLibraryPanelModalProps {
 export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPanelModalProps): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(0);
-  const [option, setOption] = useState<SelectableValue<DashboardSearchItem> | undefined>(undefined);
+  const [option, setOption] = useState<SelectableValue<DashboardQueryResult> | undefined>(undefined);
   useEffect(() => {
     const getConnected = async () => {
       const connectedDashboards = await getLibraryPanelConnectedDashboards(libraryPanel.uid);
@@ -90,9 +90,9 @@ async function loadOptionsAsync(uid: string, searchString: string, setLoading: (
   setLoading(true);
   const searchHits = await getConnectedDashboards(uid);
   const options = searchHits
-    .filter((d) => d.title.toLowerCase().includes(searchString.toLowerCase()))
-    .map((d) => ({ label: d.title, value: d }));
+    ?.filter((d) => d.name.toLowerCase().includes(searchString.toLowerCase()))
+    .map((d) => ({ label: d.name, value: d }));
   setLoading(false);
 
-  return options;
+  return options || [];
 }
