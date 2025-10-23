@@ -153,6 +153,7 @@ export function BrowseActions({ folderDTO }: Props) {
       {showBulkDeleteProvisionedResource && (
         <Drawer
           title={
+            // Heading levels should only increase by one (a11y)
             <Text variant="h3" element="h2">
               {t('browse-dashboards.action.bulk-delete-provisioned-resources', 'Bulk Delete Provisioned Resources')}
             </Text>
@@ -174,6 +175,7 @@ export function BrowseActions({ folderDTO }: Props) {
       {showBulkMoveProvisionedResource && (
         <Drawer
           title={
+            // Heading levels should only increase by one (a11y)
             <Text variant="h3" element="h2">
               {t('browse-dashboards.action.bulk-move-provisioned-resources', 'Bulk Move Provisioned Resources')}
             </Text>
