@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -12,70 +11,79 @@ import (
 	zanzana "github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
-func (s *Server) mutateFolder(ctx context.Context, store *storeInfo, operations []*authzextv1.MutateOperation) error {
+func (s *Server) mutateFolders(ctx context.Context, store *storeInfo, operations []*authzextv1.MutateOperation) error {
+	ctx, span := s.tracer.Start(ctx, "server.mutateFolder")
+	defer span.End()
+
+	writeTuples := make([]*openfgav1.TupleKey, 0)
+	deleteTuples := make([]*openfgav1.TupleKeyWithoutCondition, 0)
+
 	for _, operation := range operations {
 		switch op := operation.Operation.(type) {
 		case *authzextv1.MutateOperation_SetFolderParent:
-			if err := s.setFolderParent(ctx, store, op.SetFolderParent); err != nil {
+			tuple, err := s.getFolderWriteTuple(ctx, store, op.SetFolderParent)
+			if err != nil {
 				return err
+			}
+			writeTuples = append(writeTuples, tuple)
+
+			// Delete existing parent tuples
+			if op.SetFolderParent.GetDeleteExisting() {
+				tuples, err := s.getFolderDeleteTuples(ctx, store, op.SetFolderParent.GetFolder())
+				if err != nil {
+					return err
+				}
+				deleteTuples = append(deleteTuples, tuples...)
 			}
 		case *authzextv1.MutateOperation_DeleteFolderParents:
-			if err := s.deleteFolderParents(ctx, store, op.DeleteFolderParents); err != nil {
+			tuples, err := s.getFolderDeleteTuples(ctx, store, op.DeleteFolderParents.GetFolder())
+			if err != nil {
 				return err
 			}
+			deleteTuples = append(deleteTuples, tuples...)
 		default:
 			s.logger.Debug("unsupported mutate operation", "operation", op)
-			return errors.New("unsupported mutate operation")
 		}
 	}
 
-	return nil
-}
-
-func (s *Server) setFolderParent(ctx context.Context, store *storeInfo, req *authzextv1.SetFolderParentOperation) error {
-	ctx, span := s.tracer.Start(ctx, "server.setFolderParent")
-	defer span.End()
-
-	// Folder is at the root level
-	if req.GetParent() == "" {
-		return nil
-	}
-
-	if req.GetDeleteExisting() {
-		if err := s.deleteFolderParents(ctx, store, &authzextv1.DeleteFolderParentsOperation{
-			Folder: req.GetFolder(),
-		}); err != nil {
-			return fmt.Errorf("failed to delete existing folder parents: %w", err)
-		}
-	}
-
-	if strings.ContainsAny(req.GetFolder(), "#:") {
-		return fmt.Errorf("folder UID contains invalid characters: %s", req.GetFolder())
-	}
-
-	tuple := zanzana.NewFolderParentTuple(req.GetFolder(), req.GetParent())
 	_, err := s.openfga.Write(ctx, &openfgav1.WriteRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		Writes: &openfgav1.WriteRequestWrites{
-			TupleKeys:   []*openfgav1.TupleKey{tuple},
+			TupleKeys:   writeTuples,
 			OnDuplicate: "ignore",
+		},
+		Deletes: &openfgav1.WriteRequestDeletes{
+			TupleKeys: deleteTuples,
+			OnMissing: "ignore",
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to write folder parent tuple: %w", err)
+		s.logger.Error("failed to write folder tuples", "error", err)
+		return err
 	}
 
 	return nil
 }
 
-func (s *Server) deleteFolderParents(ctx context.Context, store *storeInfo, req *authzextv1.DeleteFolderParentsOperation) error {
-	ctx, span := s.tracer.Start(ctx, "server.deleteFolderParents")
-	defer span.End()
+func (s *Server) getFolderWriteTuple(ctx context.Context, store *storeInfo, req *authzextv1.SetFolderParentOperation) (*openfgav1.TupleKey, error) {
+	// Folder is at the root level
+	if req.GetParent() == "" {
+		return nil, nil
+	}
 
-	parentTuples, err := s.listFolderParents(ctx, store, req.GetFolder())
+	if strings.ContainsAny(req.GetFolder(), "#:") {
+		return nil, fmt.Errorf("folder UID contains invalid characters: %s", req.GetFolder())
+	}
+
+	tuple := zanzana.NewFolderParentTuple(req.GetFolder(), req.GetParent())
+	return tuple, nil
+}
+
+func (s *Server) getFolderDeleteTuples(ctx context.Context, store *storeInfo, folderUID string) ([]*openfgav1.TupleKeyWithoutCondition, error) {
+	parentTuples, err := s.listFolderParents(ctx, store, folderUID)
 	if err != nil {
-		return fmt.Errorf("failed to list folder parents: %w", err)
+		return nil, fmt.Errorf("failed to list folder parents: %w", err)
 	}
 
 	tupleKeysToDelete := make([]*openfgav1.TupleKeyWithoutCondition, 0, len(parentTuples))
@@ -87,18 +95,7 @@ func (s *Server) deleteFolderParents(ctx context.Context, store *storeInfo, req 
 		})
 	}
 
-	_, err = s.openfga.Write(ctx, &openfgav1.WriteRequest{
-		StoreId: store.ID,
-		Deletes: &openfgav1.WriteRequestDeletes{
-			TupleKeys: tupleKeysToDelete,
-			OnMissing: "ignore",
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("failed to delete folder parents: %w", err)
-	}
-
-	return nil
+	return tupleKeysToDelete, nil
 }
 
 func (s *Server) listFolderParents(ctx context.Context, store *storeInfo, folderUID string) ([]*openfgav1.Tuple, error) {

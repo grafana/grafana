@@ -42,6 +42,8 @@ func (s *Server) mutateResourcePermissions(ctx context.Context, store *storeInfo
 				return err
 			}
 			deleteTuples = append(deleteTuples, tuple)
+		default:
+			s.logger.Debug("unsupported mutate operation", "operation", op)
 		}
 	}
 
@@ -91,56 +93,6 @@ func (s *Server) getPermissionDeleteTuple(ctx context.Context, req *authzextv1.D
 		Relation: tuple.GetRelation(),
 		Object:   tuple.GetObject(),
 	}, nil
-}
-
-func (s *Server) createPermission(ctx context.Context, store *storeInfo, req *authzextv1.CreatePermissionOperation) error {
-	ctx, span := s.tracer.Start(ctx, "server.createPermission")
-	defer span.End()
-
-	tuple, err := s.getPermissionWriteTuple(ctx, req)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.openfga.Write(ctx, &openfgav1.WriteRequest{
-		StoreId:              store.ID,
-		AuthorizationModelId: store.ModelID,
-		Writes: &openfgav1.WriteRequestWrites{
-			TupleKeys:   []*openfgav1.TupleKey{tuple},
-			OnDuplicate: "ignore",
-		},
-	})
-	if err != nil {
-		s.logger.Error("failed to create resource permission tuple", "error", err, "resource", tuple.GetObject(), "permission", req.GetPermission())
-		return err
-	}
-
-	return nil
-}
-
-func (s *Server) deletePermission(ctx context.Context, store *storeInfo, req *authzextv1.DeletePermissionOperation) error {
-	ctx, span := s.tracer.Start(ctx, "server.deletePermission")
-	defer span.End()
-
-	tuple, err := s.getPermissionDeleteTuple(ctx, req)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.openfga.Write(ctx, &openfgav1.WriteRequest{
-		StoreId:              store.ID,
-		AuthorizationModelId: store.ModelID,
-		Deletes: &openfgav1.WriteRequestDeletes{
-			TupleKeys: []*openfgav1.TupleKeyWithoutCondition{tuple},
-			OnMissing: "ignore",
-		},
-	})
-	if err != nil {
-		s.logger.Error("failed to delete resource permission tuple", "error", err, "resource", tuple.GetObject(), "permission", req.GetPermission())
-		return err
-	}
-
-	return nil
 }
 
 func toZanzanaType(apiGroup string) string {

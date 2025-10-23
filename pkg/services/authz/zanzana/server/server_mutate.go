@@ -51,7 +51,7 @@ func (s *Server) mutate(ctx context.Context, req *authzextv1.MutateRequest) (*au
 	for operationGroup, operations := range groupedOperations {
 		switch operationGroup {
 		case OperationGroupFolder:
-			if err := s.mutateFolder(ctx, storeInf, operations); err != nil {
+			if err := s.mutateFolders(ctx, storeInf, operations); err != nil {
 				return nil, fmt.Errorf("failed to mutate folder: %w", err)
 			}
 		case OperationGroupPermission:
