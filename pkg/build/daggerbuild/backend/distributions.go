@@ -306,6 +306,19 @@ func ViceroyBuildOpts(distro Distribution, experiments []string, tags []string) 
 	}
 }
 
+func BuildOptsNoCGO(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
+	var (
+		os, arch = OSAndArch(distro)
+	)
+
+	return &GoBuildOpts{
+		ExperimentalFlags: experiments,
+		OS:                os,
+		Arch:              arch,
+		CGOEnabled:        false,
+	}
+}
+
 var ZigTargets = map[Distribution]string{
 	DistLinuxAMD64:            "x86_64-linux-musl",
 	DistLinuxAMD64Dynamic:     "x86_64-linux-gnu",
