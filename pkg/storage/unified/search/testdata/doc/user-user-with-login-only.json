@@ -1,0 +1,10 @@
+{
+    "metadata": {
+        "name": "user-with-login-only",
+        "namespace": "default"
+    },
+    "spec": {
+        "login": "user.two",
+        "role": "Viewer"
+    }
+}

@@ -1,0 +1,14 @@
+{
+  "key": {
+    "namespace": "default",
+    "group": "iam.grafana.app",
+    "resource": "users",
+    "name": "user-with-login-and-email"
+  },
+  "name": "user-with-login-and-email",
+  "rv": 1234,
+  "fields": {
+    "email": "user.one@test.com",
+    "login": "user.one"
+  }
+}
