@@ -17,15 +17,6 @@ import { getUrlStateFromPaneState } from 'app/features/explore/hooks/useStateSyn
 import { getState } from 'app/store/store';
 
 export const getStyles = (theme: GrafanaTheme2, isNumber?: boolean) => ({
-  wrapper: css({
-    position: 'relative',
-    height: '100%',
-  }),
-  content: css({
-    display: 'flex',
-    alignItems: 'center',
-    height: '100%',
-  }),
   clipboardButton: css({
     height: '100%',
     lineHeight: '1',
@@ -39,8 +30,9 @@ export const getStyles = (theme: GrafanaTheme2, isNumber?: boolean) => ({
     flexDirection: isNumber ? 'row-reverse' : 'row',
     height: '35px',
     left: 0,
+    top: 0,
     padding: `0 ${theme.spacing(0.5)}`,
-    position: isNumber ? 'absolute' : 'sticky',
+    position: 'absolute',
     zIndex: 1,
   }),
   inspect: css({
@@ -76,7 +68,6 @@ interface Props extends CustomCellRendererProps {
 
 export function LogsTableActionButtons(props: Props) {
   const {
-    fieldIndex,
     logId,
     exploreId,
     absoluteRange,
@@ -184,60 +175,53 @@ export function LogsTableActionButtons(props: Props) {
     setIsInspecting(true);
   };
 
-  // Only render for the first field (actions column)
-  if (fieldIndex !== 0) {
-    return null;
-  }
-
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.content}>
-        <div className={styles.iconWrapper}>
-          <div className={styles.inspect}>
-            <IconButton
-              className={styles.inspectButton}
-              tooltip={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
-              variant="secondary"
-              aria-label={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
-              tooltipPlacement="top"
-              size="md"
-              name="eye"
-              onClick={handleViewClick}
-              tabIndex={0}
-            />
-          </div>
-          <div className={styles.inspect}>
-            <ClipboardButton
-              className={styles.clipboardButton}
-              icon="share-alt"
-              variant="secondary"
-              fill="text"
-              size="md"
-              tooltip={t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')}
-              tooltipPlacement="top"
-              tabIndex={0}
-              aria-label={t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')}
-              getText={getText}
-            />
-          </div>
+    <>
+      <div className={styles.iconWrapper}>
+        <div className={styles.inspect}>
+          <IconButton
+            className={styles.inspectButton}
+            tooltip={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
+            variant="secondary"
+            aria-label={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
+            tooltipPlacement="top"
+            size="md"
+            name="eye"
+            onClick={handleViewClick}
+            tabIndex={0}
+          />
         </div>
-        {isInspecting && (
-          <Modal
-            onDismiss={() => setIsInspecting(false)}
-            isOpen={true}
-            title={t('explore.logs-table.action-buttons.inspect-value', 'Inspect value')}
-          >
-            <div style={{ maxHeight: '400px', overflow: 'auto' }}>
-              <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{String(value)}</pre>
-            </div>
-            <Modal.ButtonRow>
-              <ClipboardButton icon="copy" getText={() => String(value)}>
-                {t('explore.logs-table.action-buttons.copy-to-clipboard', 'Copy to Clipboard')}
-              </ClipboardButton>
-            </Modal.ButtonRow>
-          </Modal>
-        )}
+        <div className={styles.inspect}>
+          <ClipboardButton
+            className={styles.clipboardButton}
+            icon="share-alt"
+            variant="secondary"
+            fill="text"
+            size="md"
+            tooltip={t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')}
+            tooltipPlacement="top"
+            tabIndex={0}
+            aria-label={t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')}
+            getText={getText}
+          />
+        </div>
       </div>
-    </div>
+      {isInspecting && (
+        <Modal
+          onDismiss={() => setIsInspecting(false)}
+          isOpen={true}
+          title={t('explore.logs-table.action-buttons.inspect-value', 'Inspect value')}
+        >
+          <div style={{ maxHeight: '400px', overflow: 'auto' }}>
+            <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{String(value)}</pre>
+          </div>
+          <Modal.ButtonRow>
+            <ClipboardButton icon="copy" getText={() => String(value)}>
+              {t('explore.logs-table.action-buttons.copy-to-clipboard', 'Copy to Clipboard')}
+            </ClipboardButton>
+          </Modal.ButtonRow>
+        </Modal>
+      )}
+    </>
   );
 }
