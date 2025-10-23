@@ -156,16 +156,16 @@ jobs:
             artifacts: targz:grafana:linux/arm/v6,deb:grafana:linux/arm/v6
             verify: true
           - name: windows-amd64
-            artifacts: targz:grafana:windows/amd64,zip:grafana:windows/amd64,msi:grafana:windows/amd64
+            artifacts: targz:grafana:windows/amd64:nocgo,zip:grafana:windows/amd64:nocgo,msi:grafana:windows/amd64:nocgo
             verify: true
           - name: windows-arm64
-            artifacts: targz:grafana:windows/arm64,zip:grafana:windows/arm64
+            artifacts: targz:grafana:windows/arm64:nocgo,zip:grafana:windows/arm64:nocgo
             verify: true
           - name: darwin-amd64
-            artifacts: targz:grafana:darwin/amd64
+            artifacts: targz:grafana:darwin/amd64:nocgo
             verify: true
           - name: darwin-arm64
-            artifacts: targz:grafana:darwin/arm64
+            artifacts: targz:grafana:darwin/arm64:nocgo
             verify: true
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
