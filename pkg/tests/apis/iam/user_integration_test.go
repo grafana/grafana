@@ -23,7 +23,7 @@ func TestIntegrationUsers(t *testing.T) {
 	// TODO: Figure out why rest.Mode4 is failing
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3}
 	for _, mode := range modes {
-		t.Run(fmt.Sprintf("User CRUD operations with dual writer mode %d", mode), func(t *testing.T) {
+		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:    false,
 				DisableAnonymous:     true,
@@ -36,8 +36,14 @@ func TestIntegrationUsers(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagUnifiedStorageSearch,
 				},
 			})
+
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
 			doUserCRUDTestsUsingTheNewAPIs(t, helper)
 
 			if mode < 3 {
@@ -64,7 +70,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 
 		// Verify creation response
 		createdSpec := created.Object["spec"].(map[string]interface{})
-		require.Equal(t, "testuser1@example123.com", createdSpec["email"])
+		require.Equal(t, "testuser1@example123", createdSpec["email"])
 		require.Equal(t, "testuser1", createdSpec["login"])
 		require.Equal(t, "Test User 1", createdSpec["name"])
 		require.Equal(t, false, createdSpec["provisioned"])
@@ -82,7 +88,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 
 		// Verify fetched user matches created user
 		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
-		require.Equal(t, "testuser1@example123.com", fetchedSpec["email"])
+		require.Equal(t, "testuser1@example123", fetchedSpec["email"])
 		require.Equal(t, "testuser1", fetchedSpec["login"])
 		require.Equal(t, "Test User 1", fetchedSpec["name"])
 		require.Equal(t, false, fetchedSpec["provisioned"])
@@ -110,7 +116,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 
 		// Create the user
-		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-2-v0.yaml"), metav1.CreateOptions{})
+		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -122,7 +128,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		// Modify the user spec
 		spec := userToUpdate.Object["spec"].(map[string]interface{})
 		spec["name"] = "Updated Test User"
-		spec["email"] = "updated.test.user@example.com"
+		spec["email"] = "updated.test.user@example"
 		userToUpdate.Object["spec"] = spec
 
 		// Update the user
@@ -133,14 +139,14 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		// Verify the update response
 		updatedSpec := updated.Object["spec"].(map[string]interface{})
 		require.Equal(t, "Updated Test User", updatedSpec["name"])
-		require.Equal(t, "updated.test.user@example.com", updatedSpec["email"])
+		require.Equal(t, "updated.test.user@example", updatedSpec["email"])
 
 		// Fetch again to confirm
 		fetched, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
 		require.Equal(t, "Updated Test User", fetchedSpec["name"])
-		require.Equal(t, "updated.test.user@example.com", fetchedSpec["email"])
+		require.Equal(t, "updated.test.user@example", fetchedSpec["email"])
 
 		// Cleanup
 		err = userClient.Resource.Delete(ctx, fetched.GetName(), metav1.DeleteOptions{})
@@ -170,6 +176,144 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 			})
 		}
 	})
+
+	t.Run("should not be able to create a user with a duplicate email", func(t *testing.T) {
+		ctx := context.Background()
+		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		// Create the first user
+		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-duplicate-email-v0.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		// Attempt to create another user with the same email
+		_, err = userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-duplicate-email-other.yaml"), metav1.CreateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(409), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "email 'testuser-email-1@example' is already taken")
+
+		// Cleanup
+		err = userClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("should not be able to create a user with a duplicate login", func(t *testing.T) {
+		ctx := context.Background()
+		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		// Create the first user
+		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-duplicate-login-v0.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		// Attempt to create a second user with the same login
+		_, err = userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-duplicate-login-other.yaml"), metav1.CreateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(409), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "login 'testuser-login-1' is already taken")
+
+		// Cleanup
+		err = userClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("should not be able to update a user with an existing email", func(t *testing.T) {
+		ctx := context.Background()
+		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		// Create the first user
+		user1, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, user1)
+
+		// Create the second user
+		user2, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, user2)
+
+		// Get the user to update
+		userToUpdate, err := userClient.Resource.Get(ctx, user2.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		// Modify the user spec to have the same email as user1
+		spec := userToUpdate.Object["spec"].(map[string]interface{})
+		user1Spec := user1.Object["spec"].(map[string]interface{})
+		spec["email"] = user1Spec["email"]
+		userToUpdate.Object["spec"] = spec
+
+		// Attempt to update the user
+		_, err = userClient.Resource.Update(ctx, userToUpdate, metav1.UpdateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(409), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "email 'testuser1@example123' is already taken")
+
+		// Cleanup
+		err = userClient.Resource.Delete(ctx, user1.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err)
+		err = userClient.Resource.Delete(ctx, user2.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("should not be able to update a user with an existing login", func(t *testing.T) {
+		ctx := context.Background()
+		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		// Create the first user
+		user1, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, user1)
+
+		// Create the second user
+		user2, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, user2)
+
+		// Get the user to update
+		userToUpdate, err := userClient.Resource.Get(ctx, user2.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		// Modify the user spec to have the same login as user1
+		spec := userToUpdate.Object["spec"].(map[string]interface{})
+		user1Spec := user1.Object["spec"].(map[string]interface{})
+		spec["login"] = user1Spec["login"]
+		userToUpdate.Object["spec"] = spec
+
+		// Attempt to update the user
+		_, err = userClient.Resource.Update(ctx, userToUpdate, metav1.UpdateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(409), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "login 'testuser1' is already taken")
+
+		// Cleanup
+		err = userClient.Resource.Delete(ctx, user1.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err)
+		err = userClient.Resource.Delete(ctx, user2.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
 }
 
 func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper) {
@@ -182,7 +326,7 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 
 		legacyUserPayload := `{
 			"name": "Legacy User 3",
-			"email": "legacyuser3@example.com",
+			"email": "legacyuser3@example",
 			"login": "legacyuser3",
 			"password": "password123"
 		}`
@@ -205,7 +349,7 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 
 		// Verify fetched user matches created user
 		userSpec := user.Object["spec"].(map[string]interface{})
-		require.Equal(t, "legacyuser3@example.com", userSpec["email"])
+		require.Equal(t, "legacyuser3@example", userSpec["email"])
 		require.Equal(t, "legacyuser3", userSpec["login"])
 		require.Equal(t, "Legacy User 3", userSpec["name"])
 		require.Equal(t, false, userSpec["provisioned"])
