@@ -71,6 +71,10 @@
     "./rtkq/shorturl/v1alpha1": {
       "import": "./src/clients/rtkq/shorturl/v1alpha1/index.ts",
       "require": "./src/clients/rtkq/shorturl/v1alpha1/index.ts"
+    },
+    "./rtkq/correlations/v0alpha1": {
+      "import": "./src/clients/rtkq/correlations/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/correlations/v0alpha1/index.ts"
     }
   },
   "publishConfig": {

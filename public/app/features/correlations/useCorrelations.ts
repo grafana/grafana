@@ -2,6 +2,11 @@ import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import {
+  generatedAPI as correlationAPIv0alpha1,
+  Correlation as CorrelationK8s,
+  CorrelationList,
+} from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import {
   getDataSourceSrv,
   FetchResponse,
   CorrelationData,
@@ -10,8 +15,6 @@ import {
   CorrelationExternal,
   CorrelationQuery,
 } from '@grafana/runtime';
-import { correlationAPIv0alpha1 } from 'app/api/clients/correlations/v0alpha1';
-import { CorrelationList, Correlation as CorrelationK8s } from 'app/api/clients/correlations/v0alpha1/endpoints.gen';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import {
