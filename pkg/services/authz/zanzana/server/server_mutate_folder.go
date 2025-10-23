@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,26 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	zanzana "github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
+
+func (s *Server) mutateFolder(ctx context.Context, store *storeInfo, operations []*authzextv1.MutateOperation) error {
+	for _, operation := range operations {
+		switch op := operation.Operation.(type) {
+		case *authzextv1.MutateOperation_SetFolderParent:
+			if err := s.setFolderParent(ctx, store, op.SetFolderParent); err != nil {
+				return err
+			}
+		case *authzextv1.MutateOperation_DeleteFolderParents:
+			if err := s.deleteFolderParents(ctx, store, op.DeleteFolderParents); err != nil {
+				return err
+			}
+		default:
+			s.logger.Debug("unsupported mutate operation", "operation", op)
+			return errors.New("unsupported mutate operation")
+		}
+	}
+
+	return nil
+}
 
 func (s *Server) setFolderParent(ctx context.Context, store *storeInfo, req *authzextv1.SetFolderParentOperation) error {
 	ctx, span := s.tracer.Start(ctx, "server.setFolderParent")
