@@ -403,17 +403,6 @@ func (s *legacySQLStore) DeleteTeamMember(ctx context.Context, ns claims.Namespa
 	}
 
 	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
-		result, err := s.ListTeamBindings(ctx, ns, ListTeamBindingsQuery{
-			UID:        cmd.UID,
-			Pagination: common.Pagination{Limit: 1},
-		})
-		if err != nil {
-			return err
-		}
-		if len(result.Bindings) == 0 {
-			return fmt.Errorf("team binding not found")
-		}
-
 		teamMemberQuery, err := sqltemplate.Execute(sqlDeleteTeamMemberQuery, req)
 		if err != nil {
 			return fmt.Errorf("failed to execute team member template %q: %w", sqlDeleteTeamMemberQuery.Name(), err)
