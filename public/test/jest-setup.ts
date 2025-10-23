@@ -47,6 +47,22 @@ window.matchMedia = (query) => ({
   dispatchEvent: jest.fn(),
 });
 
+window.MessageChannel = jest.fn().mockImplementation(() => {
+  let onmessage: Function;
+  return {
+    port1: {
+      set onmessage(cb: Function) {
+        onmessage = cb;
+      },
+    },
+    port2: {
+      postMessage: (data: unknown) => {
+        onmessage?.({ data });
+      },
+    },
+  };
+});
+
 // mock the intersection observer and just say everything is in view
 const mockIntersectionObserver = jest
   .fn()
