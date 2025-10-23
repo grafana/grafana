@@ -6,7 +6,10 @@ import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehavi
 
 export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | undefined {
   // Skip setting query runner for panels without queries
-  if (!panel.targets?.length) {
+  // PanelModel adds a default query if there are no queries but it is empty { refId: 'A' }
+  const onlyDefaultQuery =
+    panel.targets?.length === 1 && Object.keys(panel.targets[0]).length === 1 && panel.targets[0].refId === 'A';
+  if (panel.targets?.length === 0 || onlyDefaultQuery) {
     return undefined;
   }
 
