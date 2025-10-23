@@ -115,16 +115,29 @@ const useResourceAttributesExtensionLinks = ({
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css({
+      label: 'SpanDetailHeader',
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'space-between',
       gap: '0 1rem',
       marginBottom: '0.25rem',
+      flexDirection: 'column',
+      [theme.breakpoints.up('lg')]: {
+        width: '50%',
+        padding: '10px',
+        margin: '10px',
+        border: '1px solid ' + theme.colors.border.weak,
+      },
     }),
     content: css({
+      label: 'SpanDetailContent',
       fontSize: theme.typography.bodySmall.fontSize,
+      [theme.breakpoints.up('lg')]: {
+        width: '50%',
+      },
     }),
     listWrapper: css({
+      label: 'SpanDetailListWrapper',
       overflow: 'hidden',
       flexGrow: 1,
       display: 'flex',
@@ -133,13 +146,28 @@ const getStyles = (theme: GrafanaTheme2) => {
     list: css({
       textAlign: 'left',
     }),
+    spanDetailComponent: css({
+      label: 'SpanDetailComponent',
+      display: 'flex',
+      flexDirection: 'column', // On bigger screens display attributes below service name
+      [theme.breakpoints.up('lg')]: {
+        flexDirection: 'row', // Switch to 2-column layout on smaller screens
+      },
+    }),
+    serviceNameAndLinks: css({
+      label: 'ServiceNameAndLinks',
+      display: 'flex',
+      width: '100%',
+      marginBottom: '16px',
+    }),
     operationName: css({
+      label: 'SpanDetailOperationName',
       margin: 0,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
       maxWidth: '50%',
-      flexGrow: 0,
+      flexGrow: 1,
       flexShrink: 0,
     }),
     AccordianWarnings: css({
@@ -358,15 +386,6 @@ export default function SpanDetail(props: SpanDetailProps) {
     });
   }
 
-  const linksComponent = getSpanDetailLinkButtons({
-    span,
-    createSpanLink,
-    datasourceType,
-    traceToProfilesOptions,
-    timeRange,
-    app,
-  });
-
   const { interpolatedParams, ...focusSpanLink } = createFocusSpanLink(traceID, spanID);
   const resourceLinksGetter = useResourceAttributesExtensionLinks({
     process,
@@ -376,18 +395,29 @@ export default function SpanDetail(props: SpanDetailProps) {
     timeRange,
   });
 
+  const linksComponent = getSpanDetailLinkButtons({
+    span,
+    createSpanLink,
+    datasourceType,
+    traceToProfilesOptions,
+    timeRange,
+    app,
+    shareButton: <ShareSpanButton focusSpanLink={focusSpanLink} />,
+  });
+
   return (
-    <div data-testid="span-detail-component">
+    <div data-testid="span-detail-component" className={styles.spanDetailComponent}>
       <div className={styles.header}>
-        <h6 className={styles.operationName} title={operationName}>
-          {operationName}
-        </h6>
+        <div className={styles.serviceNameAndLinks}>
+          <h6 className={styles.operationName} title={operationName}>
+            {operationName}
+          </h6>
+          {linksComponent}
+        </div>
         <div className={styles.listWrapper}>
           <LabeledList className={styles.list} divider={false} items={overviewItems} color={color} />
         </div>
-        <ShareSpanButton focusSpanLink={focusSpanLink} />
       </div>
-      <div className={styles.linkList}>{linksComponent}</div>
       <div className={styles.content}>
         <div>
           <AccordianKeyValues

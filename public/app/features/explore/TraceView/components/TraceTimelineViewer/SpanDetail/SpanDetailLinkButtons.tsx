@@ -1,11 +1,20 @@
+import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { CoreApp, IconName, LinkModel, PluginExtensionPoints, RawTimeRange, TimeRange } from '@grafana/data';
+import {
+  CoreApp,
+  GrafanaTheme2,
+  IconName,
+  LinkModel,
+  PluginExtensionPoints,
+  RawTimeRange,
+  TimeRange,
+} from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
-import { DataLinkButton, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
+import { Button, DataLinkButton, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
@@ -28,6 +37,7 @@ export type Props = {
   timeRange: TimeRange;
   createSpanLink?: SpanLinkFunc;
   app: CoreApp;
+  shareButton?: React.ReactNode;
 };
 
 /**
@@ -51,9 +61,10 @@ const MAX_LINKS = 3;
 const ABSOLUTE_LINK_PATTERN = /^https?:\/\//i;
 
 export const getSpanDetailLinkButtons = (props: Props) => {
-  const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, app } = props;
+  const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, app, shareButton } = props;
 
   let linkToProfiles: SpanLinkDef | undefined;
+  let content = <>{shareButton} </>;
 
   if (createSpanLink) {
     const links = (createSpanLink(span) || [])
@@ -112,23 +123,61 @@ export const getSpanDetailLinkButtons = (props: Props) => {
     });
 
     if (links.length > MAX_LINKS) {
-      return <DropDownMenu links={links}></DropDownMenu>;
-    } else {
-      return (
+      content = (
         <>
-          {links.map(({ linkModel, icon, className }, index) => (
-            <DataLinkButton key={index} link={linkModel} buttonProps={{ icon, className }}></DataLinkButton>
+          <DropDownMenu links={links}></DropDownMenu>
+          {shareButton}
+        </>
+      );
+    } else {
+      content = (
+        <>
+          {links.map((spanLinkModel, index) => (
+            <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />
           ))}
+          {shareButton}
         </>
       );
     }
   }
 
-  return <></>;
+  return (
+    <span
+      className={css({
+        display: 'flex',
+        width: '100%',
+        flexDisplay: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'flex-end',
+        gap: '5px',
+      })}
+    >
+      {content}
+    </span>
+  );
+};
+
+function getResponsibleButtonStyles(theme: GrafanaTheme2) {
+  return css({
+    [theme.breakpoints.down('sm')]: {
+      span: { display: 'none' },
+    },
+  });
+}
+
+const SingleLinkButton: React.FC<{ spanLinkModel: SpanLinkModel }> = ({ spanLinkModel }) => {
+  const styles = useStyles2(getResponsibleButtonStyles);
+  const { linkModel, icon, className } = spanLinkModel;
+  return (
+    <span className={styles}>
+      <DataLinkButton link={linkModel} buttonProps={{ icon, className }}></DataLinkButton>
+    </span>
+  );
 };
 
 const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [_, setIsOpen] = React.useState(false);
+  const styles = useStyles2(getResponsibleButtonStyles);
 
   const menu = (
     <Menu>
@@ -144,14 +193,15 @@ const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
 
   return (
     <Dropdown overlay={menu} placement="bottom-start" onVisibleChange={setIsOpen}>
-      <ToolbarButton
+      <Button
         variant="primary"
         icon="link"
-        isOpen={isOpen}
+        size="sm"
+        className={styles}
         aria-label={t('explore.drop-down-menu.aria-label-links', 'Links')}
       >
-        <Trans i18nKey="explore.drop-down-menu.links">Links</Trans>
-      </ToolbarButton>
+        <Trans i18nKey="explore.drop-down-menu.aria-label-links">Links</Trans>
+      </Button>
     </Dropdown>
   );
 };
