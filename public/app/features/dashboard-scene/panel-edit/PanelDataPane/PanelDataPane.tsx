@@ -121,6 +121,7 @@ function getStyles(theme: GrafanaTheme2) {
       border: `1px solid ${theme.colors.border.weak}`,
       borderLeft: 'none',
       borderBottom: 'none',
+      borderTop: `none`,
       borderTopRightRadius: theme.shape.radius.default,
       flexGrow: 1,
     }),
