@@ -126,7 +126,7 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/admin/migrate-to-cloud", authorize(cloudmigration.MigrationAssistantAccess), hs.Index)
 	}
 
-	// secrets management pagei
+	// secrets management page
 	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) && hs.Features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatformUI) {
 		r.Get("/admin/secrets", authorize(ac.EvalAny(
