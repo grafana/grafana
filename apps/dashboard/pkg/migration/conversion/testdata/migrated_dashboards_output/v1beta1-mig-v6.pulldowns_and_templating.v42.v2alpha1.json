@@ -32,7 +32,7 @@
         "spec": {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "default-ds-uid"
           },
           "query": {
             "kind": "DataQuery",
@@ -51,8 +51,8 @@
         "kind": "AnnotationQuery",
         "spec": {
           "datasource": {
-            "type": "prometheus",
-            "uid": "loki"
+            "type": "loki",
+            "uid": "loki-uid"
           },
           "query": {
             "kind": "DataQuery",
@@ -213,7 +213,9 @@
           },
           "query": {
             "kind": "DataQuery",
-            "spec": {}
+            "spec": {
+              "__legacyStringValue": "label_values(up, instance)"
+            }
           },
           "regex": "",
           "sort": "disabled",
@@ -236,7 +238,9 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "spec": {}
+            "spec": {
+              "__legacyStringValue": "label_values(up, instance)"
+            }
           },
           "regex": "",
           "sort": "disabled",

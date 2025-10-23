@@ -36,7 +36,7 @@
             "group": "prometheus",
             "version": "v0",
             "datasource": {
-              "name": "prometheus"
+              "name": "default-ds-uid"
             },
             "spec": {}
           },
@@ -54,10 +54,10 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "loki",
             "version": "v0",
             "datasource": {
-              "name": "loki"
+              "name": "loki-uid"
             },
             "spec": {}
           },
@@ -248,7 +248,9 @@
             "datasource": {
               "name": "default-ds-uid"
             },
-            "spec": {}
+            "spec": {
+              "__legacyStringValue": "label_values(up, instance)"
+            }
           },
           "regex": "",
           "sort": "disabled",
@@ -273,7 +275,9 @@
             "kind": "DataQuery",
             "group": "",
             "version": "v0",
-            "spec": {}
+            "spec": {
+              "__legacyStringValue": "label_values(up, instance)"
+            }
           },
           "regex": "",
           "sort": "disabled",
