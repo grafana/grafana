@@ -12,6 +12,7 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -212,7 +213,8 @@ func TestRunner_Run_UnprocessedChecks(t *testing.T) {
 					Items: []advisorv0alpha1.Check{
 						{
 							ObjectMeta: metav1.ObjectMeta{
-								Name: "unprocessed-check",
+								Name:              "unprocessed-check",
+								CreationTimestamp: metav1.NewTime(time.Now().Add(-1 * time.Hour)),
 								// No status annotation - unprocessed
 							},
 						},
@@ -331,8 +333,9 @@ func createTestRunnerWithRegistry(checkClient, typesClient *MockClient, checkReg
 		typesClient:         typesClient,
 		defaultEvalInterval: 5 * time.Millisecond,
 		maxHistory:          defaultMaxHistory,
-		namespace:           "test-namespace",
 		log:                 &logging.NoOpLogger{},
+		orgService:          &mockOrgService{orgs: []*org.OrgDTO{{ID: 1}}},
+		stackID:             "",
 	}
 }
 
@@ -382,4 +385,13 @@ func (m *mockCheck) ID() string {
 
 func (m *mockCheck) Steps() []checks.Step {
 	return m.steps
+}
+
+type mockOrgService struct {
+	org.Service
+	orgs []*org.OrgDTO
+}
+
+func (m *mockOrgService) Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*org.OrgDTO, error) {
+	return m.orgs, nil
 }

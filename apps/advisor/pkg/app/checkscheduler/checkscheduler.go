@@ -16,6 +16,7 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/services/org"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -37,8 +38,9 @@ type Runner struct {
 	typesClient         resource.Client
 	defaultEvalInterval time.Duration
 	maxHistory          int
-	namespace           string
 	log                 logging.Logger
+	orgService          org.Service
+	stackID             string
 }
 
 // NewRunner creates a new Runner.
@@ -49,15 +51,12 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 		return nil, fmt.Errorf("invalid config type")
 	}
 	checkRegistry := specificConfig.CheckRegistry
+	orgService := specificConfig.OrgService
 	evalInterval, err := getEvaluationInterval(specificConfig.PluginConfig)
 	if err != nil {
 		return nil, err
 	}
 	maxHistory, err := getMaxHistory(specificConfig.PluginConfig)
-	if err != nil {
-		return nil, err
-	}
-	namespace, err := checks.GetNamespace(specificConfig.StackID)
 	if err != nil {
 		return nil, err
 	}
@@ -79,8 +78,9 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 		typesClient:         typesClient,
 		defaultEvalInterval: evalInterval,
 		maxHistory:          maxHistory,
-		namespace:           namespace,
 		log:                 log.With("runner", "advisor.checkscheduler"),
+		orgService:          orgService,
+		stackID:             specificConfig.StackID,
 	}, nil
 }
 
@@ -89,49 +89,82 @@ func (r *Runner) Run(ctx context.Context) error {
 	// We still need the context to eventually be cancelled to exit this function
 	// but we don't want the requests to fail because of it
 	ctxWithoutCancel := context.WithoutCancel(ctx)
-	lastCreated, err := r.checkLastCreated(ctxWithoutCancel, logger)
+
+	// Determine namespaces based on StackID or OrgID
+	namespaces, err := checks.GetNamespaces(ctxWithoutCancel, r.stackID, r.orgService)
+	if err != nil {
+		return fmt.Errorf("failed to get namespaces: %w", err)
+	}
+
+	logger.Debug("Scheduling checks", "namespaces", len(namespaces))
+
+	// Get the last created time for this specific namespace
+	lastCreatedMap, err := r.checkLastCreated(ctx, logger, namespaces)
 	if err != nil {
 		logger.Error("Error getting last check creation time", "error", err)
 		return err
 	}
-	// If there are checks already created, run an initial cleanup to remove old checks
-	if !lastCreated.IsZero() {
-		err = r.cleanupChecks(ctxWithoutCancel, logger)
-		if err != nil {
-			logger.Error("Error cleaning up old check reports", "error", err)
-			return err
+
+	// If there are checks already created, run an initial cleanup
+	for _, namespace := range namespaces {
+		logger = logger.With("namespace", namespace)
+		lastCreated := lastCreatedMap[namespace]
+
+		if !lastCreated.IsZero() {
+			err = r.cleanupChecks(ctx, logger, namespace)
+			if err != nil {
+				logger.Error("Error cleaning up old check reports", "error", err)
+				return err
+			}
+			err = r.markUnprocessedChecks(ctx, logger, namespace)
+			if err != nil {
+				logger.Error("Error marking unprocessed checks", "error", err)
+				return err
+			}
 		}
 	}
 
-	nextEvalTime := r.getNextEvalTime(r.defaultEvalInterval, lastCreated)
+	nextEvalTime := r.getNextEvalTime(r.defaultEvalInterval, lastCreatedMap)
 	ticker := time.NewTicker(nextEvalTime)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			lastCreated, err := r.checkLastCreated(ctxWithoutCancel, logger)
+			// Get the current last created time for this namespace
+			lastCreatedMap, err := r.checkLastCreated(ctx, logger, namespaces)
 			if err != nil {
 				logger.Error("Error getting last check creation time", "error", err)
 				return err
 			}
 
-			// If there are checks already created, then we can automatically create more
-			if !lastCreated.IsZero() {
-				err = r.createChecks(ctxWithoutCancel, logger)
-				if err != nil {
-					logger.Error("Error creating new check reports", "error", err)
-				}
+			for _, namespace := range namespaces {
+				logger = logger.With("namespace", namespace)
+				lastCreated := lastCreatedMap[namespace]
 
-				// Clean up old checks to avoid going over the limit
-				err = r.cleanupChecks(ctxWithoutCancel, logger)
-				if err != nil {
-					logger.Error("Error cleaning up old check reports", "error", err)
+				// If there are checks already created and they are older than the evaluation interval
+				// then we can automatically create more
+				if !lastCreated.IsZero() && lastCreated.Before(time.Now().Add(-r.defaultEvalInterval)) {
+					err = r.createChecks(ctx, logger, namespace)
+					if err != nil {
+						logger.Error("Error creating new check reports", "error", err)
+						return err
+					}
+
+					// Clean up old checks to avoid going over the limit
+					err = r.cleanupChecks(ctx, logger, namespace)
+					if err != nil {
+						logger.Error("Error cleaning up old check reports", "error", err)
+						return err
+					}
+
+					// Update the last created time with the new created checks
+					lastCreatedMap[namespace] = time.Now()
 				}
 			}
 
 			// Reset the ticker to the next send interval
-			nextEvalTime = r.getNextEvalTime(r.defaultEvalInterval, lastCreated)
+			nextEvalTime = r.getNextEvalTime(r.defaultEvalInterval, lastCreatedMap)
 			ticker.Reset(nextEvalTime)
 		case <-ctx.Done():
 			return ctx.Err()
@@ -139,8 +172,8 @@ func (r *Runner) Run(ctx context.Context) error {
 	}
 }
 
-func (r *Runner) listChecks(ctx context.Context, logger logging.Logger) ([]resource.Object, error) {
-	list, err := r.checksClient.List(ctx, r.namespace, resource.ListOptions{
+func (r *Runner) listChecks(ctx context.Context, logger logging.Logger, namespace string) ([]resource.Object, error) {
+	list, err := r.checksClient.List(ctx, namespace, resource.ListOptions{
 		Limit: 1000, // Avoid pagination for normal uses cases, which is a costly operation
 	})
 	if err != nil {
@@ -150,7 +183,7 @@ func (r *Runner) listChecks(ctx context.Context, logger logging.Logger) ([]resou
 	checks := list.GetItems()
 	for list.GetContinue() != "" {
 		logger.Debug("List has continue token, listing next page", "continue", list.GetContinue())
-		list, err = r.checksClient.List(ctx, r.namespace, resource.ListOptions{Continue: list.GetContinue(), Limit: 1000})
+		list, err = r.checksClient.List(ctx, namespace, resource.ListOptions{Continue: list.GetContinue(), Limit: 1000})
 		if err != nil {
 			return nil, err
 		}
@@ -159,38 +192,48 @@ func (r *Runner) listChecks(ctx context.Context, logger logging.Logger) ([]resou
 	return checks, nil
 }
 
-// checkLastCreated returns the creation time of the last check created
-// regardless of its ID. This assumes that the checks are created in batches
-// so a batch will have a similar creation time.
+// checkLastCreated returns the creation time of the last check created for a specific namespace.
+// This assumes that the checks are created in batches so a batch will have a similar creation time.
 // In case it finds an unprocessed check from a previous run, it will set it to error.
-func (r *Runner) checkLastCreated(ctx context.Context, log logging.Logger) (time.Time, error) {
-	checkList, err := r.listChecks(ctx, log)
-	if err != nil {
-		return time.Time{}, err
-	}
-	lastCreated := time.Time{}
-	for _, item := range checkList {
-		itemCreated := item.GetCreationTimestamp().Time
-		if itemCreated.After(lastCreated) {
-			lastCreated = itemCreated
+func (r *Runner) checkLastCreated(ctx context.Context, log logging.Logger, namespaces []string) (map[string]time.Time, error) {
+	lastCreated := map[string]time.Time{}
+	for _, namespace := range namespaces {
+		checkList, err := r.listChecks(ctx, log, namespace)
+		if err != nil {
+			return nil, err
 		}
-
-		// If the check is unprocessed, set it to error
-		if checks.GetStatusAnnotation(item) == "" {
-			log.Info("Check is unprocessed, marking as error", "check", item.GetStaticMetadata().Identifier())
-			err := checks.SetStatusAnnotation(ctx, r.checksClient, item, checks.StatusAnnotationError)
-			if err != nil {
-				log.Error("Error setting check status to error", "error", err)
+		for _, item := range checkList {
+			itemCreated := item.GetCreationTimestamp().Time
+			if itemCreated.After(lastCreated[namespace]) {
+				lastCreated[namespace] = itemCreated
 			}
 		}
 	}
 	return lastCreated, nil
 }
 
+func (r *Runner) markUnprocessedChecks(ctx context.Context, log logging.Logger, namespace string) error {
+	checkList, err := r.listChecks(ctx, log, namespace)
+	if err != nil {
+		return err
+	}
+	for _, item := range checkList {
+		if checks.GetStatusAnnotation(item) == "" {
+			log.Info("Check is unprocessed, marking as error", "check", item.GetStaticMetadata().Identifier())
+			err := checks.SetStatusAnnotation(ctx, r.checksClient, item, checks.StatusAnnotationError)
+			if err != nil {
+				log.Error("Error setting check status to error", "error", err)
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // createChecks creates a new check for each check type in the registry.
-func (r *Runner) createChecks(ctx context.Context, logger logging.Logger) error {
+func (r *Runner) createChecks(ctx context.Context, logger logging.Logger, namespace string) error {
 	// List existing CheckType objects
-	list, err := r.typesClient.List(ctx, r.namespace, resource.ListOptions{})
+	list, err := r.typesClient.List(ctx, namespace, resource.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("error listing check types: %w", err)
 	}
@@ -200,7 +243,7 @@ func (r *Runner) createChecks(ctx context.Context, logger logging.Logger) error 
 	for !allChecksRegistered && retryCount < waitMaxRetries {
 		logger.Info("Waiting for all check types to be registered", "retryCount", retryCount, "waitInterval", waitInterval)
 		time.Sleep(waitInterval)
-		list, err = r.typesClient.List(ctx, r.namespace, resource.ListOptions{})
+		list, err = r.typesClient.List(ctx, namespace, resource.ListOptions{})
 		if err != nil {
 			return fmt.Errorf("error listing check types: %w", err)
 		}
@@ -218,7 +261,7 @@ func (r *Runner) createChecks(ctx context.Context, logger logging.Logger) error 
 		obj := &advisorv0alpha1.Check{
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "check-",
-				Namespace:    r.namespace,
+				Namespace:    namespace,
 				Labels: map[string]string{
 					checks.TypeLabel: checkType.Spec.Name,
 				},
@@ -235,13 +278,13 @@ func (r *Runner) createChecks(ctx context.Context, logger logging.Logger) error 
 }
 
 // cleanupChecks deletes the olders checks if the number of checks exceeds the limit.
-func (r *Runner) cleanupChecks(ctx context.Context, logger logging.Logger) error {
-	checkList, err := r.listChecks(ctx, logger)
+func (r *Runner) cleanupChecks(ctx context.Context, logger logging.Logger, namespace string) error {
+	checkList, err := r.listChecks(ctx, logger, namespace)
 	if err != nil {
 		return err
 	}
 
-	logger.Debug("Cleaning up checks", "numChecks", len(checkList))
+	logger.Debug("Cleaning up checks", "namespace", namespace, "numChecks", len(checkList))
 
 	// organize checks by type
 	checksByType := map[string][]resource.Object{}
@@ -294,12 +337,15 @@ func getEvaluationInterval(pluginConfig map[string]string) (time.Duration, error
 	return evaluationInterval, nil
 }
 
-func (r *Runner) getNextEvalTime(defaultEvaluationInterval time.Duration, lastCreated time.Time) time.Duration {
+func (r *Runner) getNextEvalTime(defaultEvaluationInterval time.Duration, lastCreated map[string]time.Time) time.Duration {
 	nextEvalTime := defaultEvaluationInterval
 
-	baseTime := lastCreated
-	if lastCreated.IsZero() {
-		baseTime = time.Now()
+	// Get the oldest last created time
+	baseTime := time.Now()
+	for _, lastNamespacedCreated := range lastCreated {
+		if !lastNamespacedCreated.IsZero() && lastNamespacedCreated.Before(baseTime) {
+			baseTime = lastNamespacedCreated
+		}
 	}
 
 	// Calculate the next evaluation time and add random variation
