@@ -129,7 +129,7 @@ func (s *Service) List(
 		query.DashboardUID = u
 	}
 
-	if query.Limit == 0 {
+	if query.Limit <= 0 {
 		query.Limit = 1000
 	}
 

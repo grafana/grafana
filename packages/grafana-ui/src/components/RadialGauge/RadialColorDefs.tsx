@@ -15,6 +15,7 @@ export interface RadialColorDefsOptions {
   displayProcessor: DisplayProcessor;
 }
 
+// eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
 export class RadialColorDefs {
   private colorToIds: Record<string, string> = {};
   private defs: React.ReactNode[] = [];
@@ -72,11 +73,12 @@ export class RadialColorDefs {
 
       this.defs.push(
         <radialGradient
+          key={id}
+          id={id}
           cx={dimensions.centerX}
           cy={dimensions.centerY}
           r={dimensions.radius + dimensions.barWidth / 2}
           fr={dimensions.radius - dimensions.barWidth / 2}
-          id={id}
           gradientUnits="userSpaceOnUse"
         >
           <stop offset="0%" stopColor={tinycolor(baseColor).spin(20).lighten(10).toString()} stopOpacity={1} />
@@ -84,6 +86,8 @@ export class RadialColorDefs {
           <stop offset="100%" stopColor={color1.toString()} stopOpacity={1} />
         </radialGradient>
       );
+
+      return returnColor;
     }
 
     // For fixed / palette based color scales we can create a more fun
@@ -102,11 +106,12 @@ export class RadialColorDefs {
 
     this.defs.push(
       <linearGradient
+        key={id}
+        id={id}
         x1="0"
         y1="0"
         x2={x2}
         y2={y2}
-        id={id}
         gradientUnits="userSpaceOnUse"
         gradientTransform={transform}
       >

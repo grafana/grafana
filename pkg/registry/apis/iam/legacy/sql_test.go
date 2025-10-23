@@ -85,6 +85,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	updateTeamMember := func(cmd *UpdateTeamMemberCommand) sqltemplate.SQLTemplate {
+		v := newUpdateTeamMember(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	listTeamMembers := func(q *ListTeamMembersQuery) sqltemplate.SQLTemplate {
 		v := newListTeamMembers(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -215,8 +221,8 @@ func TestIdentityQueries(t *testing.T) {
 					Data: createTeamMember(&CreateTeamMemberCommand{
 						TeamID:     1,
 						UserID:     1,
-						Created:    NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
-						Updated:    NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Created:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 						External:   false,
 						Permission: team.PermissionTypeMember,
 					}),
@@ -226,8 +232,8 @@ func TestIdentityQueries(t *testing.T) {
 					Data: createTeamMember(&CreateTeamMemberCommand{
 						TeamID:     1,
 						UserID:     1,
-						Created:    NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
-						Updated:    NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Created:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 						External:   false,
 						Permission: team.PermissionTypeAdmin,
 					}),
@@ -235,11 +241,10 @@ func TestIdentityQueries(t *testing.T) {
 			},
 			sqlQueryTeamBindingsTemplate: {
 				{
-					Name: "team_bindings_id",
+					Name: "team_bindings_uid",
 					Data: listTeamBindings(&ListTeamBindingsQuery{
 						OrgID:      1,
-						TeamID:     1,
-						UserID:     1,
+						UID:        "tm-1",
 						Pagination: common.Pagination{Limit: 1},
 					}),
 				},
@@ -258,6 +263,16 @@ func TestIdentityQueries(t *testing.T) {
 							Limit:    1,
 							Continue: 2,
 						},
+					}),
+				},
+			},
+			sqlUpdateTeamMemberQuery: {
+				{
+					Name: "update_team_member_basic",
+					Data: updateTeamMember(&UpdateTeamMemberCommand{
+						UID:        "team-member-1",
+						Permission: team.PermissionTypeAdmin,
+						Updated:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 					}),
 				},
 			},
@@ -425,8 +440,8 @@ func TestIdentityQueries(t *testing.T) {
 						Email:         "team1@example.com",
 						IsProvisioned: false,
 						OrgID:         1,
-						Created:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
-						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Created:       legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:       legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 					}),
 				},
 				{
@@ -438,8 +453,8 @@ func TestIdentityQueries(t *testing.T) {
 						IsProvisioned: true,
 						ExternalUID:   "team-2-uid",
 						OrgID:         1,
-						Created:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
-						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Created:       legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:       legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 					}),
 				},
 			},
@@ -452,7 +467,7 @@ func TestIdentityQueries(t *testing.T) {
 						Email:         "team1@example.com",
 						IsProvisioned: true,
 						ExternalUID:   "team-1-uid",
-						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:       legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 					}),
 				},
 			},
@@ -471,8 +486,8 @@ func TestIdentityQueries(t *testing.T) {
 						OrgID:   1,
 						UserID:  123,
 						Role:    "Viewer",
-						Created: NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
-						Updated: NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Created: legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated: legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 					}),
 				},
 				{
@@ -481,8 +496,8 @@ func TestIdentityQueries(t *testing.T) {
 						OrgID:   2,
 						UserID:  456,
 						Role:    "Admin",
-						Created: NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
-						Updated: NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Created: legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Updated: legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
 					}),
 				},
 			},
@@ -501,9 +516,9 @@ func TestIdentityQueries(t *testing.T) {
 						IsProvisioned: false,
 						Salt:          "randomsalt",
 						Rands:         "randomrands",
-						Created:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
-						Updated:       NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
-						LastSeenAt:    NewDBTime(time.Date(2013, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Created:       legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:       legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						LastSeenAt:    legacysql.NewDBTime(time.Date(2013, 1, 1, 12, 0, 0, 0, time.UTC)),
 						Role:          "Viewer",
 					}),
 				},
@@ -521,9 +536,9 @@ func TestIdentityQueries(t *testing.T) {
 						IsProvisioned: true,
 						Salt:          "adminsalt",
 						Rands:         "adminrands",
-						Created:       NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
-						Updated:       NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
-						LastSeenAt:    NewDBTime(time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Created:       legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Updated:       legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						LastSeenAt:    legacysql.NewDBTime(time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC)),
 						Role:          "Admin",
 					}),
 				},
@@ -538,8 +553,8 @@ func TestIdentityQueries(t *testing.T) {
 						Login:      "sa-1-service-account-1",
 						IsDisabled: false,
 						OrgID:      1,
-						Created:    NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
-						Updated:    NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Created:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 						LastSeenAt: time.Date(2013, 1, 1, 12, 0, 0, 0, time.UTC),
 					}),
 				},
@@ -552,8 +567,8 @@ func TestIdentityQueries(t *testing.T) {
 						Login:      "sa-2-disabled-service-account",
 						IsDisabled: true,
 						OrgID:      2,
-						Created:    NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
-						Updated:    NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Created:    legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+						Updated:    legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
 						LastSeenAt: time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC),
 					}),
 				},
@@ -570,7 +585,7 @@ func TestIdentityQueries(t *testing.T) {
 						IsDisabled:    true,
 						EmailVerified: false,
 						Role:          "Editor",
-						Updated:       NewDBTime(time.Date(2023, 1, 1, 13, 0, 0, 0, time.UTC)),
+						Updated:       legacysql.NewDBTime(time.Date(2023, 1, 1, 13, 0, 0, 0, time.UTC)),
 					}),
 				},
 			},
@@ -581,7 +596,7 @@ func TestIdentityQueries(t *testing.T) {
 						OrgID:   1,
 						UserID:  123,
 						Role:    "Admin",
-						Updated: NewDBTime(time.Date(2023, 1, 1, 14, 0, 0, 0, time.UTC)),
+						Updated: legacysql.NewDBTime(time.Date(2023, 1, 1, 14, 0, 0, 0, time.UTC)),
 					}),
 				},
 			},

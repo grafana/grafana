@@ -60,7 +60,7 @@ jobs:
           echo "github.ref: $GITHUB_REF"
 
       - name: Checkout workflow ref
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
           fetch-depth: 100
@@ -86,7 +86,7 @@ jobs:
         shell: bash
 
       - name: Checkout build commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
           ref: ${{ inputs.grafana_commit }}
@@ -122,11 +122,6 @@ jobs:
 
       - name: Validate packages
         run: ./scripts/validate-npm-packages.sh
-
-      - name: Debug OIDC Claims
-        uses: github/actions-oidc-debugger@bc12dcf1a852221e54f27c95b2db36d135c1b97f
-        with:
-          audience: '${{ github.server_url }}/${{ github.repository_owner }}'
 
       - name: Publish packages
         env:

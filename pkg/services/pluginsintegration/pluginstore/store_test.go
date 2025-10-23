@@ -12,46 +12,84 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/installsyncfakes"
 )
 
 func TestStore_ProvideService(t *testing.T) {
 	t.Run("Plugin sources are added in order", func(t *testing.T) {
-		var loadedSrcs []plugins.Class
-		l := &pluginfakes.FakeLoader{
-			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				loadedSrcs = append(loadedSrcs, src.PluginClass(ctx))
-				return nil, nil
+		tests := []struct {
+			name                  string
+			featureEnabled        bool
+			expectedLoadOnStartup bool
+			expectedBeforeStart   []plugins.Class
+			expectedAfterStart    []plugins.Class
+		}{
+			{
+				name:                  "with FlagPluginStoreServiceLoading disabled",
+				featureEnabled:        false,
+				expectedLoadOnStartup: false,
+				expectedBeforeStart:   []plugins.Class{"1", "2", "3"},
+				expectedAfterStart:    []plugins.Class{"1", "2", "3"},
+			},
+			{
+				name:                  "with FlagPluginStoreServiceLoading enabled",
+				featureEnabled:        true,
+				expectedLoadOnStartup: true,
+				expectedBeforeStart:   nil,
+				expectedAfterStart:    []plugins.Class{"1", "2", "3"},
 			},
 		}
 
-		srcs := &pluginfakes.FakeSourceRegistry{ListFunc: func(_ context.Context) []plugins.PluginSource {
-			return []plugins.PluginSource{
-				&pluginfakes.FakePluginSource{
-					PluginClassFunc: func(ctx context.Context) plugins.Class {
-						return "1"
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				var loadedSrcs []plugins.Class
+				l := &pluginfakes.FakeLoader{
+					LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+						loadedSrcs = append(loadedSrcs, src.PluginClass(ctx))
+						return nil, nil
 					},
-				},
-				&pluginfakes.FakePluginSource{
-					PluginClassFunc: func(ctx context.Context) plugins.Class {
-						return "2"
-					},
-				},
-				&pluginfakes.FakePluginSource{
-					PluginClassFunc: func(ctx context.Context) plugins.Class {
-						return "3"
-					},
-				},
-			}
-		}}
+				}
 
-		service := ProvideService(pluginfakes.NewFakePluginRegistry(), srcs, l, installsyncfakes.NewFakeSyncer())
-		ctx := context.Background()
-		err := service.StartAsync(ctx)
-		require.NoError(t, err)
-		err = service.AwaitRunning(ctx)
-		require.NoError(t, err)
-		require.Equal(t, []plugins.Class{"1", "2", "3"}, loadedSrcs)
+				srcs := &pluginfakes.FakeSourceRegistry{ListFunc: func(_ context.Context) []plugins.PluginSource {
+					return []plugins.PluginSource{
+						&pluginfakes.FakePluginSource{
+							PluginClassFunc: func(ctx context.Context) plugins.Class {
+								return "1"
+							},
+						},
+						&pluginfakes.FakePluginSource{
+							PluginClassFunc: func(ctx context.Context) plugins.Class {
+								return "2"
+							},
+						},
+						&pluginfakes.FakePluginSource{
+							PluginClassFunc: func(ctx context.Context) plugins.Class {
+								return "3"
+							},
+						},
+					}
+				}}
+
+				var features featuremgmt.FeatureToggles
+				if tt.featureEnabled {
+					features = featuremgmt.WithFeatures(featuremgmt.FlagPluginStoreServiceLoading)
+				} else {
+					features = featuremgmt.WithFeatures()
+				}
+
+				service, err := ProvideService(pluginfakes.NewFakePluginRegistry(), srcs, l, installsyncfakes.NewFakeSyncer(), features)
+				require.Equal(t, tt.expectedLoadOnStartup, service.loadOnStartup)
+				require.Equal(t, tt.expectedBeforeStart, loadedSrcs)
+				require.NoError(t, err)
+				ctx := context.Background()
+				err = service.StartAsync(ctx)
+				require.NoError(t, err)
+				err = service.AwaitRunning(ctx)
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedAfterStart, loadedSrcs)
+			})
+		}
 	})
 
 	t.Run("Plugin installs are synced", func(t *testing.T) {
@@ -85,9 +123,10 @@ func TestStore_ProvideService(t *testing.T) {
 				return []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}}}, nil
 			},
 		}
-		service := ProvideService(pluginfakes.NewFakePluginRegistry(), srcs, l, registrar)
+		service, err := ProvideService(pluginfakes.NewFakePluginRegistry(), srcs, l, registrar, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 		ctx := context.Background()
-		err := service.StartAsync(ctx)
+		err = service.StartAsync(ctx)
 		require.NoError(t, err)
 		err = service.AwaitRunning(ctx)
 		require.NoError(t, err)
