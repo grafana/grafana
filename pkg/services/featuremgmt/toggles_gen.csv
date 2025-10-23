@@ -249,7 +249,6 @@ newInfluxDSConfigPageDesign,privatePreview,@grafana/partner-datasources,false,fa
 enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
 enableDashboardEmptyExtensions,experimental,@grafana/dashboards-squad,false,false,true
 foldersAppPlatformAPI,experimental,@grafana/grafana-search-navigate-organise,false,false,true
-enablePluginImporter,experimental,@grafana/plugins-platform-backend,false,false,true
 otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
 alertingNotificationHistory,experimental,@grafana/alerting-squad,false,false,false
 unifiedStorageSearchDualReaderEnabled,experimental,@grafana/search-and-storage,false,false,false
