@@ -1,5 +1,4 @@
 import { noop } from 'lodash';
-import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { defaultDashboard as defaultDashboardData } from '@grafana/schema';
