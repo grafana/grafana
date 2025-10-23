@@ -425,12 +425,11 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
-    $behaviors: [],
+    $behaviors: config.featureToggles.timeComparison
+      ? [new CustomTimeRangeCompare({ compareWith: undefined, compareOptions: [] })]
+      : [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
-    headerActions: config.featureToggles.timeComparison
-      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
-      : undefined,
   };
 
   if (panel.libraryPanel) {
