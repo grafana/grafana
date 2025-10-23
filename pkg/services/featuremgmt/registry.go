@@ -1934,16 +1934,6 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:              "enablePluginImporter",
-			Description:       "Set this to true to use the new PluginImporter functionality",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaPluginsPlatformSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			FrontendOnly:      true,
-			Expression:        "false",
-		},
-		{
 			Name:         "otelLogsFormatting",
 			Description:  "Applies OTel formatting templates to displayed logs",
 			Stage:        FeatureStageExperimental,

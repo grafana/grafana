@@ -1445,7 +1445,8 @@
       "metadata": {
         "name": "enablePluginImporter",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-16T04:42:28Z"
+        "creationTimestamp": "2025-07-16T04:42:28Z",
+        "deletionTimestamp": "2025-10-20T05:42:33Z"
       },
       "spec": {
         "description": "Set this to true to use the new PluginImporter functionality",
