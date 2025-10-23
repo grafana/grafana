@@ -3,11 +3,12 @@ import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Checkbox, Icon, RadioButtonDot, useStyles2 } from '@grafana/ui';
+import { Checkbox, Icon, RadioButtonDot, useStyles2, Text } from '@grafana/ui';
 
 import { ScopesTree } from './ScopesTree';
 import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
 import { NodesMap, SelectedScope, TreeNode } from './types';
+import { useScopesServices } from '../ScopesContextProvider';
 
 export interface ScopesTreeItemProps {
   anyChildExpanded: boolean;
@@ -38,7 +39,9 @@ export function ScopesTreeItem({
   toggleExpandedNode,
 }: ScopesTreeItemProps) {
   const styles = useStyles2(getStyles);
-
+  // Import the closeAndApply function
+  const services = useScopesServices();
+  const { closeAndApply } = services?.scopesSelectorService || {};
   if (anyChildExpanded && !treeNode.expanded) {
     return null;
   }
@@ -48,8 +51,11 @@ export function ScopesTreeItem({
     // Should not happen as only way we show a tree is if we also load the nodes.
     return null;
   }
+
+  scopeNode.spec.subTitle = 'subTitle, parent group';
+  scopeNode.spec.disableMultiSelect = true;
   const parentNode = scopeNode.spec.parentName ? scopeNodes[scopeNode.spec.parentName] : undefined;
-  const disableMultiSelect = parentNode?.spec.disableMultiSelect ?? false;
+  const disableMultiSelect = scopeNode.spec.disableMultiSelect ?? false;
 
   const isSelectable = isNodeSelectable(scopeNode);
   const isExpandable = isNodeExpandable(scopeNode);
@@ -80,25 +86,39 @@ export function ScopesTreeItem({
       >
         {isSelectable && !treeNode.expanded ? (
           disableMultiSelect ? (
-            <RadioButtonDot
-              id={treeNode.scopeNodeId}
-              name={treeNode.scopeNodeId}
-              checked={selected}
-              label={
-                isExpandable ? (
-                  ''
-                ) : shouldHighlight ? (
+            isExpandable ? (
+              // Container with disableMultiSelect=true: RadioButtonDot
+              <RadioButtonDot
+                id={treeNode.scopeNodeId}
+                name={treeNode.scopeNodeId}
+                checked={selected}
+                label=""
+                data-testid={`scopes-tree-${treeNode.scopeNodeId}-radio`}
+                onClick={() => {
+                  selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId);
+                }}
+              />
+            ) : (
+              // Non-container with disableMultiSelect=true: Link-like item
+              <button
+                className={styles.linkLikeItem}
+                data-testid={`scopes-tree-${treeNode.scopeNodeId}-link`}
+                onClick={() => {
+                  // Apply the scope
+                  selectScope(treeNode.scopeNodeId);
+                  // Close and apply the scope
+                  closeAndApply?.();
+                }}
+              >
+                {shouldHighlight ? (
                   <Highlighter textToHighlight={titleText} searchWords={searchWords} autoEscape />
                 ) : (
                   titleText
-                )
-              }
-              data-testid={`scopes-tree-${treeNode.scopeNodeId}-radio`}
-              onClick={() => {
-                selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId);
-              }}
-            />
+                )}
+              </button>
+            )
           ) : (
+            // Multi-select mode: Checkbox
             <div className={styles.checkboxWithLabel}>
               <Checkbox
                 id={treeNode.scopeNodeId}
@@ -143,6 +163,12 @@ export function ScopesTreeItem({
               titleText
             )}
           </button>
+        )}
+
+        {scopeNode.spec.subTitle && (
+          <Text truncate variant="body" color="secondary">
+            {scopeNode.spec.subTitle}
+          </Text>
         )}
       </div>
 
@@ -226,6 +252,20 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
       margin: 0,
       padding: 0,
+    }),
+    linkLikeItem: css({
+      alignItems: 'center',
+      background: 'none',
+      border: 0,
+      display: 'flex',
+      gap: theme.spacing(1),
+      margin: 0,
+      padding: 0,
+      textDecoration: 'none',
+
+      '&:hover': {
+        textDecoration: 'underline',
+      },
     }),
     children: css({
       display: 'flex',
