@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/client-go/rest"
 )
@@ -48,6 +49,7 @@ func parseRemoteAdvisorSettings(pluginConfig map[string]string) *remoteAdvisorSe
 func RegisterApp(
 	checkRegistry checkregistry.CheckService,
 	cfg *setting.Cfg,
+	orgService org.Service,
 ) *AdvisorAppProvider {
 	provider := &AdvisorAppProvider{}
 	log := logging.DefaultLogger.With("app", "advisor.register")
@@ -75,6 +77,7 @@ func createRemoteAdvisorProvider(
 		CheckRegistry: checkRegistry,
 		PluginConfig:  pluginConfig,
 		StackID:       cfg.StackID,
+		OrgService:    orgService,
 	}
 
 	// Create a custom app config that uses the remote client's Kubernetes config
