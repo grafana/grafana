@@ -57,17 +57,10 @@ interface Props {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   firstColumnHeader: css({
-    borderRight: `1px solid ${theme.colors.border.weak}`,
     display: 'flex',
     label: 'wrapper',
     marginLeft: '56px',
     width: '100%',
-  }),
-  firstColumnHeaderContent: css({
-    borderLeft: `1px solid ${theme.colors.border.weak}`,
-    display: 'flex',
-    marginLeft: '-6px',
-    paddingLeft: '12px',
   }),
   firstColumnCell: css({
     paddingLeft: '56px',
@@ -77,6 +70,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 export function LogsTable(props: Props) {
   const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
+  const [columnWidthMap, setColumnWidthMap] = useState<Record<string, number>>({});
   const timeIndex = logsFrame?.timeField.index;
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -122,6 +116,15 @@ export function LogsTable(props: Props) {
     }
   }, [initialRowIndex, tableFrame]);
 
+  const onColumnResize = useCallback((fieldDisplayName: string, width: number) => {
+    if (width > 0) {
+      setColumnWidthMap((prev) => ({
+        ...prev,
+        [fieldDisplayName]: width,
+      }));
+    }
+  }, []);
+
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
       if (!frame.length) {
@@ -164,7 +167,9 @@ export function LogsTable(props: Props) {
             ...field.config.custom,
             inspect: false,
             filterable: true,
-            width: isBodyField ? undefined : (getInitialFieldWidth(field) ?? 200) + (isFirstField ? 40 : 0), // Body field gets auto width, add extra width to first field for header margin
+            width: isBodyField
+              ? undefined
+              : (columnWidthMap[field.name] ?? getInitialFieldWidth(field) ?? 200) + (isFirstField ? 40 : 0), // Use stored width if available, otherwise use initial width
             minWidth: isFirstField ? 240 : undefined, // Set minWidth for first field to prevent header wrapping
             cellOptions: isFirstField
               ? {
@@ -192,9 +197,7 @@ export function LogsTable(props: Props) {
               : field.config.custom?.cellOptions,
             headerComponent: isFirstField
               ? (headerProps: { defaultContent: React.ReactNode }) => (
-                  <div className={styles.firstColumnHeader}>
-                    <div className={styles.firstColumnHeaderContent}>{headerProps.defaultContent}</div>
-                  </div>
+                  <div className={styles.firstColumnHeader}>{headerProps.defaultContent}</div>
                 )
               : field.config.custom?.headerComponent,
           },
@@ -221,7 +224,7 @@ export function LogsTable(props: Props) {
       props.logRows,
       styles.firstColumnHeader,
       styles.firstColumnCell,
-      styles.firstColumnHeaderContent,
+      columnWidthMap,
     ]
   );
 
@@ -299,6 +302,7 @@ export function LogsTable(props: Props) {
     <Table
       data={tableFrame}
       width={width}
+      onColumnResize={onColumnResize}
       onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
       height={props.height}
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
