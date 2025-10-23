@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { Button, Card, Grid, Modal, useStyles2 } from '@grafana/ui';
+import { Box, Button, Card, Grid, Modal, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
@@ -77,7 +77,7 @@ export const TemplateDashboardModal = () => {
     locationService.push(templateUrl);
   };
 
-  const { value: templateDashboards } = useAsync(async () => {
+  const { value: templateDashboards, loading } = useAsync(async () => {
     const dashboards = await Promise.all(
       TEMPLATE_DASHBOARD_COMMUNITY_UIDS.map(async (uid) => {
         const result = await getBackendSrv().get(`/api/gnet/dashboards/${uid}`, undefined, undefined, {
@@ -95,71 +95,83 @@ export const TemplateDashboardModal = () => {
     <Modal
       isOpen={isOpen}
       onDismiss={onClose}
-      title={t('dashboard.template-dashboard-modal.title', 'Create dashboard from template')}
+      className={styles.modal}
+      title={t('dashboard.template-dashboard-modal.title', 'Start a dashboard from a template')}
     >
-      <Grid
-        gap={4}
-        columns={{
-          xs: 1,
-          sm: 2,
-          lg: 3,
-        }}
-      >
-        {dashboards?.map((dashboard) => {
-          const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
-          const thumbnailUrl = thumbnail ? `/api/gnet${thumbnail}` : '';
+      {loading ? (
+        <div className={styles.loadingOverlay}>
+          <Spinner />
+        </div>
+      ) : null}
+      <Box direction="column" gap={4} display="flex">
+        <Text element="p">Browse and select from a template made by Grafana</Text>
+        <Grid
+          gap={4}
+          columns={{
+            xs: 1,
+            sm: 2,
+            lg: 3,
+          }}
+        >
+          {dashboards?.map((dashboard) => {
+            const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
+            const thumbnailUrl = thumbnail ? `/api/gnet${thumbnail}` : '';
 
-          return (
-            <Card
-              key={dashboard.uid}
-              onClick={(e) => {
-                e.stopPropagation();
-                onImportDashboardClick(dashboard);
-              }}
-              className={styles.card}
-              noMargin
-            >
-              <Card.Heading>{dashboard.name}</Card.Heading>
-              <div className={thumbnailUrl ? styles.thumbnailContainer : styles.logoContainer}>
-                {thumbnailUrl ? (
-                  <img
-                    src={thumbnailUrl}
-                    alt={dashboard.name}
-                    className={thumbnailUrl ? styles.thumbnail : styles.logo}
-                    style={{ display: thumbnailUrl ? 'block' : 'none' }}
-                  />
-                ) : null}
-              </div>
-              <div title={dashboard.description || ''} className={styles.descriptionWrapper}>
-                {dashboard.description && (
-                  <Card.Description className={styles.description}>{dashboard.description}</Card.Description>
-                )}
-              </div>
+            return (
+              <Card
+                key={dashboard.uid}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onImportDashboardClick(dashboard);
+                }}
+                className={styles.card}
+                noMargin
+              >
+                <Card.Heading>{dashboard.name}</Card.Heading>
+                <div className={thumbnailUrl ? styles.thumbnailContainer : styles.logoContainer}>
+                  {thumbnailUrl ? (
+                    <img
+                      src={thumbnailUrl}
+                      alt={dashboard.name}
+                      className={thumbnailUrl ? styles.thumbnail : styles.logo}
+                      style={{ display: thumbnailUrl ? 'block' : 'none' }}
+                    />
+                  ) : null}
+                </div>
+                <div title={dashboard.description || ''} className={styles.descriptionWrapper}>
+                  {dashboard.description && (
+                    <Card.Description className={styles.description}>{dashboard.description}</Card.Description>
+                  )}
+                </div>
 
-              <Card.Actions>
-                <Button
-                  variant="secondary"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onImportDashboardClick(dashboard);
+                <Card.Actions>
+                  <Button
+                    variant="secondary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onImportDashboardClick(dashboard);
 
-                    // onUseDashboard(dashboard);
-                  }}
-                  size="sm"
-                >
-                  <Trans i18nKey="dashboard.empty.use-template-button">Use this dashboard</Trans>
-                </Button>
-              </Card.Actions>
-            </Card>
-          );
-        })}
-      </Grid>
+                      // onUseDashboard(dashboard);
+                    }}
+                    size="sm"
+                  >
+                    <Trans i18nKey="dashboard.template.use-template-button">Use template</Trans>
+                  </Button>
+                </Card.Actions>
+              </Card>
+            );
+          })}
+        </Grid>
+      </Box>
     </Modal>
   );
 };
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    modal: css({
+      width: '1200px',
+    }),
     resultsContainer: css({
       width: '100%',
       minHeight: '600px',
@@ -179,29 +191,29 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     card: css({
       gridTemplateAreas: `
-          "Heading"
-          "Thumbnail"
-          "Description"
-          "Actions"`,
+            "Heading"
+            "Thumbnail"
+            "Description"
+            "Actions"`,
       gridTemplateRows: 'auto 200px auto auto',
       height: 'auto',
+      width: '350px',
     }),
     thumbnailContainer: css({
       gridArea: 'Thumbnail',
 
       overflow: 'hidden',
-      borderRadius: theme.shape.radius.default,
-      backgroundColor: theme.colors.background.secondary,
-      marginTop: theme.spacing(1),
-      marginBottom: theme.spacing(1),
+      //   borderRadius: theme.shape.radius.default,
+      //   backgroundColor: theme.colors.background.secondary,
+      //   marginTop: theme.spacing(1),
+      //   marginBottom: theme.spacing(1),
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      height: '200px',
+      //   height: '200px',
     }),
     thumbnail: css({
-      width: '285px',
-
+      width: '100%',
       objectFit: 'contain',
     }),
     logoContainer: css({

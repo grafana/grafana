@@ -21,7 +21,7 @@ export const QuickAdd = ({}: Props) => {
       ...createActions,
       {
         id: 'create-template',
-        text: 'Create dashboard from template',
+        text: 'Pre-built dashboard',
         url: '/dashboards?templateDashboards=true',
         icon: 'template',
         onClick: () => {
