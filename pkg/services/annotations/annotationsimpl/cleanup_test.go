@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -185,7 +186,7 @@ func TestIntegrationOldAnnotationsAreDeletedFirst(t *testing.T) {
 		// run the clean up task to keep one annotation.
 		cfg := setting.NewCfg()
 		cfg.AnnotationCleanupJobBatchSize = 1
-		cleaner := NewXormStore(cfg, log.New("annotation.test"), fakeSQL, nil)
+		cleaner := NewXormStore(cfg, log.New("annotation.test"), fakeSQL, nil, prometheus.NewRegistry())
 		_, err = cleaner.CleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
 		require.NoError(t, err)
 
