@@ -1,14 +1,10 @@
+import { getAPIBaseURL } from '@grafana/api-clients';
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
 import { getBackendSrv, config } from '@grafana/runtime';
 
-import { getAPINamespace } from '../../api/utils';
-
 import { ScopeNavigation } from './dashboards/types';
 
-const apiGroup = 'scope.grafana.app';
-const apiVersion = 'v0alpha1';
-const apiNamespace = getAPINamespace();
-const apiUrl = `/apis/${apiGroup}/${apiVersion}/namespaces/${apiNamespace}`;
+const apiUrl = getAPIBaseURL('scope.grafana.app', 'v0alpha1');
 
 export class ScopesApiClient {
   async fetchScope(name: string): Promise<Scope | undefined> {

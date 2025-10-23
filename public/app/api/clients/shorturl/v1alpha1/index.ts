@@ -1,4 +1,4 @@
-import { generatedAPI } from './endpoints.gen';
+import { generatedAPI } from '@grafana/api-clients/rtkq/shorturl/v1alpha1';
 
 export const shortURLAPIv1alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
