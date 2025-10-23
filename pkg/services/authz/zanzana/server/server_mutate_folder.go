@@ -8,7 +8,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	zanzana "github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 func (s *Server) setFolderParent(ctx context.Context, store *storeInfo, req *authzextv1.SetFolderParentOperation) error {
@@ -32,7 +32,7 @@ func (s *Server) setFolderParent(ctx context.Context, store *storeInfo, req *aut
 		return fmt.Errorf("folder UID contains invalid characters: %s", req.GetFolder())
 	}
 
-	tuple := common.NewFolderParentTuple(req.GetFolder(), req.GetParent())
+	tuple := zanzana.NewFolderParentTuple(req.GetFolder(), req.GetParent())
 	_, err := s.openfga.Write(ctx, &openfgav1.WriteRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
@@ -84,12 +84,12 @@ func (s *Server) listFolderParents(ctx context.Context, store *storeInfo, folder
 	ctx, span := s.tracer.Start(ctx, "server.listFolderParents")
 	defer span.End()
 
-	object := common.NewFolderIdent(folderUID)
+	object := zanzana.NewFolderIdent(folderUID)
 	resp, err := s.openfga.Read(ctx, &openfgav1.ReadRequest{
 		StoreId: store.ID,
 		TupleKey: &openfgav1.ReadRequestTupleKey{
 			Object:   object,
-			Relation: common.RelationParent,
+			Relation: zanzana.RelationParent,
 		},
 	})
 	if err != nil {

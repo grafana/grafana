@@ -12,9 +12,7 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	zanzana "github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 var (
@@ -85,12 +83,12 @@ func (s *Server) deletePermission(ctx context.Context, store *storeInfo, req *au
 
 func toZanzanaType(apiGroup string) string {
 	if apiGroup == "folder.grafana.app" {
-		return common.TypeFolder
+		return zanzana.TypeFolder
 	}
-	return common.TypeResource
+	return zanzana.TypeResource
 }
 
-func NewResourceTuple(object string, resource *v1.Resource, perm *v1.Permission) (*openfgav1.TupleKey, error) {
+func NewResourceTuple(object string, resource *authzextv1.Resource, perm *authzextv1.Permission) (*openfgav1.TupleKey, error) {
 	// Typ is "folder" or "resource"
 	typ := toZanzanaType(resource.Group)
 
