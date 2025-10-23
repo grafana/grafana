@@ -12,7 +12,10 @@ type FeatureToggles interface {
 	// The settings may be per user, tenant, or globally set in the cloud
 	IsEnabled(ctx context.Context, flag string) bool
 
-	// Deprecated: NEIN DU MUSS DAS NICHT TUN
+	// Deprecated: FeatureToggles.IsEnabledGlobally is deprecated and will be removed in a future release.
+	// Use openfeature.FeatureProvider instead. It currently supports two variants:
+	// - "static" for configuration-based feature flags
+	// - "goff" for remotely managed OpenFeature flags
 	//
 	// IsEnabledGlobally checks if a flag is configured globally.  For now, this is the same
 	// as the function above, however it will move to only checking flags that
