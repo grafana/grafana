@@ -14,7 +14,7 @@ import {
   teamsReducer,
 } from './reducers';
 
-xdescribe('teams reducer', () => {
+describe('teams reducer', () => {
   describe('when teamsLoaded is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<TeamsState>()

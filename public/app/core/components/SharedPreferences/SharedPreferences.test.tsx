@@ -185,7 +185,7 @@ describe('SharedPreferences', () => {
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Week start' }), 'Saturday');
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /language/i }), 'Français');
 
-    await userEvent.click(screen.getByText('Save'));
+    await userEvent.click(screen.getByText('Save preferences'));
 
     expect(mockPrefsUpdate).toHaveBeenCalledWith({
       timezone: 'Australia/Sydney',
@@ -213,12 +213,12 @@ describe('SharedPreferences', () => {
 
     await selectComboboxOptionInTest(screen.getByRole('combobox', { name: /language/i }), 'Default');
 
-    await userEvent.click(screen.getByText('Save'));
+    await userEvent.click(screen.getByText('Save preferences'));
     expect(mockPrefsUpdate).toHaveBeenCalledWith(defaultPreferences);
   });
 
   it('refreshes the page after saving preferences', async () => {
-    await userEvent.click(screen.getByText('Save'));
+    await userEvent.click(screen.getByText('Save preferences'));
     expect(mockReload).toHaveBeenCalled();
   });
 });

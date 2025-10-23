@@ -28,24 +28,24 @@ const mockAccessControl = {
 
 const getTeamHandler = () =>
   http.get<{ uid: string }>('/api/teams/:uid', async ({ params, request }) => {
-    const team = mockTeamsMap.get(params.uid);
+    const teamData = mockTeamsMap.get(params.uid);
     const url = new URL(request.url);
     const accessControl = url.searchParams.get('accesscontrol') === 'true';
 
-    if (!team) {
+    if (!teamData) {
       return HttpResponse.json({ message: 'Not found' }, { status: 404 });
     }
 
-    const response = k8sTeamToLegacyTeam(team, accessControl);
+    const response = k8sTeamToLegacyTeam(teamData.team, accessControl);
 
     return HttpResponse.json(response);
   });
 
 const deleteTeamHandler = () =>
   http.delete<{ uid: string }>('/api/teams/:uid', async ({ params }) => {
-    const team = MOCK_TEAMS.find((t) => t.metadata.name === params.uid);
+    const teamData = mockTeamsMap.get(params.uid);
 
-    if (!team) {
+    if (!teamData) {
       return HttpResponse.json({ message: 'Not found' }, { status: 404 });
     }
 
@@ -55,8 +55,10 @@ const deleteTeamHandler = () =>
   });
 
 const teamsPreferencesHandler = () =>
-  http.get('/api/teams/:id/preferences', async ({ params }) => {
-    const team = MOCK_TEAMS.find((t) => t.metadata.labels['grafana.app/deprecatedInternalID'] === params.id);
+  http.get<{ uid: string }>('/api/teams/:uid/preferences', async ({ params }) => {
+    const team = Array.from(mockTeamsMap.values()).find(
+      (teamData) => teamData.team.metadata.labels['grafana.app/deprecatedInternalID'] === params.uid
+    );
 
     if (!team) {
       return HttpResponse.json({ message: 'Not found' }, { status: 404 });
@@ -67,9 +69,30 @@ const teamsPreferencesHandler = () =>
   });
 
 const teamsGroupsHandler = () =>
-  http.get('/api/teams/:id/groups', async () => {
-    // TODO: Mock groups data
-    return HttpResponse.json([]);
+  http.get<{ uid: string }>('/api/teams/:uid/groups', async ({ params }) => {
+    const team = mockTeamsMap.get(params.uid);
+
+    if (!team) {
+      return HttpResponse.json({ message: 'Not found' }, { status: 404 });
+    }
+
+    return HttpResponse.json(team.groups);
+  });
+
+const teamsUpdateGroupsHandler = () =>
+  http.post<{ uid: string }, { groupId: string }>('/api/teams/:uid/groups', async ({ params, request }) => {
+    const teamData = mockTeamsMap.get(params.uid);
+    const body = await request.json();
+    if (!teamData) {
+      return HttpResponse.json({ message: 'Not found' }, { status: 404 });
+    }
+    const updatedTeam = {
+      ...teamData,
+      groups: [...teamData.groups, body],
+    };
+    mockTeamsMap.set(params.uid, updatedTeam);
+
+    return HttpResponse.json({ message: 'Group added to Team' });
   });
 
 const searchTeamsHandler = () =>
@@ -82,7 +105,7 @@ const searchTeamsHandler = () =>
 
     return HttpResponse.json({
       totalCount: mockTeamsMap.size,
-      teams: Array.from(mockTeamsMap.values()).map((t) => k8sTeamToLegacyTeam(t, accessControl)),
+      teams: Array.from(mockTeamsMap.values()).map((t) => k8sTeamToLegacyTeam(t.team, accessControl)),
       page,
       perPage,
     });
@@ -96,7 +119,7 @@ const createTeamHandler = () =>
       return HttpResponse.json({ message: 'bad request data' }, { status: 400 });
     }
 
-    const existingTeam = MOCK_TEAMS.find((t) => t.spec.title === body.name);
+    const existingTeam = Array.from(mockTeamsMap.values()).find((teamData) => teamData.team.spec.title === body.name);
 
     if (existingTeam) {
       return HttpResponse.json({ message: 'Team name taken' }, { status: 409 });
@@ -107,6 +130,7 @@ const createTeamHandler = () =>
 const handlers = [
   teamsPreferencesHandler(),
   teamsGroupsHandler(),
+  teamsUpdateGroupsHandler(),
   searchTeamsHandler(),
   getTeamHandler(),
   deleteTeamHandler(),
