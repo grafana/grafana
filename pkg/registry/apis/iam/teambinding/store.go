@@ -125,7 +125,28 @@ func (l *LegacyBindingStore) Update(ctx context.Context, name string, objInfo re
 }
 
 func (l *LegacyBindingStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "delete")
+	if !l.enableAuthnMutation {
+		return nil, false, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "delete")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	err = l.store.DeleteTeamMember(ctx, ns, legacy.DeleteTeamMemberCommand{
+		UID: name,
+	})
+	if err != nil {
+		return nil, false, err
+	}
+
+	return &iamv0alpha1.TeamBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns.Value,
+		},
+	}, true, nil
 }
 
 func (l *LegacyBindingStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
