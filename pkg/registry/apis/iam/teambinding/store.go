@@ -134,6 +134,12 @@ func (l *LegacyBindingStore) Delete(ctx context.Context, name string, deleteVali
 		return nil, false, err
 	}
 
+	// Check if the team binding exists
+	_, err = l.Get(ctx, name, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
 	err = l.store.DeleteTeamMember(ctx, ns, legacy.DeleteTeamMemberCommand{
 		UID: name,
 	})
