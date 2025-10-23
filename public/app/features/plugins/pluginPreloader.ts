@@ -7,7 +7,7 @@ import type { AppPluginConfig } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
-import { importAppPlugin } from './pluginLoader';
+import { pluginImporter } from './importer/pluginImporter';
 
 export type PluginPreloadResult = {
   pluginId: string;
@@ -41,7 +41,7 @@ async function preload(config: AppPluginConfig): Promise<void> {
       showErrorAlert: contextSrv.user.orgRole !== '',
     });
 
-    await importAppPlugin(meta);
+    await pluginImporter.importApp(meta);
   } catch (error) {
     console.error(`[Plugins] Failed to preload plugin: ${config.path} (version: ${config.version})`, error);
   }

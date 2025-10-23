@@ -9,8 +9,6 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import appEvents from 'app/core/app_events';
-import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
@@ -22,33 +20,17 @@ import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getRowFromClipboard } from '../layouts-shared/paste';
-import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
+import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
+import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
-import { ConvertMixedGridsModal } from './ConvertMixedGridsModal';
 import { RowItem } from './RowItem';
 import { RowLayoutManagerRenderer } from './RowsLayoutManagerRenderer';
 
 interface RowsLayoutManagerState extends SceneObjectState {
   rows: RowItem[];
-}
-
-enum GridLayoutType {
-  AutoGridLayout = 'AutoGridLayout',
-  GridLayout = 'GridLayout',
-}
-
-function mapIdToGridLayoutType(id?: string): GridLayoutType | undefined {
-  switch (id) {
-    case GridLayoutType.AutoGridLayout:
-      return GridLayoutType.AutoGridLayout;
-    case GridLayoutType.GridLayout:
-      return GridLayoutType.GridLayout;
-    default:
-      return undefined;
-  }
 }
 
 export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> implements DashboardLayoutManager {
@@ -74,7 +56,9 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public readonly descriptor = RowsLayoutManager.descriptor;
 
-  public addPanel(vizPanel: VizPanel) {}
+  public addPanel(vizPanel: VizPanel) {
+    this.state.rows[0]?.getLayout().addPanel(vizPanel);
+  }
 
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
@@ -171,50 +155,25 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     const hasNonGridLayout = this.state.rows.some((row) => !row.getLayout().descriptor.isGridLayout);
     const gridTypes = new Set(findAllGridTypes(this));
 
-    if (hasNonGridLayout) {
-      appEvents.publish(
-        new ShowConfirmModalEvent({
-          title: t('dashboard.rows-layout.ungroup-nested-title', 'Ungroup nested groups?'),
-          text: t('dashboard.rows-layout.ungroup-nested-text', 'This will ungroup all nested groups.'),
-          yesText: t('dashboard.rows-layout.continue', 'Continue'),
-          noText: t('dashboard.rows-layout.cancel', 'Cancel'),
-          onConfirm: () => {
-            if (gridTypes.size > 1) {
-              requestAnimationFrame(() => {
-                this._confirmConvertMixedGrids(gridTypes);
-              });
-            } else {
-              this.wrapUngroupRowsInEdit(mapIdToGridLayoutType(gridTypes.values().next().value)!);
-            }
-          },
-        })
-      );
-      return;
-    }
-
-    if (gridTypes.size > 1) {
-      this._confirmConvertMixedGrids(gridTypes);
-      return;
-    } else {
-      this.wrapUngroupRowsInEdit(mapIdToGridLayoutType(gridTypes.values().next().value)!);
-    }
+    showUngroupConfirmation({
+      hasNonGridLayout,
+      gridTypes,
+      onConfirm: (gridLayoutType) => {
+        this.wrapUngroupRowsInEdit(gridLayoutType);
+      },
+      onConvertMixedGrids: (availableIds) => {
+        this._confirmConvertMixedGrids(availableIds);
+      },
+    });
   }
 
   private _confirmConvertMixedGrids(availableIds: Set<string>) {
-    appEvents.publish(
-      new ShowModalReactEvent({
-        component: ConvertMixedGridsModal,
-        props: {
-          availableIds,
-          onSelect: (id: string) => {
-            const selected = mapIdToGridLayoutType(id);
-            if (selected) {
-              this.wrapUngroupRowsInEdit(selected);
-            }
-          },
-        },
-      })
-    );
+    showConvertMixedGridsModal(availableIds, (id: string) => {
+      const selected = mapIdToGridLayoutType(id);
+      if (selected) {
+        this.wrapUngroupRowsInEdit(selected);
+      }
+    });
   }
 
   private wrapUngroupRowsInEdit(gridLayoutType: GridLayoutType) {

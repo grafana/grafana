@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -41,10 +42,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	legacyuser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+const MaxConcurrentZanzanaWrites = 20
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
@@ -58,11 +63,15 @@ func RegisterAPIService(
 	coreRolesStorage CoreRoleStorageBackend,
 	rolesStorage RoleStorageBackend,
 	roleBindingsStorage RoleBindingStorageBackend,
+	dual dualwrite.Service,
+	unified resource.ResourceClient,
+	userService legacyuser.Service,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
+	registerMetrics(reg)
 
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                      store,
@@ -75,21 +84,22 @@ func RegisterAPIService(
 		legacyAccessClient:         legacyAccessClient,
 		accessClient:               accessClient,
 		zClient:                    zClient,
+		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
 		display:                    user.NewLegacyDisplayREST(store),
 		reg:                        reg,
 		logger:                     log.New("iam.apis"),
 		features:                   features,
-		// enableAuthZApis:              features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
-		// enableResourcePermissionApis: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
-		// enableAuthnMutation:          features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
-		enableDualWriter: true,
+		enableDualWriter:           true,
+		dual:                       dual,
+		unified:                    unified,
+		userSearchClient:           resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), unified, user.NewUserLegacySearchClient(userService), features),
 	}
 	apiregistration.RegisterAPI(builder)
 
 	return builder, nil
 }
 
-// TODO zClient, reg
+// TODO zClient, zTickets, reg
 func NewAPIService(
 	accessClient types.AccessClient,
 	dbProvider legacysql.LegacyDatabaseProvider,
@@ -191,7 +201,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
-	teamBindingLegacyStore := team.NewLegacyBindingStore(b.store, enableAuthnMutation)
+	teamBindingLegacyStore := teambinding.NewLegacyBindingStore(b.store, enableAuthnMutation)
 	storage[teamBindingResource.StoragePath()] = teamBindingLegacyStore
 
 	if b.enableDualWriter {
@@ -261,11 +271,19 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		if err != nil {
 			return err
 		}
+		if enableZanzanaSync {
+			b.logger.Info("Enabling AfterCreate hook for CoreRole to sync to Zanzana")
+			coreRoleStore.AfterCreate = b.AfterRoleCreate
+		}
 		storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
 
 		roleStore, err := NewLocalStore(iamv0.RoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.rolesStorage)
 		if err != nil {
 			return err
+		}
+		if enableZanzanaSync {
+			b.logger.Info("Enabling AfterCreate hook for Role to sync to Zanzana")
+			roleStore.AfterCreate = b.AfterRoleCreate
 		}
 		storage[iamv0.RoleInfo.StoragePath()] = roleStore
 
@@ -370,13 +388,13 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 	case admission.Create:
 		switch typedObj := a.GetObject().(type) {
 		case *iamv0.User:
-			return user.ValidateOnCreate(ctx, typedObj)
+			return user.ValidateOnCreate(ctx, b.userSearchClient, typedObj)
 		case *iamv0.ServiceAccount:
 			return serviceaccount.ValidateOnCreate(ctx, typedObj)
 		case *iamv0.Team:
 			return team.ValidateOnCreate(ctx, typedObj)
 		case *iamv0.TeamBinding:
-			return team.ValidateOnBindingCreate(ctx, typedObj)
+			return teambinding.ValidateOnCreate(ctx, typedObj)
 		case *iamv0.ResourcePermission:
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
 		}
@@ -388,7 +406,7 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			if !ok {
 				return fmt.Errorf("expected old object to be a User, got %T", oldUserObj)
 			}
-			return user.ValidateOnUpdate(ctx, oldUserObj, typedObj)
+			return user.ValidateOnUpdate(ctx, b.userSearchClient, oldUserObj, typedObj)
 		case *iamv0.ResourcePermission:
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
 		case *iamv0.Team:
@@ -397,6 +415,12 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 				return fmt.Errorf("expected old object to be a Team, got %T", oldTeamObj)
 			}
 			return team.ValidateOnUpdate(ctx, typedObj, oldTeamObj)
+		case *iamv0.TeamBinding:
+			oldTeamBindingObj, ok := a.GetOldObject().(*iamv0.TeamBinding)
+			if !ok {
+				return fmt.Errorf("expected old object to be a TeamBinding, got %T", oldTeamBindingObj)
+			}
+			return teambinding.ValidateOnUpdate(ctx, typedObj, oldTeamBindingObj)
 		}
 		return nil
 	case admission.Delete:

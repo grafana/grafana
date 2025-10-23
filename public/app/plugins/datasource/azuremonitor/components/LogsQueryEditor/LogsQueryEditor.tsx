@@ -13,7 +13,7 @@ import { AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMetadata
 import { AzureMonitorQuery, ResultFormat } from '../../types/query';
 import { AzureMonitorErrorish, AzureMonitorOption, EngineSchema } from '../../types/types';
 import { LogsQueryBuilder } from '../LogsQueryBuilder/LogsQueryBuilder';
-import ResourceField from '../ResourceField';
+import ResourceField from '../ResourceField/ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 import FormatAsField from '../shared/FormatAsField';

@@ -36,6 +36,7 @@ import { ScrollDirection } from '../InfiniteScroll';
 import { LoadingIndicator } from '../LoadingIndicator';
 
 import { LogLineDetailsLog } from './LogLineDetailsLog';
+import { LogLineMenuCustomItem } from './LogLineMenu';
 import { LogList } from './LogList';
 import { LogListModel } from './processing';
 import { ScrollToLogsEvent } from './virtualization';
@@ -56,6 +57,8 @@ interface LogLineContextProps {
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   displayedFields?: string[];
+  logLineMenuCustomItems?: LogLineMenuCustomItem[];
+  onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
 }
@@ -77,6 +80,8 @@ export const LogLineContext = memo(
     onClose,
     getRowContext,
     displayedFields = [],
+    logLineMenuCustomItems,
+    onPermalinkClick,
     onClickShowField,
     onClickHideField,
   }: LogLineContextProps) => {
@@ -384,6 +389,7 @@ export const LogLineContext = memo(
               <LogList
                 app={CoreApp.Unknown}
                 containerElement={containerRef.current}
+                dataFrames={[]}
                 dedupStrategy={LogsDedupStrategy.none}
                 detailsMode="inline"
                 displayedFields={displayedFields}
@@ -391,12 +397,16 @@ export const LogLineContext = memo(
                 eventBus={eventBusRef.current}
                 infiniteScrollMode="unlimited"
                 loadMore={handleLoadMore}
+                logLineMenuCustomItems={logLineMenuCustomItems}
+                logOptionsStorageKey={logOptionsStorageKey}
                 logs={allLogs}
                 loading={aboveState === LoadingState.Loading || belowState === LoadingState.Loading}
                 permalinkedLogId={log.uid}
+                onPermalinkClick={onPermalinkClick}
                 onClickHideField={onClickHideField}
                 onClickShowField={onClickShowField}
                 showControls
+                showFieldSelector={false}
                 showTime={logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.showTime`, true) : true}
                 sortOrder={sortOrder}
                 syntaxHighlighting={syntaxHighlighting}

@@ -135,7 +135,8 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 		}
 	}
 
-	if col.Nullable {
+	// Floats are always nullable so we can map NaN/Inf values to null
+	if col.Nullable || fT == data.FieldTypeFloat32 || fT == data.FieldTypeFloat64 {
 		fT = fT.NullableType()
 	}
 
@@ -177,10 +178,10 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		return parseVal[uint64](val, "uint64", nullable)
 
 	case data.FieldTypeFloat32, data.FieldTypeNullableFloat32:
-		return parseVal[float32](val, "float32", nullable)
+		return parseVal[float32](val, "float32", true)
 
 	case data.FieldTypeFloat64, data.FieldTypeNullableFloat64:
-		return parseFloat64OrDecimal(val, nullable)
+		return parseFloat64OrDecimal(val, true)
 
 	case data.FieldTypeTime, data.FieldTypeNullableTime:
 		return parseVal[time.Time](val, "time.Time", nullable)
