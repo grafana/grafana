@@ -160,7 +160,6 @@ useSessionStorageForRedirection,GA,@grafana/identity-access-team,false,false,fal
 rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 unifiedStorageSearchSprinkles,experimental,@grafana/search-and-storage,false,false,false
-unifiedStorageUseFullNgram,experimental,@grafana/search-and-storage,false,false,false
 managedDualWriter,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
@@ -237,7 +236,6 @@ kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team
 kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
 restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
-skipTokenRotationIfRecent,GA,@grafana/identity-access-team,false,false,false
 alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
 alertEnrichmentMultiStep,experimental,@grafana/alerting-squad,false,false,false
 alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false
@@ -250,7 +248,6 @@ newInfluxDSConfigPageDesign,privatePreview,@grafana/partner-datasources,false,fa
 enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
 enableDashboardEmptyExtensions,experimental,@grafana/dashboards-squad,false,false,true
 foldersAppPlatformAPI,experimental,@grafana/grafana-search-navigate-organise,false,false,true
-enablePluginImporter,experimental,@grafana/plugins-platform-backend,false,false,true
 otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
 alertingNotificationHistory,experimental,@grafana/alerting-squad,false,false,false
 unifiedStorageSearchDualReaderEnabled,experimental,@grafana/search-and-storage,false,false,false
