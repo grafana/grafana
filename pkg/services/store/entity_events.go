@@ -70,7 +70,7 @@ type EntityEventsService interface {
 }
 
 func ProvideEntityEventsService(cfg *setting.Cfg, sqlStore db.DB, features featuremgmt.FeatureToggles) EntityEventsService {
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	if !features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch) {
 		return &dummyEntityEventsService{}
 	}

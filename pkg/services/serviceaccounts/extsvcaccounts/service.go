@@ -45,7 +45,7 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bu
 		saSvc:        saSvc,
 		skvStore:     kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger), // Using SQL store to avoid a cyclic dependency
 		tracer:       tracer,
-		//nolint:staticcheck
+		//nolint:staticcheck // using deprecated FFS service for backward compatibility
 		enabled: cfg.ManagedServiceAccountsEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 	}
 

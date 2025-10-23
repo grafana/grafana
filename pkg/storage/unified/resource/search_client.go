@@ -115,7 +115,7 @@ func shouldMakeBackgroundCall(ctx context.Context, features featuremgmt.FeatureT
 		return false, err
 	}
 
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	res := features != nil &&
 		features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled) &&
 		!unifiedIsMainStorage &&

@@ -22,7 +22,7 @@ type Service struct {
 }
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) && cfg.ManagedServiceAccountsEnabled
 	s := &Service{
 		featureEnabled: enabled,

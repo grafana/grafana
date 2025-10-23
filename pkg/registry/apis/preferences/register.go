@@ -52,7 +52,7 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 ) *APIBuilder {
 	// Requires development settings and clearly experimental
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil
 	}

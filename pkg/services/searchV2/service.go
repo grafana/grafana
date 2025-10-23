@@ -117,7 +117,7 @@ func ProvideService(cfg *setting.Cfg, sql db.DB, entityEventStore store.EntityEv
 }
 
 func (s *StandardSearchService) IsDisabled() bool {
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	return !s.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch)
 }
 

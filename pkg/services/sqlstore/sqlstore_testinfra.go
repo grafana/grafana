@@ -226,7 +226,7 @@ func newTestCfg(
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 	sec, err := cfg.Raw.NewSection("database")

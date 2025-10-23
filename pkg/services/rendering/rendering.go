@@ -104,7 +104,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 	}
 
 	var renderKeyProvider renderKeyProvider
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	if features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) {
 		renderKeyProvider = &jwtRenderKeyProvider{
 			log:       logger,

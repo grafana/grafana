@@ -102,7 +102,7 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 	}
 
 	var f PermissionsFilter
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	if features.IsEnabledGlobally(featuremgmt.FlagPermissionsFilterRemoveSubquery) {
 		f = &accessControlDashboardPermissionFilterNoFolderSubquery{
 			accessControlDashboardPermissionFilter: accessControlDashboardPermissionFilter{

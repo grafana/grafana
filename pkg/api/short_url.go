@@ -31,7 +31,7 @@ import (
 func (hs *HTTPServer) registerShortURLAPI(apiRoute routing.RouteRegister) {
 	reqSignedIn := middleware.ReqSignedIn
 
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
 		handler := newShortURLK8sHandler(hs)
 		apiRoute.Post("/api/short-urls", reqSignedIn, handler.createKubernetesShortURLsHandler)

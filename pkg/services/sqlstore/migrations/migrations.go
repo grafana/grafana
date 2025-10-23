@@ -109,7 +109,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	ualert.CreateOrgMigratedKVStoreEntries(mg)
 
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	// https://github.com/grafana/identity-access-team/issues/546: tracks removal of the feature toggle from the annotation permission migration
 	if oss.features != nil && oss.features.IsEnabledGlobally(featuremgmt.FlagAnnotationPermissionUpdate) {
 		accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)

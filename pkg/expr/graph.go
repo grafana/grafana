@@ -333,7 +333,7 @@ func (s *Service) buildGraph(ctx context.Context, req *Request) (*simple.Directe
 		case TypeCMDNode:
 			node, err = buildCMDNode(ctx, rn, s.features, s.cfg)
 		case TypeMLNode:
-			//nolint:staticcheck
+			//nolint:staticcheck // using deprecated FFS service for backward compatibility
 			if s.features.IsEnabledGlobally(featuremgmt.FlagMlExpressions) {
 				node, err = s.buildMLNode(dp, rn, req)
 				if err != nil {

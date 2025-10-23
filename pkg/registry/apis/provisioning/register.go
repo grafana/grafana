@@ -238,7 +238,7 @@ func RegisterAPIService(
 	extraWorkers []jobs.Worker,
 	repoFactory repository.Factory,
 ) (*APIBuilder, error) {
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
 	}

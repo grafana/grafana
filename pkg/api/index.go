@@ -304,7 +304,7 @@ func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam str
 	if pref.IsValidThemeID(themePrefId) {
 		theme := pref.GetThemeByID(themePrefId)
 		// TODO refactor
-		//nolint:staticcheck
+		//nolint:staticcheck // using deprecated FFS service for backward compatibility
 		if !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaconThemes) {
 			return theme
 		}

@@ -881,7 +881,7 @@ func (s *Service) getDescendantCountsFromApiServer(ctx context.Context, q *folde
 		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	if s.features.IsEnabledGlobally(featuremgmt.FlagK8SFolderCounts) {
 		return s.unifiedStore.(*FolderUnifiedStoreImpl).CountFolderContent(ctx, q.OrgID, *q.UID)
 	}

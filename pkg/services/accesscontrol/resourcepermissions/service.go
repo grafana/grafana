@@ -361,7 +361,7 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 		actions = append(actions, GetActionSetName(s.options.Resource, permission))
 
 		// If we only want to store action sets, return now
-		//nolint:staticcheck
+		//nolint:staticcheck // using deprecated FFS service for backward compatibility
 		if s.features.IsEnabledGlobally(featuremgmt.FlagOnlyStoreActionSets) {
 			return actions, nil
 		}

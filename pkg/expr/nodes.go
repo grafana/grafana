@@ -124,7 +124,7 @@ func buildCMDNode(ctx context.Context, rn *rawNode, toggles featuremgmt.FeatureT
 	}
 
 	if commandType == TypeSQL {
-		//nolint:staticcheck
+		//nolint:staticcheck // using deprecated FFS service for backward compatibility
 		if !toggles.IsEnabledGlobally(featuremgmt.FlagSqlExpressions) {
 			return nil, fmt.Errorf("sql expressions are disabled")
 		}

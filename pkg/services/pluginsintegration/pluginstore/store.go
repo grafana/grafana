@@ -43,7 +43,7 @@ type Service struct {
 
 func ProvideService(pluginRegistry registry.Service, pluginSources sources.Registry,
 	pluginLoader loader.Service, installsRegistrar installsync.Syncer, features featuremgmt.FeatureToggles) (*Service, error) {
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	if features.IsEnabledGlobally(featuremgmt.FlagPluginStoreServiceLoading) {
 		s := New(pluginRegistry, pluginLoader, pluginSources, installsRegistrar)
 		s.loadOnStartup = true

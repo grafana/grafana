@@ -63,11 +63,11 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 ) (*DataSourceAPIBuilder, error) {
 	// We want to expose just a limited set of plugins
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	explicitPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
 
 	// This requires devmode!
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	if !explicitPluginList && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis
 	}
@@ -113,7 +113,7 @@ func RegisterAPIService(
 			datasources.GetDatasourceProvider(pluginJSON),
 			contextProvider,
 			accessControl,
-			//nolint:staticcheck
+			//nolint:staticcheck // using deprecated FFS service for backward compatibility
 			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
 			false,
 		)

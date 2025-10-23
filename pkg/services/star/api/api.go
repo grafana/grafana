@@ -27,7 +27,7 @@ func ProvideApi(
 	starService star.Service,
 	configProvider apiserver.DirectRestConfigProvider,
 ) *API {
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesStars) {
 		starService = nil // don't use it
 	}

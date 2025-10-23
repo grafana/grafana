@@ -74,7 +74,7 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		logger.Debug("Deleted alert rule state", "count", rows)
 
 		var versions []alertRuleVersion
-		//nolint:staticcheck
+		//nolint:staticcheck // using deprecated FFS service for backward compatibility
 		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) && st.Cfg.DeletedRuleRetention > 0 && !permanently { // save deleted version only if retention is greater than 0
 			versions, err = st.getLatestVersionOfRulesByUID(ctx, orgID, ruleUID)
 			if err != nil {

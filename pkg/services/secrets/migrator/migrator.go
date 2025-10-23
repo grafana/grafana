@@ -123,7 +123,7 @@ func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) (bool, error) {
 }
 
 func (m *SecretsMigrator) initProvidersIfNeeded() error {
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	if m.features.IsEnabledGlobally(featuremgmt.FlagDisableEnvelopeEncryption) {
 		logger.Info("Envelope encryption is not enabled but trying to init providers anyway...")
 

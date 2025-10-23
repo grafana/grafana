@@ -52,7 +52,7 @@ type resourceClient struct {
 }
 
 func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
-	//nolint:staticcheck
+	//nolint:staticcheck // using deprecated FFS service for backward compatibility
 	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
 		return NewLegacyResourceClient(conn, indexConn), nil
 	}

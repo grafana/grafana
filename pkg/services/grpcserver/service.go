@@ -47,7 +47,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 	s := &gPRCServerService{
 		cfg:    cfg.GRPCServer,
 		logger: log.New("grpc-server"),
-		//nolint:staticcheck
+		//nolint:staticcheck // using deprecated FFS service for backward compatibility
 		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrpcServer), // TODO: replace with cfg.GRPCServer.Enabled when we remove feature toggle.
 		startedChan: make(chan struct{}),
 	}

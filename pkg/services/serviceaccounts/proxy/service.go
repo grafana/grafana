@@ -38,7 +38,7 @@ func ProvideServiceAccountsProxy(
 	s := &ServiceAccountsProxy{
 		log:            log.New("serviceaccounts.proxy"),
 		proxiedService: proxiedService,
-		//nolint:staticcheck
+		//nolint:staticcheck // using deprecated FFS service for backward compatibility
 		isProxyEnabled: cfg.ManagedServiceAccountsEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 	}
 
