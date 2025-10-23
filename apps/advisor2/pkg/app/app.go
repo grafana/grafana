@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -49,8 +50,10 @@ func New(cfg app.Config) (app.App, error) {
 		Name:       "advisor",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
-				logging.FromContext(ctx).Error("Informer processing error", "error", err)
+			InformerOptions: operator.InformerOptions{
+				ErrorHandler: func(ctx context.Context, err error) {
+					logging.FromContext(ctx).Error("Informer processing error", "error", err)
+				},
 			},
 		},
 		ManagedKinds: []simple.AppManagedKind{

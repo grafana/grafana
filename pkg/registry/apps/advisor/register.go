@@ -58,12 +58,12 @@ func RegisterApp(
 	// Check if remote advisor is configured
 	if remoteCfg.Enabled {
 		log.Info("Remote advisor API server is enabled", "url", remoteCfg.URL)
-		return createRemoteAdvisorProvider(provider, remoteCfg, checkRegistry, cfg)
+		return createRemoteAdvisorProvider(provider, remoteCfg, checkRegistry, cfg, orgService)
 	}
 
 	// Fall back to local implementation
 	log.Info("Using local advisor implementation")
-	return createLocalAdvisorProvider(provider, checkRegistry, cfg)
+	return createLocalAdvisorProvider(provider, checkRegistry, orgService, cfg)
 }
 
 func createRemoteAdvisorProvider(
@@ -71,6 +71,7 @@ func createRemoteAdvisorProvider(
 	remoteCfg *remoteAdvisorSettings,
 	checkRegistry checkregistry.CheckService,
 	cfg *setting.Cfg,
+	orgService org.Service,
 ) *AdvisorAppProvider {
 	pluginConfig := cfg.PluginSettings["grafana-advisor-app"]
 	specificConfig := checkregistry.AdvisorAppConfig{
@@ -137,6 +138,7 @@ func (t *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 func createLocalAdvisorProvider(
 	provider *AdvisorAppProvider,
 	checkRegistry checkregistry.CheckService,
+	orgService org.Service,
 	cfg *setting.Cfg,
 ) *AdvisorAppProvider {
 	pluginConfig := cfg.PluginSettings["grafana-advisor-app"]
@@ -144,6 +146,7 @@ func createLocalAdvisorProvider(
 		CheckRegistry: checkRegistry,
 		PluginConfig:  pluginConfig,
 		StackID:       cfg.StackID,
+		OrgService:    orgService,
 	}
 
 	appCfg := &runner.AppBuilderConfig{
