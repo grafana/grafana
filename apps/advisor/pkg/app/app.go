@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
@@ -48,8 +49,10 @@ func New(cfg app.Config) (app.App, error) {
 		Name:       "advisor",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
-				log.WithContext(ctx).Error("Informer processing error", "error", err)
+			InformerOptions: operator.InformerOptions{
+				ErrorHandler: func(ctx context.Context, err error) {
+					log.WithContext(ctx).Error("Informer processing error", "error", err)
+				},
 			},
 		},
 		ManagedKinds: []simple.AppManagedKind{
@@ -66,12 +69,12 @@ func New(cfg app.Config) (app.App, error) {
 								go func() {
 									logger := log.WithContext(ctx).With("check", check.ID())
 									logger.Debug("Processing check", "namespace", req.Object.GetNamespace())
-									requester, err := identity.GetRequester(ctx)
+									orgID, err := getOrgIDFromNamespace(req.Object.GetNamespace())
 									if err != nil {
-										logger.Error("Error getting requester", "error", err)
+										logger.Error("Error getting org ID from namespace", "error", err)
 										return
 									}
-									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), requester.GetOrgID())
+									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), orgID)
 									err = processCheck(ctx, logger, client, typesClient, req.Object, check)
 									if err != nil {
 										logger.Error("Error processing check", "error", err)
@@ -82,12 +85,12 @@ func New(cfg app.Config) (app.App, error) {
 								go func() {
 									logger := log.WithContext(ctx).With("check", check.ID())
 									logger.Debug("Updating check", "namespace", req.Object.GetNamespace(), "name", req.Object.GetName())
-									requester, err := identity.GetRequester(ctx)
+									orgID, err := getOrgIDFromNamespace(req.Object.GetNamespace())
 									if err != nil {
-										logger.Error("Error getting requester", "error", err)
+										logger.Error("Error getting org ID from namespace", "error", err)
 										return
 									}
-									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), requester.GetOrgID())
+									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), orgID)
 									err = processCheckRetry(ctx, logger, client, typesClient, req.Object, check)
 									if err != nil {
 										logger.Error("Error processing check retry", "error", err)

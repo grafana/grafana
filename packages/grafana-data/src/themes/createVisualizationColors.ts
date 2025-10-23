@@ -261,7 +261,7 @@ function getClassicPalette() {
 
   return [
     'green',
-    'yellow',
+    'semi-dark-yellow',
     'blue',
     'orange',
     'red',

@@ -310,6 +310,7 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 			continue
 		}
 		dedupMap[cmd.Permissions[i]] = true
+		cmd.Permissions[i].Kind, cmd.Permissions[i].Attribute, cmd.Permissions[i].Identifier = SplitScope(cmd.Permissions[i].Scope)
 		dedup = append(dedup, cmd.Permissions[i])
 	}
 	cmd.Permissions = dedup
@@ -327,12 +328,6 @@ const (
 	GeneralFolderUID = "general"
 	K6FolderUID      = "k6-app"
 	RoleGrafanaAdmin = "Grafana Admin"
-
-	// Permission actions
-
-	ActionAPIKeyRead   = "apikeys:read"
-	ActionAPIKeyCreate = "apikeys:create"
-	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
 	ActionUsersRead  = "users:read"
@@ -391,9 +386,6 @@ const (
 	// Global Scopes
 	ScopeGlobalUsersAll = "global.users:*"
 
-	// APIKeys scope
-	ScopeAPIKeysAll = "apikeys:*"
-
 	// Users scope
 	ScopeUsersAll    = "users:*"
 	ScopeUsersPrefix = "users:id:"
@@ -401,6 +393,7 @@ const (
 	// Settings scope
 	ScopeSettingsAll  = "settings:*"
 	ScopeSettingsSAML = "settings:auth.saml:*"
+	ScopeSettingsSCIM = "settings:auth.scim:*"
 
 	// Team related actions
 	ActionTeamsCreate           = "teams:create"
@@ -586,9 +579,6 @@ var OrgsCreateAccessEvaluator = EvalAll(
 	EvalPermission(ActionOrgsRead),
 	EvalPermission(ActionOrgsCreate),
 )
-
-// ApiKeyAccessEvaluator is used to protect the "Configuration > API keys" page access
-var ApiKeyAccessEvaluator = EvalPermission(ActionAPIKeyRead)
 
 type QueryWithOrg struct {
 	OrgId  *int64 `json:"orgId"`

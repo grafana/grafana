@@ -11,7 +11,7 @@ import {
 import type { AppPluginConfig } from '@grafana/runtime';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
-import { importAppPlugin } from './pluginLoader';
+import { pluginImporter } from './importer/pluginImporter';
 import { clearPreloadedPluginsCache, preloadPlugins } from './pluginPreloader';
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -26,12 +26,12 @@ jest.mock('app/features/plugins/pluginSettings', () => ({
   getPluginSettings: jest.fn(),
 }));
 
-jest.mock('./pluginLoader', () => ({
-  importAppPlugin: jest.fn(),
+jest.mock('./importer/pluginImporter', () => ({
+  pluginImporter: { importApp: jest.fn() },
 }));
 
 const getPluginSettingsMock = jest.mocked(getPluginSettings);
-const importAppPluginMock = jest.mocked(importAppPlugin);
+const importAppPluginMock = jest.mocked(pluginImporter.importApp);
 
 const createMockAppPluginConfig = (overrides: Partial<AppPluginConfig> = {}): AppPluginConfig => ({
   id: 'test-plugin',

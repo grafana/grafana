@@ -3549,52 +3549,6 @@
         }
       }
     },
-    "/dashboards/id/{DashboardID}/restore": {
-      "post": {
-        "description": "Please refer to [updated API](#/dashboards/restoreDashboardVersionByUID) instead",
-        "tags": [
-          "dashboards",
-          "versions"
-        ],
-        "summary": "Restore a dashboard to a given dashboard version.",
-        "operationId": "restoreDashboardVersionByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/RestoreDashboardVersionCommand"
-            }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "DashboardID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/postDashboardResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/dashboards/id/{DashboardID}/versions": {
       "get": {
         "description": "Please refer to [updated API](#/dashboards/getDashboardVersionsByUID) instead",
@@ -3707,6 +3661,32 @@
           },
           "412": {
             "$ref": "#/responses/preconditionFailedError"
+          },
+          "422": {
+            "$ref": "#/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/interpolate": {
+      "post": {
+        "tags": [
+          "dashboards"
+        ],
+        "summary": "Interpolate dashboard. This is an experimental endpoint under dashboardLibrary FF and is subject to change.",
+        "operationId": "interpolateDashboard",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/interpolateDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
           },
           "422": {
             "$ref": "#/responses/unprocessableEntityError"
@@ -4112,6 +4092,9 @@
         "responses": {
           "200": {
             "$ref": "#/responses/postDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -12665,27 +12648,6 @@
         }
       }
     },
-    "AddAPIKeyCommand": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "role": {
-          "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
-        },
-        "secondsToLive": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "AddDataSourceCommand": {
       "description": "Also acts as api DTO",
       "type": "object",
@@ -15334,6 +15296,20 @@
         }
       }
     },
+    "DashboardVersionResponseMeta": {
+      "type": "object",
+      "properties": {
+        "continueToken": {
+          "type": "string"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardVersionMeta"
+          }
+        }
+      }
+    },
     "DataLink": {
       "description": "DataLink define what",
       "type": "object",
@@ -17088,6 +17064,9 @@
     "Hit": {
       "type": "object",
       "properties": {
+        "description": {
+          "type": "string"
+        },
         "folderId": {
           "type": "integer",
           "format": "int64"
@@ -22034,6 +22013,9 @@
         "teamUID": {
           "type": "string"
         },
+        "uid": {
+          "type": "string"
+        },
         "userId": {
           "type": "integer",
           "format": "int64"
@@ -24552,10 +24534,7 @@
     "dashboardVersionsResponse": {
       "description": "(empty)",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/DashboardVersionMeta"
-        }
+        "$ref": "#/definitions/DashboardVersionResponseMeta"
       }
     },
     "deleteCorrelationResponse": {
@@ -25199,6 +25178,10 @@
       "schema": {
         "$ref": "#/definitions/publicError"
       }
+    },
+    "interpolateDashboardResponse": {
+      "description": "(empty)",
+      "schema": {}
     },
     "jwksResponse": {
       "description": "(empty)",

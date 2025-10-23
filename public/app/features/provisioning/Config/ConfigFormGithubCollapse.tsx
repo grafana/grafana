@@ -2,8 +2,9 @@ import { UseFormRegister } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Checkbox, ControlledCollapse, Field, Text, TextLink } from '@grafana/ui';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { checkImageRenderer, checkPublicAccess } from '../GettingStarted/features';
+import { checkImageRenderer, checkPublicAccess, checkImageRenderingAllowed } from '../GettingStarted/features';
 import { GETTING_STARTED_URL } from '../constants';
 import { RepositoryFormData } from '../types';
 
@@ -12,41 +13,45 @@ export interface ConfigFormGithubCollapseProps {
 }
 
 export function ConfigFormGithubCollapse({ register }: ConfigFormGithubCollapseProps) {
+  const settings = useGetFrontendSettingsQuery();
   const isPublic = checkPublicAccess();
   const hasImageRenderer = checkImageRenderer();
+  const imageRenderingAllowed = checkImageRenderingAllowed(settings.data);
 
   return (
     <ControlledCollapse
       label={t('provisioning.config-form-github-collapse.label-git-hub-features', 'GitHub features')}
       isOpen={true}
     >
-      <Field>
-        <Checkbox
-          disabled={!hasImageRenderer || !isPublic}
-          label={t('provisioning.finish-step.label-enable-previews', 'Enable dashboard previews in pull requests')}
-          description={
-            <>
-              <Trans i18nKey="provisioning.finish-step.description-enable-previews">
-                Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be
-                shared in your Git repository and visible to anyone with repository access.
-              </Trans>{' '}
-              <Text italic>
-                <Trans i18nKey="provisioning.finish-step.description-image-rendering">
-                  Requires image rendering.{' '}
-                  <TextLink
-                    variant="bodySmall"
-                    external
-                    href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-                  >
-                    Set up image rendering
-                  </TextLink>
-                </Trans>
-              </Text>
-            </>
-          }
-          {...register('generateDashboardPreviews')}
-        />
-      </Field>
+      {imageRenderingAllowed && (
+        <Field>
+          <Checkbox
+            disabled={!hasImageRenderer || !isPublic}
+            label={t('provisioning.finish-step.label-enable-previews', 'Enable dashboard previews in pull requests')}
+            description={
+              <>
+                <Trans i18nKey="provisioning.finish-step.description-enable-previews">
+                  Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be
+                  shared in your Git repository and visible to anyone with repository access.
+                </Trans>{' '}
+                <Text italic>
+                  <Trans i18nKey="provisioning.finish-step.description-image-rendering">
+                    Requires image rendering.{' '}
+                    <TextLink
+                      variant="bodySmall"
+                      external
+                      href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+                    >
+                      Set up image rendering
+                    </TextLink>
+                  </Trans>
+                </Text>
+              </>
+            }
+            {...register('generateDashboardPreviews')}
+          />
+        </Field>
+      )}
 
       {!isPublic && (
         <Field label={t('provisioning.config-form-github-collapse.label-realtime-feedback', 'Realtime feedback')}>

@@ -1,10 +1,18 @@
 import { css } from '@emotion/css';
-import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
+import { autoUpdate, useFloating } from '@floating-ui/react';
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
-import { FieldValidationMessage, Input, Portal, ScrollContainer, TextArea, useTheme2 } from '@grafana/ui';
+import {
+  FieldValidationMessage,
+  floatingUtils,
+  Input,
+  Portal,
+  ScrollContainer,
+  TextArea,
+  useTheme2,
+} from '@grafana/ui';
 import { DataLinkSuggestions } from '@grafana/ui/internal';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
@@ -64,6 +72,7 @@ export const SuggestionsInput = ({
   const [scrollTop, setScrollTop] = useState(0);
   const [inputHeight, setInputHeight] = useState<number>(0);
   const [startPos, setStartPos] = useState<number>(0);
+  const placement = 'bottom-start';
 
   const theme = useTheme2();
   const styles = getStyles(theme, inputHeight);
@@ -75,19 +84,11 @@ export const SuggestionsInput = ({
   }, [scrollTop]);
 
   // the order of middleware is important!
-  const middleware = [
-    flip({
-      fallbackAxisSideDirection: 'start',
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
-      boundary: document.body,
-    }),
-    shift(),
-  ];
+  const middleware = floatingUtils.getPositioningMiddleware(placement);
 
   const { refs, floatingStyles } = useFloating({
     open: showingSuggestions,
-    placement: 'bottom-start',
+    placement,
     onOpenChange: setShowingSuggestions,
     middleware,
     whileElementsMounted: autoUpdate,

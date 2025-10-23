@@ -3,15 +3,13 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
 export const getModalStyles = (theme: GrafanaTheme2) => {
-  const borderRadius = theme.shape.radius.default;
-
   return {
     modal: css({
       position: 'fixed',
       zIndex: theme.zIndex.modal,
       background: theme.colors.background.primary,
       boxShadow: theme.shadows.z3,
-      borderRadius,
+      borderRadius: theme.shape.radius.lg,
       border: `1px solid ${theme.colors.border.weak}`,
       backgroundClip: 'padding-box',
       outline: 'none',
@@ -48,6 +46,9 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       minHeight: '42px',
       margin: theme.spacing(1, 2, 0, 2),
+      [theme.breakpoints.down('sm')]: {
+        margin: theme.spacing(0, 1, 0, 1),
+      },
     }),
     modalHeaderWithTabs: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,
@@ -77,11 +78,22 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
     }),
     modalContent: css({
       overflow: 'auto',
-      padding: theme.spacing(3),
+      padding: theme.spacing(3, 3, 0, 3),
+      marginBottom: theme.spacing(3),
+      scrollbarWidth: 'thin',
       width: '100%',
+
+      [theme.breakpoints.down('sm')]: {
+        padding: theme.spacing(1, 2, 0, 2),
+        marginBottom: theme.spacing(2),
+      },
     }),
     modalButtonRow: css({
-      paddingTop: theme.spacing(3),
+      background: theme.colors.background.primary,
+      position: 'sticky',
+      bottom: 0,
+      paddingTop: theme.spacing(2),
+      zIndex: 1,
     }),
   };
 };

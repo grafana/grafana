@@ -337,7 +337,6 @@ describe('pluginImporter', () => {
       expect(logSpy).toHaveBeenCalledWith(`Retrieving plugin from cache`, {
         expectedHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         loadingStrategy: 'fetch',
-        newPluginLoadingEnabled: 'false',
         path: 'public/plugins/test-plugin/module.js',
         pluginId: 'test-plugin',
         pluginVersion: '1.0.0',
@@ -368,7 +367,6 @@ describe('pluginImporter', () => {
       expect(logSpy).toHaveBeenCalledWith(`Retrieving plugin from inflight plugin load request`, {
         expectedHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         loadingStrategy: 'fetch',
-        newPluginLoadingEnabled: 'false',
         path: 'public/plugins/test-plugin/module.js',
         pluginId: 'test-plugin',
         pluginVersion: '1.0.0',

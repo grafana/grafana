@@ -152,6 +152,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 						}
 					}
 				}
+				connectLogger.Debug("responder sending status code", "statusCode", statusCode)
 			},
 
 			func(err error) {
@@ -276,7 +277,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	headers := ExtractKnownHeaders(httpreq.Header)
 
-	instance, err := b.instanceProvider.GetInstance(ctx, headers)
+	instance, err := b.instanceProvider.GetInstance(ctx, connectLogger, headers)
 	if err != nil {
 		connectLogger.Error("failed to get instance configuration settings", "err", err)
 		responder.Error(err)
@@ -285,7 +286,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	instanceConfig := instance.GetSettings()
 
-	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger)
+	dsQuerierLoggerWithSlug := instance.GetLogger()
 
 	qsDsClientBuilder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(
 		instance,

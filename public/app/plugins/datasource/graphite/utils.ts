@@ -25,3 +25,8 @@ export function reduceError(error: any) {
 export function isGraphiteParserError(e: unknown): e is GraphiteParserError {
   return typeof e === 'object' && e !== null && 'message' in e && 'pos' in e;
 }
+
+export const arrayMove = <T>(array: T[], fromIndex: number, toIndex: number): T[] => {
+  array.splice(toIndex, 0, array.splice(fromIndex, 1)[0]);
+  return array;
+};

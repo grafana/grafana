@@ -413,8 +413,11 @@
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "ステップパラメーターの下限を設定",
+        "aria-label-exemplars": "",
+        "aria-label-format": "",
+        "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "解像度を選択",
+        "aria-label-type": "",
         "format-options": {
           "label-heatmap": "ヒートマップ",
           "label-table": "テーブル",
@@ -438,6 +441,7 @@
         "title-parsing-error-switch-builder": "解析エラー: ビルダーモードに切り替えますか？"
       },
       "prom-query-legend-editor": {
+        "aria-label-legend": "",
         "label-legend": "凡例",
         "placeholder-select-legend-mode": "凡例モードを選択",
         "tooltip-legend": "系列名の上書きまたはテンプレート。例: {{templateExample}}は{{labelName}}のラベル値に置き換えられます。"
@@ -482,11 +486,6 @@
         "message-no-metrics-found": "データソース内にメトリックが見つかりません。",
         "name": "名前",
         "type": "種類"
-      },
-      "update-function-args": {
-        "text": {
-          "query-parsing-is-ambiguous": "クエリ解析が曖昧です。"
-        }
       }
     }
   }

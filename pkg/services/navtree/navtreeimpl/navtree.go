@@ -59,7 +59,8 @@ type NavigationAppConfig struct {
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
 	features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
-	license licensing.Licensing, authnService authn.Service) navtree.Service {
+	license licensing.Licensing, authnService authn.Service,
+) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
@@ -187,8 +188,9 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
 	}
 
-	enabled := openfeature.GetApiInstance().GetClient().Boolean(ctx, featuremgmt.FlagPinNavItems, true, openfeature.TransactionContext(ctx))
-	if enabled && c.IsSignedIn {
+	flagDetails, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, featuremgmt.FlagPinNavItems, true, openfeature.TransactionContext(ctx))
+	s.log.Debug("flag evaluation: ", "flagDetails", flagDetails, "err", err)
+	if flagDetails.Value && c.IsSignedIn {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Bookmarks",
 			Id:             navtree.NavIDBookmarks,
@@ -243,9 +245,9 @@ func isSupportBundlesEnabled(s *ServiceImpl) bool {
 	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
 }
 
+// addHelpLinks adds a help menu item to the navigation bar.
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) {
 	if s.cfg.HelpEnabled {
-		// The version subtitle is set later by NavTree.ApplyHelpVersion
 		helpNode := &navtree.NavLink{
 			Text:       "Help",
 			Id:         "help",
@@ -257,6 +259,16 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 
 		treeRoot.AddSection(helpNode)
 
+		ctx := c.Req.Context()
+		// The interactive learning plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
+		// Support both until that migration is complete.
+		_, oldInteractiveLearningPluginInstalled := s.pluginStore.Plugin(ctx, "grafana-grafanadocsplugin-app")
+		_, newInteractiveLearningPluginInstalled := s.pluginStore.Plugin(ctx, "grafana-pathfinder-app")
+		if oldInteractiveLearningPluginInstalled || newInteractiveLearningPluginInstalled {
+			// Add a custom property to indicate this should open the interactive learning plugin if available.
+			helpNode.HideFromTabs = true
+		}
+
 		hasAccess := ac.HasAccess(s.accessControl, c)
 		supportBundleAccess := ac.EvalAny(
 			ac.EvalPermission(supportbundlesimpl.ActionRead),
@@ -267,7 +279,7 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 			supportBundleNode := &navtree.NavLink{
 				Text:       "Support bundles",
 				Id:         "support-bundles",
-				Url:        "/support-bundles",
+				Url:        s.cfg.AppSubURL + "/support-bundles",
 				Icon:       "wrench",
 				SortWeight: navtree.WeightHelp,
 			}

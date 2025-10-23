@@ -7,6 +7,7 @@ import (
 	"maps"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -26,7 +27,7 @@ func IntegrationToPostableGrafanaReceiver(integration *models.Integration) (*api
 	postable := &apimodels.PostableGrafanaReceiver{
 		UID:                   integration.UID,
 		Name:                  integration.Name,
-		Type:                  integration.Config.Type,
+		Type:                  string(integration.Config.Type()),
 		DisableResolveMessage: integration.DisableResolveMessage,
 		SecureSettings:        maps.Clone(integration.SecureSettings),
 	}
@@ -65,19 +66,7 @@ func ReceiverToPostableApiReceiver(r *models.Receiver) (*apimodels.PostableApiRe
 	}, nil
 }
 
-func PostableApiReceiversToReceivers(postables []*apimodels.PostableApiReceiver, storedProvenances map[string]models.Provenance) ([]*models.Receiver, error) {
-	receivers := make([]*models.Receiver, 0, len(postables))
-	for _, postable := range postables {
-		r, err := PostableApiReceiverToReceiver(postable, GetReceiverProvenance(storedProvenances, postable))
-		if err != nil {
-			return nil, err
-		}
-		receivers = append(receivers, r)
-	}
-	return receivers, nil
-}
-
-func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, provenance models.Provenance) (*models.Receiver, error) {
+func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, provenance models.Provenance, origin models.ResourceOrigin) (*models.Receiver, error) {
 	integrations, err := PostableGrafanaReceiversToIntegrations(postable.GrafanaManagedReceivers)
 	if err != nil {
 		return nil, err
@@ -87,13 +76,18 @@ func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, prov
 		Name:         postable.GetName(),
 		Integrations: integrations,
 		Provenance:   provenance,
+		Origin:       origin,
 	}
 	r.Version = r.Fingerprint()
 	return r, nil
 }
 
 // GetReceiverProvenance determines the provenance of a definitions.PostableApiReceiver based on the provenance of its integrations.
-func GetReceiverProvenance(storedProvenances map[string]models.Provenance, r *apimodels.PostableApiReceiver) models.Provenance {
+func GetReceiverProvenance(storedProvenances map[string]models.Provenance, r *apimodels.PostableApiReceiver, origin models.ResourceOrigin) models.Provenance {
+	if origin == models.ResourceOriginImported {
+		return models.ProvenanceConvertedPrometheus
+	}
+
 	if len(r.GrafanaManagedReceivers) == 0 || len(storedProvenances) == 0 {
 		return models.ProvenanceNone
 	}
@@ -124,9 +118,13 @@ func PostableGrafanaReceiversToIntegrations(postables []*apimodels.PostableGrafa
 }
 
 func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) (*models.Integration, error) {
-	config, err := models.IntegrationConfigFromType(p.Type, nil)
+	integrationType, err := alertingNotify.IntegrationTypeFromString(p.Type)
 	if err != nil {
 		return nil, err
+	}
+	config, ok := alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+	if !ok {
+		return nil, fmt.Errorf("integration type [%s] does not have schema of version %s", integrationType, schema.V1)
 	}
 	integration := &models.Integration{
 		UID:                   p.UID,
@@ -139,7 +137,7 @@ func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) 
 
 	if p.Settings != nil {
 		if err := json.Unmarshal(p.Settings, &integration.Settings); err != nil {
-			return nil, fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", integration.Config.Type, p.Name, err)
+			return nil, fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", integration.Config.Type(), p.Name, err)
 		}
 	}
 

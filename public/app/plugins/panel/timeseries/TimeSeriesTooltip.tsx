@@ -1,7 +1,15 @@
 import { ReactNode } from 'react';
 
-import { DataFrame, Field, FieldType, formattedValueToString, InterpolateFunction, LinkModel } from '@grafana/data';
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
+import {
+  DataFrame,
+  Field,
+  FieldType,
+  formattedValueToString,
+  InterpolateFunction,
+  LinkModel,
+  usePluginContext,
+} from '@grafana/data';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -63,8 +71,8 @@ export const TimeSeriesTooltip = ({
   canExecuteActions,
   compareDiffMs,
 }: TimeSeriesTooltipProps) => {
+  const pluginContext = usePluginContext();
   const xField = series.fields[0];
-
   let xVal = xField.values[dataIdxs[0]!];
 
   if (compareDiffMs != null && xField.type === FieldType.time) {
@@ -92,8 +100,11 @@ export const TimeSeriesTooltip = ({
     const hasOneClickLink = dataLinks.some((dataLink) => dataLink.oneClick === true);
 
     if (isPinned || hasOneClickLink) {
+      const visualizationType = pluginContext?.meta?.id ?? 'timeseries';
       const dataIdx = dataIdxs[seriesIdx]!;
-      const actions = canExecuteActions ? getFieldActions(series, field, replaceVariables, dataIdx) : [];
+      const actions = canExecuteActions
+        ? getFieldActions(series, field, replaceVariables, dataIdx, visualizationType)
+        : [];
 
       footer = (
         <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} adHocFilters={adHocFilters} />

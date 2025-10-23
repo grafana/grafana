@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
@@ -11,7 +13,7 @@ export interface Props {
   folder?: FolderDTO | DashboardViewItem;
 }
 
-export function FolderRepo({ folder }: Props) {
+export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   // skip rendering if:
   // folder is not present
   // folder have parentUID
@@ -47,7 +49,7 @@ export function FolderRepo({ folder }: Props) {
       />
     </Stack>
   );
-}
+});
 
 function getShouldSkipRender(folder: FolderDTO | DashboardViewItem | undefined, isProvisionedInstance?: boolean) {
   // Skip render if parentUID is present, then we should skip rendering. we only display icon for root folders

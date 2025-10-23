@@ -28,6 +28,7 @@ export const availableIconsIndex = {
   apps: true,
   'archive-alt': true,
   arrow: true,
+  'arrow-circle-right': true,
   'arrow-down': true,
   'arrow-from-right': true,
   'arrow-left': true,
@@ -69,7 +70,10 @@ export const availableIconsIndex = {
   'clipboard-alt': true,
   'clock-nine': true,
   cloud: true,
+  'cloud-database-tree': true,
   'cloud-download': true,
+  'cloud-exclamation': true,
+  'cloud-info': true,
   'cloud-provider': true,
   'cloud-upload': true,
   'code-branch': true,
@@ -98,6 +102,7 @@ export const availableIconsIndex = {
   'download-alt': true,
   draggabledots: true,
   drilldown: true,
+  'adaptive-telemetry': true,
   edit: true,
   'ellipsis-v': true,
   enter: true,
@@ -176,6 +181,7 @@ export const availableIconsIndex = {
   'key-skeleton-alt': true,
   keyboard: true,
   kubernetes: true,
+  'laptop-cloud': true,
   'layer-group': true,
   'layers-alt': true,
   layers: true,
@@ -279,6 +285,7 @@ export const availableIconsIndex = {
   'ai-sparkle': true,
   bitbucket: true,
   git: true,
+  'tachometer-fast': true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;
