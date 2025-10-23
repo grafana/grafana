@@ -38,17 +38,17 @@ refs:
       destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
   drilldown:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION/explore/simplified-exploration/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/simplified-exploration/
   add-data-source:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION/datasources/#add-a-data-source
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#add-a-data-source
   lbac:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION/administration/data-source-management/teamlbac
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/label-access-policies
 ---
