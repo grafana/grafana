@@ -1194,11 +1194,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/AccessControl/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/core/components/DynamicImports/SafeDynamicImport.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -1460,11 +1455,6 @@
   "public/app/core/utils/richHistory.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/core/utils/richHistory.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 3
     }
   },
   "public/app/core/utils/ticks.ts": {
@@ -1993,11 +1983,6 @@
       "count": 1
     }
   },
-  "public/app/features/auth-config/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/auth-config/utils/data.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2038,21 +2023,6 @@
       "count": 1
     }
   },
-  "public/app/features/connections/components/ConnectionsRedirectNotice/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/features/connections/tabs/ConnectData/CardGrid/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/features/connections/tabs/ConnectData/CategoryHeader/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/connections/tabs/ConnectData/ConnectData.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2062,21 +2032,6 @@
     },
     "react/no-unescaped-entities": {
       "count": 2
-    }
-  },
-  "public/app/features/connections/tabs/ConnectData/NoAccessModal/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/features/connections/tabs/ConnectData/Search/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/features/connections/tabs/ConnectData/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
     }
   },
   "public/app/features/correlations/CorrelationsPage.tsx": {
@@ -2425,11 +2380,6 @@
       "count": 3
     }
   },
-  "public/app/features/dashboard/components/AddLibraryPanelWidget/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/AnnotationSettings/AnnotationSettingsEdit.tsx": {
     "no-restricted-syntax": {
       "count": 7
@@ -2448,18 +2398,8 @@
       "count": 7
     }
   },
-  "public/app/features/dashboard/components/DashExportModal/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/DashNav/index.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -2486,11 +2426,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/DashboardRow/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/DashboardSettings/AutoRefreshIntervals.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -2511,11 +2446,6 @@
   },
   "public/app/features/dashboard/components/DashboardSettings/VersionsSettings.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/DashboardSettings/index.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -2852,11 +2782,6 @@
       "count": 2
     }
   },
-  "public/app/features/datasources/components/BasicSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "public/app/features/datasources/components/ButtonRow.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -3042,11 +2967,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TracePageHeader/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/ListView/index.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -3087,11 +3007,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/VirtualizedTraceView.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -3102,11 +3017,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/utils.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/common/SearchBarInput.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -3114,11 +3024,6 @@
   },
   "public/app/features/explore/TraceView/components/demo/trace-generators.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/model/ddg/types.tsx": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -3343,11 +3248,6 @@
       "count": 4
     }
   },
-  "public/app/features/migrate-to-cloud/api/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/migrate-to-cloud/cloud/MigrationTokenPane/CreateTokenModal.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -3428,11 +3328,6 @@
   },
   "public/app/features/plugins/admin/components/GetStartedWithPlugin/GetStartedWithDataSource.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/plugins/admin/components/GetStartedWithPlugin/index.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -3952,11 +3847,6 @@
       "count": 1
     }
   },
-  "public/app/features/variables/pickers/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/pickers/shared/VariableInput.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -4089,11 +3979,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/ArgQueryEditor/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/AppRegistrationCredentials.tsx": {
     "no-restricted-syntax": {
       "count": 5
@@ -4129,38 +4014,13 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/LogsQueryEditor/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/components/QueryEditor/QueryEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/QueryEditor/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/components/ResourceField/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/components/ResourcePicker/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/components/TracesQueryEditor/Filters.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/components/TracesQueryEditor/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -4263,18 +4123,8 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/SQLBuilderEditor/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/cloudwatch/components/shared/LogGroups/LegacyLogGroupNamesSelection.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloudwatch/components/shared/MetricStatEditor/index.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -5110,11 +4960,6 @@
   },
   "public/app/plugins/panel/nodeGraph/ViewControls.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/nodeGraph/index.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
