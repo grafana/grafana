@@ -68,7 +68,7 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
 
       Use the [PKCS #8](https://en.wikipedia.org/wiki/PKCS_8) format to issue the private key.
 
-      For more information, refer to an [example on how to generate SAML credentials](../configure-saml-request-signing/#example-of-private-key-generation-for-saml-authentication).
+      For more information, refer to an [example on how to generate SAML credentials](../configure-saml-signing-encryption/#example-of-private-key-generation-for-saml-authentication).
 
       Alternatively, you can generate a new private key and certificate pair directly from the UI. Click on the `Generate key and certificate` button to open a form where you enter some information you want to be embedded into the new certificate.
 
