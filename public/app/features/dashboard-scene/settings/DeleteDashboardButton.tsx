@@ -80,8 +80,9 @@ export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: Del
             <>
               <Text element="p">
                 <Trans i18nKey="dashboard-settings.delete-modal-restore-dashboards-text">
-                  This action will mark the dashboard for deletion in 30 days. Your organization administrator can
-                  restore it anytime before the 30 days expire.
+                  This action will delete the dashboard. Deleted dashboards will be kept in the history for up to 12
+                  months and can be restored by your organization administrator during that time. The history is limited
+                  to 1000 dashboards — older ones may be removed sooner if the limit is reached.
                 </Trans>
               </Text>
               <Space v={1} />
