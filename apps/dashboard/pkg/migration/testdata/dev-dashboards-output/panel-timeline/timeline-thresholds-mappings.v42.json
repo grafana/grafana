@@ -1071,6 +1071,7 @@
       "type": "state-timeline"
     }
   ],
+  "preload": false,
   "refresh": "",
   "schemaVersion": 42,
   "tags": [

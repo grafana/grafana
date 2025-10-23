@@ -1,4 +1,5 @@
 import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
+import { LineInterpolation } from '@grafana/ui';
 
 import { prepareGraphableFields } from './utils';
 
@@ -141,5 +142,40 @@ describe('prepare timeseries graph', () => {
       ]
     `);
     expect(frames![0].length).toEqual(6);
+  });
+
+  describe('boolean fields', () => {
+    it('will set line interpolation to an appropriate mode for boolean fields', () => {
+      const df = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'a', type: FieldType.boolean, values: [true, false, true] },
+        ],
+      });
+
+      const frames = prepareGraphableFields([df], createTheme());
+      const field = frames![0].fields.find((f) => f.name === 'a');
+      expect(field?.config.custom.lineInterpolation).toEqual(LineInterpolation.StepAfter);
+      expect(df.fields[1].config?.custom).toBeUndefined();
+    });
+
+    // #112194 - mutating this value directly can cause a memory leak
+    it('does not mutate the underlying lineInterpolation value', () => {
+      const df = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            name: 'a',
+            type: FieldType.boolean,
+            values: [true, false, true],
+            config: { custom: { lineInterpolation: LineInterpolation.Smooth } },
+          },
+        ],
+      });
+
+      const frames = prepareGraphableFields([df], createTheme());
+      expect(df.fields[1].config.custom.lineInterpolation).toEqual(LineInterpolation.Smooth);
+      expect(frames![0].fields[1].config.custom.lineInterpolation).toEqual(LineInterpolation.StepAfter);
+    });
   });
 });

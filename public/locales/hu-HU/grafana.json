@@ -1655,6 +1655,15 @@
     "inspector-yaml-tab": {
       "apply": "Alkalmaz"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2314,6 +2323,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Adatforrás"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Kifejezés"
     },
@@ -2559,6 +2571,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Riasztási szabály lett hozzáadva vagy frissítve. Akár egy percig is eltarthat, amíg a módosítások megjelennek a Riasztási szabályok listanézetben.",
         "alert-title": "Frissítés folyamatban"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Valami hiba történt ennek a riasztási szabálynak az értékelése során"
     },
@@ -2930,10 +2946,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "Kifejezés hozzáadása"
@@ -3664,7 +3692,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "Betűrendben (A–Z)",
-        "alphabetically-za": "Betűrendben (Z–A)"
+        "alphabetically-za": "Betűrendben (Z–A)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -4496,6 +4526,8 @@
     },
     "canvas-actions": {
       "add-panel": "Panel hozzáadása",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Csoportosítás sorba",
       "group-into-tab": "Csoportosítás lapra",
       "group-panels": "Panelek csoportosítása",
@@ -4504,7 +4536,9 @@
       "paste-panel": "Panel beillesztése",
       "paste-row": "Sor beillesztése",
       "paste-tab": "Lap beillesztése",
-      "un-group-panels": "Csoport szétbontása"
+      "un-group-panels": "Csoport szétbontása",
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4604,7 +4638,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "{{dashboardName}} irányítópult"
+      "aria-label-dashboard-name": "{{dashboardName}} irányítópult",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Irányítópult betöltésének megszakítása"
@@ -4746,8 +4781,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Értékek vesszővel elválasztva",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "",
+          "modal-title": "",
+          "values": "Értékek vesszővel elválasztva"
         },
         "datasource-options": {
           "name-filter": "Névszűrő",
@@ -4796,7 +4832,11 @@
       "add-visualization-header": "Indítsa el az új irányítópultot vizualizáció hozzáadásával",
       "import-a-dashboard-body": "Irányítópultok importálása fájlokból vagy a <2>grafana.com</2> webhelyről.",
       "import-a-dashboard-header": "Irányítópult importálása",
-      "import-dashboard-button": "Irányítópult importálása"
+      "import-dashboard-button": "Irányítópult importálása",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Az irányítópult betöltése sikertelen volt"
@@ -5009,6 +5049,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Másolás",
         "copy-or-duplicate": "Másolás vagy duplikálás",
@@ -5018,7 +5059,10 @@
         "group-layout-disabled": "Ezen a szinten nincsenek csoportok",
         "panel-layout": "Panel elrendezése",
         "panel-layout-disabled": "Jelöljön ki egy sort vagy lapot a panel elrendezési beállításainak módosításához"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5167,10 +5211,15 @@
       "title-row-options": "Sorbeállítások"
     },
     "rows-layout": {
+      "cancel": "",
+      "convert-to": "",
       "delete-row-text": "A sor törlésével az összes panelt is eltávolítja. Biztosan folytatja?",
       "delete-row-title": "Törli a sort?",
       "delete-row-yes": "Törlés",
       "description": "Összecsukható panelcsoportok fejlécekkel",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Sorfejléc csak szerkesztési módban látható",
       "name": "Sorok",
       "row": {
@@ -5200,7 +5249,9 @@
       },
       "row-warning": {
         "title-not-unique": "Ez a cím nem egyedi"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Irányítópult elmentve"
@@ -5290,6 +5341,9 @@
       "delete-tab-title": "Törli a lapot?",
       "delete-tab-yes": "Törlés",
       "description": "A paneleket vízszintes lapokba rendezheti",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Lapok",
       "tab": {
         "new": "Új lap",
@@ -6242,6 +6296,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "Erre a változóra más változó vagy irányítópult nem hivatkozik.",
       "content-variable-referenced-other-variables-dashboard": "Erre a változóra más változó vagy irányítópult hivatkozik."
     },
+    "variable-controls": {
+      "add-variable": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Változószerkesztő űrlap",
       "back-to-list": "Vissza a listához",
@@ -7099,9 +7156,6 @@
       "title-failed-sample-query": "A lekérdezés naplómintájának betöltése nem sikerült",
       "tooltip": "A vizualizált metrikákhoz hozzájáruló naplósorok megjelenítése"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "A(z) {{labelName}} a naplósorok {{percentage}}%-ában jelenik meg"
-    },
     "logs-table-empty-fields": {
       "no-fields": "Nincsenek mezők"
     },
@@ -7109,10 +7163,6 @@
       "fields": "Mezők",
       "reset": "Visszaállítás",
       "selected-fields": "Kijelölt mezők"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "Húzza át az ikont",
-      "title-drag-and-drop-to-reorder": "Húzza át az átrendezéshez"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Lekérdezés kijelölése név alapján",
@@ -7631,6 +7681,7 @@
   },
   "gauge": {
     "category-gauge": "Mérőeszköz",
+    "category-radial-bar": "",
     "description-min-height": "Minimális sormagasság (vízszintes tájolás)",
     "description-min-width": "Minimális oszlopszélesség (függőleges tájolás)",
     "description-neutral": "Hagyja üresen, hogy a Min. értéket használja semleges pontként",
@@ -7646,7 +7697,8 @@
     "name-neutral": "Semleges",
     "name-show-threshold-labels": "Küszöbértékcímkék megjelenítése",
     "name-show-threshold-markers": "Küszöbértékjelölők megjelenítése",
-    "placeholder-neutral": "automatikus"
+    "placeholder-neutral": "automatikus",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Alkalmaz",
@@ -7947,6 +7999,52 @@
     "select-group": "Csoport kijelölése"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_one": "",
+        "lastNDays_other": "",
+        "lastNHours_one": "",
+        "lastNHours_other": "",
+        "lastNMinutes_one": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_one": "",
+        "lastNMonths_other": "",
+        "lastNYears_one": "",
+        "lastNYears_other": "",
+        "nextNDays_one": "",
+        "nextNDays_other": "",
+        "nextNHours_one": "",
+        "nextNHours_other": "",
+        "nextNMinutes_one": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_one": "",
+        "nextNMonths_other": "",
+        "nextNYears_one": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9050,6 +9148,8 @@
       "make-time-range-permanent": "Időtartomány abszolúttá/állandóvá tétele",
       "move-time-range-back": "Időtartomány mozgatása hátra",
       "move-time-range-forward": "Időtartomány mozgatása előre",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Keresés megnyitása",
       "open-share-embed-drawer": "Panel beágyazásának megosztása",
       "open-share-link-drawer": "Panelhivatkozás megosztása",
@@ -9480,6 +9580,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Vezérlők megjelenítése az utolsó vagy az első naplósorra ugráshoz és szűrés naplószint szerint",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -10698,11 +10807,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -11778,7 +11885,8 @@
       "button-cancelling": "Megszakítás…",
       "button-previous": "Előző",
       "button-submitting": "Küldés…",
-      "error-instance-repository-exists": "A példánytár már létezik"
+      "error-instance-repository-exists": "A példánytár már létezik",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12001,6 +12109,28 @@
       "show-response": "Válasz megjelenítése"
     },
     "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12632,6 +12762,10 @@
     "sql-suggestion-history": "SQL-javaslatok előzményei",
     "suggestions": "Javaslatok",
     "view-explanation": "Magyarázat megtekintése"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -14126,14 +14260,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Lehetőség hozzáadása",
-      "description": "Egyéni beállítások hozzáadása a lekérdezési eredmények mellett",
-      "label-placeholder": "címke megjelenítése",
-      "remove-option-button-label": "Opció eltávolítása",
-      "value-placeholder": "érték, alapértelmezett üres karakterlánc"
+      "description": "Egyéni beállítások hozzáadása a lekérdezési eredmények mellett"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "A statikus opciók rendezésének módja a lekérdezési eredményekkel"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Alapértelmezett érték",

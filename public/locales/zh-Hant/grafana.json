@@ -1650,6 +1650,15 @@
     "inspector-yaml-tab": {
       "apply": "套用"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2306,6 +2315,9 @@
     "rule-details-data-sources": {
       "label-data-source": "資料來源"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "表達式"
     },
@@ -2547,6 +2559,10 @@
       "prometheus-consistency-check": {
         "alert-message": "警報規則已新增或更新。變更可能需要一分鐘才會顯示在「警報規則」清單檢視中。",
         "alert-title": "更新進行中"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "評估此警報規則時發生錯誤"
     },
@@ -2918,10 +2934,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "新增表達式"
@@ -3644,7 +3672,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "按字母順序 (A–Z)",
-        "alphabetically-za": "按字母順序 (Z–A)"
+        "alphabetically-za": "按字母順序 (Z–A)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -4476,6 +4506,8 @@
     },
     "canvas-actions": {
       "add-panel": "新增面板",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "將群組分成列",
       "group-into-tab": "將群組分成分頁",
       "group-panels": "分組面板",
@@ -4484,7 +4516,9 @@
       "paste-panel": "貼上面板",
       "paste-row": "貼上列",
       "paste-tab": "貼上分頁",
-      "un-group-panels": "解散群組"
+      "un-group-panels": "解散群組",
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4584,7 +4618,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "「{{dashboardName}}」儀表板"
+      "aria-label-dashboard-name": "「{{dashboardName}}」儀表板",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "取消載入儀表板"
@@ -4726,8 +4761,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "以逗號分隔的值",
-          "values-placeholder": "1、10、mykey：myvalue、myvalue、轉義、值"
+          "close": "",
+          "modal-title": "",
+          "values": "以逗號分隔的值"
         },
         "datasource-options": {
           "name-filter": "名稱篩選",
@@ -4776,7 +4812,11 @@
       "add-visualization-header": "透過新增可視化來啟動您的新儀表板",
       "import-a-dashboard-body": "從檔案或 <2>grafana.com</2> 匯入儀表板。",
       "import-a-dashboard-header": "匯入儀表板",
-      "import-dashboard-button": "匯入儀表板"
+      "import-dashboard-button": "匯入儀表板",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "無法載入儀表板"
@@ -4989,6 +5029,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "複製",
         "copy-or-duplicate": "複製或重複",
@@ -4998,7 +5039,10 @@
         "group-layout-disabled": "此層級上不存在群組",
         "panel-layout": "面板版面配置",
         "panel-layout-disabled": "選擇一列或分頁以變更面板版面配置選項"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5146,10 +5190,15 @@
       "title-row-options": "列選項"
     },
     "rows-layout": {
+      "cancel": "",
+      "convert-to": "",
       "delete-row-text": "刪除此列也會移除所有面板。確定要繼續嗎？",
       "delete-row-title": "要刪除列嗎？",
       "delete-row-yes": "刪除",
       "description": "帶標題的可收闔面板群組",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "只有在編輯模式下才能看到列標題",
       "name": "列",
       "row": {
@@ -5179,7 +5228,9 @@
       },
       "row-warning": {
         "title-not-unique": "此標題不是唯一"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "儀表板已儲存"
@@ -5269,6 +5320,9 @@
       "delete-tab-title": "要刪除分頁嗎？",
       "delete-tab-yes": "刪除",
       "description": "將面板組織成橫向分頁",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "分頁",
       "tab": {
         "new": "新分頁",
@@ -6219,6 +6273,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "其他變數或儀表板參照不會使用此變數。",
       "content-variable-referenced-other-variables-dashboard": "其他變數或儀表板參照會使用此變數。"
     },
+    "variable-controls": {
+      "add-variable": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "變數編輯器表單",
       "back-to-list": "返回清單",
@@ -7076,9 +7133,6 @@
       "title-failed-sample-query": "無法載入此查詢的紀錄樣本",
       "tooltip": "顯示對可視化指標有貢獻的紀錄行"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} 出現在 {{percentage}}% 的紀錄行中"
-    },
     "logs-table-empty-fields": {
       "no-fields": "沒有欄位"
     },
@@ -7086,10 +7140,6 @@
       "fields": "欄位",
       "reset": "重設",
       "selected-fields": "選取的欄位"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "拖放圖示",
-      "title-drag-and-drop-to-reorder": "拖放以重新排序"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "按名稱選取查詢項目",
@@ -7608,6 +7658,7 @@
   },
   "gauge": {
     "category-gauge": "儀表",
+    "category-radial-bar": "",
     "description-min-height": "最小列高（橫向）",
     "description-min-width": "最小欄寬（縱向）",
     "description-neutral": "留空以使用最小值作為中性點",
@@ -7623,7 +7674,8 @@
     "name-neutral": "中性",
     "name-show-threshold-labels": "顯示閾值標籤",
     "name-show-threshold-markers": "顯示閾值標記",
-    "placeholder-neutral": "自動"
+    "placeholder-neutral": "自動",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "套用",
@@ -7924,6 +7976,42 @@
     "select-group": "選擇群組"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_other": "",
+        "lastNHours_other": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_other": "",
+        "lastNYears_other": "",
+        "nextNDays_other": "",
+        "nextNHours_other": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_other": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9027,6 +9115,8 @@
       "make-time-range-permanent": "將時間範圍設為絕對／永久",
       "move-time-range-back": "將時間範圍向後移動",
       "move-time-range-forward": "將時間範圍向前移動",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "開啟搜尋",
       "open-share-embed-drawer": "分享面板嵌入",
       "open-share-link-drawer": "分享面板連結",
@@ -9452,6 +9542,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "顯示控制項以跳至最後或第一個紀錄行，並按紀錄層級篩選",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -10664,11 +10763,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -11738,7 +11835,8 @@
       "button-cancelling": "正在取消…",
       "button-previous": "上一個",
       "button-submitting": "正在提交…",
-      "error-instance-repository-exists": "執行個體儲存庫已存在"
+      "error-instance-repository-exists": "執行個體儲存庫已存在",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -11960,6 +12058,28 @@
       "show-response": "顯示回應"
     },
     "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12588,6 +12708,10 @@
     "sql-suggestion-history": "SQL 建議歷史紀錄",
     "suggestions": "建議",
     "view-explanation": "檢視解釋"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -14081,14 +14205,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "新增選項",
-      "description": "除了查詢結果之外，還可新增自訂選項",
-      "label-placeholder": "顯示標籤",
-      "remove-option-button-label": "移除選項",
-      "value-placeholder": "值，預設空字串"
+      "description": "除了查詢結果之外，還可新增自訂選項"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "如何使用查詢結果對靜態選項進行排序"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "預設值",

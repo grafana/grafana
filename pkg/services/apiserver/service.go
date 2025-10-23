@@ -248,6 +248,10 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
 }
 
+func (s *service) RegisterAppInstaller(i appsdkapiserver.AppInstaller) {
+	s.appInstallers = append(s.appInstallers, i)
+}
+
 // nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
 	// Get the list of groups the server will support
@@ -354,6 +358,7 @@ func (s *service) start(ctx context.Context) error {
 		s.buildHandlerChainFuncFromBuilders,
 		groupVersions,
 		defGetters,
+		s.metrics,
 	)
 	if err != nil {
 		return err
