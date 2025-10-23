@@ -380,7 +380,6 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 	case admission.Create:
 		switch typedObj := a.GetObject().(type) {
 		case *iamv0.User:
-			// return user.ValidateOnCreate(ctx, b.clientGenerator, typedObj)
 			return user.ValidateOnCreate(ctx, b.userSearchClient, typedObj)
 		case *iamv0.ServiceAccount:
 			return serviceaccount.ValidateOnCreate(ctx, typedObj)
