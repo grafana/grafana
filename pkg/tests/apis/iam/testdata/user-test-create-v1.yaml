@@ -4,7 +4,7 @@ metadata:
   namespace: default
   name: testuser2
 spec:
-  name: Test User 2
+  title: Test User 2
   login: testuser2
   email: testuser2@example
   provisioned: false

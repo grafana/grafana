@@ -72,7 +72,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		createdSpec := created.Object["spec"].(map[string]interface{})
 		require.Equal(t, "testuser1@example123", createdSpec["email"])
 		require.Equal(t, "testuser1", createdSpec["login"])
-		require.Equal(t, "Test User 1", createdSpec["name"])
+		require.Equal(t, "Test User 1", createdSpec["title"])
 		require.Equal(t, false, createdSpec["provisioned"])
 
 		// Get the UID from created user for fetching
@@ -90,7 +90,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
 		require.Equal(t, "testuser1@example123", fetchedSpec["email"])
 		require.Equal(t, "testuser1", fetchedSpec["login"])
-		require.Equal(t, "Test User 1", fetchedSpec["name"])
+		require.Equal(t, "Test User 1", fetchedSpec["title"])
 		require.Equal(t, false, fetchedSpec["provisioned"])
 
 		// Verify metadata
@@ -127,7 +127,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 
 		// Modify the user spec
 		spec := userToUpdate.Object["spec"].(map[string]interface{})
-		spec["name"] = "Updated Test User"
+		spec["title"] = "Updated Test User"
 		spec["email"] = "updated.test.user@example"
 		userToUpdate.Object["spec"] = spec
 
@@ -138,14 +138,14 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 
 		// Verify the update response
 		updatedSpec := updated.Object["spec"].(map[string]interface{})
-		require.Equal(t, "Updated Test User", updatedSpec["name"])
+		require.Equal(t, "Updated Test User", updatedSpec["title"])
 		require.Equal(t, "updated.test.user@example", updatedSpec["email"])
 
 		// Fetch again to confirm
 		fetched, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
-		require.Equal(t, "Updated Test User", fetchedSpec["name"])
+		require.Equal(t, "Updated Test User", fetchedSpec["title"])
 		require.Equal(t, "updated.test.user@example", fetchedSpec["email"])
 
 		// Cleanup
@@ -351,7 +351,7 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 		userSpec := user.Object["spec"].(map[string]interface{})
 		require.Equal(t, "legacyuser3@example", userSpec["email"])
 		require.Equal(t, "legacyuser3", userSpec["login"])
-		require.Equal(t, "Legacy User 3", userSpec["name"])
+		require.Equal(t, "Legacy User 3", userSpec["title"])
 		require.Equal(t, false, userSpec["provisioned"])
 
 		// Verify metadata
