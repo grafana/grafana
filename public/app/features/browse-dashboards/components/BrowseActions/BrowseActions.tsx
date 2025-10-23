@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Stack } from '@grafana/ui';
+import { Button, Drawer, Stack, Text } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { BulkDeleteProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkDeleteProvisionedResource';
@@ -152,7 +152,12 @@ export function BrowseActions({ folderDTO }: Props) {
       {/* bulk delete */}
       {showBulkDeleteProvisionedResource && (
         <Drawer
-          title={t('browse-dashboards.action.bulk-delete-provisioned-resources', 'Bulk Delete Provisioned Resources')}
+          title={
+            // Heading levels should only increase by one (a11y)
+            <Text variant="h3" element="h2">
+              {t('browse-dashboards.action.bulk-delete-provisioned-resources', 'Bulk Delete Provisioned Resources')}
+            </Text>
+          }
           onClose={() => setShowBulkDeleteProvisionedResource(false)}
           size="md"
         >
@@ -169,7 +174,12 @@ export function BrowseActions({ folderDTO }: Props) {
       {/* bulk move */}
       {showBulkMoveProvisionedResource && (
         <Drawer
-          title={t('browse-dashboards.action.bulk-move-provisioned-resources', 'Bulk Move Provisioned Resources')}
+          title={
+            // Heading levels should only increase by one (a11y)
+            <Text variant="h3" element="h2">
+              {t('browse-dashboards.action.bulk-move-provisioned-resources', 'Bulk Move Provisioned Resources')}
+            </Text>
+          }
           onClose={() => setShowBulkMoveProvisionedResource(false)}
           size="md"
         >
