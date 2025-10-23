@@ -10,7 +10,7 @@ import (
 )
 
 func (b *APIBuilder) evalAllFlagsStatic(ctx context.Context, isAuthedUser bool, w http.ResponseWriter) {
-	_, span := tracer.Start(ctx, "ofrep.static.evalAllFlags")
+	_, span := tracing.Start(ctx, "ofrep.static.evalAllFlags")
 	defer span.End()
 
 	result, err := b.staticEvaluator.EvalAllFlags(ctx)
@@ -40,7 +40,7 @@ func (b *APIBuilder) evalAllFlagsStatic(ctx context.Context, isAuthedUser bool, 
 }
 
 func (b *APIBuilder) evalFlagStatic(ctx context.Context, flagKey string, w http.ResponseWriter) {
-	_, span := tracer.Start(ctx, "ofrep.static.evalFlag")
+	_, span := tracing.Start(ctx, "ofrep.static.evalFlag")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("flag_key", flagKey))
