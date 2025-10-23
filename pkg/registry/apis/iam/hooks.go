@@ -110,20 +110,20 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 		return
 	}
 
-	// Grab a ticket to write to Zanzana
-	// This limits the amount of concurrent connections to Zanzana
+	rp, ok := obj.(*iamv0.ResourcePermission)
+	if !ok {
+		b.logger.Error("failed to convert object to resourcePermission type", "object", obj)
+		return
+	}
+
 	resourceType := "resourcepermission"
 	operation := "create"
 
+	// Grab a ticket to write to Zanzana
+	// This limits the amount of concurrent connections to Zanzana
 	wait := time.Now()
 	b.zTickets <- true
 	hooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds()) // Record wait time
-
-	rp, ok := obj.(*iamv0.ResourcePermission)
-	if !ok {
-		<-b.zTickets
-		return
-	}
 
 	go func(rp *iamv0.ResourcePermission) {
 		start := time.Now()
@@ -203,20 +203,20 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionUpdate(obj r
 		return
 	}
 
-	// Grab a ticket to write to Zanzana
-	// This limits the amount of concurrent connections to Zanzana
+	rp, ok := obj.(*iamv0.ResourcePermission)
+	if !ok {
+		b.logger.Error("failed to convert object to resourcePermission type", "object", obj)
+		return
+	}
+
 	resourceType := "resourcepermission"
 	operation := "update"
 
+	// Grab a ticket to write to Zanzana
+	// This limits the amount of concurrent connections to Zanzana
 	wait := time.Now()
 	b.zTickets <- true
 	hooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds()) // Record wait time
-
-	rp, ok := obj.(*iamv0.ResourcePermission)
-	if !ok {
-		<-b.zTickets
-		return
-	}
 
 	go func(rp *iamv0.ResourcePermission) {
 		start := time.Now()
@@ -341,20 +341,20 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionDelete(obj r
 		return
 	}
 
-	// Grab a ticket to write to Zanzana
-	// This limits the amount of concurrent connections to Zanzana
+	rp, ok := obj.(*iamv0.ResourcePermission)
+	if !ok {
+		b.logger.Error("failed to convert object to resourcePermission type", "object", obj)
+		return
+	}
+
 	resourceType := "resourcepermission"
 	operation := "delete"
 
+	// Grab a ticket to write to Zanzana
+	// This limits the amount of concurrent connections to Zanzana
 	wait := time.Now()
 	b.zTickets <- true
 	hooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds()) // Record wait time
-
-	rp, ok := obj.(*iamv0.ResourcePermission)
-	if !ok {
-		<-b.zTickets
-		return
-	}
 
 	go func(rp *iamv0.ResourcePermission) {
 		start := time.Now()
