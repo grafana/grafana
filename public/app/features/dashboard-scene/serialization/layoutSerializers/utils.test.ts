@@ -42,7 +42,7 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-// Mock only what's essential for header actions tests
+// Mock what's essential for behaviors tests
 jest.mock('../../scene/CustomTimeRangeCompare', () => ({
   CustomTimeRangeCompare: jest.fn(),
 }));
@@ -76,12 +76,12 @@ const createTestPanel = (): PanelKind => ({
 });
 
 describe('buildVizPanel', () => {
-  describe('header actions', () => {
+  describe('behaviors', () => {
     beforeEach(() => {
       jest.clearAllMocks();
     });
 
-    it('should include CustomTimeRangeCompare in headerActions when timeComparison feature toggle is enabled', () => {
+    it('should include CustomTimeRangeCompare in $behaviors when timeComparison feature toggle is enabled', () => {
       // Mock config with timeComparison enabled
       const mockConfig = require('@grafana/runtime').config;
       mockConfig.featureToggles.timeComparison = true;
@@ -89,16 +89,15 @@ describe('buildVizPanel', () => {
       const panel = createTestPanel();
       const vizPanel = buildVizPanel(panel);
 
-      expect(vizPanel.state.headerActions).toBeDefined();
-      expect(vizPanel.state.headerActions).toHaveLength(1);
+      expect(vizPanel.state.$behaviors).toBeDefined();
+      expect(vizPanel.state.$behaviors).toHaveLength(1);
       expect(CustomTimeRangeCompare).toHaveBeenCalledWith({
-        key: 'time-compare',
         compareWith: undefined,
         compareOptions: [],
       });
     });
 
-    it('should not include headerActions when timeComparison feature toggle is disabled', () => {
+    it('should have empty $behaviors array when timeComparison feature toggle is disabled', () => {
       // Mock config with timeComparison disabled
       const mockConfig = require('@grafana/runtime').config;
       mockConfig.featureToggles.timeComparison = false;
@@ -106,7 +105,8 @@ describe('buildVizPanel', () => {
       const panel = createTestPanel();
       const vizPanel = buildVizPanel(panel);
 
-      expect(vizPanel.state.headerActions).toBeUndefined();
+      expect(vizPanel.state.$behaviors).toBeDefined();
+      expect(vizPanel.state.$behaviors).toHaveLength(0);
       expect(CustomTimeRangeCompare).not.toHaveBeenCalled();
     });
   });
