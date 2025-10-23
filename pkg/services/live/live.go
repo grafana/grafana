@@ -196,6 +196,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
 
 	// Testing watch with just the provisioning support -- this will be removed when it is well validated
+	//nolint:staticcheck
 	if toggles.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		g.GrafanaScope.Features["watch"] = features.NewWatchRunner(g.Publish, configProvider)
 	}

@@ -226,6 +226,7 @@ func newTestCfg(
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}
+	//nolint:staticcheck
 	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 	sec, err := cfg.Raw.NewSection("database")

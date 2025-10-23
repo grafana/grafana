@@ -56,6 +56,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, ssoSe
 		ssoSettings:  ssoSettings,
 	}
 
+	//nolint:staticcheck
 	if s.features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP) {
 		s.ssoSettings.RegisterReloadable(social.LDAPProviderName, s)
 

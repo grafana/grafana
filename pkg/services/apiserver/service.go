@@ -423,7 +423,9 @@ func (s *service) start(ctx context.Context) error {
 	delegate := server
 
 	var runningServer *genericapiserver.GenericAPIServer
+	//nolint:staticcheck
 	isKubernetesAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator)
+	//nolint:staticcheck
 	isDataplaneAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator)
 
 	if isKubernetesAggregatorEnabled {

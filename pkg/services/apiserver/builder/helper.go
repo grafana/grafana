@@ -406,6 +406,7 @@ func InstallAPIs(
 			}
 
 			// if grafanaAPIServerWithExperimentalAPIs is not enabled, remove v0alpha1 resources unless explicitly allowed
+			//nolint:staticcheck
 			if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 				if resources, ok := g.VersionedResourcesStorageMap["v0alpha1"]; ok {
 					for name := range resources {

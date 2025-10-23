@@ -26,6 +26,7 @@ func ProvideService(
 	kv kvstore.KVStore,
 	cfg *setting.Cfg,
 ) (Service, error) {
+	//nolint:staticcheck
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
 

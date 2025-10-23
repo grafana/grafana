@@ -102,6 +102,7 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 	}
 
 	var f PermissionsFilter
+	//nolint:staticcheck
 	if features.IsEnabledGlobally(featuremgmt.FlagPermissionsFilterRemoveSubquery) {
 		f = &accessControlDashboardPermissionFilterNoFolderSubquery{
 			accessControlDashboardPermissionFilter: accessControlDashboardPermissionFilter{

@@ -119,6 +119,7 @@ func ProvideService(
 	libraryElementsService libraryelements.Service,
 	ngAlert *ngalert.AlertNG,
 ) (cloudmigration.Service, error) {
+	//nolint:staticcheck
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
 		return &NoopServiceImpl{}, nil
 	}

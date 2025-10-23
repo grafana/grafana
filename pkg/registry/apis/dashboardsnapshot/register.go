@@ -73,6 +73,8 @@ func RegisterAPIService(
 	sql db.DB,
 	reg prometheus.Registerer,
 ) *SnapshotsAPIBuilder {
+	//nolint:staticcheck
+	//nolint:staticcheck
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}

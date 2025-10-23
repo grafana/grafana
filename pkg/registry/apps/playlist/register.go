@@ -44,6 +44,7 @@ func RegisterAppInstaller(
 		service: p,
 	}
 	specificConfig := any(&playlistapp.PlaylistConfig{
+		//nolint:staticcheck
 		EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
 	})
 	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, playlistapp.New)

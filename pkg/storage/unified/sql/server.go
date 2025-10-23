@@ -99,6 +99,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 
 		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
 			opts.Cfg.SectionWithEnvOverrides("resource_api"))
+		//nolint:staticcheck
 		withPruner := opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageHistoryPruner)
 
 		backend, err := NewBackend(BackendOptions{

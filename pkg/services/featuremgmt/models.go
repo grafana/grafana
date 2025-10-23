@@ -12,6 +12,8 @@ type FeatureToggles interface {
 	// The settings may be per user, tenant, or globally set in the cloud
 	IsEnabled(ctx context.Context, flag string) bool
 
+	// Deprecated: NEIN DU MUSS DAS NICHT TUN
+	//
 	// IsEnabledGlobally checks if a flag is configured globally.  For now, this is the same
 	// as the function above, however it will move to only checking flags that
 	// are configured by the operator and shared across all tenants.

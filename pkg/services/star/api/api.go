@@ -27,6 +27,7 @@ func ProvideApi(
 	starService star.Service,
 	configProvider apiserver.DirectRestConfigProvider,
 ) *API {
+	//nolint:staticcheck
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesStars) {
 		starService = nil // don't use it
 	}

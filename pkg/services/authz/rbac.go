@@ -54,6 +54,7 @@ func ProvideAuthZClient(
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
 ) (authlib.AccessClient, error) {
+	//nolint:staticcheck
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
 
 	authCfg, err := readAuthzClientSettings(cfg)
@@ -61,10 +62,12 @@ func ProvideAuthZClient(
 		return nil, err
 	}
 
+	//nolint:staticcheck
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && authCfg.mode == clientModeCloud {
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
 	}
 
+	//nolint:staticcheck
 	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
 		return zanzanaClient, nil
 	}
@@ -72,6 +75,7 @@ func ProvideAuthZClient(
 	// Provisioning uses mode 4 (read+write only to unified storage)
 	// For G12 launch, we can disable caching for this and find a more scalable solution soon
 	// most likely this would involve passing the RV (timestamp!) in each check method
+	//nolint:staticcheck
 	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		authCfg.cacheTTL = 0
 	}
@@ -139,6 +143,7 @@ func ProvideAuthZClient(
 func ProvideStandaloneAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer, reg prometheus.Registerer,
 ) (authlib.AccessClient, error) {
+	//nolint:staticcheck
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
 	}

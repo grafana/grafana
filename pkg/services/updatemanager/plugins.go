@@ -97,6 +97,7 @@ func (s *PluginsService) IsDisabled() bool {
 
 func (s *PluginsService) Run(ctx context.Context) error {
 	s.instrumentedCheckForUpdates(ctx)
+	//nolint:staticcheck
 	if s.features.IsEnabledGlobally(featuremgmt.FlagPluginsAutoUpdate) {
 		s.updateAll(ctx)
 	}
@@ -108,6 +109,7 @@ func (s *PluginsService) Run(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			s.instrumentedCheckForUpdates(ctx)
+			//nolint:staticcheck
 			if s.features.IsEnabledGlobally(featuremgmt.FlagPluginsAutoUpdate) {
 				s.updateAll(ctx)
 			}
@@ -224,6 +226,7 @@ func (s *PluginsService) canUpdate(ctx context.Context, plugin pluginstore.Plugi
 		return false
 	}
 
+	//nolint:staticcheck
 	if s.features.IsEnabledGlobally(featuremgmt.FlagPluginsAutoUpdate) {
 		return s.updateChecker.CanUpdate(plugin.ID, plugin.Info.Version, gcomVersion, s.updateStrategy == setting.PluginUpdateStrategyMinor)
 	}

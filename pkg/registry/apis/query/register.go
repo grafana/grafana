@@ -65,6 +65,7 @@ func NewQueryAPIBuilder(
 ) (*QueryAPIBuilder, error) {
 	// Include well typed query definitions
 	var queryTypes *query.QueryTypeDefinitionList
+	//nolint:staticcheck
 	if features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes) {
 		// Read the expression query definitions
 		raw, err := expr.QueryTypeDefinitionListJSON()
@@ -179,6 +180,7 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 	storage := map[string]rest.Storage{}
 
 	// Get a list of all datasource instances
+	//nolint:staticcheck
 	if b.features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
 		// Eventually this would be backed either by search or reconciler pattern
 		storage[query.ConnectionResourceInfo.StoragePath()] = &connectionAccess{
@@ -188,6 +190,7 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 	plugins := newPluginsStorage(b.registry)
 	storage[plugins.resourceInfo.StoragePath()] = plugins
+	//nolint:staticcheck
 	if !b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		// The plugin registry is still experimental, and not yet accurate
 		// For standard k8s api discovery to work, at least one resource must be registered

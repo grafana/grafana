@@ -225,6 +225,7 @@ func newGrpcConn(address string, metrics *clientMetrics, features featuremgmt.Fe
 	// Create either a connection pool or a single connection.
 	// The connection pool __can__ be useful when connection to
 	// server side load balancers like kube-proxy.
+	//nolint:staticcheck
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageGrpcConnectionPool) {
 		conn, err := newPooledConn(&poolOpts{
 			initialCapacity: 3,

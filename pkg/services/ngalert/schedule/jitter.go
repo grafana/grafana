@@ -28,6 +28,7 @@ func JitterStrategyFrom(cfg setting.UnifiedAlertingSettings, toggles featuremgmt
 	if toggles == nil {
 		return strategy
 	}
+	//nolint:staticcheck
 	if toggles.IsEnabledGlobally(featuremgmt.FlagJitterAlertRulesWithinGroups) {
 		strategy = JitterByRule
 	}

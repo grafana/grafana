@@ -288,6 +288,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 
 func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store) {
 	log := logging.FromContext(context.Background())
+	//nolint:staticcheck
 	if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		log.Info("Enabling Zanzana folder propagation hooks")
 		store.BeginCreate = b.beginCreate

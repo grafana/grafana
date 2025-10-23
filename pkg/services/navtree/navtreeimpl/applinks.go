@@ -400,6 +400,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
 	}
 
+	//nolint:staticcheck
 	if s.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
 		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{
 			SectionID: navtree.NavIDCfg,
