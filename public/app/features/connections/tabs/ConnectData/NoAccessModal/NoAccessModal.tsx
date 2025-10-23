@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2, Modal, Icon, Button, TextLink } from '@grafana/ui';
 
-import { type CardGridItem } from '../CardGrid';
+import { type CardGridItem } from '../CardGrid/CardGrid';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   modal: css({
