@@ -1938,6 +1938,33 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		assert.Equal(t, "dash-db", query.Type) // query type should be added
 	})
 
+	t.Run("search will try and match all included tags", func(t *testing.T) {
+		ctx := context.Background()
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		query := &dashboards.FindPersistedDashboardsQuery{
+			OrgId: 1,
+			Sort:  model.SortOption{Name: "viewed-recently-desc"},
+			Tags:  []string{"tag1", "tag2"},
+		}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			// make sure we use AND logic with multiple tags
+			for _, field := range req.Options.Fields {
+				if field.Key == "tags" {
+					return field.Operator == "="
+				}
+			}
+			return false
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{},
+				Rows:    []*resourcepb.ResourceTableRow{},
+			}}, nil)
+		_, err := service.searchDashboardsThroughK8s(ctx, query)
+		require.NoError(t, err)
+	})
+
 	t.Run("search will include sort field in hit fields", func(t *testing.T) {
 		ctx := context.Background()
 		k8sCliMock := new(client.MockK8sHandler)

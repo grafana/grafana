@@ -248,7 +248,7 @@ func RegisterAPIService(
 	}
 
 	builder := NewAPIBuilder(
-		cfg.ProvisioningDisableControllers,
+		cfg.DisableControllers,
 		repoFactory,
 		features,
 		client,
@@ -648,11 +648,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 
-			// Informer with resync interval used for health check and reconciliation
-			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
-			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
-
 			b.client = c.ProvisioningV0alpha1()
 
 			// Initialize the API client-based job store
@@ -669,6 +664,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return nil
 			}
 
+			// Informer with resync interval used for health check and reconciliation
+			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
+			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
+			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 			go repoInformer.Informer().Run(postStartHookCtx.Done())
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
 
@@ -696,7 +695,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer)
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10)
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
@@ -705,6 +704,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				syncer,
 				metrics,
 				b.tracer,
+				10,
 			)
 			signerFactory := signature.NewSignerFactory(b.clients)
 			legacyResources := migrate.NewLegacyResourcesMigrator(

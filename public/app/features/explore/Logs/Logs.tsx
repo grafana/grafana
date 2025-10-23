@@ -823,6 +823,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           logOptionsStorageKey={SETTING_KEY_ROOT}
           timeZone={timeZone}
           displayedFields={displayedFields}
+          onPermalinkClick={onPermalinkClick}
           onClickShowField={showField}
           onClickHideField={hideField}
         />
@@ -1031,7 +1032,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
                 panelState={panelState?.logs}
-                theme={theme}
                 updatePanelState={updatePanelState}
                 datasourceType={props.datasourceType}
                 exploreId={props.exploreId}
@@ -1177,6 +1177,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   app={CoreApp.Explore}
                   containerElement={logsContainerRef.current}
                   enableLogDetails={true}
+                  dataFrames={props.logsFrames ?? []}
                   dedupStrategy={dedupStrategy}
                   displayedFields={displayedFields}
                   filterLevels={filterLevels}
@@ -1206,6 +1207,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   pinnedLogs={pinnedLogs}
                   setDisplayedFields={setDisplayedFields}
                   showControls
+                  showFieldSelector
                   showTime={showTime}
                   sortOrder={logsSortOrder}
                   timeRange={props.range}

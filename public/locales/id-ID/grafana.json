@@ -1650,6 +1650,15 @@
     "inspector-yaml-tab": {
       "apply": "Terapkan"
     },
+    "instance-details": {
+      "history-error": "",
+      "history-error-desc": "",
+      "no-history": "",
+      "state-history": ""
+    },
+    "instance-details-drawer": {
+      "title-instance-details": ""
+    },
     "instance-match": {
       "non-matching-labels": "",
       "notification-policy": ""
@@ -2306,6 +2315,9 @@
     "rule-details-data-sources": {
       "label-data-source": "Sumber data"
     },
+    "rule-details-drawer": {
+      "go-to-detail-view": ""
+    },
     "rule-details-expression": {
       "label-expression": "Ekspresi"
     },
@@ -2547,6 +2559,10 @@
       "prometheus-consistency-check": {
         "alert-message": "Aturan peringatan telah ditambahkan atau diperbarui. Perubahan mungkin memerlukan waktu hingga satu menit untuk muncul di tampilan daftar aturan Peringatan.",
         "alert-title": "Pembaruan sedang berlangsung"
+      },
+      "tab": {
+        "details": "",
+        "query-conditions": ""
       },
       "title-something-wrong-evaluating-alert": "Terjadi kesalahan saat mengevaluasi aturan peringatan ini"
     },
@@ -2918,10 +2934,22 @@
     },
     "triage": {
       "alert-instances": "",
+      "error-loading-rule": "",
       "firing-instances-count": "",
+      "instance-details": "",
       "no-instances-found": "",
       "no-labels": "",
-      "pending-instances-count": ""
+      "open-in-sidebar": "",
+      "open-rule-details": "",
+      "pending-instances-count": "",
+      "rule-details": {
+        "subtitle": "",
+        "title": ""
+      },
+      "rule-not-found": {
+        "description": "",
+        "title": ""
+      }
     },
     "type-selector-button": {
       "add-expression": "Tambah pola"
@@ -3644,7 +3672,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "Sesuai abjad (A-Z)",
-        "alphabetically-za": "Sesuai abjad (Z-A)"
+        "alphabetically-za": "Sesuai abjad (Z-A)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -4476,6 +4506,8 @@
     },
     "canvas-actions": {
       "add-panel": "Tambah panel",
+      "disabled-nested-grouping": "",
+      "disabled-nested-tabs": "",
       "group-into-row": "Kelompokkan ke dalam baris",
       "group-into-tab": "Kelompokkan ke dalam tab",
       "group-panels": "Panel grup",
@@ -4484,7 +4516,9 @@
       "paste-panel": "Tempel panel",
       "paste-row": "Tempel baris",
       "paste-tab": "Tempel tab",
-      "un-group-panels": "Pisah grup"
+      "un-group-panels": "Pisah grup",
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4584,7 +4618,8 @@
       }
     },
     "dashboard-links-menu": {
-      "aria-label-dashboard-name": "dasbor {{dashboardName}}"
+      "aria-label-dashboard-name": "dasbor {{dashboardName}}",
+      "label-no-dashboards-found": ""
     },
     "dashboard-loading": {
       "cancel-loading-dashboard": "Batalkan memuat dasbor"
@@ -4726,8 +4761,9 @@
       },
       "variable": {
         "custom-options": {
-          "values": "Nilai dipisahkan dengan koma",
-          "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
+          "close": "",
+          "modal-title": "",
+          "values": "Nilai dipisahkan dengan koma"
         },
         "datasource-options": {
           "name-filter": "Filter nama",
@@ -4776,7 +4812,11 @@
       "add-visualization-header": "Mulai dasbor baru Anda dengan menambahkan visualisasi",
       "import-a-dashboard-body": "Impor dasbor dari file atau <2>grafana.com</2>.",
       "import-a-dashboard-header": "Impor dasbor",
-      "import-dashboard-button": "Impor dasbor"
+      "import-dashboard-button": "Impor dasbor",
+      "show-less-dashboards": "",
+      "show-more-dashboards": "",
+      "start-with-suggested-dashboards": "",
+      "use-template-button": ""
     },
     "errors": {
       "failed-to-load": "Gagal memuat dasbor"
@@ -4989,6 +5029,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Salin",
         "copy-or-duplicate": "Salin atau Duplikasikan",
@@ -4998,7 +5039,10 @@
         "group-layout-disabled": "Tidak ada grup di level ini",
         "panel-layout": "Tata letak panel",
         "panel-layout-disabled": "Pilih baris atau tab untuk mengubah opsi tata letak panel"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5146,10 +5190,15 @@
       "title-row-options": "Opsi baris"
     },
     "rows-layout": {
+      "cancel": "",
+      "convert-to": "",
       "delete-row-text": "Menghapus baris ini juga akan menghapus semua panel. Anda yakin ingin melanjutkan?",
       "delete-row-title": "Hapus baris?",
       "delete-row-yes": "Hapus",
       "description": "Grup panel yang dapat diciutkan dengan judul",
+      "edit": {
+        "ungroup-rows": ""
+      },
       "header-hidden-tooltip": "Header baris hanya terlihat dalam mode edit",
       "name": "Baris",
       "row": {
@@ -5179,7 +5228,9 @@
       },
       "row-warning": {
         "title-not-unique": "Judul ini tidak unik"
-      }
+      },
+      "ungroup-convert-text": "",
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dasbor disimpan"
@@ -5269,6 +5320,9 @@
       "delete-tab-title": "Hapus tab?",
       "delete-tab-yes": "Hapus",
       "description": "Atur panel menjadi tab horizontal",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Tab",
       "tab": {
         "new": "Tab baru",
@@ -6219,6 +6273,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "Variabel ini tidak dirujuk oleh variabel atau dasbor lain.",
       "content-variable-referenced-other-variables-dashboard": "Variabel ini dirujuk oleh variabel atau dasbor lain."
     },
+    "variable-controls": {
+      "add-variable": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulir editor variabel",
       "back-to-list": "Kembali ke daftar",
@@ -7076,9 +7133,6 @@
       "title-failed-sample-query": "Gagal memuat sampel log untuk kueri ini",
       "tooltip": "Tampilkan baris log yang berkontribusi pada metrik yang divisualisasikan"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} muncul di {{percentage}}% baris log"
-    },
     "logs-table-empty-fields": {
       "no-fields": "Tidak ada bidang"
     },
@@ -7086,10 +7140,6 @@
       "fields": "Bidang",
       "reset": "Atur ulang",
       "selected-fields": "Bidang yang dipilih"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "Ikon tarik dan lepas",
-      "title-drag-and-drop-to-reorder": "Tarik dan lepas untuk menyusun ulang"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Pilih kueri berdasarkan nama",
@@ -7608,6 +7658,7 @@
   },
   "gauge": {
     "category-gauge": "Alat ukur",
+    "category-radial-bar": "",
     "description-min-height": "Tinggi baris minimum (orientasi horizontal)",
     "description-min-width": "Lebar kolom minimum (orientasi vertikal)",
     "description-neutral": "Biarkan kosong untuk menggunakan Min sebagai titik netral",
@@ -7623,7 +7674,8 @@
     "name-neutral": "Netral",
     "name-show-threshold-labels": "Tampilkan label ambang batas",
     "name-show-threshold-markers": "Tampilkan penanda ambang batas",
-    "placeholder-neutral": "otomatis"
+    "placeholder-neutral": "otomatis",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Terapkan",
@@ -7924,6 +7976,42 @@
     "select-group": "Pilih grup"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_other": "",
+        "lastNHours_other": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_other": "",
+        "lastNYears_other": "",
+        "nextNDays_other": "",
+        "nextNHours_other": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_other": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9027,6 +9115,8 @@
       "make-time-range-permanent": "Jadikan rentang waktu absolut/permanen",
       "move-time-range-back": "Pindahkan rentang waktu mundur",
       "move-time-range-forward": "Pindahkan rentang waktu ke depan",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Buka pencarian",
       "open-share-embed-drawer": "Sematan Bagikan panel",
       "open-share-link-drawer": "Tautan Bagikan panel",
@@ -9452,6 +9542,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Tampilkan kontrol untuk melompat ke baris log terakhir atau pertama, dan filter berdasarkan level log",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -10664,11 +10763,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -11738,7 +11835,8 @@
       "button-cancelling": "Membatalkan...",
       "button-previous": "Sebelumnya",
       "button-submitting": "Mengirim...",
-      "error-instance-repository-exists": "Repositori instans sudah ada"
+      "error-instance-repository-exists": "Repositori instans sudah ada",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -11960,6 +12058,28 @@
       "show-response": "Tampilkan respons"
     },
     "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12588,6 +12708,10 @@
     "sql-suggestion-history": "Riwayat Saran SQL",
     "suggestions": "Saran",
     "view-explanation": "Lihat penjelasan"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -14081,14 +14205,19 @@
       }
     },
     "query-variable-static-options": {
-      "add-option-button-label": "Tambahkan opsi",
-      "description": "Tambahkan opsi kustom selain hasil kueri",
-      "label-placeholder": "tampilkan label",
-      "remove-option-button-label": "Hapus opsi",
-      "value-placeholder": "nilai, string kosong default"
+      "description": "Tambahkan opsi kustom selain hasil kueri"
     },
     "query-variable-static-options-sort-select": {
       "description-values-variable": "Cara mengurutkan opsi statis dengan hasil kueri"
+    },
+    "static-options": {
+      "add-option-button-label": "",
+      "drag-and-drop": "",
+      "label-header": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-header": "",
+      "value-placeholder": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "Nilai default",

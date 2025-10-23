@@ -108,6 +108,7 @@ export interface DashboardDataDTO extends Dashboard {
 export enum DashboardRoutes {
   Home = 'home-dashboard',
   New = 'new-dashboard',
+  Template = 'template-dashboard',
   Normal = 'normal-dashboard',
   Provisioning = 'provisioning-dashboard',
   Scripted = 'scripted-dashboard',
