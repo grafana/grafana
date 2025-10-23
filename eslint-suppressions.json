@@ -3248,11 +3248,6 @@
       "count": 4
     }
   },
-  "public/app/features/migrate-to-cloud/api/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/migrate-to-cloud/cloud/MigrationTokenPane/CreateTokenModal.tsx": {
     "no-restricted-syntax": {
       "count": 1
