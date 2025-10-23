@@ -9,8 +9,6 @@ import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runti
 import {
   Button,
   useStyles2,
-  Text,
-  Box,
   Stack,
   Grid,
   EmptyState,
@@ -18,6 +16,8 @@ import {
   LoadingPlaceholder,
   Pagination,
   FilterInput,
+  Card,
+  Tooltip,
 } from '@grafana/ui';
 import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
@@ -33,6 +33,26 @@ import {
   isDataSourceInput,
 } from './utils/autoMapDatasources';
 
+interface Link {
+  rel: string;
+  href: string;
+}
+
+interface Screenshot {
+  links: Link[];
+}
+
+interface LogoImage {
+  content: string;
+  filename: string;
+  type: string;
+}
+
+interface Logo {
+  small?: LogoImage;
+  large?: LogoImage;
+}
+
 interface GnetDashboard {
   id: number;
   uid: string;
@@ -40,6 +60,8 @@ interface GnetDashboard {
   description: string;
   downloads: number;
   datasource: string;
+  screenshots?: Screenshot[];
+  logos?: Logo;
   json?: DashboardJson; // Full dashboard JSON from detail API
 }
 
@@ -217,89 +239,79 @@ export const CommunityDashboardSection = ({ onShowMapping }: Props) => {
   };
 
   return (
-    <Box borderColor="strong" borderStyle="dashed" padding={4} flex={1}>
-      <Stack direction="column" alignItems="center" gap={2}>
-        <Box width="100%" marginTop={1}>
-          <FilterInput
-            placeholder={t('dashboard.library.community-search-placeholder', 'Search community dashboards...')}
-            value={searchQuery}
-            onChange={setSearchQuery}
-          />
-        </Box>
+    <Stack direction="column" gap={2}>
+      <FilterInput
+        placeholder={t('dashboard.library.community-search-placeholder', 'Search community dashboards...')}
+        value={searchQuery}
+        onChange={setSearchQuery}
+      />
 
-        <div className={styles.resultsContainer}>
-          {loading && currentPage === 1 && !response ? (
-            <div className={styles.loadingOverlay}>
-              <LoadingPlaceholder text={t('dashboard.library.community-loading', 'Loading community dashboards...')} />
-            </div>
-          ) : showError ? (
-            <Box marginTop={2}>
-              <Stack direction="column" alignItems="center" gap={2}>
-                <Alert
-                  title={t('dashboard.library.community-error-title', 'Error loading community dashboards')}
-                  severity="error"
-                >
-                  <Trans i18nKey="dashboard.library.community-error">
-                    Failed to load community dashboards. Please try again.
-                  </Trans>
-                </Alert>
-                <Button variant="secondary" onClick={() => setCurrentPage(1)}>
-                  <Trans i18nKey="dashboard.library.retry">Retry</Trans>
-                </Button>
-              </Stack>
-            </Box>
-          ) : showEmptyState ? (
-            <Box marginTop={2}>
-              <EmptyState
-                variant="call-to-action"
-                message={t('dashboard.library.community-empty-title', 'No community dashboards found')}
-                button={
-                  <Button
-                    variant="secondary"
-                    onClick={() => window.open('https://grafana.com/grafana/dashboards/', '_blank')}
-                  >
-                    <Trans i18nKey="dashboard.library.browse-grafana-com">Browse Grafana.com</Trans>
-                  </Button>
-                }
+      <div className={styles.resultsContainer}>
+        {loading && currentPage === 1 && !response ? (
+          <div className={styles.loadingOverlay}>
+            <LoadingPlaceholder text={t('dashboard.library.community-loading', 'Loading community dashboards...')} />
+          </div>
+        ) : showError ? (
+          <Stack direction="column" alignItems="center" gap={2}>
+            <Alert
+              title={t('dashboard.library.community-error-title', 'Error loading community dashboards')}
+              severity="error"
+            >
+              <Trans i18nKey="dashboard.library.community-error">
+                Failed to load community dashboards. Please try again.
+              </Trans>
+            </Alert>
+            <Button variant="secondary" onClick={() => setCurrentPage(1)}>
+              <Trans i18nKey="dashboard.library.retry">Retry</Trans>
+            </Button>
+          </Stack>
+        ) : showEmptyState ? (
+          <EmptyState
+            variant="call-to-action"
+            message={t('dashboard.library.community-empty-title', 'No community dashboards found')}
+            button={
+              <Button
+                variant="secondary"
+                onClick={() => window.open('https://grafana.com/grafana/dashboards/', '_blank')}
               >
-                {searchQuery ? (
-                  <Trans i18nKey="dashboard.library.no-community-dashboards-search">
-                    No community dashboards found for your search. You can browse more dashboards on Grafana.com.
-                  </Trans>
-                ) : (
-                  <Trans i18nKey="dashboard.library.no-community-dashboards-datasource">
-                    No community dashboards found for this datasource. You can browse more dashboards on Grafana.com.
-                  </Trans>
-                )}
-              </EmptyState>
-            </Box>
-          ) : (
-            <Box marginTop={2}>
-              <Grid
-                gap={4}
-                columns={{
-                  xs: 1,
-                  sm: dashboards.length >= 2 ? 2 : 1,
-                  lg: dashboards.length >= 3 ? 3 : dashboards.length >= 2 ? 2 : 1,
-                }}
-              >
-                {dashboards.map((dashboard) => (
-                  <CommunityDashboardCard key={dashboard.id} dashboard={dashboard} onUseDashboard={onUseDashboard} />
-                ))}
-              </Grid>
-            </Box>
-          )}
-        </div>
-        {(hasMore || currentPage > 1) && (
-          <Pagination
-            currentPage={currentPage}
-            numberOfPages={estimatedTotalPages}
-            onNavigate={(page) => setCurrentPage(page)}
-            className={styles.pagination}
-          />
+                <Trans i18nKey="dashboard.library.browse-grafana-com">Browse Grafana.com</Trans>
+              </Button>
+            }
+          >
+            {searchQuery ? (
+              <Trans i18nKey="dashboard.library.no-community-dashboards-search">
+                No community dashboards found for your search. You can browse more dashboards on Grafana.com.
+              </Trans>
+            ) : (
+              <Trans i18nKey="dashboard.library.no-community-dashboards-datasource">
+                No community dashboards found for this datasource. You can browse more dashboards on Grafana.com.
+              </Trans>
+            )}
+          </EmptyState>
+        ) : (
+          <Grid
+            gap={4}
+            columns={{
+              xs: 1,
+              sm: dashboards.length >= 2 ? 2 : 1,
+              lg: dashboards.length >= 3 ? 3 : dashboards.length >= 2 ? 2 : 1,
+            }}
+          >
+            {dashboards.map((dashboard) => (
+              <CommunityDashboardCard key={dashboard.id} dashboard={dashboard} onUseDashboard={onUseDashboard} />
+            ))}
+          </Grid>
         )}
-      </Stack>
-    </Box>
+      </div>
+      {(hasMore || currentPage > 1) && (
+        <Pagination
+          currentPage={currentPage}
+          numberOfPages={estimatedTotalPages}
+          onNavigate={(page) => setCurrentPage(page)}
+          className={styles.pagination}
+        />
+      )}
+    </Stack>
   );
 };
 
@@ -311,30 +323,64 @@ const CommunityDashboardCard = ({
   onUseDashboard: (d: GnetDashboard) => void;
 }) => {
   const styles = useStyles2(getStyles);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  const getThumbnailUrl = () => {
+    const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
+    return thumbnail ? `/api/gnet${thumbnail}` : '';
+  };
+
+  const getLogoUrl = () => {
+    const logo = dashboard.logos?.large || dashboard.logos?.small;
+    if (logo?.content && logo?.type) {
+      return `data:${logo.type};base64,${logo.content}`;
+    }
+    return '';
+  };
+
+  const thumbnailUrl = getThumbnailUrl();
+  const logoUrl = getLogoUrl();
+  const imageUrl = thumbnailUrl || logoUrl;
+  const hasScreenshot = !!thumbnailUrl;
 
   return (
-    <div className={styles.dashboardCard}>
-      <div className={styles.dashboardContent}>
-        <Text element="p" textAlignment="center" weight="medium">
-          {dashboard.name}
-        </Text>
-        {dashboard.description && (
-          <div className={styles.description}>
-            <Text element="p" textAlignment="center" color="secondary">
-              {dashboard.description}
-            </Text>
-          </div>
-        )}
-        <Text element="p" textAlignment="center" color="secondary" variant="bodySmall">
-          <Trans i18nKey="dashboard.library.downloads" count={dashboard.downloads}>
-            {{ count: dashboard.downloads }} downloads
-          </Trans>
-        </Text>
+    <Card onClick={() => onUseDashboard(dashboard)} className={styles.card} noMargin>
+      <Card.Heading>{dashboard.name}</Card.Heading>
+      <div className={hasScreenshot ? styles.thumbnailContainer : styles.logoContainer}>
+        {imageUrl && !imageError ? (
+          <>
+            {!imageLoaded && <LoadingPlaceholder text="" />}
+            <img
+              src={imageUrl}
+              alt={dashboard.name}
+              className={hasScreenshot ? styles.thumbnail : styles.logo}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+              style={{ display: imageLoaded ? 'block' : 'none' }}
+            />
+          </>
+        ) : null}
       </div>
-      <Button fill="outline" onClick={() => onUseDashboard(dashboard)} size="sm">
-        <Trans i18nKey="dashboard.empty.use-template-button">Use this dashboard</Trans>
-      </Button>
-    </div>
+      <div title={dashboard.description || ''} className={styles.descriptionWrapper}>
+        {dashboard.description && (
+          <Card.Description className={styles.description}>{dashboard.description}</Card.Description>
+        )}
+      </div>
+
+      <Card.Actions>
+        <Button
+          variant="secondary"
+          onClick={(e) => {
+            e.stopPropagation();
+            onUseDashboard(dashboard);
+          }}
+          size="sm"
+        >
+          <Trans i18nKey="dashboard.empty.use-template-button">Use this dashboard</Trans>
+        </Button>
+      </Card.Actions>
+    </Card>
   );
 };
 
@@ -357,22 +403,53 @@ function getStyles(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.background.canvas,
       zIndex: 1,
     }),
-    dashboardCard: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
-      alignItems: 'center',
-      padding: theme.spacing(2),
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
-      minHeight: '180px',
+    card: css({
+      gridTemplateAreas: `
+        "Heading"
+        "Thumbnail"
+        "Description"
+        "Actions"`,
+      gridTemplateRows: 'auto 200px auto auto',
+      height: '320px',
     }),
-    dashboardContent: css({
-      flex: 1,
+    thumbnailContainer: css({
+      gridArea: 'Thumbnail',
+      width: '100%',
+      height: '100%',
+      overflow: 'hidden',
+      borderRadius: theme.shape.radius.default,
+      backgroundColor: theme.colors.background.secondary,
+      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
       display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
       alignItems: 'center',
+      justifyContent: 'center',
+    }),
+    thumbnail: css({
+      width: '100%',
+      height: '100%',
+      objectFit: 'contain',
+    }),
+    logoContainer: css({
+      gridArea: 'Thumbnail',
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: theme.shape.radius.default,
+      backgroundColor: theme.colors.background.secondary,
+      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+    }),
+    logo: css({
+      maxWidth: '100px',
+      maxHeight: '100px',
+      objectFit: 'contain',
+    }),
+    descriptionWrapper: css({
+      gridArea: 'Description',
+      cursor: 'help',
     }),
     description: css({
       display: '-webkit-box',
@@ -380,6 +457,7 @@ function getStyles(theme: GrafanaTheme2) {
       WebkitBoxOrient: 'vertical',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
+      margin: 0,
     }),
     pagination: css({
       marginTop: theme.spacing(2),

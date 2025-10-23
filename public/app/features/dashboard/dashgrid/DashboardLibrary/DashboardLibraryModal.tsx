@@ -117,7 +117,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(3),
     }),
     tabContent: css({
-      minHeight: '400px',
+      minHeight: '900px',
     }),
   };
 }

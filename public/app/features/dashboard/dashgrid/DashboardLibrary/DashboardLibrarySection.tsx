@@ -6,7 +6,7 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box, Stack, Grid } from '@grafana/ui';
+import { Button, useStyles2, Stack, Grid, Card } from '@grafana/ui';
 import { PluginDashboard } from 'app/types/plugins';
 import dashboardLibrary1 from 'img/dashboard-library/dashboard_library_1.jpg';
 import dashboardLibrary2 from 'img/dashboard-library/dashboard_library_2.jpg';
@@ -89,44 +89,40 @@ export const DashboardLibrarySection = () => {
   }
 
   return (
-    <Box borderColor="strong" borderStyle="dashed" padding={4} flex={1}>
-      <Stack direction="column" alignItems="center" gap={2}>
-        <Box marginTop={2}>
-          <Grid
-            gap={4}
-            columns={{
-              xs: 1,
-              sm: (dashboardsToShow?.length || 1) >= 2 ? 2 : 1,
-              lg: (dashboardsToShow?.length || 1) >= 3 ? 3 : (dashboardsToShow?.length || 1) >= 2 ? 2 : 1,
-            }}
-          >
-            {dashboardsToShow?.map((dashboard, index) => (
-              <TemplateDashboardBox
-                key={dashboard.uid}
-                index={index}
-                dashboard={dashboard}
-                onImportClick={onImportDashboardClick}
-              />
-            )) || []}
-          </Grid>
-        </Box>
-        {hasMoreThanThree && (
-          <Button
-            variant="secondary"
-            fill="outline"
-            size="sm"
-            onClick={() => setShowAll((prev) => !prev)}
-            className={styles.showMoreButton}
-          >
-            {showAll ? (
-              <Trans i18nKey="dashboard.empty.show-less-dashboards">Show less</Trans>
-            ) : (
-              <Trans i18nKey="dashboard.empty.show-more-dashboards">Show more</Trans>
-            )}
-          </Button>
-        )}
-      </Stack>
-    </Box>
+    <Stack direction="column" gap={2}>
+      <Grid
+        gap={4}
+        columns={{
+          xs: 1,
+          sm: (dashboardsToShow?.length || 1) >= 2 ? 2 : 1,
+          lg: (dashboardsToShow?.length || 1) >= 3 ? 3 : (dashboardsToShow?.length || 1) >= 2 ? 2 : 1,
+        }}
+      >
+        {dashboardsToShow?.map((dashboard, index) => (
+          <TemplateDashboardBox
+            key={dashboard.uid}
+            index={index}
+            dashboard={dashboard}
+            onImportClick={onImportDashboardClick}
+          />
+        )) || []}
+      </Grid>
+      {hasMoreThanThree && (
+        <Button
+          variant="secondary"
+          fill="outline"
+          size="sm"
+          onClick={() => setShowAll((prev) => !prev)}
+          className={styles.showMoreButton}
+        >
+          {showAll ? (
+            <Trans i18nKey="dashboard.empty.show-less-dashboards">Show less</Trans>
+          ) : (
+            <Trans i18nKey="dashboard.empty.show-more-dashboards">Show more</Trans>
+          )}
+        </Button>
+      )}
+    </Stack>
   );
 };
 
@@ -150,43 +146,60 @@ const TemplateDashboardBox = ({
 
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.templateDashboardBox}>
-      <img
-        src={index <= 5 ? dashboardLibraryImages[index] : dashboardLibraryImages[index % dashboardLibraryImages.length]}
-        width={285}
-        height={160}
-        alt={dashboard.title}
-        className={styles.templateDashboardImage}
-      />
-      <div className={styles.templateDashboardTitle}>
-        <Text element="p" textAlignment="center">
-          {dashboard.title}
-        </Text>
+    <Card onClick={() => onImportClick(dashboard)} className={styles.card} noMargin>
+      <Card.Heading>{dashboard.title}</Card.Heading>
+      <div className={styles.thumbnailContainer}>
+        <img
+          src={
+            index <= 5 ? dashboardLibraryImages[index] : dashboardLibraryImages[index % dashboardLibraryImages.length]
+          }
+          alt={dashboard.title}
+          className={styles.thumbnail}
+        />
       </div>
-      <Button fill="outline" onClick={() => onImportClick(dashboard)} size="sm">
-        <Trans i18nKey="dashboard.empty.use-template-button">Use this dashboard</Trans>
-      </Button>
-    </div>
+      <Card.Actions>
+        <Button
+          variant="secondary"
+          onClick={(e) => {
+            e.stopPropagation();
+            onImportClick(dashboard);
+          }}
+          size="sm"
+        >
+          <Trans i18nKey="dashboard.empty.use-template-button">Use this dashboard</Trans>
+        </Button>
+      </Card.Actions>
+    </Card>
   );
 };
 
 function getStyles(theme: GrafanaTheme2, dashboardsLength?: number) {
   return {
-    templateDashboardBox: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
-      alignItems: 'center',
+    card: css({
+      gridTemplateAreas: `
+        "Heading"
+        "Thumbnail"
+        "Actions"`,
+      gridTemplateRows: 'auto 200px auto',
+      minHeight: '320px',
     }),
-    templateDashboardTitle: css({
-      flex: 1,
-    }),
-    templateDashboardImage: css({
+    thumbnailContainer: css({
+      gridArea: 'Thumbnail',
+      width: '100%',
+      height: '100%',
+      overflow: 'hidden',
       borderRadius: theme.shape.radius.default,
-      borderColor: theme.colors.text.primary,
-      borderWidth: 1,
-      borderStyle: 'solid',
-      objectFit: 'cover',
+      backgroundColor: theme.colors.background.secondary,
+      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
+    thumbnail: css({
+      width: '100%',
+      height: '100%',
+      objectFit: 'contain',
     }),
     showMoreButton: css({
       marginTop: theme.spacing(2),
