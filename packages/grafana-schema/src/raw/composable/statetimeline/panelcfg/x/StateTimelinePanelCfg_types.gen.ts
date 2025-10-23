@@ -12,12 +12,11 @@ import * as ui from '@grafana/schema';
 
 export const pluginVersion = "12.3.0-pre";
 
-export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
+export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones, ui.OptionsWithAnnotations {
   /**
    * Controls value alignment on the timelines
    */
   alignValue?: ui.TimelineValueAlignment;
-  annotations?: ui.VizAnnotations;
   /**
    * Merge equal consecutive values
    */

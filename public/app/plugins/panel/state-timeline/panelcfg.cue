@@ -28,8 +28,7 @@ composableKinds: PanelCfg: {
 					ui.OptionsWithLegend
 					ui.OptionsWithTooltip
 					ui.OptionsWithTimezones
-
-					annotations?: ui.VizAnnotations
+					ui.OptionsWithAnnotations
 
 					//Show timeline values on chart
 					showValue: ui.VisibilityMode & (*"auto" | _)

@@ -164,6 +164,11 @@ VizAnnotations: {
 } @cuetsy(kind="interface")
 
 // TODO docs
+OptionsWithAnnotations: {
+	annotations?: VizAnnotations
+} @cuetsy(kind="interface")
+
+// TODO docs
 OptionsWithTooltip: {
 	tooltip: VizTooltipOptions
 } @cuetsy(kind="interface")

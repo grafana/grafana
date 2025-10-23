@@ -512,6 +512,13 @@ export interface VizAnnotations {
 /**
  * TODO docs
  */
+export interface OptionsWithAnnotations {
+  annotations?: VizAnnotations;
+}
+
+/**
+ * TODO docs
+ */
 export interface OptionsWithTooltip {
   tooltip: VizTooltipOptions;
 }
