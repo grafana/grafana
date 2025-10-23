@@ -163,8 +163,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-
-      query: variable.query,
+      query: variable.query || '',
       isMulti: variable.multi,
       allValue: variable.allValue || undefined,
       includeAll: variable.includeAll,
