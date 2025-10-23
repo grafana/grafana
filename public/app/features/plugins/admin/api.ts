@@ -50,15 +50,10 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
 
 export async function getPluginInsights(id: string, version?: string): Promise<CatalogPluginInsights> {
   try {
-    console.log('getPluginInsights called with:', { id, version });
     const params = version ? { version } : {};
-    console.log('Making request to:', `${GCOM_API_ROOT}/plugins/${id}/insights`, 'with params:', params);
-
     const insights = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/insights`, params);
-    console.log('getPluginInsights response:', insights);
     return insights;
   } catch (error) {
-    console.error('getPluginInsights error:', error);
     if (isFetchError(error)) {
       error.isHandled = true;
     }

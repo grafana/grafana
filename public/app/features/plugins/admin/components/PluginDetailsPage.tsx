@@ -49,7 +49,6 @@ export function PluginDetailsPage({
   };
   const queryParams = new URLSearchParams(location.search);
   let plugin = useGetSingle(pluginId); // fetches the plugin settings for this Grafana instance
-  console.log('plugin', plugin);
   useGetPluginInsights(pluginId, plugin?.isInstalled ? plugin?.installedVersion : plugin?.latestVersion);
 
   const isNarrowScreen = useMedia('(max-width: 600px)');
@@ -59,7 +58,6 @@ export function PluginDetailsPage({
     queryParams.get('page') as PluginTabIds,
     isNarrowScreen
   );
-  console.log('plugin', plugin);
 
   const { actions, info, subtitle } = usePluginPageExtensions(plugin);
   const { isLoading: isFetchLoading } = useFetchStatus();
