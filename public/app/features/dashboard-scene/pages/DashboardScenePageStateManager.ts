@@ -453,7 +453,14 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const searchParams = new URLSearchParams(window.location.search);
     const datasource = searchParams.get('datasource');
     const pluginId = searchParams.get('pluginId');
+    const gnetId = searchParams.get('gnetId');
+
     const path = searchParams.get('path');
+
+    // Check if this is a community dashboard (has gnetId) or plugin dashboard
+    if (gnetId) {
+      return this.loadCommunityTemplateDashboard(gnetId, datasource, pluginId);
+    }
 
     if (!datasource || !pluginId || !path) {
       throw new Error('Missing required parameters for template dashboard');
@@ -490,6 +497,56 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       meta: {
         canSave: true,
         canEdit: true,
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+        isNew: true,
+        folderUid: '',
+      },
+    };
+  }
+
+  private async loadCommunityTemplateDashboard(
+    gnetId: string,
+    datasource: string | null,
+    pluginId: string | null
+  ): Promise<DashboardDTO> {
+    // Extract mappings from URL params
+    const location = locationService.getLocation();
+    const searchParams = new URLSearchParams(location.search);
+
+    // Fetch the community dashboard from grafana.com
+    const gnetDashboard = await getBackendSrv().get(`/api/gnet/dashboards/${gnetId}`);
+
+    // The dashboard JSON is in the 'json' property
+    const dashboardJson = gnetDashboard.json;
+
+    const data = {
+      dashboard: dashboardJson,
+      // pluginId: pluginId,
+      overwrite: true,
+      inputs: [
+        {
+          name: '*',
+          type: 'datasource',
+          pluginId: pluginId,
+          value: datasource,
+        },
+      ],
+    };
+
+    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+
+    return {
+      dashboard: {
+        ...interpolatedDashboard,
+        uid: '',
+        version: 0,
+        id: null,
+      },
+      meta: {
+        // canSave: contextSrv.hasEditPermissionInFolders,
+        // canEdit: contextSrv.hasEditPermissionInFolders,
         canStar: false,
         canShare: false,
         canDelete: false,

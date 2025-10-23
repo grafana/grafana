@@ -15,7 +15,21 @@ export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
   const [isOpen, setIsOpen] = useState(false);
 
-  const createActions = useMemo(() => findCreateActions(navBarTree), [navBarTree]);
+  const createActions = useMemo(() => {
+    const createActions = findCreateActions(navBarTree);
+    return [
+      ...createActions,
+      {
+        id: 'create-template',
+        text: 'Create dashboard from template',
+        url: '/dashboards?templateDashboards=true',
+        icon: 'template',
+        onClick: () => {
+          reportInteraction('grafana_menu_item_clicked', { url: '/dashboard/new?template=true', from: 'quickadd' });
+        },
+      },
+    ];
+  }, [navBarTree]);
   const showQuickAdd = createActions.length > 0;
 
   if (!showQuickAdd) {
