@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getDataSourceSrv, config, locationService } from '@grafana/runtime';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import {
   shouldRenderInviteUserButton,
@@ -141,6 +142,20 @@ export function useStaticActions(): CommandPaletteAction[] {
   const navBarTree = useSelector((state) => state.navBarTree);
   return useMemo(() => {
     const navBarActions = navTreeToActions(navBarTree);
+
+    const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
+    const renderPreBuiltDashboardAction = testDataSources.length > 0 && config.featureToggles.dashboardLibrary;
+    if (renderPreBuiltDashboardAction) {
+      navBarActions.splice(1, 0, {
+        id: 'browse-template-dashboard',
+        name: t('command-palette.action.dashboard-from-template', 'Dashboard from template'),
+        section: t('command-palette.section.actions', 'Actions'),
+        priority: ACTIONS_PRIORITY,
+        perform: () => {
+          locationService.push('/dashboards?templateDashboards=true');
+        },
+      });
+    }
 
     if (shouldRenderInviteUserButton()) {
       navBarActions.push({

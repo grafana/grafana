@@ -5369,6 +5369,9 @@
         "title-not-unique": "This title is not unique"
       }
     },
+    "template-dashboard-modal": {
+      "title": "Start a dashboard from a template"
+    },
     "title": {
       "action": "Change dashboard title"
     },
@@ -6470,6 +6473,13 @@
     },
     "versions": {
       "title": "Versions"
+    }
+  },
+  "dashboard-template": {
+    "card": {
+      "details-button": "Details",
+      "details-title": "Details",
+      "use-template-button": "Use template"
     }
   },
   "dashboards": {
@@ -10447,7 +10457,7 @@
       "title": "New"
     },
     "new-dashboard": {
-      "title": "New dashboard"
+      "title": "Empty dashboard"
     },
     "new-folder": {
       "title": "New folder"
@@ -12309,8 +12319,9 @@
     "dashboard-actions": {
       "import": "Import",
       "new": "New",
-      "new-dashboard": "New dashboard",
-      "new-folder": "New folder"
+      "new-dashboard": "Empty dashboard",
+      "new-folder": "New folder",
+      "new-template-dashboard": "Dashboard from template"
     },
     "generate-columns": {
       "score": "Score"

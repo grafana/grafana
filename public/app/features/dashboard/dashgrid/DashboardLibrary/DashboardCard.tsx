@@ -47,17 +47,17 @@ export function DashboardCard({ title, imageUrl, onClick, onDetailsClick, dashbo
       </div>
       <Card.Actions className={styles.actionsContainer}>
         <Button variant="secondary" onClick={onClick}>
-          <Trans i18nKey="dashboard.template.use-template-button">Use template</Trans>
+          <Trans i18nKey="dashboard-template.card.use-template-button">Use template</Trans>
         </Button>
         {details && (
           <Toggletip
-            title={t('dashboard.template.details-title', 'Details')}
+            title={t('dashboard-template.card.details-title', 'Details')}
             content={<DetailsToggletipContent details={details} />}
             closeButton={true}
             placement="right"
           >
             <Button variant="secondary" fill="outline" onClick={onDetailsClick}>
-              <Trans i18nKey="dashboard.template.use-template-button">Details</Trans>
+              <Trans i18nKey="dashboard-template.card.details-button">Details</Trans>
             </Button>
           </Toggletip>
         )}

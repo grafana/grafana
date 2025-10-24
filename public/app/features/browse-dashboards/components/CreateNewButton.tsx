@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -15,6 +15,7 @@ import {
   getNewDashboardPhrase,
   getNewFolderPhrase,
   getNewPhrase,
+  getNewTemplateDashboardPhrase,
 } from 'app/features/search/tempI18nPhrases';
 import { FolderDTO } from 'app/types/folders';
 
@@ -43,6 +44,9 @@ export default function CreateNewButton({
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
+
+  const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
+  const renderPreBuiltDashboardAction = testDataSources.length > 0 && config.featureToggles.dashboardLibrary;
 
   const onCreateFolder = async (folderName: string) => {
     try {
@@ -74,16 +78,30 @@ export default function CreateNewButton({
   const newMenu = (
     <Menu>
       {canCreateDashboard && (
-        <MenuItem
-          label={getNewDashboardPhrase()}
-          onClick={() =>
-            reportInteraction('grafana_menu_item_clicked', {
-              url: buildUrl('/dashboard/new', parentFolder?.uid),
-              from: location.pathname,
-            })
-          }
-          url={buildUrl('/dashboard/new', parentFolder?.uid)}
-        />
+        <>
+          <MenuItem
+            label={getNewDashboardPhrase()}
+            onClick={() =>
+              reportInteraction('grafana_menu_item_clicked', {
+                url: buildUrl('/dashboard/new', parentFolder?.uid),
+                from: location.pathname,
+              })
+            }
+            url={buildUrl('/dashboard/new', parentFolder?.uid)}
+          />
+          {renderPreBuiltDashboardAction && (
+            <MenuItem
+              label={getNewTemplateDashboardPhrase()}
+              onClick={() =>
+                reportInteraction('grafana_menu_item_clicked', {
+                  url: buildUrl('/dashboard/new', parentFolder?.uid),
+                  from: location.pathname,
+                })
+              }
+              url={buildUrl('/dashboards?templateDashboards=true', parentFolder?.uid)}
+            />
+          )}
+        </>
       )}
       {canCreateFolder && <MenuItem onClick={() => setShowNewFolderDrawer(true)} label={getNewFolderPhrase()} />}
       {canCreateDashboard && !isProvisionedInstance && parentFolder?.managedBy !== ManagerKind.Repo && (

@@ -21,9 +21,9 @@ export const QuickAdd = ({}: Props) => {
     const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
     const renderPreBuiltDashboardAction = testDataSources.length > 0 && config.featureToggles.dashboardLibrary;
     if (renderPreBuiltDashboardAction) {
-      createActions.push({
+      createActions.splice(1, 0, {
         id: 'browse-template-dashboard',
-        text: 'Pre-built dashboard',
+        text: 'Dashboard from template',
         url: '/dashboards?templateDashboards=true',
         onClick: () => {
           reportInteraction('grafana_menu_item_clicked', {
