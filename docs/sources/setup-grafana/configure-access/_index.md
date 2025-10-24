@@ -193,7 +193,7 @@ Team synchronization occurs only when a user logs in. However, if you are using 
 
 ### Role Sync
 
-Grafana can synchronize basic roles from your authentication provider by mapping attributes from the identity provider to the user role in Grafana. This means that users with specific attributes, like role, team, or group membership in LDAP, OAuth, or SAML, will be automatically assigned the corresponding role in Grafana. Whenever a user logs in, Grafana will check for any changes in the user information retrieved from the authentication provider and update the user's role in Grafana accordingly.
+Grafana can synchronize basic roles from your authentication provider by mapping attributes from the identity provider to the user role in Grafana. This means that users with specific attributes, like role, team, or group membership in LDAP, OAuth, or SAML, can be automatically assigned the corresponding role in Grafana. Whenever a user logs in, Grafana checks for any changes in the user information retrieved from the authentication provider and updates the user's role in Grafana accordingly.
 
 ### Organization sync
 
