@@ -174,7 +174,19 @@ func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
 		response.Error = err
 		return response
 	}
-	response.Frames = data.Frames{testdatasource.RandomWalk(query, model, 0)}
+
+	// Default to 1 series if not specified
+	seriesCount := model.SeriesCount
+	if seriesCount == 0 {
+		seriesCount = 1
+	}
+
+	// Generate the requested number of series
+	frames := make([]*data.Frame, 0, seriesCount)
+	for i := 0; i < seriesCount; i++ {
+		frames = append(frames, testdatasource.RandomWalk(query, model, i))
+	}
+	response.Frames = frames
 
 	return response
 }

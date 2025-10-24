@@ -34,6 +34,7 @@ export interface GrafanaQuery extends DataQuery {
   timeRegion?: TimeRegionConfig;
   file?: GrafanaQueryFile;
   // Random walk configuration
+  seriesCount?: number;
   startValue?: number;
   min?: number;
   max?: number;

@@ -19,6 +19,7 @@ const randomWalkFields: Array<{
   max?: number;
   tooltip?: string;
 }> = [
+  { label: 'Series count', id: 'seriesCount', placeholder: '1', min: 1, step: 1 },
   { label: 'Start value', id: 'startValue', placeholder: 'auto', step: 1 },
   { label: 'Min', id: 'min', placeholder: 'none', step: 0.1 },
   { label: 'Max', id: 'max', placeholder: 'none', step: 0.1 },
