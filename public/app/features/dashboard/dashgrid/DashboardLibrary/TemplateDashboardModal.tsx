@@ -3,9 +3,9 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { Box, Button, Card, Grid, Modal, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Box, Grid, Modal, Spinner, Text, useStyles2 } from '@grafana/ui';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
@@ -44,6 +44,9 @@ export const TemplateDashboardModal = () => {
   };
 
   const { value: templateDashboards, loading } = useAsync(async () => {
+    if (!isOpen) {
+      return [];
+    }
     const dashboards = await Promise.all(
       [...TEMPLATE_DASHBOARD_COMMUNITY_UIDS, ...DEV_TEMPLATE_DASHBOARD_COMMUNITY_UIDS].map(async (uid) => {
         try {
@@ -59,11 +62,11 @@ export const TemplateDashboardModal = () => {
     );
 
     return dashboards;
-  }, []);
+  }, [isOpen]);
 
   const dashboards = templateDashboards?.filter((dashboard) => dashboard !== null) ?? [];
 
-  if (testDataSources.length === 0 || dashboards.length === 0) {
+  if (testDataSources.length === 0 || (dashboards.length === 0 && !loading)) {
     return null;
   }
 
