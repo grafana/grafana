@@ -2,7 +2,7 @@ import { defaults } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { computeInheritedTree } from '@grafana/alerting/unstable';
+import { computeInheritedTree } from '@grafana/alerting';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
