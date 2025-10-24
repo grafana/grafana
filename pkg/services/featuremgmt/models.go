@@ -19,7 +19,7 @@ type FeatureToggles interface {
 	// a full server restart for a change to take place.
 	//
 	// Deprecated: FeatureToggles.IsEnabledGlobally is deprecated and will be removed in a future release.
-	// Evaluate with OpenFeature instead (see https://pkg.go.dev/github.com/open-feature/go-sdk/openfeature#Client.Boolean)
+	// Evaluate with OpenFeature instead (see [github.com/open-feature/go-sdk/openfeature.Client])
 	IsEnabledGlobally(flag string) bool
 
 	// Get the enabled flags -- this *may* also include disabled flags (with value false)
