@@ -113,6 +113,102 @@ const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e
 const getDataLinksFallback: GetDataLinksCallback = () => [];
 const getAdHocFiltersFallback: GetAdHocFiltersCallback = () => [];
 
+/**
+ * Enables panning the time range by dragging x-axis labels.
+ * Provides visual feedback (grab/grabbing cursor) and real-time grid updates during drag.
+ * Calls queryZoom() on drag end to update dashboard time range if drag exceeds MIN_ZOOM_DIST.
+ * Mutates u.scales.x.range temporarily during drag.
+ */
+const setupXAxisPan = (u: uPlot, queryZoom: (range: { from: number; to: number }) => void) => {
+  let xAxes = u.root.querySelectorAll('.u-axis');
+  let xAxis = xAxes[0];
+
+  if (!xAxis || !(xAxis instanceof HTMLElement)) {
+    return;
+  }
+
+  const xAxisEl = xAxis;
+
+  xAxisEl.addEventListener('mouseenter', () => {
+    xAxisEl.style.cursor = 'grab';
+  });
+
+  xAxisEl.addEventListener('mouseleave', () => {
+    xAxisEl.style.cursor = '';
+  });
+
+  xAxisEl.addEventListener('mousedown', (e: Event) => {
+    if (!(e instanceof MouseEvent)) {
+      return;
+    }
+    e.preventDefault();
+
+    xAxisEl.style.cursor = 'grabbing';
+
+    let xScale = u.scales.x;
+    let originalRange = xScale.range;
+
+    let rect = u.over.getBoundingClientRect();
+    let startX = e.clientX - rect.left;
+    let startMin = xScale.min!;
+    let startMax = xScale.max!;
+    let unitsPerPx = (startMax - startMin) / (u.bbox.width / uPlot.pxRatio);
+
+    let isDragging = false;
+    let dragMin = startMin;
+    let dragMax = startMax;
+
+    xScale.range = (u, initMin, initMax, scaleKey) => {
+      if (isDragging) {
+        return [dragMin, dragMax];
+      }
+      return typeof originalRange === 'function' ? originalRange(u, initMin, initMax, scaleKey) : [initMin, initMax];
+    };
+
+    let onMove = (e: MouseEvent) => {
+      e.preventDefault();
+
+      let currentX = e.clientX - rect.left;
+      let dx = currentX - startX;
+      let shiftBy = dx * unitsPerPx;
+
+      isDragging = true;
+      dragMin = startMin - shiftBy;
+      dragMax = startMax - shiftBy;
+
+      u.setScale('x', {
+        min: dragMin,
+        max: dragMax,
+      });
+    };
+
+    let onUp = (e: MouseEvent) => {
+      let endX = e.clientX - rect.left;
+      let dx = endX - startX;
+
+      xAxisEl.style.cursor = 'grab';
+
+      isDragging = false;
+      xScale.range = originalRange;
+
+      if (Math.abs(dx) >= MIN_ZOOM_DIST) {
+        let shiftBy = dx * unitsPerPx;
+
+        queryZoom({
+          from: startMin - shiftBy,
+          to: startMax - shiftBy,
+        });
+      }
+
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+};
+
 const userAgentIsMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
 /**
@@ -341,93 +437,7 @@ export const TooltipPlugin2 = ({
       }
 
       if (queryZoom != null) {
-        let xAxes = u.root.querySelectorAll('.u-axis');
-        let xAxis = xAxes[0];
-
-        if (xAxis && xAxis instanceof HTMLElement) {
-          const xAxisEl = xAxis;
-
-          xAxisEl.addEventListener('mouseenter', () => {
-            xAxisEl.style.cursor = 'grab';
-          });
-
-          xAxisEl.addEventListener('mouseleave', () => {
-            xAxisEl.style.cursor = '';
-          });
-
-          xAxisEl.addEventListener('mousedown', (e: Event) => {
-            if (!(e instanceof MouseEvent)) {
-              return;
-            }
-            e.preventDefault();
-
-            xAxisEl.style.cursor = 'grabbing';
-
-            let xScale = u.scales.x;
-            let originalRange = xScale.range;
-
-            let rect = u.over.getBoundingClientRect();
-            let startX = e.clientX - rect.left;
-            let startMin = xScale.min!;
-            let startMax = xScale.max!;
-            let unitsPerPx = (startMax - startMin) / (u.bbox.width / uPlot.pxRatio);
-
-            let isDragging = false;
-            let dragMin = startMin;
-            let dragMax = startMax;
-
-            xScale.range = (u, initMin, initMax, scaleKey) => {
-              if (isDragging) {
-                return [dragMin, dragMax];
-              }
-              return typeof originalRange === 'function'
-                ? originalRange(u, initMin, initMax, scaleKey)
-                : [initMin, initMax];
-            };
-
-            let onMove = (e: MouseEvent) => {
-              e.preventDefault();
-
-              let currentX = e.clientX - rect.left;
-              let dx = currentX - startX;
-              let shiftBy = dx * unitsPerPx;
-
-              isDragging = true;
-              dragMin = startMin - shiftBy;
-              dragMax = startMax - shiftBy;
-
-              u.setScale('x', {
-                min: dragMin,
-                max: dragMax,
-              });
-            };
-
-            let onUp = (e: MouseEvent) => {
-              let endX = e.clientX - rect.left;
-              let dx = endX - startX;
-
-              xAxisEl.style.cursor = 'grab';
-
-              isDragging = false;
-              xScale.range = originalRange;
-
-              if (Math.abs(dx) >= MIN_ZOOM_DIST) {
-                let shiftBy = dx * unitsPerPx;
-
-                queryZoom({
-                  from: startMin - shiftBy,
-                  to: startMax - shiftBy,
-                });
-              }
-
-              document.removeEventListener('mousemove', onMove);
-              document.removeEventListener('mouseup', onUp);
-            };
-
-            document.addEventListener('mousemove', onMove);
-            document.addEventListener('mouseup', onUp);
-          });
-        }
+        setupXAxisPan(u, queryZoom);
       }
 
       // this handles pinning, 0-width range selection, and one-click
