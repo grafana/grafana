@@ -208,4 +208,3 @@ The following applies:
 - You don't need to invite users through Grafana when syncing with Organization sync.
 
 {{< /admonition >}}
-
