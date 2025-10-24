@@ -60,13 +60,6 @@ export const mocksScopes: Scope[] = [
     },
   },
   {
-    metadata: { name: 'infrastructure' },
-    spec: {
-      title: 'Infrastructure',
-      filters: [{ key: 'environment', value: 'infrastructure', operator: 'equals' }],
-    },
-  },
-  {
     metadata: { name: 'dev-env' },
     spec: {
       title: 'Development',
