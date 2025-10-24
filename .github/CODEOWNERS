@@ -166,7 +166,7 @@
 /pkg/services/kmsproviders/ @grafana/grafana-operator-experience-squad
 /pkg/services/licensing/ @grafana/grafana-operator-experience-squad
 /pkg/services/dsquerierclient/ @grafana/grafana-datasources-core-services
-/pkg/services/navtree/ @grafana/grafana-backend-group
+/pkg/services/navtree/ @grafana/grafana-backend-group @grafana/grafana-search-navigate-organise
 /pkg/services/notifications/ @grafana/grafana-backend-group
 /pkg/services/org/ @grafana/grafana-backend-group
 /pkg/services/playlist/ @grafana/grafana-app-platform-squad
