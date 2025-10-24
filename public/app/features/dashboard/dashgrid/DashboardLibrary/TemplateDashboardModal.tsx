@@ -13,6 +13,7 @@ import { DashboardCard } from './DashboardCard';
 import { GnetDashboard, Link } from './types';
 
 const TEMPLATE_DASHBOARD_COMMUNITY_UIDS = [24279, 24280, 24281, 24282];
+const DEV_TEMPLATE_DASHBOARD_COMMUNITY_UIDS = [71, 72, 73, 74];
 
 export const TemplateDashboardModal = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -44,18 +45,23 @@ export const TemplateDashboardModal = () => {
 
   const { value: templateDashboards, loading } = useAsync(async () => {
     const dashboards = await Promise.all(
-      TEMPLATE_DASHBOARD_COMMUNITY_UIDS.map(async (uid) => {
-        const result = await getBackendSrv().get(`/api/gnet/dashboards/${uid}`, undefined, undefined, {
-          showErrorAlert: false,
-        });
-        return result;
+      [...TEMPLATE_DASHBOARD_COMMUNITY_UIDS, ...DEV_TEMPLATE_DASHBOARD_COMMUNITY_UIDS].map(async (uid) => {
+        try {
+          const result = await getBackendSrv().get(`/api/gnet/dashboards/${uid}`, undefined, undefined, {
+            showErrorAlert: false,
+          });
+          return result;
+        } catch (error) {
+          console.error('Error loading template dashboard', uid, error);
+          return null;
+        }
       })
     );
 
     return dashboards;
   }, []);
 
-  const dashboards = templateDashboards ?? [];
+  const dashboards = templateDashboards?.filter((dashboard) => dashboard !== null) ?? [];
 
   if (testDataSources.length === 0 || dashboards.length === 0) {
     return null;
