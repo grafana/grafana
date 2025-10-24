@@ -711,7 +711,7 @@ describe('combineResponses', () => {
     it('filters out null values from notices arrays', () => {
       const responseA = makeResponse([
         { severity: 'warning', text: 'Valid warning' },
-        null as any, // Simulating the bug scenario
+        null as unknown as QueryResultMetaNotice, // Simulating the bug scenario
       ]);
       const responseB = makeResponse([{ severity: 'info', text: 'Valid info' }]);
 
