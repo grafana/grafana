@@ -25,7 +25,7 @@ func Convert_V1beta1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope co
 }
 
 func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope, config *ConversionConfig) error {
-	if config.V1ToV2Alpha1Enabled {
+	if !config.dashboardV2SchemaAPIEnabled {
 		if err := ConvertDashboard_V1beta1_to_V2alpha1(in, out, scope); err != nil {
 			out.Status = dashv2alpha1.DashboardStatus{
 				Conversion: &dashv2alpha1.DashboardConversionStatus{
@@ -59,7 +59,7 @@ func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboa
 }
 
 func Convert_V1beta1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope, config *ConversionConfig) error {
-	if config.V1ToV2Beta1Enabled {
+	if config.dashboardV2SchemaAPIEnabled {
 		v2alpha1 := &dashv2alpha1.Dashboard{}
 		if err := ConvertDashboard_V1beta1_to_V2alpha1(in, v2alpha1, scope); err != nil {
 			out.Status = dashv2beta1.DashboardStatus{
