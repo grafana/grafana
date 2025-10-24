@@ -68,8 +68,8 @@ When you enable SCIM in Grafana, the following requirements and restrictions app
 1. **Use the same identity provider for user provisioning and for authentication flow**: You must use the same identity provider for both authentication and user provisioning.
 
 2. **Security restriction**: When using SAML, the login authentication flow requires the SAML assertion exchange between the Identity Provider and Grafana to include the `userUID` SAML assertion with the user's unique identifier at the Identity Provider.
-   - Configure `userUID` SAML assertion in [Azure AD](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-azuread/#configure-saml-assertions-when-using-scim-provisioning)
-   - Configure `userUID` SAML assertion in [Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/#configure-saml-assertions-when-using-scim-provisioning)
+   - Configure `userUID` SAML assertion in [Azure AD](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/#configure-saml-assertions-when-using-scim-provisioning)
+   - Configure `userUID` SAML assertion in [Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/#configure-saml-assertions-when-using-scim-provisioning)
 
 ## Configure SCIM using the Grafana user interface
 
@@ -119,7 +119,7 @@ The table below describes all SCIM configuration options. Like any other Grafana
 
 - SCIM group sync (`group_sync_enabled = true`) and Team Sync cannot be enabled simultaneously
 - You can use SCIM user sync (`user_sync_enabled = true`) alongside Team Sync
-- For more details about migration and compatibility, see [SCIM vs Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-scim-provisioning/manage-users-teams/#scim-vs-team-sync)
+- For more details about migration and compatibility, see [SCIM vs Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/manage-users-teams/#scim-vs-team-sync)
   {{< /admonition >}}
 
 ### Example SCIM configuration
@@ -194,5 +194,5 @@ The following table compares SCIM with other synchronization methods to help you
 
 - [Manage users and teams with SCIM provisioning](manage-users-teams/)
 - [Troubleshoot SCIM provisioning](troubleshooting/)
-- [Configure SCIM with Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-azuread/)
-- [Configure SCIM with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-okta/)
+- [Configure SCIM with Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/configure-scim-with-azuread/)
+- [Configure SCIM with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/configure-scim-with-okta/)

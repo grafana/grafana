@@ -119,7 +119,7 @@ To integrate your OAuth2 provider with Grafana using our Generic OAuth authentic
    c. Enable the refresh token on the provider if required.
 
 1. [Configure role mapping](#configure-role-mapping).
-1. Optional: [Configure team synchronization](https://grafana.com/docs/grafana/<GRAFANA_VERSION/setup-grafana/configure-security/configure-team-sync/).
+1. Optional: [Configure team synchronization](https://grafana.com/docs/grafana/<GRAFANA_VERSION/setup-grafana/configure-access/configure-team-sync/).
 1. Restart Grafana.
 
    You should now see a Generic OAuth login button on the login page and be able to log in or sign up with your OAuth2 provider.
@@ -349,7 +349,7 @@ Generic OAuth groups can be referenced by group ID, such as `8bab1c86-8fba-33e5-
 Group information can be extracted from the OAuth2 ID token, user information from the UserInfo endpoint, or the OAuth2 access token.
 For information on configuring OAuth2 groups with Grafana using the `groups_attribute_path` configuration option, refer to [configuration options](#configuration-options).
 
-To learn more about Team Sync, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/).
+To learn more about Team Sync, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/).
 
 ### Team synchronization example
 

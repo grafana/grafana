@@ -144,7 +144,7 @@ For example, users working in [Frontend Observability](https://grafana.com/docs/
 
 After you've made sure the model is working, you can codify it.
 
-You can add any new users to your Grafana instance with an Identity Provider through [SCIM](../../configure-access/configure-authentication/). Use [role sync](../../../configure-security/configure-authentication/saml/configure-saml-team-role-mapping/#configure-role-sync-for-saml) to automatically assign users the correct basic role (Viewer, Editor, or Admin) based on their mapped attributes in the IdP..
+You can add any new users to your Grafana instance with an Identity Provider through [SCIM](../../configure-access/configure-authentication/). Use [role sync](../../../configure-access/configure-authentication/saml/configure-saml-team-role-mapping/#configure-role-sync-for-saml) to automatically assign users the correct basic role (Viewer, Editor, or Admin) based on their mapped attributes in the IdP..
 
 You can also use Terraform to provision teams their folders, fixed roles, and shared data source LBAC rules. For example, if you need to add a new team (Team D), you only need to add the new team to Grafana and run the Terraform script, which will automatically set them up to start using Grafana.
 

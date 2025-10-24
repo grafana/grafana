@@ -422,7 +422,7 @@ the correct teams.
 
 You can reference Entra ID groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
 
-To learn more, refer to the [Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync) documentation.
+To learn more, refer to the [Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync) documentation.
 
 ## Common troubleshooting
 

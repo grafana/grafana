@@ -182,7 +182,7 @@ To set up team sync for Google OAuth:
 1. Configure team sync in your Grafana team's `External group sync` tab.
    The external group ID for a Google group is the group's email address, such as `dev@grafana.com`.
 
-To learn more about Team Sync, refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/).
+To learn more about Team Sync, refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/).
 
 #### Configure allowed groups
 

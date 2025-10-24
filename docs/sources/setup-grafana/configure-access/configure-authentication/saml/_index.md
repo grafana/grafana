@@ -31,14 +31,14 @@ You can configure SAML authentication in Grafana through one of the following me
 
 - Configure SAML using the [Grafana configuration file](#configure-saml-using-the-grafana-configuration-file)
 - Configure SAML using the [SSO Settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/)
-- Configure SAML using the [SAML user interface](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/saml-ui/)
+- Configure SAML using the [SAML user interface](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/saml-ui/)
 - Configure SAML using the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/<GRAFANA_VERSION>/docs/resources/sso_settings)
 
 If you are using Okta or Azure AD as Identity Provider, see the following documentation for configuration:
 
-- [Configure SAML with Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-azuread/)
-- [Configure SAML with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/)
-- [Configure SAML with Okta catalog application](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/oin-application)
+- [Configure SAML with Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/)
+- [Configure SAML with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/)
+- [Configure SAML with Okta catalog application](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/oin-application)
 
 All methods offer the same configuration options. However, if you want to keep all of Grafana authentication settings in one place, use the Grafana configuration file or the Terraform provider. If you are a Grafana Cloud user, you do not have access to Grafana configuration file. Instead, configure SAML through the other methods.
 
@@ -85,10 +85,10 @@ The integration provides two key endpoints as part of Grafana:
 
 1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#enabled-3) to `true`.
 2. Configure SAML options:
-   - Review all [available configuration options](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/saml-configuration-options/)
+   - Review all [available configuration options](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/saml-configuration-options/)
    - For IdP-specific configuration, refer to:
-     - [Configure SAML with Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/)
-     - [Configure SAML with Entra ID](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-azuread/)
+     - [Configure SAML with Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/)
+     - [Configure SAML with Entra ID](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/)
 3. Save the configuration file and then restart the Grafana server.
 
 When you are finished, the Grafana configuration might look like this example:
@@ -181,7 +181,7 @@ By default, new Grafana users using SAML authentication will have an account cre
 If you are also using SCIM provisioning for this Grafana application in Azure AD, it's crucial to align the user identifiers between SAML and SCIM for seamless operation. The unique identifier that links the SAML user to the SCIM provisioned user is determined by the `assertion_attribute_external_uid` setting in the Grafana SAML configuration. This `assertion_attribute_external_uid` should correspond to the `externalId` used in SCIM provisioning (typically set to the Azure AD `user.objectid`).
 
 1.  **Ensure Consistent Identifier in SAML Assertion:**
-    - The unique identifier from Azure AD (typically `user.objectid`) that you mapped to the `externalId` attribute in Grafana in your SCIM provisioning setup **must also be sent as a claim in the SAML assertion.** For more details on SCIM, refer to the [SCIM provisioning documentation](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-scim-provisioning/).
+    - The unique identifier from Azure AD (typically `user.objectid`) that you mapped to the `externalId` attribute in Grafana in your SCIM provisioning setup **must also be sent as a claim in the SAML assertion.** For more details on SCIM, refer to the [SCIM provisioning documentation](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/).
     - In the Azure AD Enterprise Application, under **Single sign-on** > **Attributes & Claims**, ensure you add a claim that provides this identifier. For example, you might add a claim named `UserID` (or similar, like `externalId`) that sources its value from `user.objectid`.
 
 2.  **Configure Grafana SAML Settings for SCIM:**
@@ -210,7 +210,7 @@ If you are also using SCIM provisioning for this Grafana application in Azure AD
 Set `auto_login` option to true to attempt login automatically, skipping the login screen.
 This setting is ignored if multiple auth providers are configured to use auto login.
 
-For more information about automatic login behavior and troubleshooting, see [Automatic login](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/#automatic-oauth-login).
+For more information about automatic login behavior and troubleshooting, see [Automatic login](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/#automatic-oauth-login).
 
 ```
 auto_login = true
@@ -248,9 +248,9 @@ IdP-initiated SSO has some security risks, so make sure you understand the risks
 
 For advanced configuration and troubleshooting, please refer to the one of the following pages:
 
-- [Configure SAML request signing](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-request-signing/)
-- [Configure SAML single logout](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-single-logout/)
-- [Configure Organization mapping](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-org-mapping/)
-- [Configure Role and Team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-team-role-mapping/)
-- [SAML configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/saml-configuration-options/)
-- [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/troubleshoot-saml/)
+- [Configure SAML request signing](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-request-signing/)
+- [Configure SAML single logout](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-single-logout/)
+- [Configure Organization mapping](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-org-mapping/)
+- [Configure Role and Team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-team-role-mapping/)
+- [SAML configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/saml-configuration-options/)
+- [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/troubleshoot-saml/)
