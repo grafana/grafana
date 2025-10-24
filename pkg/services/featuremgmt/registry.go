@@ -665,6 +665,12 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
+			Name:        "dashboardV2SchemaAPI",
+			Description: "Enables the usage of the V2 schema API to retrieve and update dashboards",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+		},
+		{
 			Name:         "dashboardUndoRedo",
 			Description:  "Enables undo/redo in dynamic dashboards",
 			Stage:        FeatureStageExperimental,

@@ -185,6 +185,10 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 	}
 }
 
+func (b *DashboardsAPIBuilder) GetFeatures() featuremgmt.FeatureToggles {
+	return b.features
+}
+
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts) {
 		// If dashboards v2 is enabled, we want to use v2beta1 as the default API version.
@@ -221,7 +225,7 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	}
 
 	// Register the explicit conversions
-	if err := conversion.RegisterConversions(scheme); err != nil {
+	if err := conversion.RegisterConversions(scheme, b.GetFeatures()); err != nil {
 		return err
 	}
 
