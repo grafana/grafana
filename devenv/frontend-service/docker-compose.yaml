@@ -124,7 +124,7 @@ services:
       - 'alloy.logs=true'
 
   tempo-init:
-    image: grafana/tempo
+    image: busybox
     user: root
     entrypoint:
       - 'chown'
