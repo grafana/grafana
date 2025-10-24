@@ -3,6 +3,7 @@ import { lastValueFrom } from 'rxjs';
 
 import {
   generatedAPI as correlationAPIv0alpha1,
+  CorrelationCorrelationType,
   Correlation as CorrelationK8s,
   CorrelationList,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
@@ -88,17 +89,31 @@ const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationData | u
       label: item.spec.label,
       description: item.spec.description,
       provisioned: false, // todo
-      type: item.spec.type,
     };
 
     if (item.spec.type === 'external') {
       const extCorr: CorrelationExternal = {
         ...baseCor,
+        type: 'external',
+        config: {
+          field: item.spec.config.field,
+          target: {
+            url: item.spec.config.target.url.url || '', // todo this is wrong, fix in spec
+          },
+          transformations: [], // todo fix
+        },
       };
       return toEnrichedCorrelationData(extCorr);
     } else {
       const queryCorr: CorrelationQuery = {
         ...baseCor,
+        type: 'query',
+        targetUID: item.spec.target?.name || '', // todo
+        config: {
+          field: item.spec.config.field,
+          target: item.spec.config.target, // todo
+          transformations: [], // todo fix
+        },
       };
       return toEnrichedCorrelationData(queryCorr);
     }
@@ -113,13 +128,6 @@ export const toEnrichedCorrelationsData = (correlationsResponse: CorrelationsRes
   return {
     ...correlationsResponse,
     correlations: correlationsResponse.correlations.map(toEnrichedCorrelationData).filter(validSourceFilter),
-  };
-};
-
-export const toEnrichedCorrelationDataK8s = (correlationsResponse: CorrelationList): CorrelationsData => {
-  return {
-    ...correlationsResponse,
-    correlations: correlationsResponse.items.map(toEnrichedCorrelationDataK8s).filter(validSourceFilter),
   };
 };
 

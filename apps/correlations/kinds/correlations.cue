@@ -31,6 +31,14 @@ ConfigSpec: {
 	transformations?: [...TransformationSpec]
 }
 
+/*todo this is incorrect - target needs to be an object with any sort of key/value combination 
+inside of it
+for external correlations, this is just `target: { url: 'google.com' }` ,
+but for query correlations, target is the json for populating the query editor, which is different
+for every datasource
+
+right now this is resolving to require an object of objects, like item.spec.config.target.url is expecting an object
+instead of a string. how do i fix this? */
 TargetSpec:  [string]: _
 
 TransformationSpec: {

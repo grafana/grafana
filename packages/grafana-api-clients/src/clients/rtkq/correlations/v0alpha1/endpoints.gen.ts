@@ -407,6 +407,12 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+
+/*
+this needs to be
+  [key: string]: any;
+  };
+*/
 export type CorrelationTargetSpec = {
   [key: string]: {
     [key: string]: any;
