@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../../auth/azuread/
+  - ../setup-grafana/configure-security/configure-authentication/azuread/  
 description: Grafana Entra ID OAuth Guide
 keywords:
   - grafana

@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../setup-grafana/configure-security/configure-authentication/saml/configure-saml-org-mapping/  
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:

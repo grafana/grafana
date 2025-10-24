@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../saml-ui/ # /docs/grafana/latest/setup-grafana/configure-access/configure-authentication/saml-ui/
+  - ../setup-grafana/configure-security/configure-authentication/saml/saml-ui/   
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:

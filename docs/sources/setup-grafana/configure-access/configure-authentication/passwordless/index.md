@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../setup-grafana/configure-security/configure-authentication/passwordless/  
 description: Learn how to configure passwordless authentication with magic links in Grafana
 labels:
   products:

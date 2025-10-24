@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../../auth/grafana/
+  - ../setup-grafana/configure-security/configure-authentication/grafana/  
 description: Learn how to configure basic authentication in Grafana
 labels:
   products:

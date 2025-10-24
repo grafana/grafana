@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../../auth/grafana-cloud/
+  - ../setup-grafana/configure-security/configure-authentication/grafana-cloud/  
 description: Grafana Cloud Authentication
 labels:
   products:

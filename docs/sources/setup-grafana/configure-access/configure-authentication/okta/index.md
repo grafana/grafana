@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../../auth/okta/
+  - ../setup-grafana/configure-security/configure-authentication/okta/  
 description: Grafana Okta OIDC Guide
 labels:
   products:

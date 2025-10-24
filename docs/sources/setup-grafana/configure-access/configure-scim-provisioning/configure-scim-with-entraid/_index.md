@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-azuread/ 
 description: Learn how to configure SCIM provisioning with Entra ID in Grafana Enterprise. This guide provides step-by-step instructions for setting up automated user and team management, including enterprise application configuration, service account creation, attribute mapping, and provisioning settings to ensure seamless integration between Entra ID and Grafana.
 keywords:
   - grafana
