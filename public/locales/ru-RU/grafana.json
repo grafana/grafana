@@ -3732,7 +3732,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "В алфавитном порядке (прямом)",
-        "alphabetically-za": "В алфавитном порядке (обратном)"
+        "alphabetically-za": "В алфавитном порядке (обратном)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -6340,6 +6342,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "На эту переменную не ссылается ни одна другая переменная или дашборд.",
       "content-variable-referenced-other-variables-dashboard": "На эту переменную ссылаются другие переменные или дашборд."
     },
+    "variable-controls": {
+      "add-variable": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Форма редактора переменных",
       "back-to-list": "Назад к списку",
@@ -7197,9 +7202,6 @@
       "title-failed-sample-query": "Не удалось загрузить пример журналов для этого запроса",
       "tooltip": "Показать строки журнала, которые оказали влияние на визуализированные метрики"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} появляется в {{percentage}}% строк журнала"
-    },
     "logs-table-empty-fields": {
       "no-fields": "Нет полей"
     },
@@ -7207,10 +7209,6 @@
       "fields": "Поля",
       "reset": "Сброс",
       "selected-fields": "Выбранные поля"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "Значок перетаскивания",
-      "title-drag-and-drop-to-reorder": "Перетащить для изменения порядка"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Выбрать запрос по имени",
@@ -8047,6 +8045,72 @@
     "select-group": "Выбрать группу"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_one": "",
+        "lastNDays_few": "",
+        "lastNDays_many": "",
+        "lastNDays_other": "",
+        "lastNHours_one": "",
+        "lastNHours_few": "",
+        "lastNHours_many": "",
+        "lastNHours_other": "",
+        "lastNMinutes_one": "",
+        "lastNMinutes_few": "",
+        "lastNMinutes_many": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_one": "",
+        "lastNMonths_few": "",
+        "lastNMonths_many": "",
+        "lastNMonths_other": "",
+        "lastNYears_one": "",
+        "lastNYears_few": "",
+        "lastNYears_many": "",
+        "lastNYears_other": "",
+        "nextNDays_one": "",
+        "nextNDays_few": "",
+        "nextNDays_many": "",
+        "nextNDays_other": "",
+        "nextNHours_one": "",
+        "nextNHours_few": "",
+        "nextNHours_many": "",
+        "nextNHours_other": "",
+        "nextNMinutes_one": "",
+        "nextNMinutes_few": "",
+        "nextNMinutes_many": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_one": "",
+        "nextNMonths_few": "",
+        "nextNMonths_many": "",
+        "nextNMonths_other": "",
+        "nextNYears_one": "",
+        "nextNYears_few": "",
+        "nextNYears_many": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9592,6 +9656,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Отображать элементы управления для перехода к последней или первой строке журнала и фильтры по уровню журнала",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -10822,11 +10895,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -11839,6 +11910,11 @@
       "next": "Далее",
       "previous": "Назад"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Выполненный шаг",
       "label-current-step": "Текущий шаг",
@@ -12799,6 +12875,10 @@
     "sql-suggestion-history": "История рекомендаций по SQL",
     "suggestions": "Рекомендации",
     "view-explanation": "Просмотреть объяснение"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {

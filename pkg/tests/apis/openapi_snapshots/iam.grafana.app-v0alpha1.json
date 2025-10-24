@@ -4562,7 +4562,7 @@
           "emailVerified",
           "grafanaAdmin",
           "login",
-          "name",
+          "title",
           "provisioned",
           "role"
         ],
@@ -4587,15 +4587,15 @@
             "type": "string",
             "default": ""
           },
-          "name": {
-            "type": "string",
-            "default": ""
-          },
           "provisioned": {
             "type": "boolean",
             "default": false
           },
           "role": {
+            "type": "string",
+            "default": ""
+          },
+          "title": {
             "type": "string",
             "default": ""
           }
@@ -6458,7 +6458,7 @@
           "emailVerified",
           "grafanaAdmin",
           "login",
-          "name",
+          "title",
           "provisioned",
           "role"
         ],
@@ -6483,15 +6483,15 @@
             "type": "string",
             "default": ""
           },
-          "name": {
-            "type": "string",
-            "default": ""
-          },
           "provisioned": {
             "type": "boolean",
             "default": false
           },
           "role": {
+            "type": "string",
+            "default": ""
+          },
+          "title": {
             "type": "string",
             "default": ""
           }

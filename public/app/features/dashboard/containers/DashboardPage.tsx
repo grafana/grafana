@@ -23,10 +23,10 @@ import { StoreState } from 'app/types/store';
 
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
 import { findTemplateVarChanges } from '../../variables/utils';
-import { DashNav } from '../components/DashNav';
+import DashNav from '../components/DashNav/DashNav';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
-import { DashboardSettings } from '../components/DashboardSettings';
+import { DashboardSettings } from '../components/DashboardSettings/DashboardSettings';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
 import { ShareModal } from '../components/ShareModal/ShareModal';
@@ -84,10 +84,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   fullScreenPanel: css({
     '.react-grid-layout': {
       height: 'auto !important',
+      // eslint-disable-next-line @grafana/no-unreduced-motion
       transitionProperty: 'none',
     },
     '.react-grid-item': {
       display: 'none !important',
+      // eslint-disable-next-line @grafana/no-unreduced-motion
       transitionProperty: 'none !important',
 
       '&--fullscreen': {

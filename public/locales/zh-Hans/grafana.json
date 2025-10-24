@@ -3672,7 +3672,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "按字母顺序 (A-Z)",
-        "alphabetically-za": "按字母顺序 (Z-A)"
+        "alphabetically-za": "按字母顺序 (Z-A)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -6271,6 +6273,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "此变量未被其他变量或数据面板引用。",
       "content-variable-referenced-other-variables-dashboard": "此变量被其他变量或数据面板引用。"
     },
+    "variable-controls": {
+      "add-variable": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "变量编辑器表单",
       "back-to-list": "回到列表",
@@ -7128,9 +7133,6 @@
       "title-failed-sample-query": "加载此查询的日志示例失败",
       "tooltip": "显示有助于实现可视化指标的日志行"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} 出现在 {{percentage}}% 的日志行中"
-    },
     "logs-table-empty-fields": {
       "no-fields": "没有字段"
     },
@@ -7138,10 +7140,6 @@
       "fields": "字段",
       "reset": "重置",
       "selected-fields": "已选择的字段"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "拖放图标",
-      "title-drag-and-drop-to-reorder": "拖放以重新排序"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "按名称选择查询",
@@ -7978,6 +7976,42 @@
     "select-group": "选择组"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_other": "",
+        "lastNHours_other": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_other": "",
+        "lastNYears_other": "",
+        "nextNDays_other": "",
+        "nextNHours_other": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_other": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9508,6 +9542,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -10720,11 +10763,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -11719,6 +11760,11 @@
       "next": "下一步",
       "previous": "上一个"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "已完成的步骤",
       "label-current-step": "当前步骤",
@@ -12667,6 +12713,10 @@
     "sql-suggestion-history": "SQL 建议历史记录",
     "suggestions": "建议",
     "view-explanation": "查看解释"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {

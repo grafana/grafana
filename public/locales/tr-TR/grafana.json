@@ -3692,7 +3692,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "Alfabetik (A-Z)",
-        "alphabetically-za": "Alfabetik (Z-A)"
+        "alphabetically-za": "Alfabetik (Z-A)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -6294,6 +6296,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "Bu değişkene diğer değişkenler veya panolar tarafından başvurulmuyor.",
       "content-variable-referenced-other-variables-dashboard": "Bu değişkene diğer değişkenler veya panolar tarafından başvuruluyor."
     },
+    "variable-controls": {
+      "add-variable": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Değişken düzenleyici formu",
       "back-to-list": "Listeye geri dön",
@@ -7151,9 +7156,6 @@
       "title-failed-sample-query": "Bu sorgu için günlük kaydı örneği yüklenemedi",
       "tooltip": "Görselleştirilen metriklere katkıda bulunan günlük kayıtlarını göster"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "|||UNTRANSLATED_CONTENT_START|||{{labelName}} appears in {{percentage}}% of log lines|||UNTRANSLATED_CONTENT_END|||"
-    },
     "logs-table-empty-fields": {
       "no-fields": "Alan yok"
     },
@@ -7161,10 +7163,6 @@
       "fields": "Alanlar",
       "reset": "Sıfırla",
       "selected-fields": "Seçilen alanlar"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "Sürükle ve bırak simgesi",
-      "title-drag-and-drop-to-reorder": "Yeniden düzenlemek için sürükleyip bırakın"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Sorguyu ada göre seç",
@@ -8001,6 +7999,52 @@
     "select-group": ""
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_one": "",
+        "lastNDays_other": "",
+        "lastNHours_one": "",
+        "lastNHours_other": "",
+        "lastNMinutes_one": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_one": "",
+        "lastNMonths_other": "",
+        "lastNYears_one": "",
+        "lastNYears_other": "",
+        "nextNDays_one": "",
+        "nextNDays_other": "",
+        "nextNHours_one": "",
+        "nextNHours_other": "",
+        "nextNMinutes_one": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_one": "",
+        "nextNMonths_other": "",
+        "nextNYears_one": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9536,6 +9580,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Son veya ilk günlük satırına atlamak için ekran kontrolleri ve günlük düzeyine göre filtreler",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -10754,11 +10807,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -11759,6 +11810,11 @@
       "next": "İleri",
       "previous": "Önceki"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Tamamlanan adım",
       "label-current-step": "Mevcut adım",
@@ -12711,6 +12767,10 @@
     "sql-suggestion-history": "",
     "suggestions": "",
     "view-explanation": ""
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {

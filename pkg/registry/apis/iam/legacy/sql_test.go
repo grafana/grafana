@@ -85,8 +85,20 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	updateTeamMember := func(cmd *UpdateTeamMemberCommand) sqltemplate.SQLTemplate {
+		v := newUpdateTeamMember(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	listTeamMembers := func(q *ListTeamMembersQuery) sqltemplate.SQLTemplate {
 		v := newListTeamMembers(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	deleteTeamMember := func(q *DeleteTeamMemberCommand) sqltemplate.SQLTemplate {
+		v := newDeleteTeamMember(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -235,11 +247,10 @@ func TestIdentityQueries(t *testing.T) {
 			},
 			sqlQueryTeamBindingsTemplate: {
 				{
-					Name: "team_bindings_id",
+					Name: "team_bindings_uid",
 					Data: listTeamBindings(&ListTeamBindingsQuery{
 						OrgID:      1,
-						TeamID:     1,
-						UserID:     1,
+						UID:        "tm-1",
 						Pagination: common.Pagination{Limit: 1},
 					}),
 				},
@@ -261,6 +272,16 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
+			sqlUpdateTeamMemberQuery: {
+				{
+					Name: "update_team_member_basic",
+					Data: updateTeamMember(&UpdateTeamMemberCommand{
+						UID:        "team-member-1",
+						Permission: team.PermissionTypeAdmin,
+						Updated:    legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
 			sqlQueryTeamMembersTemplate: {
 				{
 					Name: "team_1_members_page_1",
@@ -276,6 +297,14 @@ func TestIdentityQueries(t *testing.T) {
 						UID:        "team-1",
 						OrgID:      1,
 						Pagination: common.Pagination{Limit: 1, Continue: 2},
+					}),
+				},
+			},
+			sqlDeleteTeamMemberQuery: {
+				{
+					Name: "delete_team_member_basic",
+					Data: deleteTeamMember(&DeleteTeamMemberCommand{
+						UID: "team-member-1",
 					}),
 				},
 			},

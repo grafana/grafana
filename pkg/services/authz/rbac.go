@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/authlib/cache"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/middleware"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -53,6 +54,8 @@ func ProvideAuthZClient(
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
 ) (authlib.AccessClient, error) {
+	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
 		return nil, err
@@ -60,6 +63,10 @@ func ProvideAuthZClient(
 
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && authCfg.mode == clientModeCloud {
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
+	}
+
+	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
+		return zanzanaClient, nil
 	}
 
 	// Provisioning uses mode 4 (read+write only to unified storage)
@@ -72,7 +79,7 @@ func ProvideAuthZClient(
 	switch authCfg.mode {
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
-		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		if zanzanaEnabled {
 			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
 		return rbacClient, err
@@ -119,7 +126,7 @@ func ProvideAuthZClient(
 			authzlib.WithTracerClientOption(tracer),
 		)
 
-		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		if zanzanaEnabled {
 			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
 

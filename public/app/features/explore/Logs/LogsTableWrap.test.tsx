@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ComponentProps } from 'react';
 
-import { createTheme, ExploreLogsPanelState, LogsSortOrder, toUtc } from '@grafana/data';
+import { ExploreLogsPanelState, LogsSortOrder, toUtc } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 
@@ -27,7 +27,6 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap
       timeZone={'utc'}
       width={50}
       logsFrames={[getMockLokiFrame()]}
-      theme={createTheme()}
       {...partialProps}
     />
   );
