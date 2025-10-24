@@ -1,6 +1,6 @@
 import { PluginExtensionExposedComponents } from '@grafana/data';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
-import { DrilldownAppToDashboardPanelComponent } from 'app/features/drilldown-integration/getComponentExtensions';
+import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -39,9 +39,9 @@ exposedComponentsRegistry.register({
     },
     {
       id: PluginExtensionExposedComponents.AddToDashboardFormV1,
-      title: 'Drilldown add to dashboard panel',
-      description: 'A component that allows adding drilldown panels to dashboards',
-      component: DrilldownAppToDashboardPanelComponent,
+      title: 'Add to dashboard form',
+      description: 'Add to dashboard form',
+      component: AddToDashboardFormExposedComponent,
     },
   ],
 });
