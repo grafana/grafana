@@ -63,7 +63,10 @@ export function fetchServiceAccounts(
           dispatch(rolesFetchBegin());
           const orgId = contextSrv.user.orgId;
           const userIds = result?.serviceAccounts.map((u: ServiceAccountDTO) => u.id);
-          const roles = await getBackendSrv().post(`/api/access-control/users/roles/search?includeHidden=true`, { userIds, orgId });
+          const roles = await getBackendSrv().post(`/api/access-control/users/roles/search?includeHidden=true`, {
+            userIds,
+            orgId,
+          });
           result.serviceAccounts.forEach((u: ServiceAccountDTO) => {
             u.roles = roles ? roles[u.id] || [] : [];
           });
