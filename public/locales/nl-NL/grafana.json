@@ -11810,6 +11810,11 @@
       "next": "Volgende",
       "previous": "Vorige"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Voltooide stap",
       "label-current-step": "Huidige stap",

@@ -11910,6 +11910,11 @@
       "next": "Далее",
       "previous": "Назад"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Выполненный шаг",
       "label-current-step": "Текущий шаг",

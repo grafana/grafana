@@ -11910,6 +11910,11 @@
       "next": "Další",
       "previous": "Předchozí"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Dokončený krok",
       "label-current-step": "Aktuální krok",

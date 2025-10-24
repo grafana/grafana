@@ -11810,6 +11810,11 @@
       "next": "Következő",
       "previous": "Előző"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Befejezett lépés",
       "label-current-step": "Jelenlegi lépés",

@@ -11760,6 +11760,11 @@
       "next": "次へ",
       "previous": "前へ"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "完了したステップ",
       "label-current-step": "現在のステップ",
