@@ -14,7 +14,7 @@ import (
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 	"github.com/grafana/grafana/pkg/aggregator/apiserver/util"
-	grafanasemconv "github.com/grafana/grafana/pkg/semconv"
+	grafanasemconv "github.com/grafana/grafana/pkg/grafanaconv"
 )
 
 func (h *PluginHandler) QueryDataHandler() http.HandlerFunc {
@@ -61,8 +61,8 @@ func (h *PluginHandler) QueryDataHandler() http.HandlerFunc {
 		}
 
 		span.AddEvent("GetPluginContext",
-			grafanasemconv.GrafanaDatasourceUid(dsRef.UID),
-			grafanasemconv.GrafanaDatasourceType(dsRef.Type),
+			grafanasemconv.DatasourceUID(dsRef.UID),
+			grafanasemconv.DatasourceType(dsRef.Type),
 		)
 		pluginContext, err := h.pluginContextProvider.GetPluginContext(ctx, dsRef.Type, dsRef.UID)
 		if err != nil {
@@ -71,7 +71,7 @@ func (h *PluginHandler) QueryDataHandler() http.HandlerFunc {
 		}
 
 		ctx = backend.WithGrafanaConfig(ctx, pluginContext.GrafanaConfig)
-		span.AddEvent("QueryData start", grafanasemconv.GrafanaDatasourceRequestQueryCount(len(queries)))
+		span.AddEvent("QueryData start", grafanasemconv.DatasourceRequestQueryCount(len(queries)))
 		rsp, err := h.client.QueryData(ctx, &backend.QueryDataRequest{
 			Queries:       queries,
 			PluginContext: pluginContext,

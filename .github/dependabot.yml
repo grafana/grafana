@@ -36,7 +36,7 @@ updates:
       - "/pkg/codegen"
       - "/pkg/plugins/codegen"
       - "/pkg/promlib"
-      - "/pkg/semconv"
+      - "/pkg/grafanaconv"
       - "/pkg/util/xorm"
       - "/scripts/go-workspace"
       - "/scripts/modowners"

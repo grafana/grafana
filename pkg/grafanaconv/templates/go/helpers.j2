@@ -1,0 +1,199 @@
+{#- Copyright The OpenTelemetry Authors -#}
+{#- SPDX-License-Identifier: Apache-2.0 -#}
+{%- macro repl(text) -%}
+{#- Copied from semconvgen: https://github.com/open-telemetry/opentelemetry-go-build-tools/blob/3e69152c51c56213b65c0fc6e5954293b522103c/semconvgen/generator.go#L419-L426 -#}
+{{ text | replace("RedisDatabase", "RedisDB") | replace("IPTCP", "TCP") | replace("IPUDP", "UDP") | replace("Lineno", "LineNumber") }}
+{%- endmacro -%}
+  
+{%- macro smart_title_case(text) -%}
+{%- for i in range(0, text | length) -%}
+    {%- if i == 0 or text[i-1] in ['.', '_'] -%}
+        {{ text[i] | upper }}
+    {%- elif not text[i] in ['.', '_'] -%}
+        {{ text[i] }}
+    {%- endif -%}
+{%- endfor -%}
+{%- endmacro -%}
+
+{%- macro to_go_name(fqn="", pkg="") -%}
+{%- if pkg != "" and fqn != pkg -%}
+{%- set n = pkg | length -%}
+{%- if pkg == fqn[:n] -%}
+{%- set fqn = fqn[n:] -%}
+{%- if fqn[0] == "." or fqn[0] == "_" -%}
+{%- set fqn = fqn[1:] -%}
+{%- endif -%}
+{%- endif -%}
+{%- endif -%}
+{{ repl(smart_title_case(fqn | replace(" ", "") | replace("_", ".") | acronym)) }}
+{%- endmacro -%}
+
+
+{%- macro deprecated_doc(attr) -%}
+{% if attr is deprecated %}Deprecated: {{ attr.deprecated }}{% endif %}
+{%- endmacro -%}
+
+{%- macro notes_doc(attr) -%}
+{% if attr.note %}Note: {{ attr.note }}{% endif %}
+{%- endmacro -%}
+
+{%- macro examples_doc(attr) -%}
+{%- if attr.examples is iterable %}
+Examples: {{ attr.examples | trim("[]") }}
+{%- endif %}
+{%- endmacro -%}
+
+{%- macro lower_first(line) -%}
+{%- if line is string and line | length > 1 -%}
+{%- if line[0] is upper and line[1] is upper -%}
+{#- Assume an acronym -#}
+{{ line }}
+{%- else -%}
+{{ line[0]|lower }}{{ line[1:] }}
+{%- endif -%}
+{%- elif line is not none -%}
+{{ line }}
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro first_word(line, delim=" ") -%}
+{%- for c in line -%}
+{%- if c == delim -%}
+{{ line[:loop.index0] }}
+{%- set line = "" -%}
+{%- endif -%}
+{%- endfor -%}
+{%- endmacro -%}
+
+{%- macro prefix_brief(brief, prefix="") -%}
+{%- set norms = [
+       "MUST", "REQUIRED", "SHALL",
+       "SHOULD", "RECOMMENDED",
+       "MAY", "OPTIONAL"
+] -%}
+{%- set brief = brief | trim() -%}
+{%- if first_word(brief) is in norms -%}
+It {{ brief }}.
+{%- else -%}
+{{ prefix }} {% if brief[:2] == "A " or brief[:3] == "An " or brief[:4] == "The " -%}
+  {{ lower_first(brief) | trim(".") }}.
+{%- else -%}
+  the {{ lower_first(brief) | trim(".") }}.
+{%- endif -%}
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro it_reps(brief) -%}
+{{ prefix_brief(brief, "It represents") }}
+{%- endmacro -%}
+
+{%- macro keydoc(attr, pkg="") -%}
+{{ to_go_name(attr.name, pkg) }}Key is the attribute Key conforming to the "{{ attr.name }}" semantic conventions. {{ it_reps(attr.brief) }}
+
+{% if attr is enum -%}
+Type: Enum
+{%- else -%}
+Type: {{ attr.type }}
+{%- endif %}
+RequirementLevel: {{ attr.requirement_level | title }}
+Stability: {{ attr.stability | title }}
+{{ examples_doc(attr) }}
+{{ notes_doc(attr) }}
+{{ deprecated_doc(attr) }}
+{%- endmacro -%}
+
+{%- macro generate_consts(group, pkg="") -%}
+{#- TODO: generate with group docs (i.e group by registry namespace) #}
+
+{{ ["Namespace: " ~ group.root_namespace] | comment(format="go") }}
+const (
+{%- for attribute in group.attributes if not attribute.deprecated %}
+{#- TODO: Handle template attributes. #}
+{%- if not attribute.type is template_type %}
+{{ keydoc(attribute, pkg) | comment(format="go_1tab") }}
+	{{to_go_name(attribute.name, pkg=pkg)}}Key = attribute.Key("{{attribute.name}}")
+{% endif -%}
+{%- endfor -%}
+)
+{%- endmacro -%}
+
+{%- macro generate_funcs(group, pkg="") -%}
+{%- for attribute in group.attributes %}
+{#- TODO: Handle template attributes. #}
+{%- if not attribute.type is template_type and attribute.type != "any" %}
+{%- if attribute is enum %}
+
+{{ [to_go_name(attribute.name, pkg) ~ " returns an attribute KeyValue conforming to the \"" ~ attribute.name ~ "\" semantic conventions. " ~ it_reps(attribute.brief) ] | comment(format="go") }}
+func {{to_go_name(attribute.name, pkg)}}(val fmt.Stringer) attribute.KeyValue {
+	return {{to_go_name(attribute.name, pkg)}}Key.String(val.String())
+}
+{%- else %}
+
+{{ [to_go_name(attribute.name, pkg) ~ " returns an attribute KeyValue conforming to the \"" ~ attribute.name ~ "\" semantic conventions. " ~ it_reps(attribute.brief) ] | comment(format="go") }}
+func {{to_go_name(attribute.name, pkg)}}(val {{attribute.type | instantiated_type | map_text("attribute_type_value")}}) attribute.KeyValue {
+	return {{to_go_name(attribute.name, pkg)}}Key.{{attribute.type | instantiated_type | map_text("attribute_type_method")}}(val)
+}
+{%- endif %}
+{%- elif attribute.type is template_type %}
+
+{{ [to_go_name(attribute.name, pkg) ~ " returns an attribute KeyValue conforming to the \"" ~ attribute.name ~ "\" semantic conventions. " ~ it_reps(attribute.brief) ] | comment(format="go") }}
+func {{to_go_name(attribute.name, pkg)}}(key string, val {{attribute.type | instantiated_type | map_text("attribute_type_value")}}) attribute.KeyValue {
+	return attribute.{{attribute.type | instantiated_type | map_text("attribute_type_method")}}("{{attribute.name}}."+key, val)
+}
+{%- endif %}
+{%- endfor %}
+{%- endmacro -%}
+
+{%- macro generate_vars(group, pkg="") -%}
+{#- Render values for enums #}
+{%- for attribute in group.attributes %}
+{%- if attribute is enum %}
+
+{{ ["Enum values for " ~ attribute.name] | comment(format="go") }}
+var (
+{%- for value in attribute.type.members if not value.deprecated %}
+{{ [value.brief or value.id, "Stability: " ~ value.stability] | comment(format="go_1tab") }}
+	{{to_go_name(attribute.name ~ "." ~ value.id, pkg=pkg)}} = {{ to_go_name(attribute.name, pkg=pkg) }}Key.{{attribute.type | instantiated_type | map_text("attribute_type_method")}}({{ value.value | print_member_value }})
+{%- endfor %}
+)
+{%- endif %}
+{%- endfor %}
+{%- endmacro -%}
+
+{%- macro metric_keydoc(metric, pkg="") -%}
+{%- if not metric.brief -%}
+{{ to_go_name(metric.metric_name, pkg=pkg) }} is the metric conforming to the "{{ metric.metric_name}}" semantic conventions.
+{%- else -%}
+{{ to_go_name(metric.metric_name, pkg=pkg) }} is the metric conforming to the "{{ metric.metric_name}}" semantic conventions. {{ it_reps(metric.brief)|trim(".") }}.
+{%- endif %}
+{%- endmacro -%}
+
+{%- macro metric_typedoc(metric, pkg="") -%}
+{%- if not metric.brief -%}
+{{ to_go_name(metric.metric_name, pkg=pkg) }} is an instrument used to record metric values conforming to the "{{ metric.metric_name}}" semantic conventions.
+{%- else -%}
+{{ to_go_name(metric.metric_name, pkg=pkg) }} is an instrument used to record metric values conforming to the "{{ metric.metric_name}}" semantic conventions. {{ it_reps(metric.brief)|trim(".") }}.
+{%- endif %}
+{%- endmacro -%}
+
+{%- macro member_type(member) %}
+{%- if member.value is string %}string{%- endif %}
+{%- if member.value is boolean %}bool{%- endif %}
+{%- if member.value is int %}int64{%- endif %}
+{%- if member.value is float %}float64{%- endif %}
+{%- endmacro %}
+
+{%- macro attr_type(attribute) %}
+{%- if attribute.type is mapping %}
+{{- member_type(attribute.type.members[0]) }}
+{%- elif attribute.type == "template[boolean]" %}boolean
+{%- elif attribute.type == "template[int]" %}int
+{%- elif attribute.type == "template[double]" %}double
+{%- elif attribute.type == "template[string]" %}string
+{%- elif attribute.type == "template[boolean[]]" %}boolean[]
+{%- elif attribute.type == "template[int[]]" %}int[]
+{%- elif attribute.type == "template[double[]]" %}double[]
+{%- elif attribute.type == "template[string[]]" %}string[]
+{%- else %}{{ attribute.type | trim }}
+{%- endif %}
+{%- endmacro %}

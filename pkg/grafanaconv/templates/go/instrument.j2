@@ -1,0 +1,285 @@
+{#- Copyright The OpenTelemetry Authors -#}
+{#- SPDX-License-Identifier: Apache-2.0 -#}
+{% import 'helpers.j2' as h -%}
+
+{%- macro instrument_default(metric) -%}
+{%- set ns = namespace(value="Int64", inst="unknown") -%}
+{%- set divisible = ["s", "ms"] -%}
+{%- if metric.unit is in divisible -%}
+{%- set ns.value="Float64" -%}
+{%- endif -%}
+{%- if metric.instrument == "counter" -%}
+{%- set ns.inst="Counter" -%}
+{%- elif metric.instrument == "updowncounter" -%}
+{%- set ns.inst="UpDownCounter" -%}
+{%- elif metric.instrument == "gauge" -%}
+{%- set ns.inst="Gauge" -%}
+{%- elif metric.instrument == "histogram" -%}
+{%- set ns.inst="Histogram" -%}
+{%- endif -%}
+{{ ns.value ~ ns.inst }}
+{%- endmacro -%}
+
+{%- macro instrument(metric) -%}
+{{ metric.metric_name | map_text("instrument", instrument_default(metric)) }}
+{%- endmacro -%}
+
+{%- macro value_type(metric) -%}
+{%- if instrument(metric)[:7] == "Float64" -%}
+Float64
+{%- else -%}
+Int64
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro param_name(raw="", pkg="") -%}
+{%- set reserved = [
+	"type", "break", "default", "func", "interface", "select", "case", "defer",
+	"go", "map", "struct", "chan", "else", "goto", "const", "fallthrough", "if",
+	"range", "type", "continue", "for", "import", "return", "var",
+]-%}
+{%- set name = raw -%}
+{%- if pkg != "" -%}
+{%- set n = pkg | length -%}
+{%- if pkg == name[:n] -%}
+{%- set name = name[n:] -%}
+{%- if name[0] == "." or name[0] == "." -%}
+{%- set name = name[1:] -%}
+{%- endif -%}
+{%- endif -%}
+{%- endif -%}
+{%- if name | lower is in reserved -%}
+{{ raw | camel_case }}
+{%- else -%}
+{{ name | camel_case }}
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro params_docs(attrs, pkg="") -%}
+{%- set ns = namespace(output='') -%}
+{%- for attr in attrs | required | attribute_sort -%}
+	{%- set ns.output = ns.output ~  "\n\nThe " ~ param_name(attr.name, pkg) ~ " is the " ~ h.lower_first(attr.brief) -%}
+{%- endfor -%}
+{%- if attrs | not_required | length > 0 -%}
+	{%- set ns.output = ns.output ~ "\n\nAll additional attrs passed are included in the recorded value." -%}
+{%- endif -%}
+{%- if ns.output != "" -%}
+//
+{{ ns.output | comment }}
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro param(attr, pkg="") -%}
+{%- if attr.type is mapping -%}
+{{ param_name(attr.name, pkg) }} {{ h.to_go_name(attr.name, pkg) }}Attr,
+{%- else -%}
+{{ param_name(attr.name, pkg) }} {{ attr.type | map_text("attribute_type_value")}},
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro params(attrs, type="", pkg="", prefix="") -%}
+{%- for attr in attrs | required | attribute_sort -%}
+{{ prefix ~ param(attr, pkg) }}
+{% endfor -%}
+{{ prefix ~ "attrs ...attribute.KeyValue," }}
+{%- endmacro -%}
+
+{%- macro to_attribute(attr, pkg="") -%}
+{%- if attr.type is mapping -%}
+	attribute.{{ h.attr_type(attr) | map_text("attribute_type_method")}}("{{ attr.name }}", {{ h.member_type(attr.type.members[0]) }}({{ param_name(attr.name, pkg) }})),
+{%- else -%}
+	attribute.{{ attr.type | map_text("attribute_type_method")}}("{{ attr.name }}", {{ param_name(attr.name, pkg) }}),
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro with_attributes_opt(attrs, pkg="", prefix="") -%}
+{%- if attrs | length > 0 -%}
+{{ prefix }}metric.WithAttributes(
+{%- if attrs | required | length > 0 %}
+{{ prefix }}	append(
+{{ prefix }}		attrs,
+{%- for attr in attrs | required | attribute_sort %}
+{{ prefix }}		{{ to_attribute(attr, pkg) }}
+{%- endfor %}
+{{ prefix }}	)...,
+{%- else %}
+{{ prefix }}	attrs...,
+{%- endif %}
+{{ prefix }}),
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro add_method_with_optional(metric, inst, pkg="") -%}
+{%- set name = h.to_go_name(metric.metric_name, pkg) -%}
+{%- set req_attr = metric.attributes | required | attribute_sort -%}
+func (m {{ name }}) Add(
+	ctx context.Context,
+	incr {{ value_type(metric) | lower }},
+{{ params(metric.attributes, pkg=pkg, prefix="\t") }}
+) {
+	if len(attrs) == 0 {
+		m.{{ inst }}.Add(ctx, incr)
+		return
+	}
+
+	o := addOptPool.Get().(*[]metric.AddOption)
+	defer func() {
+		*o = (*o)[:0]
+		addOptPool.Put(o)
+	}()
+
+	*o = append(
+		*o,
+{{ with_attributes_opt(metric.attributes, pkg=pkg, prefix="\t\t") }}
+	)
+
+	m.{{ inst }}.Add(ctx, incr, *o...)
+}
+{%- endmacro -%}
+
+{%- macro add_method(metric, inst, pkg="") -%}
+
+// Add adds incr to the existing count for attrs.
+{%- if metric.attributes is not none and metric.attributes | length > 0 %}
+{{ params_docs(metric.attributes, pkg=pkg) }}
+{%- if metric.note is defined %}
+//
+{{ metric.note | comment }}
+{%- endif %}
+{{ add_method_with_optional(metric, inst, pkg) }}
+{%- else %}
+{%- if metric.note is defined %}
+//
+{{ metric.note | comment }}
+{%- endif %}
+func (m {{ h.to_go_name(metric.metric_name, pkg) }}) Add(ctx context.Context, incr {{ value_type(metric) | lower }}, attrs ...attribute.KeyValue) {
+	if len(attrs) == 0 {
+		m.{{ inst }}.Add(ctx, incr)
+		return
+	}
+
+	o := addOptPool.Get().(*[]metric.AddOption)
+	defer func() {
+		*o = (*o)[:0]
+		addOptPool.Put(o)
+	}()
+
+	*o = append(*o, metric.WithAttributes(attrs...))
+	m.{{ inst }}.Add(ctx, incr, *o...)
+}
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro add_set_method(metric, inst, pkg="") -%}
+
+// AddSet adds incr to the existing count for set.
+{%- if metric.note is defined %}
+//
+{{ metric.note | comment }}
+{%- endif %}
+func (m {{ h.to_go_name(metric.metric_name, pkg) }}) AddSet(ctx context.Context, incr {{ value_type(metric) | lower }}, set attribute.Set) {
+	if set.Len() == 0 {
+		m.{{ inst }}.Add(ctx, incr)
+		return
+	}
+
+	o := addOptPool.Get().(*[]metric.AddOption)
+	defer func() {
+		*o = (*o)[:0]
+		addOptPool.Put(o)
+	}()
+
+	*o = append(*o, metric.WithAttributeSet(set))
+	m.{{ inst }}.Add(ctx, incr, *o...)
+}
+{%- endmacro -%}
+
+{%- macro record_method_with_optional(metric, inst, pkg="") -%}
+{%- set name = h.to_go_name(metric.metric_name, pkg) -%}
+{%- set req_attr = metric.attributes | required | attribute_sort -%}
+func (m {{ name }}) Record(
+	ctx context.Context,
+	val {{ value_type(metric) | lower }},
+{{ params(metric.attributes, pkg=pkg, prefix="\t") }}
+) {
+	if len(attrs) == 0 {
+		m.{{ inst }}.Record(ctx, val)
+		return
+	}
+
+	o := recOptPool.Get().(*[]metric.RecordOption)
+	defer func() {
+		*o = (*o)[:0]
+		recOptPool.Put(o)
+	}()
+
+	*o = append(
+		*o,
+{{ with_attributes_opt(metric.attributes, pkg=pkg, prefix="\t\t") }}
+	)
+
+	m.{{ inst }}.Record(ctx, val, *o...)
+}
+{%- endmacro -%}
+
+{%- macro record_method(metric, inst, pkg="") -%}
+
+// Record records val to the current distribution for attrs.
+{%- if metric.attributes is not none and metric.attributes | length > 0 %}
+{{ params_docs(metric.attributes, pkg=pkg) }}
+{%- if metric.note is defined %}
+//
+{{ metric.note | comment }}
+{%- endif %}
+{{ record_method_with_optional(metric, inst, pkg) }}
+{%- else %}
+{%- set name = h.to_go_name(metric.metric_name, pkg) -%}
+{%- if metric.note is defined %}
+//
+{{ metric.note | comment }}
+{%- endif %}
+func (m {{ name }}) Record(ctx context.Context, val {{ value_type(metric) | lower }}, attrs ...attribute.KeyValue) {
+	if len(attrs) == 0 {
+		m.{{ inst }}.Record(ctx, val)
+		return
+	}
+
+	o := recOptPool.Get().(*[]metric.RecordOption)
+	defer func() {
+		*o = (*o)[:0]
+		recOptPool.Put(o)
+	}()
+
+	*o = append(*o, metric.WithAttributes(attrs...))
+	m.{{ inst }}.Record(ctx, val, *o...)
+}
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro record_set_method(metric, inst, pkg="") -%}
+{%- set name = h.to_go_name(metric.metric_name, pkg) -%}
+
+// RecordSet records val to the current distribution for set.
+{%- if metric.note is defined %}
+//
+{{ metric.note | comment }}
+{%- endif %}
+func (m {{ name }}) RecordSet(ctx context.Context, val {{ value_type(metric) | lower }}, set attribute.Set) {
+	if set.Len() == 0 {
+		m.{{ inst }}.Record(ctx, val)
+	}
+
+	o := recOptPool.Get().(*[]metric.RecordOption)
+	defer func() {
+		*o = (*o)[:0]
+		recOptPool.Put(o)
+	}()
+
+	*o = append(*o, metric.WithAttributeSet(set))
+	m.{{ inst }}.Record(ctx, val, *o...)
+}
+{%- endmacro -%}
+
+{%- macro desc(metric) -%}
+{{metric.brief | replace('\n', ' ') | trim}}
+{%- endmacro -%}

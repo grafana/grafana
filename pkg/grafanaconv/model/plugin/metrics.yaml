@@ -1,0 +1,8 @@
+groups:
+  - id: metric.grafana.plugin.load.duration
+    type: metric
+    brief: 'Time taken to load plugins from a source'
+    metric_name: grafana.plugin.load.duration
+    instrument: histogram
+    unit: "ms"
+    stability: stable

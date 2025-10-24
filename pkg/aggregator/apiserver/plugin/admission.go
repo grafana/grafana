@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/aggregator/apiserver/plugin/admission"
 	"github.com/grafana/grafana/pkg/aggregator/apiserver/util"
-	grafanasemconv "github.com/grafana/grafana/pkg/semconv"
+	grafanasemconv "github.com/grafana/grafana/pkg/grafanaconv"
 	"k8s.io/component-base/tracing"
 	"k8s.io/klog/v2"
 )
@@ -26,7 +26,7 @@ func (h *PluginHandler) AdmissionMutationHandler() http.Handler {
 		}
 
 		span.AddEvent("GetPluginContext",
-			grafanasemconv.GrafanaPluginId(h.dataplaneService.Spec.PluginID),
+			grafanasemconv.PluginID(h.dataplaneService.Spec.PluginID),
 		)
 		pluginContext, err := h.pluginContextProvider.GetPluginContext(ctx, h.dataplaneService.Spec.PluginID, "")
 		if err != nil {
@@ -85,7 +85,7 @@ func (h *PluginHandler) AdmissionValidationHandler() http.Handler {
 		}
 
 		span.AddEvent("GetPluginContext",
-			grafanasemconv.GrafanaPluginId(h.dataplaneService.Spec.PluginID),
+			grafanasemconv.PluginID(h.dataplaneService.Spec.PluginID),
 		)
 		pluginContext, err := h.pluginContextProvider.GetPluginContext(ctx, h.dataplaneService.Spec.PluginID, "")
 		if err != nil {

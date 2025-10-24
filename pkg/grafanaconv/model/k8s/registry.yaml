@@ -1,10 +1,10 @@
 groups:
-  - id: registry.k8s
+  - id: registry.grafana.k8s
     type: attribute_group
     display_name: Kubernetes Attributes
     brief: "Describes Kubernetes attributes."
     attributes:
-      - id: k8s.dataplaneservice.name
+      - id: grafana.k8s.dataplaneservice.name
         type: string
         brief: The name of the DataPlaneService.
         examples:

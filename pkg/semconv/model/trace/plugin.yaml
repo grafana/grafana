@@ -1,8 +1,0 @@
-groups:
-  - id: trace.grafana.plugin
-    type: span
-    brief: 'Semantic Convention for Grafana plugins'
-    stability: stable
-    attributes:
-      - ref: grafana.plugin.id
-      - ref: grafana.plugin.type

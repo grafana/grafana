@@ -67,7 +67,7 @@ func (m *service) WithDependencies(dependencyMap map[string][]string) *service {
 func (m *service) starting(ctx context.Context) error {
 	var err error
 	m.moduleManager.SetContext(ctx)
-	_, span := infratracing.Start(ctx, "modules.service.starting")
+	spanCtx, span := infratracing.Start(ctx, "modules.service.starting")
 	defer span.End()
 	for mod, targets := range m.dependencyMap {
 		if !m.moduleManager.IsModuleRegistered(mod) {
@@ -109,7 +109,7 @@ func (m *service) starting(ctx context.Context) error {
 
 	listener := newServiceListener(m.log, m)
 	m.serviceManager.AddListener(listener)
-	if err := m.serviceManager.StartAsync(ctx); err != nil {
+	if err := m.serviceManager.StartAsync(spanCtx); err != nil {
 		return err
 	}
 	return m.serviceManager.AwaitHealthy(ctx)

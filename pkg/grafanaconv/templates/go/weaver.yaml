@@ -1,0 +1,90 @@
+# Weaver configuration for Grafana semantic conventions
+params:
+  excluded_namespaces: []
+  excluded_attributes: []
+
+default_comment_format: go
+text_maps:
+  attribute_type_method:
+    string: String
+    string[]: StringSlice
+    int: Int
+    int64: Int64
+    int[]: IntSlice
+    double: Float64
+    double[]: FloatSlice
+    boolean: Bool
+    boolean[]: BoolSlice
+  attribute_type_value:
+    string: string
+    string[]: "...string"
+    int: int
+    int[]: "...int"
+    double: float64
+    double[]: "...float64"
+    boolean: bool
+    boolean[]: "...bool"
+
+# Whitespace control for clean generated code
+whitespace_control:
+  trim_blocks: false
+  lstrip_blocks: true
+  keep_trailing_newline: true
+
+# Acronyms for proper Go naming
+acronyms: ["ID", "URL", "HTTP", "HTTPS", "API", "JSON", "XML", "SQL", "UUID", "UID"]
+
+# Comment format for Go
+comment_formats:
+  go:
+    format: markdown
+    prefix: "// "
+    trim: true
+    remove_trailing_dots: false
+  go_1tab:
+    format: markdown
+    prefix: "	// "
+    trim: true
+    remove_trailing_dots: false
+  go_block:
+    format: markdown
+    header: "/*"
+    prefix: " * "
+    footer: " */"
+    trim: true
+
+templates:
+  - pattern: attributes.go.j2
+    filter: >
+      semconv_grouped_attributes({
+        "exclude_deprecated": true,
+        "exclude_root_namespace": $excluded_namespaces,
+      })
+      | map({
+        root_namespace: .root_namespace,
+        attributes: .attributes | map(select(.name as $st | $excluded_attributes | index($st) | not)),
+      })
+    application_mode: single
+    file_name: attributes.go
+  - pattern: span.go.j2
+    filter: >
+      .groups 
+      | map(select(.type == "span"))
+      | map(select(.stability == "stable"))
+      | map(select(has("deprecated") | not))
+      | map(. + {root_namespace: (if .id | index(".") then .id | split(".") | .[0] else "other" end)})
+      | map(select(.root_namespace as $st | $excluded_namespaces | index($st) | not))
+      | sort_by(.root_namespace)
+      | group_by(.root_namespace)
+      | map({ root_namespace: .[0].root_namespace, spans: . | sort_by(.id) })
+    application_mode: each
+    file_name: "{{ctx.root_namespace | camel_case | lower }}_spans.go"
+  - pattern: metric.go.j2
+    filter: >
+      semconv_metrics({
+        "exclude_deprecated": true,
+        "exclude_root_namespace": $excluded_namespaces,
+      }) 
+      | semconv_group_metrics_by_root_namespace
+    application_mode: each
+    file_name: "{{ctx.root_namespace | camel_case | lower }}_metrics.go"
