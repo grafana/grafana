@@ -8,6 +8,7 @@ import {
   LocalPlugin,
   RemotePlugin,
   CatalogPluginDetails,
+  CatalogPluginInsights,
   Version,
   PluginVersion,
   InstancePlugin,
@@ -45,6 +46,19 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     signature: local?.signature,
     screenshots: remote?.json?.info.screenshots || local?.info.screenshots,
   };
+}
+
+export async function getPluginInsights(id: string, version?: string): Promise<CatalogPluginInsights> {
+  try {
+    const params = version ? { version } : {};
+    const insights = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/insights`, params);
+    return insights;
+  } catch (error) {
+    if (isFetchError(error)) {
+      error.isHandled = true;
+    }
+    throw error;
+  }
 }
 
 export async function getRemotePlugins(): Promise<RemotePlugin[]> {

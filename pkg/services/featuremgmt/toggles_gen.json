@@ -2984,6 +2984,20 @@
     },
     {
       "metadata": {
+        "name": "pluginInsights",
+        "resourceVersion": "1761300628147",
+        "creationTimestamp": "2025-10-24T10:10:28Z"
+      },
+      "spec": {
+        "description": "Show insights for plugins in the plugin details page",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginProxyPreserveTrailingSlash",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-06-05T11:36:14Z"

@@ -62,10 +62,12 @@ const plugin: CatalogPlugin = {
   angularDetected: false,
   isFullyInstalled: true,
   accessControl: {},
+  insights: { id: 1, name: 'test-plugin', version: '1.0.0', insights: [] },
 };
 
 jest.mock('../state/hooks', () => ({
   useGetSingle: jest.fn(),
+  useGetPluginInsights: jest.fn(),
   useFetchStatus: jest.fn().mockReturnValue({ isLoading: false }),
   useFetchDetailsStatus: () => ({ isLoading: false }),
   useIsRemotePluginsAvailable: () => false,

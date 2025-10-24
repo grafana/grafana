@@ -1227,4 +1227,9 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
+  /**
+  * Show insights for plugins in the plugin details page
+  * @default false
+  */
+  pluginInsights?: boolean;
 }

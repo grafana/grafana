@@ -2125,6 +2125,14 @@ var (
 			Owner:             identityAccessTeam,
 			Expression:        "true",
 		},
+		{
+			Name:         "pluginInsights",
+			Description:  "Show insights for plugins in the plugin details page",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
 	}
 )
 
