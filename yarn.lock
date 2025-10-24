@@ -5847,11 +5847,11 @@ __metadata:
   linkType: hard
 
 "@openfeature/web-sdk@npm:^1.6.1":
-  version: 1.6.1
-  resolution: "@openfeature/web-sdk@npm:1.6.1"
+  version: 1.7.0
+  resolution: "@openfeature/web-sdk@npm:1.7.0"
   peerDependencies:
     "@openfeature/core": ^1.9.0
-  checksum: 10/8bd7d1ea386e21cdd7492cab2fd1d2b138b4e6a376a4c0a40244633e5955f6452039bc2633fc5230bd7b494506a4137ba7210d40850634f9618f77a0ee435f9d
+  checksum: 10/8b9f5ec5bb0e618b439b2e18b73d5c1aecdeea98da28588dc949da2fa0bd8258d27a8329f2371b527410bbeb858af4a8b01254fda59df9d10b26fb23e9217c22
   languageName: node
   linkType: hard
 
