@@ -32,6 +32,8 @@ import {
   getSelectorInput,
   getTreeSearch,
   findResultApplicationsExpand,
+  getResultCloudDevLink,
+  getResultCloudOpsLink,
 } from './selectors';
 
 const click = async (selector: () => HTMLElement) => act(() => userEvent.click(selector()));
@@ -68,8 +70,8 @@ export const selectResultApplicationsMimir = async () => click(getResultApplicat
 export const selectResultApplicationsCloud = async () => click(getResultApplicationsCloudSelect);
 export const selectResultApplicationsCloudDev = async () => click(getResultApplicationsCloudDevSelect);
 export const selectResultCloud = async () => click(getResultCloudSelect);
-export const selectResultCloudDev = async () => click(getResultCloudDevRadio);
-export const selectResultCloudOps = async () => click(getResultCloudOpsRadio);
+export const selectResultCloudDev = async () => click(getResultCloudDevLink);
+export const selectResultCloudOps = async () => click(getResultCloudOpsLink);
 
 export const toggleDashboards = async () => click(getDashboardsExpand);
 export const searchDashboards = async (value: string) => type(getDashboardsSearch, value);

@@ -133,12 +133,14 @@ describe('Tree', () => {
     await openSelector();
     await expandResultCloud();
     await selectResultCloudDev();
-    expectResultCloudDevSelected();
-    expectResultCloudOpsNotSelected();
 
+    // Verify the content of the scopes selector input
+    expectScopesSelectorValue('Dev');
+
+    // Single leaf node links always apply the scope, hence we need to open the selector again
+    await openSelector();
     await selectResultCloudOps();
-    expectResultCloudDevNotSelected();
-    expectResultCloudOpsSelected();
+    expectScopesSelectorValue('Ops');
   });
 
   it('Search works', async () => {

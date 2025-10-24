@@ -9,6 +9,7 @@ const selectors = {
     headline: 'scopes-tree-headline',
     select: (nodeId: string) => `scopes-tree-${nodeId}-checkbox`,
     radio: (nodeId: string) => `scopes-tree-${nodeId}-radio`,
+    link: (nodeId: string) => `scopes-tree-${nodeId}-link`,
     expand: (nodeId: string) => `scopes-tree-${nodeId}-expand`,
     title: (nodeId: string) => `scopes-tree-${nodeId}-title`,
   },
@@ -93,7 +94,7 @@ export const getResultApplicationsCloudDevSelect = () =>
 
 export const getResultCloudSelect = () => screen.getByTestId(selectors.tree.select('cloud'));
 export const getResultCloudExpand = () => screen.getByTestId(selectors.tree.expand('cloud'));
-export const getResultCloudDevRadio = () => screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-dev'));
-export const getResultCloudOpsRadio = () => screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-ops'));
+export const getResultCloudDevLink = () => screen.getByTestId<HTMLInputElement>(selectors.tree.link('cloud-dev'));
+export const getResultCloudOpsLink = () => screen.getByTestId<HTMLInputElement>(selectors.tree.link('cloud-ops'));
 
 export const getListOfScopes = (service: ScopesService) => service.state.value;
