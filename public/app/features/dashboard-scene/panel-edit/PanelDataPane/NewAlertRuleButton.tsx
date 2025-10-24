@@ -9,6 +9,7 @@ import { VizPanel } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
 import { LogMessages } from 'app/features/alerting/unified/Analytics';
 import { AlertRuleDrawerForm } from 'app/features/alerting/unified/components/AlertRuleDrawerForm';
+import type { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 
 interface ScenesNewRuleFromPanelButtonProps {
@@ -45,10 +46,10 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
     );
   }
 
-  const onClick = async () => {
+  const navigateToAlerting = async (currentValues?: RuleFormValues) => {
     logInfo(LogMessages.alertRuleFromPanel);
 
-    const updateToDateFormValues = await scenesPanelToRuleFormValues(panel);
+    const updateToDateFormValues = currentValues ?? (await scenesPanelToRuleFormValues(panel));
 
     const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
       defaults: JSON.stringify(updateToDateFormValues),
@@ -56,6 +57,14 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
     });
 
     locationService.push(ruleFormUrl);
+  };
+
+  const onContinueInAlertingFromDrawer = (values: RuleFormValues) => {
+    void navigateToAlerting(values);
+  };
+
+  const onButtonClick = () => {
+    void navigateToAlerting(undefined);
   };
 
   const shouldUseDrawer = config.featureToggles.createAlertRuleFromPanel;
@@ -76,7 +85,7 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
         <AlertRuleDrawerForm
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
-          onContinueInAlerting={onClick}
+          onContinueInAlerting={onContinueInAlertingFromDrawer}
           prefill={formValues ?? undefined}
         />
       </>
@@ -84,7 +93,7 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
   }
 
   return (
-    <Button icon="bell" onClick={onClick} className={className} data-testid="create-alert-rule-button">
+    <Button icon="bell" onClick={onButtonClick} className={className} data-testid="create-alert-rule-button">
       <Trans i18nKey="dashboard-scene.scenes-new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
     </Button>
   );
