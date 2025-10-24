@@ -123,19 +123,25 @@ You can pan the view by clicking outside any node or edge and dragging your mous
 
 Use the buttons in the lower right corner to zoom in or out. You can also use the mouse wheel or touchpad scroll, together with either Ctrl or Cmd key to do so.
 
-### Grid view? Change layout
+### Switch layouts
 
-Switch quickly between displaying the visualization in graph layouts (**Layered** and **Force**) or **Grid** layout.
+Switch quickly between displaying the visualization in graph or grid [layout](#layout-algorithm).
 
-Click a node and select **Show in Grid layout** to switch to a grid layout, which provides a better overview of the most interesting nodes in the graph.
-Click a node and select **Show in Graph layout** to switch back to graph layout and focus on the selected node, to show it in context of the full graph.
+Click a node and select either **Show in Grid layout** or **Show in Graph layout**, depending on the current layout of the visualization:
 
-![Node graph grid to default](/media/docs/grafana/panels-visualizations/screenshot-node-graph-view-v11.3.png 'Node graph grid to default')
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-node-graph-grid-menu.png" max-width="750px" alt="Node graph in grid layout with node menu open" >}}
 
-Switching to grid layout this way only changes the layout temporarily.
+In grid layout, you can sort nodes by clicking on the stats inside the legend.
+The marker next to the stat name shows which stat is currently used for sorting and the sorting direction:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-node-graph-legend-sort.png" max-width="550px" alt="Node graph legend sorting" >}}
+
+Switching between grid and other layouts this way only changes the layout temporarily.
 The visualization maintains the layout algorithm selected in the panel editor, and reverts to it when the dashboard refreshes.
 
 For more information about layouts, refer to [Layout algorithm](#layout-algorithm).
+
+<!-- if you have the panel in grid layout and switch it to graph, is it switching to layered? -->
 
 ### Hidden nodes
 
@@ -164,17 +170,17 @@ Choose how the node graph should handle zoom and scroll events:
 
 #### Layout algorithm
 
-Choose how the layout is generated:
+Choose how the visualization layout is generated:
 
 - **Layered** - Default. Creates a predictable and orderly layout, especially useful for service graphs.
 - **Force** - Uses a physics-based force layout algorithm that's useful with a large number of nodes (500+).
-- **Grid** - Arranges nodes into a grid format to provide a better overview of the most interesting nodes in the graph. Grid view shows nodes in a grid without edges and can be sorted by stats shown inside the node or by stats represented by the a colored border of the nodes.
+- **Grid** - Arranges nodes into a grid format to provide a better overview of the most interesting nodes in the graph. This layout shows nodes in a grid without edges and can be sorted by the stats shown inside the node or by the ones represented by the a colored border of the nodes.
 
-   ![Node graph grid](/media/docs/grafana/panels-visualizations/screenshot-node-graph-grid-v11.3.png 'Node graph grid')
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-node-graph-grid.png" max-width="650px" alt="Node graph in grid layout" >}}
 
-   - To sort the nodes, click on the stats inside the legend. The marker next to the stat name shows which stat is currently used for sorting and sorting direction.
+   For more information about using the graph in grid layout, refer to [Switch layouts](#switch-layouts).
 
-     ![Node graph legend](/media/docs/grafana/panels-visualizations/screenshot-node-graph-legend-v11.3.png 'Node graph legend')
+
 
 ### Nodes options
 
