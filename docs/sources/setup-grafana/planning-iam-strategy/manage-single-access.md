@@ -14,7 +14,8 @@ labels:
     - cloud
     - enterprise
 title: Manage multi-team access in a single Grafana instance
-weight: 1200
+menuTitle: Multi-team access
+weight: 200
 refs:
   create-folder:
     - pattern: /docs/grafana/
@@ -88,7 +89,7 @@ Follow these suggested steps to structure, configure, and set permissions to acc
 
 For more information on how to install a Grafana instance:
 
-- If you’re using self-managed Grafana Enterprise, refer to [Configure Grafana](../../configure-grafana/).
+- If you’re using self-managed Grafana Enterprise, refer to [Configure Grafana](../configure-grafana/).
 - If you’re using Grafana Cloud, refer to [Your Grafana Cloud stack](https://grafana.com/docs/grafana-cloud/security-and-account-management/cloud-stacks).
 
 {{< admonition type="note" >}}
@@ -99,9 +100,9 @@ For guidance on when to use one stack versus multiple, refer to [Stack architect
 
 After you’ve deployed your Grafana instance:
 
-- To follow the example in this doc, create three [Grafana Teams](../../../administration/team-management/configure-grafana-teams/#create-a-grafana-team) and add them to the Grafana instance.
+- To follow the example in this doc, create three [Grafana Teams](../../administration/team-management/configure-grafana-teams/#create-a-grafana-team) and add them to the Grafana instance.
 - Determine the [RBAC](ref:rbac) strategy for your organization. RBAC extends default Grafana roles, provides more granular access rights, and simplifies how to grant, modify, or revoke user access to Grafana resources, such as users and reports.
-- Assign each user to the [relevant team](../../../administration/user-management/manage-org-users/). By default [new users](../../configure-grafana/#auto_assign_org) are granted the **Viewer** role.
+- Assign each user to the [relevant team](../../administration/user-management/manage-org-users/). By default [new users](../configure-grafana/#auto_assign_org) are granted the **Viewer** role.
 - Assign the [**Admin** role](ref:rbac-assign) to Team C so that they can manage all resources in the instance.
 
 ### Design a folder structure to match your access needs
@@ -143,7 +144,7 @@ For example, users working in [Frontend Observability](https://grafana.com/docs/
 
 After you've made sure the model is working, you can codify it.
 
-You can add any new users to your Grafana instance with an Identity Provider through [SCIM](../../configure-security/configure-scim-provisioning/). Use [role sync](../../configure-security/configure-authentication/saml/configure-saml-team-role-mapping/#configure-role-sync-for-saml) to automatically assign users the correct basic role (Viewer, Editor, or Admin) based on their mapped attributes in the IdP..
+You can add any new users to your Grafana instance with an Identity Provider through [SCIM](../configure-security/configure-scim-provisioning/). Use [role sync](../../configure-security/configure-authentication/saml/configure-saml-team-role-mapping/#configure-role-sync-for-saml) to automatically assign users the correct basic role (Viewer, Editor, or Admin) based on their mapped attributes in the IdP..
 
 You can also use Terraform to provision teams their folders, fixed roles, and shared data source LBAC rules. For example, if you need to add a new team (Team D), you only need to add the new team to Grafana and run the Terraform script, which will automatically set them up to start using Grafana.
 
