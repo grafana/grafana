@@ -4118,6 +4118,7 @@
       "description": "Use custom value"
     },
     "options": {
+      "loading": "Loading options...",
       "no-found": "No options found."
     }
   },
