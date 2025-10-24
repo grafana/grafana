@@ -21,10 +21,10 @@ describe('isValidIdentifier', () => {
 describe('toRawSql', () => {
   it('quotes dataset and table identifiers when they contain prohibited characters', () => {
     const query = {
-      sql: { columns: [{ type: 'column', name: '*' } as any] },
+      sql: { columns: [{ type: 'column', name: '*' }] },
       dataset: 'se-backoffice',
       table: 'action_title',
-    } as any;
+    };
 
     const result = toRawSql(query);
     // dataset contains a hyphen and should be backticked
