@@ -1332,11 +1332,6 @@
       "count": 2
     }
   },
-  "public/app/core/components/TimelineChart/TimelineChart.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/core/config.ts": {
     "no-barrel-files/no-barrel-files": {
       "count": 2
