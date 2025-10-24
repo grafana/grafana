@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
 import { Menu, Dropdown, ToolbarButton } from '@grafana/ui';
 import { useSelector } from 'app/types/store';
 
@@ -17,18 +17,24 @@ export const QuickAdd = ({}: Props) => {
 
   const createActions = useMemo(() => {
     const createActions = findCreateActions(navBarTree);
-    return [
-      ...createActions,
-      {
-        id: 'create-template',
+
+    const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
+    const renderPreBuiltDashboardAction = testDataSources.length > 0 && config.featureToggles.dashboardLibrary;
+    if (renderPreBuiltDashboardAction) {
+      createActions.push({
+        id: 'browse-template-dashboard',
         text: 'Pre-built dashboard',
         url: '/dashboards?templateDashboards=true',
-        icon: 'template',
         onClick: () => {
-          reportInteraction('grafana_menu_item_clicked', { url: '/dashboard/new?template=true', from: 'quickadd' });
+          reportInteraction('grafana_menu_item_clicked', {
+            url: '/dashboards?templateDashboards=true',
+            from: 'quickadd',
+          });
         },
-      },
-    ];
+      });
+    }
+
+    return createActions;
   }, [navBarTree]);
   const showQuickAdd = createActions.length > 0;
 

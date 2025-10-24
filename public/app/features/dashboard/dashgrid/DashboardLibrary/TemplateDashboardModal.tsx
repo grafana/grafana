@@ -6,47 +6,18 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Box, Button, Card, Grid, Modal, Spinner, Text, useStyles2 } from '@grafana/ui';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
+import { DashboardCard } from './DashboardCard';
+import { GnetDashboard, Link } from './types';
+
 const TEMPLATE_DASHBOARD_COMMUNITY_UIDS = [24279, 24280, 24281, 24282];
-
-interface Link {
-  rel: string;
-  href: string;
-}
-
-interface Screenshot {
-  links: Link[];
-}
-
-interface LogoImage {
-  content: string;
-  filename: string;
-  type: string;
-}
-
-interface Logo {
-  small?: LogoImage;
-  large?: LogoImage;
-}
-
-interface GnetDashboard {
-  id: number;
-  uid: string;
-  name: string;
-  description: string;
-  downloads: number;
-  datasource: string;
-  screenshots?: Screenshot[];
-  logos?: Logo;
-  json?: DashboardJson; // Full dashboard JSON from detail API
-}
 
 export const TemplateDashboardModal = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const isOpen = searchParams.get('templateDashboards') === 'true';
+  const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
 
   const styles = useStyles2(getStyles);
 
@@ -56,17 +27,11 @@ export const TemplateDashboardModal = () => {
   };
 
   const onImportDashboardClick = async (dashboard: GnetDashboard) => {
-    console.log('hello');
-
-    const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
-
     const params = new URLSearchParams({
       datasource: testDataSources[0].uid || '',
       title: dashboard.name,
       pluginId: testDataSources[0].type || '',
-      //   title: dashboardTitle,
       gnetId: String(dashboard.id),
-      //   path: dashboard.path,
       // tracking event purpose values
       //   sourceEntryPoint: 'datasource_page',
       //   libraryItemId: dashboard.uid,
@@ -91,6 +56,11 @@ export const TemplateDashboardModal = () => {
   }, []);
 
   const dashboards = templateDashboards ?? [];
+
+  if (testDataSources.length === 0 || dashboards.length === 0) {
+    return null;
+  }
+
   return (
     <Modal
       isOpen={isOpen}
@@ -118,47 +88,20 @@ export const TemplateDashboardModal = () => {
             const thumbnailUrl = thumbnail ? `/api/gnet${thumbnail}` : '';
 
             return (
-              <Card
+              <DashboardCard
                 key={dashboard.uid}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onImportDashboardClick(dashboard);
+                title={dashboard.name}
+                imageUrl={thumbnailUrl}
+                onClick={() => onImportDashboardClick(dashboard)}
+                dashboard={dashboard}
+                details={{
+                  id: dashboard.id,
+                  datasource: 'prometheus',
+                  dependencies: ['srazan', 'john'],
+                  publishedBy: 'srazan',
+                  lastUpdate: '2025-01-01',
                 }}
-                className={styles.card}
-                noMargin
-              >
-                <Card.Heading>{dashboard.name}</Card.Heading>
-                <div className={thumbnailUrl ? styles.thumbnailContainer : styles.logoContainer}>
-                  {thumbnailUrl ? (
-                    <img
-                      src={thumbnailUrl}
-                      alt={dashboard.name}
-                      className={thumbnailUrl ? styles.thumbnail : styles.logo}
-                      style={{ display: thumbnailUrl ? 'block' : 'none' }}
-                    />
-                  ) : null}
-                </div>
-                <div title={dashboard.description || ''} className={styles.descriptionWrapper}>
-                  {dashboard.description && (
-                    <Card.Description className={styles.description}>{dashboard.description}</Card.Description>
-                  )}
-                </div>
-
-                <Card.Actions>
-                  <Button
-                    variant="secondary"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onImportDashboardClick(dashboard);
-
-                      // onUseDashboard(dashboard);
-                    }}
-                    size="sm"
-                  >
-                    <Trans i18nKey="dashboard.template.use-template-button">Use template</Trans>
-                  </Button>
-                </Card.Actions>
-              </Card>
+              />
             );
           })}
         </Grid>
@@ -188,66 +131,6 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'center',
       backgroundColor: theme.colors.background.canvas,
       zIndex: 1,
-    }),
-    card: css({
-      gridTemplateAreas: `
-            "Heading"
-            "Thumbnail"
-            "Description"
-            "Actions"`,
-      gridTemplateRows: 'auto 200px auto auto',
-      height: 'auto',
-      width: '350px',
-    }),
-    thumbnailContainer: css({
-      gridArea: 'Thumbnail',
-
-      overflow: 'hidden',
-      //   borderRadius: theme.shape.radius.default,
-      //   backgroundColor: theme.colors.background.secondary,
-      //   marginTop: theme.spacing(1),
-      //   marginBottom: theme.spacing(1),
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      //   height: '200px',
-    }),
-    thumbnail: css({
-      width: '100%',
-      objectFit: 'contain',
-    }),
-    logoContainer: css({
-      gridArea: 'Thumbnail',
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: theme.shape.radius.default,
-      backgroundColor: theme.colors.background.secondary,
-      marginTop: theme.spacing(1),
-      marginBottom: theme.spacing(1),
-    }),
-    logo: css({
-      maxWidth: '100px',
-      maxHeight: '100px',
-      objectFit: 'contain',
-    }),
-    descriptionWrapper: css({
-      gridArea: 'Description',
-      cursor: 'help',
-    }),
-    description: css({
-      display: '-webkit-box',
-      WebkitLineClamp: 2,
-      WebkitBoxOrient: 'vertical',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      margin: 0,
-    }),
-    pagination: css({
-      marginTop: theme.spacing(2),
-      alignItems: 'center',
     }),
   };
 }
