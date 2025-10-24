@@ -1722,11 +1722,6 @@
       "count": 2
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/DashboardPicker.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/ExpressionEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
