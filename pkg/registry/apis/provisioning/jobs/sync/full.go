@@ -258,65 +258,41 @@ func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, cli
 
 func applyResourcesInParallel(ctx context.Context, resources []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int) error {
 	logger := logging.FromContext(ctx)
+	logger.Info("applying resources in parallel test changes 1")
 
 	if len(resources) == 0 {
 		return nil
 	}
 
-	workerCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	changeChan := make(chan ResourceFileChange, len(resources))
+	sem := make(chan struct{}, maxSyncWorkers)
 	var wg sync.WaitGroup
 
-	for i := 0; i < maxSyncWorkers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for {
-				select {
-				case change, ok := <-changeChan:
-					if !ok {
-						return
-					}
-
-					if err := progress.TooManyErrors(); err != nil {
-						cancel()
-						return
-					}
-					if workerCtx.Err() != nil {
-						return
-					}
-
-					changeCtx, changeCancel := context.WithTimeout(workerCtx, 15*time.Second)
-					applyChange(changeCtx, change, clients, repositoryResources, progress, tracer)
-					if changeCtx.Err() == context.DeadlineExceeded {
-						logger.Error("operation timed out after 15 seconds", "path", change.Path, "action", change.Action)
-						result := jobs.JobResourceResult{
-							Path:   change.Path,
-							Action: change.Action,
-							Error:  fmt.Errorf("operation timed out after 15 seconds"),
-						}
-						progress.Record(changeCtx, result)
-					}
-					changeCancel()
-
-				case <-workerCtx.Done():
-					return
-				}
-			}
-		}()
-	}
-
+loop:
 	for _, change := range resources {
-		select {
-		case changeChan <- change:
-		case <-workerCtx.Done():
-			goto done
+		// Check for early termination conditions
+		if err := progress.TooManyErrors(); err != nil {
+			break
 		}
+		if ctx.Err() != nil {
+			break
+		}
+
+		// Acquire semaphore slot (blocks if max workers reached)
+		select {
+		case sem <- struct{}{}:
+		case <-ctx.Done():
+			break loop
+		}
+
+		wg.Add(1)
+		go func(change ResourceFileChange) {
+			defer wg.Done()
+			defer func() { <-sem }() // Release semaphore slot
+
+			applyChangeWithTimeout(ctx, change, clients, repositoryResources, progress, tracer, logger)
+		}(change)
 	}
-done:
-	close(changeChan)
+
 	wg.Wait()
 
 	if err := progress.TooManyErrors(); err != nil {
@@ -324,4 +300,38 @@ done:
 	}
 
 	return ctx.Err()
+}
+
+// applyChangeWithTimeout wraps applyChange with a 15-second timeout.
+// If applyChange doesn't complete within 15 seconds, we abandon the goroutine
+// and record a timeout error. The abandoned goroutine will eventually complete
+// or remain hung, but we don't wait for it.
+func applyChangeWithTimeout(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, logger logging.Logger) {
+	changeCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	done := make(chan struct{})
+	go func() {
+		applyChange(changeCtx, change, clients, repositoryResources, progress, tracer)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// Operation completed within timeout
+	case <-changeCtx.Done():
+		if changeCtx.Err() == context.DeadlineExceeded {
+			logger.Error("operation timed out after 15 seconds", "path", change.Path, "action", change.Action)
+			progress.Record(ctx, jobs.JobResourceResult{
+				Path:   change.Path,
+				Action: change.Action,
+				Error:  fmt.Errorf("operation timed out after 15 seconds"),
+			})
+			// Note to self :
+			// The goroutine running applyChange is abandoned here.
+			// It will eventually complete or hang, but we move on.
+			// Will this create a leak? Need to investigate
+			//
+		}
+	}
 }
