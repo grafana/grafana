@@ -6,14 +6,14 @@ import {
   LogLevel,
   LogRowContextQueryDirection,
   LogRowModel,
-  MutableDataFrame,
 } from '@grafana/data';
 
 import { regionVariable } from '../mocks/CloudWatchDataSource';
 import { setupMockedLogsQueryRunner } from '../mocks/LogsQueryRunner';
 import { LogsRequestMock } from '../mocks/Request';
 import { validLogsQuery } from '../mocks/queries';
-import { CloudWatchLogsQuery } from '../types'; // Add this import statement
+import { TimeRangeMock } from '../mocks/timeRange';
+import { CloudWatchLogsAnomaliesQuery, CloudWatchLogsQuery, LogsMode } from '../types'; // Add this import statement
 
 import { LOGSTREAM_IDENTIFIER_INTERNAL, LOG_IDENTIFIER_INTERNAL } from './CloudWatchLogsQueryRunner';
 
@@ -28,14 +28,15 @@ describe('CloudWatchLogsQueryRunner', () => {
       const row: LogRowModel = {
         entryFieldIndex: 0,
         rowIndex: 0,
-        dataFrame: new MutableDataFrame({
+        dataFrame: {
           refId: 'B',
+          length: 1,
           fields: [
-            { name: 'ts', type: FieldType.time, values: [1] },
-            { name: LOG_IDENTIFIER_INTERNAL, type: FieldType.string, values: ['foo'], labels: {} },
-            { name: LOGSTREAM_IDENTIFIER_INTERNAL, type: FieldType.string, values: ['bar'], labels: {} },
+            { name: 'ts', type: FieldType.time, values: [1], config: {} },
+            { name: LOG_IDENTIFIER_INTERNAL, type: FieldType.string, values: ['foo'], labels: {}, config: {} },
+            { name: LOGSTREAM_IDENTIFIER_INTERNAL, type: FieldType.string, values: ['bar'], labels: {}, config: {} },
           ],
-        }),
+        },
         entry: '4',
         labels: {},
         hasAnsi: false,
@@ -478,6 +479,37 @@ describe('CloudWatchLogsQueryRunner', () => {
         ],
         key: 'test-key',
         state: 'Done',
+      });
+    });
+  });
+
+  describe('handleLogAnomaliesQueries', () => {
+    it('appends -anomalies to the requestId', async () => {
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
+      const logsAnomaliesRequestMock: DataQueryRequest<CloudWatchLogsAnomaliesQuery> = {
+        requestId: 'mockId',
+        range: TimeRangeMock,
+        rangeRaw: { from: TimeRangeMock.from, to: TimeRangeMock.to },
+        targets: [
+          {
+            id: '1',
+            logsMode: LogsMode.Anomalies,
+            queryMode: 'Logs',
+            refId: 'A',
+            region: 'us-east-1',
+          },
+        ],
+        interval: '',
+        intervalMs: 0,
+        scopedVars: { __interval: { value: '20s' } },
+        timezone: '',
+        app: '',
+        startTime: 0,
+      };
+      await expect(
+        runner.handleLogAnomaliesQueries(LogsRequestMock.targets, logsAnomaliesRequestMock, queryMock)
+      ).toEmitValuesWith(() => {
+        expect(queryMock.mock.calls[0][0].requestId).toEqual('mockId-logsAnomalies');
       });
     });
   });

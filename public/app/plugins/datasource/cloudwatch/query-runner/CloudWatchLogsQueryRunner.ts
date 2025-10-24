@@ -36,12 +36,14 @@ import { type CustomFormatterVariable } from '@grafana/scenes';
 
 import {
   CloudWatchJsonData,
+  CloudWatchLogsAnomaliesQuery,
   CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
   CloudWatchLogsRequest,
   CloudWatchQuery,
   GetLogEventsRequest,
   LogAction,
+  LogsMode,
   LogsQueryLanguage,
   QueryParam,
   StartQueryRequest,
@@ -101,6 +103,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         logGroups,
         logGroupNames,
         queryLanguage: target.queryLanguage,
+        logsMode: target.logsMode ?? LogsMode.Insights,
       };
     });
 
@@ -134,6 +137,54 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         );
       })
     );
+  };
+
+  public handleLogAnomaliesQueries = (
+    logAnomaliesQueries: CloudWatchLogsAnomaliesQuery[],
+    options: DataQueryRequest<CloudWatchQuery>,
+    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
+  ): Observable<DataQueryResponse> => {
+    const logAnomalyTargets: StartQueryRequest[] = logAnomaliesQueries.map((target: CloudWatchLogsAnomaliesQuery) => {
+      return {
+        refId: target.refId,
+        region: this.templateSrv.replace(this.getActualRegion(target.region)),
+        queryString: '',
+        logGroups: [],
+        logsMode: LogsMode.Anomalies,
+        suppressionState: target.suppressionState || 'all',
+        anomalyDetectionARN: target.anomalyDetectionARN || '',
+      };
+    });
+
+    const range = options?.range || getDefaultTimeRange();
+    // append -logsAnomalies to prevent requestId from matching metric or logs queries from the same panel
+    const requestId = options?.requestId ? `${options?.requestId}-logsAnomalies` : '';
+
+    const requestParams: DataQueryRequest<CloudWatchLogsAnomaliesQuery> = {
+      ...options,
+      range,
+      skipQueryCache: true,
+      requestId,
+      interval: options?.interval || '', // dummy
+      intervalMs: options?.intervalMs || 1, // dummy
+      scopedVars: options?.scopedVars || {}, // dummy
+      timezone: options?.timezone || '', // dummy
+      app: options?.app || '', // dummy
+      startTime: options?.startTime || 0, // dummy
+      targets: logAnomalyTargets.map((t) => ({
+        ...t,
+        id: '',
+        queryMode: 'Logs',
+        refId: t.refId || 'A',
+        intervalMs: 1, // dummy
+        maxDataPoints: 1, // dummy
+        datasource: this.ref,
+        type: 'logAction',
+        logsMode: LogsMode.Anomalies,
+      })),
+    };
+
+    return queryFn(requestParams);
   };
 
   /**
@@ -450,8 +501,11 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const hasMissingLogGroups = !query.logGroups?.length;
     const hasMissingQueryString = !query.expression?.length;
 
-    // log groups are not mandatory if language is SQL
-    const isInvalidCWLIQuery = query.queryLanguage !== 'SQL' && hasMissingLogGroups && hasMissingLegacyLogGroupNames;
+    // log groups are not mandatory if language is SQL and LogsMode is not Insights
+    const isInvalidCWLIQuery =
+      query.queryLanguage !== 'SQL' &&
+      hasMissingLogGroups &&
+      hasMissingLegacyLogGroupNames;
     if (isInvalidCWLIQuery || hasMissingQueryString) {
       return false;
     }
