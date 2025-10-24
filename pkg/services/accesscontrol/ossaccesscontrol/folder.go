@@ -111,7 +111,10 @@ func ProvideFolderPermissions(
 
 			if err != nil {
 				switch {
-				case errors.As(err, &errutil.Error{}):
+				case func() bool {
+					var errUtilErr errutil.Error
+					return errors.As(err, &errUtilErr)
+				}():
 					return err
 				case errors.Is(err, dashboards.ErrFolderNotFound):
 					return folder.ErrFolderNotFound.Errorf("folder not found")
