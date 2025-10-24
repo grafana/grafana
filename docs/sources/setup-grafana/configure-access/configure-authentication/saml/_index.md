@@ -36,7 +36,7 @@ You can configure SAML authentication in Grafana through one of the following me
 
 If you are using Okta or Entra ID as Identity Provider, see the following documentation for configuration:
 
-- [Configure SAML with Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/)
+- [Configure SAML with Entra ID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/)
 - [Configure SAML with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/)
 - [Configure SAML with Okta catalog application](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/oin-application)
 
