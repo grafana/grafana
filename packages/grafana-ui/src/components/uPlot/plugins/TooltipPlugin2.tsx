@@ -119,8 +119,9 @@ const getAdHocFiltersFallback: GetAdHocFiltersCallback = () => [];
  * Provides visual feedback (grab/grabbing cursor) and real-time grid updates during drag.
  * Calls queryZoom() on drag end to update dashboard time range if drag exceeds MIN_ZOOM_DIST.
  * Mutates u.scales.x.range temporarily during drag.
+ * @internal - exported for testing only
  */
-const setupXAxisPan = (u: uPlot, queryZoom: (range: { from: number; to: number }) => void) => {
+export const setupXAxisPan = (u: uPlot, queryZoom: (range: { from: number; to: number }) => void) => {
   let xAxes = u.root.querySelectorAll('.u-axis');
   let xAxis = xAxes[0];
 
