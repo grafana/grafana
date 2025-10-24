@@ -1014,7 +1014,7 @@ This is a comma-separated list of usernames. Users specified here are hidden in 
 
 ### `[auth]`
 
-Grafana provides many ways to authenticate users. Refer to the Grafana [Authentication overview](../configure-security/configure-authentication/) and other authentication documentation for detailed instructions on how to set up and configure authentication.
+Grafana provides many ways to authenticate users. Refer to the Grafana [Authentication overview](../configure-access/configure-authentication/) and other authentication documentation for detailed instructions on how to set up and configure authentication.
 
 #### `login_cookie_name`
 
@@ -1219,25 +1219,25 @@ This means the plugin can only access data and resources within that specific or
 
 ### `[auth.anonymous]`
 
-Refer to [Anonymous authentication](../configure-security/configure-authentication/grafana/#anonymous-authentication) for detailed instructions.
+Refer to [Anonymous authentication](../configure-access/configure-authentication/grafana/#anonymous-authentication) for detailed instructions.
 
 <hr />
 
 ### `[auth.github]`
 
-Refer to [GitHub OAuth2 authentication](../configure-security/configure-authentication/github/) for detailed instructions.
+Refer to [GitHub OAuth2 authentication](../configure-access/configure-authentication/github/) for detailed instructions.
 
 <hr />
 
 ### `[auth.gitlab]`
 
-Refer to [GitLab OAuth 2.0 authentication](../configure-security/configure-authentication/gitlab/) for detailed instructions.
+Refer to [GitLab OAuth 2.0 authentication](../configure-access/configure-authentication/gitlab/) for detailed instructions.
 
 <hr />
 
 ### `[auth.google]`
 
-Refer to [Google OAuth2 authentication](../configure-security/configure-authentication/google/) for detailed instructions.
+Refer to [Google OAuth2 authentication](../configure-access/configure-authentication/google/) for detailed instructions.
 
 <hr />
 
@@ -1255,37 +1255,37 @@ Legacy key names, still in the configuration file so they work in environment va
 
 ### `[auth.azuread]`
 
-Refer to [Azure AD OAuth2 authentication](../configure-security/configure-authentication/azuread/) for detailed instructions.
+Refer to [Azure AD OAuth2 authentication](../configure-access/configure-authentication/azuread/) for detailed instructions.
 
 <hr />
 
 ### `[auth.okta]`
 
-Refer to [Okta OAuth2 authentication](../configure-security/configure-authentication/okta/) for detailed instructions.
+Refer to [Okta OAuth2 authentication](../configure-access/configure-authentication/okta/) for detailed instructions.
 
 <hr />
 
 ### `[auth.generic_oauth]`
 
-Refer to [Generic OAuth authentication](../configure-security/configure-authentication/generic-oauth/) for detailed instructions.
+Refer to [Generic OAuth authentication](../configure-access/configure-authentication/generic-oauth/) for detailed instructions.
 
 <hr />
 
 ### `[auth.basic]`
 
-Refer to [Basic authentication](../configure-security/configure-authentication/#basic-authentication) for detailed instructions.
+Refer to [Basic authentication](../configure-access/configure-authentication/#basic-authentication) for detailed instructions.
 
 <hr />
 
 ### `[auth.proxy]`
 
-Refer to [Auth proxy authentication](../configure-security/configure-authentication/auth-proxy/) for detailed instructions.
+Refer to [Auth proxy authentication](../configure-access/configure-authentication/auth-proxy/) for detailed instructions.
 
 <hr />
 
 ### `[auth.ldap]`
 
-Refer to [LDAP authentication](../configure-security/configure-authentication/ldap/) for detailed instructions.
+Refer to [LDAP authentication](../configure-access/configure-authentication/ldap/) for detailed instructions.
 
 ### `[aws]`
 
@@ -1444,7 +1444,7 @@ Disabled by default, needs to be explicitly enabled.
 
 ### `[auth.jwt]`
 
-Refer to [JWT authentication](../configure-security/configure-authentication/jwt/) for more information.
+Refer to [JWT authentication](../configure-access/configure-authentication/jwt/) for more information.
 
 <hr />
 
