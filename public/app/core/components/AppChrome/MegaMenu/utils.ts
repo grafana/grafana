@@ -13,14 +13,21 @@ import { HelpModal } from '../../help/HelpModal';
 
 import { DOCK_MENU_BUTTON_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
 
-export const enrichHelpItem = (helpItem: NavModelItem) => {
+const emitOpenShortcutsModal = () => {
+  appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
+};
+
+export const getEnrichedHelpItem = (helpItem: NavModelItem): NavModelItem => {
   let menuItems = helpItem.children || [];
 
-  if (helpItem.id === 'help') {
-    const onOpenShortcuts = () => {
-      appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
-    };
-    helpItem.children = [
+  if (helpItem.id !== 'help') {
+    return helpItem;
+  }
+
+  return {
+    ...helpItem,
+    subTitle: config.buildInfo.versionString,
+    children: [
       ...menuItems,
       ...getFooterLinks(),
       ...getEditionAndUpdateLinks(),
@@ -28,11 +35,10 @@ export const enrichHelpItem = (helpItem: NavModelItem) => {
         id: 'keyboard-shortcuts',
         text: t('nav.help/keyboard-shortcuts', 'Keyboard shortcuts'),
         icon: 'keyboard',
-        onClick: onOpenShortcuts,
+        onClick: emitOpenShortcutsModal,
       },
-    ];
-  }
-  return helpItem;
+    ],
+  };
 };
 
 export const enrichWithInteractionTracking = (
