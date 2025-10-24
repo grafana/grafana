@@ -5682,6 +5682,11 @@
       "open-in-new-tab": "Open in new tab",
       "title-error-adding-the-panel": "Error adding the panel"
     },
+    "add-to-dashboard-form-exposed": {
+      "title": {
+        "new-panel": "New panel"
+      }
+    },
     "annotation-settings-edit": {
       "back-to-list": "Back to list",
       "delete": "Delete",
