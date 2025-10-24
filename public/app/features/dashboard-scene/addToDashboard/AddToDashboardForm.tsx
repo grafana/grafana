@@ -9,7 +9,6 @@ import { Panel } from '@grafana/schema';
 import { Alert, Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
-import { DrilldownOptions } from 'app/features/drilldown-integration/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { addToDashboard, SubmissionError } from './addToDashboard';
@@ -42,7 +41,7 @@ export interface Props<TOptions = undefined> {
   children?: React.ReactNode;
 }
 
-export function AddToDashboardForm<TOptions extends DrilldownOptions | undefined = undefined>({
+export function AddToDashboardForm<TOptions extends ExternalAppOptions | undefined = undefined>({
   onClose,
   buildPanel,
   timeRange,
@@ -202,4 +201,8 @@ function assertIsSaveToExistingDashboardError(
   // the shape of the errors object is always compatible with the type above, but we need to
   // explicitly assert its type so that TS can narrow down FormDTO to SaveToExistingDashboard
   // when we use it in the form.
+}
+
+interface ExternalAppOptions {
+  isExternalApp: boolean;
 }
