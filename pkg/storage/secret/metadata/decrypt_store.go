@@ -109,7 +109,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 
 		logging.FromContext(ctx).Info("Secrets Audit Log", args...)
 
-		s.metrics.DecryptDuration.WithLabelValues(decryptResultLabel).Observe(time.Since(start).Seconds())
+		s.metrics.DecryptDuration.WithLabelValues(decryptResultLabel, cmp.Or(decrypterIdentity, "unknown")).Observe(time.Since(start).Seconds())
 
 		// Do not leak error details to caller, return only the wrapped domain errors.
 		if decryptErr != nil {
