@@ -33,12 +33,12 @@ In order to plan an integration with Grafana, assess your organization's current
 As a first step, determine how you want to manage users who will access Grafana.
 
 Do you already use an identity provider to manage users? If so, Grafana might be able to integrate with your identity provider through one of our IdP integrations.
-Refer to [Configure authentication documentation](../configure-security/configure-authentication/) for the list of supported providers.
+Refer to [Configure authentication documentation](../configure-authentication/) for the list of supported providers.
 
 If you are not interested in setting up an external identity provider, but still want to limit access to your Grafana instance, consider using Grafana's basic authentication.
 
 Finally, if you want your Grafana instance to be accessible to everyone, you can enable anonymous access to Grafana.
-For information, refer to the [anonymous authentication documentation](../configure-security/configure-authentication/#anonymous-authentication).
+For information, refer to the [anonymous authentication documentation](../configure-authentication/#anonymous-authentication).
 
 ## Ways to organize users
 
@@ -197,16 +197,15 @@ Grafana can synchronize basic roles from your authentication provider by mapping
 
 Organization sync is the process of binding all the users from an organization in Grafana. This delegates the role of managing users to the identity provider. This way, there's no need to manage user access from Grafana because the identity provider will be queried whenever a new user tries to log in.
 
-With organization sync, users from identity provider groups can be assigned to corresponding Grafana organizations. This functionality is similar to role sync but with the added benefit of specifying the organization that a user belongs to for a particular identity provider group. Please note that this feature is only available for self-hosted Grafana instances, as Cloud Grafana instances have a single organization limit.
+With organization sync, you can assign users from identity provider groups to corresponding Grafana organizations. This functionality is similar to role sync but with the added benefit of specifying the organization that a user belongs to for a particular identity provider group. Please note that this feature is only available for self-hosted Grafana instances, as Cloud Grafana instances have a single organization limit.
 
 {{< admonition type="note" >}}
-Organization sync is currently only supported for SAML and LDAP.
+
+The following applies:
+
+- Organization sync is currently only supported for SAML and LDAP.
+- You can only map basic roles with Organization sync.
+- You don't need to invite users through Grafana when syncing with Organization sync.
+
 {{< /admonition >}}
 
-{{< admonition type="note" >}}
-You don't need to invite users through Grafana when syncing with Organization sync.
-{{< /admonition >}}
-
-{{< admonition type="note" >}}
-Currently, only basic roles can be mapped via Organization sync.
-{{< /admonition >}}
