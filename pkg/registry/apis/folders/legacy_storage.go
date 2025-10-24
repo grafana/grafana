@@ -176,10 +176,17 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	parent := accessor.GetFolder()
 	descr := ""
 	if p.Spec.Description != nil {
 		descr = *p.Spec.Description
+	}
+
+	parent := accessor.GetFolder()
+	switch parent {
+	case folder.GeneralFolderUID:
+		parent = ""
+	case folder.SharedWithMeFolderUID:
+		return nil, fmt.Errorf("invalid parent uid")
 	}
 
 	out, err := s.service.CreateLegacy(ctx, &folder.CreateFolderCommand{
