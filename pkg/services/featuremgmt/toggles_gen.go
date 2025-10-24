@@ -1086,6 +1086,10 @@ const (
 	// Enable loading plugins via declarative URLs
 	FlagCdnPluginsUrls = "cdnPluginsUrls"
 
+	// FlagPluginInstallAPISync
+	// Enable syncing plugin installations to the installs API
+	FlagPluginInstallAPISync = "pluginInstallAPISync"
+
 	// FlagNewGauge
 	// Enable new gauge visualization
 	FlagNewGauge = "newGauge"
