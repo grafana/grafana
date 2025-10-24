@@ -13021,7 +13021,7 @@
       "placeholder-search-teams": "Search teams"
     },
     "team-settings": {
-      "description-email": "This is optional and is primarily used to set the team profile avatar (via gravatar service)",
+      "description-email": "This is optional and is primarily used to set the team profile avatar (via the Gravatar service)",
       "label-email": "Email",
       "label-name": "Name",
       "label-numerical-identifier": "Numerical identifier",

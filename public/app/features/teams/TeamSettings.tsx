@@ -80,7 +80,7 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
               label={t('teams.team-settings.label-email', 'Email')}
               description={t(
                 'teams.team-settings.description-email',
-                'This is optional and is primarily used to set the team profile avatar (via gravatar service)'
+                'This is optional and is primarily used to set the team profile avatar (via the Gravatar service)'
               )}
               disabled={!canWriteTeamSettings}
             >
