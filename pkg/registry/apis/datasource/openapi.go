@@ -70,5 +70,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		},
 	}
 
+	// TODO (stretch) mark *.datasource.grafana.app group names as deprecated
+
 	return oas, nil
 }
