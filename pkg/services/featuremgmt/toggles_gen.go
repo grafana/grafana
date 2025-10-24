@@ -1101,4 +1101,8 @@ const (
 	// FlagOnlyStoreActionSets
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
 	FlagOnlyStoreActionSets = "onlyStoreActionSets"
+
+	// FlagPluginInsights
+	// Show insights for plugins in the plugin details page
+	FlagPluginInsights = "pluginInsights"
 )

@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/internal';
 import {
   Stack,
@@ -71,7 +71,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   return (
     <>
       <Stack direction="column" gap={3} shrink={0} grow={0} width={width} data-testid="plugin-details-panel">
-        {plugin.insights && plugin.insights?.insights?.length > 0 && (
+        {config.featureToggles.pluginInsights && plugin.insights && plugin.insights?.insights?.length > 0 && (
           <Box borderRadius="lg" padding={2} borderColor="medium" borderStyle="solid">
             <PluginInsights pluginInsights={plugin.insights} />
           </Box>

@@ -2,10 +2,21 @@ import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { CatalogPlugin, SCORE_LEVELS } from '../types';
 
 import { PluginDetailsPanel } from './PluginDetailsPanel';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      pluginInsights: false,
+    },
+  },
+}));
 
 const mockPlugin: CatalogPlugin = {
   description: 'Test plugin description',
@@ -188,6 +199,7 @@ describe('PluginDetailsPanel', () => {
   });
 
   it('should render plugin insights when plugin has insights', async () => {
+    config.featureToggles.pluginInsights = true;
     const pluginWithInsights = {
       ...mockPlugin,
       insights: {
