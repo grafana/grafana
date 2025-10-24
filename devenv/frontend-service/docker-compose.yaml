@@ -86,7 +86,7 @@ services:
       - 'alloy.logs=true'
 
   alloy:
-    image: grafana/alloy:1.11.2
+    image: grafana/alloy:v1.11.2
     volumes:
       - ./configs/alloy:/alloy-config
       - /var/run/docker.sock:/var/run/docker.sock # To scrape Docker container logs
