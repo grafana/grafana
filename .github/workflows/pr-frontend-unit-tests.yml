@@ -187,5 +187,9 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Install Tilt
       run: curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/master/scripts/install.sh | bash
+    - name: Create empty config files # TODO: the tiltfile should conditionally mount these only if they exist, like the enterprise license
+      run: |
+        touch devenv/frontend-service/configs/grafana-api.local.ini
+        touch devenv/frontend-service/configs/frontend-service.local.ini
     - name: Test frontend-service Tiltfile
       run: tilt ci --file devenv/frontend-service/Tiltfile
