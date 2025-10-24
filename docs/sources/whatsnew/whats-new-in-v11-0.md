@@ -376,7 +376,7 @@ If you manage your users using Grafana's built-in basic authorization as an iden
 
 Starting with Grafana v11.0, you can enable an opinionated strong password policy feature. This configuration option validates all password updates to comply with our strong password policy.
 
-To learn more about Grafana's strong password policy, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/grafana/#strong-password-policy).
+To learn more about the strong password policy in Grafana, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/grafana/#strong-password-policy).
 
 ### Anonymous users are billed in Grafana Enterprise
 

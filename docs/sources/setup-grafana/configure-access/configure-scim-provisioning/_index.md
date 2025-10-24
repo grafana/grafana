@@ -119,7 +119,7 @@ The table below describes all SCIM configuration options. Like any other Grafana
 
 - SCIM group sync (`group_sync_enabled = true`) and Team Sync cannot be enabled simultaneously
 - You can use SCIM user sync (`user_sync_enabled = true`) alongside Team Sync
-- For more details about migration and compatibility, see [SCIM vs Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/manage-users-teams/#scim-vs-team-sync)
+- For more details about migration and compatibility, see [SCIM vs Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-scim-provisioning/manage-users-teams/#scim-vs-team-sync)
   {{< /admonition >}}
 
 ### Example SCIM configuration
