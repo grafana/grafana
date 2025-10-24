@@ -9,6 +9,12 @@ type TargetResponseDTO struct {
 	Tags map[string]any `json:"tags"`
 }
 
+type LegacyTargetResponseDTO struct {
+	Version string              `json:"version"`
+	Meta    map[string]any      `json:"meta"`
+	Series  []TargetResponseDTO `json:"series"`
+}
+
 type DataTimePoint [2]Float
 type DataTimeSeriesPoints []DataTimePoint
 

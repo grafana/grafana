@@ -225,6 +225,70 @@ func TestConvertResponses(t *testing.T) {
 			t.Errorf("Data frames should have been equal but was, expected:\n%s\nactual:\n%s", expectedFramesJSON, dataFramesJSON)
 		}
 	})
+
+	t.Run("Converts legacy response with no series", func(*testing.T) {
+		body := `
+		{
+			"version": "v0.1",
+			"meta": {
+				"stats": {}
+			},
+			"series": []
+		}`
+		refId := "A"
+		expectedFrames := data.Frames{}
+
+		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
+
+		require.NoError(t, err)
+		if !reflect.DeepEqual(expectedFrames, dataFrames) {
+			expectedFramesJSON, _ := json.Marshal(expectedFrames)
+			dataFramesJSON, _ := json.Marshal(dataFrames)
+			t.Errorf("Data frames should have been equal but was, expected:\n%s\nactual:\n%s", expectedFramesJSON, dataFramesJSON)
+		}
+	})
+
+	t.Run("Converts legacy response with series", func(*testing.T) {
+		body := `
+		{
+			"version": "v0.1",
+			"meta": {
+				"stats": {
+				}
+			},
+			"series": [
+				{
+				"target": "target",
+				"tags": { "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
+				"datapoints": [[50, 1], [null, 2], [100, 3]]
+				}
+			]
+		}`
+		refId := "A"
+		a := 50.0
+		b := 100.0
+		expectedFrame := data.NewFrame("A",
+			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
+			data.NewField("value", data.Labels{
+				"fooTag": "fooValue",
+				"barTag": "barValue",
+				"int":    "100",
+				"float":  "3.14",
+			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
+		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+		expectedFrames := data.Frames{expectedFrame}
+
+		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
+		dataFrames, err := service.toDataFrames(httpResponse, refId)
+
+		require.NoError(t, err)
+		if !reflect.DeepEqual(expectedFrames, dataFrames) {
+			expectedFramesJSON, _ := json.Marshal(expectedFrames)
+			dataFramesJSON, _ := json.Marshal(dataFrames)
+			t.Errorf("Data frames should have been equal but was, expected:\n%s\nactual:\n%s", expectedFramesJSON, dataFramesJSON)
+		}
+	})
 }
 
 func TestFixIntervalFormat(t *testing.T) {

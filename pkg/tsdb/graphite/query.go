@@ -256,8 +256,14 @@ func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error)
 	var data []TargetResponseDTO
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		s.logger.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
-		return nil, backend.DownstreamError(err)
+		s.logger.Warn("Failed to unamrshal to newer graphite response, attempting legacy")
+		var legacyData LegacyTargetResponseDTO
+		err = json.Unmarshal(body, &legacyData)
+		if err != nil {
+			s.logger.Info("Failed to unmarshal legacy graphite response", "error", err, "status", res.Status, "body", string(body))
+			return nil, backend.PluginError(err)
+		}
+		return legacyData.Series, nil
 	}
 
 	return data, nil
