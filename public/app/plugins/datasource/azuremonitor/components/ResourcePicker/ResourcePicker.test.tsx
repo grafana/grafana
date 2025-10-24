@@ -18,10 +18,8 @@ import {
 import { DeepPartial } from '../../mocks/utils';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 
-import { RECENT_RESOURCES_KEY } from './ResourcePicker';
+import ResourcePicker, { RECENT_RESOURCES_KEY } from './ResourcePicker';
 import { ResourceRowGroup, ResourceRowType } from './types';
-
-import ResourcePicker from '.';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

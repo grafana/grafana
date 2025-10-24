@@ -13,8 +13,8 @@ import {
   createQueryHeading,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
-  SortOrder,
 } from './richHistory';
+import { SortOrder } from './richHistoryTypes';
 
 const richHistoryStorageMock: RichHistoryStorage = {} as RichHistoryStorage;
 

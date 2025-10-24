@@ -24,7 +24,7 @@ const bots =
   'twitterbot|cxensebot|smtbot|bnf.fr_bot|a6-indexer|admantx|facebot|orangebot|' +
   'memorybot|advbot|megaindex|semanticscholarbot|ltx71|nerdybot|xovibot|bubing|' +
   'qwantify|archive.org_bot|applebot|tweetmemebot|crawler4j|findxbot|semrushbot|' +
-  'yoozbot|lipperhey|y!j-asr|domain re-animator bot|addthis)';
+  'yoozbot|lipperhey|y!j-asr|domain re-animator bot|addthis|bytespider)';
 
 const botsRegex = new RegExp(bots);
 

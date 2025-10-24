@@ -1228,14 +1228,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "unifiedStorageUseFullNgram",
-			Description:       "Use full n-gram indexing instead of edge n-gram for unified storage search",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSearchAndStorageSquad,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:              "managedDualWriter",
 			Description:       "Pick the dual write mode from database configs",
 			Stage:             FeatureStageExperimental,
@@ -1828,15 +1820,6 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:              "skipTokenRotationIfRecent",
-			Description:       "Skip token rotation if it was already rotated less than 5 seconds ago",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             identityAccessTeam,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			Expression:        "true", // enabled by default
-		},
-		{
 			Name:              "alertEnrichment",
 			Description:       "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:             FeatureStageExperimental,
@@ -1936,16 +1919,6 @@ var (
 			Description:       "Enables use of app platform API for folders",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaFrontendSearchNavOrganise,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			FrontendOnly:      true,
-			Expression:        "false",
-		},
-		{
-			Name:              "enablePluginImporter",
-			Description:       "Set this to true to use the new PluginImporter functionality",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaPluginsPlatformSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			FrontendOnly:      true,
@@ -2119,6 +2092,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "pluginInstallAPISync",
+			Description:  "Enable syncing plugin installations to the installs API",
+			FrontendOnly: false,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "newGauge",
 			Description:  "Enable new gauge visualization",
 			Stage:        FeatureStageExperimental,
@@ -2136,7 +2117,7 @@ var (
 		},
 		{
 			Name:         "pluginStoreServiceLoading",
-			Description:  "Load plugins during store service startup instead of wire provider",
+			Description:  "Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
