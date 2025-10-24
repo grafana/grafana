@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { noop } from 'lodash';
-import { CSSProperties, useCallback, useEffect, useMemo, useState } from 'react';
-import { useDebounce } from 'react-use';
+import { CSSProperties, useCallback, useMemo, useState } from 'react';
+import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
@@ -19,7 +19,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult, LocationInfo } from 'app/features/search/service/types';
+import { DashboardQueryResult } from 'app/features/search/service/types';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 
@@ -56,56 +56,32 @@ interface DashboardPickerProps {
 }
 
 const useFilteredDashboards = (dashboardFilter: string) => {
-  const [isDashSearchFetching, setIsDashSearchFetching] = useState(false);
-  const [dashboards, setDashboards] = useState<DashboardQueryResult[]>([]);
-  const [locationInfo, setLocationInfo] = useState<Record<string, LocationInfo>>({});
-
-  useEffect(() => {
-    setIsDashSearchFetching(true);
-    const search = getGrafanaSearcher().search({
+  return useAsync(async () => {
+    const results = await getGrafanaSearcher().search({
       query: dashboardFilter,
       kind: ['dashboard'],
     });
+    const locationInfo = await getGrafanaSearcher().getLocationInfo();
 
-    search
-      .then((result) => {
-        setDashboards(result.view.toArray());
-        return getGrafanaSearcher().getLocationInfo();
-      })
-      .then((locationInfo) => {
-        setLocationInfo(locationInfo);
-      })
-      .finally(() => {
-        setIsDashSearchFetching(false);
-      });
+    return { dashboards: results.view.toArray(), locationInfo };
   }, [dashboardFilter]);
-
-  return { dashboards, locationInfo, isFetching: isDashSearchFetching };
 };
 
 export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDismiss }: DashboardPickerProps) => {
   const styles = useStyles2(getPickerStyles);
-
   const [selectedDashboardUid, setSelectedDashboardUid] = useState(dashboardUid);
   const [selectedPanelId, setSelectedPanelId] = useState(panelId);
-
   const [dashboardFilter, setDashboardFilter] = useState('');
   const [debouncedDashboardFilter, setDebouncedDashboardFilter] = useState('');
-
   const [panelFilter, setPanelFilter] = useState('');
-
-  const {
-    dashboards: filteredDashboards = [],
-    locationInfo,
-    isFetching: isDashSearchFetching,
-  } = useFilteredDashboards(debouncedDashboardFilter);
-
+  const { value, loading: isDashSearchFetching } = useFilteredDashboards(debouncedDashboardFilter);
   const { dashboardModel, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
-
   const handleDashboardChange = useCallback((dashboardUid: string) => {
     setSelectedDashboardUid(dashboardUid);
     setSelectedPanelId(undefined);
   }, []);
+
+  const { dashboards: filteredDashboards = [], locationInfo: locationInfo = {} } = value || {};
 
   const allDashboardPanels = getVisualPanels(dashboardModel);
 
