@@ -539,11 +539,6 @@
       "count": 2
     }
   },
-  "packages/grafana-sql/src/components/ErrorBoundary.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-sql/src/components/configuration/ConnectionLimits.tsx": {
     "no-restricted-syntax": {
       "count": 2
