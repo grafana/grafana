@@ -3580,11 +3580,6 @@
       "count": 1
     }
   },
-  "public/app/features/transformers/editors/ConcatenateTransformerEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/transformers/editors/ConvertFieldTypeTransformerEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
