@@ -1483,11 +1483,6 @@
       "count": 1
     }
   },
-  "public/app/features/admin/UserSessions.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/admin/ldap/LdapDrawer.tsx": {
     "no-restricted-syntax": {
       "count": 23
