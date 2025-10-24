@@ -283,7 +283,9 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			}
 
 			info, ok := authlib.AuthInfoFrom(ctx)
-			if ok && authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy) {
+			// when running as standalone API server, the identity type may not always match TypeAccessPolicy
+			// so we allow it to use the access checker if there is any auth info available
+			if ok && (b.onlyApiServer || authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy)) {
 				res, err := b.access.Check(ctx, info, authlib.CheckRequest{
 					Verb:        a.GetVerb(),
 					Group:       a.GetAPIGroup(),
