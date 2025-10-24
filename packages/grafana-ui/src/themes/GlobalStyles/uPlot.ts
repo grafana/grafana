@@ -12,6 +12,16 @@ export function getUplotStyles(theme: GrafanaTheme2) {
       background: 'rgba(120, 120, 130, 0.2)',
     },
 
+    '.u-select.pan-right': {
+      borderLeft: '2px dotted rgba(120, 120, 130, 0.8)',
+      borderRight: '2px solid rgba(120, 120, 130, 0.8)',
+    },
+
+    '.u-select.pan-left': {
+      borderLeft: '2px solid rgba(120, 120, 130, 0.8)',
+      borderRight: '2px dotted rgba(120, 120, 130, 0.8)',
+    },
+
     '.u-hz .u-cursor-x, .u-vt .u-cursor-y': {
       borderRight: '1px dashed rgba(120, 120, 130, 0.5)',
     },
