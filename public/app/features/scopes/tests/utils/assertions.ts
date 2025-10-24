@@ -26,8 +26,6 @@ import {
   queryResultApplicationsCloudSelect,
   queryResultApplicationsGrafanaSelect,
   queryResultApplicationsMimirSelect,
-  queryResultInfrastructureSelect,
-  getResultInfrastructureSelect,
   getResultEnvironmentsDevSelect,
   getResultEnvironmentsProdSelect,
   querySelectorApply,
