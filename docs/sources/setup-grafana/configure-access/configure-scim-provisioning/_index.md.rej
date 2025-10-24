@@ -1,0 +1,21 @@
+diff a/content/docs/grafana/v12.2/setup-grafana/configure-access/configure-scim-provisioning/_index.md b/content/docs/grafana/v12.2/setup-grafana/configure-access/configure-scim-provisioning/_index.md	(rejected hunks)
+@@ -68,8 +71,8 @@ When you enable SCIM in Grafana, the following requirements and restrictions app
+ 1. **Use the same identity provider for user provisioning and for authentication flow**: You must use the same identity provider for both authentication and user provisioning.
+ 
+ 2. **Security restriction**: When using SAML, the login authentication flow requires the SAML assertion exchange between the Identity Provider and Grafana to include the `userUID` SAML assertion with the user's unique identifier at the Identity Provider.
+-   - Configure `userUID` SAML assertion in [Azure AD](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-azuread/#configure-saml-assertions-when-using-scim-provisioning)
+-   - Configure `userUID` SAML assertion in [Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/#configure-saml-assertions-when-using-scim-provisioning)
++   - Configure `userUID` SAML assertion in [Entra ID](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/#configure-saml-assertions-when-using-scim-provisioning)
++   - Configure `userUID` SAML assertion in [Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/#configure-saml-assertions-when-using-scim-provisioning)
+ 
+ ## Configure SCIM using the Grafana user interface
+ 
+@@ -102,7 +105,7 @@ The SCIM UI also displays information that may help you configure SCIM in your i
+ After configuring SCIM in Grafana, configure your identity provider:
+ 
+ - [Configure SCIM with Okta](configure-scim-with-okta/)
+-- [Configure SCIM with Azure AD](configure-scim-with-azuread/)
++- [Configure SCIM with Entra ID](configure-scim-with-azuread/)
+ 
+ ## Configure SCIM using the configuration file
+ 
