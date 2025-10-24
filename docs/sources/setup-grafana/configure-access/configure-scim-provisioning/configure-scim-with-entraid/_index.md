@@ -1,5 +1,6 @@
 ---
 aliases:
+  - ../../configure-security/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-azuread/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-azuread/
   - ../../configure-security/configure-scim-provisioning/configure-scim-with-azuread/ # /docs/grafana/next/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-azuread/
 description: Learn how to configure SCIM provisioning with Entra ID in Grafana Enterprise. This guide provides step-by-step instructions for setting up automated user and team management, including enterprise application configuration, service account creation, attribute mapping, and provisioning settings to ensure seamless integration between Entra ID and Grafana.
 keywords:
@@ -44,7 +45,7 @@ For more information, refer to the [feature toggles documentation](/docs/grafana
 When using SAML for authentication alongside SCIM provisioning with Entra ID, it is crucial to correctly align user identifiers.
 For detailed information on why this is critical for security and how to configure it, refer to the main [SCIM provisioning documentation](../).
 
-Refer to the [SAML authentication with Entra ID documentation](../../configure-authentication/saml/configure-saml-with-entraid/) for specific instructions on how to configure SAML claims and Grafana SAML settings for your Entra ID SCIM setup.
+Refer to the [SAML authentication with Entra ID documentation](../../configure-authentication/saml/configure-saml-with-azuread/) for specific instructions on how to configure SAML claims and Grafana SAML settings for your Entra ID SCIM setup.
 {{< /admonition >}}
 
 ## Prerequisites
