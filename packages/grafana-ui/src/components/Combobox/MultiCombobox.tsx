@@ -51,6 +51,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     'aria-labelledby': ariaLabelledBy,
     'data-testid': dataTestId,
     portalContainer,
+    prefixIcon,
   } = props;
 
   const styles = useStyles2(getComboboxStyles);
@@ -267,6 +268,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   return (
     <div className={multiStyles.container} ref={containerRef}>
       <div className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })} ref={measureRef}>
+        {prefixIcon && (
+          <Box marginLeft={0.5}>
+            <Text color="secondary">
+              <Icon name={prefixIcon} />
+            </Text>
+          </Box>
+        )}
         <span className={multiStyles.pillWrapper}>
           {visibleItems.map((item, index) => (
             <ValuePill
