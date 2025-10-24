@@ -2,8 +2,10 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -21,6 +23,8 @@ import (
 type FolderPermissionsService struct {
 	*resourcepermissions.Service
 }
+
+var ErrFolderUnhandledError = errutil.Internal("folder.unhandled-error", errutil.WithPublicMessage("Unhandled folder error"))
 
 var FolderViewActions = []string{dashboards.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead, libraryelements.ActionLibraryPanelsRead, accesscontrol.ActionAlertingSilencesRead}
 var FolderEditActions = append(FolderViewActions, []string{
@@ -106,7 +110,16 @@ func ProvideFolderPermissions(
 			})
 
 			if err != nil {
-				return err
+				switch {
+				case func() bool {
+					var errUtilErr errutil.Error
+					return errors.As(err, &errUtilErr)
+				}():
+					return err
+				case errors.Is(err, dashboards.ErrFolderNotFound):
+					return folder.ErrFolderNotFound.Errorf("folder not found")
+				}
+				return ErrFolderUnhandledError.Errorf("unhandled folder error: %w", err)
 			}
 
 			return nil
