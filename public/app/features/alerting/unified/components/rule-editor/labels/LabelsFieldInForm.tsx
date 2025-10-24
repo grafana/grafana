@@ -1,7 +1,7 @@
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, Stack, Text, Tooltip } from '@grafana/ui';
+import { Button, Stack, Text } from '@grafana/ui';
 
 import { AIImproveLabelsButtonComponent } from '../../../enterprise-components/AI/AIGenImproveLabelsButton/addAIImproveLabelsButton';
 import { RuleFormValues } from '../../../types/rule-form';
@@ -12,18 +12,11 @@ import { LabelsInRule } from './LabelsField';
 
 interface LabelsFieldInFormProps {
   onEditClick: () => void;
-  labelVariant?: 'small' | 'default';
-  showHelpTooltip?: boolean;
 }
-export function LabelsFieldInForm({
-  onEditClick,
-  labelVariant = 'default',
-  showHelpTooltip = false,
-}: LabelsFieldInFormProps) {
-  const { control, watch } = useFormContext<RuleFormValues>();
+export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
+  const { watch } = useFormContext<RuleFormValues>();
 
-  // Subscribe to label changes so UI updates when modal saves
-  const labels = useWatch({ control, name: 'labels' }) ?? [];
+  const labels = watch('labels');
   const type = watch('type');
 
   const isRecordingRule = type ? isRecordingRuleByType(type) : false;
@@ -36,48 +29,13 @@ export function LabelsFieldInForm({
         'Add labels to your rule for searching, silencing, or routing to a notification policy.'
       );
 
-  const hasLabels = Array.isArray(labels) && labels.length > 0 && labels.some((label) => label?.key || label?.value);
+  const hasLabels = Object.keys(labels).length > 0 && labels.some((label) => label.key || label.value);
 
   return (
     <Stack direction="column" gap={2}>
       <Stack direction="column" gap={1}>
         <Text element="h5">
-          <Stack direction="row" alignItems="center" gap={0.5}>
-            {labelVariant === 'small' ? (
-              <Text variant="bodySmall">
-                <Trans i18nKey="alerting.labels-field-in-form.labels">Labels</Trans>
-              </Text>
-            ) : (
-              <Text element="h5">
-                <Trans i18nKey="alerting.labels-field-in-form.labels">Labels</Trans>
-              </Text>
-            )}
-            <Text variant="bodySmall" color="secondary">
-              {t('alerting.common.optional', '(optional)')}
-            </Text>
-            {showHelpTooltip && (
-              <Tooltip
-                content={
-                  <div>
-                    <div style={{ marginBottom: 8 }}>
-                      {t(
-                        'alerting.labels-field-in-form.tooltip-text',
-                        'Labels are used to differentiate an alert from all other alerts.You can use them for searching, silencing, and routing notifications.'
-                      )}
-                    </div>
-                    <div>
-                      {t(
-                        'alerting.labels-field-in-form.tooltip-text-2',
-                        'The dropdown only displays labels that you have previously used for alerts. Select a label from the options below or type in a new one.'
-                      )}
-                    </div>
-                  </div>
-                }
-              >
-                <Icon name="info-circle" size="sm" />
-              </Tooltip>
-            )}
-          </Stack>
+          <Trans i18nKey="alerting.labels-field-in-form.labels">Labels</Trans>
         </Text>
         <Stack direction={'column'} gap={1}>
           <Stack direction={'row'} gap={1}>

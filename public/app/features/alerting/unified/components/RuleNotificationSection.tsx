@@ -4,9 +4,7 @@ import { useMemo, useState } from 'react';
 import { notificationsAPIv0alpha1 } from '@grafana/alerting/unstable';
 import type { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Combobox, ComboboxOption, Field, Input, Stack, TextArea, useStyles2 } from '@grafana/ui';
-
-import { LinkToContactPoints } from './rule-editor/alert-rule-form/simplifiedRouting/contactPoint/ContactPointSelector';
+import { Button, Combobox, ComboboxOption, Field, Input, Stack, TextArea, TextLink, useStyles2 } from '@grafana/ui';
 
 export function RuleNotificationSection() {
   const styles = useStyles2(getStyles);
@@ -37,7 +35,7 @@ export function RuleNotificationSection() {
       <div className={styles.contentIndented}>
         <Stack direction="column" gap={2}>
           <Field
-            label={t('alerting.simplified.notification.contact-point', 'Contact point')}
+            label={t('alerting.simplified.notification.contact-point.label', 'Contact point')}
             description={t(
               'alerting.simplified.notification.contact-point.description',
               'Select who should receive a notification when the alert rule fires'
@@ -67,11 +65,22 @@ export function RuleNotificationSection() {
                   }
                 }}
               />
-              <LinkToContactPoints />
+              <TextLink
+                external
+                href={'/alerting/notifications'}
+                aria-label={t(
+                  'alerting.link-to-contact-points.aria-label-view-or-create-contact-points',
+                  'View or create contact points'
+                )}
+              >
+                <Trans i18nKey="alerting.link-to-contact-points.view-or-create-contact-points">
+                  View or create contact points
+                </Trans>
+              </TextLink>
             </Stack>
           </Field>
 
-          <Field label={t('alerting.simplified.notification.summary', 'Summary (optional)')} noMargin>
+          <Field label={t('alerting.simplified.notification.summary.label', 'Summary (optional)')} noMargin>
             <TextArea
               placeholder={t(
                 'alerting.simplified.notification.summary.placeholder',
@@ -80,7 +89,7 @@ export function RuleNotificationSection() {
             />
           </Field>
 
-          <Field label={t('alerting.simplified.notification.description', 'Description (optional)')} noMargin>
+          <Field label={t('alerting.simplified.notification.description.label', 'Description (optional)')} noMargin>
             <TextArea
               placeholder={t(
                 'alerting.simplified.notification.description.placeholder',
@@ -89,7 +98,7 @@ export function RuleNotificationSection() {
             />
           </Field>
 
-          <Field label={t('alerting.simplified.notification.runbook-url', 'Runbook URL (optional)')} noMargin>
+          <Field label={t('alerting.simplified.notification.runbook-url.label', 'Runbook URL (optional)')} noMargin>
             <Input
               placeholder={t(
                 'alerting.simplified.notification.runbook-url.placeholder',
