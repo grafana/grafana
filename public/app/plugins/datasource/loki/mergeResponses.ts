@@ -7,6 +7,7 @@ import {
   Field,
   FieldType,
   LoadingState,
+  QueryResultMetaNotice,
   QueryResultMetaStat,
   shallowCompare,
 } from '@grafana/data';
@@ -197,6 +198,7 @@ export function mergeFrames(dest: DataFrame, source: DataFrame) {
   dest.meta = {
     ...dest.meta,
     stats: getCombinedMetadataStats(dest.meta?.stats ?? [], source.meta?.stats ?? []),
+    notices: getCombinedNotices(dest.meta?.notices ?? [], source.meta?.notices ?? []),
   };
 }
 
@@ -286,6 +288,27 @@ function getCombinedMetadataStats(
     }
   }
   return stats;
+}
+
+function getCombinedNotices(
+  destNotices: QueryResultMetaNotice[],
+  sourceNotices: QueryResultMetaNotice[]
+): QueryResultMetaNotice[] {
+  // Combine notices from both frames and filter out null/undefined values
+  const allNotices = [...destNotices, ...sourceNotices].filter(
+    (notice): notice is QueryResultMetaNotice => notice != null
+  );
+
+  // Deduplicate notices based on text to avoid showing the same warning twice
+  const uniqueNotices = allNotices.reduce((acc: QueryResultMetaNotice[], notice) => {
+    const exists = acc.some((n) => n.severity === notice.severity && n.text === notice.text);
+    if (!exists) {
+      acc.push(notice);
+    }
+    return acc;
+  }, []);
+
+  return uniqueNotices;
 }
 
 /**
