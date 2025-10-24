@@ -7,12 +7,10 @@ import { Trans, t } from '@grafana/i18n';
 import {
   Combobox,
   ComboboxOption,
-  Field,
   Icon,
   InlineField,
   InlineFieldRow,
   Input,
-  Select,
   Stack,
   Text,
   useStyles2,
@@ -24,29 +22,15 @@ import { reducerTypes, thresholdFunctions } from 'app/features/expressions/types
 import { isRangeEvaluator } from 'app/features/expressions/utils/expressionTypes';
 
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
-import { safeParsePrometheusDuration } from '../utils/time';
 
-import { getPendingPeriodQuickOptions } from './rule-editor/DurationQuickPick';
+// no custom pending/eval parsing here; use defaults from form
+import { EvaluationGroupFieldRow } from './rule-editor/EvaluationGroupFieldRow';
 
 export function RuleConditionSection({ type }: { type: RuleFormType }) {
   const base = useStyles2(getStyles);
-  const { register, watch, setValue } = useFormContext<RuleFormValues>();
-  const evaluateEvery = watch('evaluateEvery') || '5m';
+  const { watch } = useFormContext<RuleFormValues>();
   const evaluateFor = watch('evaluateFor') || '0s';
-  const pendingOptions = getPendingPeriodQuickOptions(evaluateEvery);
-  const [customMode, setCustomMode] = useState(false);
-  const isCustomSelected = customMode;
-  const customDelay = isCustomSelected ? evaluateFor : '';
-  const evalMs = safeParsePrometheusDuration(evaluateEvery);
-  const customMs = safeParsePrometheusDuration(customDelay || '0s');
-  const isCustomInvalid = isCustomSelected && (evalMs <= 0 || customMs <= 0 || customMs % evalMs !== 0);
-
-  let fireSelectLabel: string = evaluateFor;
-  if (isCustomSelected) {
-    fireSelectLabel = customDelay || pendingOptions[1] || '1m';
-  } else if (evaluateFor === '0s') {
-    fireSelectLabel = t('alerting.duration.immediately', 'immediately');
-  }
+  watch('folder');
 
   type LocalSimpleCondition = { whenField?: string; evaluator: { params: number[]; type: EvalFunction } };
   const [simpleCondition, setSimpleCondition] = useState<LocalSimpleCondition>({
@@ -145,72 +129,7 @@ export function RuleConditionSection({ type }: { type: RuleFormType }) {
             </InlineField>
           </InlineFieldRow>
 
-          <div className={base.paragraphRow}>
-            <Text>
-              <Trans i18nKey="alerting.simplified.evaluation.every">Evaluate the rule every</Trans>
-            </Text>
-            <Input width={8} {...register('evaluateEvery')} />
-            <Text>.</Text>
-            <Text>
-              <Trans i18nKey="alerting.simplified.evaluation.wait-prefix">Wait</Trans>
-            </Text>
-            <Input width={8} value={evaluateFor} onChange={(e) => setValue('evaluateFor', e.currentTarget.value)} />
-            {isCustomSelected && (
-              <Field
-                noMargin
-                className={base.inlineField}
-                invalid={isCustomInvalid || undefined}
-                error={
-                  isCustomInvalid
-                    ? t(
-                        'alerting.simplified.evaluation.custom-delay-invalid',
-                        'The delay must be a multiple of the evaluation frequency.'
-                      )
-                    : undefined
-                }
-              >
-                <Input width={8} value={customDelay} onChange={(e) => setValue('evaluateFor', e.currentTarget.value)} />
-              </Field>
-            )}
-            <Text>
-              <Trans i18nKey="alerting.simplified.evaluation.wait-suffix">
-                after the condition is breached before firing.
-              </Trans>
-            </Text>
-            <Text>
-              <Trans i18nKey="alerting.simplified.evaluation.fire">Fire the alert rule</Trans>
-            </Text>
-            <Select
-              width={20}
-              value={{
-                value: isCustomSelected ? 'custom' : evaluateFor,
-                label: fireSelectLabel,
-              }}
-              onChange={(v: SelectableValue<string>) => {
-                const val = v?.value;
-                if (val === 'custom') {
-                  setCustomMode(true);
-                  const defCustom = pendingOptions[1] || evaluateEvery || '1m';
-                  if (!evaluateFor || pendingOptions.includes(evaluateFor)) {
-                    setValue('evaluateFor', defCustom);
-                  }
-                  return;
-                }
-                setCustomMode(false);
-                setValue('evaluateFor', val || '0s');
-              }}
-              options={[
-                { value: '0s', label: t('alerting.duration.immediately', 'immediately') },
-                ...pendingOptions.filter((d) => d !== '0s').map((d) => ({ value: d, label: d })),
-                { value: 'custom', label: t('alerting.simplified.evaluation.custom-delay', 'with custom delay of') },
-              ]}
-            />
-            <Text>
-              <Trans i18nKey="alerting.simplified.evaluation.after-breached">
-                after the condition is initially breached.
-              </Trans>
-            </Text>
-          </div>
+          <EvaluationGroupFieldRow enableProvisionedGroups={false} />
 
           {evaluateFor === '0s' && (
             <Stack direction="row" gap={0.5} alignItems="center">

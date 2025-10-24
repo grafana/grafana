@@ -1085,9 +1085,6 @@
       "text-loading-notification-template": "Loading notification template",
       "title-error-loading-notification-template": "Error loading notification template"
     },
-    "duration": {
-      "immediately": "immediately"
-    },
     "duration-quick-pick": {
       "none": "None"
     },
@@ -2846,14 +2843,7 @@
       "continue-in-alerting": "Continue in Alerting",
       "create": "Create",
       "evaluation": {
-        "after-breached": "after the condition is initially breached.",
-        "custom-delay": "with custom delay of",
-        "custom-delay-invalid": "The delay must be a multiple of the evaluation frequency.",
-        "every": "Evaluate the rule every",
-        "fire": "Fire the alert rule",
-        "immediate-warning": "Immediate firing might lead to unnecessary alerts being sent for temporary issues",
-        "wait-prefix": "Wait",
-        "wait-suffix": "after the condition is breached before firing."
+        "immediate-warning": "Immediate firing might lead to unnecessary alerts being sent for temporary issues"
       },
       "notification": {
         "contact-point": {
