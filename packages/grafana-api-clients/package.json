@@ -1,0 +1,111 @@
+{
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
+  "private": true,
+  "name": "@grafana/api-clients",
+  "version": "12.3.0-pre",
+  "description": "Grafana API client utilities",
+  "keywords": [
+    "grafana",
+    "typescript"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-api-clients"
+  },
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./src/index.ts"
+    },
+    "./rtkq": {
+      "import": "./src/clients/rtkq/index.ts",
+      "require": "./src/clients/rtkq/index.ts"
+    },
+    "./rtkq/advisor/v0alpha1": {
+      "import": "./src/clients/rtkq/advisor/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/advisor/v0alpha1/index.ts"
+    },
+    "./rtkq/dashboard/v0alpha1": {
+      "import": "./src/clients/rtkq/dashboard/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/dashboard/v0alpha1/index.ts"
+    },
+    "./rtkq/folder/v1beta1": {
+      "import": "./src/clients/rtkq/folder/v1beta1/index.ts",
+      "require": "./src/clients/rtkq/folder/v1beta1/index.ts"
+    },
+    "./rtkq/iam/v0alpha1": {
+      "import": "./src/clients/rtkq/iam/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/iam/v0alpha1/index.ts"
+    },
+    "./rtkq/legacy/migrate-to-cloud": {
+      "import": "./src/clients/rtkq/migrate-to-cloud/index.ts",
+      "require": "./src/clients/rtkq/migrate-to-cloud/index.ts"
+    },
+    "./rtkq/legacy/preferences": {
+      "import": "./src/clients/rtkq/preferences/user/index.ts",
+      "require": "./src/clients/rtkq/preferences/user/index.ts"
+    },
+    "./rtkq/legacy/user": {
+      "import": "./src/clients/rtkq/user/index.ts",
+      "require": "./src/clients/rtkq/user/index.ts"
+    },
+    "./rtkq/playlist/v0alpha1": {
+      "import": "./src/clients/rtkq/playlist/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/playlist/v0alpha1/index.ts"
+    },
+    "./rtkq/preferences/v1alpha1": {
+      "import": "./src/clients/rtkq/preferences/v1alpha1/index.ts",
+      "require": "./src/clients/rtkq/preferences/v1alpha1/index.ts"
+    },
+    "./rtkq/provisioning/v0alpha1": {
+      "import": "./src/clients/rtkq/provisioning/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/provisioning/v0alpha1/index.ts"
+    },
+    "./rtkq/shorturl/v1alpha1": {
+      "import": "./src/clients/rtkq/shorturl/v1alpha1/index.ts",
+      "require": "./src/clients/rtkq/shorturl/v1alpha1/index.ts"
+    }
+  },
+  "publishConfig": {
+    "main": "./dist/cjs/index.cjs",
+    "module": "./dist/esm/index.mjs",
+    "types": "./dist/types/index.d.ts",
+    "access": "public"
+  },
+  "files": [
+    "./dist",
+    "./README.md",
+    "./CHANGELOG.md",
+    "./LICENSE_APACHE2"
+  ],
+  "scripts": {
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
+    "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
+    "clean": "rimraf ./dist ./compiled ./package.tgz",
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json",
+    "process-specs": "NODE_OPTIONS='--disable-warning=ExperimentalWarning' node --experimental-strip-types src/scripts/process-specs.ts",
+    "generate-apis": "yarn process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
+    "generate:api-client": "NODE_OPTIONS='--experimental-strip-types --disable-warning=ExperimentalWarning' plop --plopfile src/generator/plopfile.ts"
+  },
+  "devDependencies": {
+    "@rtk-query/codegen-openapi": "^2.0.0",
+    "openapi-types": "^12.1.3",
+    "plop": "^4.0.1",
+    "rollup": "^4.22.4",
+    "typescript": "5.9.2"
+  },
+  "peerDependencies": {
+    "@grafana/runtime": ">=11.6 <= 12.x",
+    "@reduxjs/toolkit": "^2.8.0",
+    "rxjs": "7.8.2"
+  }
+}

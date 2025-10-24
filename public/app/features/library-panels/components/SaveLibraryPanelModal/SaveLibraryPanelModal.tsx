@@ -29,8 +29,8 @@ export const SaveLibraryPanelModal = ({
   const [searchString, setSearchString] = useState('');
   const dashState = useAsync(async () => {
     const searchHits = await getConnectedDashboards(panel.libraryPanel.uid);
-    if (searchHits.length > 0) {
-      return searchHits.map((dash) => dash.title);
+    if (searchHits && searchHits.length > 0) {
+      return searchHits.map((dash) => dash.name);
     }
 
     return [];
