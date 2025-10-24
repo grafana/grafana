@@ -11810,6 +11810,11 @@
       "next": "Nästa",
       "previous": "Föregående"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Slutfört steg",
       "label-current-step": "Nuvarande steg",

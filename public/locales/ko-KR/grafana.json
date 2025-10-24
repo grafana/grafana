@@ -11760,6 +11760,11 @@
       "next": "다음",
       "previous": "이전"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "완료된 단계",
       "label-current-step": "현재 단계",
