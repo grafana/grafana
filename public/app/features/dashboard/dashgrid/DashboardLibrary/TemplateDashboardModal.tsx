@@ -100,13 +100,6 @@ export const TemplateDashboardModal = () => {
                 imageUrl={thumbnailUrl}
                 onClick={() => onImportDashboardClick(dashboard)}
                 dashboard={dashboard}
-                details={{
-                  id: dashboard.id,
-                  datasource: 'prometheus',
-                  dependencies: ['srazan', 'john'],
-                  publishedBy: 'srazan',
-                  lastUpdate: '2025-01-01',
-                }}
               />
             );
           })}
