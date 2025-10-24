@@ -1,5 +1,5 @@
 import { HttpResponse } from 'msw';
-import { render } from 'test/test-utils';
+import { render, testWithFeatureToggles } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { OrgRole } from '@grafana/data';
@@ -11,7 +11,6 @@ import { grantUserPermissions, grantUserRole } from '../mocks';
 import { setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 import { RulesFilter } from '../search/rulesSearchParser';
-import { testWithFeatureToggles } from '../test/test-utils';
 
 import RuleList, { RuleListActions } from './RuleList.v2';
 
@@ -39,7 +38,7 @@ setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
-testWithFeatureToggles(['alertingListViewV2']);
+testWithFeatureToggles({ enable: ['alertingListViewV2'] });
 
 setupMswServer();
 
@@ -253,7 +252,7 @@ describe('RuleListActions', () => {
   });
 
   describe('Import Alert Rules', () => {
-    testWithFeatureToggles(['alertingMigrationUI']);
+    testWithFeatureToggles({ enable: ['alertingMigrationUI'] });
 
     it('should show "Import alert rules" option when user has required permissions and feature toggle is enabled', async () => {
       grantUserPermissions([

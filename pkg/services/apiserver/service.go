@@ -248,6 +248,10 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
 }
 
+func (s *service) RegisterAppInstaller(i appsdkapiserver.AppInstaller) {
+	s.appInstallers = append(s.appInstallers, i)
+}
+
 // nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
 	// Get the list of groups the server will support
@@ -419,7 +423,9 @@ func (s *service) start(ctx context.Context) error {
 	delegate := server
 
 	var runningServer *genericapiserver.GenericAPIServer
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	isKubernetesAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator)
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	isDataplaneAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator)
 
 	if isKubernetesAggregatorEnabled {
