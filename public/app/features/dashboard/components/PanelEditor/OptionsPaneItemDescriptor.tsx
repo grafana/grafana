@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { uniqueId } from 'lodash';
 import { ReactNode } from 'react';
 import * as React from 'react';
 import Highlighter from 'react-highlight-words';
@@ -25,7 +24,7 @@ export interface OptionsPaneItemInfo {
   overrides?: OptionPaneItemOverrideInfo[];
   addon?: ReactNode;
   /** Must be unique on the page! */
-  id?: string;
+  id: string;
 }
 
 /**
@@ -36,7 +35,7 @@ export class OptionsPaneItemDescriptor {
   props: OptionsPaneItemInfo;
 
   constructor(props: OptionsPaneItemInfo) {
-    this.props = { ...props, id: props.id || uniqueId() };
+    this.props = { ...props };
   }
 
   render(searchQuery?: string) {

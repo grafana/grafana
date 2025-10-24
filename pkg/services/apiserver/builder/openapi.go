@@ -34,7 +34,9 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder, additionalGetters ...open
 				return bytes.Equal(aa, bb)
 			},
 		)
-		logging.DefaultLogger.Error("error initializing DataQuery apiequality", "err", err)
+		if err != nil {
+			logging.DefaultLogger.Error("error initializing DataQuery apiequality", "err", err)
+		}
 	})
 
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
@@ -199,10 +201,9 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 							keep := make([]map[string]any, 0, len(gvks))
 							for _, val := range gvks {
 								gvk, ok := val.(map[string]any)
-								if ok && gvk["version"] == "__internal" {
-									continue
+								if ok && gvk["group"] == gv.Group && gvk["version"] != "__internal" {
+									keep = append(keep, gvk) // only expose real versions in the same group
 								}
-								keep = append(keep, gvk)
 							}
 							v.Extensions["x-kubernetes-group-version-kind"] = keep
 						}

@@ -4,8 +4,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { useHasClonedParents } from '../../utils/clone';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
+import { useSoloPanelContext } from '../SoloPanelContext';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 
@@ -14,17 +15,21 @@ import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden } = model.useState();
-  const hasClonedParents = useHasClonedParents(model);
   const styles = useStyles2(getStyles, model.state);
   const { layoutOrchestrator, isEditing } = useDashboardState(model);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
   const { fillScreen } = layoutManager.useState();
+  const soloPanelContext = useSoloPanelContext();
 
   if (isHidden || !layoutOrchestrator) {
     return null;
   }
 
-  const showCanvasActions = !hasClonedParents && isEditing;
+  const showCanvasActions = !isRepeatCloneOrChildOf(model) && isEditing;
+
+  if (soloPanelContext) {
+    return children.map((item) => <item.Component key={item.state.key} model={item} />);
+  }
 
   return (
     <div

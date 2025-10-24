@@ -11,9 +11,11 @@ node_modules
 pkg
 public/lib/monaco
 public/sass/*.generated.scss
-scripts/cli/bettererIssueTemplate.md
 scripts/grafana-server/tmp
 vendor
+
+/coverage
+/codeowners-manifest
 
 # TS generate from cue by cuetsy
 **/*.gen.ts
@@ -24,6 +26,7 @@ vendor
 # Auto-generated theme files
 theme.light.generated.json
 theme.dark.generated.json
+public/app/features/theme-playground/schema.generated.json
 
 # Generated Swagger API specs
 public/api-merged.json
@@ -43,3 +46,5 @@ public/mockServiceWorker.js
 # Playwright results
 test-results
 playwright-report
+
+eslint-suppressions.json

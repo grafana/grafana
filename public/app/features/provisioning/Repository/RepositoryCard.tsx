@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Stack, Text, TextLink, Icon, Card, LinkButton, Badge } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -9,7 +10,6 @@ import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 
-import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
 
 interface Props {
@@ -104,14 +104,22 @@ export function RepositoryCard({ repository }: Props) {
             <Trans i18nKey="provisioning.repository-card.view">View</Trans>
           </LinkButton>
           <SyncRepository repository={repository} />
-          <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`} size="md">
+          <LinkButton
+            variant="secondary"
+            icon="cog"
+            href={`${PROVISIONING_URL}/${name}/edit`}
+            size="md"
+            onClick={() => {
+              reportInteraction('grafana_provisioning_repository_settings_opened', {
+                repositoryName: name,
+                repositoryType: spec?.type ?? 'unknown',
+              });
+            }}
+          >
             <Trans i18nKey="provisioning.repository-card.settings">Settings</Trans>
           </LinkButton>
         </Stack>
       </Card.Actions>
-      <Card.SecondaryActions>
-        <DeleteRepositoryButton name={name} />
-      </Card.SecondaryActions>
     </Card>
   );
 }

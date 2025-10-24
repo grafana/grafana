@@ -1,0 +1,360 @@
+global:
+  resolve_timeout: 5m
+  http_config:
+    follow_redirects: true
+    enable_http2: true
+  smtp_from: alertmanager@example.com
+  smtp_hello: localhost
+  smtp_smarthost: localhost:1025
+  smtp_auth_username: alertmanager
+  smtp_auth_password: <secret>
+  smtp_require_tls: false
+  slack_api_url: <secret>
+  pagerduty_url: http://localhost/pagerduty-default
+  opsgenie_api_url: http://localhost/opsgenie-default
+  opsgenie_api_key: <secret>
+  wechat_api_url: http://localhost/wechat-default
+  wechat_api_secret: <secret>
+  wechat_api_corp_id: corp123
+  victorops_api_url: http://localhost/victorops-default/
+  victorops_api_key: <secret>
+  telegram_api_url: http://localhost/telegram-default
+  webex_api_url: http://localhost/webes-default
+  jira_api_url: http://localhost/jira-default
+templates:
+  - mimir-alertmanager.tmpl
+route:
+  receiver: webhook
+  group_by:
+    - alertname
+    - cluster
+  continue: false
+  routes:
+    - receiver: pagerduty
+      matchers:
+        - severity="critical"
+      continue: false
+    - receiver: slack
+      matchers:
+        - severity="warning"
+      mute_time_intervals:
+        - maintenance_window
+        - us_independence_day
+      continue: false
+    - receiver: email
+      matchers:
+        - severity="info"
+      mute_time_intervals:
+        - maintenance_window
+        - off_hours
+        - us_independence_day
+      continue: false
+    - receiver: wechat
+      matchers:
+        - severity="notice"
+      continue: false
+    - receiver: webex
+      matchers:
+        - severity="minor"
+      continue: false
+    - receiver: telegram
+      matchers:
+        - severity="major"
+      continue: false
+    - receiver: sns
+      matchers:
+        - severity="low"
+      continue: false
+    - receiver: msteams
+      matchers:
+        - severity="high"
+      continue: false
+    - receiver: jira
+      matchers:
+        - severity="medium"
+      continue: false
+    - receiver: discord
+      matchers:
+        - severity="debug"
+      mute_time_intervals:
+        - maintenance_window
+        - off_hours
+        - us_independence_day
+      continue: false
+  group_wait: 1s
+  group_interval: 5s
+  repeat_interval: 1m
+inhibit_rules:
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal:
+      - alertname
+      - cluster
+receivers:
+  - name: discord
+    discord_configs:
+      - send_resolved: true
+        http_config:
+          follow_redirects: false
+          enable_http2: true
+        webhook_url: <secret>
+        title: '{{ template "discord.default.title" . }}'
+        message: '{{ template "discord.default.message" . }}'
+  - name: email
+    email_configs:
+      - send_resolved: true
+        to: team@example.com
+        from: alertmanager@example.com
+        hello: localhost
+        smarthost: smtp.example.com:587
+        auth_username: alertmanager
+        auth_password: <secret>
+        headers:
+          Subject: test subject
+        html: '{{ template "email.default.html" . }}'
+        text: test email
+        require_tls: true
+  - name: jira
+    jira_configs:
+      - send_resolved: true
+        http_config:
+          basic_auth:
+            username: alertmanager@example.com
+            password: <secret>
+          follow_redirects: true
+          enable_http2: true
+        api_url: http://localhost/jira
+        project: PROJ
+        summary: '{{ template "jira.default.summary" . }}'
+        description: '{{ template "jira.default.description" . }}'
+        labels:
+          - alertmanager
+          - '{{ .CommonLabels.severity }}'
+        priority: '{{ template "jira.default.priority" . }}'
+        issue_type: Bug
+        fields:
+          customfield_10000: test customfield_10000
+  - name: msteams
+    msteams_configs:
+      - send_resolved: true
+        http_config:
+          follow_redirects: true
+          enable_http2: true
+          proxy_url: http://proxy.example.com:8080
+        webhook_url: <secret>
+        title: '{{ template "msteams.default.title" . }}'
+        summary: '{{ template "msteams.default.summary" . }}'
+        text: '{{ template "msteams.default.text" . }}'
+  - name: opsgenie
+    opsgenie_configs:
+      - send_resolved: true
+        http_config:
+          follow_redirects: true
+          enable_http2: true
+        api_key: <secret>
+        api_url: http://localhost/opsgenie/
+        message: test message
+        description: test description
+        source: Alertmanager
+        details:
+          firing: test firing
+        entity: test entity
+        responders:
+          - name: ops-team
+            type: team
+        actions: test actions
+        tags: test-tags
+        note: Triggered by Alertmanager
+        priority: P3
+        update_alerts: true
+  - name: pagerduty
+    pagerduty_configs:
+      - send_resolved: true
+        http_config:
+          follow_redirects: true
+          enable_http2: true
+        service_key: <secret>
+        routing_key: <secret>
+        url: http://localhost/pagerduty
+        client: Alertmanager
+        client_url: https://monitoring.example.com
+        description: test description
+        details:
+          firing: test firing
+          num_firing: '{{ .Alerts.Firing | len }}'
+          num_resolved: '{{ .Alerts.Resolved | len }}'
+          resolved: '{{ template "pagerduty.default.instances" .Alerts.Resolved }}'
+        images:
+          - src: test src
+            alt: test alt
+            href: http://localhost
+        links:
+          - href: http://localhost
+            text: test text
+        source: test source
+        severity: test severity
+        class: test class
+        component: test component
+        group: test group
+  - name: pushover
+    pushover_configs:
+      - send_resolved: true
+        http_config:
+          authorization:
+            type: Bearer
+            credentials: <secret>
+          follow_redirects: true
+          enable_http2: true
+        user_key: <secret>
+        token: <secret>
+        title: '{{ template "pushover.default.title" . }}'
+        message: '{{ template "pushover.default.message" . }}'
+        url: http://localhost/pushover
+        priority: '{{ if eq .Status "firing" }}2{{ else }}0{{ end }}'
+        retry: 30s
+        expire: 1h0m0s
+        html: false
+  - name: slack
+    slack_configs:
+      - send_resolved: true
+        http_config:
+          follow_redirects: true
+          enable_http2: true
+        api_url: <secret>
+        channel: '#alerts'
+        username: Alerting Team
+        color: danger
+        title: test title
+        title_link: http://localhost
+        pretext: test pretext
+        text: test text
+        fields:
+          - title: test title
+            value: test value
+            short: true
+        short_fields: false
+        footer: test footer
+        fallback: test fallback
+        callback_id: test callback id
+        icon_emoji: ':warning:'
+        icon_url: https://example.com/icon.png
+        image_url: https://example.com/image.png
+        thumb_url: https://example.com/thumb.png
+        link_names: true
+        mrkdwn_in:
+          - fallback
+          - pretext
+          - text
+        actions:
+          - type: test-type
+            text: test-text
+            style: test-style
+            name: test-name
+            value: test-value
+            confirm:
+              text: test-text
+              title: test-title
+              ok_text: test-ok-text
+              dismiss_text: test-dismiss-text
+  - name: sns
+    sns_configs:
+      - send_resolved: true
+        http_config:
+          follow_redirects: true
+          enable_http2: false
+        sigv4:
+          region: us-east-1
+          access_key: secret-access-key
+          secret_key: <secret>
+          profile: default,
+          role_arn: arn:aws:iam::123456789012:role/role-name
+        topic_arn: arn:aws:sns:us-east-1:123456789012:alerts
+        subject: '{{ template "sns.default.subject" . }}'
+        message: '{{ template "sns.default.message" . }}'
+        attributes:
+          key1: value1
+  - name: telegram
+    telegram_configs:
+      - send_resolved: true
+        http_config:
+          follow_redirects: true
+          enable_http2: true
+        api_url: http://localhost/telegram-default
+        bot_token: <secret>
+        chat_id: -1001234567890
+        message: '{{ template "telegram.default.message" . }}'
+        parse_mode: MarkdownV2
+  - name: victorops
+    victorops_configs:
+      - send_resolved: true
+        http_config:
+          tls_config:
+            server_name: victorops.com
+            insecure_skip_verify: false
+          follow_redirects: true
+          enable_http2: true
+        api_key: <secret>
+        api_url: http://localhost/victorops-default/
+        routing_key: team1
+        message_type: CRITICAL
+        state_message: '{{ template "victorops.default.state_message" . }}'
+        entity_display_name: '{{ template "victorops.default.entity_display_name" . }}'
+        monitoring_tool: '{{ template "victorops.default.monitoring_tool" . }}'
+  - name: webex
+    webex_configs:
+      - send_resolved: true
+        http_config:
+          authorization:
+            type: Bearer
+            credentials: <secret>
+          follow_redirects: true
+          enable_http2: true
+        api_url: http://localhost/webes-default
+        message: '{{ template "webex.default.message" . }}'
+        room_id: Y2lzY29zcGFyazovL3VzL1JPT00v12345678
+  - name: webhook
+    webhook_configs:
+      - send_resolved: true
+        http_config:
+          follow_redirects: true
+          enable_http2: true
+        url: <secret>
+        url_file: ""
+        max_alerts: 10
+        timeout: 0s
+  - name: wechat
+    wechat_configs:
+      - send_resolved: true
+        http_config:
+          follow_redirects: true
+          enable_http2: true
+        api_secret: <secret>
+        corp_id: "12345"
+        message: test message
+        api_url: http://localhost/wechat/
+        to_user: user1
+        to_party: party1
+        to_tag: tag1
+        agent_id: "1000002"
+        message_type: text
+time_intervals:
+  - name: maintenance_window
+    time_intervals:
+      - times:
+          - start_time: "02:00"
+            end_time: "04:00"
+        weekdays: [ saturday ]
+  - name: off_hours
+    time_intervals:
+      - times:
+          - start_time: "20:00"
+            end_time: "23:59"
+          - start_time: "00:00"
+            end_time: "06:00"
+        weekdays: [ monday, tuesday, wednesday, thursday, friday ]
+  - name: us_independence_day
+    time_intervals:
+      - days_of_month: [ "4" ]
+        months: [ "7" ]

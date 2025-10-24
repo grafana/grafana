@@ -1,6 +1,6 @@
 import { omit } from 'lodash';
 
-import { AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery, isEmptyObject, TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   behaviors,
@@ -13,7 +13,7 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { DataSourceRef, VariableRefresh } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import {
@@ -41,9 +41,10 @@ import {
   LibraryPanelKind,
   Element,
   DashboardCursorSync,
-  FieldConfig,
   FieldColor,
+  defaultFieldConfig,
   defaultDataQueryKind,
+  SwitchVariableKind,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -175,40 +176,7 @@ export function vizPanelToSchemaV2(
     return elementSpec;
   }
 
-  // Handle type conversion for color mode
-  const rawColor = vizPanel.state.fieldConfig.defaults.color;
-  let color: FieldColor | undefined;
-
-  if (rawColor) {
-    const convertedMode = colorIdEnumToColorIdV2(rawColor.mode);
-
-    if (convertedMode) {
-      color = {
-        ...rawColor,
-        mode: convertedMode,
-      };
-    }
-  }
-
-  // Remove null from the defaults because schema V2 doesn't support null for these fields
-  const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
-  const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
-  const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
-
-  const defaults: FieldConfig = Object.fromEntries(
-    Object.entries({
-      ...vizPanel.state.fieldConfig.defaults,
-      decimals,
-      min,
-      max,
-      color,
-    }).filter(([_, value]) => {
-      if (Array.isArray(value)) {
-        return value.length > 0;
-      }
-      return value !== undefined;
-    })
-  );
+  const defaults = handleFieldConfigDefaultsConversion(vizPanel);
 
   const vizFieldConfig: FieldConfigSource = {
     ...vizPanel.state.fieldConfig,
@@ -243,6 +211,49 @@ export function vizPanelToSchemaV2(
     },
   };
   return elementSpec;
+}
+
+function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
+  if (!vizPanel.state.fieldConfig || !vizPanel.state.fieldConfig.defaults) {
+    return defaultFieldConfig();
+  }
+
+  // Handle type conversion for color mode
+  const rawColor = vizPanel.state.fieldConfig.defaults.color;
+  let color: FieldColor | undefined;
+
+  if (rawColor) {
+    const convertedMode = colorIdEnumToColorIdV2(rawColor.mode);
+
+    if (convertedMode) {
+      color = {
+        ...rawColor,
+        mode: convertedMode,
+      };
+    }
+  }
+
+  // Remove null from the defaults because schema V2 doesn't support null for these fields
+  const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
+  const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
+  const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
+
+  const defaults = Object.fromEntries(
+    Object.entries({
+      ...vizPanel.state.fieldConfig.defaults,
+      decimals,
+      min,
+      max,
+      color,
+    }).filter(([_, value]) => {
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      return value !== undefined;
+    })
+  );
+
+  return defaults;
 }
 
 function getPanelLinks(panel: VizPanel): DataLink[] {
@@ -401,6 +412,7 @@ function getVariables(oldDash: DashboardSceneState, dsReferencesMapping?: DSRefe
     | ConstantVariableKind
     | GroupByVariableKind
     | AdhocVariableKind
+    | SwitchVariableKind
   > = [];
 
   if (variablesSet instanceof SceneVariableSet) {
@@ -485,6 +497,104 @@ export function getDefaultDataSourceRef(): DataSourceRef {
   const ds = dsList[defaultDatasource];
 
   return { type: ds.meta.id, uid: ds.name }; // in the datasource list from bootData "id" is the type
+}
+
+export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: DashboardV2Spec, panel?: VizPanel) {
+  let spec: DashboardV2Spec = {
+    ...dash,
+    title,
+    timeSettings: {
+      ...dash.timeSettings,
+      from: time.from.toISOString(),
+      to: time.to.toISOString(),
+    },
+    links: [],
+  };
+
+  // When VizPanel is present, we are snapshoting a single panel. The rest of the panels is removed from the dashboard,
+  // and the panel is resized to 24x20 grid and placed at the top of the dashboard.
+  if (panel) {
+    const panelId = getPanelIdForVizPanel(panel);
+
+    // Find the panel in elements
+    const panelElementKey = Object.keys(dash.elements || {}).find((key) => {
+      const element = dash.elements![key];
+      return element.spec.id === panelId;
+    });
+
+    if (panelElementKey) {
+      // Keep only this panel in elements
+      spec.elements = {
+        [panelElementKey]: dash.elements![panelElementKey],
+      };
+
+      spec.layout = {
+        kind: 'GridLayout',
+        spec: {
+          items: [
+            {
+              kind: 'GridLayoutItem',
+              spec: {
+                element: {
+                  kind: 'ElementReference',
+                  name: panelElementKey,
+                },
+                width: 24,
+                height: 20,
+                x: 0,
+                y: 0,
+              },
+            },
+          ],
+        },
+      };
+    }
+  }
+
+  // Remove links from all panels
+  spec.elements = Object.fromEntries(
+    Object.entries(spec.elements).map(([key, element]) => {
+      if ('links' in element) {
+        element.links = [];
+      }
+      return [key, element];
+    })
+  );
+
+  if (spec.annotations) {
+    const annotations = spec.annotations.filter((annotation) => annotation.spec.enable) || [];
+    const trimedAnnotations = annotations.map((annotation): AnnotationQueryKind => {
+      return {
+        kind: 'AnnotationQuery',
+        spec: {
+          name: annotation.spec.name,
+          enable: annotation.spec.enable,
+          iconColor: annotation.spec.iconColor,
+          builtIn: annotation.spec.builtIn,
+          hide: annotation.spec.hide,
+          query: annotation.spec.query,
+        },
+      };
+    });
+    spec.annotations = trimedAnnotations;
+  }
+
+  if (spec.variables) {
+    spec.variables.forEach((variable) => {
+      if ('query' in variable) {
+        variable.query = '';
+      }
+      if ('options' in variable && 'current' in variable) {
+        variable.options = variable.current && !isEmptyObject(variable.current) ? [variable.current] : [];
+      }
+
+      if ('refresh' in variable) {
+        variable.refresh = VariableRefresh.never;
+      }
+    });
+  }
+
+  return spec;
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec

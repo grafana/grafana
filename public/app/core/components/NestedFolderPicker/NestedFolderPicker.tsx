@@ -6,7 +6,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getStatusFromError } from 'app/core/utils/errors';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
@@ -14,7 +14,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
-import { PermissionLevelString } from 'app/types/acl';
+import { PermissionLevel } from 'app/types/acl';
 
 import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
@@ -36,6 +36,12 @@ export interface NestedFolderPickerProps {
   /* Folder UIDs to exclude from the picker, to prevent invalid operations */
   excludeUIDs?: string[];
 
+  /* Start tree from this folder instead of root */
+  rootFolderUID?: string;
+
+  /* Custom root folder item, default is "Dashboards" */
+  rootFolderItem?: DashboardsTreeItem;
+
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
   permission?: 'view' | 'edit';
 
@@ -51,7 +57,7 @@ export interface NestedFolderPickerProps {
 
 const debouncedSearch = debounce(getSearchResults, 300);
 
-async function getSearchResults(searchQuery: string, permission?: PermissionLevelString) {
+async function getSearchResults(searchQuery: string, permission?: PermissionLevel) {
   const queryResponse = await getGrafanaSearcher().search({
     query: searchQuery,
     kind: ['folder'],
@@ -69,6 +75,8 @@ export function NestedFolderPicker({
   showRootFolder = true,
   clearable = false,
   excludeUIDs,
+  rootFolderUID,
+  rootFolderItem,
   permission = 'edit',
   onChange,
   id,
@@ -90,23 +98,19 @@ export function NestedFolderPicker({
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
 
-  // Map the permission string union to enum value for compatibility
-  const permissionLevel = useMemo(() => {
-    if (permission === 'view') {
-      return PermissionLevelString.View;
-    } else if (permission === 'edit') {
-      return PermissionLevelString.Edit;
-    }
-
-    throw new Error('Invalid permission');
-  }, [permission]);
-
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
+    emptyFolders,
     items: browseFlatTree,
     isLoading: isBrowseLoading,
     requestNextPage: fetchFolderPage,
-  } = useFoldersQuery(isBrowsing, foldersOpenState, permissionLevel);
+  } = useFoldersQuery({
+    isBrowsing,
+    openFolders: foldersOpenState,
+    permission,
+    rootFolderUID,
+    rootFolderItem,
+  });
 
   useEffect(() => {
     if (!search) {
@@ -117,7 +121,7 @@ export function NestedFolderPicker({
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
 
-    debouncedSearch(search, permissionLevel).then((queryResponse) => {
+    debouncedSearch(search, permission).then((queryResponse) => {
       // Only keep the results if it's was issued after the most recently resolved search.
       // This prevents results showing out of order if first request is slower than later ones.
       // We don't need to worry about clearing the isFetching state either - if there's a later
@@ -129,14 +133,14 @@ export function NestedFolderPicker({
         lastSearchTimestamp.current = timestamp;
       }
     });
-  }, [search, permissionLevel]);
+  }, [search, permission]);
 
   // the order of middleware is important!
   const middleware = [
     flip({
       // see https://floating-ui.com/docs/flip#combining-with-shift
       crossAxis: false,
-      boundary: document.body,
+      boundary: document.getElementById(floatingUtils.BOUNDARY_ELEMENT_ID) ?? undefined,
     }),
   ];
 
@@ -219,6 +223,8 @@ export function NestedFolderPicker({
             kind: 'folder' as const,
             title: item.title,
             uid: item.uid,
+            parentUID: item.parentUID,
+            parentTitle: item.parentTitle,
           },
         })) ?? [];
     }
@@ -312,7 +318,7 @@ export function NestedFolderPicker({
       <Input
         ref={refs.setReference}
         autoFocus
-        prefix={label ? <Icon name="folder" /> : null}
+        prefix={label ? <Icon name="folder" /> : <Icon name="search" />}
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
         invalid={invalid}
@@ -325,7 +331,6 @@ export function NestedFolderPicker({
         aria-owns={overlayId}
         aria-activedescendant={getDOMId(overlayId, flatTree[focusedItemIndex]?.item.uid)}
         role="combobox"
-        suffix={<Icon name="search" />}
         {...getReferenceProps()}
         onKeyDown={handleKeyDown}
       />
@@ -365,6 +370,7 @@ export function NestedFolderPicker({
               foldersAreOpenable={!(search && searchResults)}
               isItemLoaded={isItemLoaded}
               requestLoadMore={handleLoadMore}
+              emptyFolders={emptyFolders}
             />
           </div>
         )}

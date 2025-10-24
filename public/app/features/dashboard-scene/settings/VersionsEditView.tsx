@@ -113,7 +113,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       .then((result) => {
         this.setState({
           isLoading: false,
-          versions: [...(this.state.versions ?? []), ...this.decorateVersions(result.versions)],
+          versions: [...(append ? (this.state.versions ?? []) : []), ...this.decorateVersions(result.versions)],
         });
         this._start += this._limit;
         // Update the continueToken for the next request, if available

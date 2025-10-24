@@ -186,7 +186,7 @@ func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.Get
 	return ruleList, nil
 }
 
-func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlertRulesByGroupQuery) (models.RulesGroup, string, error) {
+func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlertRulesExtendedQuery) (models.RulesGroup, string, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
@@ -228,13 +228,13 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 
 	var nextToken string
 	var cursor models.GroupCursor
-	if q.GroupContinueToken != "" {
-		if cur, err := models.DecodeGroupCursor(q.GroupContinueToken); err == nil {
+	if q.ContinueToken != "" {
+		if cur, err := models.DecodeGroupCursor(q.ContinueToken); err == nil {
 			cursor = cur
 		}
 	}
 
-	if q.GroupLimit < 0 {
+	if q.Limit < 0 {
 		return ruleList, "", nil
 	}
 
@@ -254,7 +254,7 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 			RuleGroup:    r.RuleGroup,
 		}
 		if key != cursor {
-			if q.GroupLimit > 0 && groupsFetched == q.GroupLimit {
+			if q.Limit > 0 && groupsFetched == q.Limit {
 				nextToken = models.EncodeGroupCursor(cursor)
 				break
 			}
@@ -266,6 +266,22 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 	}
 
 	return outputRules, nextToken, nil
+}
+
+// TODO: implement pagination for this fake
+func (f *RuleStore) ListAlertRulesPaginated(_ context.Context, q *models.ListAlertRulesExtendedQuery) (models.RulesGroup, string, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, *q)
+
+	if err := f.Hook(*q); err != nil {
+		return nil, "", err
+	}
+	rules, err := f.listAlertRules(&q.ListAlertRulesQuery)
+	if err != nil {
+		return nil, "", err
+	}
+	return rules, "", nil
 }
 
 func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) (models.RulesGroup, error) {
@@ -318,8 +334,8 @@ func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesG
 		if q.ReceiverName != "" && (len(r.NotificationSettings) < 1 || r.NotificationSettings[0].Receiver != q.ReceiverName) {
 			continue
 		}
-
-		ruleList = append(ruleList, r)
+		copyR := models.CopyRule(r)
+		ruleList = append(ruleList, copyR)
 	}
 
 	return ruleList, nil
@@ -363,13 +379,13 @@ func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64
 	return nil, dashboards.ErrFolderNotFound
 }
 
-func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error) {
+func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
 	for _, folder := range f.Folders[orgID] {
 		if folder.Title == title && folder.ParentUID == parentUID {
-			return folder.ToFolderReference(), nil
+			return folder.ToFolderReference(), false, nil
 		}
 	}
 
@@ -382,7 +398,7 @@ func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title strin
 	}
 
 	f.Folders[orgID] = append(f.Folders[orgID], newFolder)
-	return newFolder.ToFolderReference(), nil
+	return newFolder.ToFolderReference(), true, nil
 }
 
 func (f *RuleStore) GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error) {

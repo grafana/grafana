@@ -9,7 +9,8 @@
     }
   },
   "tui": {
-    "autoExit": true
+    "autoExit": true,
+    "enabled": false
   },
   "defaultBase": "main"
 }

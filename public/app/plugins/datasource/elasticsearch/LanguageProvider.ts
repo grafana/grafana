@@ -8,11 +8,9 @@ export default class ElasticsearchLanguageProvider extends LanguageProvider {
   declare start: () => Promise<any[]>;
   datasource: ElasticDatasource;
 
-  constructor(datasource: ElasticDatasource, initialValues?: any) {
+  constructor(datasource: ElasticDatasource) {
     super();
     this.datasource = datasource;
-
-    Object.assign(this, initialValues);
   }
 
   /**

@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 
@@ -9,10 +10,11 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
+
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,6 +30,7 @@ type QOSEnqueueDequeuer interface {
 
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
+	Backend        resource.StorageBackend
 	DB             infraDB.DB
 	Cfg            *setting.Cfg
 	Tracer         trace.Tracer
@@ -39,15 +42,25 @@ type ServerOptions struct {
 	Features       featuremgmt.FeatureToggles
 	QOSQueue       QOSEnqueueDequeuer
 	SecureValues   secrets.InlineSecureValueSupport
-	Ring           *ring.Ring
-	RingLifecycler *ring.BasicLifecycler
+	OwnsIndexFn    func(key resource.NamespacedResource) (bool, error)
 }
 
-// Creates a new ResourceServer
-func NewResourceServer(
-	opts ServerOptions,
-) (resource.ResourceServer, error) {
+func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+
+	if opts.SecureValues == nil && opts.Cfg != nil && opts.Cfg.SecretsManagement.GrpcClientEnable {
+		inlineSecureValueService, err := inlinesecurevalue.ProvideInlineSecureValueService(
+			opts.Cfg,
+			opts.Tracer,
+			nil, // not needed for gRPC client mode
+			nil, // not needed for gRPC client mode
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create inline secure value service: %w", err)
+		}
+		opts.SecureValues = inlineSecureValueService
+	}
+
 	serverOptions := resource.ResourceServerOptions{
 		Tracer: opts.Tracer,
 		Blob: resource.BlobConfig{
@@ -75,35 +88,40 @@ func NewResourceServer(
 	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
 	serverOptions.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
 
-	eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
-	if err != nil {
-		return nil, err
+	if opts.Backend != nil {
+		serverOptions.Backend = opts.Backend
+		// TODO: we should probably have a proper interface for diagnostics/lifecycle
+	} else {
+		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
+		if err != nil {
+			return nil, err
+		}
+
+		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+			opts.Cfg.SectionWithEnvOverrides("resource_api"))
+		withPruner := opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageHistoryPruner)
+
+		backend, err := NewBackend(BackendOptions{
+			DBProvider:           eDB,
+			Tracer:               opts.Tracer,
+			Reg:                  opts.Reg,
+			IsHA:                 isHA,
+			withPruner:           withPruner,
+			storageMetrics:       opts.StorageMetrics,
+			LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
+		})
+		if err != nil {
+			return nil, err
+		}
+		serverOptions.Backend = backend
+		serverOptions.Diagnostics = backend
+		serverOptions.Lifecycle = backend
 	}
 
-	isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
-		opts.Cfg.SectionWithEnvOverrides("resource_api"))
-	withPruner := opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageHistoryPruner)
-
-	store, err := NewBackend(BackendOptions{
-		DBProvider:     eDB,
-		Tracer:         opts.Tracer,
-		Reg:            opts.Reg,
-		IsHA:           isHA,
-		withPruner:     withPruner,
-		storageMetrics: opts.StorageMetrics,
-	})
-	if err != nil {
-		return nil, err
-	}
-	serverOptions.Backend = store
-	serverOptions.Diagnostics = store
-	serverOptions.Lifecycle = store
 	serverOptions.Search = opts.SearchOptions
 	serverOptions.IndexMetrics = opts.IndexMetrics
 	serverOptions.QOSQueue = opts.QOSQueue
-	serverOptions.Ring = opts.Ring
-	serverOptions.RingLifecycler = opts.RingLifecycler
-	serverOptions.SearchAfterWrite = opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchAfterWriteExperimentalAPI)
+	serverOptions.OwnsIndexFn = opts.OwnsIndexFn
 
 	return resource.NewResourceServer(serverOptions)
 }

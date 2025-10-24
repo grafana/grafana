@@ -72,7 +72,7 @@
       "label-enable-basic-logs": "Включить базовые журналы"
     },
     "config-editor": {
-      "description-additional-settings": "",
+      "description-additional-settings": "Дополнительные параметры — это необязательные настройки, которые позволяют получить больший контроль над источником данных. К таким параметрам относятся Secure Socks Proxy, время ожидания запроса и пересылаемые файлы cookie.",
       "title-additional-settings": "Дополнительные параметры"
     },
     "current-user-fallback-credentials": {
@@ -113,12 +113,12 @@
       "aria-label-column": "Столбец",
       "aria-label-column-value": "Значение столбца",
       "aria-label-operator": "Оператор",
-      "aria-label-remove-filter": "",
+      "aria-label-remove-filter": "Удалить фильтр",
       "label-or": "ИЛИ"
     },
     "filter-section": {
-      "aria-label-add-filter": "",
-      "aria-label-add-or-filter": "",
+      "aria-label-add-filter": "Добавить фильтр",
+      "aria-label-add-or-filter": "Добавить фильтр «ИЛИ»",
       "label-add-group": "Добавить группу",
       "label-and": "И",
       "label-filters": "Фильтры",
@@ -131,8 +131,8 @@
       "label-format-as": "Форматировать как"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "",
-      "aria-label-remove-fuzzy-search": "",
+      "aria-label-add-fuzzy-search": "Добавить нечеткий поиск",
+      "aria-label-remove-fuzzy-search": "Удалить нечеткий поиск",
       "aria-label-select-column": "Выбрать столбец",
       "label-fuzzy-search": "Нечеткий поиск",
       "placeholder-search-team": "Введите ключевое слово",
@@ -147,7 +147,7 @@
       "aria-label-remove": "Удалить"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "",
+      "aria-label-add-group-by": "Добавить группировку по",
       "label-group-by": "Группировать по",
       "tooltip-group-by": "Упорядочите результаты по категориям на основе указанных столбцов. Функцию группировки можно использовать отдельно для перечисления уникальных значений в выбранных столбцах или в сочетании с агрегатными функциями для получения сводной статистики по каждой группе. При использовании в отдельности она возвращает различные комбинации указанных столбцов."
     },
@@ -190,10 +190,10 @@
       "text-loading": "Загрузка…"
     },
     "order-by-section": {
-      "aria-label-add-order-by": "",
+      "aria-label-add-order-by": "Добавить сортировку по",
       "aria-label-order-by-column": "Упорядочить по столбцу",
       "aria-label-order-direction": "Направление упорядочивания",
-      "aria-label-remove-order-by": "",
+      "aria-label-remove-order-by": "Удалить сортировку по",
       "label-by": "ПО",
       "label-order-by": "Упорядочить по",
       "tooltip-order-by": "Сортируйте результаты по одному или нескольким столбцам в порядке возрастания или убывания"
@@ -227,16 +227,26 @@
       "select-resource": "Выбрать ресурс"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Применить",
       "button-cancel": "Отмена",
       "header-location": "Расположение",
+      "header-resource-group": "",
       "header-scope": "Область применения",
       "header-type": "Тип",
       "heading-selection": "Выбор",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Показано первых результатов: {{numResults}}",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Загрузка…",
+      "text-no-recent-resources": "",
       "text-no-resources": "Ресурсы не найдены",
-      "title-error-occurred": "Ошибка при запросе ресурсов из Azure Monitor"
+      "title-error-occurred": "Ошибка при запросе ресурсов из Azure Monitor",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Область"
@@ -256,7 +266,7 @@
       "label-table": "Таблица",
       "placeholder-select-columns": "Выберите столбцы",
       "placeholder-select-table": "Выберите таблицу",
-      "tooltip-remove-all-columns": ""
+      "tooltip-remove-all-columns": "Удалить все столбцы"
     },
     "time-grain-field": {
       "label-time-grain": "Интервал времени"

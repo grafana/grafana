@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// swagger:route GET /folders/{folder_uid}/permissions folder_permissions getFolderPermissionList
+// swagger:route GET /folders/{folder_uid}/permissions folders permissions getFolderPermissionList
 //
 // Gets all existing permissions for the folder with the given `uid`.
 //
@@ -67,7 +67,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, filteredACLs)
 }
 
-// swagger:route POST /folders/{folder_uid}/permissions folder_permissions updateFolderPermissions
+// swagger:route POST /folders/{folder_uid}/permissions folders permissions updateFolderPermissions
 //
 // Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.
 //

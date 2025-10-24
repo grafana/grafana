@@ -118,10 +118,7 @@ func (s *LocalInlineSecureValueService) isSecureValueOwnedByResource(ctx context
 			return true, nil // The secure value is owned by the same owner reference, pass!
 		}
 
-		return false, fmt.Errorf(
-			"secure value %s is not owned by %s/%s/%s/%s but by %s/%s/%s",
-			name, owner.APIGroup, owner.APIVersion, owner.Kind, owner.Name, actualOwner.APIVersion, actualOwner.Kind, actualOwner.Name,
-		)
+		return false, fmt.Errorf("secure value %s is not owned by %s/%s/%s/%s", name, owner.APIGroup, owner.APIVersion, owner.Kind, owner.Name)
 	}
 
 	// not owned
@@ -145,7 +142,7 @@ func (s *LocalInlineSecureValueService) canIdentityReadSecureValue(ctx context.C
 		Resource:  secretv1beta1.SecureValuesResourceInfo.GroupResource().Resource,
 		Namespace: namespace.String(),
 		Name:      name,
-	})
+	}, "")
 	if err != nil {
 		return fmt.Errorf("checking access for secure value %s: %w", name, err)
 	}

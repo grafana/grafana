@@ -6,10 +6,11 @@ import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { AnnoKeyManagerKind, ManagerKind } from '../../../features/apiserver/types';
+import { ManagerKind } from '../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
+import { UseFoldersQueryProps } from './useFoldersQuery';
 import { getRootFolderItem } from './utils';
 
 type GetFolderChildrenQuery = ReturnType<ReturnType<typeof dashboardAPIv0alpha1.endpoints.getSearch.select>>;
@@ -25,11 +26,22 @@ const collator = new Intl.Collator();
  * This version uses the getFolderChildren API from the folder v1beta1 API. Compared to legacy API, the v1beta1 API
  * does not have pagination at the moment.
  */
-export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Record<string, boolean>) {
+
+type Props = Omit<UseFoldersQueryProps, 'permission'>;
+export function useFoldersQueryAppPlatform({
+  isBrowsing,
+  openFolders,
+  /* rootFolderUID: configure which folder to start browsing from */
+  rootFolderUID,
+  rootFolderItem,
+}: Props) {
   const dispatch = useDispatch();
 
   // Keep a list of all request subscriptions so we can unsubscribe from them when the component is unmounted
   const requestsRef = useRef<GetFolderChildrenRequest[]>([]);
+
+  // Set of UIDs for which children were requested but were empty.
+  const [emptyFolders, setEmptyFolders] = useState<Set<string>>(new Set());
 
   // Keep a list of selectors for dynamic state selection
   const [selectors, setSelectors] = useState<Array<ReturnType<typeof dashboardAPIv0alpha1.endpoints.getSearch.select>>>(
@@ -77,7 +89,7 @@ export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Rec
         return;
       }
 
-      const args = { folder: finalParentUid, type: 'folder' };
+      const args = { folder: finalParentUid, type: 'folder' } as const;
 
       // Make a request
       const subscription = dispatch(dashboardAPIv0alpha1.endpoints.getSearch.initiate(args));
@@ -129,12 +141,21 @@ export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Rec
             // query by it.
             uid: name,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            managedBy: item.metadata?.annotations?.[AnnoKeyManagerKind] as ManagerKind | undefined,
+            managedBy: item.managedBy?.kind as ManagerKind | undefined,
+            parentUID: item.folder,
           },
         };
 
         const childResponse = folderIsOpen && state.responseByParent[name];
         if (childResponse) {
+          // If we finished loading and there are no children add to empty list
+          if (
+            childResponse.data &&
+            childResponse.status !== QueryStatus.pending &&
+            childResponse.data.hits.length === 0
+          ) {
+            setEmptyFolders((prev) => new Set(prev).add(name));
+          }
           const childFlatItems = createFlatList(name, childResponse, level + 1);
           return [flatItem, ...childFlatItems];
         }
@@ -150,13 +171,15 @@ export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Rec
       return list;
     }
 
-    const rootFlatTree = createFlatList(rootFolderToken, state.responseByParent[rootFolderToken], 1);
-    rootFlatTree.unshift(getRootFolderItem());
+    const startingToken = rootFolderUID ?? rootFolderToken;
+    const rootFlatTree = createFlatList(startingToken, state.responseByParent[startingToken], 1);
+    rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders]);
+  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
 
   return {
+    emptyFolders,
     items: treeList,
     isLoading: state.isLoading,
     requestNextPage,

@@ -29,7 +29,7 @@ export function useGetLabelsFromDataSourceName(rulesSourceName: string) {
 
   useEffect(() => {
     if (features?.rulerConfig && !prometheusRulesPrimary) {
-      fetchRulerRules({ rulerConfig: features.rulerConfig });
+      fetchRulerRules({ rulerConfig: features.rulerConfig }, true);
     }
   }, [features?.rulerConfig, fetchRulerRules]);
 

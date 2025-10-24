@@ -51,7 +51,7 @@ func (hs *HTTPServer) getDSQueryEndpoint() web.Handler {
 }
 
 // QueryMetricsV2 returns query metrics.
-// swagger:route POST /ds/query ds queryMetricsWithExpressions
+// swagger:route POST /ds/query datasources queryMetricsWithExpressions
 //
 // DataSource query metrics with expressions.
 //

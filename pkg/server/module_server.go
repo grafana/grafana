@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/dskit/services"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/frontend"
@@ -42,8 +44,10 @@ func NewModule(opts Options,
 	promGatherer prometheus.Gatherer,
 	tracer tracing.Tracer, // Ensures tracing is initialized
 	license licensing.Licensing,
+	moduleRegisterer ModuleRegisterer,
+	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend)
 	if err != nil {
 		return nil, err
 	}
@@ -64,6 +68,8 @@ func newModuleServer(opts Options,
 	reg prometheus.Registerer,
 	promGatherer prometheus.Gatherer,
 	license licensing.Licensing,
+	moduleRegisterer ModuleRegisterer,
+	storageBackend resource.StorageBackend,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -85,6 +91,8 @@ func newModuleServer(opts Options,
 		promGatherer:     promGatherer,
 		registerer:       reg,
 		license:          license,
+		moduleRegisterer: moduleRegisterer,
+		storageBackend:   storageBackend,
 	}
 
 	return s, nil
@@ -106,6 +114,7 @@ type ModuleServer struct {
 	shutdownFinished chan struct{}
 	isInitialized    bool
 	mtx              sync.Mutex
+	storageBackend   resource.StorageBackend
 	storageMetrics   *resource.StorageMetrics
 	indexMetrics     *resource.BleveIndexMetrics
 	license          licensing.Licensing
@@ -122,6 +131,9 @@ type ModuleServer struct {
 	httpServerRouter           *mux.Router
 	searchServerRing           *ring.Ring
 	searchServerRingClientPool *ringclient.Pool
+
+	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
+	moduleRegisterer ModuleRegisterer
 }
 
 // init initializes the server and its services.
@@ -153,7 +165,7 @@ func (s *ModuleServer) Run() error {
 	s.notifySystemd("READY=1")
 	s.log.Debug("Waiting on services...")
 
-	m := modules.New(s.cfg.Target)
+	m := modules.New(s.log, s.cfg.Target)
 
 	// only run the instrumentation server module if were not running a module that already contains an http server
 	m.RegisterInvisibleModule(modules.InstrumentationServer, func() (services.Service, error) {
@@ -185,20 +197,58 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
-		return authz.ProvideZanzanaService(s.cfg, s.features)
+		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer)
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
 		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license)
 	})
 
+	m.RegisterModule(modules.OperatorServer, s.initOperatorServer)
+
 	m.RegisterModule(modules.All, nil)
 
+	// Register modules provided by other builds (e.g. enterprise).
+	s.moduleRegisterer.RegisterModules(m)
+
 	return m.Run(s.context)
+}
+
+func (s *ModuleServer) initOperatorServer() (services.Service, error) {
+	operatorName := os.Getenv("GF_OPERATOR_NAME")
+	if operatorName == "" {
+		s.log.Debug("GF_OPERATOR_NAME environment variable empty or unset, can't start operator")
+		return nil, nil
+	}
+
+	for _, op := range GetRegisteredOperators() {
+		if op.Name == operatorName {
+			return services.NewBasicService(
+				nil,
+				func(ctx context.Context) error {
+					cliContext := cli.NewContext(&cli.App{}, nil, nil)
+					deps := OperatorDependencies{
+						BuildInfo: standalone.BuildInfo{
+							Version:     s.version,
+							Commit:      s.commit,
+							BuildBranch: s.buildBranch,
+						},
+						CLIContext: cliContext,
+						Config:     s.cfg,
+						Registerer: s.registerer,
+					}
+					return op.RunFunc(deps)
+				},
+				nil,
+			).WithName("operator"), nil
+		}
+	}
+
+	return nil, fmt.Errorf("unknown operator: %s. available operators: %v", operatorName, GetRegisteredOperatorNames())
 }
 
 // Shutdown initiates Grafana graceful shutdown. This shuts down all

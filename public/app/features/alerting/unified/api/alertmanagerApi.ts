@@ -1,8 +1,12 @@
 import { isEmpty } from 'lodash';
 
+import {
+  NotificationChannelOption,
+  NotifierDTO,
+  ReceiversStateDTO,
+} from 'app/features/alerting/unified/types/alerting';
 import { encodeMatcher } from 'app/features/alerting/unified/utils/matchers';
 import { dispatch } from 'app/store/store';
-import { NotificationChannelOption, NotifierDTO, ReceiversStateDTO } from 'app/types/alerting';
 
 import {
   AlertManagerCortexConfig,
@@ -191,6 +195,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
               data: {
                 alertmanager_config: status.config,
                 template_files: {},
+                extra_config: undefined,
               },
             }))
           );
@@ -207,6 +212,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
           alertmanager_config: {},
           template_files: {},
           template_file_provenances: {},
+          extra_config: undefined,
         };
 
         const lazyConfigInitSupported = alertmanagerFeatures?.lazyConfigInit ?? false;
@@ -244,6 +250,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
                 template_file_provenances: result.template_file_provenances,
                 last_applied: result.last_applied,
                 id: result.id,
+                extra_config: result.extra_config,
               }));
             }
 

@@ -2,8 +2,9 @@ import { createContext, ReactNode, useContext } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+import { SavedQuery } from 'app/features/explore/QueryLibrary/types';
 
-import { OnSelectQueryType, QueryTemplate } from './types';
+import { OnSelectQueryType, QueryLibraryEventsPropertyMap, QueryLibraryTab } from './types';
 
 export type QueryLibraryDrawerOptions = {
   datasourceFilters?: string[];
@@ -29,24 +30,63 @@ export type QueryLibraryContextType = {
    * @param newQuery New query to be added to the library.
    */
   openDrawer: (options: QueryLibraryDrawerOptions) => void;
-  closeDrawer: () => void;
+  closeDrawer: (isSelectingQuery?: boolean) => void;
   isDrawerOpen: boolean;
   onSave?: () => void;
 
   /**
-   * Returns a predefined small button that can be used to save a query to the library.
+   * Returns both save and replace action buttons that can be used to save or replace a query to the library.
    * @param query
    */
-  renderSaveQueryButton: (
+  renderSavedQueryButtons: (
+    query: DataQuery,
+    app?: CoreApp,
+    onUpdateSuccess?: () => void,
+    onSelectQuery?: (query: DataQuery) => void,
+    datasourceFilters?: string[]
+  ) => ReactNode;
+
+  /**
+   * Returns a header component for editing queries from the library.
+   * used in places like Explore
+   * @param query
+   * @param app
+   * @param queryLibraryRef
+   * @param onCancelEdit
+   * @param onUpdateSuccess
+   */
+  renderQueryLibraryEditingHeader: (
     query: DataQuery,
     app?: CoreApp,
     queryLibraryRef?: string,
+    onCancelEdit?: () => void,
     onUpdateSuccess?: () => void,
     onSelectQuery?: (query: DataQuery) => void
   ) => ReactNode;
+
   queryLibraryEnabled: boolean;
   context: string;
-  setNewQuery: (query?: QueryTemplate) => void;
+  triggerAnalyticsEvent: (
+    handleAnalyticEvent: (properties?: QueryLibraryEventsPropertyMap) => void,
+    properties?: QueryLibraryEventsPropertyMap,
+    contextOverride?: string
+  ) => void;
+  setNewQuery: (query?: SavedQuery) => void;
+  onSelectQuery: (query: DataQuery) => void;
+  onFavorite: (uid: string) => void;
+  onUnfavorite: (uid: string) => void;
+  userFavorites: { [key: string]: boolean };
+  isEditingQuery: boolean;
+  setIsEditingQuery: (isEditingQuery: boolean) => void;
+  onAddHistoryQueryToLibrary: (newQuery: SavedQuery) => void;
+  activeTab: QueryLibraryTab;
+  setActiveTab: (activeTab: QueryLibraryTab) => void;
+  onTabChange: (activeTab: QueryLibraryTab) => void;
+  highlightedQuery: string | undefined;
+  newQuery: SavedQuery | undefined;
+  activeDatasources: string[];
+  /** Set a guard function that returns true to allow closing, false to prevent closing */
+  setCloseGuard: (shouldAllowClose: () => boolean) => void;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
@@ -57,12 +97,31 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   setNewQuery: () => {},
   onSave: () => {},
 
-  renderSaveQueryButton: () => {
+  renderSavedQueryButtons: () => {
+    return null;
+  },
+
+  renderQueryLibraryEditingHeader: () => {
     return null;
   },
 
   queryLibraryEnabled: false,
   context: 'unknown',
+  triggerAnalyticsEvent: () => {},
+  onSelectQuery: () => {},
+  onFavorite: () => {},
+  onUnfavorite: () => {},
+  userFavorites: {},
+  isEditingQuery: false,
+  setIsEditingQuery: () => {},
+  onAddHistoryQueryToLibrary: () => {},
+  activeTab: QueryLibraryTab.ALL,
+  setActiveTab: () => {},
+  onTabChange: () => {},
+  highlightedQuery: undefined,
+  newQuery: undefined,
+  activeDatasources: [],
+  setCloseGuard: () => {},
 });
 
 export function useQueryLibraryContext() {

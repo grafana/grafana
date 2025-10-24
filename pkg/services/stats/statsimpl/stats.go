@@ -6,8 +6,10 @@ import (
 	"strconv"
 	"time"
 
+	provisioningv1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -16,29 +18,37 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
 
-func ProvideService(cfg *setting.Cfg, db db.DB, dashSvc dashboards.DashboardService, folderSvc folder.Service, orgSvc org.Service, features featuremgmt.FeatureToggles) stats.Service {
+func ProvideService(cfg *setting.Cfg, db db.DB, dashSvc dashboards.DashboardService, folderSvc folder.Service,
+	orgSvc org.Service, unifiedStorage resource.ResourceClient, features featuremgmt.FeatureToggles) stats.Service {
+	namespacer := request.GetNamespaceMapper(cfg)
 	return &sqlStatsService{
-		cfg:       cfg,
-		db:        db,
-		folderSvc: folderSvc,
-		dashSvc:   dashSvc,
-		orgSvc:    orgSvc,
-		features:  features,
+		cfg:            cfg,
+		db:             db,
+		folderSvc:      folderSvc,
+		namespacer:     namespacer,
+		unifiedStorage: unifiedStorage,
+		dashSvc:        dashSvc,
+		orgSvc:         orgSvc,
+		features:       features,
 	}
 }
 
 type sqlStatsService struct {
-	db        db.DB
-	cfg       *setting.Cfg
-	dashSvc   dashboards.DashboardService
-	features  featuremgmt.FeatureToggles
-	folderSvc folder.Service
-	orgSvc    org.Service
+	db             db.DB
+	cfg            *setting.Cfg
+	dashSvc        dashboards.DashboardService
+	features       featuremgmt.FeatureToggles
+	folderSvc      folder.Service
+	orgSvc         org.Service
+	namespacer     request.NamespaceMapper
+	unifiedStorage resource.ResourceClient
 }
 
 func (ss *sqlStatsService) getDashboardCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
@@ -79,6 +89,26 @@ func (ss *sqlStatsService) getFolderCount(ctx context.Context, orgs []*org.OrgDT
 			return 0, err
 		}
 		total += folderCount
+	}
+	return total, nil
+}
+
+func (ss *sqlStatsService) getRepositoryCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
+	total := int64(0)
+	for _, org := range orgs {
+		ctx, _ = identity.WithServiceIdentity(ctx, org.ID)
+		resp, err := ss.unifiedStorage.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+			Namespace: ss.namespacer(org.ID),
+			Kinds: []string{
+				provisioningv1.GROUP + "/" + provisioningv1.RepositoryResourceInfo.GroupResource().Resource,
+			},
+		})
+		if err != nil {
+			return 0, err
+		}
+		if len(resp.Stats) != 0 {
+			total += resp.Stats[0].Count
+		}
 	}
 	return total, nil
 }
@@ -195,6 +225,12 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		return result, err
 	}
 	result.Folders = folderCount
+
+	repositoryCount, err := ss.getRepositoryCount(ctx, orgs)
+	if err != nil {
+		return result, err
+	}
+	result.Repositories = repositoryCount
 
 	return result, err
 }

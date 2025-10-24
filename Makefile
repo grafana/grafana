@@ -5,11 +5,10 @@
 WIRE_TAGS = "oss"
 
 -include local/Makefile
-include .bingo/Variables.mk
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.24.6
+GO_VERSION = 1.25.3
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -18,6 +17,7 @@ GO_RACE_FLAG := $(if $(GO_RACE),-race)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
+GO_BUILD_FLAGS += $(if $(GO_BUILD_CGO),-cgo-enabled=$(GO_BUILD_CGO))
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
 
@@ -71,6 +71,7 @@ swagger-oss-gen: ## Generate API Swagger specification
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
+	-x "github.com/docker/docker" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha \
 	--exclude-tag=enterprise
@@ -89,6 +90,7 @@ swagger-enterprise-gen: ## Generate API Swagger specification
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
+	-x "github.com/docker/docker" \
 	-i pkg/api/swagger_tags.json \
 	-t enterprise \
 	--exclude-tag=alpha \
@@ -172,7 +174,19 @@ gen-cuev2: ## Do all CUE code generation
 APPS_DIRS := ./apps/dashboard ./apps/folder ./apps/alerting/notifications
 
 .PHONY: gen-apps
-gen-apps: ## Generate code for Grafana App SDK apps
+gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt
+	@if [ -n "$$CODEGEN_VERIFY" ]; then \
+		echo "Verifying generated code is up to date..."; \
+		if ! git diff --quiet; then \
+			echo "Error: Generated apps code is not up to date. Please run 'make gen-apps' to regenerate."; \
+			git diff --name-only; \
+			exit 1; \
+		fi; \
+		echo "Generated apps code is up to date."; \
+	fi
+
+.PHONY: do-gen-apps
+do-gen-apps: ## Generate code for Grafana App SDK apps
 	for dir in $(APPS_DIRS); do \
 		$(MAKE) -C $$dir generate; \
 	done
@@ -200,7 +214,7 @@ gen-enterprise-go: ## Generate Wire graph (Enterprise)
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "enterprise" -gen_tags "(enterprise || pro)" -output_file_prefix="enterprise_" ./pkg/server
 endif
 gen-go: gen-enterprise-go ## Generate Wire graph
-	@echo "generatng Wire graph"
+	@echo "generating Wire graph"
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
 
 .PHONY: fix-cue
@@ -219,18 +233,22 @@ update-workspace: gen-go
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
-build-go: gen-go update-workspace ## Build all Go binaries.
+build-go: ## Build all Go binaries.
 	@echo "build go files with updated workspace"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
-build-go-fast: gen-go ## Build all Go binaries.
-	@echo "build go files"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build
+.PHONY: build-go-fast
+build-go-fast: ## Build all Go binaries without updating workspace.
+	@echo "!!! [DEPRECATED] use build-go, they do the same thing now. This command will be removed soon"
 
 .PHONY: build-backend
 build-backend: ## Build Grafana backend.
 	@echo "build backend"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build-backend
+
+.PHONY: build-air
+build-air: build-backend
+	@cp ./bin/grafana ./bin/grafana-air
 
 .PHONY: build-server
 build-server: ## Build Grafana server.
@@ -283,13 +301,9 @@ run-bra: ## [Deprecated] Build and run web server on filesystem changes. See /.b
 frontend-service-check:
 	./devenv/frontend-service/local-init.sh
 
-.PHONY: frontend-service-up
-frontend-service-up: frontend-service-check
-	tilt up -f devenv/frontend-service/Tiltfile
-
-.PHONY: frontend-service-down
-frontend-service-down: frontend-service-check
-	tilt down -f devenv/frontend-service/Tiltfile
+.PHONY: frontend-service
+frontend-service: frontend-service-check
+	bash ./devenv/frontend-service/run.sh
 
 ##@ Testing
 
@@ -389,6 +403,10 @@ lint-go-diff:
 		sed 's,^,./,' | \
 		$(XARGSR) $(golangci-lint) run --config .golangci.yml
 
+.PHONY: gofmt
+gofmt: ## Run gofmt for all Go files.
+	@go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}' | xargs gofmt -s -w 2>&1 | grep -v '/pkg/build/' || true
+
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
 shellcheck: $(SH_FILES) ## Run checks for shell scripts.
@@ -400,13 +418,35 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 TAG_SUFFIX=$(if $(WIRE_TAGS)!=oss,-$(WIRE_TAGS))
 PLATFORM=linux/amd64
 
+# default to a production build for frontend
+#
+DOCKER_JS_NODE_ENV_FLAG = production
+DOCKER_JS_YARN_BUILD_FLAG = build
+DOCKER_JS_YARN_INSTALL_FLAG = --immutable
+#
+# if go is in dev mode, also build node in dev mode
+ifeq ($(GO_BUILD_DEV), dev)
+  DOCKER_JS_NODE_ENV_FLAG = dev
+  DOCKER_JS_YARN_BUILD_FLAG = dev
+	DOCKER_JS_YARN_INSTALL_FLAG =
+endif
+# if NODE_ENV is set in the environment to dev, build frontend in dev mode, and allow go builds to use their default
+ifeq (${NODE_ENV}, dev)
+  DOCKER_JS_NODE_ENV_FLAG = dev
+  DOCKER_JS_YARN_BUILD_FLAG = dev
+	DOCKER_JS_YARN_INSTALL_FLAG =
+endif
+
 .PHONY: build-docker-full
 build-docker-full: ## Build Docker image for development.
-	@echo "build docker container"
+	@echo "build docker container mode=($(DOCKER_JS_NODE_ENV_FLAG))"
 	tar -ch . | \
 	docker buildx build - \
 	--platform $(PLATFORM) \
-	--build-arg BINGO=false \
+	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
+	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -416,11 +456,14 @@ build-docker-full: ## Build Docker image for development.
 
 .PHONY: build-docker-full-ubuntu
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
-	@echo "build docker container"
+	@echo "build docker container mode=($(DOCKER_JS_NODE_ENV_FLAG))"
 	tar -ch . | \
 	docker buildx build - \
 	--platform $(PLATFORM) \
-	--build-arg BINGO=false \
+	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
+	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -501,25 +544,6 @@ gen-ts:
 	tscriptify -interface -package=github.com/grafana/grafana/pkg/services/live/pipeline -import="import { FieldConfig } from '@grafana/data'" -target=public/app/features/live/pipeline/models.gen.ts pkg/services/live/pipeline/config.go
 	go mod tidy
 
-# This repository's configuration is protected (https://readme.drone.io/signature/).
-# Use this make target to regenerate the configuration YAML files when
-# you modify starlark files.
-.PHONY: drone
-drone: $(DRONE)
-	bash scripts/drone/env-var-check.sh
-	$(DRONE) starlark --format
-	$(DRONE) lint .drone.yml --trusted
-	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
-
-# Generate an Emacs tags table (https://www.gnu.org/software/emacs/manual/html_node/emacs/Tags-Tables.html) for Starlark files.
-.PHONY: scripts/drone/TAGS
-scripts/drone/TAGS: $(shell find scripts/drone -name '*.star')
-	etags --lang none --regex="/def \(\w+\)[^:]+:/\1/" --regex="/\s*\(\w+\) =/\1/" $^ -o $@
-
-.PHONY: format-drone
-format-drone:
-	buildifier --lint=fix -r scripts/drone
-
 .PHONY: go-race-is-enabled
 go-race-is-enabled:
 	@if [ -n "$(GO_RACE)" ]; then \
@@ -546,4 +570,3 @@ help: ## Display this help.
 # container/check-licenses target)
 check-licenses:
 	license_finder --decisions-file .github/license_finder.yaml
-

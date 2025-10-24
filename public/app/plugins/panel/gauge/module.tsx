@@ -85,7 +85,7 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
           options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Horizontal,
       });
 
-    commonOptionsBuilder.addTextSizeOptions(builder);
+    commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true });
   })
   .setPanelChangeHandler(gaugePanelChangedHandler)
   .setSuggestionsSupplier(new GaugeSuggestionsSupplier())

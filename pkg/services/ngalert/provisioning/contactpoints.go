@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -17,7 +18,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -43,7 +43,7 @@ type ContactPointService struct {
 
 type receiverService interface {
 	GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
-	RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *apimodels.Route, oldName, newName string, receiverProvenance models.Provenance) error
+	RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error
 }
 
 func NewContactPointService(
@@ -151,7 +151,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	contactPoint apimodels.EmbeddedContactPoint,
 	provenance models.Provenance,
 ) (apimodels.EmbeddedContactPoint, error) {
-	if err := ValidateContactPoint(ctx, contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
+	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -243,15 +243,22 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if contactPoint.Settings == nil {
 		return fmt.Errorf("%w: %s", ErrValidation, "settings should not be empty")
 	}
+	iType, err := alertingNotify.IntegrationTypeFromString(contactPoint.Type)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+	}
+	typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(iType, schema.V1)
+	if !ok {
+		return fmt.Errorf("%w: failed to get secret keys for contact point type %s", ErrValidation, contactPoint.Type)
+	}
+
+	// patch integration with the secrets from the existing version
 	rawContactPoint, err := ecp.getContactPointDecrypted(ctx, orgID, contactPoint.UID)
 	if err != nil {
 		return err
 	}
-	secretKeys, err := channels_config.GetSecretKeysForContactPointType(contactPoint.Type)
-	if err != nil {
-		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
-	}
-	for _, secretKey := range secretKeys {
+	for _, secretPath := range typeSchema.GetSecretFieldsPaths() {
+		secretKey := secretPath.String()
 		secretValue := contactPoint.Settings.Get(secretKey).MustString()
 		if secretValue == apimodels.RedactedValue {
 			contactPoint.Settings.Set(secretKey, rawContactPoint.Settings.Get(secretKey).MustString())
@@ -259,7 +266,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	// validate merged values
-	if err := ValidateContactPoint(ctx, contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
+	if err := ValidateContactPoint(ctx, &contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -321,7 +328,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 			}
 
 			if fullRemoval {
-				if err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision.Config.AlertmanagerConfig.Route, oldReceiverName, mergedReceiver.Name, provenance); err != nil {
+				if err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision, oldReceiverName, mergedReceiver.Name, provenance); err != nil {
 					return err
 				}
 				if err := ecp.resourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(oldReceiverName)); err != nil {
@@ -511,7 +518,12 @@ groupLoop:
 	return oldReceiverName, fullRemoval, newReceiverCreated
 }
 
-func ValidateContactPoint(ctx context.Context, e apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn) error {
+func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn) error {
+	iType, err := alertingNotify.IntegrationTypeFromString(e.Type)
+	if err != nil {
+		return err
+	}
+	e.Type = string(iType)
 	integration, err := EmbeddedContactPointToGrafanaIntegrationConfig(e)
 	if err != nil {
 		return err
@@ -522,11 +534,12 @@ func ValidateContactPoint(ctx context.Context, e apimodels.EmbeddedContactPoint,
 // RemoveSecretsForContactPoint removes all secrets from the contact point's settings and returns them as a map. Returns error if contact point type is not known.
 func RemoveSecretsForContactPoint(e *apimodels.EmbeddedContactPoint) (map[string]string, error) {
 	s := map[string]string{}
-	secretKeys, err := channels_config.GetSecretKeysForContactPointType(e.Type)
-	if err != nil {
-		return nil, err
+	typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(schema.IntegrationType(e.Type), schema.V1)
+	if !ok {
+		return nil, fmt.Errorf("failed to get secret keys for contact point type %s", e.Type)
 	}
-	for _, secretKey := range secretKeys {
+	for _, secretPath := range typeSchema.GetSecretFieldsPaths() {
+		secretKey := secretPath.String()
 		secretValue, err := extractCaseInsensitive(e.Settings, secretKey)
 		if err != nil {
 			return nil, err

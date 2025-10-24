@@ -1,16 +1,14 @@
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
+import memoize from 'micro-memoize';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 import { COLUMN, TABLE } from './constants';
 import { TableCellStyles } from './types';
-import { getJustifyContent } from './utils';
+import { getJustifyContent, IS_SAFARI_26, TextAlign } from './utils';
 
-export const getGridStyles = (
-  theme: GrafanaTheme2,
-  { enablePagination, transparent }: { enablePagination?: boolean; transparent?: boolean }
-) => {
+export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, transparent?: boolean) => {
   const bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
   // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
   // unpredictable for background color cells
@@ -24,6 +22,8 @@ export const getGridStyles = (
       '--rdg-color': theme.colors.text.primary,
       '--rdg-summary-border-color': borderColor,
       '--rdg-summary-border-width': '1px',
+
+      '--rdg-selection-color': theme.colors.info.transparent,
 
       // note: this cannot have any transparency since default cells that
       // overlay/overflow on hover inherit this background and need to occlude cells below
@@ -50,16 +50,16 @@ export const getGridStyles = (
 
       // add a box shadow on hover and selection for all body cells
       '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
-        '&:hover, &[aria-selected=true]': { boxShadow: theme.shadows.z2 },
+        [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
         // selected cells should appear below hovered cells.
-        '&:hover': { zIndex: theme.zIndex.tooltip - 7 },
+        ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 7 } }),
         '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 6 },
       },
 
       '.rdg-cell.rdg-cell-frozen': {
-        backgroundColor: '--rdg-row-background-color',
+        backgroundColor: 'var(--rdg-row-background-color)',
         zIndex: theme.zIndex.tooltip - 4,
-        '&:hover': { zIndex: theme.zIndex.tooltip - 2 },
+        ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 2 } }),
         '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 3 },
       },
 
@@ -71,11 +71,25 @@ export const getGridStyles = (
           },
         },
       },
+      '.rdg-summary-row >': {
+        '.rdg-cell': {
+          // 0.75 padding causes "jumping" on hover.
+          paddingBlock: theme.spacing(0.625),
+        },
+        [getActiveCellSelector()]: {
+          whiteSpace: 'pre-line',
+          height: '100%',
+          minHeight: 'fit-content',
+          overflowY: 'visible',
+          boxShadow: theme.shadows.z2,
+        },
+      },
     }),
     gridNested: css({
       height: '100%',
       width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - 1}px)`,
-      overflow: 'visible',
+      overflowX: 'scroll',
+      overflowY: 'hidden',
       marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
       marginBlock: TABLE.CELL_PADDING,
     }),
@@ -88,19 +102,6 @@ export const getGridStyles = (
       color: theme.colors.text.secondary,
       fontSize: theme.typography.h4.fontSize,
     }),
-    cellActions: css({
-      display: 'none',
-      position: 'absolute',
-      top: 0,
-      margin: 'auto',
-      height: '100%',
-      color: theme.colors.text.primary,
-      background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-      padding: theme.spacing.x0_5,
-      paddingInlineStart: theme.spacing.x1,
-    }),
-    cellActionsEnd: css({ left: 0 }),
-    cellActionsStart: css({ right: 0 }),
     headerRow: css({
       paddingBlockStart: 0,
       fontWeight: 'normal',
@@ -122,13 +123,9 @@ export const getGridStyles = (
       padding: theme.spacing(0, 1, 0, 2),
     }),
     menuItem: css({ maxWidth: '200px' }),
+    safariWrapper: css({ contain: 'strict', height: '100%' }),
   };
 };
-
-export const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
-  footerCellCountRows: css({ display: 'flex', justifyContent: 'space-between' }),
-  footerCell: css({ display: 'flex', justifyContent: justifyContent || 'space-between' }),
-});
 
 export const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) =>
   css({
@@ -141,21 +138,55 @@ export const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Proper
     '&:last-child': { borderInlineEnd: 'none' },
   });
 
-export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, shouldOverflow }) =>
+export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, shouldOverflow, maxHeight }) =>
   css({
     display: 'flex',
     alignItems: 'center',
     textAlign,
-    justifyContent: getJustifyContent(textAlign),
+    justifyContent: Boolean(maxHeight) ? 'flex-start' : getJustifyContent(textAlign),
+    ...(maxHeight && { overflowY: 'hidden' }),
     ...(shouldOverflow && { minHeight: '100%' }),
-    '&:hover, &[aria-selected=true]': {
-      '.table-cell-actions': { display: 'flex' },
+
+    [getActiveCellSelector()]: {
       ...(shouldOverflow && {
         zIndex: theme.zIndex.tooltip - 2,
         height: 'fit-content',
         minWidth: 'fit-content',
       }),
     },
+
+    [getHoverOnlyCellSelector()]: {
+      '.table-cell-actions': { display: 'flex' },
+    },
+  });
+
+export const getMaxHeightCellStyles: TableCellStyles = (_theme, { textAlign, maxHeight }) =>
+  css({
+    display: 'flex',
+    alignItems: 'center',
+    textAlign,
+    justifyContent: getJustifyContent(textAlign),
+    maxHeight,
+    width: '100%',
+    overflowY: 'hidden',
+    [getActiveCellSelector(true)]: {
+      maxHeight: 'none',
+      minHeight: '100%',
+    },
+  });
+
+export const getCellActionStyles = (theme: GrafanaTheme2, textAlign: TextAlign) =>
+  css({
+    display: 'none',
+    position: 'absolute',
+    top: 0,
+    margin: 'auto',
+    height: '100%',
+    color: theme.colors.text.primary,
+    background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+    padding: theme.spacing.x0_5,
+    paddingInlineStart: theme.spacing.x1,
+    [textAlign === 'right' ? 'left' : 'right']: 0,
   });
 
 export const getLinkStyles = (theme: GrafanaTheme2, canBeColorized: boolean) =>
@@ -174,3 +205,60 @@ export const getLinkStyles = (theme: GrafanaTheme2, canBeColorized: boolean) =>
           }),
     },
   });
+
+const caretTriangle = (direction: 'left' | 'right', bgColor: string) =>
+  `linear-gradient(to top ${direction}, transparent 62.5%, ${bgColor} 50%)`;
+
+export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => ({
+  tooltipContent: css({
+    height: '100%',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  tooltipWrapper: css({
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    boxShadow: theme.shadows.z3,
+    overflow: 'hidden',
+    padding: theme.spacing(1),
+    width: 'inherit',
+  }),
+  tooltipCaret: css({
+    cursor: 'pointer',
+    position: 'absolute',
+    top: theme.spacing(0.25),
+    [textAlign === 'right' ? 'right' : 'left']: theme.spacing(0.25),
+    width: theme.spacing(1.75),
+    height: theme.spacing(1.75),
+    background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.border.strong),
+  }),
+});
+
+const ACTIVE_CELL_SELECTORS = {
+  hover: {
+    nested: '.rdg-cell:hover &',
+    normal: '&:hover',
+  },
+  selected: {
+    nested: '[aria-selected=true] &',
+    normal: '&[aria-selected=true]',
+  },
+} as const;
+
+export const getActiveCellSelector = memoize((isNested?: boolean) => {
+  const selectors = [];
+  selectors.push(ACTIVE_CELL_SELECTORS.selected[isNested ? 'nested' : 'normal']);
+  if (!IS_SAFARI_26) {
+    selectors.push(ACTIVE_CELL_SELECTORS.hover[isNested ? 'nested' : 'normal']);
+  }
+  return selectors.join(', ');
+});
+
+export const getHoverOnlyCellSelector = memoize((isNested?: boolean) => {
+  if (IS_SAFARI_26) {
+    return '';
+  }
+  return ACTIVE_CELL_SELECTORS.hover[isNested ? 'nested' : 'normal'];
+});

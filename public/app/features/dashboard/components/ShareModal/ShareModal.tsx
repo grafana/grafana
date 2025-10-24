@@ -17,7 +17,7 @@ import { ShareExport } from './ShareExport';
 import { ShareLibraryPanel } from './ShareLibraryPanel';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
-import { ShareModalTabModel } from './types';
+import { ShareModalTabModel, ShareModalTabProps } from './types';
 import { getTrackingSource, shareDashboardType } from './utils';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
@@ -46,7 +46,7 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
 
   if (panel) {
     const embedLabel = t('share-modal.tab-title.embed', 'Embed');
-    tabs.push({ label: embedLabel, value: shareDashboardType.embed, component: ShareEmbed });
+    tabs.push({ label: embedLabel, value: shareDashboardType.embed, component: ShareEmbedTab });
 
     if (!isPanelModelLibraryPanel(panel)) {
       const libraryPanelLabel = t('share-modal.tab-title.library-panel', 'Library panel');
@@ -77,6 +77,17 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
     tabs,
     activeTab: at?.value ?? tabs[0].value,
   };
+}
+
+function ShareEmbedTab(props: ShareModalTabProps) {
+  return (
+    <ShareEmbed
+      dashboard={props.dashboard}
+      panelId={String(props.panel?.id)}
+      timeFrom={props.panel?.timeFrom}
+      onDismiss={props.onDismiss}
+    />
+  );
 }
 
 interface Props extends Themeable2 {
@@ -119,16 +130,14 @@ class UnthemedShareModal extends React.Component<Props, State> {
     return tabs.find((t) => t.value === activeTab)!;
   }
 
-  renderTitle() {
-    const { panel } = this.props;
+  renderTitle(modalTitle: string) {
     const { activeTab } = this.state;
-    const title = panel ? t('share-modal.panel.title', 'Share Panel') : t('share-modal.dashboard.title', 'Share');
     const canEditDashboard = this.props.dashboard.canEditDashboard();
     const tabs = getTabs(canEditDashboard, this.props.panel, this.state.activeTab).tabs;
 
     return (
       <ModalTabsHeader
-        title={title}
+        title={modalTitle}
         icon="share-alt"
         tabs={tabs}
         activeTab={activeTab}
@@ -141,9 +150,10 @@ class UnthemedShareModal extends React.Component<Props, State> {
     const { dashboard, panel } = this.props;
     const activeTabModel = this.getActiveTab();
     const ActiveTab = activeTabModel.component;
+    const modalTitle = panel ? t('share-modal.panel.title', 'Share Panel') : t('share-modal.dashboard.title', 'Share');
 
     return (
-      <Modal isOpen={true} title={this.renderTitle()} onDismiss={this.props.onDismiss}>
+      <Modal ariaLabel={modalTitle} isOpen={true} title={this.renderTitle(modalTitle)} onDismiss={this.props.onDismiss}>
         <TabContent>
           <ActiveTab dashboard={dashboard} panel={panel} onDismiss={this.props.onDismiss} />
         </TabContent>

@@ -317,6 +317,8 @@ export interface FieldConfig {
 	color?: FieldColor;
 	// The behavior when clicking on a result
 	links?: any[];
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	actions?: Action[];
 	// Alternative to empty string
 	noValue?: string;
 	// custom is specified by the FieldConfig field
@@ -503,6 +505,81 @@ export const defaultFieldColorModeId = (): FieldColorModeId => ("thresholds");
 export type FieldColorSeriesByMode = "min" | "max" | "last";
 
 export const defaultFieldColorSeriesByMode = (): FieldColorSeriesByMode => ("min");
+
+export interface Action {
+	type: ActionType;
+	title: string;
+	fetch?: FetchOptions;
+	infinity?: InfinityOptions;
+	confirmation?: string;
+	oneClick?: boolean;
+	variables?: ActionVariable[];
+	style?: {
+		backgroundColor?: string;
+	};
+}
+
+export const defaultAction = (): Action => ({
+	type: "fetch",
+	title: "",
+});
+
+export type ActionType = "fetch" | "infinity";
+
+export const defaultActionType = (): ActionType => ("fetch");
+
+export interface FetchOptions {
+	method: HttpRequestMethod;
+	url: string;
+	body?: string;
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	queryParams?: string[][];
+	headers?: string[][];
+}
+
+export const defaultFetchOptions = (): FetchOptions => ({
+	method: "GET",
+	url: "",
+});
+
+export type HttpRequestMethod = "GET" | "PUT" | "POST" | "DELETE" | "PATCH";
+
+export const defaultHttpRequestMethod = (): HttpRequestMethod => ("GET");
+
+export interface InfinityOptions {
+	method: HttpRequestMethod;
+	url: string;
+	body?: string;
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	queryParams?: string[][];
+	datasourceUid: string;
+	headers?: string[][];
+}
+
+export const defaultInfinityOptions = (): InfinityOptions => ({
+	method: "GET",
+	url: "",
+	datasourceUid: "",
+});
+
+export interface ActionVariable {
+	key: string;
+	name: string;
+	type: "string";
+}
+
+export const defaultActionVariable = (): ActionVariable => ({
+	key: "",
+	name: "",
+	type: ActionVariableType,
+});
+
+// Action variable type
+export const ActionVariableType = "string";
 
 export interface DynamicConfigValue {
 	id: string;
@@ -885,6 +962,8 @@ export interface DashboardLink {
 	includeVars: boolean;
 	// If true, includes current time range in the link as query params
 	keepTime: boolean;
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	placement?: "inControlsMenu";
 }
 
 export const defaultDashboardLink = (): DashboardLink => ({
@@ -897,12 +976,17 @@ export const defaultDashboardLink = (): DashboardLink => ({
 	targetBlank: false,
 	includeVars: false,
 	keepTime: false,
+	placement: DashboardLinkPlacement,
 });
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 export type DashboardLinkType = "link" | "dashboards";
 
 export const defaultDashboardLinkType = (): DashboardLinkType => ("link");
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+export const DashboardLinkPlacement = "inControlsMenu";
 
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.
@@ -969,7 +1053,7 @@ export const defaultTimeRangeOption = (): TimeRangeOption => ({
 	to: "now",
 });
 
-export type VariableKind = QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind;
+export type VariableKind = QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind | SwitchVariableKind;
 
 export const defaultVariableKind = (): VariableKind => (defaultQueryVariableKind());
 
@@ -1038,8 +1122,8 @@ export const defaultVariableOption = (): VariableOption => ({
 });
 
 // Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
-export type VariableHide = "dontHide" | "hideLabel" | "hideVariable";
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
+export type VariableHide = "dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu";
 
 export const defaultVariableHide = (): VariableHide => ("dontHide");
 
@@ -1344,6 +1428,7 @@ export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
 	key: "",
 	operator: "",
 	value: "",
+	origin: FilterOrigin,
 });
 
 // Determine the origin of the adhoc variable filter
@@ -1359,6 +1444,36 @@ export interface MetricFindValue {
 
 export const defaultMetricFindValue = (): MetricFindValue => ({
 	text: "",
+});
+
+export interface SwitchVariableKind {
+	kind: "SwitchVariable";
+	spec: SwitchVariableSpec;
+}
+
+export const defaultSwitchVariableKind = (): SwitchVariableKind => ({
+	kind: "SwitchVariable",
+	spec: defaultSwitchVariableSpec(),
+});
+
+export interface SwitchVariableSpec {
+	name: string;
+	current: string;
+	enabledValue: string;
+	disabledValue: string;
+	label?: string;
+	hide: VariableHide;
+	skipUrlSync: boolean;
+	description?: string;
+}
+
+export const defaultSwitchVariableSpec = (): SwitchVariableSpec => ({
+	name: "",
+	current: "false",
+	enabledValue: "true",
+	disabledValue: "false",
+	hide: "dontHide",
+	skipUrlSync: false,
 });
 
 export interface Spec {

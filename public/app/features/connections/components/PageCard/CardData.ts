@@ -20,7 +20,7 @@ export function getCloudCardData(): CardData[] {
       icon: 'plus-circle',
     },
     {
-      text: t('connections.cloud.connections-home-page.collector.title', 'Collector:'),
+      text: t('connections.cloud.connections-home-page.collector.title', 'Collector'),
       subTitle: t(
         'connections.cloud.connections-home-page.collector.subtitle',
         'Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector'

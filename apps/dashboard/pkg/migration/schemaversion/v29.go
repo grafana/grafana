@@ -1,5 +1,7 @@
 package schemaversion
 
+import "context"
+
 // V29 migrates query variables to ensure their refresh property is set to 1 (on dashboard load)
 // if it is not 1 or 2, and clears their options array if present.
 //
@@ -22,7 +24,7 @@ package schemaversion
 //	    { "type": "query", "refresh": 1, "options": [] }
 //	  ]
 //	}
-func V29(dashboard map[string]interface{}) error {
+func V29(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 29
 
 	templating, ok := dashboard["templating"].(map[string]interface{})
@@ -42,16 +44,12 @@ func V29(dashboard map[string]interface{}) error {
 			continue
 		}
 		// Set refresh to 1 if not 1 or 2
-		refresh, hasRefresh := variable["refresh"]
-		refreshInt := 0
-		if r, ok := refresh.(int); ok {
-			refreshInt = r
-		}
-		if !hasRefresh || (refreshInt != 1 && refreshInt != 2) {
+		refreshInt := GetIntValue(variable, "refresh", 0)
+		if refreshInt != 1 && refreshInt != 2 {
 			variable["refresh"] = 1
 		}
-		// Clear options if present
-		if _, hasOptions := variable["options"]; hasOptions {
+		// Clear options if they have content (matches frontend behavior)
+		if options, hasOptions := variable["options"].([]interface{}); hasOptions && len(options) > 0 {
 			variable["options"] = []interface{}{}
 		}
 	}

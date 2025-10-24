@@ -4,7 +4,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
-import { Card, Grid, useStyles2, Stack, Badge } from '@grafana/ui';
+import { Badge, Card, Grid, Stack, useStyles2 } from '@grafana/ui';
 import { PluginDeprecatedBadge } from 'app/features/plugins/admin/components/Badges/PluginDeprecatedBadge';
 import { PluginDisabledBadge } from 'app/features/plugins/admin/components/Badges/PluginDisabledBadge';
 import { PluginInstalledBadge } from 'app/features/plugins/admin/components/Badges/PluginInstallBadge';
@@ -85,6 +85,7 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
       {items.map((item) => (
         <Card
           key={item.id}
+          noMargin
           className={styles.card}
           href={item.url}
           onClick={(e) => {

@@ -19,8 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -599,7 +599,7 @@ func TestValidate(t *testing.T) {
 				featuremgmt.WithFeatures(),
 				nil,
 				tracing.InitializeTracerForTest(),
-				mtdsclient.NewNullMTDatasourceClientBuilder(),
+				dsquerierclient.NewNullQSDatasourceClientBuilder(),
 			)
 			validator := NewConditionValidator(cacheService, expressions, store)
 			evalCtx := NewContext(context.Background(), u)
@@ -729,7 +729,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 					featuremgmt.WithFeatures(),
 					nil,
 					tracing.InitializeTracerForTest(),
-					mtdsclient.NewNullMTDatasourceClientBuilder(),
+					dsquerierclient.NewNullQSDatasourceClientBuilder(),
 				),
 			)
 			evalCtx := NewContextWithPreviousResults(context.Background(), u, testCase.reader)
@@ -1595,4 +1595,11 @@ func (f fakeNode) String() string {
 
 func (f fakeNode) NeedsVars() []string {
 	return nil
+}
+
+func (f fakeNode) IsInputTo() map[string]struct{} {
+	return nil
+}
+
+func (f fakeNode) SetInputTo(a string) {
 }

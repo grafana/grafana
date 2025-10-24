@@ -6,9 +6,11 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { RowItems } from './RowItems';
 
 export function getEditOptions(model: RowItems): OptionsPaneCategoryDescriptor[] {
-  const options = new OptionsPaneCategoryDescriptor({ title: '', id: `rows-options` }).addItem(
+  const categoryId = 'rows-options';
+  const options = new OptionsPaneCategoryDescriptor({ title: '', id: categoryId }).addItem(
     new OptionsPaneItemDescriptor({
       title: t('dashboard.edit-pane.row.header.title', 'Row header'),
+      id: `${categoryId}-row-header`,
       render: () => <RowHeaderCheckboxMulti model={model} />,
     })
   );

@@ -153,13 +153,15 @@ export class GrafanaBootConfig {
   dateFormats?: SystemDateFormatSettings;
   grafanaJavascriptAgent = {
     enabled: false,
-    customEndpoint: '',
     apiKey: '',
-    allInstrumentationsEnabled: false,
-    errorInstrumentalizationEnabled: true,
+    customEndpoint: '',
     consoleInstrumentalizationEnabled: false,
-    webVitalsInstrumentalizationEnabled: false,
+    performanceInstrumentalizationEnabled: false,
+    cspInstrumentalizationEnabled: false,
     tracingInstrumentalizationEnabled: false,
+    webVitalsAttribution: false,
+    internalLoggerLevel: 0,
+    botFilterEnabled: false,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;
@@ -186,10 +188,18 @@ export class GrafanaBootConfig {
   unifiedAlertingEnabled = false;
   unifiedAlerting: UnifiedAlertingConfig = {
     minInterval: '',
-    alertStateHistoryBackend: undefined,
-    alertStateHistoryPrimary: undefined,
+    stateHistory: {
+      backend: undefined,
+      primary: undefined,
+      prometheusTargetDatasourceUID: undefined,
+      prometheusMetricName: undefined,
+    },
     recordingRulesEnabled: false,
     defaultRecordingRulesTargetDatasourceUID: undefined,
+
+    // Backward compatibility fields - populated by backend
+    alertStateHistoryBackend: undefined,
+    alertStateHistoryPrimary: undefined,
   };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
@@ -234,6 +244,8 @@ export class GrafanaBootConfig {
   exploreDefaultTimeOffset = '1h';
   exploreHideLogsDownload?: boolean;
   quickRanges?: TimeOption[];
+  pluginRestrictedAPIsAllowList?: Record<string, string[]>;
+  pluginRestrictedAPIsBlockList?: Record<string, string[]>;
 
   /**
    * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
@@ -248,6 +260,8 @@ export class GrafanaBootConfig {
   regionalFormat: string;
   listDashboardScopesEndpoint = '';
   listScopesEndpoint = '';
+
+  openFeatureContext: Record<string, unknown> = {};
 
   constructor(
     options: BootData['settings'] & {

@@ -1,30 +1,48 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Field, Input, SecretInput, Stack } from '@grafana/ui';
+import { Combobox, Field, Input, SecretInput, Stack } from '@grafana/ui';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
+import { useBranchOptions } from '../hooks/useBranchOptions';
 import { getHasTokenInstructions } from '../utils/git';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 import { getGitProviderFields, getLocalProviderFields } from './fields';
 import { WizardFormData } from './types';
 
-export function ConnectStep() {
+export const ConnectStep = memo(function ConnectStep() {
   const {
     register,
     control,
     setValue,
     formState: { errors },
     getValues,
+    watch,
   } = useFormContext<WizardFormData>();
 
   const [tokenConfigured, setTokenConfigured] = useState(false);
 
+  // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
+  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = ''] = watch([
+    'repository.url',
+    'repository.token',
+    'repository.tokenUser',
+  ]);
   const isGitBased = isGitProvider(type);
 
-  // Get field configurations based on provider type
+  const {
+    options: branchOptions,
+    loading: branchesLoading,
+    error: branchesError,
+  } = useBranchOptions({
+    repositoryType: type,
+    repositoryUrl,
+    repositoryToken,
+    repositoryTokenUser,
+  });
+
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = !isGitBased ? getLocalProviderFields(type) : null;
   const hasTokenInstructions = getHasTokenInstructions(type);
@@ -53,6 +71,7 @@ export function ConnectStep() {
                   id="token"
                   placeholder={gitFields.tokenConfig.placeholder}
                   isConfigured={tokenConfigured}
+                  invalid={!!errors?.repository?.token?.message}
                   onReset={() => {
                     setValue('repository.token', '');
                     setTokenConfigured(false);
@@ -84,12 +103,12 @@ export function ConnectStep() {
             label={gitFields.urlConfig.label}
             description={gitFields.urlConfig.description}
             error={errors?.repository?.url?.message}
-            invalid={!!errors?.repository?.url?.message}
+            invalid={Boolean(errors?.repository?.url?.message)}
             required={gitFields.urlConfig.required}
           >
             <Input
               {...register('repository.url', gitFields.urlConfig.validation)}
-              id="url"
+              id="repository-url"
               placeholder={gitFields.urlConfig.placeholder}
             />
           </Field>
@@ -99,13 +118,25 @@ export function ConnectStep() {
             label={gitFields.branchConfig.label}
             description={gitFields.branchConfig.description}
             error={errors?.repository?.branch?.message}
-            invalid={!!errors?.repository?.branch?.message}
             required={gitFields.branchConfig.required}
+            invalid={Boolean(errors?.repository?.branch?.message || branchesError)}
           >
-            <Input
-              {...register('repository.branch', gitFields.branchConfig.validation)}
-              id="branch"
-              placeholder={gitFields.branchConfig.placeholder}
+            <Controller
+              name="repository.branch"
+              control={control}
+              rules={gitFields.branchConfig.validation}
+              render={({ field: { ref, onChange, ...field } }) => (
+                <Combobox
+                  invalid={Boolean(errors?.repository?.branch?.message || branchesError)}
+                  onChange={(option) => onChange(option?.value || '')}
+                  placeholder={gitFields.branchConfig.placeholder}
+                  options={branchOptions}
+                  loading={branchesLoading}
+                  createCustomValue
+                  isClearable
+                  {...field}
+                />
+              )}
             />
           </Field>
 
@@ -144,4 +175,4 @@ export function ConnectStep() {
       )}
     </Stack>
   );
-}
+});

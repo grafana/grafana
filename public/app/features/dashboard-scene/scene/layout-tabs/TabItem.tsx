@@ -14,13 +14,12 @@ import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { appEvents } from 'app/core/core';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
-import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
@@ -39,9 +38,11 @@ export interface TabItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
   title?: string;
   isDropTarget?: boolean;
-  conditionalRendering?: ConditionalRendering;
+  conditionalRendering?: ConditionalRenderingGroup;
   repeatByVariable?: string;
   repeatedTabs?: TabItem[];
+  /** Marks object as a repeated object and a key pointer to source object */
+  repeatSourceKey?: string;
 }
 
 export class TabItem
@@ -64,7 +65,7 @@ export class TabItem
       ...state,
       title: state?.title ?? t('dashboard.tabs-layout.tab.new', 'New tab'),
       layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
-      conditionalRendering: state?.conditionalRendering ?? ConditionalRendering.createEmpty(),
+      conditionalRendering: state?.conditionalRendering ?? ConditionalRenderingGroup.createEmpty(),
     });
 
     this.addActivationHandler(() => this._activationHandler());
@@ -104,9 +105,7 @@ export class TabItem
     this.setState({ layout });
   }
 
-  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
-    return useEditOptions(this, isNewElement);
-  }
+  public useEditPaneOptions = useEditOptions.bind(this);
 
   public onDelete() {
     const layout = this.getParentLayout();
@@ -163,16 +162,10 @@ export class TabItem
     return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
   }
 
-  public onAddPanel(panel = getDefaultVizPanel()) {
-    this.getLayout().addPanel(panel);
-  }
-
-  public onAddTab() {
-    this.getParentLayout().addNewTab();
-  }
-
   public onChangeTitle(title: string) {
     this.setState({ title });
+    const currentTabSlug = this.getSlug();
+    this.getParentLayout().setState({ currentTabSlug });
   }
 
   public onChangeName(name: string): void {
@@ -204,9 +197,9 @@ export class TabItem
     this.setIsDropTarget(false);
 
     const parentLayout = this.getParentLayout();
-    const tabIndex = parentLayout.state.tabs.findIndex((tab) => tab === this);
-    if (tabIndex !== parentLayout.state.currentTabIndex) {
-      parentLayout.setState({ currentTabIndex: tabIndex });
+
+    if (parentLayout.state.currentTabSlug !== this.getSlug()) {
+      parentLayout.setState({ currentTabSlug: this.getSlug() });
     }
   }
 

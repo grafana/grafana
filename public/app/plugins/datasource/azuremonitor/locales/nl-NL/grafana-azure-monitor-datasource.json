@@ -72,7 +72,7 @@
       "label-enable-basic-logs": "Basislogboeken inschakelen"
     },
     "config-editor": {
-      "description-additional-settings": "",
+      "description-additional-settings": "Aanvullende instellingen zijn optioneel en geven je meer controle over je databron. Denk hierbij aan Secure Socks Proxy, request timeout en doorgestuurde cookies.",
       "title-additional-settings": "Aanvullende instellingen"
     },
     "current-user-fallback-credentials": {
@@ -113,12 +113,12 @@
       "aria-label-column": "Kolom",
       "aria-label-column-value": "Kolomwaarde",
       "aria-label-operator": "Operator",
-      "aria-label-remove-filter": "",
+      "aria-label-remove-filter": "Filter verwijderen",
       "label-or": "OF"
     },
     "filter-section": {
-      "aria-label-add-filter": "",
-      "aria-label-add-or-filter": "",
+      "aria-label-add-filter": "Filter toevoegen",
+      "aria-label-add-or-filter": "OF-filter toevoegen",
       "label-add-group": "Groep toevoegen",
       "label-and": "EN",
       "label-filters": "Filters",
@@ -131,8 +131,8 @@
       "label-format-as": "Opmaak als"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "",
-      "aria-label-remove-fuzzy-search": "",
+      "aria-label-add-fuzzy-search": "Fuzzy search toevoegen",
+      "aria-label-remove-fuzzy-search": "Fuzzy search verwijderen",
       "aria-label-select-column": "Kolom selecteren",
       "label-fuzzy-search": "Vage zoekopdracht",
       "placeholder-search-team": "Geef zoekterm op",
@@ -147,7 +147,7 @@
       "aria-label-remove": "Verwijderen"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "",
+      "aria-label-add-group-by": "Group by toevoegen",
       "label-group-by": "Groeperen op",
       "tooltip-group-by": "Organiseer resultaten in categorieën op basis van gespecificeerde kolommen. Groeperen op kan onafhankelijk worden gebruikt om unieke waarden in geselecteerde kolommen weer te geven, of worden gecombineerd met aggregaatfuncties om samenvattende statistieken voor elke groep te produceren. Wanneer deze optie afzonderlijk wordt gebruikt, retourneert het verschillende combinaties van de gespecificeerde kolommen."
     },
@@ -190,10 +190,10 @@
       "text-loading": "Laden..."
     },
     "order-by-section": {
-      "aria-label-add-order-by": "",
+      "aria-label-add-order-by": "Order by toevoegen",
       "aria-label-order-by-column": "Sorteren op kolom",
       "aria-label-order-direction": "Volgorde sortering",
-      "aria-label-remove-order-by": "",
+      "aria-label-remove-order-by": "Order by verwijderen",
       "label-by": "OP",
       "label-order-by": "Sorteren op",
       "tooltip-order-by": "Sorteer resultaten op basis van een of meer kolommen in oplopende of aflopende volgorde."
@@ -227,16 +227,26 @@
       "select-resource": "Kies een bron"
     },
     "resource-picker": {
+      "browse-tab": "",
       "button-apply": "Toepassen",
       "button-cancel": "Annuleren",
       "header-location": "Locatie",
+      "header-resource-group": "",
       "header-scope": "Bereik",
       "header-type": "Type",
       "heading-selection": "Selectie",
+      "locations-filter": "",
+      "locations-filter-placeholder": "",
+      "recent-tab": "",
       "result-limit": "Eerste {{numResults}} resultaten weergeven",
+      "subscriptions-filter": "",
+      "subscriptions-filter-placeholder": "",
       "text-loading": "Laden...",
+      "text-no-recent-resources": "",
       "text-no-resources": "Geen bronnen gevonden",
-      "title-error-occurred": "Er is een fout opgetreden bij het aanvragen van metagegevens van Azure Monitor"
+      "title-error-occurred": "Er is een fout opgetreden bij het aanvragen van metagegevens van Azure Monitor",
+      "types-filter": "",
+      "types-filter-placeholder": ""
     },
     "scope-selector": {
       "label": "Bereik"
@@ -256,7 +266,7 @@
       "label-table": "Tabel",
       "placeholder-select-columns": "Selecteer kolommen",
       "placeholder-select-table": "Selecteer een tabel",
-      "tooltip-remove-all-columns": ""
+      "tooltip-remove-all-columns": "Alle kolommen verwijderen"
     },
     "time-grain-field": {
       "label-time-grain": "Tijdsinterval"

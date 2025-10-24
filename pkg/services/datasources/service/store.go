@@ -300,14 +300,6 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 				return err
 			}
 		}
-
-		sess.PublishAfterCommit(&events.DataSourceCreated{
-			Timestamp: time.Now(),
-			Name:      cmd.Name,
-			ID:        ds.ID,
-			UID:       cmd.UID,
-			OrgID:     cmd.OrgID,
-		})
 		return nil
 	})
 }

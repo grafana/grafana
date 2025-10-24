@@ -1,14 +1,21 @@
 package iam
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
 	"github.com/grafana/authlib/types"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
@@ -24,12 +31,18 @@ type CoreRoleStorageBackend interface{ resource.StorageBackend }
 // Used by wire to identify the storage backend for custom roles.
 type RoleStorageBackend interface{ resource.StorageBackend }
 
+// RoleBindingStorageBackend uses the resource.StorageBackend interface to provide storage for role bindings.
+// Used by wire to identify the storage backend for role bindings.
+type RoleBindingStorageBackend interface{ resource.StorageBackend }
+
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
 	// Stores
-	store            legacy.LegacyIdentityStore
-	coreRolesStorage CoreRoleStorageBackend
-	rolesStorage     RoleStorageBackend
+	store                      legacy.LegacyIdentityStore
+	coreRolesStorage           CoreRoleStorageBackend
+	rolesStorage               RoleStorageBackend
+	resourcePermissionsStorage resource.StorageBackend
+	roleBindingsStorage        RoleBindingStorageBackend
 
 	// Access Control
 	authorizer authorizer.Authorizer
@@ -37,8 +50,20 @@ type IdentityAccessManagementAPIBuilder struct {
 	legacyAccessClient types.AccessClient
 	// accessClient is used for the core role apis
 	accessClient types.AccessClient
+	// zClient is used to populate Zanzana with:
+	// - roles
+	// - permissions
+	// - assignments
+	zClient zanzana.Client
+	// Buffered channel to limit the amount of concurrent writes to Zanzana
+	zTickets chan bool
 
-	reg prometheus.Registerer
+	reg    prometheus.Registerer
+	logger log.Logger
+
+	dual             dualwrite.Service
+	unified          resource.ResourceClient
+	userSearchClient resourcepb.ResourceIndexClient
 
 	// non-k8s api route
 	display *user.LegacyDisplayREST
@@ -47,10 +72,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	sso ssosettings.Service
 
 	// Toggle for enabling authz management apis
-	enableAuthZApis bool
-
-	// Toggle for enabling authn mutation
-	enableAuthnMutation bool
+	features featuremgmt.FeatureToggles
 
 	// Toggle for enabling dual writer
 	enableDualWriter bool

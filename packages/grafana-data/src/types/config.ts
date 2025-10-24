@@ -1,3 +1,5 @@
+import type { InternalLoggerLevel } from '@grafana/faro-core';
+
 import { SystemDateFormatSettings } from '../datetime/formats';
 import { MapLayerOptions } from '../geo/layer';
 
@@ -93,22 +95,34 @@ export interface LicenseInfo {
 export interface GrafanaJavascriptAgentConfig {
   enabled: boolean;
   customEndpoint: string;
-  errorInstrumentalizationEnabled: boolean;
-  consoleInstrumentalizationEnabled: boolean;
-  webVitalsInstrumentalizationEnabled: boolean;
-  tracingInstrumentalizationEnabled: boolean;
   apiKey: string;
+  internalLoggerLevel: InternalLoggerLevel;
+
+  consoleInstrumentalizationEnabled: boolean;
+  performanceInstrumentalizationEnabled: boolean;
+  cspInstrumentalizationEnabled: boolean;
+  tracingInstrumentalizationEnabled: boolean;
+  webVitalsAttribution: boolean;
+}
+
+export interface UnifiedAlertingStateHistoryConfig {
+  backend?: string;
+  primary?: string;
+  prometheusTargetDatasourceUID?: string;
+  prometheusMetricName?: string;
 }
 
 export interface UnifiedAlertingConfig {
   minInterval: string;
-  // will be undefined if alerStateHistory is not enabled
-  alertStateHistoryBackend?: string;
-  // will be undefined if implementation is not "multiple"
-  alertStateHistoryPrimary?: string;
+  stateHistory?: UnifiedAlertingStateHistoryConfig;
   recordingRulesEnabled?: boolean;
-  // will be undefined if no default datasource is configured
   defaultRecordingRulesTargetDatasourceUID?: string;
+
+  // Backward compatibility aliases - deprecated
+  /** @deprecated Use stateHistory.backend instead */
+  alertStateHistoryBackend?: string;
+  /** @deprecated Use stateHistory.primary instead */
+  alertStateHistoryPrimary?: string;
 }
 
 /** Supported OAuth services
@@ -186,6 +200,9 @@ export interface BootData {
     light: string;
     dark: string;
   };
+
+  /** @deprecated Internal Grafana usage only. This property will be removed at any time. */
+  _femt?: boolean;
 }
 
 /**
@@ -302,6 +319,9 @@ export interface GrafanaConfig {
   exploreDefaultTimeOffset: string;
   exploreHideLogsDownload: boolean;
   quickRanges?: TimeOption[];
+  pluginRestrictedAPIsAllowList?: Record<string, string[]>;
+  pluginRestrictedAPIsBlockList?: Record<string, string[]>;
+  openFeatureContext: Record<string, unknown>;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;

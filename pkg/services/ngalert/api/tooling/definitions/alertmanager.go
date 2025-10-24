@@ -267,7 +267,6 @@ type (
 	ObjectMatchers            = definition.ObjectMatchers
 	PostableApiReceiver       = definition.PostableApiReceiver
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
-	ReceiverType              = definition.ReceiverType
 )
 
 type MergeResult definition.MergeResult
@@ -277,7 +276,7 @@ func (m MergeResult) LogContext() []any {
 		return nil
 	}
 	logCtx := make([]any, 0, 4)
-	if len(m.RenamedTimeIntervals) > 0 {
+	if len(m.RenamedReceivers) > 0 {
 		rcvBuilder := strings.Builder{}
 		for from, to := range m.RenamedReceivers {
 			rcvBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
@@ -285,19 +284,16 @@ func (m MergeResult) LogContext() []any {
 		logCtx = append(logCtx, "renamedReceivers", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
 	}
 	if len(m.RenamedTimeIntervals) > 0 {
-		rcvBuilder := strings.Builder{}
+		intervalBuilder := strings.Builder{}
 		for from, to := range m.RenamedTimeIntervals {
-			rcvBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
+			intervalBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
 		}
-		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
+		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", intervalBuilder.String()[0:intervalBuilder.Len()-1]))
 	}
 	return logCtx
 }
 
 const (
-	GrafanaReceiverType      = definition.GrafanaReceiverType
-	AlertmanagerReceiverType = definition.AlertmanagerReceiverType
-
 	errInvalidExtraConfigurationMsg = "Invalid Alertmanager configuration: {{.Public.Error}}"
 )
 
@@ -489,10 +485,12 @@ func (s *GettableStatus) UnmarshalJSON(b []byte) error {
 
 	s.Cluster = amStatus.Cluster
 	s.Config = &PostableApiAlertingConfig{Config: Config{
-		Global:       c.Global,
-		Route:        AsGrafanaRoute(c.Route),
-		InhibitRules: c.InhibitRules,
-		Templates:    c.Templates,
+		Global:            c.Global,
+		Route:             AsGrafanaRoute(c.Route),
+		InhibitRules:      c.InhibitRules,
+		Templates:         c.Templates,
+		MuteTimeIntervals: c.MuteTimeIntervals,
+		TimeIntervals:     c.TimeIntervals,
 	}}
 	s.Uptime = amStatus.Uptime
 	s.VersionInfo = amStatus.VersionInfo
@@ -607,15 +605,15 @@ type AlertGroups = amv2.AlertGroups
 
 type AlertGroup = amv2.AlertGroup
 
-type Receiver = alertingmodels.Receiver
+type Receiver = alertingmodels.ReceiverStatus
 
 // swagger:response receiversResponse
 type ReceiversResponse struct {
 	// in:body
-	Body []alertingmodels.Receiver
+	Body []alertingmodels.ReceiverStatus
 }
 
-type Integration = alertingmodels.Integration
+type Integration = alertingmodels.IntegrationStatus
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
@@ -719,9 +717,6 @@ func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error
 		return "", err
 	}
 
-	// Remove global settings as they are not used in Grafana
-	prometheusConfig.Global = nil
-
 	configYAML, err := yaml.Marshal(prometheusConfig)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal sanitized configuration: %w", err)
@@ -760,10 +755,12 @@ func (c ExtraConfiguration) Validate() error {
 func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingConfig {
 	config := PostableApiAlertingConfig{
 		Config: Config{
-			Global:       prometheusConfig.Global,
-			Route:        AsGrafanaRoute(prometheusConfig.Route),
-			InhibitRules: prometheusConfig.InhibitRules,
-			Templates:    prometheusConfig.Templates,
+			Global:            prometheusConfig.Global,
+			Route:             AsGrafanaRoute(prometheusConfig.Route),
+			InhibitRules:      prometheusConfig.InhibitRules,
+			TimeIntervals:     prometheusConfig.TimeIntervals,
+			MuteTimeIntervals: prometheusConfig.MuteTimeIntervals,
+			Templates:         prometheusConfig.Templates,
 		},
 	}
 
@@ -871,12 +868,8 @@ func (c *PostableUserConfig) validate() error {
 func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafanaReceiver {
 	UIDs := make(map[string]*PostableGrafanaReceiver)
 	for _, r := range c.AlertmanagerConfig.Receivers {
-		switch r.Type() {
-		case GrafanaReceiverType:
-			for _, gr := range r.GrafanaManagedReceivers {
-				UIDs[gr.UID] = gr
-			}
-		default:
+		for _, gr := range r.GrafanaManagedReceivers {
+			UIDs[gr.UID] = gr
 		}
 	}
 	return UIDs
@@ -976,12 +969,8 @@ func (c *GettableUserConfig) MarshalJSON() ([]byte, error) {
 func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafanaReceiver {
 	UIDs := make(map[string]*GettableGrafanaReceiver)
 	for _, r := range c.AlertmanagerConfig.Receivers {
-		switch r.Type() {
-		case GrafanaReceiverType:
-			for _, gr := range r.GrafanaManagedReceivers {
-				UIDs[gr.UID] = gr
-			}
-		default:
+		for _, gr := range r.GrafanaManagedReceivers {
+			UIDs[gr.UID] = gr
 		}
 	}
 	return UIDs
@@ -1098,47 +1087,7 @@ type GettableApiReceiver struct {
 
 func (r *GettableApiReceiver) UnmarshalJSON(b []byte) error {
 	type plain GettableApiReceiver
-	if err := json.Unmarshal(b, (*plain)(r)); err != nil {
-		return err
-	}
-
-	hasGrafanaReceivers := len(r.GrafanaManagedReceivers) > 0
-
-	if hasGrafanaReceivers {
-		if len(r.EmailConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager EmailConfigs & Grafana receivers together")
-		}
-		if len(r.PagerdutyConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager PagerdutyConfigs & Grafana receivers together")
-		}
-		if len(r.SlackConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager SlackConfigs & Grafana receivers together")
-		}
-		if len(r.WebhookConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager WebhookConfigs & Grafana receivers together")
-		}
-		if len(r.OpsGenieConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager OpsGenieConfigs & Grafana receivers together")
-		}
-		if len(r.WechatConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager WechatConfigs & Grafana receivers together")
-		}
-		if len(r.PushoverConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager PushoverConfigs & Grafana receivers together")
-		}
-		if len(r.VictorOpsConfigs) > 0 {
-			return fmt.Errorf("cannot have both Alertmanager VictorOpsConfigs & Grafana receivers together")
-		}
-	}
-
-	return nil
-}
-
-func (r *GettableApiReceiver) Type() ReceiverType {
-	if len(r.GrafanaManagedReceivers) > 0 {
-		return GrafanaReceiverType
-	}
-	return AlertmanagerReceiverType
+	return json.Unmarshal(b, (*plain)(r))
 }
 
 func (r *GettableApiReceiver) GetName() string {

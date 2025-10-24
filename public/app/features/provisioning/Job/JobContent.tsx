@@ -21,13 +21,9 @@ export interface JobContentProps {
 export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange }: JobContentProps) {
   const errorSetRef = useRef(false);
 
-  if (!job?.status) {
-    return null;
-  }
-
-  const { state, message, progress, summary, errors } = job.status;
-  const repoName = job.metadata?.labels?.['provisioning.grafana.app/repository'];
-  const pullRequestURL = job.status?.url?.newPullRequestURL;
+  const { state, message, progress, summary, errors } = job?.status || {};
+  const repoName = job?.metadata?.labels?.['provisioning.grafana.app/repository'];
+  const pullRequestURL = job?.status?.url?.newPullRequestURL;
 
   // Update step status based on job state
   useEffect(() => {
@@ -72,19 +68,21 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
     }
   }, [state, message, errors, onStatusChange]);
 
+  if (!job?.status) {
+    return null;
+  }
+
   return (
     <Stack direction="column" gap={2}>
       <Stack direction="column" gap={2}>
         {['working', 'pending'].includes(state ?? '') && (
-          <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
-            <Spinner size={24} />
-            <Text element="h5" color="secondary">
-              {message ?? state ?? t('provisioning.job-status.starting', 'Starting...')}
-            </Text>
-          </Stack>
-        )}
-        {state && !['success', 'error'].includes(state) && (
-          <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+          <Stack direction="column" alignItems="center">
+            <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+              <Spinner size={24} />
+              <Text element="h3" variant="h5" color="secondary">
+                {message ?? state ?? t('provisioning.job-status.starting', 'Starting...')}
+              </Text>
+            </Stack>
             <ProgressBar progress={progress ?? 0} />
           </Stack>
         )}
@@ -97,13 +95,11 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
           </Stack>
         )}
         {state === 'success' ? (
-          <Stack direction="row" gap={1}>
-            {pullRequestURL ? (
-              <PullRequestButtons urls={job.status?.url} jobType={jobType} />
-            ) : (
-              <RepositoryLink name={repoName} jobType={jobType} />
-            )}
-          </Stack>
+          pullRequestURL ? (
+            <PullRequestButtons urls={job.status?.url} jobType={jobType} />
+          ) : (
+            <RepositoryLink name={repoName} jobType={jobType} />
+          )
         ) : (
           <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
             <pre>{JSON.stringify(job, null, 2)}</pre>

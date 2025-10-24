@@ -3,6 +3,7 @@ package apistore
 import (
 	"context"
 	"math/rand/v2"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -34,6 +36,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		opts: StorageOptions{
 			EnableFolderSupport: true,
 			LargeObjectSupport:  nil,
+			MaximumNameLength:   100,
 		},
 	}
 
@@ -48,10 +51,18 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Error on missing name", func(t *testing.T) {
-		dashboard := dashv1.Dashboard{}
-		_, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		dashboard := &dashv1.Dashboard{}
+		_, err := s.prepareObjectForStorage(ctx, dashboard)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "missing name")
+		require.ErrorContains(t, err, "missing name")
+	})
+
+	t.Run("name is too long", func(t *testing.T) {
+		dashboard := &dashv1.Dashboard{}
+		dashboard.Name = strings.Repeat("a", 120)
+		_, err := s.prepareObjectForStorage(ctx, dashboard)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "name exceeds maximum length")
 	})
 
 	t.Run("Error on non-empty resource version", func(t *testing.T) {
@@ -159,7 +170,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		err = meta.SetStatus(dashv1.DashboardStatus{
 			Conversion: &dashv1.DashboardConversionStatus{
 				Failed: true,
-				Error:  "test",
+				Error:  ptr.To("test"),
 			},
 		})
 		require.NoError(t, err)

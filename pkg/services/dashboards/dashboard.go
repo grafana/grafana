@@ -65,7 +65,8 @@ type DashboardProvisioningService interface {
 	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
-	SaveFolderForProvisionedDashboards(context.Context, *folder.CreateFolderCommand) (*folder.Folder, error)
+	SaveFolderForProvisionedDashboards(ctx context.Context, cmd *folder.CreateFolderCommand, managerIdentity string) (*folder.Folder, error)
+	UpdateFolderWithManagedByAnnotation(ctx context.Context, folder *folder.Folder, managerIdentity string) (*folder.Folder, error)
 	SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO, provisioning *DashboardProvisioning) (*Dashboard, error)
 	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
 }

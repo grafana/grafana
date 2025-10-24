@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Badge, BadgeColor, IconName } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
@@ -6,11 +7,35 @@ import { PROVISIONING_URL } from '../constants';
 
 interface StatusBadgeProps {
   repo?: Repository;
+  displayOnly?: boolean; // if true, disable click action and cursor will be default
 }
 
-export function StatusBadge({ repo }: StatusBadgeProps) {
+/**
+ * @description Displays a status badge for the given provisioned repository.
+ */
+export function StatusBadge({ repo, displayOnly = false }: StatusBadgeProps) {
   if (!repo) {
     return null;
+  }
+
+  // TODO: remove after 12.2
+  if (repo.spec?.type !== 'local' && !repo.secure?.token?.name) {
+    return (
+      <Badge
+        color={'red'}
+        icon={'exclamation-triangle'}
+        style={{ cursor: 'pointer' }}
+        text={t('provisioning.inline-token-warning-badge-text', 'Token needs to be saved again')}
+        tooltip={t(
+          'inline-token-warning-badge-tooltip',
+          'The method to save the token is to re-enter it in the repository settings.'
+        )}
+        onClick={() => {
+          // navigate to edit page, rather than view page
+          locationService.push(`${PROVISIONING_URL}/${repo.metadata?.name}/edit`);
+        }}
+      />
+    );
   }
 
   let tooltip: string | undefined = undefined;
@@ -65,10 +90,12 @@ export function StatusBadge({ repo }: StatusBadgeProps) {
       color={color}
       icon={icon}
       text={text}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: displayOnly ? 'default' : 'pointer' }}
       tooltip={tooltip}
       onClick={() => {
-        locationService.push(`${PROVISIONING_URL}/${repo.metadata?.name}/?tab=overview`);
+        if (!displayOnly) {
+          locationService.push(`${PROVISIONING_URL}/${repo.metadata?.name}/?tab=overview`);
+        }
       }}
     />
   );
