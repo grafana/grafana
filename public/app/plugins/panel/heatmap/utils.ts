@@ -163,6 +163,8 @@ export function prepConfig(opts: PrepConfigOpts) {
     }
   }
 
+  let xField = dataRef.current?.heatmap?.fields[0]!;
+
   builder.addAxis({
     scaleKey: xScaleKey,
     placement: AxisPlacement.Bottom,
@@ -170,6 +172,10 @@ export function prepConfig(opts: PrepConfigOpts) {
     isTime,
     theme: theme,
     timeZone,
+    formatValue:
+      isTime && xField.config.unit?.startsWith('time:')
+        ? (v, decimals) => xField.display!(v, decimals).text
+        : undefined,
   });
 
   const yField = dataRef.current?.heatmap?.fields[1]!;
