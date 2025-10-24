@@ -38,7 +38,7 @@ exposedComponentsRegistry.register({
       component: CentralAlertHistorySceneExposedComponent,
     },
     {
-      id: PluginExtensionExposedComponents.DrilldownAddToDashboardPanelV1,
+      id: PluginExtensionExposedComponents.AddToDashboardFormV1,
       title: 'Drilldown add to dashboard panel',
       description: 'A component that allows adding drilldown panels to dashboards',
       component: DrilldownAppToDashboardPanelComponent,
