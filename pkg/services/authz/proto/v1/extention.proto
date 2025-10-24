@@ -27,7 +27,7 @@ message MutateResponse {}
 message MutateOperation {
   oneof operation {
     SetFolderParentOperation set_folder_parent = 1;
-    DeleteFolderParentsOperation delete_folder_parents = 2;
+    DeleteFolderOperation delete_folder = 2;
     CreatePermissionOperation add_permission = 3;
     DeletePermissionOperation delete_permission = 4;
   }
@@ -39,8 +39,10 @@ message SetFolderParentOperation {
   bool delete_existing = 3;
 }
 
-message DeleteFolderParentsOperation {
+message DeleteFolderOperation {
   string folder = 1;
+  string parent = 2;
+  bool delete_existing = 3;
 }
 
 message CreatePermissionOperation {

@@ -68,7 +68,7 @@ func (s *Server) mutate(ctx context.Context, req *authzextv1.MutateRequest) (*au
 
 func getOperationGroup(operation *authzextv1.MutateOperation) (OperationGroup, error) {
 	switch operation.Operation.(type) {
-	case *authzextv1.MutateOperation_SetFolderParent, *authzextv1.MutateOperation_DeleteFolderParents:
+	case *authzextv1.MutateOperation_SetFolderParent, *authzextv1.MutateOperation_DeleteFolder:
 		return OperationGroupFolder, nil
 	case *authzextv1.MutateOperation_AddPermission, *authzextv1.MutateOperation_DeletePermission:
 		return OperationGroupPermission, nil

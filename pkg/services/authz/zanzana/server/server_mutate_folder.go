@@ -25,18 +25,20 @@ func (s *Server) mutateFolders(ctx context.Context, store *storeInfo, operations
 			if err != nil {
 				return err
 			}
-			writeTuples = append(writeTuples, tuple)
+			if tuple != nil {
+				writeTuples = append(writeTuples, tuple)
+			}
 
 			// Delete existing parent tuples
 			if op.SetFolderParent.GetDeleteExisting() {
-				tuples, err := s.getFolderDeleteTuples(ctx, store, op.SetFolderParent.GetFolder())
+				tuples, err := s.getFolderDeleteTuples(ctx, store, op.SetFolderParent.GetFolder(), op.SetFolderParent.GetParent(), true)
 				if err != nil {
 					return err
 				}
 				deleteTuples = append(deleteTuples, tuples...)
 			}
-		case *authzextv1.MutateOperation_DeleteFolderParents:
-			tuples, err := s.getFolderDeleteTuples(ctx, store, op.DeleteFolderParents.GetFolder())
+		case *authzextv1.MutateOperation_DeleteFolder:
+			tuples, err := s.getFolderDeleteTuples(ctx, store, op.DeleteFolder.GetFolder(), op.DeleteFolder.GetParent(), op.DeleteFolder.GetDeleteExisting())
 			if err != nil {
 				return err
 			}
@@ -80,19 +82,30 @@ func (s *Server) getFolderWriteTuple(ctx context.Context, store *storeInfo, req 
 	return tuple, nil
 }
 
-func (s *Server) getFolderDeleteTuples(ctx context.Context, store *storeInfo, folderUID string) ([]*openfgav1.TupleKeyWithoutCondition, error) {
-	parentTuples, err := s.listFolderParents(ctx, store, folderUID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list folder parents: %w", err)
+func (s *Server) getFolderDeleteTuples(ctx context.Context, store *storeInfo, folderUID string, parentUID string, deleteExisting bool) ([]*openfgav1.TupleKeyWithoutCondition, error) {
+	tupleKeysToDelete := make([]*openfgav1.TupleKeyWithoutCondition, 0)
+
+	if folderUID != "" && parentUID != "" && !deleteExisting {
+		tupleKeysToDelete = append(tupleKeysToDelete, &openfgav1.TupleKeyWithoutCondition{
+			User:     zanzana.NewFolderParentTuple(folderUID, parentUID).GetUser(),
+			Relation: zanzana.RelationParent,
+			Object:   folderUID,
+		})
 	}
 
-	tupleKeysToDelete := make([]*openfgav1.TupleKeyWithoutCondition, 0, len(parentTuples))
-	for _, tuple := range parentTuples {
-		tupleKeysToDelete = append(tupleKeysToDelete, &openfgav1.TupleKeyWithoutCondition{
-			User:     tuple.Key.User,
-			Relation: tuple.Key.Relation,
-			Object:   tuple.Key.Object,
-		})
+	if deleteExisting {
+		parentTuples, err := s.listFolderParents(ctx, store, folderUID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list folder parents: %w", err)
+		}
+
+		for _, tuple := range parentTuples {
+			tupleKeysToDelete = append(tupleKeysToDelete, &openfgav1.TupleKeyWithoutCondition{
+				User:     tuple.Key.User,
+				Relation: tuple.Key.Relation,
+				Object:   tuple.Key.Object,
+			})
+		}
 	}
 
 	return tupleKeysToDelete, nil
