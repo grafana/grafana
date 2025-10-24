@@ -42,6 +42,14 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
     typeof link.internal?.query === 'function'
       ? link.internal.query({ replaceVariables, scopedVars })
       : internalLink.query;
+
+  // datasource ref is optional in a query object, but Explore relies on it being defined for some
+  // functionalites, e.g., changing query filters directly from visualizations, so we need to put
+  // it here if it's missing. See also #112945
+  if (!query.datasource && internalLink.datasourceUid) {
+    query.datasource = { uid: internalLink.datasourceUid };
+  }
+
   const interpolatedQuery = interpolateObject(query, scopedVars, replaceVariables);
   const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
   const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
@@ -49,14 +57,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
 
   const interpolatedParams = interpolatedQuery
     ? {
-        query: {
-          ...interpolatedQuery,
-          // data source is defined in a separate property in DataLink, we ensure it's put back together after interpolation
-          datasource: {
-            ...interpolatedQuery.datasource,
-            uid: internalLink.datasourceUid,
-          },
-        },
+        query: interpolatedQuery,
         ...(range && { timeRange: range }),
       }
     : undefined;
