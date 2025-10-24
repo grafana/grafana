@@ -106,4 +106,79 @@ func TestIntegrationServerMutateFolders(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, res.Tuples, 0)
 	})
+
+	t.Run("should clean up all parent relations", func(t *testing.T) {
+		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+			Namespace: "default",
+			Operations: []*v1.MutateOperation{
+				{
+					Operation: &v1.MutateOperation_DeleteFolder{
+						DeleteFolder: &v1.DeleteFolderOperation{
+							Folder:         "broken",
+							DeleteExisting: true,
+						},
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		res, err := srv.Read(newContextWithNamespace(), &v1.ReadRequest{
+			Namespace: "default",
+			TupleKey: &v1.ReadRequestTupleKey{
+				Object:   "folder:broken",
+				Relation: "parent",
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, res.Tuples, 0)
+	})
+
+	t.Run("should perform batch mutate if multiple operations are provided", func(t *testing.T) {
+		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+			Namespace: "default",
+			Operations: []*v1.MutateOperation{
+				{
+					Operation: &v1.MutateOperation_SetFolderParent{
+						SetFolderParent: &v1.SetFolderParentOperation{
+							Folder: "new-folder-2",
+							Parent: "1",
+						},
+					},
+				},
+				{
+					Operation: &v1.MutateOperation_DeleteFolder{
+						DeleteFolder: &v1.DeleteFolderOperation{
+							Folder: "12",
+							Parent: "1",
+						},
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		res, err := srv.Read(newContextWithNamespace(), &v1.ReadRequest{
+			Namespace: "default",
+			TupleKey: &v1.ReadRequestTupleKey{
+				Object:   "folder:new-folder-2",
+				Relation: "parent",
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, res.Tuples, 1)
+		require.Equal(t, "folder:new-folder-2", res.Tuples[0].Key.Object)
+		require.Equal(t, "parent", res.Tuples[0].Key.Relation)
+		require.Equal(t, "folder:1", res.Tuples[0].Key.User)
+
+		res, err = srv.Read(newContextWithNamespace(), &v1.ReadRequest{
+			Namespace: "default",
+			TupleKey: &v1.ReadRequestTupleKey{
+				Object:   "folder:12",
+				Relation: "parent",
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, res.Tuples, 0)
+	})
 }
