@@ -1604,11 +1604,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/contact-points/utils.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/create-folder/CreateNewFolder.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1725,11 +1720,6 @@
   "public/app/features/alerting/unified/components/rule-editor/CloudEvaluationBehavior.tsx": {
     "no-restricted-syntax": {
       "count": 2
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-editor/DashboardPicker.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/ExpressionEditor.tsx": {
@@ -3561,11 +3551,6 @@
   "public/app/features/teams/TeamGroupSync.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
-    }
-  },
-  "public/app/features/teams/TeamSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 4
     }
   },
   "public/app/features/teams/state/reducers.ts": {

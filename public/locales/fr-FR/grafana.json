@@ -11810,6 +11810,11 @@
       "next": "Suivant",
       "previous": "Précédent"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Étape terminée",
       "label-current-step": "Étape actuelle",

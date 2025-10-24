@@ -11760,6 +11760,11 @@
       "next": "下一步",
       "previous": "上一个"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "已完成的步骤",
       "label-current-step": "当前步骤",
