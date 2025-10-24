@@ -21,6 +21,14 @@ import { PluginTabIds } from '../types';
 
 import { PluginDetailsDeprecatedWarning } from './PluginDetailsDeprecatedWarning';
 
+function isPluginTabId(value: string | null): value is PluginTabIds {
+  if (!value) {
+    return false;
+  }
+  const validIds: string[] = Object.values(PluginTabIds);
+  return validIds.includes(value);
+}
+
 export type Props = {
   // The ID of the plugin
   pluginId: string;
@@ -52,11 +60,9 @@ export function PluginDetailsPage({
   useGetPluginInsights(pluginId, plugin?.isInstalled ? plugin?.installedVersion : plugin?.latestVersion);
 
   const isNarrowScreen = useMedia('(max-width: 600px)');
-  const { navModel, activePageId } = usePluginDetailsTabs(
-    plugin,
-    queryParams.get('page') as PluginTabIds,
-    isNarrowScreen
-  );
+  const pageParam = queryParams.get('page');
+  const pageId = pageParam && isPluginTabId(pageParam) ? pageParam : undefined;
+  const { navModel, activePageId } = usePluginDetailsTabs(plugin, pageId, isNarrowScreen);
 
   const { actions, info, subtitle } = usePluginPageExtensions(plugin);
   const { isLoading: isFetchLoading } = useFetchStatus();
