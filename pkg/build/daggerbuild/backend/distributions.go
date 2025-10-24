@@ -264,7 +264,7 @@ func BuildOptsStaticS390X(distro Distribution, experiments []string, tags []stri
 	}
 }
 
-// BuildOptsStaticS390X builds Grafana statically for the s390x arch
+// BuildOptsStaticRiscv64 builds Grafana statically for the riscv64 arch
 func BuildOptsStaticRiscv64(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
 	var (
 		os, _ = OSAndArch(distro)
@@ -280,7 +280,7 @@ func BuildOptsStaticRiscv64(distro Distribution, experiments []string, tags []st
 	}
 }
 
-// BuildOptsStaticWindows builds Grafana statically for the s390x arch
+// BuildOptsStaticWindows builds Grafana statically for Windows on amd64
 func BuildOptsStaticWindows(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
 	var (
 		os, _ = OSAndArch(distro)
