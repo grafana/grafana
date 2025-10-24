@@ -1,10 +1,10 @@
 ---
 aliases:
-  - ../setup-grafana/configure-security/configure-team-sync/ # /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/
-  - ../../auth/team-sync/
-  - ../../enterprise/team-sync/
-description: Learn how to use Team Sync to synchronize between your authentication
-  provider teams and Grafana teams.
+  - ../setup-grafana/configure-security/configure-team-sync/ # /docs/grafana/next/setup-grafana/setup-grafana/configure-security/configure-team-sync/
+  - ../../auth/team-sync/ # /docs/grafana/next/auth/team-sync/
+  - ../../enterprise/team-sync/ # /docs/grafana/next/enterprise/team-sync/
+  - ../configure-security/configure-team-sync/ # /docs/grafana/next/setup-grafana/configure-security/configure-team-sync/
+description: Learn how to use Team Sync to synchronize between your authentication provider teams and Grafana teams.
 labels:
   products:
     - cloud

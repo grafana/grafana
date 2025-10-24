@@ -1,6 +1,7 @@
 ---
 aliases:
-  - ../setup-grafana/configure-security/configure-authentication/saml/configure-saml-single-logout/
+  - ../../../configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/configure-saml-single-logout/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/configure-saml-single-logout/
+  - ../../../configure-security/configure-authentication/saml/configure-saml-single-logout/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml/configure-saml-single-logout/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:

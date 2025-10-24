@@ -1,7 +1,8 @@
 ---
 aliases:
-  - ../../../auth/anonymous-auth/
-  - ../setup-grafana/configure-security/configure-authentication/anonymous-auth/
+  - ../../../auth/anonymous-auth/ # /docs/grafana/next/auth/anonymous-auth/
+  - ../../configure-security/setup-grafana/configure-security/configure-authentication/anonymous-auth/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-authentication/anonymous-auth/
+  - ../../configure-security/configure-authentication/anonymous-auth/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/anonymous-auth/
 description: Learn how to configure anonymous access in Grafana
 labels:
   products:

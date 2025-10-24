@@ -1,7 +1,8 @@
 ---
 aliases:
-  - ../../../auth/jwt/
-  - ../setup-grafana/configure-security/configure-authentication/jwt/
+  - ../../../auth/jwt/ # /docs/grafana/next/auth/jwt/
+  - ../../configure-security/setup-grafana/configure-security/configure-authentication/jwt/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-authentication/jwt/
+  - ../../configure-security/configure-authentication/jwt/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/jwt/
 description: Grafana JWT Authentication
 labels:
   products:

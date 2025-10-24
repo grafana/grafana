@@ -1,7 +1,8 @@
 ---
 aliases:
-  - ../../../auth/enhanced-ldap/
-  - ../setup-grafana/configure-security/configure-authentication/ldap-ui/
+  - ../../../auth/enhanced-ldap/ # /docs/grafana/next/auth/enhanced-ldap/
+  - ../../configure-security/setup-grafana/configure-security/configure-authentication/ldap-ui/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-authentication/ldap-ui/
+  - ../../configure-security/configure-authentication/ldap-ui/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/ldap-ui/
 description: Learn about configuring LDAP authentication in Grafana using the Grafana UI.
 labels:
   products:

@@ -1,6 +1,7 @@
 ---
 aliases:
-  - ../setup-grafana/configure-security/configure-authentication/saml/configure-saml-signing-encryption/
+  - ../../../configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/configure-saml-signing-encryption/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/configure-saml-signing-encryption/
+  - ../../../configure-security/configure-authentication/saml/configure-saml-signing-encryption/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml/configure-saml-signing-encryption/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:

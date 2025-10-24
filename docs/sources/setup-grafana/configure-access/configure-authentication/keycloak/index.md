@@ -1,7 +1,8 @@
 ---
 aliases:
-  - ../../../auth/keycloak/
-  - ../setup-grafana/configure-security/configure-authentication/keycloak/
+  - ../../../auth/keycloak/ # /docs/grafana/next/auth/keycloak/
+  - ../../configure-security/setup-grafana/configure-security/configure-authentication/keycloak/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-authentication/keycloak/
+  - ../../configure-security/configure-authentication/keycloak/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/keycloak/
 description: Grafana Keycloak Guide
 keywords:
   - grafana

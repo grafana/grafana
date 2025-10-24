@@ -1,6 +1,7 @@
 ---
 aliases:
-  - ../setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-okta/
+  - ../../configure-security/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-okta/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-okta/
+  - ../../configure-security/configure-scim-provisioning/configure-scim-with-okta/ # /docs/grafana/next/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-okta/
 description: Learn how to configure SCIM provisioning with Okta in Grafana. This guide provides step-by-step instructions for setting up automated user and team management, including SAML configuration, service account creation, attribute mapping, and provisioning settings to ensure seamless integration between Okta and Grafana.
 keywords:
   - grafana

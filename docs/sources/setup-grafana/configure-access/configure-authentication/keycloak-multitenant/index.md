@@ -1,6 +1,7 @@
 ---
 aliases:
-  - ../setup-grafana/configure-security/configure-authentication/keycloak-multitenant/
+  - ../../configure-security/setup-grafana/configure-security/configure-authentication/keycloak-multitenant/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-authentication/keycloak-multitenant/
+  - ../../configure-security/configure-authentication/keycloak-multitenant/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/keycloak-multitenant/
 description: Multiple providers with Keycloak
 keywords:
   - grafana

@@ -1,6 +1,7 @@
 ---
 aliases:
-  - ../setup-grafana/configure-security/configure-scim-provisioning/manage-users-teams/
+  - ../../configure-security/setup-grafana/configure-security/configure-scim-provisioning/manage-users-teams/ # /docs/grafana/next/setup-grafana/configure-security/setup-grafana/configure-security/configure-scim-provisioning/manage-users-teams/
+  - ../../configure-security/configure-scim-provisioning/manage-users-teams/ # /docs/grafana/next/setup-grafana/configure-security/configure-scim-provisioning/manage-users-teams/
 description: Learn how to implement SCIM provisioning in Grafana for automated user and team synchronization. SCIM integrates with identity providers like Okta and Entra ID to streamline user management, automate team provisioning, and replace Team Sync.
 keywords:
   - grafana
