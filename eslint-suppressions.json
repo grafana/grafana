@@ -4191,11 +4191,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/grafana-testdata-datasource/components/CSVWaveEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/grafana-testdata-datasource/components/RandomWalkEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
