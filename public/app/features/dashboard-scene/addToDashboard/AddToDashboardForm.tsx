@@ -41,6 +41,10 @@ export interface Props<TOptions = undefined> {
   children?: React.ReactNode;
 }
 
+/**
+ * Internal implementation used by the exposed versioned wrapper.
+ * For stability/versioning guidance, refer to AddToDashboardFormExposedComponent.
+ */
 export function AddToDashboardForm<TOptions extends AbsolutePathOptions | undefined = undefined>({
   onClose,
   buildPanel,
