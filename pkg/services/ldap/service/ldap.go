@@ -56,7 +56,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, ssoSe
 		ssoSettings:  ssoSettings,
 	}
 
-	//nolint:staticcheck // using deprecated FFS service for backward compatibility
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP) {
 		s.ssoSettings.RegisterReloadable(social.LDAPProviderName, s)
 

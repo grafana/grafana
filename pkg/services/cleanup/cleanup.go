@@ -293,7 +293,7 @@ func (srv *CleanUpService) expireOldVerifications(ctx context.Context) {
 
 func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
-	//nolint:staticcheck // using deprecated FFS service for backward compatibility
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if srv.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
 		srv.deleteStaleKubernetesShortURLs(ctx)
 	} else {

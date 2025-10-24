@@ -44,7 +44,7 @@ func RegisterAppInstaller(
 		service: p,
 	}
 	specificConfig := any(&playlistapp.PlaylistConfig{
-		//nolint:staticcheck // using deprecated FFS service for backward compatibility
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
 	})
 	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, playlistapp.New)

@@ -26,7 +26,7 @@ func ProvideService(
 	kv kvstore.KVStore,
 	cfg *setting.Cfg,
 ) (Service, error) {
-	//nolint:staticcheck // using deprecated FFS service for backward compatibility
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
 

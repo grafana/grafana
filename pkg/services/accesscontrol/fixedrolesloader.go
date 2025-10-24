@@ -48,7 +48,7 @@ func (l *FixedRolesLoader) running(ctx context.Context) error {
 }
 
 func (l *FixedRolesLoader) IsDisabled() bool {
-	//nolint:staticcheck // using deprecated FFS service for backward compatibility
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	return !l.features.IsEnabledGlobally(featuremgmt.FlagPluginStoreServiceLoading)
 }
 

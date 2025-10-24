@@ -194,7 +194,7 @@ func (s *NotificationSettings) Fingerprint(features featuremgmt.FeatureToggles) 
 	// Add a separator between the time intervals to avoid collisions
 	// when all settings are the same including interval names except for the interval type (mute vs active).
 	// Use new algorithm by default, unless feature flag is explicitly disabled
-	//nolint:staticcheck // using deprecated FFS service for backward compatibility
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features == nil || (features != nil && features.IsEnabledGlobally(featuremgmt.FlagAlertingUseNewSimplifiedRoutingHashAlgorithm)) {
 		_, _ = h.Write([]byte{255})
 	}

@@ -28,7 +28,7 @@ func JitterStrategyFrom(cfg setting.UnifiedAlertingSettings, toggles featuremgmt
 	if toggles == nil {
 		return strategy
 	}
-	//nolint:staticcheck // using deprecated FFS service for backward compatibility
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if toggles.IsEnabledGlobally(featuremgmt.FlagJitterAlertRulesWithinGroups) {
 		strategy = JitterByRule
 	}

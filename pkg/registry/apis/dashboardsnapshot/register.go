@@ -73,7 +73,7 @@ func RegisterAPIService(
 	sql db.DB,
 	reg prometheus.Registerer,
 ) *SnapshotsAPIBuilder {
-	//nolint:staticcheck // using deprecated FFS service for backward compatibility
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}

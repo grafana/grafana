@@ -33,7 +33,7 @@ func ProvideService(cfg *setting.Cfg,
 
 	// Register routes only when query history is enabled
 	if s.Cfg.QueryHistoryEnabled {
-		//nolint:staticcheck // using deprecated FFS service for backward compatibility
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if features.IsEnabledGlobally(featuremgmt.FlagKubernetesStars) {
 			s.k8sClients = &k8sClients{
 				namespacer:     request.GetNamespaceMapper(s.Cfg),

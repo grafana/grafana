@@ -83,7 +83,7 @@ func ProvideSecretsService(
 		log:                 log.New("secrets"),
 	}
 
-	//nolint:staticcheck // using deprecated FFS service for backward compatibility
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	enabled := !features.IsEnabledGlobally(featuremgmt.FlagDisableEnvelopeEncryption)
 
 	if enabled {

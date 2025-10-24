@@ -281,7 +281,7 @@ func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, ident
 	WriteSessionCookie(w, cfg, identity.SessionToken)
 
 	redirectURL := cfg.AppSubURL + "/"
-	//nolint:staticcheck // using deprecated FFS service for backward compatibility
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
 		if redirectToCookieName != "" {
 			scopedRedirectToCookie, err := r.Cookie(redirectToCookieName)

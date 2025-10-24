@@ -103,7 +103,7 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 	ctx, span := tracing.Start(ctx, "ContextHandler.setRequestContext")
 	defer span.End()
 
-	//nolint:staticcheck // using deprecated FFS service for backward compatibility
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	reqContext := &contextmodel.ReqContext{
 		Context: web.FromContext(ctx),
 		SignedInUser: &user.SignedInUser{

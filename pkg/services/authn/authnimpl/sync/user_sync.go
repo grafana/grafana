@@ -438,7 +438,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 			AuthId:     identity.AuthID,
 		}
 
-		//nolint:staticcheck // using deprecated FFS service for backward compatibility
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 			setAuthInfoCmd.OAuthToken = identity.OAuthToken
 		}
@@ -451,7 +451,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 		AuthModule: identity.AuthenticatedBy,
 	}
 
-	//nolint:staticcheck // using deprecated FFS service for backward compatibility
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 		updateAuthInfoCmd.OAuthToken = identity.OAuthToken
 	}
