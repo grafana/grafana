@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../auth/google/
-  - ../setup-grafana/configure-security/configure-authentication/google/  
+  - ../setup-grafana/configure-security/configure-authentication/google/
 description: Grafana Google OAuth Guide
 labels:
   products:

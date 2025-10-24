@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../auth/gitlab/
-  - ../setup-grafana/configure-security/configure-authentication/gitlab/  
+  - ../setup-grafana/configure-security/configure-authentication/gitlab/
 description: Grafana GitLab OAuth Guide
 keywords:
   - grafana

@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../setup-grafana/configure-security/configure-authentication/saml/saml-configuration-options/ 
+  - ../setup-grafana/configure-security/configure-authentication/saml/saml-configuration-options/
 labels:
   products:
     - cloud

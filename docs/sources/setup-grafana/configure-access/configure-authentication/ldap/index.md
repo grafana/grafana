@@ -2,7 +2,7 @@
 aliases:
   - ../../../auth/ldap/
   - ../../../installation/ldap/
-  - ../setup-grafana/configure-security/configure-authentication/ldap/  
+  - ../setup-grafana/configure-security/configure-authentication/ldap/
 description: Grafana LDAP Authentication Guide
 labels:
   products:

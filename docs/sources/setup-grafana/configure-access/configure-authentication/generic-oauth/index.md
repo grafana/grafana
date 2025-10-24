@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../auth/generic-oauth/
-  - ../setup-grafana/configure-security/configure-authentication/generic-oauth/  
+  - ../setup-grafana/configure-security/configure-authentication/generic-oauth/
 description: Configure Generic OAuth authentication
 keywords:
   - grafana

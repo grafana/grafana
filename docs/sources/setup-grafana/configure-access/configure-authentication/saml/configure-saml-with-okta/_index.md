@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/  
+  - ../setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:

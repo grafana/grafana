@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../setup-grafana/configure-security/configure-scim-provisioning/troubleshooting/ 
+  - ../setup-grafana/configure-security/configure-scim-provisioning/troubleshooting/
 description: Troubleshoot common SCIM provisioning issues in Grafana, including user provisioning, authentication, and login problems.
 keywords:
   - grafana

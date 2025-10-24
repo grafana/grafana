@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../setup-grafana/configure-security/configure-authentication/saml/troublsehoot-saml/ 
+  - ../setup-grafana/configure-security/configure-authentication/saml/troublsehoot-saml/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:
