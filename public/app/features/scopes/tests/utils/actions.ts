@@ -24,6 +24,9 @@ import {
   getResultApplicationsMimirSelect,
   getResultCloudExpand,
   getResultCloudSelect,
+  getResultEnvironmentsExpand,
+  getResultEnvironmentsDevSelect,
+  getResultEnvironmentsProdSelect,
   getSelectorApply,
   getSelectorCancel,
   getSelectorClear,
@@ -70,6 +73,10 @@ export const selectResultApplicationsCloudDev = async () => click(getResultAppli
 export const selectResultCloud = async () => click(getResultCloudSelect);
 export const selectResultCloudDev = async () => click(getResultCloudDevLink);
 export const selectResultCloudOps = async () => click(getResultCloudOpsLink);
+
+export const expandResultEnvironments = async () => click(getResultEnvironmentsExpand);
+export const selectResultEnvironmentsDev = async () => click(getResultEnvironmentsDevSelect);
+export const selectResultEnvironmentsProd = async () => click(getResultEnvironmentsProdSelect);
 
 export const toggleDashboards = async () => click(getDashboardsExpand);
 export const searchDashboards = async (value: string) => type(getDashboardsSearch, value);

@@ -59,6 +59,27 @@ export const mocksScopes: Scope[] = [
       filters: [{ key: 'app', value: 'tempo', operator: 'equals' }],
     },
   },
+  {
+    metadata: { name: 'infrastructure' },
+    spec: {
+      title: 'Infrastructure',
+      filters: [{ key: 'environment', value: 'infrastructure', operator: 'equals' }],
+    },
+  },
+  {
+    metadata: { name: 'dev-env' },
+    spec: {
+      title: 'Development',
+      filters: [{ key: 'environment', value: 'dev', operator: 'equals' }],
+    },
+  },
+  {
+    metadata: { name: 'prod-env' },
+    spec: {
+      title: 'Production',
+      filters: [{ key: 'environment', value: 'prod', operator: 'equals' }],
+    },
+  },
 ] as const;
 
 const dashboardBindingsGenerator = (
@@ -339,6 +360,38 @@ export const mocksNodes: ScopeNode[] = [
       linkType: 'scope',
       linkId: 'tempo',
       parentName: 'cloud-applications',
+    },
+  },
+  {
+    metadata: { name: 'environments' },
+    spec: {
+      nodeType: 'container',
+      title: 'Environments',
+      description: 'Environment Scopes',
+      disableMultiSelect: true,
+      parentName: '',
+    },
+  },
+  {
+    metadata: { name: 'environments-dev' },
+    spec: {
+      nodeType: 'container',
+      title: 'Development',
+      description: 'Development Environment',
+      linkType: 'scope',
+      linkId: 'dev-env',
+      parentName: 'environments',
+    },
+  },
+  {
+    metadata: { name: 'environments-prod' },
+    spec: {
+      nodeType: 'container',
+      title: 'Production',
+      description: 'Production Environment',
+      linkType: 'scope',
+      linkId: 'prod-env',
+      parentName: 'environments',
     },
   },
 ] as const;

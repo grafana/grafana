@@ -21,6 +21,9 @@ import {
   selectResultCloud,
   selectResultCloudDev,
   selectResultCloudOps,
+  expandResultEnvironments,
+  selectResultEnvironmentsDev,
+  selectResultEnvironmentsProd,
   updateScopes,
 } from './utils/actions';
 import {
@@ -33,6 +36,10 @@ import {
   expectResultApplicationsMimirNotPresent,
   expectResultApplicationsMimirPresent,
   expectResultApplicationsMimirSelected,
+  expectResultEnvironmentsDevNotSelected,
+  expectResultEnvironmentsDevSelected,
+  expectResultEnvironmentsProdNotSelected,
+  expectResultEnvironmentsProdSelected,
   expectScopesHeadline,
   expectScopesSelectorValue,
 } from './utils/assertions';
@@ -137,6 +144,25 @@ describe('Tree', () => {
     await openSelector();
     await selectResultCloudOps();
     expectScopesSelectorValue('Ops');
+  });
+
+  it('Can only select one selectable container at a time', async () => {
+    await openSelector();
+    await expandResultEnvironments();
+
+    // Select the Development environment container
+    await selectResultEnvironmentsDev();
+    expectResultEnvironmentsDevSelected(); // Check selection state before applying
+    expectResultEnvironmentsProdNotSelected(); // Production should not be selected
+
+    // Select the Production environment container - should replace Development
+    await selectResultEnvironmentsProd();
+    expectResultEnvironmentsProdSelected(); // Check selection state before applying
+    expectResultEnvironmentsDevNotSelected(); // Development should no longer be selected
+
+    // Apply scopes and verify final state
+    await applyScopes();
+    expectScopesSelectorValue('Production');
   });
 
   it('Search works', async () => {

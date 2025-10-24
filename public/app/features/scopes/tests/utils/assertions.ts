@@ -12,8 +12,6 @@ import {
   getResultApplicationsCloudSelect,
   getResultApplicationsGrafanaSelect,
   getResultApplicationsMimirSelect,
-  getResultCloudDevLink,
-  getResultCloudOpsLink,
   getSelectorInput,
   getTreeHeadline,
   queryAllDashboard,
@@ -28,14 +26,18 @@ import {
   queryResultApplicationsCloudSelect,
   queryResultApplicationsGrafanaSelect,
   queryResultApplicationsMimirSelect,
+  queryResultInfrastructureSelect,
+  getResultInfrastructureSelect,
+  getResultEnvironmentsDevSelect,
+  getResultEnvironmentsProdSelect,
   querySelectorApply,
 } from './selectors';
 
 const expectInDocument = (selector: () => HTMLElement) => expect(selector()).toBeInTheDocument();
 const expectNotInDocument = (selector: () => HTMLElement | null) => expect(selector()).not.toBeInTheDocument();
 const expectChecked = (selector: () => HTMLInputElement) => expect(selector()).toBeChecked();
-const expectRadioChecked = (selector: () => HTMLInputElement) => expect(selector().checked).toBe(true);
-const expectRadioNotChecked = (selector: () => HTMLInputElement) => expect(selector().checked).toBe(false);
+const expectNotChecked = (selector: () => HTMLInputElement) => expect(selector()).not.toBeChecked();
+
 const expectValue = (selector: () => HTMLInputElement, value: string) => expect(selector().value).toBe(value);
 const expectTextContent = (selector: () => HTMLElement, text: string) => expect(selector()).toHaveTextContent(text);
 const expectDisabled = (selector: () => HTMLElement) => expect(selector()).toBeDisabled();
@@ -62,10 +64,15 @@ export const expectResultApplicationsMimirPresent = () => expectInDocument(getRe
 export const expectResultApplicationsMimirNotPresent = () => expectNotInDocument(queryResultApplicationsMimirSelect);
 export const expectResultApplicationsCloudPresent = () => expectInDocument(getResultApplicationsCloudSelect);
 export const expectResultApplicationsCloudNotPresent = () => expectNotInDocument(queryResultApplicationsCloudSelect);
-export const expectResultCloudDevSelected = () => expectRadioChecked(getResultCloudDevLink);
-export const expectResultCloudDevNotSelected = () => expectRadioNotChecked(getResultCloudDevLink);
-export const expectResultCloudOpsSelected = () => expectRadioChecked(getResultCloudOpsLink);
-export const expectResultCloudOpsNotSelected = () => expectRadioNotChecked(getResultCloudOpsLink);
+
+export const expectResultInfrastructureSelected = () => expectChecked(getResultInfrastructureSelect);
+export const expectResultInfrastructurePresent = () => expectInDocument(getResultInfrastructureSelect);
+export const expectResultInfrastructureNotPresent = () => expectNotInDocument(queryResultInfrastructureSelect);
+
+export const expectResultEnvironmentsDevSelected = () => expectChecked(getResultEnvironmentsDevSelect);
+export const expectResultEnvironmentsDevNotSelected = () => expectNotChecked(getResultEnvironmentsDevSelect);
+export const expectResultEnvironmentsProdSelected = () => expectChecked(getResultEnvironmentsProdSelect);
+export const expectResultEnvironmentsProdNotSelected = () => expectNotChecked(getResultEnvironmentsProdSelect);
 
 export const expectDashboardsDisabled = () => expectDisabled(getDashboardsExpand);
 export const expectDashboardsClosed = () => expectNotInDocument(queryDashboardsContainer);

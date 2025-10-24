@@ -144,7 +144,6 @@ export function ScopesTreeItem({
   toggleExpandedNode,
 }: ScopesTreeItemProps) {
   const styles = useStyles2(getStyles);
-  // Import the closeAndApply function
   const services = useScopesServices();
   const { closeAndApply } = services?.scopesSelectorService || {};
   if (anyChildExpanded && !treeNode.expanded) {

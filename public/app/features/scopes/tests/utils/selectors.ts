@@ -94,7 +94,15 @@ export const getResultApplicationsCloudDevSelect = () =>
 
 export const getResultCloudSelect = () => screen.getByTestId(selectors.tree.select('cloud'));
 export const getResultCloudExpand = () => screen.getByTestId(selectors.tree.expand('cloud'));
-export const getResultCloudDevLink = () => screen.getByTestId<HTMLInputElement>(selectors.tree.link('cloud-dev'));
-export const getResultCloudOpsLink = () => screen.getByTestId<HTMLInputElement>(selectors.tree.link('cloud-ops'));
+export const getResultCloudDevLink = () => screen.getByTestId<HTMLButtonElement>(selectors.tree.link('cloud-dev'));
+export const getResultCloudOpsLink = () => screen.getByTestId<HTMLButtonElement>(selectors.tree.link('cloud-ops'));
+
+export const getResultEnvironmentsExpand = () => screen.getByTestId(selectors.tree.expand('environments'));
+export const getResultEnvironmentsDevSelect = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('environments-dev'));
+export const getResultEnvironmentsProdSelect = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('environments-prod'));
+export const queryResultEnvironmentsDevSelect = () => screen.queryByTestId(selectors.tree.radio('environments-dev'));
+export const queryResultEnvironmentsProdSelect = () => screen.queryByTestId(selectors.tree.radio('environments-prod'));
 
 export const getListOfScopes = (service: ScopesService) => service.state.value;
