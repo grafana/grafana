@@ -89,7 +89,7 @@ const mockDashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
   metadata: {
     name: 'dash-2',
     resourceVersion: '0',
-    creationTimestamp: '0',
+    creationTimestamp: '2025-01-01T00:00:00Z',
     annotations: {},
   },
   access: {
