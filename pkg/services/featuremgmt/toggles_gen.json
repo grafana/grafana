@@ -1176,6 +1176,21 @@
     },
     {
       "metadata": {
+        "name": "dashboardV2SchemaAPI",
+        "resourceVersion": "1761316256063",
+        "creationTimestamp": "2025-10-24T14:29:56Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-10-24 14:30:56.063544 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the usage of the V2 schema API to retrieve and update dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashgpt",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2023-08-30T20:22:05Z"
