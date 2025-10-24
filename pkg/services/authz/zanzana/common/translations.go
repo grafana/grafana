@@ -1,6 +1,8 @@
-package zanzana
+package common
 
 import (
+	authlib "github.com/grafana/authlib/types"
+
 	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 )
@@ -78,4 +80,61 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:delete": newMapping(RelationDelete, ""),
 		},
 	},
+}
+
+func TranslateToCheckRequest(namespace, action, kind, name string) (*authlib.CheckRequest, bool) {
+	translation, ok := resourceTranslations[kind]
+
+	if !ok {
+		return nil, false
+	}
+
+	m, ok := translation.mapping[action]
+	if !ok {
+		return nil, false
+	}
+
+	verb, ok := RelationToVerbMapping[m.relation]
+	if !ok {
+		return nil, false
+	}
+
+	req := &authlib.CheckRequest{
+		Namespace: namespace,
+		Verb:      verb,
+		Group:     translation.group,
+		Resource:  translation.resource,
+		Name:      name,
+	}
+
+	return req, true
+}
+
+func TranslateToListRequest(namespace, action, kind string) (*authlib.ListRequest, bool) {
+	translation, ok := resourceTranslations[kind]
+
+	if !ok {
+		return nil, false
+	}
+
+	// FIXME: support different verbs
+	req := &authlib.ListRequest{
+		Namespace: namespace,
+		Group:     translation.group,
+		Resource:  translation.resource,
+	}
+
+	return req, true
+}
+
+func TranslateToGroupResource(kind string) string {
+	translation, ok := resourceTranslations[kind]
+	if !ok {
+		return ""
+	}
+	return FormatGroupResource(translation.group, translation.resource, "")
+}
+
+func TranslateBasicRole(name string) string {
+	return basicRolesTranslations[name]
 }

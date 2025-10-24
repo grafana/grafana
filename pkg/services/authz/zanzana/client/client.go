@@ -12,9 +12,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
 var _ authlib.AccessClient = (*Client)(nil)
+var _ zanzana.Client = (*Client)(nil)
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/client")
 
@@ -71,4 +73,20 @@ func (c *Client) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckReque
 	defer span.End()
 
 	return c.authzext.BatchCheck(ctx, req)
+}
+
+func (c *Client) WriteNew(ctx context.Context, req *authzextv1.WriteRequest) error {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Write")
+	defer span.End()
+
+	_, err := c.authzext.Write(ctx, req)
+	return err
+}
+
+func (c *Client) Mutate(ctx context.Context, req *authzextv1.MutateRequest) error {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Mutate")
+	defer span.End()
+
+	_, err := c.authzext.Mutate(ctx, req)
+	return err
 }

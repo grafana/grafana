@@ -6,11 +6,13 @@ import (
 	authlib "github.com/grafana/authlib/types"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
 var _ authlib.AccessClient = (*NoopClient)(nil)
+var _ zanzana.Client = (*NoopClient)(nil)
 
-func NewNoop() *NoopClient {
+func NewNoopClient() *NoopClient {
 	return &NoopClient{}
 }
 
@@ -34,4 +36,8 @@ func (nc NoopClient) Write(ctx context.Context, req *authzextv1.WriteRequest) er
 
 func (nc NoopClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
 	return nil, nil
+}
+
+func (nc NoopClient) Mutate(ctx context.Context, req *authzextv1.MutateRequest) error {
+	return nil
 }
