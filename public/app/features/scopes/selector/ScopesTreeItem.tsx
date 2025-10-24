@@ -5,10 +5,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, Icon, RadioButtonDot, useStyles2, Text } from '@grafana/ui';
 
+import { useScopesServices } from '../ScopesContextProvider';
 import { ScopesTree } from './ScopesTree';
 import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
 import { NodesMap, SelectedScope, TreeNode } from './types';
-import { useScopesServices } from '../ScopesContextProvider';
 
 // Helper components for rendering different selectable content types
 interface RadioButtonDotProps {
