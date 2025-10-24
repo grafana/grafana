@@ -3107,11 +3107,6 @@
       "count": 2
     }
   },
-  "public/app/features/live/LiveConnectionWarning.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/live/centrifuge/LiveDataStream.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
