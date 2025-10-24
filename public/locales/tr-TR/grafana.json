@@ -11810,6 +11810,11 @@
       "next": "İleri",
       "previous": "Önceki"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Tamamlanan adım",
       "label-current-step": "Mevcut adım",

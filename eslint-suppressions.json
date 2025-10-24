@@ -1604,11 +1604,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/contact-points/utils.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/create-folder/CreateNewFolder.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -3052,11 +3047,6 @@
   },
   "public/app/features/explore/TraceView/components/utils/DraggableManager/demo/RegionDemo.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/utils/DraggableManager/demo/index.tsx": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
