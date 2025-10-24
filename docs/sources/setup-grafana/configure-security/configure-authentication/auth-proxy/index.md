@@ -46,9 +46,13 @@ whitelist =
 # Example `headers = Name:X-WEBAUTH-NAME Role:X-WEBAUTH-ROLE Email:X-WEBAUTH-EMAIL Groups:X-WEBAUTH-GROUPS`
 headers =
 # Non-ASCII strings in header values are encoded using quoted-printable encoding
-;headers_encoded = false
+headers_encoded = false
 # Check out docs on this for more details on the below setting
 enable_login_token = false
+# JMESPath expression to extract role from user email, example: email=='admin@company.com' && 'Admin' || 'Viewer'
+role_attribute_path =
+# Set to true to deny user login if role cannot be extracted using role_attribute_path
+role_attribute_strict = false
 ```
 
 ## Interacting with Grafana’s AuthProxy via curl
@@ -315,6 +319,23 @@ An empty `X-WEBAUTH-GROUPS` or the absence of a groups header will remove the us
 {{< /admonition >}}
 
 [Learn more about Team Sync](../../configure-team-sync/)
+
+## Map roles using the user email
+
+You can configure a [JMESPath](http://jmespath.org/examples.html) expression to extract the role
+from the user's email address.
+
+The email can be extracted from the username header (if `header_property = email`) or from
+additional headers configured in the `headers` mapping (e.g., `Email:X-WEBAUTH-EMAIL`).
+
+Example:
+
+```bash
+role_attribute_path = email=='admin@company.com' && 'Admin' || 'Viewer'
+role_attribute_strict = true
+```
+
+This example assigns the `Admin` role to `admin@company.com`, and the `Viewer` role to all other users.
 
 ## Login token and session cookie
 
