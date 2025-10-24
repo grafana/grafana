@@ -1298,6 +1298,11 @@
       "count": 1
     }
   },
+  "public/app/core/components/Select/TeamPicker.tsx": {
+    "react-prefer-function-component/react-prefer-function-component": {
+      "count": 1
+    }
+  },
   "public/app/core/components/Select/UserPicker.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -1305,7 +1310,7 @@
   },
   "public/app/core/components/SharedPreferences/SharedPreferences.tsx": {
     "no-restricted-syntax": {
-      "count": 2
+      "count": 8
     },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
