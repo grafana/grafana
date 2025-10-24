@@ -2,15 +2,13 @@ import { PropsWithChildren, ReactElement } from 'react';
 
 import { RestrictedGrafanaApisContextProvider, RestrictedGrafanaApisContextType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { alertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
+import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 
 const restrictedGrafanaApis: RestrictedGrafanaApisContextType = config.featureToggles.restrictedPluginApis
   ? {
       // Add your restricted APIs here
       // (APIs that should be availble to ALL plugins should be shared via our packages, e.g. @grafana/data.)
-      alerting: {
-        alertRuleFormSchema: alertRuleFormSchemaApi.alertRuleFormSchema,
-      },
+      alertingAlertRuleFormSchema: alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema,
     }
   : {};
 

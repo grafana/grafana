@@ -65,7 +65,7 @@ export const alertingQuerySchema = z.object({
 export const alertingModelSchema = z.union([alertingQuerySchema, exprQuerySchema]);
 
 // Main navigate to alert form schema - merged from both alertingSchemaApi and formDefaults
-export const alertRuleFormSchema = z.object({
+export const alertingAlertRuleFormSchema = z.object({
   // Common fields
   name: z.string().optional().describe('Name of the alert rule'),
   type: z.enum(RuleFormType).optional().catch(RuleFormType.grafana).describe('Type of the alert rule'),
@@ -192,12 +192,12 @@ export const alertRuleFormSchema = z.object({
 });
 
 // Export types for use in plugins
-export type AlertRuleFormSchemaType = z.infer<typeof alertRuleFormSchema>;
+export type AlertingAlertRuleFormSchemaType = z.infer<typeof alertingAlertRuleFormSchema>;
 export type AlertingQuerySchemaType = z.infer<typeof alertingQuerySchema>;
 export type ExprQuerySchemaType = z.infer<typeof exprQuerySchema>;
 export type AlertingModelSchemaType = z.infer<typeof alertingModelSchema>;
 
 // Simple API that only exposes the navigate to alert rule form schema
-export const alertRuleFormSchemaApi = {
-  alertRuleFormSchema,
+export const alertingAlertRuleFormSchemaApi = {
+  alertingAlertRuleFormSchema,
 };

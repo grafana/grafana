@@ -7,14 +7,14 @@ import {
 } from './RestrictedGrafanaApis';
 
 // Mock schema for testing
-const mockNavigateToAlertFormSchema = {
+const mockAlertRuleFormSchema = {
   parse: jest.fn((data: unknown) => data),
   safeParse: jest.fn((data: unknown) => ({ success: true, data })),
 };
 
 describe('RestrictedGrafanaApis', () => {
   const apis: RestrictedGrafanaApisContextType = {
-    navigateToAlertFormSchema: mockNavigateToAlertFormSchema,
+    alertingAlertRuleFormSchema: mockAlertRuleFormSchema,
   };
 
   beforeEach(() => {
@@ -27,15 +27,15 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-test-app'}
-          apiAllowList={{ navigateToAlertFormSchema: ['grafana-test-app'] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: ['grafana-test-app'] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
 
-    expect(result.current.navigateToAlertFormSchema).toEqual(apis.navigateToAlertFormSchema);
-    expect(Object.keys(result.current)).toEqual(['navigateToAlertFormSchema']);
+    expect(result.current.alertingAlertRuleFormSchema).toEqual(apis.alertingAlertRuleFormSchema);
+    expect(Object.keys(result.current)).toEqual(['alertingAlertRuleFormSchema']);
   });
 
   it('should share an API if the plugin is allowed using a regexp', () => {
@@ -44,15 +44,15 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-test-app'}
-          apiAllowList={{ navigateToAlertFormSchema: [/^grafana-/] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: [/^grafana-/] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
 
-    expect(result.current.navigateToAlertFormSchema).toEqual(apis.navigateToAlertFormSchema);
-    expect(Object.keys(result.current)).toEqual(['navigateToAlertFormSchema']);
+    expect(result.current.alertingAlertRuleFormSchema).toEqual(apis.alertingAlertRuleFormSchema);
+    expect(Object.keys(result.current)).toEqual(['alertingAlertRuleFormSchema']);
   });
 
   it('should not share an API if the plugin is not directly allowed and no allow regexp matches it', () => {
@@ -61,14 +61,14 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'myorg-test-app'}
-          apiAllowList={{ navigateToAlertFormSchema: [/^grafana-/] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: [/^grafana-/] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
 
-    expect(result.current.navigateToAlertFormSchema).not.toBeDefined();
+    expect(result.current.alertingAlertRuleFormSchema).not.toBeDefined();
   });
 
   // Ideally the `allowList` and the `blockList` are not used together
@@ -78,16 +78,16 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-test-app'}
-          apiAllowList={{ navigateToAlertFormSchema: ['grafana-test-app'] }}
-          apiBlockList={{ navigateToAlertFormSchema: ['grafana-test-app'] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: ['grafana-test-app'] }}
+          apiBlockList={{ alertingAlertRuleFormSchema: ['grafana-test-app'] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
 
-    expect(result.current.navigateToAlertFormSchema).toEqual(apis.navigateToAlertFormSchema);
-    expect(Object.keys(result.current)).toEqual(['navigateToAlertFormSchema']);
+    expect(result.current.alertingAlertRuleFormSchema).toEqual(apis.alertingAlertRuleFormSchema);
+    expect(Object.keys(result.current)).toEqual(['alertingAlertRuleFormSchema']);
   });
 
   it('should share an API with allowed plugins (testing multiple plugins)', () => {
@@ -99,13 +99,13 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-test-app'}
-          apiAllowList={{ navigateToAlertFormSchema: ['grafana-test-app', 'grafana-assistant-app'] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: ['grafana-test-app', 'grafana-assistant-app'] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
-    expect(result.result.current.navigateToAlertFormSchema).toEqual(apis.navigateToAlertFormSchema);
+    expect(result.result.current.alertingAlertRuleFormSchema).toEqual(apis.alertingAlertRuleFormSchema);
 
     // 2. Second app
     result = renderHook(() => useRestrictedGrafanaApis(), {
@@ -113,13 +113,13 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-assistant-app'}
-          apiAllowList={{ navigateToAlertFormSchema: ['grafana-test-app', 'grafana-assistant-app'] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: ['grafana-test-app', 'grafana-assistant-app'] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
-    expect(result.result.current.navigateToAlertFormSchema).toEqual(apis.navigateToAlertFormSchema);
+    expect(result.result.current.alertingAlertRuleFormSchema).toEqual(apis.alertingAlertRuleFormSchema);
   });
 
   it('should not share APIs with plugins that are not allowed', () => {
@@ -128,14 +128,14 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-restricted-app'}
-          apiAllowList={{ navigateToAlertFormSchema: ['grafana-authorised-app'] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: ['grafana-authorised-app'] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
 
-    expect(result.current.navigateToAlertFormSchema).not.toBeDefined();
+    expect(result.current.alertingAlertRuleFormSchema).not.toBeDefined();
   });
 
   it('should not share APIs with anyone if both the allowList and the blockList are empty', () => {
@@ -146,13 +146,13 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-test-app'}
-          apiAllowList={{ navigateToAlertFormSchema: [] }}
+          apiAllowList={{ alertingAlertRuleFormSchema: [] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
-    expect(result.result.current.navigateToAlertFormSchema).not.toBeDefined();
+    expect(result.result.current.alertingAlertRuleFormSchema).not.toBeDefined();
 
     result = renderHook(() => useRestrictedGrafanaApis(), {
       wrapper: ({ children }: { children: React.ReactNode }) => (
@@ -161,7 +161,7 @@ describe('RestrictedGrafanaApis', () => {
         </RestrictedGrafanaApisContextProvider>
       ),
     });
-    expect(result.result.current.navigateToAlertFormSchema).not.toBeDefined();
+    expect(result.result.current.alertingAlertRuleFormSchema).not.toBeDefined();
   });
 
   it('should not share APIs with blocked plugins', () => {
@@ -170,13 +170,13 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'grafana-test-app'}
-          apiBlockList={{ navigateToAlertFormSchema: ['grafana-test-app'] }}
+          apiBlockList={{ alertingAlertRuleFormSchema: ['grafana-test-app'] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
-    expect(result.current.navigateToAlertFormSchema).not.toBeDefined();
+    expect(result.current.alertingAlertRuleFormSchema).not.toBeDefined();
   });
 
   it('should not share APIs with plugins that match any block list regexes', () => {
@@ -185,12 +185,12 @@ describe('RestrictedGrafanaApis', () => {
         <RestrictedGrafanaApisContextProvider
           apis={apis}
           pluginId={'myorg-test-app'}
-          apiBlockList={{ navigateToAlertFormSchema: [/^myorg-/] }}
+          apiBlockList={{ alertingAlertRuleFormSchema: [/^myorg-/] }}
         >
           {children}
         </RestrictedGrafanaApisContextProvider>
       ),
     });
-    expect(result.current.navigateToAlertFormSchema).not.toBeDefined();
+    expect(result.current.alertingAlertRuleFormSchema).not.toBeDefined();
   });
 });

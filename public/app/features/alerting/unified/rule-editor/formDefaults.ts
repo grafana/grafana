@@ -2,7 +2,7 @@ import { clamp } from 'lodash';
 import z from 'zod';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { alertRuleFormSchema } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
+import { alertingAlertRuleFormSchema } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import { GrafanaAlertStateDecision, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -240,7 +240,7 @@ const cloudRuleFormValuesSchema = z.looseObject({
 });
 
 export function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
-  let parsedRule: z.infer<typeof alertRuleFormSchema> | z.infer<typeof cloudRuleFormValuesSchema>;
+  let parsedRule: z.infer<typeof alertingAlertRuleFormSchema> | z.infer<typeof cloudRuleFormValuesSchema>;
   // differencitate between cloud and grafana prefill
   if (rule.type === RuleFormType.cloudAlerting) {
     // we use this schema to coerce prefilled query params into a valid "FormValues" interface
@@ -248,7 +248,7 @@ export function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormVa
   } else {
     // grafana prefill
     // coerce prefill params to a valid RuleFormValues interface
-    parsedRule = alertRuleFormSchema.parse(rule);
+    parsedRule = alertingAlertRuleFormSchema.parse(rule);
   }
 
   return revealHiddenQueries({
