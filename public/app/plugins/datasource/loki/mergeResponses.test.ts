@@ -661,12 +661,8 @@ describe('combineResponses', () => {
     });
 
     it('combines notices from both frames', () => {
-      const responseA = makeResponse([
-        { severity: 'warning', text: 'Warning from frame A' },
-      ]);
-      const responseB = makeResponse([
-        { severity: 'info', text: 'Info from frame B' },
-      ]);
+      const responseA = makeResponse([{ severity: 'warning', text: 'Warning from frame A' }]);
+      const responseB = makeResponse([{ severity: 'info', text: 'Info from frame B' }]);
 
       expect(combineResponses(responseA, responseB).data[0].meta?.notices).toStrictEqual([
         { severity: 'warning', text: 'Warning from frame A' },
@@ -675,12 +671,8 @@ describe('combineResponses', () => {
     });
 
     it('deduplicates identical notices', () => {
-      const responseA = makeResponse([
-        { severity: 'warning', text: 'Same warning' },
-      ]);
-      const responseB = makeResponse([
-        { severity: 'warning', text: 'Same warning' },
-      ]);
+      const responseA = makeResponse([{ severity: 'warning', text: 'Same warning' }]);
+      const responseB = makeResponse([{ severity: 'warning', text: 'Same warning' }]);
 
       expect(combineResponses(responseA, responseB).data[0].meta?.notices).toStrictEqual([
         { severity: 'warning', text: 'Same warning' },
@@ -688,12 +680,8 @@ describe('combineResponses', () => {
     });
 
     it('keeps notices with same text but different severity', () => {
-      const responseA = makeResponse([
-        { severity: 'warning', text: 'Message' },
-      ]);
-      const responseB = makeResponse([
-        { severity: 'info', text: 'Message' },
-      ]);
+      const responseA = makeResponse([{ severity: 'warning', text: 'Message' }]);
+      const responseB = makeResponse([{ severity: 'info', text: 'Message' }]);
 
       expect(combineResponses(responseA, responseB).data[0].meta?.notices).toStrictEqual([
         { severity: 'warning', text: 'Message' },
@@ -702,9 +690,7 @@ describe('combineResponses', () => {
     });
 
     it('handles one frame with notices and one without', () => {
-      const responseA = makeResponse([
-        { severity: 'warning', text: 'Warning message' },
-      ]);
+      const responseA = makeResponse([{ severity: 'warning', text: 'Warning message' }]);
       const responseB = makeResponse();
 
       expect(combineResponses(responseA, responseB).data[0].meta?.notices).toStrictEqual([
@@ -727,9 +713,7 @@ describe('combineResponses', () => {
         { severity: 'warning', text: 'Valid warning' },
         null as any, // Simulating the bug scenario
       ]);
-      const responseB = makeResponse([
-        { severity: 'info', text: 'Valid info' },
-      ]);
+      const responseB = makeResponse([{ severity: 'info', text: 'Valid info' }]);
 
       const result = combineResponses(responseA, responseB).data[0].meta?.notices;
       expect(result).toStrictEqual([
