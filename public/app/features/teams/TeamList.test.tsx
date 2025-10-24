@@ -1,63 +1,44 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, screen, waitFor } from 'test/test-utils';
 
+import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { MOCK_TEAMS } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { Team } from 'app/types/teams';
 
-import { Props, TeamList } from './TeamList';
-import { getMockTeam, getMultipleMockTeams } from './mocks/teamMocks';
+import TeamList from './TeamList';
 
-jest.mock('app/core/core', () => ({
-  contextSrv: {
-    hasPermission: (action: string) => true,
-    licensedAccessControlEnabled: () => false,
-    user: {
-      helpFlags1: 0,
-    },
-  },
-}));
-
-const setup = (propOverrides?: object) => {
-  const props: Props = {
-    teams: [] as Team[],
-    noTeams: false,
-    loadTeams: jest.fn(),
-    deleteTeam: jest.fn(),
-    changePage: jest.fn(),
-    changeQuery: jest.fn(),
-    changeSort: jest.fn(),
-    query: '',
-    totalPages: 0,
-    page: 0,
-    hasFetched: false,
-    perPage: 10,
-    rolesLoading: false,
-  };
-
-  Object.assign(props, propOverrides);
-
-  render(
-    <TestProvider>
-      <TeamList {...props} />
-    </TestProvider>
-  );
-};
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('TeamList', () => {
-  it('should render teams table', () => {
-    setup({ teams: getMultipleMockTeams(5), teamsCount: 5, hasFetched: true });
-    expect(screen.getAllByRole('row')).toHaveLength(6); // 5 teams plus table header row
+  beforeEach(() => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockReturnValue(true);
+    jest.spyOn(contextSrv, 'fetchUserPermissions').mockResolvedValue();
+  });
+
+  it('should render teams table', async () => {
+    render(<TeamList />);
+    await waitFor(() =>
+      expect(screen.getAllByRole('row'))
+        // Number of teams plus table header row
+        .toHaveLength(MOCK_TEAMS.length + 1)
+    );
+  });
+
+  it('deletes a team', async () => {
+    const mockTeam = MOCK_TEAMS[0];
+    const { user } = render(<TeamList />);
+    await user.click(await screen.findByRole('button', { name: `Delete team ${mockTeam.spec.title}` }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => expect(screen.queryByText(mockTeam.spec.title)).not.toBeInTheDocument());
   });
 
   describe('when user has access to create a team', () => {
-    it('should enable the new team button', () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-      setup({
-        teams: getMultipleMockTeams(1),
-        totalCount: 1,
-        hasFetched: true,
-      });
+    it('should enable the new team button', async () => {
+      render(<TeamList />);
 
       expect(screen.getByRole('link', { name: /new team/i })).not.toHaveStyle('pointer-events: none');
     });
@@ -66,25 +47,9 @@ describe('TeamList', () => {
   describe('when user does not have access to create a team', () => {
     it('should disable the new team button', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-      setup({
-        teams: getMultipleMockTeams(1),
-        totalCount: 1,
-        hasFetched: true,
-      });
+      render(<TeamList />);
 
       expect(screen.getByRole('link', { name: /new team/i })).toHaveStyle('pointer-events: none');
     });
-  });
-});
-
-it('should call delete team', async () => {
-  const mockDelete = jest.fn();
-  const mockTeam = getMockTeam();
-  jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockReturnValue(true);
-  setup({ deleteTeam: mockDelete, teams: [mockTeam], totalCount: 1, hasFetched: true });
-  await userEvent.click(screen.getByRole('button', { name: `Delete team ${mockTeam.name}` }));
-  await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
-  await waitFor(() => {
-    expect(mockDelete).toHaveBeenCalledWith(mockTeam.uid);
   });
 });

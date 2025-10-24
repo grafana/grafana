@@ -121,7 +121,7 @@ describe('SharedPreferences', () => {
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Week start' }), 'Saturday');
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /language/i }), 'Français');
 
-    await user.click(screen.getByText('Save'));
+    await user.click(screen.getByText('Save preferences'));
 
     const requests = await capture;
     const newPreferences = await getPrefsUpdateRequest(requests);
@@ -154,7 +154,7 @@ describe('SharedPreferences', () => {
 
     await selectComboboxOptionInTest(screen.getByRole('combobox', { name: /language/i }), 'Default');
 
-    await user.click(screen.getByText('Save'));
+    await user.click(screen.getByText('Save preferences'));
     const requests = await capture;
     const newPreferences = await getPrefsUpdateRequest(requests);
     expect(newPreferences).toEqual({
@@ -171,7 +171,7 @@ describe('SharedPreferences', () => {
 
   it('refreshes the page after saving preferences', async () => {
     const { user } = await setup();
-    await user.click(screen.getByText('Save'));
+    await user.click(screen.getByText('Save preferences'));
     expect(mockReload).toHaveBeenCalled();
   });
 });
