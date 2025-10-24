@@ -147,7 +147,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		access.CanStar = user.IsIdentityType(authlib.TypeUser)
 
 		access.AnnotationsPermissions = &dashboard.AnnotationPermission{}
-		r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
+		r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, dashScope)
 		r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
 		title := obj.FindTitle("")
