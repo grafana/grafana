@@ -10,7 +10,7 @@ labels:
     - enterprise
     - oss
 title: Configure authentication
-weight: 200
+weight: 100
 ---
 
 # Configure authentication

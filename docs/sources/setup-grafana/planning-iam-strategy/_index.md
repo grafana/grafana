@@ -1,8 +1,8 @@
 ---
 title: Plan your IAM integration strategy
-menuTitle: Plan access management
+menuTitle: Configure access management
 description: Learn how to plan your identity and access management strategy before setting up Grafana.
-weight: 100
+weight: 700
 keywords:
   - IdP
   - IAM

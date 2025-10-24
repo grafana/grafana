@@ -15,7 +15,7 @@ labels:
     - enterprise
 title: Manage multi-team access in a single Grafana instance
 menuTitle: Multi-team access
-weight: 200
+weight: 500
 refs:
   create-folder:
     - pattern: /docs/grafana/

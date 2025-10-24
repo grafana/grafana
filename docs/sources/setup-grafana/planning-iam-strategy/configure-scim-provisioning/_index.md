@@ -12,7 +12,7 @@ labels:
     - enterprise
 menuTitle: Configure SCIM provisioning
 title: Configure SCIM provisioning
-weight: 300
+weight: 200
 ---
 
 # Configure SCIM provisioning
