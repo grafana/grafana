@@ -17,6 +17,13 @@ const paginationStyles = {
   }),
 };
 
+/**
+ * a React hook used to encapsulate the rendering and state for pagination in StateTimeline.
+ * @param frames DataFrames to paginate
+ * @param perPage number of series per page
+ * @returns the current frames rendered, the pagination element to render, the height of the pagination element,
+ *    and a paginationRev which GraphNG uses to trigger re-renders.
+ */
 export function usePagination(frames?: DataFrame[], perPage?: number) {
   const [currentPage, setCurrentPage] = useState(1);
 
