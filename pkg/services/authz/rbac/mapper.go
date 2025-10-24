@@ -238,6 +238,11 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport: false,
 			},
 		},
+		"provisioning.grafana.app": {
+			"repositories": newResourceTranslation("provisioning.repositories", "uid", false, false),
+			"jobs":         newResourceTranslation("provisioning.jobs", "uid", false, false),
+			"historicjobs": newResourceTranslation("provisioning.historicjobs", "uid", false, false),
+		},
 		"secret.grafana.app": {
 			"securevalues": newResourceTranslation("secret.securevalues", "uid", false, false),
 			"keepers":      newResourceTranslation("secret.keepers", "uid", false, false),
