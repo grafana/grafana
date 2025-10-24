@@ -34,7 +34,7 @@ You can configure SAML authentication in Grafana through one of the following me
 - Configure SAML using the [SAML user interface](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/saml-ui/)
 - Configure SAML using the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/<GRAFANA_VERSION>/docs/resources/sso_settings)
 
-If you are using Okta or Azure AD as Identity Provider, see the following documentation for configuration:
+If you are using Okta or Entra ID as Identity Provider, see the following documentation for configuration:
 
 - [Configure SAML with Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/)
 - [Configure SAML with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/)
