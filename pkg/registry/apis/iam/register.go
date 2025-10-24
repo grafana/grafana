@@ -305,8 +305,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 		if enableZanzanaSync {
-			b.logger.Info("Enabling AfterCreate hook for ResourcePermission to sync to Zanzana")
+			b.logger.Info("Enabling AfterCreate, BeginUpdate, and AfterDelete hooks for ResourcePermission to sync to Zanzana")
 			resourcePermissionStore.AfterCreate = b.AfterResourcePermissionCreate
+			resourcePermissionStore.BeginUpdate = b.BeginResourcePermissionUpdate
+			resourcePermissionStore.AfterDelete = b.AfterResourcePermissionDelete
 		}
 		storage[iamv0.ResourcePermissionInfo.StoragePath()] = resourcePermissionStore
 	}
