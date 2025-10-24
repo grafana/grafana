@@ -501,6 +501,22 @@ describe('MultiCombobox', () => {
       // The pill should be removed
       expect(screen.queryByRole('button', { name: 'Remove Integration A' })).not.toBeInTheDocument();
     });
+
+    it('shows loading message', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      render(<MultiCombobox options={asyncOptions} value={['Option 1']} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+
+      await act(async () => jest.advanceTimersByTime(0));
+
+      expect(await screen.findByText('Loading options...')).toBeInTheDocument();
+
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+
+      expect(screen.queryByText('Loading options...')).not.toBeInTheDocument();
+    });
   });
 });
 
