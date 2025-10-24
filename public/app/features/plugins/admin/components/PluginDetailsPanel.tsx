@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/internal';
 import {
@@ -249,7 +249,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
       </Stack>
       {reportAbuseModalOpen && (
         <Modal
-          title={<Trans i18nKey="plugins.details.modal.title">Report a plugin concern</Trans>}
+          title={t('plugins.details.modal.title', 'Report a plugin concern')}
           isOpen
           onDismiss={() => setReportAbuseModalOpen(false)}
         >

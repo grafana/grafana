@@ -1,25 +1,24 @@
-import { PureComponent } from 'react';
+import { memo } from 'react';
 
 import { Trans } from '@grafana/i18n';
 
 import { CanvasElementItem, CanvasElementProps } from '../element';
 
-class NotFoundDisplay extends PureComponent<CanvasElementProps> {
-  render() {
-    const { config } = this.props;
-    return (
-      <div>
-        <Trans
-          i18nKey="canvas.not-found-display.not-found"
-          components={{ config: <pre>{JSON.stringify(config, null, 2)}</pre> }}
-        >
-          <h3>Not found: </h3>
-          {'<config />'}
-        </Trans>
-      </div>
-    );
-  }
-}
+const NotFoundDisplay = memo(({ config }: CanvasElementProps) => {
+  return (
+    <div>
+      <Trans
+        i18nKey="canvas.not-found-display.not-found"
+        components={{ config: <pre>{JSON.stringify(config, null, 2)}</pre> }}
+      >
+        <h3>Not found: </h3>
+        {'<config />'}
+      </Trans>
+    </div>
+  );
+});
+
+NotFoundDisplay.displayName = 'NotFoundDisplay';
 
 export const notFoundItem: CanvasElementItem = {
   id: 'not-found',
