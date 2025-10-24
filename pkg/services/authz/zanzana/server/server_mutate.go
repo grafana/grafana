@@ -70,7 +70,7 @@ func getOperationGroup(operation *authzextv1.MutateOperation) (OperationGroup, e
 	switch operation.Operation.(type) {
 	case *authzextv1.MutateOperation_SetFolderParent, *authzextv1.MutateOperation_DeleteFolder:
 		return OperationGroupFolder, nil
-	case *authzextv1.MutateOperation_AddPermission, *authzextv1.MutateOperation_DeletePermission:
+	case *authzextv1.MutateOperation_CreatePermission, *authzextv1.MutateOperation_DeletePermission:
 		return OperationGroupPermission, nil
 	}
 	return OperationGroup(""), errors.New("unsupported mutate operation type")

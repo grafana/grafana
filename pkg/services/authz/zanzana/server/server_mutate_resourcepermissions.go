@@ -30,8 +30,8 @@ func (s *Server) mutateResourcePermissions(ctx context.Context, store *storeInfo
 
 	for _, operation := range operations {
 		switch op := operation.Operation.(type) {
-		case *authzextv1.MutateOperation_AddPermission:
-			tuple, err := s.getPermissionWriteTuple(ctx, op.AddPermission)
+		case *authzextv1.MutateOperation_CreatePermission:
+			tuple, err := s.getPermissionWriteTuple(ctx, op.CreatePermission)
 			if err != nil {
 				return err
 			}
@@ -47,18 +47,24 @@ func (s *Server) mutateResourcePermissions(ctx context.Context, store *storeInfo
 		}
 	}
 
-	_, err := s.openfga.Write(ctx, &openfgav1.WriteRequest{
+	writeReq := &openfgav1.WriteRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
-		Writes: &openfgav1.WriteRequestWrites{
+	}
+	if len(writeTuples) > 0 {
+		writeReq.Writes = &openfgav1.WriteRequestWrites{
 			TupleKeys:   writeTuples,
 			OnDuplicate: "ignore",
-		},
-		Deletes: &openfgav1.WriteRequestDeletes{
+		}
+	}
+	if len(deleteTuples) > 0 {
+		writeReq.Deletes = &openfgav1.WriteRequestDeletes{
 			TupleKeys: deleteTuples,
 			OnMissing: "ignore",
-		},
-	})
+		}
+	}
+
+	_, err := s.openfga.Write(ctx, writeReq)
 	if err != nil {
 		s.logger.Error("failed to write resource permission tuples", "error", err)
 		return err

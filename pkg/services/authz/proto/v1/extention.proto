@@ -28,7 +28,7 @@ message MutateOperation {
   oneof operation {
     SetFolderParentOperation set_folder_parent = 1;
     DeleteFolderOperation delete_folder = 2;
-    CreatePermissionOperation add_permission = 3;
+    CreatePermissionOperation create_permission = 3;
     DeletePermissionOperation delete_permission = 4;
   }
 }
