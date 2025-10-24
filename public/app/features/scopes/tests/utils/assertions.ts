@@ -63,10 +63,6 @@ export const expectResultApplicationsMimirNotPresent = () => expectNotInDocument
 export const expectResultApplicationsCloudPresent = () => expectInDocument(getResultApplicationsCloudSelect);
 export const expectResultApplicationsCloudNotPresent = () => expectNotInDocument(queryResultApplicationsCloudSelect);
 
-export const expectResultInfrastructureSelected = () => expectChecked(getResultInfrastructureSelect);
-export const expectResultInfrastructurePresent = () => expectInDocument(getResultInfrastructureSelect);
-export const expectResultInfrastructureNotPresent = () => expectNotInDocument(queryResultInfrastructureSelect);
-
 export const expectResultEnvironmentsDevSelected = () => expectChecked(getResultEnvironmentsDevSelect);
 export const expectResultEnvironmentsDevNotSelected = () => expectNotChecked(getResultEnvironmentsDevSelect);
 export const expectResultEnvironmentsProdSelected = () => expectChecked(getResultEnvironmentsProdSelect);
