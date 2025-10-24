@@ -33,12 +33,12 @@ In order to plan an integration with Grafana, assess your organization's current
 As a first step, determine how you want to manage users who will access Grafana.
 
 Do you already use an identity provider to manage users? If so, Grafana might be able to integrate with your identity provider through one of our IdP integrations.
-Refer to [Configure authentication documentation](../configure-authentication/) for the list of supported providers.
+Refer to [Configure authentication documentation](../configure-access/configure-authentication/) for the list of supported providers.
 
 If you are not interested in setting up an external identity provider, but still want to limit access to your Grafana instance, consider using Grafana's basic authentication.
 
 Finally, if you want your Grafana instance to be accessible to everyone, you can enable anonymous access to Grafana.
-For information, refer to the [anonymous authentication documentation](../configure-authentication/#anonymous-authentication).
+For information, refer to the [anonymous authentication documentation](../configure-access/configure-authentication/#anonymous-authentication).
 
 ## Ways to organize users
 
