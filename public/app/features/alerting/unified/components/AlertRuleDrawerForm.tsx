@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Drawer, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { getMessageFromError } from 'app/core/utils/errors';
 import { RuleDefinitionSection } from 'app/features/alerting/unified/components/RuleDefinitionSection';
 
 import { isGrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
@@ -22,14 +23,20 @@ export interface AlertRuleDrawerFormProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
-  onContinueInAlerting?: () => void;
+  onContinueInAlerting?: (values: RuleFormValues) => void;
   prefill?: Partial<RuleFormValues>;
 }
 
-export function AlertRuleDrawerForm({ isOpen, onClose, title, onContinueInAlerting, prefill }: AlertRuleDrawerFormProps) {
+export function AlertRuleDrawerForm({
+  isOpen,
+  onClose,
+  title,
+  onContinueInAlerting,
+  prefill,
+}: AlertRuleDrawerFormProps) {
   const baseDefaults = useMemo(() => getDefaultFormValues(RuleFormType.grafana), []);
   const methods = useForm<RuleFormValues>({
-    defaultValues: prefill ? { ...baseDefaults, ...(prefill as Partial<RuleFormValues>) } : baseDefaults,
+    defaultValues: prefill ? { ...baseDefaults, ...prefill } : baseDefaults,
   });
   const styles = useStyles2(getStyles);
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
@@ -38,9 +45,9 @@ export function AlertRuleDrawerForm({ isOpen, onClose, title, onContinueInAlerti
   // Keep form in sync if prefill changes between openings
   useEffect(() => {
     if (prefill) {
-      methods.reset({ ...baseDefaults, ...(prefill as Partial<RuleFormValues>) });
+      methods.reset({ ...baseDefaults, ...prefill });
     }
-  }, [prefill, methods]);
+  }, [prefill, methods, baseDefaults]);
 
   if (!isOpen) {
     return null;
@@ -48,7 +55,8 @@ export function AlertRuleDrawerForm({ isOpen, onClose, title, onContinueInAlerti
 
   const submit = async (values: RuleFormValues) => {
     try {
-      const groupName = values.group && values.group.trim().length > 0 ? values.group : (values.name?.trim() || 'default');
+      const groupName =
+        values.group && values.group.trim().length > 0 ? values.group : values.name?.trim() || 'default';
       const effectiveValues: RuleFormValues = { ...values, group: groupName };
 
       const dto = formValuesToRulerGrafanaRuleDTO(effectiveValues);
@@ -59,9 +67,9 @@ export function AlertRuleDrawerForm({ isOpen, onClose, title, onContinueInAlerti
         return;
       }
       notifyApp.error('Failed to create rule', 'The rule was not created. Please review the form and try again.');
-    } catch (err: any) {
-      const msg = err?.data?.message || err?.message || 'Unknown error while creating the rule.';
-      notifyApp.error('Failed to create rule', msg);
+    } catch (err) {
+      const errorMessage = getMessageFromError(err);
+      notifyApp.error('Failed to create rule', errorMessage);
     }
   };
 
@@ -93,7 +101,7 @@ export function AlertRuleDrawerForm({ isOpen, onClose, title, onContinueInAlerti
               {t('alerting.common.cancel', 'Cancel')}
             </Button>
             {onContinueInAlerting && (
-              <Button variant="secondary" type="button" onClick={onContinueInAlerting}>
+              <Button variant="secondary" type="button" onClick={() => onContinueInAlerting(methods.getValues())}>
                 {t('alerting.simplified.continue-in-alerting', 'Continue in Alerting')}
               </Button>
             )}

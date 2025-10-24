@@ -12,6 +12,7 @@ import { useSelector } from 'app/types/store';
 
 import { LogMessages } from '../../Analytics';
 import { AlertRuleDrawerForm } from '../../components/AlertRuleDrawerForm';
+import type { RuleFormValues } from '../../types/rule-form';
 import { panelToRuleFormValues } from '../../utils/rule-form';
 
 interface Props {
@@ -58,15 +59,23 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
     );
   }
 
-  const onContinueInAlerting = async () => {
+  const navigateToAlerting = async (currentValues?: RuleFormValues) => {
     logInfo(LogMessages.alertRuleFromPanel);
-    // Refresh values to ensure they're up-to-date with current panel state
-    const updateToDateFormValues = await panelToRuleFormValues(panel, dashboard);
+    // Prefer current drawer values if provided; otherwise refresh from panel state
+    const updateToDateFormValues = currentValues ?? (await panelToRuleFormValues(panel, dashboard));
     const ruleFormUrl = urlUtil.renderUrl('alerting/new', {
       defaults: JSON.stringify(updateToDateFormValues),
       returnTo: location.pathname + location.search,
     });
     locationService.push(ruleFormUrl);
+  };
+
+  const onContinueInAlertingFromDrawer = (values: RuleFormValues) => {
+    void navigateToAlerting(values);
+  };
+
+  const onContinueInAlertingButton = () => {
+    void navigateToAlerting(undefined);
   };
 
   const shouldUseDrawer = config.featureToggles.createAlertRuleFromPanel;
@@ -85,7 +94,7 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
         <AlertRuleDrawerForm
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
-          onContinueInAlerting={onContinueInAlerting}
+          onContinueInAlerting={onContinueInAlertingFromDrawer}
           prefill={formValues ?? undefined}
         />
       </>
@@ -95,7 +104,7 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
   return (
     <LinkButton
       icon="bell"
-      onClick={onContinueInAlerting}
+      onClick={onContinueInAlertingButton}
       href={urlUtil.renderUrl('alerting/new', {
         defaults: JSON.stringify(formValues),
         returnTo: location.pathname + location.search,
