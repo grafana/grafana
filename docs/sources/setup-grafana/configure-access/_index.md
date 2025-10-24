@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../configure-security/planning-iam-strategy/ # /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/planning-iam-strategy/
 title: Plan your IAM integration strategy
 menuTitle: Configure access management
 description: Learn how to plan your identity and access management strategy before setting up Grafana.
