@@ -42,7 +42,7 @@ For more information, refer to the [feature toggles documentation](/docs/grafana
 When using SAML for authentication alongside SCIM provisioning with Azure AD, it is crucial to correctly align user identifiers.
 For detailed information on why this is critical for security and how to configure it, refer to the main [SCIM provisioning documentation](../).
 
-Refer to the [SAML authentication with Azure AD documentation](../../configure-authentication/saml/configure-saml-with-azuread/) for specific instructions on how to configure SAML claims and Grafana SAML settings for your Azure AD SCIM setup.
+Refer to the [SAML authentication with Entra ID documentation](../../configure-authentication/saml/configure-saml-with-entraid/) for specific instructions on how to configure SAML claims and Grafana SAML settings for your Azure AD SCIM setup.
 {{< /admonition >}}
 
 ## Prerequisites

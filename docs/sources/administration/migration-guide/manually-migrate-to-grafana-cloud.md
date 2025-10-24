@@ -277,7 +277,7 @@ Grizzly does not currently support Reports and Playlists as a resource, so you c
 
 Grafana Cloud stacks support all of the same authentication and authorization options as Grafana OSS/Enterprise, except for [anonymous authentication](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/anonymous-auth/) and use of the [Auth proxy](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/auth-proxy/). However, single sign-on settings cannot be exported and imported like dashboards, alerts, and other resources.
 
-To set up SAML authentication from scratch using Grafana’s UI or API, follow [these instructions](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml-ui/) to Configure SAML authentication in Grafana.
+To set up SAML authentication from scratch using Grafana’s UI or API, follow [these instructions](https://grafana.com/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/saml-ui/) to Configure SAML authentication in Grafana.
 
 LDAP and OIDC/OAuth2 can only be configured in Grafana Cloud by the Grafana Labs support team. Follow [these instructions](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/) to request SSO configuration from the support team.
 
