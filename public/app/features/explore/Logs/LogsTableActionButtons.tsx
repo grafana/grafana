@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
-import * as React from 'react';
 
 import {
   AbsoluteTimeRange,
@@ -14,50 +13,12 @@ import { t } from '@grafana/i18n';
 import { ClipboardButton, CustomCellRendererProps, IconButton, Modal, useTheme2 } from '@grafana/ui';
 import { getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { getUrlStateFromPaneState } from 'app/features/explore/hooks/useStateSync';
+import { LogsFrame } from 'app/features/logs/logsFrame';
 import { getState } from 'app/store/store';
-
-export const getStyles = (theme: GrafanaTheme2, isNumber?: boolean) => ({
-  clipboardButton: css({
-    height: '100%',
-    lineHeight: '1',
-    padding: 0,
-    width: '20px',
-  }),
-  iconWrapper: css({
-    background: theme.colors.background.secondary,
-    boxShadow: theme.shadows.z2,
-    display: 'flex',
-    flexDirection: isNumber ? 'row-reverse' : 'row',
-    height: '35px',
-    left: 0,
-    top: 0,
-    padding: `0 ${theme.spacing(0.5)}`,
-    position: 'absolute',
-    zIndex: 1,
-  }),
-  inspect: css({
-    '& button svg': {
-      marginRight: isNumber ? '0' : 'auto',
-    },
-    '&:hover': {
-      color: theme.colors.text.link,
-      cursor: 'pointer',
-    },
-    padding: '5px 3px',
-  }),
-  inspectButton: css({
-    borderRadius: theme.shape.radius.default,
-    display: 'inline-flex',
-    margin: 0,
-    overflow: 'hidden',
-    verticalAlign: 'middle',
-  }),
-});
-
 interface Props extends CustomCellRendererProps {
   fieldIndex: number;
   logId?: string;
-  logsFrame?: { bodyField: { name: string } };
+  logsFrame?: LogsFrame;
   exploreId?: string;
   panelState?: ExploreLogsPanelState;
   displayedFields?: string[];
@@ -82,47 +43,20 @@ export function LogsTableActionButtons(props: Props) {
 
   const theme = useTheme2();
   const [isInspecting, setIsInspecting] = useState(false);
-
-  // Get the actual log line content from the data frame
-  const getLogLineContent = () => {
-    // Use the body field name from logsFrame if available, otherwise fallback to common names
+  const getLineValue = () => {
     const bodyFieldName = logsFrame?.bodyField?.name;
+    const bodyField = bodyFieldName
+      ? frame.fields.find((field) => field.name === bodyFieldName)
+      : frame.fields.find((field) => field.type === 'string');
 
-    let bodyField;
-    if (bodyFieldName) {
-      // Use the exact field name from logsFrame
-      bodyField = frame.fields.find((field) => field.name === bodyFieldName);
-    } else {
-      // Fallback to common field names
-      bodyField = frame.fields.find(
-        (field) =>
-          field.name === 'Line' ||
-          field.name === 'body' ||
-          field.name === 'message' ||
-          field.name === 'text' ||
-          (field.type === 'string' && field.name !== 'Time')
-      );
-    }
-
-    if (bodyField && bodyField.values[rowIndex] !== undefined) {
-      const rawValue = bodyField.values[rowIndex];
-      if (React.isValidElement(rawValue)) {
-        return rawValue;
-      } else if (typeof rawValue === 'object') {
-        return JSON.stringify(rawValue);
-      } else {
-        return String(rawValue);
-      }
-    }
-
-    return 'No log line content available';
+    return bodyField?.values[rowIndex];
   };
 
-  const value = getLogLineContent();
-  // Check if the value is a number to reset the position of the icons for direction 'rtl'
-  const isNumber = typeof value === 'string' && !isNaN(Number(value));
-  const styles = getStyles(theme, isNumber);
+  const lineValue = getLineValue();
 
+  const styles = getStyles(theme);
+
+  // Generate link to the log line
   const getText = useCallback(() => {
     if (!logId || !exploreId || !absoluteRange || !logRows) {
       return '';
@@ -212,11 +146,9 @@ export function LogsTableActionButtons(props: Props) {
           isOpen={true}
           title={t('explore.logs-table.action-buttons.inspect-value', 'Inspect value')}
         >
-          <div style={{ maxHeight: '400px', overflow: 'auto' }}>
-            <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{String(value)}</pre>
-          </div>
+          <pre>{lineValue}</pre>
           <Modal.ButtonRow>
-            <ClipboardButton icon="copy" getText={() => String(value)}>
+            <ClipboardButton icon="copy" getText={() => String(props.value)}>
               {t('explore.logs-table.action-buttons.copy-to-clipboard', 'Copy to Clipboard')}
             </ClipboardButton>
           </Modal.ButtonRow>
@@ -225,3 +157,41 @@ export function LogsTableActionButtons(props: Props) {
     </>
   );
 }
+
+export const getStyles = (theme: GrafanaTheme2) => ({
+  clipboardButton: css({
+    height: '100%',
+    lineHeight: '1',
+    padding: 0,
+    width: '20px',
+  }),
+  iconWrapper: css({
+    background: theme.colors.background.secondary,
+    boxShadow: theme.shadows.z2,
+    display: 'flex',
+    flexDirection: 'row',
+    height: '35px',
+    left: 0,
+    top: 0,
+    padding: `0 ${theme.spacing(0.5)}`,
+    position: 'absolute',
+    zIndex: 1,
+  }),
+  inspect: css({
+    '& button svg': {
+      marginRight: 'auto',
+    },
+    '&:hover': {
+      color: theme.colors.text.link,
+      cursor: 'pointer',
+    },
+    padding: '5px 3px',
+  }),
+  inspectButton: css({
+    borderRadius: theme.shape.radius.default,
+    display: 'inline-flex',
+    margin: 0,
+    overflow: 'hidden',
+    verticalAlign: 'middle',
+  }),
+});

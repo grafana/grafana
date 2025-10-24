@@ -180,7 +180,7 @@ export function LogsTable(props: Props) {
                         {...cellProps}
                         fieldIndex={0}
                         logId={logsFrame?.idField?.values[cellProps.rowIndex]}
-                        logsFrame={logsFrame ? { bodyField: { name: logsFrame.bodyField.name } } : undefined}
+                        logsFrame={logsFrame ?? undefined}
                         exploreId={props.exploreId}
                         panelState={props.panelState}
                         displayedFields={props.displayedFields}
