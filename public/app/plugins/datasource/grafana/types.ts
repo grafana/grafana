@@ -33,6 +33,13 @@ export interface GrafanaQuery extends DataQuery {
   snapshot?: DataFrameJSON[];
   timeRegion?: TimeRegionConfig;
   file?: GrafanaQueryFile;
+  // Random walk configuration
+  startValue?: number;
+  min?: number;
+  max?: number;
+  spread?: number;
+  noise?: number;
+  dropPercent?: number;
 }
 
 export interface GrafanaQueryFile {
