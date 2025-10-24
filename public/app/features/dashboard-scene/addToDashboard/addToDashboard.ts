@@ -27,7 +27,7 @@ interface AddPanelToDashboardOptions {
   openInNewTab?: boolean;
   timeRange?: TimeRange;
   options?: {
-    isExternalApp?: boolean;
+    useAbsolutePath?: boolean;
   };
 }
 
@@ -89,7 +89,7 @@ export function addToDashboard({
 
   let navigateToDashboardUrl = locationUtil.stripBaseFromUrl(dashboardURL);
 
-  if (options?.isExternalApp) {
+  if (options?.useAbsolutePath) {
     navigateToDashboardUrl = '/' + navigateToDashboardUrl;
   }
 

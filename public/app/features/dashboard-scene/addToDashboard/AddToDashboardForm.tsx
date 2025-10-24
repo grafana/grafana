@@ -41,7 +41,7 @@ export interface Props<TOptions = undefined> {
   children?: React.ReactNode;
 }
 
-export function AddToDashboardForm<TOptions extends ExternalAppOptions | undefined = undefined>({
+export function AddToDashboardForm<TOptions extends AbsolutePathOptions | undefined = undefined>({
   onClose,
   buildPanel,
   timeRange,
@@ -203,6 +203,8 @@ function assertIsSaveToExistingDashboardError(
   // when we use it in the form.
 }
 
-interface ExternalAppOptions {
-  isExternalApp: boolean;
+export interface AbsolutePathOptions {
+  useAbsolutePath: boolean;
 }
+
+export default AddToDashboardForm;
