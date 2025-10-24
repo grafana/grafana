@@ -215,13 +215,13 @@ If you use a SAML identity provider to manage your users but prefer to assign ro
 
 Use the `skip_org_role_sync` configuration option when configuring SAML to prevent synchronization with SAML roles and make user roles editable from within Grafana.
 
-For more information, see the [SAML configuration documentation](/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/saml/).
+For more information, see the [SAML configuration documentation](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/).
 
 ## Assign Server Admin permissions from Oauth
 
 You can now map OAuth groups and roles to Server Admin for the GitLab, GitHub, AzureAD, Okta, and Generic OAuth integrations.
 To enable this functionality, set the `allow_assign_grafana_admin` configuration option to `true` in the desired OAuth integration section.
-For more information, see the [authentication configuration documentation](/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/) for each OAuth client.
+For more information, see the [authentication configuration documentation](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/) for each OAuth client.
 
 ## Match parameter support in prometheus labels API
 
