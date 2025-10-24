@@ -4,6 +4,7 @@ import React from 'react';
 
 import { MultiCombobox, MultiComboboxProps } from './MultiCombobox';
 import { ComboboxOption } from './types';
+import { DEBOUNCE_TIME_MS } from './useOptions';
 
 describe('MultiCombobox', () => {
   beforeAll(() => {
@@ -330,7 +331,7 @@ describe('MultiCombobox', () => {
       await user.click(input);
 
       // Debounce
-      await act(async () => jest.advanceTimersByTime(200));
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       expect(asyncOptions).toHaveBeenCalled();
     });
@@ -380,10 +381,10 @@ describe('MultiCombobox', () => {
       await user.click(input);
 
       await user.keyboard('a');
-      act(() => jest.advanceTimersByTime(200)); // Skip debounce
+      act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS)); // Skip debounce
 
       await user.keyboard('b');
-      act(() => jest.advanceTimersByTime(200)); // Skip debounce
+      act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS)); // Skip debounce
 
       await user.keyboard('c');
       act(() => jest.advanceTimersByTime(500)); // Resolve the second request, should be ignored
@@ -422,7 +423,7 @@ describe('MultiCombobox', () => {
       act(() => jest.advanceTimersByTime(10));
 
       await user.keyboard('c');
-      act(() => jest.advanceTimersByTime(200));
+      act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       const item = await screen.findByRole('option', { name: 'Option 3' });
       expect(item).toBeInTheDocument();
@@ -439,7 +440,7 @@ describe('MultiCombobox', () => {
       await user.click(input);
 
       // Debounce
-      await act(async () => jest.advanceTimersByTime(200));
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       // Click on Option 1 to deselect it (it should already be selected via value prop)
       const item = await screen.findByRole('option', { name: 'Option 1' });
@@ -484,7 +485,7 @@ describe('MultiCombobox', () => {
       await user.click(input);
 
       // Wait for async options to load
-      await act(async () => jest.advanceTimersByTime(200));
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       // Integration A should be selected (shown as pill)
       const pillRemoveButton = screen.getByRole('button', { name: 'Remove Integration A' });
