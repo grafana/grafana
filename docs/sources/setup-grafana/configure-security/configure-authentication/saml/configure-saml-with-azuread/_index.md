@@ -78,7 +78,7 @@ In order to validate Entra ID users with Grafana, you need to configure the SAML
 1. In the **Add a client secret** pane, enter a description for the secret.
 1. Set the expiration date for the secret.
 1. Select **Add**.
-1. Copy the value of the secret. This value is used in the `client_secret` field in the [SAML configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/saml-configuration-options/).
+1. Copy the value of the secret. This value is used in the `client_secret` field in the [SAML configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/saml-configuration-options/).
 
 ## Configure SAML assertions when using SCIM provisioning
 
