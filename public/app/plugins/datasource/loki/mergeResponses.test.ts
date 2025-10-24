@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { DataQueryResponse, Field, FieldType, QueryResultMetaStat } from '@grafana/data';
+import { DataQueryResponse, Field, FieldType, QueryResultMetaNotice, QueryResultMetaStat } from '@grafana/data';
 
 import { cloneQueryResponse, combineResponses } from './mergeResponses';
 import { getMockFrames } from './mocks/frames';
@@ -636,6 +636,100 @@ describe('combineResponses', () => {
       const responseA = makeResponse();
       const responseB = makeResponse();
       expect(combineResponses(responseA, responseB).data[0].meta.stats).toHaveLength(0);
+    });
+  });
+
+  describe('combine notices', () => {
+    const { metricFrameA } = getMockFrames();
+    const makeResponse = (notices?: QueryResultMetaNotice[]): DataQueryResponse => ({
+      data: [
+        {
+          ...metricFrameA,
+          meta: {
+            ...metricFrameA.meta,
+            notices,
+          },
+        },
+      ],
+    });
+
+    it('combines notices from both frames', () => {
+      const responseA = makeResponse([
+        { severity: 'warning', text: 'Warning from frame A' },
+      ]);
+      const responseB = makeResponse([
+        { severity: 'info', text: 'Info from frame B' },
+      ]);
+
+      expect(combineResponses(responseA, responseB).data[0].meta?.notices).toStrictEqual([
+        { severity: 'warning', text: 'Warning from frame A' },
+        { severity: 'info', text: 'Info from frame B' },
+      ]);
+    });
+
+    it('deduplicates identical notices', () => {
+      const responseA = makeResponse([
+        { severity: 'warning', text: 'Same warning' },
+      ]);
+      const responseB = makeResponse([
+        { severity: 'warning', text: 'Same warning' },
+      ]);
+
+      expect(combineResponses(responseA, responseB).data[0].meta?.notices).toStrictEqual([
+        { severity: 'warning', text: 'Same warning' },
+      ]);
+    });
+
+    it('keeps notices with same text but different severity', () => {
+      const responseA = makeResponse([
+        { severity: 'warning', text: 'Message' },
+      ]);
+      const responseB = makeResponse([
+        { severity: 'info', text: 'Message' },
+      ]);
+
+      expect(combineResponses(responseA, responseB).data[0].meta?.notices).toStrictEqual([
+        { severity: 'warning', text: 'Message' },
+        { severity: 'info', text: 'Message' },
+      ]);
+    });
+
+    it('handles one frame with notices and one without', () => {
+      const responseA = makeResponse([
+        { severity: 'warning', text: 'Warning message' },
+      ]);
+      const responseB = makeResponse();
+
+      expect(combineResponses(responseA, responseB).data[0].meta?.notices).toStrictEqual([
+        { severity: 'warning', text: 'Warning message' },
+      ]);
+
+      expect(combineResponses(responseB, responseA).data[0].meta?.notices).toStrictEqual([
+        { severity: 'warning', text: 'Warning message' },
+      ]);
+    });
+
+    it('returns empty array when neither frame has notices', () => {
+      const responseA = makeResponse();
+      const responseB = makeResponse();
+      expect(combineResponses(responseA, responseB).data[0].meta?.notices).toHaveLength(0);
+    });
+
+    it('filters out null values from notices arrays', () => {
+      const responseA = makeResponse([
+        { severity: 'warning', text: 'Valid warning' },
+        null as any, // Simulating the bug scenario
+      ]);
+      const responseB = makeResponse([
+        { severity: 'info', text: 'Valid info' },
+      ]);
+
+      const result = combineResponses(responseA, responseB).data[0].meta?.notices;
+      expect(result).toStrictEqual([
+        { severity: 'warning', text: 'Valid warning' },
+        { severity: 'info', text: 'Valid info' },
+      ]);
+      expect(result).not.toContainEqual(null);
     });
   });
 
