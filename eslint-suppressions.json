@@ -2756,11 +2756,6 @@
       "count": 1
     }
   },
-  "public/app/features/datasources/components/DataSourcePluginSettings.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/datasources/components/DataSourcePluginState.tsx": {
     "no-restricted-syntax": {
       "count": 3
