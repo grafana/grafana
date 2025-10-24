@@ -3553,11 +3553,6 @@
       "count": 1
     }
   },
-  "public/app/features/teams/TeamSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 4
-    }
-  },
   "public/app/features/teams/state/reducers.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1

@@ -12678,6 +12678,7 @@
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
     },
+    "save": "Save preferences",
     "theme": {
       "default-label": "Default",
       "experimental": "Experimental"
@@ -13079,13 +13080,13 @@
       "placeholder-search-teams": "Search teams"
     },
     "team-settings": {
-      "description-email": "This is optional and is primarily used to set the team profile avatar (via gravatar service)",
+      "description-email": "This is optional and is primarily used to set the team profile avatar (via the Gravatar service)",
       "label-email": "Email",
       "label-name": "Name",
       "label-numerical-identifier": "Numerical identifier",
       "label-role": "Role",
       "label-team-details": "Team details",
-      "save": "Save"
+      "save": "Save team details"
     },
     "team-sync-upgrade-content": {
       "description": "Team Sync makes it easier for you to manage users' access in Grafana, by immediately updating each user's Grafana teams and permissions based on their single sign-on group membership, instead of when users sign in"
