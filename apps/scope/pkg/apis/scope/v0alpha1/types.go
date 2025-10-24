@@ -148,6 +148,7 @@ type ScopeNodeSpec struct {
 
 	Title              string `json:"title"`
 	//+optional
+	// Displays next to the title to provide more context.
 	SubTitle           string `json:"subTitle,omitempty"`
 	
 	//+optional

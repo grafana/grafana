@@ -840,8 +840,9 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 					},
 					"subTitle": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Displays next to the title to provide more context.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"description": {
