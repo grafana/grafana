@@ -32,6 +32,10 @@
       "import": "./src/clients/rtkq/advisor/v0alpha1/index.ts",
       "require": "./src/clients/rtkq/advisor/v0alpha1/index.ts"
     },
+    "./rtkq/correlations/v0alpha1": {
+      "import": "./src/clients/rtkq/correlations/v0alpha1/index.ts",
+      "require": "./src/clients/rtkq/correlations/v0alpha1/index.ts"
+    },
     "./rtkq/dashboard/v0alpha1": {
       "import": "./src/clients/rtkq/dashboard/v0alpha1/index.ts",
       "require": "./src/clients/rtkq/dashboard/v0alpha1/index.ts"
