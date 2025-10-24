@@ -10,6 +10,7 @@ import {
   incrRoundUp,
   TimeRange,
   FieldType,
+  getDisplayProcessor,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, HeatmapCellLayout } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
@@ -164,6 +165,11 @@ export function prepConfig(opts: PrepConfigOpts) {
   }
 
   let xField = dataRef.current?.heatmap?.fields[0]!;
+  xField.display ??= getDisplayProcessor({
+    field: xField,
+    theme,
+    timeZone,
+  });
 
   builder.addAxis({
     scaleKey: xScaleKey,
