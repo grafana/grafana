@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -224,6 +226,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 }
 
 func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
+	logger := logging.FromContext(ctx)
 	folderCtx, folderCancel := context.WithCancel(ctx)
 	defer folderCancel()
 
@@ -236,13 +239,26 @@ func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, cli
 			return err
 		}
 
-		applyChange(folderCtx, folder, clients, repositoryResources, progress, tracer)
+		folderChangeCtx, cancel := context.WithTimeout(folderCtx, 15*time.Second)
+		applyChange(folderChangeCtx, folder, clients, repositoryResources, progress, tracer)
+		if folderChangeCtx.Err() == context.DeadlineExceeded {
+			logger.Error("operation timed out after 15 seconds", "path", folder.Path, "action", folder.Action)
+			result := jobs.JobResourceResult{
+				Path:   folder.Path,
+				Action: folder.Action,
+				Error:  fmt.Errorf("operation timed out after 15 seconds"),
+			}
+			progress.Record(folderChangeCtx, result)
+		}
+		cancel()
 	}
 
 	return nil
 }
 
 func applyResourcesInParallel(ctx context.Context, resources []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int) error {
+	logger := logging.FromContext(ctx)
+
 	if len(resources) == 0 {
 		return nil
 	}
@@ -272,7 +288,18 @@ func applyResourcesInParallel(ctx context.Context, resources []ResourceFileChang
 						return
 					}
 
-					applyChange(workerCtx, change, clients, repositoryResources, progress, tracer)
+					changeCtx, changeCancel := context.WithTimeout(workerCtx, 15*time.Second)
+					applyChange(changeCtx, change, clients, repositoryResources, progress, tracer)
+					if changeCtx.Err() == context.DeadlineExceeded {
+						logger.Error("operation timed out after 15 seconds", "path", change.Path, "action", change.Action)
+						result := jobs.JobResourceResult{
+							Path:   change.Path,
+							Action: change.Action,
+							Error:  fmt.Errorf("operation timed out after 15 seconds"),
+						}
+						progress.Record(changeCtx, result)
+					}
+					changeCancel()
 
 				case <-workerCtx.Done():
 					return
