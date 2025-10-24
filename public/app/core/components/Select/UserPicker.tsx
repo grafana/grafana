@@ -66,4 +66,3 @@ export const UserPicker = ({ className, onSelected, inputId }: Props) => {
     </div>
   );
 };
-UserPicker.displayName = 'UserPicker';
