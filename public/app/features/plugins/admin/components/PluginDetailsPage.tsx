@@ -48,13 +48,12 @@ export function PluginDetailsPage({
     active: true,
   };
   const queryParams = new URLSearchParams(location.search);
-  let plugin = useGetSingle(pluginId); // fetches the plugin settings for this Grafana instance
+  const plugin = useGetSingle(pluginId); // fetches the plugin settings for this Grafana instance
   useGetPluginInsights(pluginId, plugin?.isInstalled ? plugin?.installedVersion : plugin?.latestVersion);
 
   const isNarrowScreen = useMedia('(max-width: 600px)');
   const { navModel, activePageId } = usePluginDetailsTabs(
     plugin,
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     queryParams.get('page') as PluginTabIds,
     isNarrowScreen
   );

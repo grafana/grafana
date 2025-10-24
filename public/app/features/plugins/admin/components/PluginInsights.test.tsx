@@ -1,7 +1,7 @@
 import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
-import { CatalogPluginInsights, ScoreLevel, InsightLevel } from '../types';
+import { CatalogPluginInsights, InsightLevel, SCORE_LEVELS } from '../types';
 
 import { PluginInsights } from './PluginInsights';
 
@@ -13,7 +13,7 @@ const mockPluginInsights: CatalogPluginInsights = {
     {
       name: 'security',
       scoreValue: 90,
-      scoreLevel: 'Excellent' as ScoreLevel,
+      scoreLevel: SCORE_LEVELS.EXCELLENT,
       items: [
         {
           id: 'signature',
@@ -31,7 +31,7 @@ const mockPluginInsights: CatalogPluginInsights = {
     {
       name: 'quality',
       scoreValue: 60,
-      scoreLevel: 'Fair' as ScoreLevel,
+      scoreLevel: SCORE_LEVELS.FAIR,
       items: [
         {
           id: 'metadatavalid',
@@ -57,7 +57,7 @@ const mockPluginInsightsWithDangerLevel: CatalogPluginInsights = {
     {
       name: 'security',
       scoreValue: 20,
-      scoreLevel: 'Critical' as ScoreLevel,
+      scoreLevel: SCORE_LEVELS.CRITICAL,
       items: [
         {
           id: 'virus-scan',
@@ -78,7 +78,7 @@ const mockPluginInsightsWithPoorLevel: CatalogPluginInsights = {
     {
       name: 'quality',
       scoreValue: 35,
-      scoreLevel: 'Poor' as ScoreLevel,
+      scoreLevel: SCORE_LEVELS.POOR,
       items: [
         {
           id: 'legacy-platform',
@@ -162,7 +162,7 @@ describe('PluginInsights', () => {
         {
           name: 'quality',
           scoreValue: 75,
-          scoreLevel: 'Good' as ScoreLevel,
+          scoreLevel: SCORE_LEVELS.GOOD,
           items: [
             {
               id: 'code-rules',

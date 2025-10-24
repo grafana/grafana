@@ -93,7 +93,15 @@ export interface CatalogPluginDetails {
 
 export type InsightLevel = 'ok' | 'warning' | 'danger' | 'good' | 'info';
 
-export type ScoreLevel = 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Critical';
+export const SCORE_LEVELS = {
+  EXCELLENT: 'Excellent',
+  GOOD: 'Good',
+  FAIR: 'Fair',
+  POOR: 'Poor',
+  CRITICAL: 'Critical',
+} as const;
+
+export type ScoreLevel = (typeof SCORE_LEVELS)[keyof typeof SCORE_LEVELS];
 
 export const INSIGHT_CATEGORIES = {
   SECURITY: 'security',
@@ -109,48 +117,19 @@ export const INSIGHT_LEVELS = {
   INFO: 'info',
 } as const;
 
-export type InsightItems = {
-  [INSIGHT_CATEGORIES.SECURITY]:
-    | 'signature'
-    | 'manifest'
-    | 'osv-scanner'
-    | 'trackingscripts'
-    | 'unsafe-svg'
-    | 'virus-scan'
-    | 'binarypermissions';
-  [INSIGHT_CATEGORIES.QUALITY]:
-    | 'code-rules'
-    | 'sdk-usage'
-    | 'jsMap'
-    | 'gosec'
-    | 'legacy-builder'
-    | 'legacy-platform'
-    | 'circular-dependency'
-    | 'restrictive-dep'
-    | 'metadatavalid';
-};
-
-type ItemsForCategory<T extends keyof InsightItems> = Array<{
-  id: InsightItems[T];
-  name: string;
-  description?: string;
-  level: InsightLevel;
-  link?: string;
-}>;
-
-export type InsightCategory<T extends keyof InsightItems = keyof InsightItems> = {
-  name: T;
-  items: ItemsForCategory<T>;
-  scoreValue: number;
-  scoreLevel: ScoreLevel;
-};
-
 export interface InsightItem {
   id: string;
   name: string;
   description?: string;
   level: InsightLevel;
   link?: string;
+}
+
+export interface InsightCategory {
+  name: string;
+  items: InsightItem[];
+  scoreValue: number;
+  scoreLevel: ScoreLevel;
 }
 
 export interface CatalogPluginInsights {

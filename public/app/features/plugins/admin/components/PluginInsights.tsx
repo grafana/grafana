@@ -2,24 +2,34 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Stack, Text, TextLink, CollapsableSection, Tooltip, Icon, ColorPicker, useStyles2 } from '@grafana/ui';
+import {
+  Stack,
+  Text,
+  TextLink,
+  CollapsableSection,
+  Tooltip,
+  Icon,
+  ColorPicker,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 
-import { CatalogPluginInsights, ScoreLevel, InsightLevel } from '../types';
+import { CatalogPluginInsights, ScoreLevel, InsightLevel, SCORE_LEVELS } from '../types';
 
 type Props = { pluginInsights: CatalogPluginInsights | undefined };
 
-const getColor = (level: ScoreLevel) => {
+const getColor = (level: ScoreLevel, theme: GrafanaTheme2) => {
   switch (level) {
-    case 'Excellent':
-      return '#1a7f4b';
-    case 'Good':
-    case 'Fair':
-      return '#ff9900';
-    case 'Poor':
-    case 'Critical':
-      return '#d10e5c';
+    case SCORE_LEVELS.EXCELLENT:
+      return theme.colors.success.main;
+    case SCORE_LEVELS.GOOD:
+    case SCORE_LEVELS.FAIR:
+      return theme.colors.warning.main;
+    case SCORE_LEVELS.POOR:
+    case SCORE_LEVELS.CRITICAL:
+      return theme.colors.error.main;
     default:
-      return 'rgba(204, 204, 220, 0.10)';
+      return theme.colors.border.weak;
   }
 };
 
@@ -36,53 +46,54 @@ const getInsightItemColor = (level: InsightLevel) => {
   }
 };
 
-const tooltipInfo = (
-  <Stack direction="column">
-    <Stack direction="row" alignItems="center">
-      <ColorPicker color={getColor('Excellent')} onChange={() => {}} />
-      <Text color="secondary" variant="body">
-        <Trans i18nKey="plugins.details.labels.pluginInsightsSuccessTooltip">
-          All relevant signals are present and verified
-        </Trans>
-      </Text>
-    </Stack>
-    <Stack direction="row" alignItems="center">
-      <ColorPicker color={getColor('Fair')} onChange={() => {}} />
-      <Text color="secondary" variant="body">
-        <Trans i18nKey="plugins.details.labels.pluginInsightsWarningTooltip">
-          One or more signals are missing or need attention
-        </Trans>
-      </Text>
-    </Stack>
-    <Stack direction="row" alignItems="center">
-      <ColorPicker color={getColor('Poor')} onChange={() => {}} />
-      <Text color="secondary" variant="body">
-        <Trans i18nKey="plugins.details.labels.pluginInsightsErrorTooltip">Poor or critical data quality</Trans>
-      </Text>
-    </Stack>
-    <Stack direction="row" alignItems="center">
-      <ColorPicker color="rgba(204, 204, 220, 0.10)" onChange={() => {}} />
-      <Text color="secondary" variant="body">
-        <Trans i18nKey="plugins.details.labels.pluginInsightsNodataTooltip">
-          No available data to determine the status yet
-        </Trans>
-      </Text>
-    </Stack>
-    <Text color="secondary" variant="body">
-      <Trans i18nKey="plugins.details.labels.moreDetails">
-        Plese find more information{' '}
-        <TextLink href="https://grafana.com/developers/plugin-tools/" external>
-          here
-        </TextLink>
-        .
-      </Trans>
-    </Text>
-  </Stack>
-);
-
 export function PluginInsights(props: Props): React.ReactElement | null {
   const { pluginInsights } = props;
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+
+  const tooltipInfo = (
+    <Stack direction="column">
+      <Stack direction="row" alignItems="center">
+        <ColorPicker color={getColor(SCORE_LEVELS.EXCELLENT, theme)} onChange={() => {}} />
+        <Text color="secondary" variant="body">
+          <Trans i18nKey="plugins.details.labels.pluginInsightsSuccessTooltip">
+            All relevant signals are present and verified
+          </Trans>
+        </Text>
+      </Stack>
+      <Stack direction="row" alignItems="center">
+        <ColorPicker color={getColor(SCORE_LEVELS.FAIR, theme)} onChange={() => {}} />
+        <Text color="secondary" variant="body">
+          <Trans i18nKey="plugins.details.labels.pluginInsightsWarningTooltip">
+            One or more signals are missing or need attention
+          </Trans>
+        </Text>
+      </Stack>
+      <Stack direction="row" alignItems="center">
+        <ColorPicker color={getColor(SCORE_LEVELS.POOR, theme)} onChange={() => {}} />
+        <Text color="secondary" variant="body">
+          <Trans i18nKey="plugins.details.labels.pluginInsightsErrorTooltip">Poor or critical data quality</Trans>
+        </Text>
+      </Stack>
+      <Stack direction="row" alignItems="center">
+        <ColorPicker color={theme.colors.border.weak} onChange={() => {}} />
+        <Text color="secondary" variant="body">
+          <Trans i18nKey="plugins.details.labels.pluginInsightsNodataTooltip">
+            No available data to determine the status yet
+          </Trans>
+        </Text>
+      </Stack>
+      <Text color="secondary" variant="body">
+        <Trans i18nKey="plugins.details.labels.moreDetails">
+          Plese find more information{' '}
+          <TextLink href="https://grafana.com/developers/plugin-tools/" external>
+            here
+          </TextLink>
+          .
+        </Trans>
+      </Text>
+    </Stack>
+  );
 
   return (
     <>
@@ -108,7 +119,7 @@ export function PluginInsights(props: Props): React.ReactElement | null {
                     data-testid={`plugin-insight-${insightItem.name.toLowerCase()}`}
                   >
                     <ColorPicker
-                      color={getColor(insightItem.scoreLevel)}
+                      color={getColor(insightItem.scoreLevel, theme)}
                       onChange={() => {}}
                       data-testid={`plugin-insight-color-${insightItem.name.toLowerCase()}`}
                     />
