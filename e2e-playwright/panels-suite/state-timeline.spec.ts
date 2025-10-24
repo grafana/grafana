@@ -14,11 +14,11 @@ test.describe('Panels test: StateTimeine', { tag: ['@panels', '@state-timeline']
 
     // check that gauges are rendered
     const stateTimelineUplot = page.locator('.uplot');
-    await expect(stateTimelineUplot).toHaveCount(11);
+    await expect(stateTimelineUplot, 'panels are rendered').toHaveCount(11);
 
     // check that no panel errors exist
     const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
-    await expect(errorInfo).toBeHidden();
+    await expect(errorInfo, 'no errors in the panels').toBeHidden();
   });
 
   test('"no data"', async ({ gotoDashboardPage, selectors, page }) => {

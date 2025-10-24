@@ -1,32 +1,33 @@
 import { render, screen } from '@testing-library/react';
 
-import { createDataFrame, FieldType, makeTimeRange } from '@grafana/data';
+import { createDataFrame, Field, FieldType, makeTimeRange } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/ui';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 
 describe('StateTimelineTooltip', () => {
   const timeRange = makeTimeRange('1970-01-01T00:00:00+00:00', '1970-01-01T00:02:00+00:00');
+  const timeField: Field = {
+    name: 'Time',
+    type: FieldType.time,
+    values: [0, 60000, 100000],
+    display: (v) => ({ text: String(v), numeric: NaN }),
+    config: {},
+  };
+  const valueField: Field = {
+    name: 'State',
+    type: FieldType.number,
+    values: [0, 100, 50],
+    display: (v) => ({ text: String(v), numeric: Number(v) }),
+    config: {},
+  };
+  const series = createDataFrame({ fields: [timeField, valueField] });
+
   describe('Duration display', () => {
     it('should include the duration in single mode when withDuration is true', () => {
       render(
         <StateTimelineTooltip
-          series={createDataFrame({
-            fields: [
-              {
-                name: 'Time',
-                type: FieldType.time,
-                values: [0, 60000, 100000],
-                display: (v) => ({ text: String(v), numeric: NaN }),
-              },
-              {
-                name: 'State',
-                type: FieldType.number,
-                values: [0, 100, 50],
-                display: (v) => ({ text: String(v), numeric: Number(v) }),
-              },
-            ],
-          })}
+          series={series}
           seriesIdx={1}
           dataIdxs={[null, 1]}
           mode={TooltipDisplayMode.Single}
@@ -46,22 +47,7 @@ describe('StateTimelineTooltip', () => {
     it('correctly renders the final duration in a state timeline based on the range', () => {
       render(
         <StateTimelineTooltip
-          series={createDataFrame({
-            fields: [
-              {
-                name: 'Time',
-                type: FieldType.time,
-                values: [0, 60000, 100000],
-                display: (v) => ({ text: String(v), numeric: NaN }),
-              },
-              {
-                name: 'State',
-                type: FieldType.number,
-                values: [0, 100, 50],
-                display: (v) => ({ text: String(v), numeric: Number(v) }),
-              },
-            ],
-          })}
+          series={series}
           seriesIdx={1}
           dataIdxs={[null, 2]}
           mode={TooltipDisplayMode.Single}
@@ -81,24 +67,9 @@ describe('StateTimelineTooltip', () => {
         <StateTimelineTooltip
           series={createDataFrame({
             fields: [
-              {
-                name: 'Time',
-                type: FieldType.time,
-                values: [0, 60000, 100000],
-                display: (v) => ({ text: String(v), numeric: NaN }),
-              },
-              {
-                name: 'StateA',
-                type: FieldType.number,
-                values: [0, 100, 50],
-                display: (v) => ({ text: String(v), numeric: Number(v) }),
-              },
-              {
-                name: 'StateB',
-                type: FieldType.number,
-                values: [200, 400, 300],
-                display: (v) => ({ text: String(v), numeric: Number(v) }),
-              },
+              timeField,
+              { ...valueField, name: 'StateA' },
+              { ...valueField, name: 'StateB', values: [200, 400, 100] },
             ],
           })}
           seriesIdx={1}
@@ -119,22 +90,7 @@ describe('StateTimelineTooltip', () => {
     it('works without a seriesIdx is withDuration is false', () => {
       render(
         <StateTimelineTooltip
-          series={createDataFrame({
-            fields: [
-              {
-                name: 'Time',
-                type: FieldType.time,
-                values: [0, 60000, 100000],
-                display: (v) => ({ text: String(v), numeric: NaN }),
-              },
-              {
-                name: 'State',
-                type: FieldType.number,
-                values: [0, 100, 50],
-                display: (v) => ({ text: String(v), numeric: Number(v) }),
-              },
-            ],
-          })}
+          series={series}
           dataIdxs={[null, 1]}
           mode={TooltipDisplayMode.Single}
           timeRange={timeRange}
@@ -151,45 +107,29 @@ describe('StateTimelineTooltip', () => {
   });
 
   describe('footer', () => {
-    it.each([
-      ['hides', true],
-      ['shows', false],
-    ])('%s the footer based on isPinned=%s', (_title, isPinned) => {
-      render(
-        <StateTimelineTooltip
-          series={createDataFrame({
-            fields: [
-              {
-                name: 'Time',
-                type: FieldType.time,
-                values: [0, 60000, 100000],
-                display: (v) => ({ text: String(v), numeric: NaN }),
-              },
-              {
-                name: 'State',
-                type: FieldType.number,
-                values: [0, 100, 50],
-                display: (v) => ({ text: String(v), numeric: Number(v) }),
-              },
-            ],
-          })}
-          seriesIdx={1}
-          dataIdxs={[null, 1]}
-          mode={TooltipDisplayMode.Single}
-          timeRange={timeRange}
-          withDuration
-          dataLinks={[{ title: 'Regular Link', href: 'https://example.com', target: '_blank', origin: '*' }]}
-          isPinned={isPinned}
-        />
-      );
+    const StateTimelineTooltipWithDataLinks = ({ isPinned }: { isPinned: boolean }) => (
+      <StateTimelineTooltip
+        series={series}
+        seriesIdx={1}
+        dataIdxs={[null, 1]}
+        mode={TooltipDisplayMode.Single}
+        timeRange={timeRange}
+        withDuration
+        dataLinks={[{ title: 'Regular Link', href: 'https://example.com', target: '_blank', origin: '*' }]}
+        isPinned={isPinned}
+      />
+    );
 
-      // Footer content should not be present
+    it('shows the footer if isPinned is true and there are data links', () => {
+      render(<StateTimelineTooltipWithDataLinks isPinned />);
       const link = screen.queryByText('Regular Link');
-      if (isPinned) {
-        expect(link).toBeInTheDocument();
-      } else {
-        expect(link).not.toBeInTheDocument();
-      }
+      expect(link).toBeInTheDocument();
+    });
+
+    it('hides the footer if isPinned is false even if there are data links', () => {
+      render(<StateTimelineTooltipWithDataLinks isPinned={false} />);
+      const link = screen.queryByText('Regular Link');
+      expect(link).not.toBeInTheDocument();
     });
   });
 });
