@@ -38,8 +38,7 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
       });
       break;
     default:
-      console.error('Unknown kind ' + kind);
-      return null;
+      text = t('dashboard-scene.managed-badge.provisioned', 'Provisioned');
   }
 
   return <Badge color="purple" icon="exchange-alt" tooltip={text} key="provisioned-dashboard-button-badge" />;
