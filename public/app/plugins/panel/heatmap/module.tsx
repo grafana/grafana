@@ -23,12 +23,17 @@ import { Options, defaultOptions, HeatmapColorMode, HeatmapColorScale } from './
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig({
-    disableStandardOptions: Object.values(FieldConfigProperty).filter((v) => v !== FieldConfigProperty.Links),
+    disableStandardOptions: Object.values(FieldConfigProperty).filter(
+      (v) => v !== FieldConfigProperty.Links && v !== FieldConfigProperty.Unit
+    ),
     standardOptions: {
       [FieldConfigProperty.Links]: {
         settings: {
           showOneClick: true,
         },
+      },
+      [FieldConfigProperty.Unit]: {
+        hideFromDefaults: true,
       },
     },
     useCustomConfig: (builder) => {
