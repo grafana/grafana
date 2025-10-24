@@ -8,6 +8,7 @@ services:
       dockerfile: proxy.dockerfile
     volumes:
       - ../../public/build:/cdn/public/build
+      - ../../public/app/plugins:/cdn/public/app/plugins
       - ../../public/fonts:/cdn/public/fonts
     ports:
       - '3000:80' # Gateway
