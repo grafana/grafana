@@ -712,10 +712,6 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchSprinkles?: boolean;
   /**
-  * Use full n-gram indexing instead of edge n-gram for unified storage search
-  */
-  unifiedStorageUseFullNgram?: boolean;
-  /**
   * Pick the dual write mode from database configs
   */
   managedDualWriter?: boolean;
@@ -1055,11 +1051,6 @@ export interface FeatureToggles {
   */
   restoreDashboards?: boolean;
   /**
-  * Skip token rotation if it was already rotated less than 5 seconds ago
-  * @default true
-  */
-  skipTokenRotationIfRecent?: boolean;
-  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -1119,11 +1110,6 @@ export interface FeatureToggles {
   */
   foldersAppPlatformAPI?: boolean;
   /**
-  * Set this to true to use the new PluginImporter functionality
-  * @default false
-  */
-  enablePluginImporter?: boolean;
-  /**
   * Applies OTel formatting templates to displayed logs
   */
   otelLogsFormatting?: boolean;
@@ -1178,9 +1164,9 @@ export interface FeatureToggles {
   */
   teamFolders?: boolean;
   /**
-  * Enables Pathfinder app
+  * Enables the interactive learning app
   */
-  grafanaPathfinder?: boolean;
+  interactiveLearning?: boolean;
   /**
   * Enables the alerting triage feature
   * @default false
@@ -1232,7 +1218,7 @@ export interface FeatureToggles {
   */
   preventPanelChromeOverflow?: boolean;
   /**
-  * Load plugins during store service startup instead of wire provider
+  * Load plugins on store service startup instead of wire provider, and call RegisterFixedRoles after all plugins are loaded
   * @default false
   */
   pluginStoreServiceLoading?: boolean;

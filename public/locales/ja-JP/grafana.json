@@ -3672,7 +3672,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "アルファベット順（A-Z）",
-        "alphabetically-za": "アルファベット順（Z-A）"
+        "alphabetically-za": "アルファベット順（Z-A）",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -7131,9 +7133,6 @@
       "title-failed-sample-query": "このクエリのログサンプルの読み込みに失敗しました",
       "tooltip": "視覚化されたメトリックに関連するログ行を表示"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}}はログ行の{{percentage}}%に表示されます"
-    },
     "logs-table-empty-fields": {
       "no-fields": "フィールドなし"
     },
@@ -7141,10 +7140,6 @@
       "fields": "フィールド",
       "reset": "リセット",
       "selected-fields": "選択済みのフィールド"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "ドラッグ＆ドロップアイコン",
-      "title-drag-and-drop-to-reorder": "ドラッグ＆ドロップで並べ替え"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "名前でクエリを選択",
@@ -7981,6 +7976,42 @@
     "select-group": "グループを選択"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_other": "",
+        "lastNHours_other": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_other": "",
+        "lastNYears_other": "",
+        "nextNDays_other": "",
+        "nextNHours_other": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_other": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9511,6 +9542,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "最後または最初のログ行にジャンプするコントロールを表示し、ログレベルでフィルタリングします",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -11719,6 +11759,11 @@
       "done": "完了",
       "next": "次へ",
       "previous": "前へ"
+    },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
     },
     "sidebar-item": {
       "label-completed-step": "完了したステップ",
