@@ -69,15 +69,15 @@ To enable SCIM provisioning in Grafana, create a service account and generate a 
 2. Click **Add service account**
 3. Create a new service account with Admin role
 4. Create a new token for the newly created service account and save it securely
-   - This token will be used in the Azure AD configuration
+   - This token will be used in the Entra ID configuration
 
-## Configure SCIM in Azure AD
+## Configure SCIM in Entra ID
 
-Configure the enterprise application in Azure AD to enable automated user and team synchronization with Grafana. This involves creating a new application and setting up both authentication and provisioning.
+Configure the enterprise application in Entra ID to enable automated user and team synchronization with Grafana. This involves creating a new application and setting up both authentication and provisioning.
 
 ### Create the enterprise application
 
-1. Open Azure Portal Entra ID (Azure AD)
+1. Open Azure Portal Entra ID (Entra ID)
 2. Click **+ Add** dropdown
 3. Click **Add Enterprise Application**
 4. Click **+ Create Your Own Application**
