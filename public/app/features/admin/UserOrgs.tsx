@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { memo, PureComponent, ReactElement, useRef, useState } from 'react';
+import { memo, PureComponent, ReactElement, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -10,10 +10,8 @@ import {
   Icon,
   Modal,
   stylesFactory,
-  Themeable2,
   Tooltip,
   useStyles2,
-  withTheme2,
   Stack,
   TextLink,
 } from '@grafana/ui';
@@ -93,7 +91,7 @@ export const UserOrgs = memo(({ user, orgs, isExternalUser, onOrgRoleChange, onO
 });
 UserOrgs.displayName = 'UserOrgs';
 
-const getOrgRowStyles = stylesFactory((theme: GrafanaTheme2) => {
+const getOrgRowStyles = (theme: GrafanaTheme2) => {
   return {
     removeButton: css({
       marginRight: '0.6rem',
@@ -120,9 +118,9 @@ const getOrgRowStyles = stylesFactory((theme: GrafanaTheme2) => {
       marginRight: theme.spacing(1),
     }),
   };
-});
+};
 
-interface OrgRowProps extends Themeable2 {
+interface OrgRowProps {
   user?: UserDTO;
   org: UserOrg;
   isExternalUser?: boolean;
@@ -130,124 +128,116 @@ interface OrgRowProps extends Themeable2 {
   onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
 }
 
-class UnThemedOrgRow extends PureComponent<OrgRowProps> {
-  state = {
-    currentRole: this.props.org.role,
-    isChangingRole: false,
-    roleOptions: [],
-  };
+const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }: OrgRowProps) => {
+  const [currentRole, setCurrentRole] = useState(org.role);
+  const [isChangingRole, setIsChangingRole] = useState(false);
+  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const styles = useStyles2(getOrgRowStyles);
 
-  componentDidMount() {
+  useEffect(() => {
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
-        fetchRoleOptions(this.props.org.orgId)
-          .then((roles) => this.setState({ roleOptions: roles }))
+        fetchRoleOptions(org.orgId)
+          .then((roles) => setRoleOptions(roles))
           .catch((e) => console.error(e));
       }
     }
-  }
+  }, [org.orgId]);
 
-  onOrgRemove = async () => {
-    const { org } = this.props;
-    this.props.onOrgRemove(org.orgId);
+  const handleOrgRemove = async () => {
+    onOrgRemove(org.orgId);
   };
 
-  onChangeRoleClick = () => {
-    const { org } = this.props;
-    this.setState({ isChangingRole: true, currentRole: org.role });
+  const handleChangeRoleClick = () => {
+    setIsChangingRole(true);
+    setCurrentRole(org.role);
   };
 
-  onOrgRoleChange = (newRole: OrgRole) => {
-    this.setState({ currentRole: newRole });
+  const handleOrgRoleChange = (newRole: OrgRole) => {
+    setCurrentRole(newRole);
   };
 
-  onOrgRoleSave = () => {
-    this.props.onOrgRoleChange(this.props.org.orgId, this.state.currentRole);
+  const handleOrgRoleSave = () => {
+    onOrgRoleChange(org.orgId, currentRole);
   };
 
-  onCancelClick = () => {
-    this.setState({ isChangingRole: false });
+  const handleCancelClick = () => {
+    setIsChangingRole(false);
   };
 
-  onBasicRoleChange = (newRole: OrgRole) => {
-    this.props.onOrgRoleChange(this.props.org.orgId, newRole);
+  const handleBasicRoleChange = (newRole: OrgRole) => {
+    onOrgRoleChange(org.orgId, newRole);
   };
 
-  render() {
-    const { user, org, isExternalUser, theme } = this.props;
-    const authSource = user?.authLabels?.length && user?.authLabels[0];
-    const lockMessage = authSource ? `Synced via ${authSource}` : '';
-    const { currentRole, isChangingRole } = this.state;
-    const styles = getOrgRowStyles(theme);
-    const labelClass = cx('width-16', styles.label);
-    const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersWrite);
-    const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove) && !isExternalUser;
-    const rolePickerDisabled = isExternalUser || !canChangeRole;
+  const authSource = user?.authLabels?.length && user?.authLabels[0];
+  const lockMessage = authSource ? `Synced via ${authSource}` : '';
+  const labelClass = cx('width-16', styles.label);
+  const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersWrite);
+  const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove) && !isExternalUser;
+  const rolePickerDisabled = isExternalUser || !canChangeRole;
 
-    const inputId = `${org.name}-input`;
-    return (
-      <tr>
-        <td className={labelClass}>
-          <label htmlFor={inputId}>{org.name}</label>
-        </td>
-        {contextSrv.licensedAccessControlEnabled() ? (
-          <td>
-            <div className={styles.rolePickerWrapper}>
-              <div className={styles.rolePicker}>
-                <UserRolePicker
-                  userId={user?.id || 0}
-                  orgId={org.orgId}
-                  basicRole={org.role}
-                  roleOptions={this.state.roleOptions}
-                  onBasicRoleChange={this.onBasicRoleChange}
-                  basicRoleDisabled={rolePickerDisabled}
-                  basicRoleDisabledMessage="This user's role is not editable because it is synchronized from your auth provider.
-                    Refer to the Grafana authentication docs for details."
-                />
-              </div>
-              {isExternalUser && <ExternalUserTooltip lockMessage={lockMessage} />}
+  const inputId = `${org.name}-input`;
+  return (
+    <tr>
+      <td className={labelClass}>
+        <label htmlFor={inputId}>{org.name}</label>
+      </td>
+      {contextSrv.licensedAccessControlEnabled() ? (
+        <td>
+          <div className={styles.rolePickerWrapper}>
+            <div className={styles.rolePicker}>
+              <UserRolePicker
+                userId={user?.id || 0}
+                orgId={org.orgId}
+                basicRole={org.role}
+                roleOptions={roleOptions}
+                onBasicRoleChange={handleBasicRoleChange}
+                basicRoleDisabled={rolePickerDisabled}
+                basicRoleDisabledMessage="This user's role is not editable because it is synchronized from your auth provider.
+                  Refer to the Grafana authentication docs for details."
+              />
             </div>
-          </td>
-        ) : (
-          <>
-            {isChangingRole ? (
-              <td>
-                <OrgRolePicker inputId={inputId} value={currentRole} onChange={this.onOrgRoleChange} autoFocus />
-              </td>
-            ) : (
-              <td className="width-25">{org.role}</td>
-            )}
-            <td colSpan={1}>
-              {canChangeRole && (
-                <ChangeOrgButton
-                  lockMessage={lockMessage}
-                  isExternalUser={isExternalUser}
-                  onChangeRoleClick={this.onChangeRoleClick}
-                  onCancelClick={this.onCancelClick}
-                  onOrgRoleSave={this.onOrgRoleSave}
-                />
-              )}
-            </td>
-          </>
-        )}
-        <td colSpan={1}>
-          {canRemoveFromOrg && (
-            <ConfirmButton
-              confirmText={t('admin.un-themed-org-row.confirmText-confirm-removal', 'Confirm removal')}
-              confirmVariant="destructive"
-              onCancel={this.onCancelClick}
-              onConfirm={this.onOrgRemove}
-            >
-              {t('admin.user-orgs.remove-button', 'Remove from organization')}
-            </ConfirmButton>
-          )}
+            {isExternalUser && <ExternalUserTooltip lockMessage={lockMessage} />}
+          </div>
         </td>
-      </tr>
-    );
-  }
-}
-
-const OrgRow = withTheme2(UnThemedOrgRow);
+      ) : (
+        <>
+          {isChangingRole ? (
+            <td>
+              <OrgRolePicker inputId={inputId} value={currentRole} onChange={handleOrgRoleChange} autoFocus />
+            </td>
+          ) : (
+            <td className="width-25">{org.role}</td>
+          )}
+          <td colSpan={1}>
+            {canChangeRole && (
+              <ChangeOrgButton
+                lockMessage={lockMessage}
+                isExternalUser={isExternalUser}
+                onChangeRoleClick={handleChangeRoleClick}
+                onCancelClick={handleCancelClick}
+                onOrgRoleSave={handleOrgRoleSave}
+              />
+            )}
+          </td>
+        </>
+      )}
+      <td colSpan={1}>
+        {canRemoveFromOrg && (
+          <ConfirmButton
+            confirmText={t('admin.un-themed-org-row.confirmText-confirm-removal', 'Confirm removal')}
+            confirmVariant="destructive"
+            onCancel={handleCancelClick}
+            onConfirm={handleOrgRemove}
+          >
+            {t('admin.user-orgs.remove-button', 'Remove from organization')}
+          </ConfirmButton>
+        )}
+      </td>
+    </tr>
+  );
+});
+OrgRow.displayName = 'OrgRow';
 
 const getAddToOrgModalStyles = stylesFactory(() => ({
   modal: css({
