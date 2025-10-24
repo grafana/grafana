@@ -16,8 +16,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"golang.org/x/net/html"
 )
 
 func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataResponse, error) {
@@ -26,10 +28,13 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		req      *http.Request
 		formData url.Values
 	}{}
+	result := backend.NewQueryDataResponse()
+
 	for _, query := range req.Queries {
 		graphiteReq, formData, emptyQuery, err := s.createGraphiteRequest(ctx, query, dsInfo)
 		if err != nil {
-			return nil, err
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+			return result, nil
 		}
 
 		if emptyQuery != nil {
@@ -46,7 +51,6 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		}
 	}
 
-	var result = backend.QueryDataResponse{}
 	if len(emptyQueries) != 0 {
 		s.logger.Warn("Found query models without targets", "models without targets", strings.Join(emptyQueries, "\n"))
 		// If no queries had a valid target, return an error; otherwise, attempt with the targets we have
@@ -56,9 +60,9 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			}
 			// marking this downstream error as it is a user error, but arguably this is a plugin error
 			// since the plugin should have frontend validation that prevents us from getting into this state
-			missingQueryResponse := backend.ErrDataResponseWithSource(400, backend.ErrorSourceDownstream, "no query target found for the alert rule")
+			missingQueryResponse := backend.ErrDataResponseWithSource(400, backend.ErrorSourceDownstream, "no query target found")
 			result.Responses["A"] = missingQueryResponse
-			return &result, nil
+			return result, nil
 		}
 	}
 
@@ -83,7 +87,8 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
-			return &result, err
+			result.Responses[refId] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(err))
+			return result, nil
 		}
 
 		defer func() {
@@ -97,14 +102,11 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
-			return &result, err
+			result.Responses[refId] = backend.ErrorResponseWithErrorSource(err)
+			return result, nil
 		}
 
 		frames = append(frames, queryFrames...)
-	}
-
-	result = backend.QueryDataResponse{
-		Responses: make(backend.Responses),
 	}
 
 	for _, f := range frames {
@@ -118,7 +120,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		}
 	}
 
-	return &result, nil
+	return result, nil
 }
 
 // processQuery converts a Graphite data source query to a Graphite query target. It returns the target,
@@ -127,7 +129,7 @@ func (s *Service) processQuery(query backend.DataQuery) (string, *GraphiteQuery,
 	queryJSON := GraphiteQuery{}
 	err := json.Unmarshal(query.JSON, &queryJSON)
 	if err != nil {
-		return "", &queryJSON, false, fmt.Errorf("failed to decode the Graphite query: %w", err)
+		return "", &queryJSON, false, backend.PluginError(fmt.Errorf("failed to decode the Graphite query: %w", err))
 	}
 	s.logger.Debug("Graphite", "query", queryJSON)
 	currTarget := queryJSON.TargetFull
@@ -237,7 +239,7 @@ func (s *Service) toDataFrames(response *http.Response, refId string) (frames da
 func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		return nil, backend.DownstreamError(err)
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
@@ -246,18 +248,48 @@ func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error)
 	}()
 
 	if res.StatusCode/100 != 2 {
-		s.logger.Info("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("request failed, status: %s", res.Status)
+		graphiteError := parseGraphiteError(res.StatusCode, string(body))
+		s.logger.Info("Request failed", "status", res.Status, "error", graphiteError, "body", string(body))
+		return nil, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed with error: %s", graphiteError), false)
 	}
 
 	var data []TargetResponseDTO
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		s.logger.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
-		return nil, err
+		return nil, backend.DownstreamError(err)
 	}
 
 	return data, nil
+}
+
+/**
+ * Duplicated from the frontend.
+ * Graphite-web before v1.6 returns HTTP 500 with full stack traces in an HTML page
+ * when a query fails. It results in massive error alerts with HTML tags in the UI.
+ * This function removes all HTML tags and keeps only the last line from the stack
+ * trace which should be the most meaningful.
+ */
+func parseGraphiteError(status int, body string) (errorMsg string) {
+	errorMsg = body
+	if status == http.StatusInternalServerError {
+		if strings.HasPrefix(body, "<body") {
+			htmlErrorMsg := ""
+			tokenizer := html.NewTokenizer(strings.NewReader(body))
+			// Break here as that typically means we've reached EOF
+			for tokenizer.Next() != html.ErrorToken {
+				token := tokenizer.Token()
+				if token.Type == html.TextToken {
+					trimmed := strings.TrimSpace(token.Data)
+					if trimmed != "" {
+						htmlErrorMsg += html.UnescapeString(trimmed) + "\n"
+					}
+				}
+			}
+			errorMsg = strings.TrimSpace(htmlErrorMsg)
+		}
+	}
+	return errorMsg
 }
 
 func fixIntervalFormat(target string) string {

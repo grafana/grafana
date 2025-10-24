@@ -8,6 +8,7 @@ const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
 const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
 const reactPlugin = require('eslint-plugin-react');
+const reactPreferFunctionComponentPlugin = require('eslint-plugin-react-prefer-function-component');
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
 const unicornPlugin = require('eslint-plugin-unicorn');
 
@@ -100,6 +101,7 @@ module.exports = [
       '**/build/',
       '**/compiled/',
       '**/dist/',
+      'coverage/',
       'data/',
       'deployment_tools_config.json',
       'devenv',
@@ -139,6 +141,7 @@ module.exports = [
       'no-barrel-files': barrelPlugin,
       '@grafana': grafanaPlugin,
       unicorn: unicornPlugin,
+      'react-prefer-function-component': reactPreferFunctionComponentPlugin,
     },
 
     settings: {
@@ -155,6 +158,7 @@ module.exports = [
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
       '@grafana/no-restricted-img-srcs': 'error',
+      'react-prefer-function-component/react-prefer-function-component': ['error', { allowJsxUtilityClass: true }],
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
       'react/no-unknown-property': ['error', { ignore: ['css'] }],
@@ -271,10 +275,11 @@ module.exports = [
   {
     // No NPM package should import from @grafana/*/internal because it does not exist
     // outside of this repo - they're not published to NPM.
-    name: 'grafana/packages-overrides',
+    name: 'grafana/packages',
     files: ['packages/**/*.{ts,tsx}'],
     ignores: [],
     rules: {
+      'import/no-extraneous-dependencies': ['error', { includeInternal: true }],
       'no-restricted-imports': [
         'error',
         withBaseRestrictedImportsConfig({
@@ -361,7 +366,10 @@ module.exports = [
       '**/mock*.{ts,tsx}',
     ],
     rules: {
-      '@grafana/i18n/no-untranslated-strings': ['error', { calleesToIgnore: ['^css$', 'use[A-Z].*'] }],
+      '@grafana/i18n/no-untranslated-strings': [
+        'error',
+        { calleesToIgnore: ['^css$', 'use[A-Z].*'], basePaths: ['public/app/features'] },
+      ],
       '@grafana/i18n/no-translation-top-level': 'error',
     },
   },

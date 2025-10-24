@@ -175,6 +175,10 @@ func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructu
 	return fm.client.Get(ctx, name, metav1.GetOptions{})
 }
 
+func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
+	return fm.client.Delete(ctx, name, metav1.DeleteOptions{})
+}
+
 // ReplicateTree replicates the folder tree to the repository.
 // The function fn is called for each folder.
 // If the folder already exists, the function is called with created set to false.

@@ -1,6 +1,6 @@
+import { generatedAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { DescendantCount } from 'app/types/folders';
 
-import { generatedAPI } from './endpoints.gen';
 import { getParsedCounts } from './utils';
 
 export const folderAPIv1beta1 = generatedAPI
@@ -23,24 +23,6 @@ export const folderAPIv1beta1 = generatedAPI
       deleteFolder: {
         // We don't want delete to invalidate getFolder tags, as that would lead to unnecessary 404s
         invalidatesTags: (result, error) => (error ? [] : [{ type: 'Folder', id: 'LIST' }]),
-      },
-      updateFolder: {
-        query: (queryArg) => ({
-          url: `/folders/${queryArg.name}`,
-          method: 'PATCH',
-          // We need to stringify the body and set the correct header for the call to work with k8s api.
-          body: JSON.stringify(queryArg.patch),
-          headers: {
-            'Content-Type': 'application/strategic-merge-patch+json',
-          },
-          params: {
-            pretty: queryArg.pretty,
-            dryRun: queryArg.dryRun,
-            fieldManager: queryArg.fieldManager,
-            fieldValidation: queryArg.fieldValidation,
-            force: queryArg.force,
-          },
-        }),
       },
     },
   })
@@ -98,4 +80,9 @@ export const {
 } = folderAPIv1beta1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export { type Folder, type FolderList, type CreateFolderApiArg, type ReplaceFolderApiArg } from './endpoints.gen';
+export {
+  type Folder,
+  type FolderList,
+  type CreateFolderApiArg,
+  type ReplaceFolderApiArg,
+} from '@grafana/api-clients/rtkq/folder/v1beta1';

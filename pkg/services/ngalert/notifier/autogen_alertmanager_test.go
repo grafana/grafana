@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -293,7 +294,7 @@ func TestAddAutogenConfig(t *testing.T) {
 			if tt.skipInvalid {
 				onInvalid = IgnoreInvalidReceivers
 			}
-			err := AddAutogenConfig(context.Background(), &logtest.Fake{}, store, orgId, tt.existingConfig, onInvalid)
+			err := AddAutogenConfig(context.Background(), &logtest.Fake{}, store, orgId, tt.existingConfig, onInvalid, featuremgmt.WithFeatures())
 			if tt.expErrorContains != "" {
 				require.Error(t, err)
 				require.ErrorContains(t, err, tt.expErrorContains)

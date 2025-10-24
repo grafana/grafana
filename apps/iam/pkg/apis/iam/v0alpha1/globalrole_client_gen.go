@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type GlobalRoleClient struct {
@@ -74,24 +73,6 @@ func (c *GlobalRoleClient) Update(ctx context.Context, obj *GlobalRole, opts res
 
 func (c *GlobalRoleClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*GlobalRole, error) {
 	return c.client.Patch(ctx, identifier, req, opts)
-}
-
-func (c *GlobalRoleClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus GlobalRoleStatus, opts resource.UpdateOptions) (*GlobalRole, error) {
-	return c.client.Update(ctx, &GlobalRole{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       GlobalRoleKind().Kind(),
-			APIVersion: GroupVersion.Identifier(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			ResourceVersion: opts.ResourceVersion,
-			Namespace:       identifier.Namespace,
-			Name:            identifier.Name,
-		},
-		Status: newStatus,
-	}, resource.UpdateOptions{
-		Subresource:     "status",
-		ResourceVersion: opts.ResourceVersion,
-	})
 }
 
 func (c *GlobalRoleClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {

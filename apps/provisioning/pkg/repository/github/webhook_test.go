@@ -69,6 +69,36 @@ func TestParseWebhooks(t *testing.T) {
 				},
 			},
 		}},
+		{"push", "keep_file_only", provisioning.WebhookResponse{
+			Code: http.StatusAccepted,
+			Job: &provisioning.JobSpec{
+				Repository: "unit-test-repo",
+				Action:     provisioning.JobActionPull,
+				Pull: &provisioning.SyncJobOptions{
+					Incremental: false,
+				},
+			},
+		}},
+		{"push", "keep_file_with_others", provisioning.WebhookResponse{
+			Code: http.StatusAccepted,
+			Job: &provisioning.JobSpec{
+				Repository: "unit-test-repo",
+				Action:     provisioning.JobActionPull,
+				Pull: &provisioning.SyncJobOptions{
+					Incremental: true,
+				},
+			},
+		}},
+		{"push", "multiple_keep_files", provisioning.WebhookResponse{
+			Code: http.StatusAccepted,
+			Job: &provisioning.JobSpec{
+				Repository: "unit-test-repo",
+				Action:     provisioning.JobActionPull,
+				Pull: &provisioning.SyncJobOptions{
+					Incremental: false,
+				},
+			},
+		}},
 		{"issue_comment", "created", provisioning.WebhookResponse{
 			Code: http.StatusNotImplemented,
 		}},
@@ -1563,6 +1593,32 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 			},
 			webhookURL: "https://example.com/webhook",
 			// We don't return an error if the webhook is already gone
+			expectedError: nil,
+		},
+		{
+			name: "unauthorized to delete the webhook",
+			setupMock: func(m *MockClient) {
+				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+					Return(ErrUnauthorized)
+			},
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			webhookURL: "https://example.com/webhook",
+			// We don't return an error if access to the webhook is revoked
 			expectedError: nil,
 		},
 		{

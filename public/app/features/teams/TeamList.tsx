@@ -196,9 +196,7 @@ export const TeamList = ({
           }
 
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
-          const canDelete =
-            contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original) &&
-            !original.isProvisioned;
+          const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (

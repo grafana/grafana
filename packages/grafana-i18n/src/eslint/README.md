@@ -10,6 +10,30 @@ Check if strings are marked for translation inside JSX Elements, in certain JSX 
 
 ### Options
 
+#### `basePaths`
+
+Allows specifying base paths that should be stripped when generating i18n keys. Defaults to `['src']`.
+
+#### Example
+
+```tsx
+// For a file located at public/app/features/search/EmptyState.tsx
+
+// Specifying basePaths:
+// {
+//   '@grafana/i18n/no-untranslated-strings': ['error', { basePaths: ['public/app/features'] }],
+// }
+
+<Trans i18nKey="search.empty-state.no-results-found">No results found</Trans>
+
+// Without basePaths:
+// {
+//   '@grafana/i18n/no-untranslated-strings': ['error'],
+// }
+
+<Trans i18nKey="public.app.features.search.empty-state.no-results-found">No results found</Trans>
+```
+
 #### `forceFix`
 
 Allows specifying directories that, if the file is present within, then the rule will automatically fix the errors. This is primarily a workaround to allow for automatic mark up of new violations as the rule evolves.
@@ -44,6 +68,32 @@ const foo = css({
 const bar = {
   label: 'test',
 };
+```
+
+#### `namespace`
+
+Allows specifying a namespace prefix that will be added to all auto-generated translation keys when using ESLint's auto-fix feature. The namespace is separated from the key with a colon (:).
+
+This is useful for organizing translation keys by feature area or preventing key collisions between different parts of the application.
+
+#### Example:
+
+```tsx
+// Configuration:
+{
+  '@grafana/i18n/no-untranslated-strings': ['error', { namespace: 'dashboard' }],
+}
+
+// For a file located at src/features/search/EmptyState.tsx
+
+// Without namespace, auto-fix generates:
+<Trans i18nKey="features.search.empty-state.no-results-found">No results found</Trans>
+
+// With namespace: 'dashboard', auto-fix generates:
+<Trans i18nKey="dashboard:features.search.empty-state.no-results-found">No results found</Trans>
+
+// For JSX attributes, auto-fix generates:
+<div title={t("dashboard:features.search.empty-state.title-no-results", "No results")} />
 ```
 
 #### JSXText

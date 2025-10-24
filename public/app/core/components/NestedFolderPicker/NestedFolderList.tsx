@@ -32,6 +32,7 @@ interface NestedFolderListProps {
   onFolderSelect: (item: DashboardViewItem) => void;
   isItemLoaded: (itemIndex: number) => boolean;
   requestLoadMore: (folderUid: string | undefined) => void;
+  emptyFolders: Set<string>;
 }
 
 export function NestedFolderList({
@@ -44,6 +45,7 @@ export function NestedFolderList({
   onFolderSelect,
   isItemLoaded,
   requestLoadMore,
+  emptyFolders,
 }: NestedFolderListProps) {
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const styles = useStyles2(getStyles);
@@ -57,8 +59,18 @@ export function NestedFolderList({
       onFolderExpand,
       onFolderSelect,
       idPrefix,
+      emptyFolders,
     }),
-    [items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect, idPrefix]
+    [
+      items,
+      focusedItemIndex,
+      foldersAreOpenable,
+      selectedFolder,
+      onFolderExpand,
+      onFolderSelect,
+      idPrefix,
+      emptyFolders,
+    ]
   );
 
   const handleIsItemLoaded = useCallback(
@@ -119,8 +131,16 @@ interface RowProps {
 const SKELETON_WIDTHS = [100, 200, 130, 160, 150];
 
 function Row({ index, style: virtualStyles, data }: RowProps) {
-  const { items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect, idPrefix } =
-    data;
+  const {
+    items,
+    focusedItemIndex,
+    foldersAreOpenable,
+    selectedFolder,
+    onFolderExpand,
+    onFolderSelect,
+    idPrefix,
+    emptyFolders,
+  } = data;
   const { item, isOpen, level, parentUID } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
@@ -203,7 +223,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       <div className={styles.rowBody}>
         <Indent level={level} spacing={2} />
 
-        {foldersAreOpenable ? (
+        {foldersAreOpenable && !emptyFolders.has(item.uid) ? (
           <IconButton
             size={CHEVRON_SIZE}
             // by using onMouseDown here instead of onClick we can stop focus moving
@@ -257,7 +277,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     folderButtonSpacer: css({
-      paddingLeft: theme.spacing(0.5),
+      paddingLeft: theme.spacing(2.5),
     }),
 
     row: css({

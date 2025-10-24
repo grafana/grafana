@@ -29,7 +29,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder  = (*APIBuilder)(nil)
+	_ builder.APIGroupMutation = (*APIBuilder)(nil)
+)
 
 type APIBuilder struct {
 	authorizer  authorizer.Authorizer
@@ -72,7 +75,7 @@ func RegisterAPIService(
 
 	namespacer := request.GetNamespaceMapper(cfg)
 	if prefs != nil {
-		builder.legacyPrefs = legacy.NewPreferencesStorage(namespacer, sql)
+		builder.legacyPrefs = legacy.NewPreferencesStorage(prefs, namespacer, sql)
 	}
 	if stars != nil {
 		builder.legacyStars = legacy.NewDashboardStarsStorage(stars, users, namespacer, sql)
@@ -112,7 +115,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	if err != nil {
 		return err
 	}
-	stars = &starStorage{store: stars} // wrap List so we only return one value
+	stars = &starStorage{Storage: stars} // wrap List so we only return one value
 	if b.legacyStars != nil && opts.DualWriteBuilder != nil {
 		stars, err = opts.DualWriteBuilder(resource.GroupResource(), b.legacyStars, stars)
 		if err != nil {

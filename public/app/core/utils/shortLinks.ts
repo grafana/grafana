@@ -1,5 +1,6 @@
 import memoizeOne from 'memoize-one';
 
+import { generatedAPI } from '@grafana/api-clients/rtkq/shorturl/v1alpha1';
 import { AbsoluteTimeRange, LogRowModel, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
@@ -11,7 +12,6 @@ import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboard
 import { dispatch } from 'app/store/store';
 
 import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1alpha1/shorturl_object_gen';
-import { generatedAPI } from '../../api/clients/shorturl/v1alpha1/endpoints.gen';
 import { extractErrorMessage } from '../../api/utils';
 import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
 
@@ -48,6 +48,9 @@ export const createShortLink = async function (path: string) {
       const result = await dispatch(
         generatedAPI.endpoints.createShortUrl.initiate({
           shortUrl: {
+            apiVersion: 'shorturl.grafana.app/v1alpha1',
+            kind: 'ShortURL',
+            metadata: {},
             spec: {
               path: getRelativeURLPath(path),
             },

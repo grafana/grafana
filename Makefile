@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.24.6
+GO_VERSION = 1.25.3
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -17,6 +17,7 @@ GO_RACE_FLAG := $(if $(GO_RACE),-race)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
+GO_BUILD_FLAGS += $(if $(GO_BUILD_CGO),-cgo-enabled=$(GO_BUILD_CGO))
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
 
@@ -232,13 +233,13 @@ update-workspace: gen-go
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
-build-go: gen-go update-workspace ## Build all Go binaries.
+build-go: ## Build all Go binaries.
 	@echo "build go files with updated workspace"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
-build-go-fast: gen-go ## Build all Go binaries.
-	@echo "build go files"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build
+.PHONY: build-go-fast
+build-go-fast: ## Build all Go binaries without updating workspace.
+	@echo "!!! [DEPRECATED] use build-go, they do the same thing now. This command will be removed soon"
 
 .PHONY: build-backend
 build-backend: ## Build Grafana backend.

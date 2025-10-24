@@ -1,10 +1,15 @@
+import { configureStore } from '@reduxjs/toolkit';
 import { advanceBy } from 'jest-date-mock';
+import { UnknownAction } from 'redux';
+import { of } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import { BackendSrv, config, locationService, setBackendSrv } from '@grafana/runtime';
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import store from 'app/core/store';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -26,18 +31,26 @@ import {
   UnifiedDashboardScenePageStateManager,
   DASHBOARD_CACHE_TTL,
 } from './DashboardScenePageStateManager';
+const fetchMock = jest.fn();
 
-// Mock the config module
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
+  const originalGetBackendSrv = original.getBackendSrv;
   return {
     ...original,
+    getBackendSrv: () => {
+      const originalSrv = originalGetBackendSrv();
+      return {
+        ...originalSrv,
+        fetch: fetchMock,
+      };
+    },
     config: {
       ...original.config,
       featureToggles: {
         ...original.config.featureToggles,
-        dashboardNewLayouts: false, // Default value
-        reloadDashboardsOnParamsChange: false, // Default value
+        dashboardNewLayouts: false,
+        reloadDashboardsOnParamsChange: false,
       },
       datasources: {
         'gdev-testdata': {
@@ -80,6 +93,29 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
     },
   },
 }));
+
+const createTestStore = () =>
+  configureStore({
+    reducer: {
+      [provisioningAPIv0alpha1.reducerPath]: provisioningAPIv0alpha1.reducer,
+    },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(provisioningAPIv0alpha1.middleware),
+  });
+
+let testStore: ReturnType<typeof createTestStore>;
+
+jest.mock('app/store/store', () => {
+  const actual = jest.requireActual('app/store/store');
+  return {
+    ...actual,
+    dispatch: jest.fn((action: UnknownAction) => {
+      if (testStore) {
+        return testStore.dispatch(action);
+      }
+      return action;
+    }),
+  };
+});
 
 const setupDashboardAPI = (
   d: DashboardWithAccessInfo<DashboardV2Spec> | undefined,
@@ -161,10 +197,13 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockDashboardLoader.loadDashboard.mockReset();
   mockDashboardLoader.loadSnapshot.mockReset();
+  fetchMock.mockReset();
 
   // Reset locationService mocks
   locationService.getSearch = jest.fn().mockReturnValue(new URLSearchParams());
   locationService.getSearchObject = jest.fn().mockReturnValue({});
+
+  testStore = createTestStore();
 });
 
 describe('DashboardScenePageStateManager v1', () => {
@@ -1558,10 +1597,9 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
   describe('Provisioned dashboard', () => {
     it('should load a provisioned v1 dashboard', async () => {
+      fetchMock.mockImplementation(() => of(createFetchResponse(v1ProvisionedDashboardResource)));
+
       const loader = new UnifiedDashboardScenePageStateManager({});
-      setBackendSrv({
-        get: () => Promise.resolve(v1ProvisionedDashboardResource),
-      } as unknown as BackendSrv);
       await loader.loadDashboard({ uid: 'blah-blah', route: DashboardRoutes.Provisioning });
 
       expect(loader.state.dashboard).toBeDefined();
@@ -1572,10 +1610,9 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should load a provisioned v2 dashboard', async () => {
+      fetchMock.mockImplementation(() => of(createFetchResponse(v2ProvisionedDashboardResource)));
+
       const loader = new UnifiedDashboardScenePageStateManager({});
-      setBackendSrv({
-        get: () => Promise.resolve(v2ProvisionedDashboardResource),
-      } as unknown as BackendSrv);
       await loader.loadDashboard({ uid: 'blah-blah', route: DashboardRoutes.Provisioning });
 
       expect(loader.state.dashboard).toBeDefined();

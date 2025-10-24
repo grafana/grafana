@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"slices"
 	"strings"
 	"time"
 
@@ -116,6 +115,7 @@ type APIBuilder struct {
 	access           authlib.AccessChecker
 	statusPatcher    *appcontroller.RepositoryStatusPatcher
 	healthChecker    *controller.HealthChecker
+	validator        repository.RepositoryValidator
 	// Extras provides additional functionality to the API.
 	extras       []Extra
 	extraWorkers []jobs.Worker
@@ -144,6 +144,7 @@ func NewAPIBuilder(
 	allowedTargets []provisioning.SyncTargetType,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
+	minSyncInterval time.Duration,
 	registry prometheus.Registerer,
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 ) *APIBuilder {
@@ -172,10 +173,11 @@ func NewAPIBuilder(
 		access:              access,
 		jobHistoryConfig:    jobHistoryConfig,
 		extraWorkers:        extraWorkers,
-		allowedTargets:      allowedTargets,
 		restConfigGetter:    restConfigGetter,
+		allowedTargets:      allowedTargets,
 		allowImageRendering: allowImageRendering,
 		registry:            registry,
+		validator:           repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
 	}
 
 	for _, builder := range extraBuilders {
@@ -246,7 +248,7 @@ func RegisterAPIService(
 	}
 
 	builder := NewAPIBuilder(
-		cfg.ProvisioningDisableControllers,
+		cfg.DisableControllers,
 		repoFactory,
 		features,
 		client,
@@ -261,6 +263,7 @@ func RegisterAPIService(
 		allowedTargets,
 		nil, // will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
+		cfg.ProvisioningMinSyncInterval,
 		reg,
 		nil,
 	)
@@ -287,7 +290,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					Name:        a.GetName(),
 					Namespace:   a.GetNamespace(),
 					Subresource: a.GetSubresource(),
-				})
+				}, "")
 				if err != nil {
 					return authorizer.DecisionDeny, "failed to perform authorization", err
 				}
@@ -475,7 +478,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.validator), b.VerifyAgainstExistingRepositories))
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
@@ -485,7 +488,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, jobHistory)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -576,23 +579,13 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return err
 	}
 
-	list := repository.ValidateRepository(repo)
+	// ALL configuration validations should be done in ValidateRepository -
+	// this is how the UI is able to show proper validation errors
+	//
+	// the only time to add configuration checks here is if you need to compare
+	// the incoming change to the current configuration
+	list := b.validator.ValidateRepository(repo)
 	cfg := repo.Config()
-
-	if !slices.Contains(b.allowedTargets, cfg.Spec.Sync.Target) {
-		list = append(list,
-			field.Invalid(
-				field.NewPath("spec", "target"),
-				cfg.Spec.Sync.Target,
-				"sync target is not supported"))
-	}
-
-	if !b.allowImageRendering && cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews {
-		list = append(list,
-			field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
-				cfg.Spec.GitHub.GenerateDashboardPreviews,
-				"image rendering is not enabled"))
-	}
 
 	if a.GetOperation() == admission.Update {
 		oldRepo, err := b.asRepository(ctx, a.GetOldObject(), nil)
@@ -655,11 +648,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 
-			// Informer with resync interval used for health check and reconciliation
-			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
-			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
-
 			b.client = c.ProvisioningV0alpha1()
 
 			// Initialize the API client-based job store
@@ -669,13 +657,17 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
-			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry)
+			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewSimpleRepositoryTester(b.validator))
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.onlyApiServer {
 				return nil
 			}
 
+			// Informer with resync interval used for health check and reconciliation
+			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
+			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
+			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 			go repoInformer.Informer().Run(postStartHookCtx.Done())
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
 
@@ -703,7 +695,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer)
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10)
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
@@ -712,6 +704,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				syncer,
 				metrics,
 				b.tracer,
+				10,
 			)
 			signerFactory := signature.NewSignerFactory(b.clients)
 			legacyResources := migrate.NewLegacyResourcesMigrator(

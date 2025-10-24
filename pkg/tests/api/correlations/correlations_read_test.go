@@ -109,7 +109,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 	var created int64 = 0
 	err := ctx.env.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		var innerError error
-		created, innerError = sess.InsertMulti(&[]correlations.Correlation{
+		created, innerError = sess.Omit("source_type", "target_type").InsertMulti(&[]correlations.Correlation{
 			{
 				UID:       "uid-1",
 				SourceUID: dsWithoutCorrelations.UID,

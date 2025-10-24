@@ -23,9 +23,9 @@ const qualifiedNameFmt string = "^(" + qnameCharFmt + qnameExtCharFmt + "*)?" + 
 const qualifiedNameErrMsg string = "must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character"
 
 const alphaCharFmt string = "[A-Za-z]"
-const resourceCharFmt string = "[A-Za-z0-9]" // alpha numeric
+const resourceCharFmt string = "[A-Za-z0-9-]" // alpha numeric plus dashes
 const resourceFmt string = "^" + alphaCharFmt + resourceCharFmt + "*$"
-const resourceErrMsg string = "must consist of alphanumeric characters"
+const resourceErrMsg string = "must consist of alphanumeric characters and dashes, and must start with an alphabetic character"
 
 var (
 	grafanaNameRegexp   = regexp.MustCompile(grafanaNameFmt).MatchString
@@ -90,7 +90,7 @@ func IsValidGroup(group string) []string {
 
 // If the value is not valid, a list of error strings is returned.
 // Otherwise an empty list (or nil) is returned.
-func IsValidateResource(resource string) []string {
+func IsValidResource(resource string) []string {
 	s := len(resource)
 	switch {
 	case s > maxResourceLength:

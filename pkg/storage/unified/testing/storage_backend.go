@@ -39,6 +39,7 @@ const (
 	TestListModifiedSince         = "list events since rv"
 	TestListTrash                 = "list trash"
 	TestCreateNewResource         = "create new resource"
+	TestGetResourceLastImportTime = "get resource last import time"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
@@ -81,6 +82,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestListTrash, runTestIntegrationBackendTrash},
 		{TestCreateNewResource, runTestIntegrationBackendCreateNewResource},
 		{TestListModifiedSince, runTestIntegrationBackendListModifiedSince},
+		{TestGetResourceLastImportTime, runTestIntegrationGetResourceLastImportTime},
 	}
 
 	for _, tc := range cases {
@@ -124,13 +126,13 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 	})
 
 	t.Run("Update item2", func(t *testing.T) {
-		rv4, err = writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+		rv4, err = writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv2))
 		require.NoError(t, err)
 		require.Greater(t, rv4, rv3)
 	})
 
 	t.Run("Delete item1", func(t *testing.T) {
-		rv5, err = writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+		rv5, err = writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv1))
 		require.NoError(t, err)
 		require.Greater(t, rv5, rv4)
 	})
@@ -352,10 +354,10 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 	rv5, err := writeEvent(ctx, backend, "item5", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rv5, rv4)
-	rv6, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	rv6, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv2))
 	require.NoError(t, err)
 	require.Greater(t, rv6, rv5)
-	rv7, err := writeEvent(ctx, backend, "item3", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	rv7, err := writeEvent(ctx, backend, "item3", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv3))
 	require.NoError(t, err)
 	require.Greater(t, rv7, rv6)
 	rv8, err := writeEvent(ctx, backend, "item6", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
@@ -490,10 +492,10 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 	ns := nsPrefix + "-history-ns"
 	rvCreated, _ := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 	require.Greater(t, rvCreated, int64(0))
-	rvUpdated, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	rvUpdated, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvCreated))
 	require.NoError(t, err)
 	require.Greater(t, rvUpdated, rvCreated)
-	rvDeleted, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	rvDeleted, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rvUpdated))
 	require.NoError(t, err)
 	require.Greater(t, rvDeleted, rvUpdated)
 
@@ -610,19 +612,19 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 	require.Greater(t, rv1, int64(0))
 
 	// add 5 events for item1 - should be saved to history
-	rvHistory1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	rvHistory1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv1))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory1, rv1)
-	rvHistory2, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	rvHistory2, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvHistory1))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory2, rvHistory1)
-	rvHistory3, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	rvHistory3, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvHistory2))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory3, rvHistory2)
-	rvHistory4, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	rvHistory4, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvHistory3))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory4, rvHistory3)
-	rvHistory5, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	rvHistory5, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvHistory4))
 	require.NoError(t, err)
 	require.Greater(t, rvHistory5, rvHistory4)
 
@@ -804,8 +806,9 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		resourceVersions = append(resourceVersions, initialRV)
 
 		// Create 9 more versions with modifications
+		rv := initialRV
 		for i := 0; i < 9; i++ {
-			rv, err := writeEvent(ctx, backend, "paged-item", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns2))
+			rv, err = writeEvent(ctx, backend, "paged-item", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns2, rv))
 			require.NoError(t, err)
 			resourceVersions = append(resourceVersions, rv)
 		}
@@ -907,7 +910,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		// Create a resource and delete it
 		rv, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 		require.NoError(t, err)
-		rvDeleted, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+		rvDeleted, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv))
 		require.NoError(t, err)
 		require.Greater(t, rvDeleted, rv)
 
@@ -932,7 +935,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		// Create a resource and delete it
 		rv, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 		require.NoError(t, err)
-		rvDeleted, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+		rvDeleted, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv))
 		require.NoError(t, err)
 		require.Greater(t, rvDeleted, rv)
 
@@ -940,7 +943,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		rv1, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 		require.NoError(t, err)
 		require.Greater(t, rv1, rvDeleted)
-		rv2, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+		rv2, err := writeEvent(ctx, backend, "deleted-item", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv1))
 		require.NoError(t, err)
 		require.Greater(t, rv2, rv1)
 
@@ -983,8 +986,8 @@ func runTestIntegrationBackendListHistoryErrorReporting(t *testing.T, backend re
 
 	const events = 500
 	prevRv := origRv
-	for i := 0; i < events; i++ {
-		rv, err := writeEvent(ctx, backend, name, resourcepb.WatchEvent_MODIFIED, WithNamespace(ns), WithGroup(group), WithResource(resourceName))
+	for range events {
+		rv, err := writeEvent(ctx, backend, name, resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, prevRv), WithGroup(group), WithResource(resourceName))
 		require.NoError(t, err)
 		require.Greater(t, rv, prevRv)
 		prevRv = rv
@@ -1132,6 +1135,14 @@ func runTestIntegrationBackendCreateNewResource(t *testing.T, backend resource.S
 type WriteEventOption func(*WriteEventOptions)
 
 // WithNamespace sets the namespace for the write event
+func WithNamespaceAndRV(namespace string, rv int64) WriteEventOption {
+	return func(o *WriteEventOptions) {
+		o.Namespace = namespace
+		o.PreviousRV = rv
+	}
+}
+
+// WithNamespace sets the namespace for the write event
 func WithNamespace(namespace string) WriteEventOption {
 	return func(o *WriteEventOptions) {
 		o.Namespace = namespace
@@ -1180,11 +1191,12 @@ func WithValue(value string) WriteEventOption {
 }
 
 type WriteEventOptions struct {
-	Namespace string
-	Group     string
-	Resource  string
-	Folder    string
-	Value     []byte
+	Namespace  string
+	Group      string
+	Resource   string
+	Folder     string
+	Value      []byte
+	PreviousRV int64
 }
 
 func writeEvent(ctx context.Context, store resource.StorageBackend, name string, action resourcepb.WatchEvent_Type, opts ...WriteEventOption) (int64, error) {
@@ -1236,6 +1248,7 @@ func writeEvent(ctx context.Context, store resource.StorageBackend, name string,
 			Resource:  options.Resource,
 			Name:      name,
 		},
+		PreviousRV: options.PreviousRV,
 	}
 	switch action {
 	case resourcepb.WatchEvent_DELETED:
@@ -1285,18 +1298,15 @@ func runTestIntegrationBackendTrash(t *testing.T, backend resource.StorageBacken
 	rv1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rv1, int64(0))
-	rvDelete1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	rvDelete1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv1))
 	require.NoError(t, err)
 	require.Greater(t, rvDelete1, rv1)
-	rvDelete2, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
-	require.NoError(t, err)
-	require.Greater(t, rvDelete2, rvDelete1)
 
 	// item2 deleted and recreated, should not be returned in trash
 	rv2, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rv2, int64(0))
-	rvDelete3, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	rvDelete3, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv2))
 	require.NoError(t, err)
 	require.Greater(t, rvDelete3, rv2)
 	rv3, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
@@ -1325,10 +1335,10 @@ func runTestIntegrationBackendTrash(t *testing.T, backend resource.StorageBacken
 					},
 				},
 			},
-			expectedVersions:   []int64{rvDelete2},
+			expectedVersions:   []int64{rvDelete1},
 			expectedValues:     []string{"item1 DELETED"},
-			minExpectedHeadRV:  rvDelete2,
-			expectedContinueRV: rvDelete2,
+			minExpectedHeadRV:  rvDelete1,
+			expectedContinueRV: rvDelete1,
 			expectedSortAsc:    false,
 		},
 		{
@@ -1366,4 +1376,169 @@ func runTestIntegrationBackendTrash(t *testing.T, backend resource.StorageBacken
 			require.GreaterOrEqual(t, res.ResourceVersion, tc.minExpectedHeadRV)
 		})
 	}
+}
+
+func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	bulk, ok := backend.(resource.BulkProcessingBackend)
+	if !ok {
+		// This test is only enabled for backends that DO support bulk import. If the backend does not support
+		// bulk import but has this test enabled, that's a bug.
+		t.Fatal("backend does not support bulk import")
+	}
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+
+	t.Run("no imported times by default", func(t *testing.T) {
+		res := collectLastImportedTimes(t, backend, ctx)
+		require.Empty(t, res)
+	})
+
+	t.Run("last imported time after bulk import", func(t *testing.T) {
+		ns := nsPrefix + "-import"
+
+		collections := []*resourcepb.ResourceKey{
+			{Namespace: ns, Group: "dashboards", Resource: "dashboard"},
+			{Namespace: ns, Group: "folders", Resource: "folder"},
+		}
+
+		bulkRequests := []*resourcepb.BulkRequest{
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: "dashboards", Resource: "dashboard", Name: "test"},
+				Action: resourcepb.BulkRequest_ADDED,
+				Value:  nil,
+			},
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: "dashboards", Resource: "dashboard", Name: "test2"},
+				Action: resourcepb.BulkRequest_ADDED,
+				Value:  nil,
+			},
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: "folders", Resource: "folder", Name: "test2"},
+				Action: resourcepb.BulkRequest_ADDED,
+				Value:  nil,
+			},
+		}
+
+		resp := bulk.ProcessBulk(ctx, resource.BulkSettings{
+			Collection:        collections,
+			RebuildCollection: true,
+		}, toBulkIterator(bulkRequests))
+		require.Nil(t, resp.Error)
+
+		result := collectLastImportedTimes(t, backend, ctx)
+		require.Len(t, result, len(collections))
+
+		now := time.Now()
+
+		for _, r := range collections {
+			nsr := resource.NamespacedResource{Namespace: r.Namespace, Group: r.Group, Resource: r.Resource}
+			lastImported, ok := result[nsr]
+			require.True(t, ok, "resource not found: %s", nsr.String())
+			require.True(t, lastImported.After(now.Add(-5*time.Second)), "last imported time is not recent")
+		}
+	})
+
+	t.Run("last imported time after multiple bulk imports", func(t *testing.T) {
+		ns1 := nsPrefix + "-import1"
+		collections1 := []*resourcepb.ResourceKey{
+			{Namespace: ns1, Group: "dashboards", Resource: "dashboard"},
+			{Namespace: ns1, Group: "folders", Resource: "folder"},
+		}
+		bulkRequests1 := []*resourcepb.BulkRequest{{
+			Key:    &resourcepb.ResourceKey{Namespace: ns1, Group: "dashboards", Resource: "dashboard", Name: "test"},
+			Action: resourcepb.BulkRequest_ADDED,
+			Value:  nil,
+		}, {
+			Key:    &resourcepb.ResourceKey{Namespace: ns1, Group: "dashboards", Resource: "dashboard", Name: "test2"},
+			Action: resourcepb.BulkRequest_ADDED,
+			Value:  nil,
+		}, {
+			Key:    &resourcepb.ResourceKey{Namespace: ns1, Group: "folders", Resource: "folder", Name: "test2"},
+			Action: resourcepb.BulkRequest_ADDED,
+			Value:  nil,
+		}}
+
+		resp1 := bulk.ProcessBulk(ctx, resource.BulkSettings{
+			Collection:        collections1,
+			RebuildCollection: true,
+		}, toBulkIterator(bulkRequests1))
+		require.Nil(t, resp1.Error)
+
+		firstImport := time.Now()
+
+		const delta = 5 * time.Second
+		// Verify that last imported times are combination of both bulk imports
+		result1 := collectLastImportedTimes(t, backend, ctx)
+		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], firstImport, delta)
+		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
+
+		// Do another bulk import, without overwriting existing resources. We import into ns1-dashboards (same as before),
+		// and new ns2-folders. ns1-folders is unchanged.
+		ns2 := nsPrefix + "-import2"
+		collections2 := []*resourcepb.ResourceKey{
+			{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}, // Import MORE dashboards into ns1
+			{Namespace: ns2, Group: "folders", Resource: "folder"},
+		}
+		bulkRequests2 := []*resourcepb.BulkRequest{{
+			Key:    &resourcepb.ResourceKey{Namespace: ns1, Group: "dashboards", Resource: "dashboard", Name: "new-test"},
+			Action: resourcepb.BulkRequest_ADDED,
+			Value:  nil,
+		}, {
+			Key:    &resourcepb.ResourceKey{Namespace: ns2, Group: "folders", Resource: "folder", Name: "test2"},
+			Action: resourcepb.BulkRequest_ADDED,
+			Value:  nil,
+		}}
+
+		resp2 := bulk.ProcessBulk(ctx, resource.BulkSettings{
+			Collection:        collections2,
+			RebuildCollection: false,
+		}, toBulkIterator(bulkRequests2))
+		require.Nil(t, resp2.Error)
+
+		secondImport := time.Now()
+
+		// Verify that last imported times are combination of both bulk imports
+		result2 := collectLastImportedTimes(t, backend, ctx)
+
+		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], secondImport, delta)
+		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
+		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns2, Group: "folders", Resource: "folder"}], secondImport, delta)
+
+		// Verify that last import time for ns1 folders are unchanged
+		ns1FoldersKey := resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}
+		require.Equal(t, result1[ns1FoldersKey], result2[ns1FoldersKey])
+	})
+}
+
+func collectLastImportedTimes(t *testing.T, backend resource.StorageBackend, ctx context.Context) map[resource.NamespacedResource]time.Time {
+	result := map[resource.NamespacedResource]time.Time{}
+	for lm, err := range backend.GetResourceLastImportTimes(ctx) {
+		require.NoError(t, err)
+		result[lm.NamespacedResource] = lm.LastImportTime
+	}
+	return result
+}
+
+func toBulkIterator(reqs []*resourcepb.BulkRequest) resource.BulkRequestIterator {
+	it := &sliceBulkRequestIterator{}
+	*it = reqs
+	return it
+}
+
+type sliceBulkRequestIterator []*resourcepb.BulkRequest
+
+func (s *sliceBulkRequestIterator) Next() bool {
+	if len(*s) > 1 {
+		*s = (*s)[1:]
+		return true
+	}
+	return false
+}
+
+func (s *sliceBulkRequestIterator) Request() *resourcepb.BulkRequest {
+	return (*s)[0]
+}
+
+func (s *sliceBulkRequestIterator) RollbackRequested() bool {
+	return false
 }
