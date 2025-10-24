@@ -347,6 +347,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         >
           {isOpen && (
             <ComboboxList
+              loading={loading}
               options={options}
               highlightedIndex={highlightedIndex}
               selectedItems={selectedItems}

@@ -402,6 +402,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         >
           {isOpen && (
             <ComboboxList
+              loading={loading}
               options={filteredOptions}
               highlightedIndex={highlightedIndex}
               selectedItems={selectedItem ? [selectedItem] : []}
