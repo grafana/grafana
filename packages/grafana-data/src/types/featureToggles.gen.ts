@@ -1208,6 +1208,11 @@ export interface FeatureToggles {
   */
   cdnPluginsUrls?: boolean;
   /**
+  * Enable syncing plugin installations to the installs API
+  * @default false
+  */
+  pluginInstallAPISync?: boolean;
+  /**
   * Enable new gauge visualization
   * @default false
   */

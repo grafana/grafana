@@ -11760,6 +11760,11 @@
       "next": "Berikutnya",
       "previous": "Sebelumnya"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Langkah selesai",
       "label-current-step": "Langkah saat ini",
