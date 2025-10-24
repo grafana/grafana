@@ -105,8 +105,8 @@ func GolangContainer(
 	opts *BuildOpts,
 ) (*dagger.Container, error) {
 	os, _ := OSAndArch(distro)
-	// Only use viceroy for all darwin and only windows/amd64
-	if opts.CGOEnabled && (os == "darwin" || distro == DistWindowsAMD64) {
+	// Only use viceroy for all darwin builds
+	if opts.CGOEnabled && os == "darwin" {
 		return ViceroyContainer(d, log, distro, goVersion, viceroyVersion, opts)
 	}
 
@@ -124,7 +124,9 @@ func GolangContainer(
 			WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/s390x-linux-musl-cross.tgz", "-P", "/toolchain"}).
 			WithExec([]string{"tar", "-xf", "/toolchain/s390x-linux-musl-cross.tgz", "-C", "/toolchain"}).
 			WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/riscv64-linux-musl-cross.tgz", "-P", "/toolchain"}).
-			WithExec([]string{"tar", "-xf", "/toolchain/riscv64-linux-musl-cross.tgz", "-C", "/toolchain"})
+			WithExec([]string{"tar", "-xf", "/toolchain/riscv64-linux-musl-cross.tgz", "-C", "/toolchain"}).
+			WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/x86_64-w64-mingw32-cross.tgz", "-P", "/toolchain"}).
+			WithExec([]string{"tar", "-xf", "/toolchain/x86_64-w64-mingw32-cross.tgz", "-C", "/toolchain"})
 	}
 	return WithGoEnv(log, container, distro, opts)
 }
