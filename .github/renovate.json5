@@ -1,6 +1,6 @@
 {
   extends: ["config:recommended"],
-  enabledManagers: ["npm"],
+  enabledManagers: ["npm", "docker-compose"],
   ignorePresets: [
     "github>grafana/grafana-renovate-config//presets/labels",
   ],
