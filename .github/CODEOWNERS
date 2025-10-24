@@ -166,7 +166,7 @@
 /pkg/services/kmsproviders/ @grafana/grafana-operator-experience-squad
 /pkg/services/licensing/ @grafana/grafana-operator-experience-squad
 /pkg/services/dsquerierclient/ @grafana/grafana-datasources-core-services
-/pkg/services/navtree/ @grafana/grafana-backend-group
+/pkg/services/navtree/ @grafana/grafana-backend-group @grafana/grafana-search-navigate-organise
 /pkg/services/notifications/ @grafana/grafana-backend-group
 /pkg/services/org/ @grafana/grafana-backend-group
 /pkg/services/playlist/ @grafana/grafana-app-platform-squad
@@ -482,6 +482,7 @@
 /e2e-playwright/panels-suite/panelEdit_base.spec.ts @grafana/dashboards-squad
 /e2e-playwright/panels-suite/panelEdit_queries.spec.ts @grafana/dashboards-squad
 /e2e-playwright/panels-suite/panelEdit_transforms.spec.ts @grafana/datapro
+/e2e-playwright/panels-suite/state-timeline.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/table-footer.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/table-kitchenSink.spec.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/table-markdown.spec.ts @grafana/dataviz-squad
