@@ -64,7 +64,7 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
       </Trans>
       <div>
         <TextLink
-          href="https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/conditional-rendering/"
+          href="https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/create-dynamic-dashboard/#configure-showhide-rules"
           external={true}
         >
           <Trans i18nKey="dashboard.conditional-rendering.editor.learn-more">Learn more</Trans>
