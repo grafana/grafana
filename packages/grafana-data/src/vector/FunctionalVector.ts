@@ -153,13 +153,13 @@ export abstract class FunctionalVector<T = unknown> {
   findIndex(predicate: (value: T, index: number, obj: T[]) => unknown, thisArg?: any): number {
     return this.toArray().findIndex(predicate, thisArg);
   }
-  entries(): IterableIterator<[number, T]> {
+  entries(): ArrayIterator<[number, T]> {
     return this.toArray().entries();
   }
-  keys(): IterableIterator<number> {
+  keys(): ArrayIterator<number> {
     return this.toArray().keys();
   }
-  values(): IterableIterator<T> {
+  values(): ArrayIterator<T> {
     return this.toArray().values();
   }
   includes(searchElement: T, fromIndex?: number | undefined): boolean {
