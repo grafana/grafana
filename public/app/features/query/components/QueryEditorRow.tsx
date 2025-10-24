@@ -315,7 +315,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         return acc;
       }
 
-      const warnings = filter(serie.meta.notices, (item: QueryResultMetaNotice) => item.severity === type) ?? [];
+      const warnings = filter(serie.meta.notices, (item: QueryResultMetaNotice | null) => item?.severity === type) ?? [];
       return acc.concat(warnings);
     }, []);
 
