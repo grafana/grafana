@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
 import { createDataFrame } from '@grafana/data';
+import { mockGetBoundingClientRect } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
@@ -9,6 +10,8 @@ import { textToDataContainer } from '../FlameGraph/testHelpers';
 import { ColorScheme } from '../types';
 
 import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
+
+mockGetBoundingClientRect({ width: 500, height: 500 });
 
 describe('FlameGraphTopTableContainer', () => {
   const setup = () => {
@@ -31,14 +34,6 @@ describe('FlameGraphTopTableContainer', () => {
   };
 
   it('should render correctly', async () => {
-    // Needed for AutoSizer to work in test
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: jest.fn(() => ({
-        width: 500,
-        height: 500,
-      })),
-    });
-
     setup();
     const rows = screen.getAllByRole('row');
     expect(rows).toHaveLength(16);
@@ -63,15 +58,6 @@ describe('FlameGraphTopTableContainer', () => {
   });
 
   it('should render search and sandwich buttons', async () => {
-    // Needed for AutoSizer to work in test
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: jest.fn(() => ({
-        width: 500,
-        height: 500,
-        left: 0,
-      })),
-    });
-
     const { mocks } = setup();
 
     const searchButtons = screen.getAllByLabelText(/Search for symbol/);

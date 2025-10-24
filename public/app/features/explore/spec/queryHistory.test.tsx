@@ -1,5 +1,3 @@
-import { Props } from 'react-virtualized-auto-sizer';
-
 import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -77,15 +75,6 @@ jest.mock('app/core/services/PreferencesService', () => ({
 jest.mock('../hooks/useExplorePageTitle', () => ({
   useExplorePageTitle: jest.fn(),
 }));
-
-jest.mock('react-virtualized-auto-sizer', () => {
-  return {
-    __esModule: true,
-    default(props: Props) {
-      return <div>{props.children({ height: 1, scaledHeight: 1, scaledWidth: 1000, width: 1000 })}</div>;
-    },
-  };
-});
 
 describe('Explore: Query History', () => {
   const USER_INPUT = 'my query';

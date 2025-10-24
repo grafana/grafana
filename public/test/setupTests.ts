@@ -7,7 +7,7 @@ import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
 import { initReactI18next } from 'react-i18next';
 
-import { matchers } from '@grafana/test-utils';
+import { matchers, mockGetBoundingClientRect } from '@grafana/test-utils';
 
 import getEnvConfig from '../../scripts/webpack/env-util';
 
@@ -33,6 +33,21 @@ i18next.use(initReactI18next).init({
 // The mock is needed because JSDOM does not support workers and
 // the factory uses import.meta.url so we can't use it in CommonJS modules.
 jest.mock('app/features/dashboard-scene/saving/createDetectChangesWorker.ts');
+
+// window.HTMLElement.prototype.getBoundingClientRect = () => {
+//   return {
+//     height: 120,
+//     width: 120,
+//     bottom: 0,
+//     left: 0,
+//     right: 0,
+//     top: 0,
+//     x: 0,
+//     y: 0,
+//   } as DOMRect;
+// };
+
+mockGetBoundingClientRect({ width: 120, height: 120 });
 
 // our tests are heavy in CI due to parallelisation and monaco and kusto
 // so we increase the default timeout to 2secs to avoid flakiness

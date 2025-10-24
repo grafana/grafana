@@ -1,5 +1,4 @@
 import { noop } from 'lodash';
-import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { defaultDashboard as defaultDashboardData } from '@grafana/schema';
@@ -29,16 +28,6 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
     getDashboardDTO: getDashboardDTO,
   }),
 }));
-
-jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: Props) =>
-    children({
-      height: 600,
-      scaledHeight: 600,
-      scaledWidth: 1,
-      width: 1,
-    });
-});
 
 jest.mocked(backendSrv.search).mockResolvedValue([
   {

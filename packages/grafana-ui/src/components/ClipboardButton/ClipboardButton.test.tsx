@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { ClipboardButton } from './ClipboardButton';
@@ -20,6 +20,7 @@ describe('ClipboardButton', () => {
   beforeAll(() => {
     jest.useFakeTimers();
     Object.assign(window, {
+      ...originalWindow,
       isSecureContext: true,
     });
   });
@@ -43,11 +44,11 @@ describe('ClipboardButton', () => {
     await user.click(button);
     expect(await screen.findByText('Copied')).toBeInTheDocument();
 
-    act(() => {
-      jest.runAllTimers();
-    });
+    // act(() => {
+    //   jest.runAllTimers();
+    // });
 
-    expect(screen.queryByText('Copied')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Copied')).not.toBeInTheDocument());
 
     const clipboardText = await navigator.clipboard.readText();
 

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { PayloadEditor, RESET_TO_DEFAULT } from './PayloadEditor';
@@ -22,16 +21,6 @@ jest.mock('@grafana/ui', () => ({
     return <input data-testid="mockeditor" value={value} onChange={(e) => onBlur(e.currentTarget.value)} />;
   },
 }));
-
-jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: Props) =>
-    children({
-      height: 1,
-      scaledHeight: 1,
-      scaledWidth: 1,
-      width: 1,
-    });
-});
 
 const PayloadEditorWithState = () => {
   const [payload, setPayload] = useState(DEFAULT_PAYLOAD);

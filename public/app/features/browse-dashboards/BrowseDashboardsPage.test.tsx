@@ -1,6 +1,4 @@
-import { ComponentProps } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import { render as testRender, screen, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -17,24 +15,6 @@ setBackendSrv(backendSrv);
 setupMockServer();
 
 const [_, { dashbdD, folderA, folderA_folderA }] = getFolderFixtures();
-
-jest.mock('react-virtualized-auto-sizer', () => {
-  return {
-    __esModule: true,
-    default(props: ComponentProps<typeof AutoSizer>) {
-      return (
-        <div>
-          {props.children({
-            width: 800,
-            scaledWidth: 800,
-            scaledHeight: 600,
-            height: 600,
-          })}
-        </div>
-      );
-    },
-  };
-});
 
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),

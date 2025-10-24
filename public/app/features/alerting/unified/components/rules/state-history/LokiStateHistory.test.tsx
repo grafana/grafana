@@ -1,5 +1,4 @@
 import { HttpResponse, http } from 'msw';
-import { Props } from 'react-virtualized-auto-sizer';
 import { render, waitFor } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -9,16 +8,6 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import LokiStateHistory from './LokiStateHistory';
 
 const server = setupMswServer();
-
-jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: Props) =>
-    children({
-      height: 600,
-      scaledHeight: 600,
-      scaledWidth: 1,
-      width: 1,
-    });
-});
 
 // Mock useMeasure from LogTimelineViewer > TimelineChart > GraphNG > VizLayout
 // so it always renders the chart
