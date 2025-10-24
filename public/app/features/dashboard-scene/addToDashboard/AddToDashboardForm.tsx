@@ -9,7 +9,7 @@ import { Panel } from '@grafana/schema';
 import { Alert, Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
-import { DrilldownOptions } from 'app/features/explore/extensions/AddToDashboard/DrilldownApp/types';
+import { DrilldownOptions } from 'app/features/drilldown-integration/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { addToDashboard, SubmissionError } from './addToDashboard';

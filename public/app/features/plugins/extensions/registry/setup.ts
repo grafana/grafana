@@ -1,6 +1,6 @@
 import { PluginExtensionExposedComponents } from '@grafana/data';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
-import { DrilldownAppToDashboardPanelComponent } from 'app/features/explore/extensions/getComponentExtensions';
+import { DrilldownAppToDashboardPanelComponent } from 'app/features/drilldown-integration/getComponentExtensions';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 

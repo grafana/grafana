@@ -1,11 +1,9 @@
 import { lazy, Suspense } from 'react';
 
-import { DrilldownAppToDashboardPanelProps } from './AddToDashboard/DrilldownApp/DrilldownAppToDashboardPanel';
+import { DrilldownAppToDashboardPanelProps } from './DrilldownAppToDashboardPanel';
 
 // Lazy load the component
-const DrilldownAppToDashboardPanelLazy = lazy(
-  () => import('./AddToDashboard/DrilldownApp/DrilldownAppToDashboardPanel')
-);
+const DrilldownAppToDashboardPanelLazy = lazy(() => import('./DrilldownAppToDashboardPanel'));
 
 // Wrap with Suspense and properly typed props
 export const DrilldownAppToDashboardPanelComponent = (props: DrilldownAppToDashboardPanelProps) => (
