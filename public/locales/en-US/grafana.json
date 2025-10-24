@@ -7156,6 +7156,14 @@
       "title-failed-sample-query": "Failed to load logs sample for this query",
       "tooltip": "Show log lines that contributed to visualized metrics"
     },
+    "logs-table": {
+      "action-buttons": {
+        "copy-link": "Copy link to log line",
+        "copy-to-clipboard": "Copy to Clipboard",
+        "inspect-value": "Inspect value",
+        "view-log-line": "View log line"
+      }
+    },
     "logs-table-empty-fields": {
       "no-fields": "No fields"
     },

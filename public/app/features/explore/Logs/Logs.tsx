@@ -361,6 +361,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     }
   }, [displayedFields, panelState?.logs?.displayedFields, visualisationType, panelState?.logs, updatePanelState]);
 
+  // Clear permalink id from panelState after loading completes
+  useEffect(() => {
+    if (!loading && panelState?.logs?.id) {
+      dispatch(changePanelState(exploreId, 'logs', { logs: {} }));
+    }
+  }, [loading, panelState?.logs?.id, exploreId, dispatch]);
+
   // actions
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {

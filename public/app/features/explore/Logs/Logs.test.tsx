@@ -73,6 +73,7 @@ describe('Logs', () => {
     Object.defineProperty(window, 'location', {
       value: {
         href: 'http://localhost:3000/explore?test',
+        search: '?test',
       },
       writable: true,
     });
@@ -86,6 +87,7 @@ describe('Logs', () => {
     Object.defineProperty(window, 'location', {
       value: {
         href: originalHref,
+        search: '',
       },
       writable: true,
     });
