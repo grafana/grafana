@@ -76,6 +76,7 @@ describe('combineResponses', () => {
             custom: {
               frameType: 'LabeledTimeValues',
             },
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -154,6 +155,7 @@ describe('combineResponses', () => {
             custom: {
               frameType: 'LabeledTimeValues',
             },
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -199,6 +201,7 @@ describe('combineResponses', () => {
           length: 4,
           meta: {
             type: 'timeseries-multi',
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -244,6 +247,7 @@ describe('combineResponses', () => {
           length: 4,
           meta: {
             type: 'timeseries-multi',
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -424,6 +428,7 @@ describe('combineResponses', () => {
             custom: {
               frameType: 'LabeledTimeValues',
             },
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -499,6 +504,7 @@ describe('combineResponses', () => {
             custom: {
               frameType: 'LabeledTimeValues',
             },
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -574,6 +580,7 @@ describe('combineResponses', () => {
             custom: {
               frameType: 'LabeledTimeValues',
             },
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -824,6 +831,7 @@ describe('combineResponses', () => {
           length: 4,
           meta: {
             type: 'timeseries-multi',
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -890,6 +898,7 @@ describe('combineResponses', () => {
           length: 4,
           meta: {
             type: 'timeseries-multi',
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -937,6 +946,7 @@ describe('mergeFrames', () => {
           length: 4,
           meta: {
             type: 'timeseries-multi',
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -986,6 +996,7 @@ describe('mergeFrames', () => {
           length: 3,
           meta: {
             type: 'timeseries-multi',
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -1031,6 +1042,7 @@ describe('mergeFrames', () => {
           length: 4,
           meta: {
             type: 'timeseries-multi',
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -1110,6 +1122,7 @@ describe('mergeFrames', () => {
             custom: {
               frameType: 'LabeledTimeValues',
             },
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -1192,6 +1205,7 @@ describe('mergeFrames', () => {
             custom: {
               frameType: 'LabeledTimeValues',
             },
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -1223,6 +1237,7 @@ describe('mergeFrames', () => {
             custom: {
               frameType: 'LabeledTimeValues',
             },
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -1302,6 +1317,7 @@ describe('mergeFrames', () => {
             custom: {
               frameType: 'LabeledTimeValues',
             },
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
@@ -1336,6 +1352,7 @@ describe('mergeFrames', () => {
             custom: {
               frameType: 'LabeledTimeValues',
             },
+            notices: [],
             stats: [{ displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 22 }],
           },
           length: 2,
@@ -1361,6 +1378,7 @@ describe('mergeFrames', () => {
             custom: {
               frameType: 'LabeledTimeValues',
             },
+            notices: [],
             stats: [
               {
                 displayName: 'Summary: total bytes processed',
