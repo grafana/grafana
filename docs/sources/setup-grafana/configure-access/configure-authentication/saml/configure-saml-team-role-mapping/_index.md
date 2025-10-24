@@ -1,5 +1,6 @@
 ---
 aliases:
+  - ../../../configure-access/configure-authentication/saml/configure-saml-team-role-mapping/ # /docs/grafana/next/configure-access/configure-authentication/saml/configure-saml-team-role-mapping/
   - ../../../configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/configure-saml-team-role-mapping/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/configure-saml-team-role-mapping/
   - ../../../configure-security/configure-authentication/saml/configure-saml-team-role-mapping/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml/configure-saml-team-role-mapping/
 description: Learn how to configure SAML authentication in Grafana's UI.
