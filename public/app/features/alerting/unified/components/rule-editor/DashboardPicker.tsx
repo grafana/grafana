@@ -19,7 +19,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult } from 'app/features/search/service/types';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 
