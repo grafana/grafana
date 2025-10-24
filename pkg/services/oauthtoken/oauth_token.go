@@ -124,6 +124,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 	}
 
 	// If the feature toggle is enabled, an external session is required.
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) && (externalSession == nil || errors.Is(err, auth.ErrExternalSessionNotFound)) {
 		ctxLogger.Error("No external session found for user", "userID", userID)
 		return nil
@@ -158,6 +159,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 		return nil
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 		persistedToken = buildOAuthTokenFromExternalSession(externalSession)
 	} else {
@@ -286,6 +288,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 	}
 
 	lockKey := fmt.Sprintf("oauth-refresh-token-%d", userID)
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 		lockKey = fmt.Sprintf("oauth-refresh-token-%d-%d", userID, tokenRefreshMetadata.ExternalSessionID)
 	}
@@ -315,6 +318,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 
 		var persistedToken *oauth2.Token
 		var externalSession *auth.ExternalSession
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 			externalSession, err = o.sessionService.GetExternalSession(ctx, tokenRefreshMetadata.ExternalSessionID)
 			if err != nil {
@@ -371,7 +375,7 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr identity.Reques
 	}
 
 	ctxLogger := logger.FromContext(ctx).New("userID", userID)
-
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 		err := o.sessionService.UpdateExternalSession(ctx, tokenRefreshMetadata.ExternalSessionID, &auth.UpdateExternalSessionCommand{
 			Token: &oauth2.Token{},
@@ -469,6 +473,7 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 			)
 		}
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 			updateAuthCommand := &login.UpdateAuthInfoCommand{
 				UserId:     userID,

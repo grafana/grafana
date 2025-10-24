@@ -83,6 +83,7 @@ func ProvideSecretsService(
 		log:                 log.New("secrets"),
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	enabled := !features.IsEnabledGlobally(featuremgmt.FlagDisableEnvelopeEncryption)
 
 	if enabled {
