@@ -1278,11 +1278,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/Select/ServiceAccountPicker.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/core/components/Select/TeamPicker.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
