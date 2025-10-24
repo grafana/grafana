@@ -4968,11 +4968,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/stat/StatPanel.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/state-timeline/migrations.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
