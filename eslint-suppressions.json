@@ -3993,11 +3993,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/cloud-monitoring/components/ConfigEditor/ConfigEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/cloud-monitoring/components/Fields.tsx": {
     "no-restricted-syntax": {
       "count": 1
