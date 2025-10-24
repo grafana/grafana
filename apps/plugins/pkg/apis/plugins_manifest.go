@@ -20,12 +20,9 @@ import (
 )
 
 var (
-	rawSchemaPluginMetav0alpha1        = []byte(`{"Dependencies":{"additionalProperties":false,"properties":{"extensions":{"additionalProperties":false,"properties":{"exposedComponents":{"description":"+listType=set","items":{"type":"string"},"type":"array"}},"type":"object"},"grafanaDependency":{"description":"Required field","type":"string"},"grafanaVersion":{"description":"Optional fields","type":"string"},"plugins":{"description":"+listType=set\n+listMapKey=id","items":{"additionalProperties":false,"properties":{"id":{"type":"string"},"name":{"type":"string"},"type":{"enum":["app","datasource","panel"],"type":"string"}},"required":["id","type","name"],"type":"object"},"type":"array"}},"required":["grafanaDependency"],"type":"object"},"EnterpriseFeatures":{"additionalProperties":false,"properties":{"healthDiagnosticsErrors":{"default":false,"description":"Allow additional properties","type":"boolean"}},"type":"object"},"Extensions":{"additionalProperties":false,"properties":{"addedComponents":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"description":{"type":"string"},"targets":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"title":{"type":"string"}},"required":["targets","title"],"type":"object"},"type":"array"},"addedLinks":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"description":{"type":"string"},"targets":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"title":{"type":"string"}},"required":["targets","title"],"type":"object"},"type":"array"},"exposedComponents":{"description":"+listType=set\n+listMapKey=id","items":{"additionalProperties":false,"properties":{"description":{"type":"string"},"id":{"type":"string"},"title":{"type":"string"}},"required":["id"],"type":"object"},"type":"array"},"extensionPoints":{"description":"+listType=set\n+listMapKey=id","items":{"additionalProperties":false,"properties":{"description":{"type":"string"},"id":{"type":"string"},"title":{"type":"string"}},"required":["id"],"type":"object"},"type":"array"}},"type":"object"},"IAM":{"additionalProperties":false,"properties":{"permissions":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"action":{"type":"string"},"scope":{"type":"string"}},"type":"object"},"type":"array"}},"type":"object"},"Include":{"additionalProperties":false,"properties":{"action":{"type":"string"},"addToNav":{"type":"boolean"},"component":{"type":"string"},"defaultNav":{"type":"boolean"},"icon":{"type":"string"},"name":{"type":"string"},"path":{"type":"string"},"role":{"enum":["Admin","Editor","Viewer"],"type":"string"},"type":{"enum":["dashboard","page","panel","datasource"],"type":"string"},"uid":{"type":"string"}},"type":"object"},"Info":{"additionalProperties":false,"properties":{"author":{"additionalProperties":false,"description":"Optional fields","properties":{"email":{"type":"string"},"name":{"type":"string"},"url":{"type":"string"}},"type":"object"},"description":{"type":"string"},"keywords":{"description":"Required fields\n+listType=set","items":{"type":"string"},"type":"array"},"links":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"name":{"type":"string"},"url":{"type":"string"}},"type":"object"},"type":"array"},"logos":{"additionalProperties":false,"properties":{"large":{"type":"string"},"small":{"type":"string"}},"required":["small","large"],"type":"object"},"screenshots":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"name":{"type":"string"},"path":{"type":"string"}},"type":"object"},"type":"array"},"updated":{"format":"date-time","type":"string"},"version":{"type":"string"}},"required":["keywords","logos","updated","version"],"type":"object"},"JSONData":{"additionalProperties":false,"description":"JSON configuration schema for Grafana plugins\nConverted from: https://github.com/grafana/grafana/blob/main/docs/sources/developers/plugins/plugin.schema.json","properties":{"alerting":{"description":"Optional fields","type":"boolean"},"annotations":{"type":"boolean"},"autoEnabled":{"type":"boolean"},"backend":{"type":"boolean"},"buildMode":{"type":"string"},"builtIn":{"type":"boolean"},"category":{"enum":["tsdb","logging","cloud","tracing","profiling","sql","enterprise","iot","other"],"type":"string"},"dependencies":{"$ref":"#/components/schemas/Dependencies","description":"Dependency information"},"enterpriseFeatures":{"$ref":"#/components/schemas/EnterpriseFeatures"},"executable":{"type":"string"},"extensions":{"$ref":"#/components/schemas/Extensions"},"hideFromList":{"type":"boolean"},"iam":{"$ref":"#/components/schemas/IAM"},"id":{"description":"Unique name of the plugin","type":"string"},"includes":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/Include"},"type":"array"},"info":{"$ref":"#/components/schemas/Info","description":"Metadata for the plugin"},"logs":{"type":"boolean"},"metrics":{"type":"boolean"},"multiValueFilterOperators":{"type":"boolean"},"name":{"description":"Human-readable name of the plugin","type":"string"},"pascalName":{"type":"string"},"preload":{"type":"boolean"},"queryOptions":{"$ref":"#/components/schemas/QueryOptions"},"roles":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/Role"},"type":"array"},"routes":{"description":"+listType=atomic","items":{"$ref":"#/components/schemas/Route"},"type":"array"},"skipDataQuery":{"type":"boolean"},"state":{"enum":["alpha","beta"],"type":"string"},"streaming":{"type":"boolean"},"tracing":{"type":"boolean"},"type":{"description":"Plugin type","enum":["app","datasource","panel","renderer"],"type":"string"}},"required":["id","type","name","info","dependencies"],"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PluginMeta":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"QueryOptions":{"additionalProperties":false,"properties":{"cacheTimeout":{"type":"boolean"},"maxDataPoints":{"type":"boolean"},"minInterval":{"type":"boolean"}},"type":"object"},"Role":{"additionalProperties":false,"properties":{"grants":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"role":{"additionalProperties":false,"properties":{"description":{"type":"string"},"name":{"type":"string"},"permissions":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"action":{"type":"string"},"scope":{"type":"string"}},"type":"object"},"type":"array"}},"type":"object"}},"type":"object"},"Route":{"additionalProperties":false,"properties":{"body":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"headers":{"description":"+listType=atomic","items":{"type":"string"},"type":"array"},"jwtTokenAuth":{"additionalProperties":false,"properties":{"params":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"scopes":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"url":{"type":"string"}},"type":"object"},"method":{"type":"string"},"path":{"type":"string"},"reqAction":{"type":"string"},"reqRole":{"type":"string"},"reqSignedIn":{"type":"boolean"},"tokenAuth":{"additionalProperties":false,"properties":{"params":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"scopes":{"description":"+listType=set","items":{"type":"string"},"type":"array"},"url":{"type":"string"}},"type":"object"},"url":{"type":"string"},"urlParams":{"description":"+listType=atomic","items":{"additionalProperties":false,"properties":{"content":{"type":"string"},"name":{"type":"string"}},"type":"object"},"type":"array"}},"type":"object"},"spec":{"additionalProperties":false,"properties":{"pluginJSON":{"$ref":"#/components/schemas/JSONData"}},"required":["pluginJSON"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
-	versionSchemaPluginMetav0alpha1    app.VersionSchema
-	_                                  = json.Unmarshal(rawSchemaPluginMetav0alpha1, &versionSchemaPluginMetav0alpha1)
-	rawSchemaPluginInstallv0alpha1     = []byte(`{"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PluginInstall":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"class":{"enum":["core","external","cdn"],"type":"string"},"id":{"type":"string"},"url":{"type":"string"},"version":{"type":"string"}},"required":["id","version","class"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
-	versionSchemaPluginInstallv0alpha1 app.VersionSchema
-	_                                  = json.Unmarshal(rawSchemaPluginInstallv0alpha1, &versionSchemaPluginInstallv0alpha1)
+	rawSchemaPluginv0alpha1     = []byte(`{"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"Plugin":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"getMetaDependencies":{"type":"object","required":["grafanaDependency"],"properties":{"extensions":{"type":"object","properties":{"exposedComponents":{"description":"+listType=set","type":"array","items":{"type":"string"}}},"additionalProperties":false},"grafanaDependency":{"description":"Required field","type":"string"},"grafanaVersion":{"description":"Optional fields","type":"string"},"plugins":{"description":"+listType=set\n+listMapKey=id","type":"array","items":{"type":"object","required":["id","type","name"],"properties":{"id":{"type":"string"},"name":{"type":"string"},"type":{"type":"string","enum":["app","datasource","panel"]}},"additionalProperties":false}}},"additionalProperties":false},"getMetaEnterpriseFeatures":{"type":"object","properties":{"healthDiagnosticsErrors":{"description":"Allow additional properties","type":"boolean","default":false}},"additionalProperties":false},"getMetaExtensions":{"type":"object","properties":{"addedComponents":{"description":"+listType=atomic","type":"array","items":{"type":"object","required":["targets","title"],"properties":{"description":{"type":"string"},"targets":{"description":"+listType=set","type":"array","items":{"type":"string"}},"title":{"type":"string"}},"additionalProperties":false}},"addedLinks":{"description":"+listType=atomic","type":"array","items":{"type":"object","required":["targets","title"],"properties":{"description":{"type":"string"},"targets":{"description":"+listType=set","type":"array","items":{"type":"string"}},"title":{"type":"string"}},"additionalProperties":false}},"exposedComponents":{"description":"+listType=set\n+listMapKey=id","type":"array","items":{"type":"object","required":["id"],"properties":{"description":{"type":"string"},"id":{"type":"string"},"title":{"type":"string"}},"additionalProperties":false}},"extensionPoints":{"description":"+listType=set\n+listMapKey=id","type":"array","items":{"type":"object","required":["id"],"properties":{"description":{"type":"string"},"id":{"type":"string"},"title":{"type":"string"}},"additionalProperties":false}}},"additionalProperties":false},"getMetaIAM":{"type":"object","properties":{"permissions":{"description":"+listType=atomic","type":"array","items":{"type":"object","properties":{"action":{"type":"string"},"scope":{"type":"string"}},"additionalProperties":false}}},"additionalProperties":false},"getMetaInclude":{"type":"object","properties":{"action":{"type":"string"},"addToNav":{"type":"boolean"},"component":{"type":"string"},"defaultNav":{"type":"boolean"},"icon":{"type":"string"},"name":{"type":"string"},"path":{"type":"string"},"role":{"type":"string","enum":["Admin","Editor","Viewer"]},"type":{"type":"string","enum":["dashboard","page","panel","datasource"]},"uid":{"type":"string"}},"additionalProperties":false},"getMetaInfo":{"type":"object","required":["keywords","logos","updated","version"],"properties":{"author":{"description":"Optional fields","type":"object","properties":{"email":{"type":"string"},"name":{"type":"string"},"url":{"type":"string"}},"additionalProperties":false},"description":{"type":"string"},"keywords":{"description":"Required fields\n+listType=set","type":"array","items":{"type":"string"}},"links":{"description":"+listType=atomic","type":"array","items":{"type":"object","properties":{"name":{"type":"string"},"url":{"type":"string"}},"additionalProperties":false}},"logos":{"type":"object","required":["small","large"],"properties":{"large":{"type":"string"},"small":{"type":"string"}},"additionalProperties":false},"screenshots":{"description":"+listType=atomic","type":"array","items":{"type":"object","properties":{"name":{"type":"string"},"path":{"type":"string"}},"additionalProperties":false}},"updated":{"type":"string","format":"date-time"},"version":{"type":"string"}},"additionalProperties":false},"getMetaQueryOptions":{"type":"object","properties":{"cacheTimeout":{"type":"boolean"},"maxDataPoints":{"type":"boolean"},"minInterval":{"type":"boolean"}},"additionalProperties":false},"getMetaRole":{"type":"object","properties":{"grants":{"description":"+listType=set","type":"array","items":{"type":"string"}},"role":{"type":"object","properties":{"description":{"type":"string"},"name":{"type":"string"},"permissions":{"description":"+listType=atomic","type":"array","items":{"type":"object","properties":{"action":{"type":"string"},"scope":{"type":"string"}},"additionalProperties":false}}},"additionalProperties":false}},"additionalProperties":false},"getMetaRoute":{"type":"object","properties":{"body":{"type":"object","additionalProperties":{"type":"object","additionalProperties":{}}},"headers":{"description":"+listType=atomic","type":"array","items":{"type":"string"}},"jwtTokenAuth":{"type":"object","properties":{"params":{"type":"object","additionalProperties":{"type":"object","additionalProperties":{}}},"scopes":{"description":"+listType=set","type":"array","items":{"type":"string"}},"url":{"type":"string"}},"additionalProperties":false},"method":{"type":"string"},"path":{"type":"string"},"reqAction":{"type":"string"},"reqRole":{"type":"string"},"reqSignedIn":{"type":"boolean"},"tokenAuth":{"type":"object","properties":{"params":{"type":"object","additionalProperties":{"type":"object","additionalProperties":{}}},"scopes":{"description":"+listType=set","type":"array","items":{"type":"string"}},"url":{"type":"string"}},"additionalProperties":false},"url":{"type":"string"},"urlParams":{"description":"+listType=atomic","type":"array","items":{"type":"object","properties":{"content":{"type":"string"},"name":{"type":"string"}},"additionalProperties":false}}},"additionalProperties":false},"spec":{"additionalProperties":false,"properties":{"class":{"enum":["core","external","cdn"],"type":"string"},"id":{"type":"string"},"url":{"type":"string"},"version":{"type":"string"}},"required":["id","version","class"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaPluginv0alpha1 app.VersionSchema
+	_                           = json.Unmarshal(rawSchemaPluginv0alpha1, &versionSchemaPluginv0alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -35,22 +32,237 @@ var appManifestData = app.ManifestData{
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v0alpha1",
-			Served: false,
+			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "PluginMeta",
-					Plural:     "PluginMetas",
+					Kind:       "Plugin",
+					Plural:     "Plugins",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaPluginMetav0alpha1,
-				},
+					Schema:     &versionSchemaPluginv0alpha1,
+					Routes: map[string]spec3.PathProps{
+						"/meta": {
+							Get: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
 
-				{
-					Kind:       "PluginInstall",
-					Plural:     "PluginInstalls",
-					Scope:      "Namespaced",
-					Conversion: false,
-					Schema:     &versionSchemaPluginInstallv0alpha1,
+									OperationId: "getMeta",
+
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"alerting": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"boolean"},
+																					Description: "Optional fields",
+																				},
+																			},
+																			"annotations": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"autoEnabled": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"backend": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"buildMode": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																			"builtIn": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"category": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																					Enum: []interface{}{
+																						"tsdb",
+																						"logging",
+																						"cloud",
+																						"tracing",
+																						"profiling",
+																						"sql",
+																						"enterprise",
+																						"iot",
+																						"other",
+																					},
+																				},
+																			},
+																			"dependencies": {
+																				SchemaProps: spec.SchemaProps{
+
+																					Description: "Dependency information",
+																					Ref:         spec.MustCreateRef("#/components/schemas/getMetaDependencies"),
+																				},
+																			},
+																			"enterpriseFeatures": {
+																				SchemaProps: spec.SchemaProps{
+
+																					Ref: spec.MustCreateRef("#/components/schemas/getMetaEnterpriseFeatures"),
+																				},
+																			},
+																			"executable": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																			"extensions": {
+																				SchemaProps: spec.SchemaProps{
+
+																					Ref: spec.MustCreateRef("#/components/schemas/getMetaExtensions"),
+																				},
+																			},
+																			"hideFromList": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"iam": {
+																				SchemaProps: spec.SchemaProps{
+
+																					Ref: spec.MustCreateRef("#/components/schemas/getMetaIAM"),
+																				},
+																			},
+																			"id": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Unique name of the plugin",
+																				},
+																			},
+																			"includes": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"array"},
+																					Description: "+listType=atomic",
+																				},
+																			},
+																			"info": {
+																				SchemaProps: spec.SchemaProps{
+
+																					Description: "Metadata for the plugin",
+																					Ref:         spec.MustCreateRef("#/components/schemas/getMetaInfo"),
+																				},
+																			},
+																			"logs": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"metrics": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"multiValueFilterOperators": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"name": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Human-readable name of the plugin",
+																				},
+																			},
+																			"pascalName": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																			"preload": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"queryOptions": {
+																				SchemaProps: spec.SchemaProps{
+
+																					Ref: spec.MustCreateRef("#/components/schemas/getMetaQueryOptions"),
+																				},
+																			},
+																			"roles": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"array"},
+																					Description: "+listType=atomic",
+																				},
+																			},
+																			"routes": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"array"},
+																					Description: "+listType=atomic",
+																				},
+																			},
+																			"skipDataQuery": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"state": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																					Enum: []interface{}{
+																						"alpha",
+																						"beta",
+																					},
+																				},
+																			},
+																			"streaming": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"tracing": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"type": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Plugin type",
+																					Enum: []interface{}{
+																						"app",
+																						"datasource",
+																						"panel",
+																						"renderer",
+																					},
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"id",
+																			"type",
+																			"name",
+																			"info",
+																			"dependencies",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+						},
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
@@ -71,8 +283,7 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"PluginMeta/v0alpha1":    v0alpha1.PluginMetaKind(),
-	"PluginInstall/v0alpha1": v0alpha1.PluginInstallKind(),
+	"Plugin/v0alpha1": v0alpha1.PluginKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
@@ -82,7 +293,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 	return goType, exists
 }
 
-var customRouteToGoResponseType = map[string]any{}
+var customRouteToGoResponseType = map[string]any{
+	"v0alpha1|Plugin|meta|GET": v0alpha1.GetMeta{},
+}
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
 // kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.

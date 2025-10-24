@@ -5,14 +5,13 @@ manifest: {
 	groupOverride: "plugins.grafana.app"
 	versions: {
 		"v0alpha1": {
-			served: false
+			served: true
 			codegen: {
 				ts: {enabled: false}
 				go: {enabled: true}
 			}
 			kinds: [
-				pluginMetaV0Alpha1,
-				pluginInstallV0Alpha1,
+				pluginV0Alpha1,
 			]
 		}
 	}
