@@ -19,7 +19,7 @@ export interface OptionsPaneCategoryDescriptorProps {
   /**
    * When set will disable category and show tooltip with disabledText on
    */
-  disabledText?: string;
+  disabledText?: string | React.ReactElement;
 }
 
 /**
