@@ -960,6 +960,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/variables/ @grafana/dashboards-squad
 /public/app/features/preferences/ @grafana/grafana-frontend-platform
 /public/app/features/bookmarks/ @grafana/grafana-search-navigate-organise
+/public/app/features/drilldown-integration/ @grafana/observability-metrics
 /public/app/plugins/panel/* @grafana/dataviz-squad
 /public/app/plugins/panel/alertlist/ @grafana/alerting-frontend
 /public/app/plugins/panel/annolist/ @grafana/dashboards-squad
