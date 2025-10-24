@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { createRef, PureComponent, ReactElement } from 'react';
+import { memo, PureComponent, ReactElement, useRef, useState } from 'react';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -37,71 +37,61 @@ interface Props {
   onOrgAdd: (orgId: number, role: OrgRole) => void;
 }
 
-interface State {
-  showAddOrgModal: boolean;
-}
+export const UserOrgs = memo(({ user, orgs, isExternalUser, onOrgRoleChange, onOrgRemove, onOrgAdd }: Props) => {
+  const [showAddOrgModal, setShowAddOrgModal] = useState(false);
+  const addToOrgButtonRef = useRef<HTMLButtonElement>(null);
 
-export class UserOrgs extends PureComponent<Props, State> {
-  addToOrgButtonRef = createRef<HTMLButtonElement>();
-  state = {
-    showAddOrgModal: false,
+  const showOrgAddModal = () => {
+    setShowAddOrgModal(true);
   };
 
-  showOrgAddModal = () => {
-    this.setState({ showAddOrgModal: true });
+  const dismissOrgAddModal = () => {
+    setShowAddOrgModal(false);
+    addToOrgButtonRef.current?.focus();
   };
 
-  dismissOrgAddModal = () => {
-    this.setState({ showAddOrgModal: false }, () => {
-      this.addToOrgButtonRef.current?.focus();
-    });
-  };
+  const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) && !isExternalUser;
 
-  render() {
-    const { user, orgs, isExternalUser, onOrgRoleChange, onOrgRemove, onOrgAdd } = this.props;
-    const { showAddOrgModal } = this.state;
+  return (
+    <div>
+      <h3 className="page-heading">
+        <Trans i18nKey="admin.user-orgs.title">Organizations</Trans>
+      </h3>
+      <Stack gap={1.5} direction="column">
+        <table className="filter-table form-inline">
+          <tbody>
+            {orgs.map((org, index) => (
+              <OrgRow
+                key={`${org.orgId}-${index}`}
+                isExternalUser={isExternalUser}
+                user={user}
+                org={org}
+                onOrgRoleChange={onOrgRoleChange}
+                onOrgRemove={onOrgRemove}
+              />
+            ))}
+          </tbody>
+        </table>
 
-    const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) && !isExternalUser;
-    return (
-      <div>
-        <h3 className="page-heading">
-          <Trans i18nKey="admin.user-orgs.title">Organizations</Trans>
-        </h3>
-        <Stack gap={1.5} direction="column">
-          <table className="filter-table form-inline">
-            <tbody>
-              {orgs.map((org, index) => (
-                <OrgRow
-                  key={`${org.orgId}-${index}`}
-                  isExternalUser={isExternalUser}
-                  user={user}
-                  org={org}
-                  onOrgRoleChange={onOrgRoleChange}
-                  onOrgRemove={onOrgRemove}
-                />
-              ))}
-            </tbody>
-          </table>
-
-          <div>
-            {canAddToOrg && (
-              <Button variant="secondary" onClick={this.showOrgAddModal} ref={this.addToOrgButtonRef}>
-                <Trans i18nKey="admin.user-orgs.add-button">Add user to organization</Trans>
-              </Button>
-            )}
-          </div>
-          <AddToOrgModal
-            user={user}
-            userOrgs={orgs}
-            isOpen={showAddOrgModal}
-            onOrgAdd={onOrgAdd}
-            onDismiss={this.dismissOrgAddModal}
-          />
-        </Stack>
-      </div>
-    );
-  }
-}
+        <div>
+          {canAddToOrg && (
+            <Button variant="secondary" onClick={showOrgAddModal} ref={addToOrgButtonRef}>
+              <Trans i18nKey="admin.user-orgs.add-button">Add user to organization</Trans>
+            </Button>
+          )}
+        </div>
+        <AddToOrgModal
+          user={user}
+          userOrgs={orgs}
+          isOpen={showAddOrgModal}
+          onOrgAdd={onOrgAdd}
+          onDismiss={dismissOrgAddModal}
+        />
+      </Stack>
+    </div>
+  );
+});
+UserOrgs.displayName = 'UserOrgs';
 
 const getOrgRowStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
