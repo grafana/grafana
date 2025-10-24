@@ -1,5 +1,5 @@
-import { isValidIdentifier } from './sqlUtil';
-import { toRawSql } from './sqlUtil';
+import { isValidIdentifier, toRawSql } from './sqlUtil';
+
 
 describe('isValidIdentifier', () => {
   test.each([
