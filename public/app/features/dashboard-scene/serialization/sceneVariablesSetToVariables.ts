@@ -466,8 +466,8 @@ export function sceneVariablesSetToSchemaV2Variables(
       // Textbox variable
     } else if (sceneUtils.isTextBoxVariable(variable)) {
       const current = {
-        text: variable.state.value,
-        value: variable.state.value,
+        text: variable.state.value ?? '',
+        value: variable.state.value ?? '',
       };
 
       const textBoxVariable: TextVariableKind = {
@@ -475,7 +475,7 @@ export function sceneVariablesSetToSchemaV2Variables(
         spec: {
           ...commonProperties,
           current,
-          query: variable.state.value,
+          query: variable.state.value ?? '',
         },
       };
 
