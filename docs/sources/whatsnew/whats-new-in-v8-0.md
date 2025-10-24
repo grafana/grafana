@@ -267,11 +267,11 @@ JWT is a new authentication option in Grafana.
 
 You can now configure Grafana to accept a JWT token provided in the HTTP header.
 
-[JWT authentication](../../setup-grafana/configure-security/configure-authentication/jwt/) was added and [Configuration](../../setup-grafana/configure-grafana/#authjwt) was updated as a result of this feature.
+[JWT authentication](../../setup-grafana/configure-access/configure-authentication/jwt/) was added and [Configuration](../../setup-grafana/configure-grafana/#authjwt) was updated as a result of this feature.
 
 #### OAuth
 
-[Generic OAuth authentication](../../setup-grafana/configure-security/configure-authentication/generic-oauth/) has been updated as a result of these changes.
+[Generic OAuth authentication](../../setup-grafana/configure-access/configure-authentication/generic-oauth/) has been updated as a result of these changes.
 
 ##### Added OAuth support for empty scopes
 

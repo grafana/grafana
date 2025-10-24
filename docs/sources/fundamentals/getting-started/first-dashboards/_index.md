@@ -85,7 +85,7 @@ Continue to experiment with what you have built, try the [explore workflow](http
 The following topics are of interest to Grafana server admin users:
 
 - [Grafana configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/)
-- [Authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/)
+- [Authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/)
 - [User permissions and roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/)
 - [Provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/)
 - [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/cli/)

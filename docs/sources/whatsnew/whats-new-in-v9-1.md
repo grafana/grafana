@@ -58,7 +58,7 @@ To see JWT URL embedding in action, see the [sample project](https://github.com/
 
 You can now use GitHub OAuth2 to map users or teams to specific [Grafana organization roles](../../administration/roles-and-permissions/#organization-roles) by using `role_attribute_path` configuration option.
 Grafana will use [JMESPath](https://jmespath.org/examples.html) for path lookup and role mapping.
-For more information, see the [documentation](../../setup-grafana/configure-security/configure-authentication/github/#map-roles).
+For more information, see the [documentation](../../setup-grafana/configure-access/configure-authentication/github/#map-roles).
 
 Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
 
@@ -242,7 +242,7 @@ To learn more, see the [configuration documentation](../../setup-grafana/configu
 When you synchronize users from a SAML, LDAP, or OAuth provider, some user settings, such as name and email address, are synchronized from your identity provider.
 Previously, you could edit those settings in the Grafana UI, but they would revert back.
 To make user management clearer, you can now see which settings are synchronized from your identity provider, but you cannot edit those settings.
-To learn more about authentication, see the [documentation](../../setup-grafana/configure-security/configure-authentication/).
+To learn more about authentication, see the [documentation](../../setup-grafana/configure-access/configure-authentication/).
 
 {{< figure src="/static/img/docs/enterprise/oauth-synced-user-9-1.png" max-width="750px" caption="Non-interactive view of a user synced via OAuth" >}}
 
