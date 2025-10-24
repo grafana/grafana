@@ -183,6 +183,8 @@ jobs:
         persist-credentials: false
     - name: Setup Docker
       uses: docker/setup-docker-action@3fb92d6d9c634363128c8cce4bc3b2826526370a # v4
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
     - name: Install Tilt
       run: curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/master/scripts/install.sh | bash
     - name: Test frontend-service Tiltfile
