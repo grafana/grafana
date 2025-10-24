@@ -2971,11 +2971,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/common/SearchBarInput.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/demo/trace-generators.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
