@@ -71,14 +71,12 @@ To enable SCIM provisioning in Grafana, create a service account and generate a 
 4. In the service account **Permissions** tab, add these permissions:
 
    **Allow the service account to sync users:**
-
    - `org.users:read`
    - `org.users:write`
    - `org.users:add`
    - `org.users:remove`
 
    **Allow the service account to sync groups:**
-
    - `teams:read`
    - `teams:create`
    - `teams:write`
@@ -110,7 +108,6 @@ Configure the enterprise application in Entra ID to enable automated user and te
   You can copy the tenant URL directly from the SCIM UI at **Administration > Authentication > SCIM**. Your stack domain and stack ID can also be found in the SCIM UI.
 
   Alternatively, you can construct the URL manually:
-
   - For Grafana Cloud instances:
     ```
     https://{stack-name}.grafana.net/apis/scim.grafana.app/v0alpha1/namespaces/stacks-{stack-id}
