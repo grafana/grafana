@@ -1,6 +1,8 @@
 import { HttpResponse, http } from 'msw';
 
+import { wellFormedTree } from '../../../fixtures/folders';
 import { mockStarredDashboardsMap } from '../../../fixtures/starred';
+const [_, { dashbdD }] = wellFormedTree();
 
 const getStarsHandler = () =>
   http.get('/api/user/stars', async () => {
