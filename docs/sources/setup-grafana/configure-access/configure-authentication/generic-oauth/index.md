@@ -23,7 +23,7 @@ weight: 700
 
 Grafana provides OAuth2 integrations for the following auth providers:
 
-- [Azure AD OAuth](../azuread/)
+- [Entra ID OAuth](../azuread/)
 - [GitHub OAuth](../github/)
 - [GitLab OAuth](../gitlab/)
 - [Google OAuth](../google/)
@@ -44,7 +44,7 @@ To follow this guide:
 - If you are using refresh tokens, ensure you know how to set them up with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 
 {{< admonition type="note" >}}
-If Users use the same email address in Azure AD that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) documentation for more information.
+If Users use the same email address in Entra ID that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) documentation for more information.
 {{< /admonition >}}
 
 ## Configure generic OAuth authentication client using the Grafana UI

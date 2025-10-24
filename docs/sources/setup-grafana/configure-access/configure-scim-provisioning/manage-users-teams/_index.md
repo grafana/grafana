@@ -1,5 +1,5 @@
 ---
-description: Learn how to implement SCIM provisioning in Grafana for automated user and team synchronization. SCIM integrates with identity providers like Okta and Azure AD to streamline user management, automate team provisioning, and replace Team Sync.
+description: Learn how to implement SCIM provisioning in Grafana for automated user and team synchronization. SCIM integrates with identity providers like Okta and Entra ID to streamline user management, automate team provisioning, and replace Team Sync.
 keywords:
   - grafana
   - scim
@@ -49,7 +49,7 @@ After a user is provisioned through SCIM, they cannot be deleted from Grafana - 
 
 For detailed configuration steps specific to the identity provider, see:
 
-- [Configure SCIM with Azure AD](../configure-scim-with-azuread/)
+- [Configure SCIM with Entra ID](../configure-scim-with-azuread/)
 - [Configure SCIM with Okta](../configure-scim-with-okta/)
 
 ### How SCIM identifies users
@@ -69,10 +69,10 @@ SCIM uses a specific process to establish and maintain user identity between the
    - Grafana updates the authentication validations to expect this External ID
 
 3. **Matching the User During Login:**
-   When a user logs in via SAML, Grafana needs to securely match them to the correct user account provisioned by SCIM. This requires using a consistent, unique identifier across both processes (for example, the user's `objectId` in Azure AD).
-   - **Configure SAML Claims:** Set up your identity provider (e.g., Azure AD) to include this unique identifier in the information it sends during SAML login.
+   When a user logs in via SAML, Grafana needs to securely match them to the correct user account provisioned by SCIM. This requires using a consistent, unique identifier across both processes (for example, the user's `objectId` in Entra ID).
+   - **Configure SAML Claims:** Set up your identity provider (e.g., Entra ID) to include this unique identifier in the information it sends during SAML login.
    - **Configure Grafana SAML:** In the Grafana SAML settings, use the `assertion_attribute_login` setting to specify which incoming SAML attribute contains this unique identifier.
-   - **Configure SCIM Mapping:** To complete the link, ensure your SCIM attribute mapping in the identity provider sets the user's Grafana **externalId** attribute to be the _same_ unique identifier provided via SAML (for example, the user's `objectId` in Azure AD).
+   - **Configure SCIM Mapping:** To complete the link, ensure your SCIM attribute mapping in the identity provider sets the user's Grafana **externalId** attribute to be the _same_ unique identifier provided via SAML (for example, the user's `objectId` in Entra ID).
    - See [SAML configuration details](../../configure-authentication/saml/#integrating-with-scim-provisioning) for specific configuration guidance.
 
 This process ensures secure and consistent user identification across both systems, preventing security issues that could arise from email changes or other user attribute modifications.
@@ -228,7 +228,7 @@ Teams provisioned through SCIM cannot be deleted manually from Grafana - they ca
 
 For detailed configuration steps specific to the identity provider, see:
 
-- [Configure SCIM with Azure AD](../configure-scim-with-azuread/)
+- [Configure SCIM with Entra ID](../configure-scim-with-azuread/)
 - [Configure SCIM with Okta](../configure-scim-with-okta/)
 
 ### SCIM vs Team Sync
@@ -279,5 +279,5 @@ Team membership maintenance:
 ## Next steps
 
 - [Troubleshoot SCIM provisioning](../troubleshooting/)
-- [Configure SCIM with Azure AD](../configure-scim-with-azuread/)
+- [Configure SCIM with Entra ID](../configure-scim-with-azuread/)
 - [Configure SCIM with Okta](../configure-scim-with-okta/)

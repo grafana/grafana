@@ -26,21 +26,21 @@ This guide explains how to set up multiple providers of the same type with Keycl
 
 The idea is to set up multiple OIDC providers in Keycloak with different tenants and configure Grafana to use the same Keycloak instance as the authentication provider.
 
-## Azure AD configuration
+## Entra ID configuration
 
-For Azure AD, repeat the following steps for each tenant you want to set up in Keycloak.
+For Entra ID, repeat the following steps for each tenant you want to set up in Keycloak.
 
 ### Overview
 
-1. Register your application in Azure AD.
+1. Register your application in Entra ID.
 1. Give access to the application to the users in the tenant.
 1. Create credentials for the application.
 1. Configure the application in Keycloak.
 1. Configure Grafana to use Keycloak.
 
-#### Register your application in Azure AD
+#### Register your application in Entra ID
 
-Registering an application in Azure AD is a one-time process. You can follow the steps in the [Azure AD documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app) to register your application.
+Registering an application in Entra ID is a one-time process. You can follow the steps in the [Entra ID documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app) to register your application.
 
 1. Go to the Azure portal and ensure you are using the correct tenant also known as directory.
 1. Search for **App Registrations** and click on **New registration**.
@@ -56,7 +56,7 @@ Assigning the correct access to users ensures only intended users or groups have
 
 #### Create credentials for the application
 
-To authenticate with Azure AD, the Keycloak application needs a client ID and client secret.
+To authenticate with Entra ID, the Keycloak application needs a client ID and client secret.
 
 1. Search for **App Registrations** and look for the application ypu just created.
 1. Click on **Certificates & Secrets**.
@@ -65,7 +65,7 @@ To authenticate with Azure AD, the Keycloak application needs a client ID and cl
 #### Configure the application in Keycloak
 
 1. Go to the Keycloak admin console.
-1. Go to the Realm where you want to configure the Azure AD tenant.
+1. Go to the Realm where you want to configure the Entra ID tenant.
 1. Go to the Identity Providers section and click on **Add provider**.
 1. Select **OpenID Connect v1.0**.
    1. Select a unique **Alias** and **Display name**.
@@ -83,13 +83,13 @@ To authenticate with Azure AD, the Keycloak application needs a client ID and cl
    1. Click Add.
 
 {{< admonition type="note" >}}
-Up to this point, you have created an App Registration in Azure AD, assigned users to the application, created credentials for the application, and configured the application in Keycloak. In the Keycloak Client's section, the client with ID `account` Home URL can be used to test the configuration. This will open a new tab where you can login into the correct Keycloak realm with the Azure AD tenant you just configured.
+Up to this point, you have created an App Registration in Entra ID, assigned users to the application, created credentials for the application, and configured the application in Keycloak. In the Keycloak Client's section, the client with ID `account` Home URL can be used to test the configuration. This will open a new tab where you can login into the correct Keycloak realm with the Entra ID tenant you just configured.
 {{< /admonition >}}
 
-Repeat this steps, for every Azure AD tenant you want to configure in Keycloak.
+Repeat this steps, for every Entra ID tenant you want to configure in Keycloak.
 
 #### Configure Grafana to use Keycloak
 
-Now that the Azure AD tenants are configured in Keycloak, you can configure Grafana to use Keycloak as the authentication provider.
+Now that the Entra ID tenants are configured in Keycloak, you can configure Grafana to use Keycloak as the authentication provider.
 
 Refer to the [Keycloak documentation](https://grafana.com/docs/grafana/latest/auth/keycloak/) to configure Grafana to use Keycloak as the authentication provider.

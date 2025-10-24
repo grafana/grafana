@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../auth/azuread/
-description: Grafana Azure AD OAuth Guide
+description: Grafana Entra ID OAuth Guide
 keywords:
   - grafana
   - configuration
@@ -80,7 +80,7 @@ To enable the Entra ID OAuth, register your application with Entra ID.
        {{< /admonition >}}
 
      - **_Workload Identity (K8s/AKS)_**
-       1. Refer to [Federated identity credential for an Azure AD application](https://azure.github.io/azure-workload-identity/docs/topics/federated-identity-credential.html#azure-portal-ui) for a complete guide on setting up a federated credential for workload identity.
+       1. Refer to [Federated identity credential for an Entra ID application](https://azure.github.io/azure-workload-identity/docs/topics/federated-identity-credential.html#azure-portal-ui) for a complete guide on setting up a federated credential for workload identity.
           Add a new entry under Federated credentials with the following configuration.
           - Federated credential scenario: Select **Kubernetes accessing Azure resources**.
           - [Cluster issuer URL](https://learn.microsoft.com/en-us/azure/aks/use-oidc-issuer#get-the-oidc-issuer-url): The OIDC issuer URL that your cluster is integrated with. For example: `https://{region}.oic.prod-aks.azure.com/{tenant_id}/{uuid}`.
@@ -95,7 +95,7 @@ To enable the Entra ID OAuth, register your application with Entra ID.
 
        1. You may optionally set `workload_identity_token_file` (env var `GF_AUTH_AZUREAD_WORKLOAD_IDENTITY_TOKEN_FILE`) under `[auth.azuread]` to `/var/run/secrets/azure/tokens/azure-identity-token` in the Grafana server configuration for this to work. (Optional, defaults to `/var/run/secrets/azure/tokens/azure-identity-token`)
 
-       1. You must have set `client_id` (env var `GF_AUTH_AZUREAD_CLIENT_ID`) under `[auth.azuread]` in the Grafana server configuration for this to work. This must match the Entra ID/Azure AD App Registration Application (client) ID.
+       1. You must have set `client_id` (env var `GF_AUTH_AZUREAD_CLIENT_ID`) under `[auth.azuread]` in the Grafana server configuration for this to work. This must match the Entra ID/Entra ID App Registration Application (client) ID.
 
        1. You must have set `token_url` (env var `GF_AUTH_AZUREAD_TOKEN_URL`) under `[auth.azuread]` to `https://login.microsoftonline.com/{tenantID}/oauth2/v2.0/token` in the Grafana server configuration for this to work.
 
@@ -228,7 +228,7 @@ Ensure that you have followed the steps in [Create the Microsoft Entra ID applic
 
 ## Configure Entra ID authentication client using the Grafana UI
 
-As a Grafana Admin, you can configure your Entra ID OAuth client from within Grafana using the Grafana UI. To do this, navigate to the **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
+As a Grafana Admin, you can configure your Entra ID OAuth client from within Grafana using the Grafana UI. To do this, navigate to the **Administration > Authentication > Entra ID** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
 
 After you have filled in the form, click **Save** to save the configuration. If the save was successful, Grafana will apply the new configurations.
 
@@ -244,7 +244,7 @@ If you run Grafana in high availability mode, configuration changes may not get 
 resource "grafana_sso_settings" "azuread_sso_settings" {
   provider_name = "azuread"
   oauth2_settings {
-    name                          = "Azure AD"
+    name                          = "Entra ID"
     auth_url                      = "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize"
     token_url                     = "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token"
     client_authentication         = "CLIENT_AUTHENTICATION_OPTION"

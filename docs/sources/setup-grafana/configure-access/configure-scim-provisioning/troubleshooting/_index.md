@@ -65,11 +65,11 @@ Where:
 
 | SAML Assertion | Identity Provider | Value                            |
 | -------------- | ----------------- | -------------------------------- |
-| `userUID`      | Azure AD          | `objectId`                       |
+| `userUID`      | Entra ID          | `objectId`                       |
 | `userUID`      | Okta              | `user.getInternalProperty("id")` |
 
 ## Next steps
 
 - [Manage users and teams with SCIM provisioning](../manage-users-teams/)
-- [Configure SCIM with Azure AD](../configure-scim-with-azuread/)
+- [Configure SCIM with Entra ID](../configure-scim-with-azuread/)
 - [Configure SCIM with Okta](../configure-scim-with-okta/)

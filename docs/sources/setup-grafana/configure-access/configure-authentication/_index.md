@@ -23,7 +23,7 @@ The following table shows all supported authentication methods and the features 
 | :---------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ | :----------- |
 | [Anonymous access](anonymous-auth/) | N/A               | N/A          | N/A          | N/A                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           | N/A          |
 | [Auth Proxy](auth-proxy/)           | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           | N/A          |
-| [Azure AD OAuth](azuread/)          | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | N/A          |
+| [Entra ID OAuth](azuread/)          | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | N/A          |
 | [Basic auth](grafana/)              | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           | N/A          |
 | [Passwordless auth](passwordless/)  | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           | N/A          |
 | [Generic OAuth](generic-oauth/)     | yes               | yes          | yes          | yes                   | yes       | no             | N/A         | yes                  | yes        | yes           | N/A          |
@@ -58,7 +58,7 @@ Fields explanation:
 
 **Single Logout:** Logging out from Grafana also logs you out of provider session
 
-**SCIM support:** Support for SCIM provisioning. Supported Identity Providers are Azure AD and Okta.
+**SCIM support:** Support for SCIM provisioning. Supported Identity Providers are Entra ID and Okta.
 
 ## Configuring multiple identity providers
 
@@ -83,7 +83,7 @@ To enable this option, refer to the [Enable email lookup](#enable-email-lookup) 
 
 Grafana and the Grafana Cloud portal currently do not include built-in support for multi-factor authentication (MFA).
 
-We strongly recommend integrating an external identity provider (IdP) that supports MFA, such as Okta, Azure AD, or Google Workspace. By configuring your Grafana instances to use an external IdP, you can leverage MFA to protect your accounts and resources effectively.
+We strongly recommend integrating an external identity provider (IdP) that supports MFA, such as Okta, Entra ID, or Google Workspace. By configuring your Grafana instances to use an external IdP, you can leverage MFA to protect your accounts and resources effectively.
 
 ## Login and short-lived tokens
 

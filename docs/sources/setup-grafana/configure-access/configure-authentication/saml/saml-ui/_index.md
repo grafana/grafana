@@ -125,11 +125,11 @@ Learn more about [team sync](../../../configure-team-sync) and [configuring team
    Role mapping will automatically update user's [basic role](../../../../../administration/roles-and-permissions/access-control/#basic-roles) based on their SAML roles every time the user logs in to Grafana.
    Learn more about [SAML role synchronization](../configure-saml-team-role-mapping/#configure-role-sync).
 
-1. If you're setting up Grafana with Azure AD using the SAML protocol and want to fetch user groups from the Graph API, complete the **Azure AD Service Account Configuration** subsection.
-   1. Set up a service account in Azure AD and provide the necessary details in the **Azure AD Service Account Configuration** section.
-   1. Provide the **Client ID** of your Azure AD application.
-   1. Provide the **Client Secret** of your Azure AD application, the **Client Secret** will be used to request an access token from Azure AD.
-   1. Provide the Azure AD request **Access Token URL**.
+1. If you're setting up Grafana with Entra ID using the SAML protocol and want to fetch user groups from the Graph API, complete the **Entra ID Service Account Configuration** subsection.
+   1. Set up a service account in Entra ID and provide the necessary details in the **Entra ID Service Account Configuration** section.
+   1. Provide the **Client ID** of your Entra ID application.
+   1. Provide the **Client Secret** of your Entra ID application, the **Client Secret** will be used to request an access token from Entra ID.
+   1. Provide the Entra ID request **Access Token URL**.
    1. If you don't have users with more than 150 groups, you can still force the use of the Graph API by enabling the **Force use Graph API** toggle.
 1. If you have multiple organizations and want to automatically add users to organizations, complete the **Org mapping section**.
 

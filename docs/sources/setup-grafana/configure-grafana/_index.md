@@ -1255,7 +1255,7 @@ Legacy key names, still in the configuration file so they work in environment va
 
 ### `[auth.azuread]`
 
-Refer to [Azure AD OAuth2 authentication](../configure-access/configure-authentication/azuread/) for detailed instructions.
+Refer to [Entra ID OAuth2 authentication](../configure-access/configure-authentication/azuread/) for detailed instructions.
 
 <hr />
 
@@ -1358,27 +1358,27 @@ Should be set for user-assigned identity and should be empty for system-assigned
 
 #### `workload_identity_enabled`
 
-Specifies whether Azure AD Workload Identity authentication should be enabled in data sources that support it.
+Specifies whether Entra ID Workload Identity authentication should be enabled in data sources that support it.
 
-For more documentation on Azure AD Workload Identity, review [Azure AD Workload Identity](https://azure.github.io/azure-workload-identity/docs/) documentation.
+For more documentation on Entra ID Workload Identity, review [Entra ID Workload Identity](https://azure.github.io/azure-workload-identity/docs/) documentation.
 
 Disabled by default, needs to be explicitly enabled.
 
 #### `workload_identity_tenant_id`
 
-Tenant ID of the Azure AD Workload Identity.
+Tenant ID of the Entra ID Workload Identity.
 
-Allows to override default tenant ID of the Azure AD identity associated with the Kubernetes service account.
+Allows to override default tenant ID of the Entra ID identity associated with the Kubernetes service account.
 
 #### `workload_identity_client_id`
 
-Client ID of the Azure AD Workload Identity.
+Client ID of the Entra ID Workload Identity.
 
-Allows to override default client ID of the Azure AD identity associated with the Kubernetes service account.
+Allows to override default client ID of the Entra ID identity associated with the Kubernetes service account.
 
 #### `workload_identity_token_file`
 
-Custom path to token file for the Azure AD Workload Identity.
+Custom path to token file for the Entra ID Workload Identity.
 
 Allows to set a custom path to the projected service account token file.
 

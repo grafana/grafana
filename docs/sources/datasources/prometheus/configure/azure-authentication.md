@@ -99,15 +99,15 @@ After creating a Azure Monitor Managed Service for Prometheus data source:
 
 1. In the data source configuration page, locate the **Authentication** section
 2. Select your authentication method:
-   - **Managed Identity**: For Azure-hosted Grafana instances. To learn more about Entra login for Grafana, refer to [Configure Azure AD/Entra ID OAuth authentication](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#configure-azure-adentra-id-oauth-authentication)
+   - **Managed Identity**: For Azure-hosted Grafana instances. To learn more about Entra login for Grafana, refer to [Configure Entra ID/Entra ID OAuth authentication](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#configure-azure-adentra-id-oauth-authentication)
    - **App Registration**: For service principal authentication
-   - **Current User**: Uses the current user's Azure AD credentials
+   - **Current User**: Uses the current user's Entra ID credentials
 
 3. Configure based on your chosen method:
 
 | Setting                     | Description                     | Example                                |
 | --------------------------- | ------------------------------- | -------------------------------------- |
-| **Directory (tenant) ID**   | Your Azure AD tenant ID         | `12345678-1234-1234-1234-123456789012` |
+| **Directory (tenant) ID**   | Your Entra ID tenant ID         | `12345678-1234-1234-1234-123456789012` |
 | **Application (client) ID** | Your app registration client ID | `87654321-4321-4321-4321-210987654321` |
 | **Client secret**           | Your app registration secret    | `your-client-secret`                   |
 

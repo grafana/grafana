@@ -178,14 +178,14 @@ By default, new Grafana users using SAML authentication will have an account cre
 
 ## Integrating with SCIM Provisioning
 
-If you are also using SCIM provisioning for this Grafana application in Azure AD, it's crucial to align the user identifiers between SAML and SCIM for seamless operation. The unique identifier that links the SAML user to the SCIM provisioned user is determined by the `assertion_attribute_external_uid` setting in the Grafana SAML configuration. This `assertion_attribute_external_uid` should correspond to the `externalId` used in SCIM provisioning (typically set to the Azure AD `user.objectid`).
+If you are also using SCIM provisioning for this Grafana application in Entra ID, it's crucial to align the user identifiers between SAML and SCIM for seamless operation. The unique identifier that links the SAML user to the SCIM provisioned user is determined by the `assertion_attribute_external_uid` setting in the Grafana SAML configuration. This `assertion_attribute_external_uid` should correspond to the `externalId` used in SCIM provisioning (typically set to the Entra ID `user.objectid`).
 
 1.  **Ensure Consistent Identifier in SAML Assertion:**
     - The unique identifier from Entra ID (typically `user.objectid`) that you mapped to the `externalId` attribute in Grafana in your SCIM provisioning setup **must also be sent as a claim in the SAML assertion.** For more details on SCIM, refer to the [SCIM provisioning documentation](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/).
-    - In the Azure AD Enterprise Application, under **Single sign-on** > **Attributes & Claims**, ensure you add a claim that provides this identifier. For example, you might add a claim named `UserID` (or similar, like `externalId`) that sources its value from `user.objectid`.
+    - In the Entra ID Enterprise Application, under **Single sign-on** > **Attributes & Claims**, ensure you add a claim that provides this identifier. For example, you might add a claim named `UserID` (or similar, like `externalId`) that sources its value from `user.objectid`.
 
 2.  **Configure Grafana SAML Settings for SCIM:**
-    - In the `[auth.saml]` section of your Grafana configuration, set `assertion_attribute_external_uid` to the name of the SAML claim you configured in the previous step (e.g., `userUID` or the full URI like `http://schemas.microsoft.com/identity/claims/objectidentifier` if that's how Azure AD sends it).
+    - In the `[auth.saml]` section of your Grafana configuration, set `assertion_attribute_external_uid` to the name of the SAML claim you configured in the previous step (e.g., `userUID` or the full URI like `http://schemas.microsoft.com/identity/claims/objectidentifier` if that's how Entra ID sends it).
     - The `assertion_attribute_login` setting should still be configured to map to the attribute your users will log in with (e.g., `userPrincipalName`, `mail`).
 
     _Example Grafana Configuration:_
@@ -197,13 +197,13 @@ If you are also using SCIM provisioning for this Grafana application in Azure AD
     assertion_attribute_external_uid = http://schemas.microsoft.com/identity/claims/objectidentifier # Or your custom claim name for user.objectid
     ```
 
-    Ensure that the value specified in `assertion_attribute_external_uid` precisely matches the name of the claim as it's sent in the SAML assertion from Azure AD.
+    Ensure that the value specified in `assertion_attribute_external_uid` precisely matches the name of the claim as it's sent in the SAML assertion from Entra ID.
 
-3.  **SCIM Linking Identifier and Azure AD:**
+3.  **SCIM Linking Identifier and Entra ID:**
     - By default (if `assertion_attribute_external_uid` is not set), Grafana uses the `userUID` attribute from the SAML assertion for SCIM linking.
-    - **Recommended for Azure AD:** For SCIM integration with Azure AD, it is necessary to:
-      1.  Ensure Azure AD sends the `user.objectid` in a claim.
-      2.  Either set this claim name in Azure AD to `userUID`, or, if you want to use a different claim name, set `assertion_attribute_external_uid` in Grafana to match the claim name you chose in Azure AD.
+    - **Recommended for Entra ID:** For SCIM integration with Entra ID, it is necessary to:
+      1.  Ensure Entra ID sends the `user.objectid` in a claim.
+      2.  Either set this claim name in Entra ID to `userUID`, or, if you want to use a different claim name, set `assertion_attribute_external_uid` in Grafana to match the claim name you chose in Entra ID.
 
 ## Configure automatic login
 

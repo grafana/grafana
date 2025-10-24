@@ -34,7 +34,7 @@ Grafana Enterprise includes integrations with more ways to authenticate your use
 Supported auth providers:
 
 - [Auth Proxy](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/auth-proxy#team-sync-enterprise-only)
-- [Azure AD OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#team-sync-enterprise-only)
+- [Entra ID OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#team-sync-enterprise-only)
 - [GitHub OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/github/#configure-team-synchronization)
 - [Generic OAuth integration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/generic-oauth/#configure-team-synchronization)
 - [GitLab OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/gitlab/#configure-team-synchronization)

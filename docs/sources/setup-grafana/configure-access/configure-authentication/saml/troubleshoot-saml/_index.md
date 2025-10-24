@@ -110,7 +110,7 @@ For enhanced security, set `cookie_secure` to `true`, which forces cookies to be
 
 ### Troubleshoot Graph API calls
 
-When setting up SAML authentication with Azure AD, you may encounter issues with Graph API calls. This can happen if the Azure AD application is not properly configured to allow Graph API access.
+When setting up SAML authentication with Entra ID, you may encounter issues with Graph API calls. This can happen if the Entra ID application is not properly configured to allow Graph API access.
 
 To help in the troubleshooting process, test the Graph API calls using the following commands:
 
@@ -122,9 +122,9 @@ curl -X POST "{token_url}" \
 
 Where the following values come from your [SAML configuration](../saml-configuration-options/_index.md#saml-configuration-options):
 
-- `token_url`: The token URL of your Azure AD application.
-- `client_id`: The client ID of your Azure AD application.
-- `client_secret`: The client secret of your Azure AD application.
+- `token_url`: The token URL of your Entra ID application.
+- `client_id`: The client ID of your Entra ID application.
+- `client_secret`: The client secret of your Entra ID application.
 
 The response should look like:
 
@@ -153,4 +153,4 @@ The response should look like:
 }
 ```
 
-If the second call fails due to 401 or 403, you may need to check the Azure AD application settings to ensure that Graph API access is enabled.
+If the second call fails due to 401 or 403, you may need to check the Entra ID application settings to ensure that Graph API access is enabled.

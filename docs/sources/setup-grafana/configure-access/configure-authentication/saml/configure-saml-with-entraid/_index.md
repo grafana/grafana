@@ -16,7 +16,7 @@ Grafana supports user authentication through Microsoft Entra ID. This topic show
 {{< admonition type="note" >}}
 If an Entra ID user belongs to more than 150 groups, a Graph API endpoint is used instead.
 
-Grafana versions 11.1 and below, do not support fetching the groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, it is recommended that you use the Azure AD connector.
+Grafana versions 11.1 and below, do not support fetching the groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, it is recommended that you use the Entra ID connector.
 
 As of Grafana 11.2, the SAML integration offers a mechanism to retrieve user groups from the Graph API.
 
@@ -82,7 +82,7 @@ In order to validate Entra ID users with Grafana, you need to configure the SAML
 
 ## Configure SAML assertions when using SCIM provisioning
 
-In order to verify the logged in user is the same user that was provisioned through Azure AD, you need to include the same `externalId` in the SAML assertion by mapping the SAML assertion `assertion_attribute_external_id`.
+In order to verify the logged in user is the same user that was provisioned through Entra ID, you need to include the same `externalId` in the SAML assertion by mapping the SAML assertion `assertion_attribute_external_id`.
 
 1. Open your Entra ID application.
 1. Select the SAML single sign-on configuration.
