@@ -523,6 +523,7 @@
       "metric-aria-label-metric": "metric",
       "metric-placeholder-recorded-metric": "Give the name of the new recorded metric",
       "placeholder-name": "Give your {{namePlaceholder}} a name",
+      "recording-rule-pattern": "Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.",
       "title-section": "Enter {{entityName}} name"
     },
     "alert-rules": {
@@ -866,6 +867,8 @@
       "export-all": "Export all",
       "learn-more": "Learn more",
       "loading": "Loading...",
+      "optional": "(optional)",
+      "refresh": "Refresh",
       "search-by-matchers": "Search by matchers",
       "titles": {
         "notification-templates": "Notification Templates"
@@ -1081,6 +1084,9 @@
     "duplicate-message-template": {
       "text-loading-notification-template": "Loading notification template",
       "title-error-loading-notification-template": "Error loading notification template"
+    },
+    "duration": {
+      "immediately": "immediately"
     },
     "duration-quick-pick": {
       "none": "None"
@@ -2832,6 +2838,47 @@
     },
     "simpleCondition": {
       "alertCondition": "Alert condition"
+    },
+    "simplified": {
+      "condition": {
+        "title": "Condition"
+      },
+      "continue-in-alerting": "Continue in Alerting",
+      "create": "Create",
+      "evaluation": {
+        "after-breached": "after the condition is initially breached.",
+        "custom-delay": "with custom delay of",
+        "custom-delay-invalid": "The delay must be a multiple of the evaluation frequency.",
+        "every": "Evaluate the rule every",
+        "fire": "Fire the alert rule",
+        "immediate-warning": "Immediate firing might lead to unnecessary alerts being sent for temporary issues",
+        "wait-prefix": "Wait",
+        "wait-suffix": "after the condition is breached before firing."
+      },
+      "notification": {
+        "contact-point": {
+          "description": "Select who should receive a notification when the alert rule fires",
+          "label": "Contact point"
+        },
+        "description": {
+          "label": "Description (optional)",
+          "placeholder": "Enter a description of what the alert rule does…"
+        },
+        "runbook-url": {
+          "label": "Runbook URL (optional)",
+          "placeholder": "Enter the webpage where you keep your runbook for the alert…"
+        },
+        "select-contact-point": "Select a contact point...",
+        "summary": {
+          "label": "Summary (optional)",
+          "placeholder": "Enter a summary of what happened and why…"
+        },
+        "title": "Notification"
+      },
+      "rule-definition": "Rule Definition",
+      "step-number-one": "1",
+      "step-number-three": "3",
+      "step-number-two": "2"
     },
     "smart-alert-type-detector": {
       "data-source-managed": "Data source-managed",

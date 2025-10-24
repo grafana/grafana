@@ -55,7 +55,7 @@ export function FolderSelectorV2() {
           error={errors.folder?.message}
           data-testid="folder-picker"
         >
-          <Stack direction="column" alignItems="flex-start" gap={0.5}>
+          <Stack direction="column" alignItems="flex-start" gap={1}>
             <Controller
               render={({ field: { ref, ...field } }) => (
                 <div style={{ width: 420 }}>

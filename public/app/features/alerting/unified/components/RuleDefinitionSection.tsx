@@ -13,7 +13,7 @@ import { isCloudRecordingRuleByType, isGrafanaManagedRuleByType, isRecordingRule
 
 import { FolderSelectorV2 } from './rule-editor/FolderSelectorV2';
 import { LabelsEditorModal } from './rule-editor/labels/LabelsEditorModal';
-import { LabelsFieldInForm } from './rule-editor/labels/LabelsFieldInForm';
+import { LabelsFieldInFormV2 } from './rule-editor/labels/LabelsFieldInFormV2';
 
 export function RuleDefinitionSection({ type }: { type: RuleFormType }) {
   const styles = useStyles2(getStyles);
@@ -43,7 +43,11 @@ export function RuleDefinitionSection({ type }: { type: RuleFormType }) {
         <Stack direction="column" gap={2}>
           <Field
             noMargin
-            label={<Trans i18nKey="alerting.alert-rule-name-and-metric.label-name">Name</Trans>}
+            label={
+              <span className={styles.nameLabel}>
+                <Trans i18nKey="alerting.alert-rule-name-and-metric.label-name">Name</Trans>
+              </span>
+            }
             error={errors?.name?.message}
             invalid={!!errors.name?.message}
           >
@@ -78,7 +82,7 @@ export function RuleDefinitionSection({ type }: { type: RuleFormType }) {
           {isGrafanaManagedRuleByType(type) && (
             <>
               <FolderSelectorV2 />
-              <LabelsFieldInForm showHelpTooltip onEditClick={() => setShowLabelsEditor(true)} labelVariant="small" />
+              <LabelsFieldInFormV2 onEditClick={() => setShowLabelsEditor(true)} />
               <LabelsEditorModal
                 isOpen={showLabelsEditor}
                 onClose={(labelsToUpdate) => {
@@ -128,5 +132,9 @@ function getStyles(theme: GrafanaTheme2) {
       fontWeight: 600,
     }),
     contentIndented: css({ marginLeft: `calc(20px + ${theme.spacing(1)})` }),
+    nameLabel: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: 500,
+    }),
   };
 }
