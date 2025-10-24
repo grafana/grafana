@@ -7,11 +7,6 @@ import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { PROVISIONING_URL } from '../constants';
 
-interface StatusBadgeProps {
-  repo?: Repository;
-  displayOnly?: boolean; // if true, disable click action and cursor will be default
-}
-
 interface BadgeConfig {
   color: BadgeColor;
   text: string;
@@ -81,12 +76,17 @@ function getBadgeConfig(repo: Repository): BadgeConfig {
   }
 }
 
+interface StatusBadgeProps {
+  repo?: Repository;
+  displayOnly?: boolean; // if true, disable click action and cursor will be default
+}
+
 export function StatusBadge({ repo, displayOnly = false }: StatusBadgeProps) {
   const handleClick = useCallback(() => {
     if (repo?.metadata?.name) {
-        if (!displayOnly) {
-          locationService.push(`${PROVISIONING_URL}/${repo.metadata.name}/?tab=overview`);
-        }
+      if (!displayOnly) {
+        locationService.push(`${PROVISIONING_URL}/${repo.metadata.name}/?tab=overview`);
+      }
     }
   }, [repo?.metadata?.name, displayOnly]);
 
