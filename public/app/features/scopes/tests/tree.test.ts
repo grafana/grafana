@@ -33,10 +33,6 @@ import {
   expectResultApplicationsMimirNotPresent,
   expectResultApplicationsMimirPresent,
   expectResultApplicationsMimirSelected,
-  expectResultCloudDevNotSelected,
-  expectResultCloudDevSelected,
-  expectResultCloudOpsNotSelected,
-  expectResultCloudOpsSelected,
   expectScopesHeadline,
   expectScopesSelectorValue,
 } from './utils/assertions';

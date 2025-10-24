@@ -12,8 +12,8 @@ import {
   getResultApplicationsCloudSelect,
   getResultApplicationsGrafanaSelect,
   getResultApplicationsMimirSelect,
-  getResultCloudDevRadio,
-  getResultCloudOpsRadio,
+  getResultCloudDevLink,
+  getResultCloudOpsLink,
   getSelectorInput,
   getTreeHeadline,
   queryAllDashboard,
@@ -62,10 +62,10 @@ export const expectResultApplicationsMimirPresent = () => expectInDocument(getRe
 export const expectResultApplicationsMimirNotPresent = () => expectNotInDocument(queryResultApplicationsMimirSelect);
 export const expectResultApplicationsCloudPresent = () => expectInDocument(getResultApplicationsCloudSelect);
 export const expectResultApplicationsCloudNotPresent = () => expectNotInDocument(queryResultApplicationsCloudSelect);
-export const expectResultCloudDevSelected = () => expectRadioChecked(getResultCloudDevRadio);
-export const expectResultCloudDevNotSelected = () => expectRadioNotChecked(getResultCloudDevRadio);
-export const expectResultCloudOpsSelected = () => expectRadioChecked(getResultCloudOpsRadio);
-export const expectResultCloudOpsNotSelected = () => expectRadioNotChecked(getResultCloudOpsRadio);
+export const expectResultCloudDevSelected = () => expectRadioChecked(getResultCloudDevLink);
+export const expectResultCloudDevNotSelected = () => expectRadioNotChecked(getResultCloudDevLink);
+export const expectResultCloudOpsSelected = () => expectRadioChecked(getResultCloudOpsLink);
+export const expectResultCloudOpsNotSelected = () => expectRadioNotChecked(getResultCloudOpsLink);
 
 export const expectDashboardsDisabled = () => expectDisabled(getDashboardsExpand);
 export const expectDashboardsClosed = () => expectNotInDocument(queryDashboardsContainer);
