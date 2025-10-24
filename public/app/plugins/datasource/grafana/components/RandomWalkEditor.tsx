@@ -37,8 +37,8 @@ const coreFields: FieldConfig[] = [
     step: 1,
     tooltip: 'Initial value for the random walk',
   },
-  { label: 'Min', id: 'min', placeholder: 'none', step: 0.1, tooltip: 'Minimum value (optional)' },
-  { label: 'Max', id: 'max', placeholder: 'none', step: 0.1, tooltip: 'Maximum value (optional)' },
+  { label: 'Min', id: 'min', placeholder: 'none', step: 0.1 },
+  { label: 'Max', id: 'max', placeholder: 'none', step: 0.1 },
 ];
 
 // Fine-tuning parameters - controls randomness and variation
