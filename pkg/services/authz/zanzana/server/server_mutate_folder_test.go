@@ -1,0 +1,109 @@
+package server
+
+import (
+	"testing"
+
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
+)
+
+func setupMutateFolders(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
+	t.Helper()
+
+	// seed tuples
+	tuples := []*openfgav1.TupleKey{
+		common.NewFolderParentTuple("11", "1"),
+		common.NewFolderParentTuple("12", "1"),
+		common.NewFolderParentTuple("111", "11"),
+		common.NewFolderParentTuple("112", "11"),
+		common.NewFolderParentTuple("broken", "foo"),
+		common.NewFolderParentTuple("broken", "bar"),
+	}
+
+	return setupOpenFGADatabase(t, testDB, cfg, tuples)
+}
+
+func TestIntegrationServerMutateFolders(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	// Create a test-specific config to avoid migration conflicts
+	cfg := setting.NewCfg()
+
+	// Use a test-specific database to avoid migration conflicts
+	testStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
+
+	// Hack to skip these tests on mysql 5.7
+	if testStore.GetDialect().DriverName() == migrator.MySQL {
+		if supported, err := testStore.RecursiveQueriesAreSupported(); !supported || err != nil {
+			t.Skip("skipping integration test")
+		}
+	}
+
+	srv := setupMutateFolders(t, testStore, cfg)
+
+	t.Run("should create new folder parent relation", func(t *testing.T) {
+		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+			Namespace: "default",
+			Operations: []*v1.MutateOperation{
+				{
+					Operation: &v1.MutateOperation_SetFolderParent{
+						SetFolderParent: &v1.SetFolderParentOperation{
+							Folder:         "new-folder",
+							Parent:         "1",
+							DeleteExisting: false,
+						},
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		res, err := srv.Read(newContextWithNamespace(), &v1.ReadRequest{
+			Namespace: "default",
+			TupleKey: &v1.ReadRequestTupleKey{
+				Object:   "folder:new-folder",
+				Relation: "parent",
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, res.Tuples, 1)
+		require.Equal(t, "folder:new-folder", res.Tuples[0].Key.Object)
+		require.Equal(t, "parent", res.Tuples[0].Key.Relation)
+		require.Equal(t, "folder:1", res.Tuples[0].Key.User)
+	})
+
+	t.Run("should delete folder parent relation", func(t *testing.T) {
+		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+			Namespace: "default",
+			Operations: []*v1.MutateOperation{
+				{
+					Operation: &v1.MutateOperation_DeleteFolder{
+						DeleteFolder: &v1.DeleteFolderOperation{
+							Folder: "11",
+							Parent: "1",
+						},
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		res, err := srv.Read(newContextWithNamespace(), &v1.ReadRequest{
+			Namespace: "default",
+			TupleKey: &v1.ReadRequestTupleKey{
+				Object:   "folder:11",
+				Relation: "parent",
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, res.Tuples, 0)
+	})
+}

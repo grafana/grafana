@@ -48,18 +48,28 @@ func (s *Server) mutateFolders(ctx context.Context, store *storeInfo, operations
 		}
 	}
 
-	_, err := s.openfga.Write(ctx, &openfgav1.WriteRequest{
+	if len(writeTuples) == 0 && len(deleteTuples) == 0 {
+		return nil
+	}
+
+	writeReq := &openfgav1.WriteRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
-		Writes: &openfgav1.WriteRequestWrites{
+	}
+	if len(writeTuples) > 0 {
+		writeReq.Writes = &openfgav1.WriteRequestWrites{
 			TupleKeys:   writeTuples,
 			OnDuplicate: "ignore",
-		},
-		Deletes: &openfgav1.WriteRequestDeletes{
+		}
+	}
+	if len(deleteTuples) > 0 {
+		writeReq.Deletes = &openfgav1.WriteRequestDeletes{
 			TupleKeys: deleteTuples,
 			OnMissing: "ignore",
-		},
-	})
+		}
+	}
+
+	_, err := s.openfga.Write(ctx, writeReq)
 	if err != nil {
 		s.logger.Error("failed to write folder tuples", "error", err)
 		return err
@@ -86,10 +96,11 @@ func (s *Server) getFolderDeleteTuples(ctx context.Context, store *storeInfo, fo
 	tupleKeysToDelete := make([]*openfgav1.TupleKeyWithoutCondition, 0)
 
 	if folderUID != "" && parentUID != "" && !deleteExisting {
+		tuple := zanzana.NewFolderParentTuple(folderUID, parentUID)
 		tupleKeysToDelete = append(tupleKeysToDelete, &openfgav1.TupleKeyWithoutCondition{
-			User:     zanzana.NewFolderParentTuple(folderUID, parentUID).GetUser(),
-			Relation: zanzana.RelationParent,
-			Object:   folderUID,
+			User:     tuple.GetUser(),
+			Relation: tuple.GetRelation(),
+			Object:   tuple.GetObject(),
 		})
 	}
 
