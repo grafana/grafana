@@ -42,6 +42,15 @@ type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace'
   contactPoint?: string;
   health?: RuleHealth[];
   state?: PromAlertingRuleState[];
+  // New filter parameters
+  freeFormSearch?: string;
+  namespaceSearch?: string;
+  groupNameSearch?: string;
+  ruleNameSearch?: string;
+  labels?: string[];
+  ruleType?: 'alerting' | 'recording';
+  datasourceUids?: string[];
+  excludePlugins?: boolean;
 };
 
 export const prometheusApi = alertingApi.injectEndpoints({
@@ -91,6 +100,14 @@ export const prometheusApi = alertingApi.injectEndpoints({
         groupLimit,
         limitAlerts,
         groupNextToken,
+        freeFormSearch,
+        namespaceSearch,
+        groupNameSearch,
+        ruleNameSearch,
+        labels,
+        ruleType,
+        datasourceUids,
+        excludePlugins,
       }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
@@ -103,6 +120,14 @@ export const prometheusApi = alertingApi.injectEndpoints({
           limit_alerts: limitAlerts,
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,
+          free_form_search: freeFormSearch,
+          namespace_search: namespaceSearch,
+          group_name_search: groupNameSearch,
+          rule_name_search: ruleNameSearch,
+          labels: labels,
+          rule_type: ruleType,
+          datasource_uid: datasourceUids,
+          exclude_plugins: excludePlugins,
         },
       }),
       providesTags: (_result, _error, { folderUid, groupName, ruleName }) => {
