@@ -29,7 +29,6 @@ export const AddToDashboardFormExposedComponent = (props: Partial<Props<Absolute
         (() => ({
           type: 'timeseries',
           title: t('dashboard-scene.add-to-dashboard-form-exposed.title.new-panel', 'New panel'),
-          gridPos: { x: 0, y: 0, w: 12, h: 8 },
           targets: [],
         }))
       }
