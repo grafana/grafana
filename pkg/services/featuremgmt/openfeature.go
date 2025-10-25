@@ -25,8 +25,8 @@ type OpenFeatureConfig struct {
 	URL *url.URL
 	// HTTPClient is a pre-configured HTTP client (optional, used for GOFF provider)
 	HTTPClient *http.Client
-	// StaticFlags are the feature flags to use with static provider
-	StaticFlags map[string]bool
+	// TypedFlags are the feature flags to use with static provider
+	StaticFlags map[string]setting.TypedFeatureFlag
 	// TargetingKey is used for evaluation context
 	TargetingKey string
 	// ContextAttrs are additional attributes for evaluation context
@@ -60,7 +60,8 @@ func InitOpenFeature(config OpenFeatureConfig) error {
 
 // InitOpenFeatureWithCfg initializes OpenFeature from setting.Cfg
 func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
-	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
+	// Read typed flags from config
+	confFlags, err := setting.ReadTypedFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
 	if err != nil {
 		return fmt.Errorf("failed to read feature flags from config: %w", err)
 	}
@@ -96,7 +97,7 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 func createProvider(
 	providerType string,
 	u *url.URL,
-	staticFlags map[string]bool,
+	staticFlags map[string]setting.TypedFeatureFlag,
 	httpClient *http.Client,
 ) (openfeature.FeatureProvider, error) {
 	if providerType != setting.GOFFProviderType {
