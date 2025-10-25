@@ -15,5 +15,6 @@ func ValidatePackage(ctx context.Context, d *dagger.Client, service *dagger.Serv
 
 	return c.WithServiceBinding("grafana", service).
 		WithEnvVariable("GRAFANA_URL", "http://grafana:3000").
+		WithEnvVariable("PW_TEST_HTML_REPORT_OPEN", "never").
 		WithExec([]string{"yarn", "e2e:acceptance"}), nil
 }
