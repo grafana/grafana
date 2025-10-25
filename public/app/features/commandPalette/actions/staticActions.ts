@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
+import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import {
   shouldRenderInviteUserButton,
   performInviteUserClick,
@@ -25,7 +25,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
   for (let navItem of navTree) {
     // help node needs enriching with the frontend links
     if (navItem.id === 'help') {
-      navItem = enrichHelpItem({ ...navItem });
+      navItem = getEnrichedHelpItem({ ...navItem });
       delete navItem.url;
     }
     const { url, target, text, isCreateAction, children, onClick, keywords } = navItem;

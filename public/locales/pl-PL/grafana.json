@@ -4642,7 +4642,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "Renderowanie warunkowe nie jest obsługiwane w przypadku niestandardowego układu siatki. Przełącz na automatyczną siatkę, aby użyć renderowania warunkowego.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -6029,6 +6030,13 @@
       "usage-count_few": "Używane na {{count}} pulpitach",
       "usage-count_many": "Używane na {{count}} pulpitach",
       "usage-count_other": "Używane na {{count}} pulpitach"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "Nie udało się przenieść pulpitu",
@@ -7677,7 +7685,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Wyczyść foldery",
     "noOptionsMessage-no-folders-found": "Nie znaleziono folderów",
     "select-aria-label": "Filtr folderów",
     "select-placeholder": "Filtruj wg folderu"
@@ -11910,6 +11917,11 @@
       "next": "Dalej",
       "previous": "Wstecz"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Krok ukończony",
       "label-current-step": "Aktualny krok",
@@ -12775,6 +12787,7 @@
       "theme-label": "Motyw interfejsu",
       "week-start-label": "Początek tygodnia"
     },
+    "save": "",
     "theme": {
       "default-label": "Domyślny",
       "experimental": "Eksperymentalna"
@@ -13178,13 +13191,13 @@
       "placeholder-search-teams": "Szukaj zespołów"
     },
     "team-settings": {
-      "description-email": "Jest to opcjonalne i służy przede wszystkim do ustawiania awatara profilu zespołu (za pośrednictwem usługi Gravatar)",
+      "description-email": "",
       "label-email": "E-mail",
       "label-name": "Nazwa",
       "label-numerical-identifier": "Identyfikator numeryczny",
       "label-role": "Rola",
       "label-team-details": "Szczegóły zespołu",
-      "save": "Zapisz"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "Synchronizacja zespołów ułatwia zarządzanie dostępem użytkowników w usłudze Grafana, natychmiast aktualizując zespoły i uprawnienia każdego użytkownika Grafany na podstawie członkostwa w grupie jednokrotnego logowania, a nie podczas logowania się użytkowników"

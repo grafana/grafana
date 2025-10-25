@@ -4582,7 +4582,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "맞춤형 그리드 레이아웃에서는 조건부 렌더링이 지원되지 않습니다. 조건부 렌더링을 사용하려면 자동 그리드로 전환하세요.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5963,6 +5964,13 @@
     "library-viz-panel-info": {
       "last-edited": "<person /> 님({{timeAgo}}에)",
       "usage-count_other": "{{count}}개의 대시보드에서 사용됨"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "대시보드를 이동하지 못했습니다",
@@ -7608,7 +7616,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "폴더 비우기",
     "noOptionsMessage-no-folders-found": "폴더를 찾을 수 없습니다",
     "select-aria-label": "폴더 필터",
     "select-placeholder": "폴더별로 필터링"
@@ -11760,6 +11767,11 @@
       "next": "다음",
       "previous": "이전"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "완료된 단계",
       "label-current-step": "현재 단계",
@@ -12613,6 +12625,7 @@
       "theme-label": "인터페이스 테마",
       "week-start-label": "주 시작 요일"
     },
+    "save": "",
     "theme": {
       "default-label": "기본값",
       "experimental": "실험적 기능"
@@ -13013,13 +13026,13 @@
       "placeholder-search-teams": "팀 검색"
     },
     "team-settings": {
-      "description-email": "이 항목은 선택 사항이며 주로 (gravatar 서비스를 통해) 팀 프로필 아바타를 설정하는 데 사용됩니다",
+      "description-email": "",
       "label-email": "이메일",
       "label-name": "이름",
       "label-numerical-identifier": "숫자 식별자",
       "label-role": "역할",
       "label-team-details": "팀 세부 정보",
-      "save": "저장"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "팀 동기화를 사용하면 사용자가 로그인할 때가 아니라 싱글 사인온 그룹에 속한 사용자인지 여부를 토대로 각 사용자의 Grafana 팀 및 권한을 즉시 업데이트하여 Grafana에서 사용자의 액세스를 보다 쉽게 관리할 수 있습니다"
