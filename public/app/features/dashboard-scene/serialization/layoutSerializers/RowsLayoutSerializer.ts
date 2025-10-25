@@ -38,7 +38,7 @@ export function serializeRow(row: RowItem): RowsLayoutRowKind {
     kind: 'RowsLayoutRow',
     spec: {
       title: row.state.title,
-      collapse: row.state.collapse,
+      collapse: row.state.collapse ?? false,
       layout: layout,
       fillScreen: row.state.fillScreen,
       hideHeader: row.state.hideHeader,
