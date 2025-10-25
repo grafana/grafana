@@ -18,6 +18,23 @@ Thank you for sending a pull request! Here are some tips:
 
 -->
 
+<!-- meta
+Note: Optional. Update these fields to help our automation classify your PR and run the right workflow.
+type: bugfix|feature|refactor|docs
+size: small|medium|large
+product_area: dashboards|datasources|alerting|explore|auth|admin|plugins|other
+components: frontend, backend, db, config, docs, tests
+breaking_change: true|false
+migration_note: <short or N/A>
+feature_flag: <name or N/A>
+docs_updated: true|false
+docs_link: <url or N/A>
+users_affected: few|many|unknown
+usage_frequency: daily|weekly|monthly|unknown
+time_lost_per_task: <minutes/hours or unknown>
+evidence_links: <comma-separated urls or N/A>
+-->
+
 **What is this feature?**
 
 [Add a brief description of what the feature or update does.]
