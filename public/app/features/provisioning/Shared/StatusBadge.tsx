@@ -83,11 +83,10 @@ interface StatusBadgeProps {
 
 export function StatusBadge({ repo, displayOnly = false }: StatusBadgeProps) {
   const handleClick = useCallback(() => {
-    if (repo?.metadata?.name) {
-      if (!displayOnly) {
-        locationService.push(`${PROVISIONING_URL}/${repo.metadata.name}/?tab=overview`);
-      }
+    if (displayOnly || !repo?.metadata?.name) {
+      return;
     }
+    locationService.push(`${PROVISIONING_URL}/${repo.metadata.name}/?tab=overview`);
   }, [repo?.metadata?.name, displayOnly]);
 
   if (!repo) {
