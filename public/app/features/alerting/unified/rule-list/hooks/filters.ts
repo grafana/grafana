@@ -12,34 +12,50 @@ import { fuzzyMatches } from '../../utils/fuzzySearch';
 import { parseMatcher } from '../../utils/matchers';
 import { isPluginProvidedRule, prometheusRuleType } from '../../utils/rules';
 
+export interface GroupFilterResult {
+  matches: boolean;
+  freeFormMatched: boolean;
+}
+
 /**
  * @returns True if the group matches the filter, false otherwise. Keeps rules intact
+ * Also returns whether the freeFormWords matched at the group level
  */
 export function groupFilter(
   group: PromRuleGroupDTO,
-  filterState: Pick<RulesFilter, 'namespace' | 'groupName'>
-): boolean {
+  filterState: Pick<RulesFilter, 'namespace' | 'groupName' | 'freeFormWords'>
+): GroupFilterResult {
   const { name, file } = group;
-  const { namespace, groupName } = filterState;
+  const { namespace, groupName, freeFormWords } = filterState;
+
+  const freeFormNeedle = freeFormWords.join(' ');
 
   if (namespace && !fuzzyMatches(file, namespace)) {
-    return false;
+    return { matches: false, freeFormMatched: false };
   }
 
   if (groupName && !fuzzyMatches(name, groupName)) {
-    return false;
+    return { matches: false, freeFormMatched: false };
   }
 
-  return true;
+  // Check if free form text matches at the group level
+  let freeFormMatched = false;
+  if (freeFormNeedle) {
+    if (fuzzyMatches(name, freeFormNeedle) || fuzzyMatches(file, freeFormNeedle)) {
+      freeFormMatched = true;
+    }
+  }
+
+  return { matches: true, freeFormMatched };
 }
 
 /**
  * @returns True if the rule matches the filter, false otherwise
  */
-export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
+export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter, freeFormAlreadyMatched = false) {
   const { name, labels = {}, health, type } = rule;
 
-  if (filterState.freeFormWords.length > 0) {
+  if (filterState.freeFormWords.length > 0 && !freeFormAlreadyMatched) {
     const nameMatches = fuzzyMatches(name, filterState.freeFormWords.join(' '));
     if (!nameMatches) {
       return false;
