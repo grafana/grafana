@@ -17,19 +17,11 @@ function filterModeOptions(modeOptions: ModeOption[], repoName: string, settings
       return false;
     }
 
-    if (settings?.legacyStorage) {
-      return option.target === 'instance';
-    }
-
-    if (option.target === 'folder') {
-      return true;
-    }
-
     if (option.target === 'instance') {
       return !folderConnected;
     }
 
-    return false;
+    return true;
   });
 }
 
