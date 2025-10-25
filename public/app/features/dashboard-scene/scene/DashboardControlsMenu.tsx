@@ -2,12 +2,15 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { sceneGraph, SceneVariable } from '@grafana/scenes';
+import { SceneDataLayerProvider, sceneGraph, SceneVariable } from '@grafana/scenes';
 import { DashboardLink, VariableHide } from '@grafana/schema';
 import { Box, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+
 import { DashboardLinkRenderer } from './DashboardLinkRenderer';
 import { DashboardScene } from './DashboardScene';
+import { DataLayerControl } from './DataLayerControls';
 import { VariableValueSelectWrapper } from './VariableControls';
 
 export const DASHBOARD_CONTROLS_MENU_ARIA_LABEL = 'Dashboard controls menu';
@@ -24,15 +27,24 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
     .getVariables(dashboard)!
     .useState()
     .variables.filter((v) => v.state.hide === VariableHide.inControlsMenu);
+  const { annotationLayers } = dashboardSceneGraph.getDataLayers(dashboard).useState();
+  const filteredAnnotationLayers = annotationLayers.filter((layer) => layer.state.placement === 'inControlsMenu');
 
-  if ((variables.length === 0 && filteredLinks.length === 0) || !uid) {
+  if ((variables.length === 0 && filteredLinks.length === 0 && filteredAnnotationLayers.length === 0) || !uid) {
     return null;
   }
 
   return (
     <Dropdown
       placement="bottom-end"
-      overlay={<DashboardControlsMenu variables={variables} links={filteredLinks} dashboardUID={uid} />}
+      overlay={
+        <DashboardControlsMenu
+          variables={variables}
+          links={filteredLinks}
+          annotationLayers={filteredAnnotationLayers}
+          dashboardUID={uid}
+        />
+      }
     >
       <ToolbarButton
         aria-label={t('dashboard.controls.menu.aria-label', DASHBOARD_CONTROLS_MENU_ARIA_LABEL)}
@@ -49,10 +61,11 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
 interface DashboardControlsMenuProps {
   variables: SceneVariable[];
   links: DashboardLink[];
+  annotationLayers: SceneDataLayerProvider[];
   dashboardUID: string;
 }
 
-function DashboardControlsMenu({ variables, links, dashboardUID }: DashboardControlsMenuProps) {
+function DashboardControlsMenu({ variables, links, annotationLayers, dashboardUID }: DashboardControlsMenuProps) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -80,19 +93,36 @@ function DashboardControlsMenu({ variables, links, dashboardUID }: DashboardCont
         </div>
       ))}
 
-      {variables.length > 0 && links.length > 0 && (
-        <div className={styles.divider}>
-          <Menu.Divider />
-        </div>
-      )}
+      {/* Annotation layers */}
+      {annotationLayers.length > 0 &&
+        annotationLayers.map((layer, index) => (
+          <div className={cx(index > 0 && styles.menuItem)} key={layer.state.key}>
+            <DataLayerControl layer={layer} inMenu />
+          </div>
+        ))}
 
       {/* Links */}
-      {links.map((link, index) => (
-        <div key={`${link.title}-${index}`}>
-          <DashboardLinkRenderer link={link} dashboardUID={dashboardUID} inMenu />
-        </div>
-      ))}
+      {links.length > 0 && (
+        <>
+          {(variables.length > 0 || annotationLayers.length > 0) && <MenuDivider />}
+          {links.map((link, index) => (
+            <div key={`${link.title}-${index}`}>
+              <DashboardLinkRenderer link={link} dashboardUID={dashboardUID} inMenu />
+            </div>
+          ))}
+        </>
+      )}
     </Box>
+  );
+}
+
+function MenuDivider() {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.divider}>
+      <Menu.Divider />
+    </div>
   );
 }
 
