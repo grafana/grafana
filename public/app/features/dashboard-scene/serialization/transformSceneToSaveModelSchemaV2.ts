@@ -45,6 +45,7 @@ import {
   defaultFieldConfig,
   defaultDataQueryKind,
   SwitchVariableKind,
+  defaultTimeSettingsSpec,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -73,6 +74,8 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 
   const dsReferencesMapping: DSReferencesMapping = scene.serializer.getDSReferencesMapping();
 
+  const timeSettingsDefaults = defaultTimeSettingsSpec();
+
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
     title: sceneDash.title,
@@ -87,12 +90,12 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 
     // time settings
     timeSettings: {
-      timezone: timeRange.timeZone,
+      timezone: timeRange.timeZone || timeSettingsDefaults.timezone,
       from: timeRange.from,
       to: timeRange.to,
-      autoRefresh: refreshPicker?.state.refresh || '',
-      autoRefreshIntervals: refreshPicker?.state.intervals,
-      hideTimepicker: controlsState?.hideTimeControls ?? false,
+      autoRefresh: refreshPicker?.state.refresh || timeSettingsDefaults.autoRefresh,
+      autoRefreshIntervals: refreshPicker?.state.intervals || timeSettingsDefaults.autoRefreshIntervals,
+      hideTimepicker: controlsState?.hideTimeControls || timeSettingsDefaults.hideTimepicker,
       weekStart: timeRange.weekStart,
       fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
       nowDelay: timeRange.UNSAFE_nowDelay,
@@ -179,8 +182,8 @@ export function vizPanelToSchemaV2(
   const defaults = handleFieldConfigDefaultsConversion(vizPanel);
 
   const vizFieldConfig: FieldConfigSource = {
-    ...vizPanel.state.fieldConfig,
     defaults,
+    overrides: vizPanel.state.fieldConfig?.overrides ?? [],
   };
 
   const elementSpec: PanelKind = {
@@ -248,6 +251,10 @@ function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
     }).filter(([_, value]) => {
       if (Array.isArray(value)) {
         return value.length > 0;
+      }
+      // Filter out empty objects (like custom: {})
+      if (typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length === 0) {
+        return false;
       }
       return value !== undefined;
     })
@@ -324,7 +331,16 @@ export function getDataQueryKind(query: SceneDataQuery | string, queryRunner?: S
 }
 
 export function getDataQuerySpec(query: SceneDataQuery): DataQueryKind['spec'] {
-  return query;
+  // Add refId if it exists in the query to ensure round-trip consistency
+  if ('refId' in query && query.refId) {
+    return query;
+  }
+  // For queries without refId (like those in variables), add default refId to match
+  // the behavior in transformSaveModelSchemaV2ToScene.getDataQueryForVariable
+  return {
+    ...query,
+    refId: query.refId ?? 'A',
+  };
 }
 
 function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
@@ -437,7 +453,7 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
 
     let layerDs = layer.state.query.datasource;
 
-    if (!layerDs) {
+    if (!layerDs || !layerDs.type) {
       // This can happen only if we are transforming a scene that was created
       // from a v1 spec. In v1 annotation layer can contain no datasource ref, which is guaranteed
       // for layers created for v2 schema. See transform transformSaveModelSchemaV2ToScene.ts.
@@ -496,7 +512,12 @@ export function getDefaultDataSourceRef(): DataSourceRef {
   const dsList = config.datasources;
   const ds = dsList[defaultDatasource];
 
-  return { type: ds.meta.id, uid: ds.name }; // in the datasource list from bootData "id" is the type
+  // If we can't find the default datasource, fall back to grafana
+  if (!ds) {
+    return { type: 'grafana', uid: '-- Grafana --' };
+  }
+
+  return { type: ds.type, uid: ds.uid };
 }
 
 export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: DashboardV2Spec, panel?: VizPanel) {

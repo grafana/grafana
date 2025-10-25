@@ -5,7 +5,6 @@ import { getRuntimePanelDataSource } from './layoutSerializers/utils';
 
 export function transformV1ToV2AnnotationQuery(
   annotation: AnnotationQuery,
-
   dsType: string,
   dsUID?: string,
   // Overrides are used to provide properties based on scene's annotations data layer object state
@@ -49,7 +48,8 @@ export function transformV1ToV2AnnotationQuery(
     },
   };
 
-  if (dsUID) {
+  if (dsUID && annotation.datasource && annotation.datasource.type) {
+    // Only add datasource reference if the annotation actually has a valid datasource in the original input
     result.spec.query.datasource = {
       name: dsUID,
     };
