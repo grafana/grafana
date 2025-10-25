@@ -37,7 +37,7 @@ export {
   getRunRequest,
 } from './services/QueryRunner';
 export { PluginPage } from './components/PluginPage';
-export type { PluginPageType, PluginPageProps } from './components/PluginPage';
+export type { PluginPageType, PluginPageProps, PluginPageBackground } from './components/PluginPage';
 export {
   DataSourcePicker,
   type DataSourcePickerProps,
