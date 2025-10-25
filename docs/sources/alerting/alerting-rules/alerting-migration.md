@@ -65,6 +65,10 @@ The copied rules are converted to Grafana-managed rules, preserving their behavi
 
   The rule query offset is taken from the `query_offset` value in the rule group configuration. If empty, it defaults to the [`rule_query_offset` configuration setting](ref:configure-grafana-rule_query_offset), which is `1m` by default.
 
+- **Rule query conversion**
+
+  For alert rules, adds `prometheus_math` and `threshold` expressions to preserve Prometheus no data behavior, ensuring the alert stays in **Normal** state when `query` returns no data.
+
 - **Missing series evaluations to resolve**
 
   The [Missing series evaluations to resolve](ref:missing_series_evaluations_to_resolve) setting is set to `1` to replicate Prometheus’s alert eviction behavior.
