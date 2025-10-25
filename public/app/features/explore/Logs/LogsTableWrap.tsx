@@ -7,11 +7,13 @@ import {
   ExploreLogsPanelState,
   GrafanaTheme2,
   Labels,
+  LogRowModel,
   LogsSortOrder,
   SelectableValue,
   SplitOpen,
   store,
   TimeRange,
+  AbsoluteTimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -23,7 +25,7 @@ import {
 } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
 
-import { parseLogsFrame } from '../../logs/logsFrame';
+import { DEFAULT_URL_COLUMNS, DETECTED_LEVEL, LEVEL, LogsFrame, parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsTable } from './LogsTable';
 import { SETTING_KEY_ROOT } from './utils/logs';
@@ -40,6 +42,11 @@ interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   datasourceType?: string;
+  exploreId?: string;
+  displayedFields?: string[];
+  visualisationType?: 'table';
+  absoluteRange?: AbsoluteTimeRange;
+  logRows?: LogRowModel[];
 }
 
 type ActiveFieldMeta = {
@@ -54,7 +61,7 @@ type InactiveFieldMeta = {
 
 type GenericMeta = {
   percentOfLinesWithLabel: number;
-  type?: 'BODY_FIELD' | 'TIME_FIELD';
+  type?: 'BODY_FIELD' | 'TIME_FIELD' | 'LEVEL_FIELD';
 };
 
 export type FieldNameMeta = (InactiveFieldMeta | ActiveFieldMeta) & GenericMeta;
@@ -90,17 +97,73 @@ export function LogsTableWrap(props: Props) {
             fieldNames[key].index = index;
           }
         });
+
+        // Reorder to ensure special fields come first
+        fieldNames = reorderColumnsToEnsureSpecialFieldsFirst(fieldNames);
       }
       return fieldNames;
     },
     [props.panelState?.columns]
   );
 
+  const getColumnsFromDisplayedFields = useCallback(
+    (fieldNames: FieldNameMetaStore, columnIndex: number) => {
+      const previouslySelected = props.panelState?.displayedFields;
+      if (previouslySelected) {
+        Object.values(previouslySelected).forEach((key) => {
+          columnIndex++;
+          if (fieldNames[key]) {
+            fieldNames[key].active = true;
+            fieldNames[key].index = columnIndex;
+          }
+        });
+
+        // Reorder to ensure special fields come first
+        fieldNames = reorderColumnsToEnsureSpecialFieldsFirst(fieldNames);
+      }
+      return fieldNames;
+    },
+    [props.panelState?.displayedFields]
+  );
+
   const logsFrame = useMemo(() => parseLogsFrame(currentDataFrame), [currentDataFrame]);
+
+  const updateDisplayedFields = useCallback(
+    (pendingLabelState: FieldNameMetaStore): string[] => {
+      // Get all active columns and sort by index
+      const newColumnsArray = Object.keys(pendingLabelState)
+        .filter((key) => pendingLabelState[key]?.active)
+        .sort((a, b) => {
+          const pa = pendingLabelState[a];
+          const pb = pendingLabelState[b];
+          if (pa.index !== undefined && pb.index !== undefined) {
+            return pa.index - pb.index;
+          }
+          return 0;
+        });
+
+      const newColumns = Object.values(newColumnsArray);
+      const levelName = getLevelFieldNameFromLabels(logsFrame);
+
+      // Filter out default columns and level field
+      return newColumns.filter((column) => !DEFAULT_URL_COLUMNS.includes(column) && column !== levelName);
+    },
+    [logsFrame]
+  );
 
   useEffect(() => {
     if (logsFrame?.timeField.name && logsFrame?.bodyField.name && !propsColumns) {
-      const defaultColumns = { 0: logsFrame?.timeField.name ?? '', 1: logsFrame?.bodyField.name ?? '' };
+      const levelName = getLevelFieldNameFromLabels(logsFrame);
+      const defaultColumns: Record<number, string> = levelName
+        ? {
+            0: logsFrame.timeField.name,
+            1: levelName,
+            2: logsFrame.bodyField.name,
+          }
+        : {
+            0: logsFrame.timeField.name,
+            1: logsFrame.bodyField.name,
+          };
       updatePanelState({
         columns: Object.values(defaultColumns),
         visualisationType: 'table',
@@ -123,6 +186,7 @@ export function LogsTableWrap(props: Props) {
    * Keeps the filteredColumnsWithMeta state in sync with the columnsWithMeta state,
    * which can be updated by explore browser history state changes
    * This prevents an edge case bug where the user is navigating while a search is open.
+   * Also syncs displayedFields from URL on load.
    */
   useEffect(() => {
     if (!columnsWithMeta || !filteredColumnsWithMeta) {
@@ -163,12 +227,11 @@ export function LogsTableWrap(props: Props) {
     if (logsFrame) {
       otherFields.push(...logsFrame.extraFields.filter((field) => !field?.config?.custom?.hidden));
     }
-    if (logsFrame?.severityField) {
-      otherFields.push(logsFrame?.severityField);
-    }
+
     if (logsFrame?.bodyField) {
       otherFields.push(logsFrame?.bodyField);
     }
+
     if (logsFrame?.timeField) {
       otherFields.push(logsFrame?.timeField);
     }
@@ -254,24 +317,58 @@ export function LogsTableWrap(props: Props) {
     const active = Object.keys(pendingLabelState).filter((key) => pendingLabelState[key].active);
 
     // If nothing is selected, then select the default columns
+    // Keep track of the column index to set the displayed fields in the correct order
+    let columnIndex = 0;
     if (active.length === 0) {
-      if (logsFrame?.bodyField?.name) {
-        pendingLabelState[logsFrame.bodyField.name].active = true;
-      }
       if (logsFrame?.timeField?.name) {
         pendingLabelState[logsFrame.timeField.name].active = true;
+        pendingLabelState[logsFrame.timeField.name].index = columnIndex++;
+      }
+
+      // Check for level field by name in the pendingLabelState (populated from labels)
+      const levelName = getLevelFieldName(pendingLabelState);
+      if (levelName) {
+        pendingLabelState[levelName].active = true;
+        pendingLabelState[levelName].index = columnIndex++;
+      }
+
+      if (logsFrame?.bodyField?.name) {
+        pendingLabelState[logsFrame.bodyField.name].active = true;
+        pendingLabelState[logsFrame.bodyField.name].index = columnIndex++;
       }
     }
 
     if (logsFrame?.bodyField?.name && logsFrame?.timeField?.name) {
       pendingLabelState[logsFrame.bodyField.name].type = 'BODY_FIELD';
       pendingLabelState[logsFrame.timeField.name].type = 'TIME_FIELD';
+
+      // Mark level field type - check in pendingLabelState
+      const levelName = getLevelFieldName(pendingLabelState);
+      if (levelName && pendingLabelState[levelName]) {
+        pendingLabelState[levelName].type = 'LEVEL_FIELD';
+      }
     }
+
+    // Sync displayed fields from URL
+    pendingLabelState = getColumnsFromDisplayedFields(pendingLabelState, columnIndex);
 
     setColumnsWithMeta(pendingLabelState);
 
     // The panel state is updated when the user interacts with the multi-select sidebar
-  }, [currentDataFrame, getColumnsFromProps]);
+  }, [currentDataFrame, getColumnsFromProps, getColumnsFromDisplayedFields, props.panelState?.displayedFields]);
+
+  const onSortByChange = useCallback(
+    (sortBy: Array<{ displayName: string; desc?: boolean }>) => {
+      // Transform from Table format to URL format - only store the first sort column
+      if (sortBy.length > 0) {
+        props.updatePanelState({
+          tableSortBy: sortBy[0].displayName,
+          tableSortDir: sortBy[0].desc ? 'desc' : 'asc',
+        });
+      }
+    },
+    [props]
+  );
 
   const [sidebarWidth, setSidebarWidth] = useState(getSidebarWidth(SETTING_KEY_ROOT));
   const tableWidth = props.width - sidebarWidth;
@@ -296,7 +393,7 @@ export function LogsTableWrap(props: Props) {
   }
 
   const clearSelection = () => {
-    const pendingLabelState = { ...columnsWithMeta };
+    let pendingLabelState = { ...columnsWithMeta };
     Object.keys(pendingLabelState).forEach((key) => {
       const isDefaultField = !!pendingLabelState[key].type;
       // after reset the only active fields are the special time and body fields
@@ -308,7 +405,14 @@ export function LogsTableWrap(props: Props) {
         pendingLabelState[key].index = pendingLabelState[key].type === 'BODY_FIELD' ? 1 : undefined;
       }
     });
+
+    // Reorder to ensure special fields come first in correct order (time, level, body)
+    pendingLabelState = reorderColumnsToEnsureSpecialFieldsFirst(pendingLabelState);
+
     setColumnsWithMeta(pendingLabelState);
+
+    // Update explore state to sync with URL
+    updateExploreState(pendingLabelState);
   };
 
   const reorderColumn = (newColumns: string[]) => {
@@ -345,14 +449,31 @@ export function LogsTableWrap(props: Props) {
       newColumnsArray
     );
 
-    const defaultColumns = { 0: logsFrame?.timeField.name ?? '', 1: logsFrame?.bodyField.name ?? '' };
+    const levelName = getLevelFieldNameFromLabels(logsFrame);
+    const defaultColumns: Record<number, string> = levelName
+      ? {
+          0: logsFrame?.timeField.name ?? '',
+          1: levelName,
+          2: logsFrame?.bodyField.name ?? '',
+        }
+      : {
+          0: logsFrame?.timeField.name ?? '',
+          1: logsFrame?.bodyField.name ?? '',
+        };
+
+    // Use the extracted updateDisplayedFields function
+    const newDisplayedFields = updateDisplayedFields(pendingLabelState);
+
     const newPanelState: ExploreLogsPanelState = {
       ...props.panelState,
       // URL format requires our array of values be an object, so we convert it using object.assign
       columns: Object.keys(newColumns).length ? newColumns : defaultColumns,
+      displayedFields: newDisplayedFields,
       refId: currentDataFrame.refId,
       visualisationType: 'table',
       labelFieldName: logsFrame?.getLabelFieldName() ?? undefined,
+      tableSortBy: props.panelState?.tableSortBy,
+      tableSortDir: props.panelState?.tableSortDir,
     };
 
     // Update url state
@@ -371,6 +492,7 @@ export function LogsTableWrap(props: Props) {
 
     let pendingLabelState: FieldNameMetaStore;
     if (isActive) {
+      // Activating a column - set temporary index and let reorder function handle proper placement
       pendingLabelState = {
         ...columnsWithMeta,
         [columnName]: {
@@ -379,7 +501,11 @@ export function LogsTableWrap(props: Props) {
           index: length,
         },
       };
+
+      // Reorder to ensure special fields come first
+      pendingLabelState = reorderColumnsToEnsureSpecialFieldsFirst(pendingLabelState);
     } else {
+      // Deactivating a column
       pendingLabelState = {
         ...columnsWithMeta,
         [columnName]: {
@@ -388,6 +514,9 @@ export function LogsTableWrap(props: Props) {
           index: undefined,
         },
       };
+
+      // Reorder to ensure proper sequential indices
+      pendingLabelState = reorderColumnsToEnsureSpecialFieldsFirst(pendingLabelState);
     }
 
     // Analytics
@@ -400,6 +529,7 @@ export function LogsTableWrap(props: Props) {
     if (filteredColumnsWithMeta) {
       const active = !filteredColumnsWithMeta[columnName]?.active;
       let pendingFilteredLabelState: FieldNameMetaStore;
+
       if (active) {
         pendingFilteredLabelState = {
           ...filteredColumnsWithMeta,
@@ -409,6 +539,9 @@ export function LogsTableWrap(props: Props) {
             index: length,
           },
         };
+
+        // Reorder to ensure special fields come first
+        pendingFilteredLabelState = reorderColumnsToEnsureSpecialFieldsFirst(pendingFilteredLabelState);
       } else {
         pendingFilteredLabelState = {
           ...filteredColumnsWithMeta,
@@ -418,6 +551,9 @@ export function LogsTableWrap(props: Props) {
             index: undefined,
           },
         };
+
+        // Reorder to ensure proper sequential indices
+        pendingFilteredLabelState = reorderColumnsToEnsureSpecialFieldsFirst(pendingFilteredLabelState);
       }
 
       setFilteredColumnsWithMeta(pendingFilteredLabelState);
@@ -512,6 +648,18 @@ export function LogsTableWrap(props: Props) {
               dataFrame={currentDataFrame}
               columnsWithMeta={columnsWithMeta}
               height={height}
+              sortBy={
+                props.panelState?.tableSortBy
+                  ? [{ displayName: props.panelState.tableSortBy, desc: props.panelState.tableSortDir === 'desc' }]
+                  : undefined
+              }
+              onSortByChange={onSortByChange}
+              exploreId={props.exploreId}
+              displayedFields={props.displayedFields}
+              panelState={props.panelState}
+              visualisationType={props.visualisationType}
+              absoluteRange={props.absoluteRange}
+              logRows={props.logRows}
             />
           </div>
         </div>
@@ -522,6 +670,86 @@ export function LogsTableWrap(props: Props) {
 
 const normalize = (value: number, total: number): number => {
   return Math.ceil((100 * value) / total);
+};
+
+/**
+ * Reorders columns to ensure special fields (TIME_FIELD, LEVEL_FIELD, BODY_FIELD) always come first
+ */
+const reorderColumnsToEnsureSpecialFieldsFirst = (fieldNames: FieldNameMetaStore): FieldNameMetaStore => {
+  // Get all active columns sorted by their current index
+  const activeColumns = Object.keys(fieldNames)
+    .filter((key) => fieldNames[key].active && fieldNames[key].index !== undefined)
+    .sort((a, b) => {
+      const indexA = fieldNames[a].index!;
+      const indexB = fieldNames[b].index!;
+      return indexA - indexB;
+    });
+
+  // Separate special fields from regular fields
+  const specialFields: Array<{ key: string; type: string; priority: number }> = [];
+  const regularFields: string[] = [];
+
+  activeColumns.forEach((key) => {
+    const type = fieldNames[key].type;
+    if (type === 'TIME_FIELD') {
+      specialFields.push({ key, type, priority: 0 });
+    } else if (type === 'LEVEL_FIELD') {
+      specialFields.push({ key, type, priority: 1 });
+    } else if (type === 'BODY_FIELD') {
+      specialFields.push({ key, type, priority: 2 });
+    } else {
+      regularFields.push(key);
+    }
+  });
+
+  // Sort special fields by their priority
+  specialFields.sort((a, b) => a.priority - b.priority);
+
+  // Combine special fields first, then regular fields
+  const orderedColumns = [...specialFields.map((f) => f.key), ...regularFields];
+
+  // Create new fieldNames with updated indices
+  const reorderedFieldNames = { ...fieldNames };
+  orderedColumns.forEach((key, index) => {
+    const field = reorderedFieldNames[key];
+    if (field.active && field.index !== undefined) {
+      reorderedFieldNames[key] = {
+        percentOfLinesWithLabel: field.percentOfLinesWithLabel,
+        type: field.type,
+        active: true,
+        index,
+      };
+    }
+  });
+
+  return reorderedFieldNames;
+};
+
+const getLevelFieldName = (columnsWithMeta: FieldNameMetaStore): string | undefined => {
+  // Prioritize detected_level over level
+  if (DETECTED_LEVEL in columnsWithMeta) {
+    return DETECTED_LEVEL;
+  }
+  if (LEVEL in columnsWithMeta) {
+    return LEVEL;
+  }
+  return undefined;
+};
+
+const getLevelFieldNameFromLabels = (logsFrame: LogsFrame | null): string | undefined => {
+  // Check for level field in labels
+  const labels = logsFrame?.getLogFrameLabelsAsLabels();
+  if (labels && labels.length > 0) {
+    // Check if any label object has detected_level or level
+    for (const labelObj of labels) {
+      if (DETECTED_LEVEL in labelObj) {
+        return DETECTED_LEVEL;
+      } else if (LEVEL in labelObj) {
+        return LEVEL;
+      }
+    }
+  }
+  return undefined;
 };
 
 function getStyles(theme: GrafanaTheme2, height: number, width: number) {

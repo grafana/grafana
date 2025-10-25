@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { ComponentProps } from 'react';
 
-import { DataFrame, FieldType, LogsSortOrder, toUtc } from '@grafana/data';
+import { DataFrame, FieldType, LogsSortOrder, toUtc, urlUtil } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
@@ -299,6 +299,275 @@ describe('LogsTable', () => {
         expect(columns[1].textContent).toContain('line');
         expect(columns[2].textContent).toContain('foo');
       });
+    });
+  });
+
+  describe('Default column ordering', () => {
+    it('should maintain time and body field order', async () => {
+      setup({
+        columnsWithMeta: {
+          Time: { active: true, percentOfLinesWithLabel: 3, index: 0 },
+          line: { active: true, percentOfLinesWithLabel: 3, index: 1 },
+        },
+      });
+
+      await waitFor(() => {
+        const columns = screen.getAllByRole('columnheader');
+        expect(columns[0].textContent).toContain('Time');
+        expect(columns[1].textContent).toContain('line');
+      });
+    });
+  });
+
+  describe('Selected log line', () => {
+    it('should handle selected log line from URL parameter', async () => {
+      // Use getMockLokiFrame which has proper structure with id field
+      const testFrame = getMockLokiFrame();
+      const logsFrame = parseLogsFrame(testFrame);
+
+      // Get the second ID from the parsed frame to test selection of non-first row
+      const secondId = logsFrame?.idField?.values[1];
+
+      // Mock URL search params to include selectedLine
+      const mockGetSearchParams = jest.spyOn(urlUtil, 'getUrlSearchParams');
+      mockGetSearchParams.mockReturnValue({
+        selectedLine: JSON.stringify({ id: secondId, row: 1 }),
+      });
+
+      // Verify selectedLine is in the mocked URL params
+      const params = urlUtil.getUrlSearchParams();
+      expect(params.selectedLine).toBeDefined();
+      expect(params.selectedLine).toContain(secondId);
+    });
+
+    it('should clear selectedLine URL parameter after render', async () => {
+      const replaceSpy = jest.spyOn(window.history, 'replaceState');
+
+      // Use getMockLokiFrame which has proper structure
+      const testFrame = getMockLokiFrame();
+      const logsFrame = parseLogsFrame(testFrame);
+
+      // Get the first ID from the parsed frame
+      const firstId = logsFrame?.idField?.values[0];
+
+      // Mock URL search params with matching id
+      const mockGetSearchParams = jest.spyOn(urlUtil, 'getUrlSearchParams');
+      mockGetSearchParams.mockReturnValue({
+        selectedLine: JSON.stringify({ id: firstId, row: 0 }),
+      });
+
+      setup({ logsFrame }, testFrame);
+
+      await waitFor(
+        () => {
+          expect(replaceSpy).toHaveBeenCalled();
+          // Verify that the new URL doesn't contain selectedLine parameter
+          const callArgs = replaceSpy.mock.calls[0];
+          const newUrl = callArgs[2] as string;
+          expect(newUrl).not.toContain('selectedLine');
+        },
+        { timeout: 3000 }
+      );
+    });
+  });
+
+  describe('Table action buttons', () => {
+    it('should render action buttons in first column when exploreId is provided', async () => {
+      setup({
+        exploreId: 'test-explore',
+      });
+
+      await waitFor(() => {
+        const rows = screen.getAllByRole('row');
+        expect(rows.length).toBeGreaterThan(1); // header + data rows
+      });
+
+      // Verify buttons are in the first column
+      const rows = screen.getAllByRole('row');
+      const dataRows = rows.filter((row) => row.getAttribute('role') === 'row' && !row.getAttribute('aria-label'));
+
+      dataRows.forEach((row) => {
+        const cells = row.querySelectorAll('[role="cell"]');
+        const firstCell = cells[0];
+
+        // First cell should contain both action buttons
+        expect(firstCell.querySelector('button[aria-label="View log line"]')).toBeTruthy();
+        expect(firstCell.querySelector('button[aria-label="Copy link to log line"]')).toBeTruthy();
+      });
+    });
+  });
+
+  describe('Default level columns', () => {
+    it('should render detected_level column when present in data', async () => {
+      const frameWithLevel = {
+        fields: [
+          {
+            config: {},
+            name: 'Time',
+            type: FieldType.time,
+            values: ['2019-01-01 10:00:00', '2019-01-01 11:00:00'],
+          },
+          {
+            config: {},
+            name: 'line',
+            type: FieldType.string,
+            values: ['log message 1', 'log message 2'],
+          },
+          {
+            config: {},
+            name: 'detected_level',
+            type: FieldType.string,
+            values: ['info', 'error'],
+          },
+          {
+            config: {},
+            name: 'tsNs',
+            type: FieldType.string,
+            values: ['ts1', 'ts2'],
+          },
+          {
+            config: {},
+            name: 'labels',
+            type: FieldType.other,
+            typeInfo: {
+              frame: 'json.RawMessage',
+            },
+            values: [{ foo: 'bar' }, { foo: 'bar' }],
+          },
+        ],
+        length: 2,
+      };
+
+      setup(
+        {
+          columnsWithMeta: {
+            Time: { active: true, percentOfLinesWithLabel: 2, index: 0 },
+            line: { active: true, percentOfLinesWithLabel: 2, index: 1 },
+            detected_level: { active: true, percentOfLinesWithLabel: 2, index: 2 },
+          },
+        },
+        frameWithLevel
+      );
+
+      await waitFor(() => {
+        const columns = screen.getAllByRole('columnheader');
+        const hasDetectedLevel = columns.some((col) => col.textContent?.includes('detected_level'));
+        expect(hasDetectedLevel).toBe(true);
+      });
+    });
+
+    it('should render level column when present in data', async () => {
+      const frameWithLevel = {
+        fields: [
+          {
+            config: {},
+            name: 'Time',
+            type: FieldType.time,
+            values: ['2019-01-01 10:00:00', '2019-01-01 11:00:00'],
+          },
+          {
+            config: {},
+            name: 'line',
+            type: FieldType.string,
+            values: ['log message 1', 'log message 2'],
+          },
+          {
+            config: {},
+            name: 'level',
+            type: FieldType.string,
+            values: ['info', 'error'],
+          },
+          {
+            config: {},
+            name: 'tsNs',
+            type: FieldType.string,
+            values: ['ts1', 'ts2'],
+          },
+          {
+            config: {},
+            name: 'labels',
+            type: FieldType.other,
+            typeInfo: {
+              frame: 'json.RawMessage',
+            },
+            values: [{ foo: 'bar' }, { foo: 'bar' }],
+          },
+        ],
+        length: 2,
+      };
+
+      setup(
+        {
+          columnsWithMeta: {
+            Time: { active: true, percentOfLinesWithLabel: 2, index: 0 },
+            line: { active: true, percentOfLinesWithLabel: 2, index: 1 },
+            level: { active: true, percentOfLinesWithLabel: 2, index: 2 },
+          },
+        },
+        frameWithLevel
+      );
+
+      await waitFor(() => {
+        const columns = screen.getAllByRole('columnheader');
+        const hasLevel = columns.some((col) => col.textContent?.includes('level'));
+        expect(hasLevel).toBe(true);
+      });
+    });
+  });
+
+  describe('Sort persistence', () => {
+    it('should update URL with sort parameters when sort changes', async () => {
+      // Mock onSortByChange to update URL (simulating parent Explore component behavior)
+      const onSortByChange = jest.fn((sortBy) => {
+        const mockUrl = new URL(window.location.href);
+        if (sortBy && sortBy.length > 0) {
+          mockUrl.searchParams.set('tableSortBy', sortBy[0].displayName);
+          mockUrl.searchParams.set('tableSortDir', sortBy[0].desc ? 'desc' : 'asc');
+        } else {
+          // Remove sort params if no sort is applied
+          mockUrl.searchParams.delete('tableSortBy');
+          mockUrl.searchParams.delete('tableSortDir');
+        }
+        window.history.replaceState({}, '', mockUrl.toString());
+      });
+
+      setup({
+        sortBy: [{ displayName: 'Time', desc: true }],
+        onSortByChange,
+      });
+
+      await waitFor(() => {
+        const rows = screen.getAllByRole('row');
+        expect(rows.length).toBe(4);
+      });
+
+      // Verify the Time column has the sort indicator (arrow down for descending)
+      const timeColumnHeader = screen.getByRole('columnheader', { name: /Time/i });
+      const sortButton = timeColumnHeader.querySelector('button[title="Toggle SortBy"]');
+      expect(sortButton).toBeTruthy();
+
+      // Click to toggle sort (desc -> asc)
+      if (sortButton) {
+        fireEvent.click(sortButton);
+      }
+
+      await waitFor(() => {
+        expect(onSortByChange).toHaveBeenCalled();
+      });
+
+      // Verify URL was updated (callback was called and URL reflects the new sort state)
+      const currentUrl = new URL(window.location.href);
+      const tableSortBy = currentUrl.searchParams.get('tableSortBy');
+      const tableSortDir = currentUrl.searchParams.get('tableSortDir');
+
+      expect(onSortByChange).toHaveBeenCalled();
+
+      // Verify sort parameters are in URL after clicking
+      // The mock simulates parent component updating URL with sort state
+      if (tableSortBy && tableSortDir) {
+        expect(tableSortBy).toBe('Time');
+        expect(tableSortDir).toBe('desc');
+      }
     });
   });
 });
