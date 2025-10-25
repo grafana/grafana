@@ -56,7 +56,7 @@ export function SaveProvisionedDashboardForm({
 
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { handleSubmit, watch, control, reset, register } = methods;
-  const [workflow] = watch(['workflow']);
+  const [workflow, ref, path] = watch(['workflow', 'ref', 'path']);
 
   // Update the form if default values change
   useEffect(() => {
@@ -82,16 +82,29 @@ export function SaveProvisionedDashboardForm({
     navigate(url);
   };
 
-  const onWriteSuccess = (_: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+  const onWriteSuccess = ({ repoType }: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
     handleDismiss();
     if (isNew && upsert?.metadata.name) {
       handleNewDashboard(upsert);
-    } else {
-      locationService.partial({
-        viewPanel: null,
-        editPanel: null,
-      });
+      return;
     }
+
+    // if pushed to an existing but non-configured branch, navigate to preview page
+    if (ref !== repository?.branch) {
+      const url = buildResourceBranchRedirectUrl({
+        baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+        paramName: 'ref',
+        paramValue: ref,
+        repoType: repoType,
+      });
+      navigate(url);
+      return;
+    }
+
+    locationService.partial({
+      viewPanel: null,
+      editPanel: null,
+    });
   };
 
   const onBranchSuccess = (ref: string, path: string, info: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
