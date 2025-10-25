@@ -89,6 +89,10 @@ export function addToDashboard({
 
   let navigateToDashboardUrl = locationUtil.stripBaseFromUrl(dashboardURL);
 
+  // External apps need absolute paths to navigate to dashboards correctly.
+  // Without the leading '/', paths like "dashboard/new" are treated as relative to the current location.
+  // For example, from "/a/grafana-metricsdrilldown-app", this would incorrectly navigate to
+  // "/a/grafana-metricsdrilldown-app/dashboard/new" instead of "/dashboard/new".
   if (options?.useAbsolutePath) {
     navigateToDashboardUrl = '/' + navigateToDashboardUrl;
   }
