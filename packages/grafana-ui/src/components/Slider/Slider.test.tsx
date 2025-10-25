@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { Slider } from './Slider';
 import { SliderProps } from './types';
 
+import '@testing-library/jest-dom';
+
 const sliderProps: SliderProps = {
   min: 10,
   max: 20,
@@ -16,6 +18,51 @@ describe('Slider', () => {
   beforeEach(() => {
     user = userEvent.setup();
   });
+
+  it('allows decimal numbers in input', async () => {
+  render(<Slider {...sliderProps} min={0} max={10} step={0.1} />);
+  const sliderInput = screen.getByRole('textbox');
+  const slider = screen.getByRole('slider');
+
+  await user.clear(sliderInput);
+  await user.type(sliderInput, '3.5');
+
+  expect(sliderInput).toHaveValue('3.5');
+  expect(slider).toHaveAttribute('aria-valuenow', '3.5');
+});
+
+
+  it('respects min/max bounds after decimal input blur', async () => {
+    render(<Slider min={0} max={10} value={5} />);
+
+    const sliderInput = screen.getByRole('textbox');
+
+    // Above max
+    await user.clear(sliderInput);
+    await user.type(sliderInput, '15.2');
+    await user.click(document.body);
+    expect(sliderInput).toHaveValue('10'); // max enforced
+
+    // Below min
+    await user.clear(sliderInput);
+    await user.type(sliderInput, '-2.7');
+    await user.click(document.body);
+    expect(sliderInput).toHaveValue('0'); // min enforced
+  });
+
+  it('updates slider value correctly when decimal input is typed', async () => {
+    render(<Slider min={0} max={10} step={0.1} value={5} />);
+
+    const slider = screen.getByRole('slider');
+    const sliderInput = screen.getByRole('textbox');
+
+    await user.clear(sliderInput);
+    await user.type(sliderInput, '7.3');
+    await user.click(document.body);
+
+    expect(slider).toHaveAttribute('aria-valuenow', '7.3');
+  });
+
 
   it('renders without error', () => {
     expect(() => render(<Slider {...sliderProps} />)).not.toThrow();
@@ -98,4 +145,5 @@ describe('Slider', () => {
     expect(sliderInput).toHaveValue('10');
     expect(slider).toHaveAttribute('aria-valuenow', '10');
   });
+
 });

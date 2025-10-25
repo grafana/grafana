@@ -34,62 +34,67 @@ export const Slider = ({
   const isHorizontal = orientation === 'horizontal';
   const styles = useStyles2(getStyles, isHorizontal, Boolean(marks));
   const SliderWithTooltip = SliderComponent;
-  const [sliderValue, setSliderValue] = useState<number>(value ?? min);
+
+  const [numericValue, setNumericValue] = useState<number>(value ?? min);
+  const [inputValue, setInputValue] = useState<string>((value ?? min).toString());
+
   const dragHandleAriaLabel =
     ariaLabelForHandle ?? t('grafana-ui.slider.drag-handle-aria-label', 'Use arrow keys to change the value');
 
   const onSliderChange = useCallback(
     (v: number | number[]) => {
-      const value = typeof v === 'number' ? v : v[0];
-
-      setSliderValue(value);
-      onChange?.(value);
+      const num = typeof v === 'number' ? v : v[0];
+      setNumericValue(num);
+      setInputValue(num.toString());
+      onChange?.(num);
     },
-    [setSliderValue, onChange]
-  );
-
-  const onSliderInputChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      let v = +e.target.value;
-
-      if (Number.isNaN(v)) {
-        v = 0;
-      }
-
-      setSliderValue(v);
-
-      if (onChange) {
-        onChange(v);
-      }
-
-      if (onAfterChange) {
-        onAfterChange(v);
-      }
-    },
-    [onChange, onAfterChange]
-  );
-
-  // Check for min/max on input blur so user is able to enter
-  // custom values that might seem above/below min/max on first keystroke
-  const onSliderInputBlur = useCallback(
-    (e: FocusEvent<HTMLInputElement>) => {
-      const v = +e.target.value;
-
-      if (v > max) {
-        setSliderValue(max);
-      } else if (v < min) {
-        setSliderValue(min);
-      }
-    },
-    [max, min]
+    [onChange]
   );
 
   const handleChangeComplete = useCallback(
     (v: number | number[]) => {
-      const value = typeof v === 'number' ? v : v[0];
-      onAfterChange?.(value);
+      const num = typeof v === 'number' ? v : v[0];
+      onAfterChange?.(num);
     },
     [onAfterChange]
+  );
+
+  const onSliderInputChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const raw = e.target.value;
+
+      // Always update the raw input string to show exactly what user typed
+      setInputValue(raw);
+
+      // Parse and validate the number
+      const parsed = parseFloat(raw);
+      if (!isNaN(parsed)) {
+        // Allow the numeric value to temporarily go outside min/max while typing
+        // (it will be clamped on blur)
+        setNumericValue(parsed);
+        onChange?.(parsed);
+      }
+    },
+    [onChange]
+  );
+
+  const onSliderInputBlur = useCallback(
+    (e: FocusEvent<HTMLInputElement>) => {
+      let parsed = parseFloat(e.target.value);
+      if (isNaN(parsed)) {
+        parsed = min;
+      }
+
+      // Clamp to min/max
+      parsed = Math.max(min, Math.min(max, parsed));
+
+      // Update both numeric and string values with the clamped result
+      setNumericValue(parsed);
+      setInputValue(parsed.toString());
+      onChange?.(parsed);
+      onAfterChange?.(parsed);
+    },
+    [min, max, onChange, onAfterChange]
   );
 
   const sliderInputClassNames = !isHorizontal ? [styles.sliderInputVertical] : [];
@@ -97,15 +102,13 @@ export const Slider = ({
 
   return (
     <div className={cx(styles.container, styles.slider)}>
-      {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.tooltip} />
       <div className={cx(styles.sliderInput, ...sliderInputClassNames)}>
         <SliderWithTooltip
           min={min}
           max={max}
-          step={step}
-          defaultValue={value}
-          value={sliderValue}
+          step={step ?? 0.1}
+          value={numericValue}
           onChange={onSliderChange}
           onChangeComplete={handleChangeComplete}
           vertical={!isHorizontal}
@@ -120,7 +123,7 @@ export const Slider = ({
             type="text"
             width={7.5}
             className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
-            value={sliderValue}
+            value={inputValue}
             onChange={onSliderInputChange}
             onBlur={onSliderInputBlur}
             min={min}
