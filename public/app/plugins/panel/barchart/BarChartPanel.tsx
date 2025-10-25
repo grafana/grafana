@@ -197,6 +197,17 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
                 return [];
               }}
+              onAddAdHocFilter={onAddAdHocFilter}
+              getFilterInfo={(_seriesIdx, dataIdx) => {
+                const xField = vizSeries[0].fields[0];
+                if (xField && dataIdx != null) {
+                  return {
+                    key: xField.name,
+                    value: String(xField.values[dataIdx]),
+                  };
+                }
+                return null;
+              }}
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks, adHocFilters) => {
                 return (
                   <TimeSeriesTooltip
