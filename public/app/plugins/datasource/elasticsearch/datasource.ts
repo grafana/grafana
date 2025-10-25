@@ -785,6 +785,23 @@ export class ElasticDatasource
           fieldNameParts.pop();
         }
 
+        // Process runtime fields
+        function getRuntimeFields(mapping: { runtime: Record<string, { type: string }> }) {
+          if (!mapping.runtime) {
+            return;
+          }
+
+          for (const key in mapping.runtime) {
+            const runtimeField = mapping.runtime[key];
+            if (shouldAddField(runtimeField, key)) {
+              fields[key] = {
+                text: key,
+                type: runtimeField.type,
+              };
+            }
+          }
+        }
+
         for (const indexName in result) {
           const index = result[indexName];
           if (index && index.mappings) {
@@ -792,6 +809,7 @@ export class ElasticDatasource
 
             const properties = mappings.properties;
             getFieldsRecursively(properties);
+            getRuntimeFields(mappings);
           }
         }
 
