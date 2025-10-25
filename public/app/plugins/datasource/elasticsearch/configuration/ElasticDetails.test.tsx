@@ -41,4 +41,16 @@ describe('ElasticDetails', () => {
       })
     );
   });
+
+  it('should change default query mode when selected', async () => {
+    const onChangeMock = jest.fn();
+    render(<ElasticDetails onChange={onChangeMock} value={createDefaultConfigOptions()} />);
+    const selectEl = screen.getByLabelText('Default query mode');
+
+    await selectEvent.select(selectEl, 'Logs', { container: document.body });
+
+    expect(onChangeMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ jsonData: expect.objectContaining({ defaultQueryMode: 'logs' }) })
+    );
+  });
 });
