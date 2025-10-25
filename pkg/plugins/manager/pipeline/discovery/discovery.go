@@ -3,6 +3,11 @@ package discovery
 import (
 	"context"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -26,6 +31,7 @@ type FilterFunc func(ctx context.Context, class plugins.Class, bundles []*plugin
 type Discovery struct {
 	filterSteps []FilterFunc
 	log         log.Logger
+	tracer      trace.Tracer
 }
 
 type Opts struct {
@@ -41,29 +47,37 @@ func New(_ *config.PluginManagementCfg, opts Opts) *Discovery {
 	return &Discovery{
 		filterSteps: opts.FilterFuncs,
 		log:         log.New("plugins.discovery"),
+		tracer:      otel.Tracer("github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"),
 	}
 }
 
 // Discover will execute the Filter step of the Discovery stage.
 func (d *Discovery) Discover(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
+	pluginClass := src.PluginClass(ctx)
+	ctx, span := d.tracer.Start(ctx, "discovery.Discover", trace.WithAttributes(
+		attribute.String("grafana.plugins.class", string(pluginClass)),
+	))
+	defer span.End()
+	ctxLogger := d.log.FromContext(ctx)
+
 	// Use the source's own Discover method
 	found, err := src.Discover(ctx)
 	if err != nil {
-		d.log.Warn("Discovery source failed", "class", src.PluginClass(ctx), "error", err)
-		return nil, err
+		ctxLogger.Warn("Discovery source failed", "class", pluginClass, "error", err)
+		return nil, tracing.Error(span, err)
 	}
 
-	d.log.Debug("Found plugins", "class", src.PluginClass(ctx), "count", len(found))
+	ctxLogger.Debug("Found plugins", "class", pluginClass, "count", len(found))
 
 	// Apply filtering steps
 	result := found
 	for _, filter := range d.filterSteps {
 		result, err = filter(ctx, src.PluginClass(ctx), result)
 		if err != nil {
-			return nil, err
+			return nil, tracing.Error(span, err)
 		}
 	}
 
-	d.log.Debug("Discovery complete", "class", src.PluginClass(ctx), "found", len(found), "filtered", len(result))
+	ctxLogger.Debug("Discovery complete", "class", pluginClass, "found", len(found), "filtered", len(result))
 	return result, nil
 }

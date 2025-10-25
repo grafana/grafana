@@ -3,11 +3,16 @@ package bootstrap
 import (
 	"context"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
+	"github.com/grafana/grafana/pkg/semconv"
 )
 
 // Bootstrapper is responsible for the Bootstrap stage of the plugin loader pipeline.
@@ -34,6 +39,7 @@ type Bootstrap struct {
 	constructStep ConstructFunc
 	decorateSteps []DecorateFunc
 	log           log.Logger
+	tracer        trace.Tracer
 }
 
 type Opts struct {
@@ -55,14 +61,21 @@ func New(cfg *config.PluginManagementCfg, opts Opts) *Bootstrap {
 		constructStep: opts.ConstructFunc,
 		decorateSteps: opts.DecorateFuncs,
 		log:           log.New("plugins.bootstrap"),
+		tracer:        otel.Tracer("github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"),
 	}
 }
 
 // Bootstrap will execute the Construct and Decorate steps of the Bootstrap stage.
 func (b *Bootstrap) Bootstrap(ctx context.Context, src plugins.PluginSource, found *plugins.FoundBundle) ([]*plugins.Plugin, error) {
+	pluginClass := src.PluginClass(ctx)
+	ctx, span := b.tracer.Start(ctx, "bootstrap.Bootstrap", trace.WithAttributes(
+		semconv.PluginSourceClass(pluginClass),
+	))
+	defer span.End()
+
 	ps, err := b.constructStep(ctx, src, found)
 	if err != nil {
-		return nil, err
+		return nil, tracing.Error(span, err)
 	}
 
 	if len(b.decorateSteps) == 0 {
@@ -76,7 +89,7 @@ func (b *Bootstrap) Bootstrap(ctx context.Context, src plugins.PluginSource, fou
 			ip, err = decorate(ctx, p)
 			if err != nil {
 				b.log.Error("Could not decorate plugin", "pluginId", p.ID, "error", err)
-				return nil, err
+				return nil, tracing.Error(span, err)
 			}
 		}
 		bootstrappedPlugins = append(bootstrappedPlugins, ip)

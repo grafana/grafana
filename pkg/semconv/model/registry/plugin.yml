@@ -34,3 +34,30 @@ groups:
         brief: The plugin type.
         examples: datasource
         stability: stable
+
+  - id: registry.grafana.plugin.source
+    type: attribute_group
+    display_name: Grafana Plugin Source Attributes
+    brief: "Describes Grafana plugin source attributes."
+    attributes:
+      - id: grafana.plugin.source.class
+        type:
+          members:
+            - id: core
+              value: "core"
+              brief: 'Core Plugin'
+              stability: stable
+            - id: cdn
+              value: "cdn"
+              brief: 'CDN Plugin'
+              stability: stable
+            - id: external
+              value: "external"
+              brief: 'External Plugin'
+              stability: stable
+            - id: unknown
+              value: "unknown"
+              brief: 'Unknown Plugin Source'
+              stability: stable
+        brief: The plugin source class.
+        stability: stable
