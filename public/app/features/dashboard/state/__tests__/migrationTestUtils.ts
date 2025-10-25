@@ -139,7 +139,128 @@ export function getTestDirectories() {
   return { inputDir };
 }
 
-export function getOutputDirectory(outputType: 'single_version' | 'latest_version') {
+export function getCommunityDashboardTestDirectories() {
+  const inputDir = path.join(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    '..',
+    '..',
+    '..',
+    'apps',
+    'dashboard',
+    'pkg',
+    'migration',
+    'testdata',
+    'input-community-dashboards'
+  );
+
+  return { inputDir };
+}
+
+export function getHistoricalDevDashboardTestDirectories() {
+  const inputDir = path.join(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    '..',
+    '..',
+    '..',
+    'apps',
+    'dashboard',
+    'pkg',
+    'migration',
+    'testdata',
+    'input-historical-dev-dashboards'
+  );
+
+  return { inputDir };
+}
+
+export function getOldestHistoricalTestDirectories() {
+  const inputDir = path.join(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    '..',
+    '..',
+    '..',
+    'apps',
+    'dashboard',
+    'pkg',
+    'migration',
+    'testdata',
+    'input-oldest-historical'
+  );
+
+  return { inputDir };
+}
+
+export function getOutputDirectory(
+  outputType:
+    | 'single_version'
+    | 'latest_version'
+    | 'community-dashboards'
+    | 'historical-dev-dashboards'
+    | 'oldest-historical'
+) {
+  if (outputType === 'community-dashboards') {
+    return path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+      'apps',
+      'dashboard',
+      'pkg',
+      'migration',
+      'testdata',
+      'output-community-dashboards'
+    );
+  }
+
+  if (outputType === 'historical-dev-dashboards') {
+    return path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+      'apps',
+      'dashboard',
+      'pkg',
+      'migration',
+      'testdata',
+      'output-historical-dev-dashboards'
+    );
+  }
+
+  if (outputType === 'oldest-historical') {
+    return path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+      'apps',
+      'dashboard',
+      'pkg',
+      'migration',
+      'testdata',
+      'output-oldest-historical'
+    );
+  }
+
   return path.join(
     __dirname,
     '..',
