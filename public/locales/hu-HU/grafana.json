@@ -4602,7 +4602,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "A feltételes ábrázolás nem támogatott az egyéni rácselrendezésnél. A feltételes ábrázolás használatához váltson automatikus rácsra.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5985,6 +5986,13 @@
       "last-edited": "{{timeAgo}}, <person />",
       "usage-count_one": "{{count}} irányítópulton használatos",
       "usage-count_other": "{{count}} irányítópulton használatos"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "Nem sikerült áthelyezni az irányítópultot",
@@ -7631,7 +7639,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Mappák törlése",
     "noOptionsMessage-no-folders-found": "Nem található mappa",
     "select-aria-label": "Mappaszűrő",
     "select-placeholder": "Szűrés mappa alapján"
@@ -12672,6 +12679,7 @@
       "theme-label": "Felület témája",
       "week-start-label": "Hét kezdete"
     },
+    "save": "",
     "theme": {
       "default-label": "Alapértelmezett",
       "experimental": "Kísérleti"
@@ -13073,13 +13081,13 @@
       "placeholder-search-teams": "Csapatok keresése"
     },
     "team-settings": {
-      "description-email": "Ez nem kötelező, és elsősorban a csapatprofil avatárjának beállítására szolgál (a gravatar szolgáltatáson keresztül)",
+      "description-email": "",
       "label-email": "E-mail-cím",
       "label-name": "Név",
       "label-numerical-identifier": "Numerikus azonosító",
       "label-role": "Szerepkör",
       "label-team-details": "Csapat adatai",
-      "save": "Mentés"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "A csapatszinkronizálás megkönnyíti a felhasználói hozzáférés kezelését a Grafanában azáltal, hogy azonnal frissíti az egyes felhasználók Grafana-csapatait és engedélyeit az egyszeri bejelentkezési csoporttagságuk alapján, ahelyett, hogy a felhasználók bejelentkezésekor kerülne erre sor"

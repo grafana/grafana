@@ -4582,7 +4582,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "自訂網格版面配置不支援條件轉譯。切換至自動網格以使用條件轉譯。",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5963,6 +5964,13 @@
     "library-viz-panel-info": {
       "last-edited": "<person />在 {{timeAgo}}前",
       "usage-count_other": "用於 {{count}} 個儀表板"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "無法移動儀表板",
@@ -7608,7 +7616,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "清除資料夾",
     "noOptionsMessage-no-folders-found": "未找到資料夾",
     "select-aria-label": "資料夾篩選條件",
     "select-placeholder": "按資料夾篩選"
@@ -12618,6 +12625,7 @@
       "theme-label": "介面主題",
       "week-start-label": "一週哪一天開始"
     },
+    "save": "",
     "theme": {
       "default-label": "預設值",
       "experimental": "實驗性"
@@ -13018,13 +13026,13 @@
       "placeholder-search-teams": "搜尋團隊"
     },
     "team-settings": {
-      "description-email": "這是可選項目，主要用於設定團隊個人資料頭像（透過 gravatar 服務）",
+      "description-email": "",
       "label-email": "電子郵件",
       "label-name": "名稱",
       "label-numerical-identifier": "數字識別碼",
       "label-role": "角色",
       "label-team-details": "團隊詳細資料",
-      "save": "儲存"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "團隊同步可讓您更輕鬆地管理 Grafana 中的使用者存取權限，它可以根據每個使用者的單一登入群組成員資格，立即更新其 Grafana 團隊和權限，而不是在使用者登入時更新"

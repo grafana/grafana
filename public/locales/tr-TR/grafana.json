@@ -4602,6 +4602,7 @@
       },
       "editor": {
         "info": "",
+        "learn-more": "",
         "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
@@ -5985,6 +5986,13 @@
       "last-edited": "{{timeAgo}} önce, <person /> tarafından",
       "usage-count_one": "{{count}} panoda kullanılıyor",
       "usage-count_other": "{{count}} panoda kullanılıyor"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "Pano taşınamadı",
@@ -7631,7 +7639,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Klasörleri temizle",
     "noOptionsMessage-no-folders-found": "Klasör bulunamadı",
     "select-aria-label": "Klasör filtresi",
     "select-placeholder": "Klasöre göre filtrele"
@@ -12672,6 +12679,7 @@
       "theme-label": "Arayüz teması",
       "week-start-label": "Hafta başlangıcı"
     },
+    "save": "",
     "theme": {
       "default-label": "Varsayılan",
       "experimental": "Deneysel"
@@ -13073,13 +13081,13 @@
       "placeholder-search-teams": "Ekip ara"
     },
     "team-settings": {
-      "description-email": "Bu isteğe bağlıdır ve öncelikle ekip profil avatarını (gravatar servisi aracılığıyla) ayarlamak için kullanılır",
+      "description-email": "",
       "label-email": "E-posta",
       "label-name": "Ad",
       "label-numerical-identifier": "Sayısal tanımlayıcı",
       "label-role": "Rol",
       "label-team-details": "Ekip bilgileri",
-      "save": "Kaydet"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "Ekip Senkronizasyonu, kullanıcıların Grafana üzerindeki erişimlerini yönetmeyi kolaylaştırır; kullanıcılar oturum açtığında değil, doğrudan SSO grup üyeliklerine göre Grafana ekipleri ve izinleri güncellenir"

@@ -4582,7 +4582,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "カスタムグリッドレイアウトでは、条件付きレンダリングはサポートされていません。条件付きレンダリングを使用するには、自動グリッドに切り替えてください。",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5963,6 +5964,13 @@
     "library-viz-panel-info": {
       "last-edited": "<person />が{{timeAgo}}に実施",
       "usage-count_other": "{{count}}件のダッシュボードで使用中"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "ダッシュボードの移動に失敗しました",
@@ -7608,7 +7616,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "フォルダをクリア",
     "noOptionsMessage-no-folders-found": "フォルダが見つかりません",
     "select-aria-label": "フォルダフィルター",
     "select-placeholder": "フォルダでフィルタリング"
@@ -12618,6 +12625,7 @@
       "theme-label": "インターフェースのテーマ",
       "week-start-label": "週のはじまり"
     },
+    "save": "",
     "theme": {
       "default-label": "初期設定",
       "experimental": "試験運用"
@@ -13018,13 +13026,13 @@
       "placeholder-search-teams": "チームを検索"
     },
     "team-settings": {
-      "description-email": "これは任意であり、主にチームプロフィールのアバター設定（gravatar経由）に使用されます",
+      "description-email": "",
       "label-email": "メールアドレス",
       "label-name": "名前",
       "label-numerical-identifier": "数値ID",
       "label-role": "ロール",
       "label-team-details": "チーム詳細",
-      "save": "保存"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "チーム同期を使用すると、ユーザーがサインインした際ではなく、シングルサインオングループのメンバーシップに基づいて各ユーザーのGrafanaチームと権限がすぐに更新されるため、Grafanaでのユーザーアクセス管理が容易になります"

@@ -4602,7 +4602,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "A renderização condicional não é suportada para o layout de grelha personalizado. Mude para a grelha automática para utilizar a renderização condicional.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5985,6 +5986,13 @@
       "last-edited": "{{timeAgo}} por <person />",
       "usage-count_one": "Utilizado em {{count}} painéis de controlo",
       "usage-count_other": "Utilizado em {{count}} painéis de controlo"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "Não foi possível mover o painel de controlo",
@@ -7631,7 +7639,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Limpar pastas",
     "noOptionsMessage-no-folders-found": "Nenhuma pasta encontrada",
     "select-aria-label": "Filtro de pastas",
     "select-placeholder": "Filtrar por pasta"
@@ -12672,6 +12679,7 @@
       "theme-label": "Tema da interface",
       "week-start-label": "Início da semana"
     },
+    "save": "",
     "theme": {
       "default-label": "Predefinição",
       "experimental": "Experimental"
@@ -13073,13 +13081,13 @@
       "placeholder-search-teams": "Pesquisar equipas"
     },
     "team-settings": {
-      "description-email": "Isto é opcional e é utilizado principalmente para definir o avatar do perfil da equipa (através do serviço gravatar)",
+      "description-email": "",
       "label-email": "E-mail",
       "label-name": "Nome",
       "label-numerical-identifier": "Identificador numérico",
       "label-role": "Função",
       "label-team-details": "Detalhes da equipa",
-      "save": "Guardar"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "A sincronização de equipas facilita a gestão do acesso dos utilizadores na Grafana, atualizando imediatamente as equipas e permissões Grafana de cada utilizador com base na sua afiliação de grupo de início de sessão único, em vez de quando os utilizadores iniciam sessão"
