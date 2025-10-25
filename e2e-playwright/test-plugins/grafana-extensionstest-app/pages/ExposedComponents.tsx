@@ -29,7 +29,6 @@ export function ExposedComponents() {
             buildPanel={() => ({
               type: 'timeseries',
               title: 'E2E Add to Dashboard Panel',
-              gridPos: { x: 0, y: 0, w: 8, h: 6 },
               targets: [],
             })}
             // Ensure navigation works correctly from plugin page
