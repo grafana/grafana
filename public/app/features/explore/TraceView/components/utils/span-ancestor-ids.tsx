@@ -33,6 +33,8 @@ export default function spanAncestorIds(span: TraceSpan | TNil): string[] {
     return ancestorIDs;
   }
   let ref = getFirstAncestor(span);
+  // TODO(#110330, #106589): Add cycle detection to prevent infinite loops
+  // Track visited spanIDs in a Set and break if ref.spanID is already visited
   while (ref) {
     ancestorIDs.push(ref.spanID);
     ref = getFirstAncestor(ref);
