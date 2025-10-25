@@ -2201,6 +2201,10 @@
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
     },
+    "query-wrapper": {
+      "warning-body": "This query will trigger an alert when it returns any non-zero value. Consider using an expression below for more precise alert control.",
+      "warning-title": "Data source query set as alert condition"
+    },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
         "text": "The selected queries and expressions cannot be converted to default. If you deactivate advanced options, your query and condition will be reset to default settings."
