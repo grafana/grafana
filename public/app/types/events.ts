@@ -221,3 +221,7 @@ export class PanelEditExitedEvent extends BusEventWithPayload<number> {
 export class RecordHistoryEntryEvent extends BusEventWithPayload<HistoryEntryView> {
   static type = 'record-history-entry';
 }
+
+export class RunQueryEvent extends BusEventBase {
+  static type = 'run-query';
+}

@@ -11,6 +11,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
 import {
   RemovePanelEvent,
+  RunQueryEvent,
   ShiftTimeEvent,
   ShiftTimeEventDirection,
   ShowModalReactEvent,
@@ -253,6 +254,12 @@ export class KeybindingSrv {
 
     this.bind('t v', () => {
       appEvents.publish(new PasteTimeEvent({ updateUrl }));
+    });
+  }
+
+  setupExploreBindings() {
+    this.bind('e r', () => {
+      appEvents.publish(new RunQueryEvent());
     });
   }
 
