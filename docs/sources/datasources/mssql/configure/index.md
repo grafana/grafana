@@ -209,7 +209,7 @@ You can also override this setting in a dashboard panel under its data source op
 
 ### Database user permissions
 
-When adding a data source, ensure the database user you specify has only SELECT permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb`; or `DROP TABLE user;`, which could get executed. To minimize this risk, Grafana strongly recommends creating a dedicated MySQL user with restricted permissions.
+When adding a data source, ensure the database user you specify has only SELECT permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb`; or `DROP TABLE user;`, which could get executed. To minimize this risk, Grafana strongly recommends creating a dedicated SQL user with restricted permissions.
 
 ```sql
 CREATE USER grafanareader WITH PASSWORD 'password'
