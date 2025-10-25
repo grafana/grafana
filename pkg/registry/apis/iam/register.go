@@ -300,17 +300,32 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
+		var dw rest.Storage
 		resourcePermissionStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
 		if err != nil {
 			return err
 		}
+		dw = resourcePermissionStore
+
+		if b.enableDualWriter {
+			resourcePermissionUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, iamv0.ResourcePermissionInfo, opts.OptsGetter)
+			if err != nil {
+				return err
+			}
+
+			dw, err = opts.DualWriteBuilder(iamv0.ResourcePermissionInfo.GroupResource(), resourcePermissionStore, resourcePermissionUniStore)
+			if err != nil {
+				return err
+			}
+		}
+
 		if enableZanzanaSync {
 			b.logger.Info("Enabling AfterCreate, BeginUpdate, and AfterDelete hooks for ResourcePermission to sync to Zanzana")
 			resourcePermissionStore.AfterCreate = b.AfterResourcePermissionCreate
 			resourcePermissionStore.BeginUpdate = b.BeginResourcePermissionUpdate
 			resourcePermissionStore.AfterDelete = b.AfterResourcePermissionDelete
 		}
-		storage[iamv0.ResourcePermissionInfo.StoragePath()] = resourcePermissionStore
+		storage[iamv0.ResourcePermissionInfo.StoragePath()] = dw
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[legacyiamv0.VERSION] = storage
