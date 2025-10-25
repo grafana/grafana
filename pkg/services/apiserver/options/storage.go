@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"k8s.io/apimachinery/pkg/runtime"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/rest"
@@ -167,7 +168,7 @@ func (o *StorageOptions) Validate() []error {
 	return errs
 }
 
-func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfig, etcdOptions *options.EtcdOptions, tracer tracing.Tracer, secureServing *options.SecureServingOptions) error {
+func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfig, etcdOptions *options.EtcdOptions, scheme *runtime.Scheme, tracer tracing.Tracer, secureServing *options.SecureServingOptions) error {
 	if o.StorageType != StorageTypeUnifiedGrpc {
 		return nil
 	}
@@ -228,7 +229,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 		o.InlineSecrets = inlineSecureValueService
 	}
 
-	getter := apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider)
+	getter := apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, scheme, o.ConfigProvider)
 	serverConfig.RESTOptionsGetter = getter
 	return nil
 }
