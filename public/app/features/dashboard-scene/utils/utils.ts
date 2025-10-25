@@ -24,6 +24,7 @@ import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { PanelTimeCompareLabel } from '../scene/PanelTimeCompareLabel';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
@@ -249,7 +250,7 @@ export function getDefaultVizPanel(): VizPanel {
     title: newPanelTitle,
     pluginId: defaultPluginId,
     seriesLimit: config.panelSeriesLimit,
-    titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+    titleItems: [new PanelTimeCompareLabel(), new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,

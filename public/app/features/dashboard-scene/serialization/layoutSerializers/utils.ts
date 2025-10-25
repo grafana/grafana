@@ -31,6 +31,7 @@ import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
+import { PanelTimeCompareLabel } from '../../scene/PanelTimeCompareLabel';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
@@ -43,6 +44,8 @@ import { transformDataTopic } from '../transformToV2TypesUtils';
 
 export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
+
+  titleItems.push(new PanelTimeCompareLabel());
 
   titleItems.push(
     new VizPanelLinks({
@@ -97,6 +100,8 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
 
 export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
+
+  titleItems.push(new PanelTimeCompareLabel());
 
   titleItems.push(
     new VizPanelLinks({
