@@ -276,6 +276,16 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   renderTransformationEditors = () => {
     const { data, transformations } = this.state;
 
+    const transformationNoRefIdIdxs = transformations
+      .map((t, i) => {
+        return t.refId === undefined ? i : undefined;
+      })
+      .filter((idx) => idx !== undefined);
+
+    transformationNoRefIdIdxs.forEach((tIdx, i) => {
+      transformations[tIdx].refId = `T-${i}`;
+    });
+
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
         <Droppable droppableId="transformations-list" direction="vertical">
