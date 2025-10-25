@@ -4582,7 +4582,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "Rendering bersyarat tidak didukung untuk tata letak kisi khusus. Beralih ke kisi otomatis untuk menggunakan perenderan bersyarat.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5963,6 +5964,13 @@
     "library-viz-panel-info": {
       "last-edited": "{{timeAgo}} oleh<person />",
       "usage-count_other": "Digunakan pada {{count}} dasbor"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "Gagal memindahkan dasbor",
@@ -7608,7 +7616,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Hapus folder",
     "noOptionsMessage-no-folders-found": "Folder tidak ditemukan",
     "select-aria-label": "Filter folder",
     "select-placeholder": "Filter berdasarkan folder"
@@ -12618,6 +12625,7 @@
       "theme-label": "Tema antarmuka",
       "week-start-label": "Minggu mulai"
     },
+    "save": "",
     "theme": {
       "default-label": "Default",
       "experimental": "Eksperimental"
@@ -13018,13 +13026,13 @@
       "placeholder-search-teams": "Cari tim"
     },
     "team-settings": {
-      "description-email": "Hal ini opsional dan secara spesifik digunakan untuk mengatur avatar profil tim (melalui layanan gravatar)",
+      "description-email": "",
       "label-email": "Email",
       "label-name": "Nama",
       "label-numerical-identifier": "Pengidentifikasi numerik",
       "label-role": "Peran",
       "label-team-details": "Detail tim",
-      "save": "Simpan"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "Sinkronisasi Tim lebih memudahkan Anda mengelola akses pengguna di Grafana, dengan segera memperbarui tim dan izin Grafana setiap pengguna berdasarkan keanggotaan grup single sign-on mereka, alih-alih saat pengguna masuk"
