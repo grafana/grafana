@@ -34,14 +34,14 @@ func (f *fakeServerLock) LockExecuteAndRelease(ctx context.Context, actionName s
 }
 
 type fakePluginInstallClient struct {
-	listAllFunc func(ctx context.Context, namespace string, opts resource.ListOptions) (*pluginsv0alpha1.PluginInstallList, error)
-	getFunc     func(ctx context.Context, identifier resource.Identifier) (*pluginsv0alpha1.PluginInstall, error)
-	createFunc  func(ctx context.Context, obj *pluginsv0alpha1.PluginInstall, opts resource.CreateOptions) (*pluginsv0alpha1.PluginInstall, error)
-	updateFunc  func(ctx context.Context, obj *pluginsv0alpha1.PluginInstall, opts resource.UpdateOptions) (*pluginsv0alpha1.PluginInstall, error)
+	listAllFunc func(ctx context.Context, namespace string, opts resource.ListOptions) (*pluginsv0alpha1.PluginList, error)
+	getFunc     func(ctx context.Context, identifier resource.Identifier) (*pluginsv0alpha1.Plugin, error)
+	createFunc  func(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.CreateOptions) (*pluginsv0alpha1.Plugin, error)
+	updateFunc  func(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error)
 	deleteFunc  func(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error
 }
 
-func (f *fakePluginInstallClient) Get(ctx context.Context, identifier resource.Identifier) (*pluginsv0alpha1.PluginInstall, error) {
+func (f *fakePluginInstallClient) Get(ctx context.Context, identifier resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
 	if f.getFunc != nil {
 		return f.getFunc(ctx, identifier)
 	}
@@ -52,36 +52,36 @@ func (f *fakePluginInstallClient) Get(ctx context.Context, identifier resource.I
 	}, identifier.Name)
 }
 
-func (f *fakePluginInstallClient) ListAll(ctx context.Context, namespace string, opts resource.ListOptions) (*pluginsv0alpha1.PluginInstallList, error) {
+func (f *fakePluginInstallClient) ListAll(ctx context.Context, namespace string, opts resource.ListOptions) (*pluginsv0alpha1.PluginList, error) {
 	if f.listAllFunc != nil {
 		return f.listAllFunc(ctx, namespace, opts)
 	}
-	return &pluginsv0alpha1.PluginInstallList{}, nil
+	return &pluginsv0alpha1.PluginList{}, nil
 }
 
-func (f *fakePluginInstallClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (*pluginsv0alpha1.PluginInstallList, error) {
+func (f *fakePluginInstallClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (*pluginsv0alpha1.PluginList, error) {
 	return f.ListAll(ctx, namespace, opts)
 }
 
-func (f *fakePluginInstallClient) Create(ctx context.Context, obj *pluginsv0alpha1.PluginInstall, opts resource.CreateOptions) (*pluginsv0alpha1.PluginInstall, error) {
+func (f *fakePluginInstallClient) Create(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
 	if f.createFunc != nil {
 		return f.createFunc(ctx, obj, opts)
 	}
 	return obj, nil
 }
 
-func (f *fakePluginInstallClient) Update(ctx context.Context, obj *pluginsv0alpha1.PluginInstall, opts resource.UpdateOptions) (*pluginsv0alpha1.PluginInstall, error) {
+func (f *fakePluginInstallClient) Update(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
 	if f.updateFunc != nil {
 		return f.updateFunc(ctx, obj, opts)
 	}
 	return obj, nil
 }
 
-func (f *fakePluginInstallClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus pluginsv0alpha1.PluginInstallStatus, opts resource.UpdateOptions) (*pluginsv0alpha1.PluginInstall, error) {
+func (f *fakePluginInstallClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus pluginsv0alpha1.PluginStatus, opts resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
 	return nil, nil
 }
 
-func (f *fakePluginInstallClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*pluginsv0alpha1.PluginInstall, error) {
+func (f *fakePluginInstallClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*pluginsv0alpha1.Plugin, error) {
 	return nil, nil
 }
 
@@ -114,7 +114,7 @@ func (f *fakeResourceClient) GetInto(ctx context.Context, identifier resource.Id
 		return err
 	}
 	// Copy the object data into the provided 'into' object
-	if target, ok := into.(*pluginsv0alpha1.PluginInstall); ok {
+	if target, ok := into.(*pluginsv0alpha1.Plugin); ok {
 		*target = *obj
 	}
 	return nil
@@ -130,14 +130,14 @@ func (f *fakeResourceClient) ListInto(ctx context.Context, namespace string, opt
 		return err
 	}
 	// Copy the list data into the provided 'into' object
-	if target, ok := into.(*pluginsv0alpha1.PluginInstallList); ok {
+	if target, ok := into.(*pluginsv0alpha1.PluginList); ok {
 		*target = *list
 	}
 	return nil
 }
 
 func (f *fakeResourceClient) Create(ctx context.Context, identifier resource.Identifier, obj resource.Object, options resource.CreateOptions) (resource.Object, error) {
-	plugin := obj.(*pluginsv0alpha1.PluginInstall)
+	plugin := obj.(*pluginsv0alpha1.Plugin)
 	return f.client.Create(ctx, plugin, options)
 }
 
@@ -147,8 +147,8 @@ func (f *fakeResourceClient) CreateInto(ctx context.Context, identifier resource
 		return err
 	}
 	// Copy the created object data into the provided 'into' object
-	if plugin, ok := created.(*pluginsv0alpha1.PluginInstall); ok {
-		if target, ok := into.(*pluginsv0alpha1.PluginInstall); ok {
+	if plugin, ok := created.(*pluginsv0alpha1.Plugin); ok {
+		if target, ok := into.(*pluginsv0alpha1.Plugin); ok {
 			*target = *plugin
 		}
 	}
@@ -156,7 +156,7 @@ func (f *fakeResourceClient) CreateInto(ctx context.Context, identifier resource
 }
 
 func (f *fakeResourceClient) Update(ctx context.Context, identifier resource.Identifier, obj resource.Object, options resource.UpdateOptions) (resource.Object, error) {
-	plugin := obj.(*pluginsv0alpha1.PluginInstall)
+	plugin := obj.(*pluginsv0alpha1.Plugin)
 	return f.client.Update(ctx, plugin, options)
 }
 
@@ -166,8 +166,8 @@ func (f *fakeResourceClient) UpdateInto(ctx context.Context, identifier resource
 		return err
 	}
 	// Copy the updated object data into the provided 'into' object
-	if plugin, ok := updated.(*pluginsv0alpha1.PluginInstall); ok {
-		if target, ok := into.(*pluginsv0alpha1.PluginInstall); ok {
+	if plugin, ok := updated.(*pluginsv0alpha1.Plugin); ok {
+		if target, ok := into.(*pluginsv0alpha1.Plugin); ok {
 			*target = *plugin
 		}
 	}
@@ -184,8 +184,8 @@ func (f *fakeResourceClient) PatchInto(ctx context.Context, identifier resource.
 		return err
 	}
 	// Copy the patched object data into the provided 'into' object
-	if plugin, ok := patched.(*pluginsv0alpha1.PluginInstall); ok {
-		if target, ok := into.(*pluginsv0alpha1.PluginInstall); ok {
+	if plugin, ok := patched.(*pluginsv0alpha1.Plugin); ok {
+		if target, ok := into.(*pluginsv0alpha1.Plugin); ok {
 			*target = *plugin
 		}
 	}
@@ -298,12 +298,12 @@ func TestSyncer_Sync(t *testing.T) {
 			// Setup fake client and registrar
 			syncCalls := 0
 			fakeClient := &fakePluginInstallClient{
-				createFunc: func(ctx context.Context, obj *pluginsv0alpha1.PluginInstall, opts resource.CreateOptions) (*pluginsv0alpha1.PluginInstall, error) {
+				createFunc: func(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
 					syncCalls++
 					return obj, nil
 				},
-				listAllFunc: func(ctx context.Context, namespace string, opts resource.ListOptions) (*pluginsv0alpha1.PluginInstallList, error) {
-					return &pluginsv0alpha1.PluginInstallList{}, nil
+				listAllFunc: func(ctx context.Context, namespace string, opts resource.ListOptions) (*pluginsv0alpha1.PluginList, error) {
+					return &pluginsv0alpha1.PluginList{}, nil
 				},
 			}
 			clientGen := &fakeClientGenerator{client: fakeClient}
@@ -342,7 +342,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 	tests := []struct {
 		name               string
 		installedPlugins   []*plugins.Plugin
-		apiPlugins         []pluginsv0alpha1.PluginInstall
+		apiPlugins         []pluginsv0alpha1.Plugin
 		clientListError    error
 		expectedError      error
 		expectedRegCalls   int
@@ -353,7 +353,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 		{
 			name:               "no installed plugins, no API plugins",
 			installedPlugins:   []*plugins.Plugin{},
-			apiPlugins:         []pluginsv0alpha1.PluginInstall{},
+			apiPlugins:         []pluginsv0alpha1.Plugin{},
 			expectedError:      nil,
 			expectedRegCalls:   0,
 			expectedUnregCalls: 0,
@@ -364,7 +364,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 				{JSONData: plugins.JSONData{ID: "plugin-1", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore},
 				{JSONData: plugins.JSONData{ID: "plugin-2", Info: plugins.Info{Version: "2.0.0"}}, Class: plugins.ClassExternal},
 			},
-			apiPlugins:         []pluginsv0alpha1.PluginInstall{},
+			apiPlugins:         []pluginsv0alpha1.Plugin{},
 			expectedError:      nil,
 			expectedRegCalls:   2,
 			expectedUnregCalls: 0,
@@ -373,7 +373,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 		{
 			name:             "API plugins only",
 			installedPlugins: []*plugins.Plugin{},
-			apiPlugins: []pluginsv0alpha1.PluginInstall{
+			apiPlugins: []pluginsv0alpha1.Plugin{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "plugin-1",
@@ -381,7 +381,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
 						},
 					},
-					Spec: pluginsv0alpha1.PluginInstallSpec{Id: "plugin-1"},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-1"},
 				},
 				{
 					ObjectMeta: metav1.ObjectMeta{
@@ -390,7 +390,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
 						},
 					},
-					Spec: pluginsv0alpha1.PluginInstallSpec{Id: "plugin-2"},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-2"},
 				},
 			},
 			expectedError:      nil,
@@ -405,7 +405,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 				{JSONData: plugins.JSONData{ID: "plugin-2", Info: plugins.Info{Version: "2.0.0"}}, Class: plugins.ClassExternal},
 				{JSONData: plugins.JSONData{ID: "plugin-3", Info: plugins.Info{Version: "3.0.0"}}, Class: plugins.ClassExternal},
 			},
-			apiPlugins: []pluginsv0alpha1.PluginInstall{
+			apiPlugins: []pluginsv0alpha1.Plugin{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "plugin-2",
@@ -413,7 +413,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
 						},
 					},
-					Spec: pluginsv0alpha1.PluginInstallSpec{Id: "plugin-2", Version: "2.0.0"},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-2", Version: "2.0.0"},
 				},
 				{
 					ObjectMeta: metav1.ObjectMeta{
@@ -422,7 +422,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
 						},
 					},
-					Spec: pluginsv0alpha1.PluginInstallSpec{Id: "plugin-4"},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-4"},
 				},
 			},
 			expectedError:      nil,
@@ -434,7 +434,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 		{
 			name:             "list error",
 			installedPlugins: []*plugins.Plugin{},
-			apiPlugins:       []pluginsv0alpha1.PluginInstall{},
+			apiPlugins:       []pluginsv0alpha1.Plugin{},
 			clientListError:  errors.New("list error"),
 			expectedError:    errors.New("list error"),
 		},
@@ -450,15 +450,15 @@ func TestSyncer_syncNamespace(t *testing.T) {
 
 			// Setup fake client
 			fakeClient := &fakePluginInstallClient{
-				listAllFunc: func(ctx context.Context, namespace string, opts resource.ListOptions) (*pluginsv0alpha1.PluginInstallList, error) {
+				listAllFunc: func(ctx context.Context, namespace string, opts resource.ListOptions) (*pluginsv0alpha1.PluginList, error) {
 					if tt.clientListError != nil {
 						return nil, tt.clientListError
 					}
-					return &pluginsv0alpha1.PluginInstallList{
+					return &pluginsv0alpha1.PluginList{
 						Items: tt.apiPlugins,
 					}, nil
 				},
-				createFunc: func(ctx context.Context, obj *pluginsv0alpha1.PluginInstall, opts resource.CreateOptions) (*pluginsv0alpha1.PluginInstall, error) {
+				createFunc: func(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
 					registeredIDs = append(registeredIDs, obj.Spec.Id)
 					return obj, nil
 				},
@@ -466,7 +466,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 					unregisteredIDs = append(unregisteredIDs, identifier.Name)
 					return nil
 				},
-				getFunc: func(ctx context.Context, identifier resource.Identifier) (*pluginsv0alpha1.PluginInstall, error) {
+				getFunc: func(ctx context.Context, identifier resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
 					// Check if plugin exists in apiPlugins
 					for i := range tt.apiPlugins {
 						if tt.apiPlugins[i].Name == identifier.Name {
@@ -611,12 +611,12 @@ func TestSyncer_syncAllNamespaces(t *testing.T) {
 			// Track namespace sync calls
 			syncCalls := 0
 			fakeClient := &fakePluginInstallClient{
-				createFunc: func(ctx context.Context, obj *pluginsv0alpha1.PluginInstall, opts resource.CreateOptions) (*pluginsv0alpha1.PluginInstall, error) {
+				createFunc: func(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
 					syncCalls++
 					return obj, nil
 				},
-				listAllFunc: func(ctx context.Context, namespace string, opts resource.ListOptions) (*pluginsv0alpha1.PluginInstallList, error) {
-					return &pluginsv0alpha1.PluginInstallList{}, nil
+				listAllFunc: func(ctx context.Context, namespace string, opts resource.ListOptions) (*pluginsv0alpha1.PluginList, error) {
+					return &pluginsv0alpha1.PluginList{}, nil
 				},
 			}
 

@@ -41,12 +41,12 @@ type PluginInstall struct {
 	Source  Source
 }
 
-func (p *PluginInstall) ToPluginInstallV0Alpha1(namespace string) *pluginsv0alpha1.PluginInstall {
+func (p *PluginInstall) ToPluginInstallV0Alpha1(namespace string) *pluginsv0alpha1.Plugin {
 	var url *string = nil
 	if p.URL != "" {
 		url = &p.URL
 	}
-	return &pluginsv0alpha1.PluginInstall{
+	return &pluginsv0alpha1.Plugin{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      p.ID,
@@ -54,16 +54,16 @@ func (p *PluginInstall) ToPluginInstallV0Alpha1(namespace string) *pluginsv0alph
 				PluginInstallSourceAnnotation: p.Source,
 			},
 		},
-		Spec: pluginsv0alpha1.PluginInstallSpec{
+		Spec: pluginsv0alpha1.PluginSpec{
 			Id:      p.ID,
 			Version: p.Version,
 			Url:     url,
-			Class:   pluginsv0alpha1.PluginInstallSpecClass(p.Class),
+			Class:   pluginsv0alpha1.PluginSpecClass(p.Class),
 		},
 	}
 }
 
-func (p *PluginInstall) ShouldUpdate(existing *pluginsv0alpha1.PluginInstall) bool {
+func (p *PluginInstall) ShouldUpdate(existing *pluginsv0alpha1.Plugin) bool {
 	update := p.ToPluginInstallV0Alpha1(existing.Namespace)
 	if source, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && source != p.Source {
 		return true
@@ -92,7 +92,7 @@ func equalStringPointers(a, b *string) bool {
 
 type InstallRegistrar struct {
 	clientGenerator resource.ClientGenerator
-	client          *pluginsv0alpha1.PluginInstallClient
+	client          *pluginsv0alpha1.PluginClient
 	clientOnce      sync.Once
 }
 
@@ -103,9 +103,9 @@ func NewInstallRegistrar(clientGenerator resource.ClientGenerator) *InstallRegis
 	}
 }
 
-func (r *InstallRegistrar) GetClient() (*pluginsv0alpha1.PluginInstallClient, error) {
+func (r *InstallRegistrar) GetClient() (*pluginsv0alpha1.PluginClient, error) {
 	r.clientOnce.Do(func() {
-		client, err := pluginsv0alpha1.NewPluginInstallClientFromGenerator(r.clientGenerator)
+		client, err := pluginsv0alpha1.NewPluginClientFromGenerator(r.clientGenerator)
 		if err != nil {
 			r.client = nil
 			return
