@@ -24,7 +24,7 @@ type UserHeaderMiddleware struct {
 	backend.BaseHandler
 }
 
-func (m *UserHeaderMiddleware) applyUserHeader(ctx context.Context, h backend.ForwardHTTPHeaders) {
+func ApplyUserHeader(ctx context.Context, h backend.ForwardHTTPHeaders) {
 	reqCtx := contexthandler.FromContext(ctx)
 	// if no HTTP request context skip middleware
 	if h == nil || reqCtx == nil || reqCtx.Req == nil || reqCtx.SignedInUser == nil {
@@ -37,12 +37,16 @@ func (m *UserHeaderMiddleware) applyUserHeader(ctx context.Context, h backend.Fo
 	}
 }
 
+func (m *UserHeaderMiddleware) applyUserHeader(ctx context.Context, h backend.ForwardHTTPHeaders) {
+	ApplyUserHeader(ctx, h)
+}
+
 func (m *UserHeaderMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
 		return m.BaseHandler.QueryData(ctx, req)
 	}
 
-	m.applyUserHeader(ctx, req)
+	ApplyUserHeader(ctx, req)
 
 	return m.BaseHandler.QueryData(ctx, req)
 }
@@ -52,7 +56,7 @@ func (m *UserHeaderMiddleware) CallResource(ctx context.Context, req *backend.Ca
 		return m.BaseHandler.CallResource(ctx, req, sender)
 	}
 
-	m.applyUserHeader(ctx, req)
+	ApplyUserHeader(ctx, req)
 
 	return m.BaseHandler.CallResource(ctx, req, sender)
 }
@@ -62,7 +66,7 @@ func (m *UserHeaderMiddleware) CheckHealth(ctx context.Context, req *backend.Che
 		return m.BaseHandler.CheckHealth(ctx, req)
 	}
 
-	m.applyUserHeader(ctx, req)
+	ApplyUserHeader(ctx, req)
 
 	return m.BaseHandler.CheckHealth(ctx, req)
 }
@@ -72,7 +76,7 @@ func (m *UserHeaderMiddleware) SubscribeStream(ctx context.Context, req *backend
 		return m.BaseHandler.SubscribeStream(ctx, req)
 	}
 
-	m.applyUserHeader(ctx, req)
+	ApplyUserHeader(ctx, req)
 
 	return m.BaseHandler.SubscribeStream(ctx, req)
 }
@@ -82,7 +86,7 @@ func (m *UserHeaderMiddleware) PublishStream(ctx context.Context, req *backend.P
 		return m.BaseHandler.PublishStream(ctx, req)
 	}
 
-	m.applyUserHeader(ctx, req)
+	ApplyUserHeader(ctx, req)
 
 	return m.BaseHandler.PublishStream(ctx, req)
 }
@@ -92,7 +96,7 @@ func (m *UserHeaderMiddleware) RunStream(ctx context.Context, req *backend.RunSt
 		return m.BaseHandler.RunStream(ctx, req, sender)
 	}
 
-	m.applyUserHeader(ctx, req)
+	ApplyUserHeader(ctx, req)
 
 	return m.BaseHandler.RunStream(ctx, req, sender)
 }
