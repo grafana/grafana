@@ -40,7 +40,7 @@ func TestAuthenticateJWT(t *testing.T) {
 		{
 			name: "Valid Use case with group path",
 			wantID: &authn.Identity{
-				OrgID:           0,
+				OrgID:           1,
 				OrgName:         "",
 				OrgRoles:        map[int64]identity.RoleType{1: identity.RoleAdmin},
 				Groups:          []string{"foo", "bar"},
@@ -92,7 +92,7 @@ func TestAuthenticateJWT(t *testing.T) {
 		{
 			name: "Valid Use case without group path",
 			wantID: &authn.Identity{
-				OrgID:           0,
+				OrgID:           1,
 				OrgName:         "",
 				OrgRoles:        map[int64]identity.RoleType{1: identity.RoleAdmin},
 				Login:           "eai-doe",
@@ -143,7 +143,7 @@ func TestAuthenticateJWT(t *testing.T) {
 		{
 			name: "Valid Use case with org_mapping",
 			wantID: &authn.Identity{
-				OrgID:           0,
+				OrgID:           1,
 				OrgName:         "",
 				OrgRoles:        map[int64]identity.RoleType{4: identity.RoleEditor, 5: identity.RoleViewer},
 				Login:           "eai-doe",
@@ -198,7 +198,7 @@ func TestAuthenticateJWT(t *testing.T) {
 		{
 			name: "Invalid Use case with org_mapping and invalid roles",
 			wantID: &authn.Identity{
-				OrgID:           0,
+				OrgID:           1,
 				OrgName:         "",
 				OrgRoles:        map[int64]identity.RoleType{4: identity.RoleEditor, 5: identity.RoleViewer},
 				Login:           "eai-doe",
