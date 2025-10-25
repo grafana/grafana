@@ -38,3 +38,10 @@ func (f *FakePreferenceService) Patch(ctx context.Context, cmd *pref.PatchPrefer
 func (f *FakePreferenceService) Delete(context.Context, *pref.DeleteCommand) error {
 	return f.ExpectedError
 }
+
+func (f *FakePreferenceService) Find(context.Context, *pref.FindPreferenceQuery) ([]*pref.Preference, error) {
+	if f.ExpectedPreference != nil {
+		return []*pref.Preference{f.ExpectedPreference}, f.ExpectedError
+	}
+	return nil, f.ExpectedError
+}

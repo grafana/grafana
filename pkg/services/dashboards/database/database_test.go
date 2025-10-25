@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	libmodel "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -300,6 +301,26 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		res, err = dashboardStore.GetProvisionedDashboardData(context.Background(), "test")
 		require.NoError(t, err)
 		require.Len(t, res, 0)
+	})
+
+	t.Run("Should delete preferences alongside dashboard", func(t *testing.T) {
+		setup()
+		dash := insertTestDashboard(t, dashboardStore, "delete me", 1, 0, "", false, "delete this")
+		pr := insertTestHomeDashboardPreference(t, sqlStore, dash.ID, dash.UID)
+
+		err := dashboardStore.DeleteDashboard(context.Background(), &dashboards.DeleteDashboardCommand{
+			ID:    dash.ID,
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		var preference pref.Preference
+		err = sqlStore.WithDbSession(t.Context(), func(sess *db.Session) error {
+			_, err := sess.Where("id=?", pr.ID).Get(&preference)
+			return err
+		})
+		require.NoError(t, err)
+		require.Equal(t, "", preference.HomeDashboardUID)
+		require.Equal(t, int64(0), preference.HomeDashboardID) //nolint:staticcheck
 	})
 
 	t.Run("Should be able to get all dashboards for an org", func(t *testing.T) {
@@ -1135,6 +1156,25 @@ func insertTestLibraryElementConnection(t *testing.T, sqlStore db.DB, elementID 
 		return err
 	})
 	require.NoError(t, err)
+}
+
+func insertTestHomeDashboardPreference(t *testing.T, sqlStore db.DB, dashboardID int64, dashboardUID string) *pref.Preference {
+	t.Helper()
+	pr := &pref.Preference{
+		OrgID:            1,
+		UserID:           0,
+		TeamID:           0,
+		HomeDashboardID:  dashboardID,
+		HomeDashboardUID: dashboardUID,
+		Created:          time.Now(),
+		Updated:          time.Now(),
+	}
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		_, err := sess.Insert(pr)
+		return err
+	})
+	require.NoError(t, err)
+	return pr
 }
 
 func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID string) {
