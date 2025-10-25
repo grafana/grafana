@@ -553,14 +553,14 @@ func buildPanelKind(panelMap map[string]interface{}) (*dashv2alpha1.DashboardPan
 }
 
 func buildGridItemKind(panelMap map[string]interface{}, elementName string, yOverride *int64) dashv2alpha1.DashboardGridLayoutItemKind {
-	// Default grid position
-	x, y, width, height := int64(0), int64(0), int64(12), int64(8)
+	// Default grid position (matches frontend PanelModel defaults: w=6, h=3)
+	x, y, width, height := int64(0), int64(0), int64(6), int64(3)
 
 	if gridPos, ok := panelMap["gridPos"].(map[string]interface{}); ok {
 		x = int64(getIntField(gridPos, "x", 0))
 		y = int64(getIntField(gridPos, "y", 0))
-		width = int64(getIntField(gridPos, "w", 12))
-		height = int64(getIntField(gridPos, "h", 8))
+		width = int64(getIntField(gridPos, "w", 6))
+		height = int64(getIntField(gridPos, "h", 3))
 	}
 
 	// Apply frontend-style grid position calculations
@@ -1571,6 +1571,14 @@ func transformPanelQueries(panelMap map[string]interface{}) []dashv2alpha1.Dashb
 	}
 
 	queries := make([]dashv2alpha1.DashboardPanelQueryKind, 0, len(targets))
+
+	// Check if there's only a default query (only refId: "A" and no other properties)
+	onlyDefaultQuery := len(targets) == 1 && isDefaultQuery(targets[0])
+
+	if len(targets) == 0 || onlyDefaultQuery {
+		return queries // Return empty queries array
+	}
+
 	for _, target := range targets {
 		if targetMap, ok := target.(map[string]interface{}); ok {
 			query := transformSingleQuery(targetMap, panelDatasource)
@@ -1579,6 +1587,25 @@ func transformPanelQueries(panelMap map[string]interface{}) []dashv2alpha1.Dashb
 	}
 
 	return queries
+}
+
+// isDefaultQuery checks if a query is a default query (only has refId: "A" and no other properties)
+func isDefaultQuery(target interface{}) bool {
+	targetMap, ok := target.(map[string]interface{})
+	if !ok {
+		return false
+	}
+
+	// Check if it only has one key and that key is "refId" with value "A"
+	if len(targetMap) == 1 {
+		if refId, exists := targetMap["refId"]; exists {
+			if refIdStr, ok := refId.(string); ok && refIdStr == "A" {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func transformSingleQuery(targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef) dashv2alpha1.DashboardPanelQueryKind {
@@ -1745,7 +1772,7 @@ func transformDataLinks(panelMap map[string]interface{}) []dashv2alpha1.Dashboar
 }
 
 func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizConfigKind {
-	panelType := schemaversion.GetStringValue(panelMap, "type", "graph")
+	panelType := schemaversion.GetStringValue(panelMap, "type", "timeseries")
 	pluginVersion := schemaversion.GetStringValue(panelMap, "pluginVersion")
 
 	// Extract field config and options
@@ -1762,7 +1789,8 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 	// Add frontend-style default options to match frontend behavior
 	if legend, ok := options["legend"].(map[string]interface{}); ok {
 		// Add showLegend: true to match frontend behavior
-		legend["showLegend"] = true
+		showLegend := getBoolField(legend, "showLegend", true)
+		legend["showLegend"] = showLegend
 		options["legend"] = legend
 	}
 

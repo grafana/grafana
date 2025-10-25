@@ -12,13 +12,6 @@
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations \u0026 Alerts",
         "type": "dashboard"
-      },
-      {
-        "datasource": {
-          "uid": "grafana"
-        },
-        "enable": true,
-        "name": "Annotations \u0026 Alerts"
       }
     ]
   },

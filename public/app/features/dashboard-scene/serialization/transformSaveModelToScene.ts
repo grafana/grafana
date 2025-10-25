@@ -241,7 +241,9 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
     layout: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         // If the row is collapsed it will have panels within the row model.
-        children: (row.panels?.map((p) => buildGridItemForPanel(p)) ?? []).concat(panels),
+        children: (
+          row.panels?.map((p) => buildGridItemForPanel(p instanceof PanelModel ? p : new PanelModel(p))) ?? []
+        ).concat(panels),
       }),
     }),
     repeatByVariable: row.repeat,
