@@ -3,9 +3,8 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
+import { Input, SecretInput, Field, Box } from '@grafana/ui';
 
-import { DB_SETTINGS_LABEL_WIDTH } from './constants';
 import {
   trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField,
   trackInfluxDBConfigV2FluxDBDetailsOrgInputField,
@@ -20,8 +19,8 @@ export const InfluxFluxDBConnection = (props: Props) => {
 
   return (
     <>
-      <InlineFieldRow>
-        <InlineField label="Organization" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow required>
+      <Box marginBottom={2}>
+        <Field label="Organization" required noMargin>
           <Input
             id="organization"
             placeholder="myorg"
@@ -29,10 +28,10 @@ export const InfluxFluxDBConnection = (props: Props) => {
             onChange={onUpdateDatasourceJsonDataOption(props, 'organization')}
             value={jsonData.organization || ''}
           />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField labelWidth={DB_SETTINGS_LABEL_WIDTH} label="Default Bucket" grow required>
+        </Field>
+      </Box>
+      <Box marginBottom={2}>
+        <Field label="Default Bucket" required noMargin>
           <Input
             id="default-bucket"
             onBlur={trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField}
@@ -40,10 +39,10 @@ export const InfluxFluxDBConnection = (props: Props) => {
             placeholder="mybucket"
             value={jsonData.defaultBucket || ''}
           />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField labelWidth={DB_SETTINGS_LABEL_WIDTH} label="Token" grow required>
+        </Field>
+      </Box>
+      <Box marginBottom={2}>
+        <Field label="Token" required noMargin>
           <SecretInput
             id="token"
             isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
@@ -52,8 +51,8 @@ export const InfluxFluxDBConnection = (props: Props) => {
             onReset={() => updateDatasourcePluginResetOption(props, 'token')}
             value={secureJsonData?.token || ''}
           />
-        </InlineField>
-      </InlineFieldRow>
+        </Field>
+      </Box>
     </>
   );
 };
