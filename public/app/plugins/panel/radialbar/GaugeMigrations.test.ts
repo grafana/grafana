@@ -32,6 +32,34 @@ describe('Gauge Panel Migrations', () => {
     expect(result.sparkline).toBe(false);
   });
 
+  it('does not overwrite new gauge', () => {
+    const panel = {
+      id: 2,
+      options: {
+        reduceOptions: {
+          calcs: ['lastNotNull'],
+        },
+        showThresholdLabels: false,
+        showThresholdMarkers: true,
+        sparkline: true,
+      },
+      fieldConfig: {
+        defaults: {
+          color: {
+            mode: FieldColorModeId.Fixed,
+            fixedColor: 'blue',
+          },
+        },
+        overrides: [],
+      },
+      pluginVersion: '13.0.0',
+      type: 'gauge',
+    } as Omit<PanelModel, 'fieldConfig'>;
+
+    const result = gaugePanelMigrationHandler(panel as PanelModel);
+    expect(result.sparkline).toBe(true);
+  });
+
   it('from 6.1.1', () => {
     const panel = {
       datasource: '-- Grafana --',
