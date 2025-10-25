@@ -16,6 +16,7 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   rowHeight?: number;
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
+  seriesNameAlignment?: 'left' | 'right';
   colWidth?: number;
   legendItems?: VizLegendItem[];
   tooltip?: VizTooltipOptions;
@@ -23,7 +24,16 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   paginationRev?: string;
 }
 
-const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip', 'paginationRev'];
+const propsToDiff = [
+  'rowHeight',
+  'colWidth',
+  'showValue',
+  'mergeValues',
+  'alignValue',
+  'seriesNameAlignment',
+  'tooltip',
+  'paginationRev',
+];
 
 export class TimelineChart extends Component<TimelineProps> {
   getValueColor = (frameIdx: number, fieldIdx: number, value: unknown) => {
