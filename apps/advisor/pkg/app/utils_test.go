@@ -414,10 +414,10 @@ type mockClient struct {
 	get    func(ctx context.Context, id resource.Identifier) (resource.Object, error)
 }
 
-func (m *mockClient) PatchInto(ctx context.Context, id resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions, obj resource.Object) error {
-	value := req.Operations[0].Value
-	m.values = append(m.values, value)
-	return nil
+func (m *mockClient) Update(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+	// For testing purposes, we'll capture the object being updated
+	m.values = append(m.values, obj)
+	return obj, nil
 }
 
 func (m *mockClient) Get(ctx context.Context, id resource.Identifier) (resource.Object, error) {

@@ -19,7 +19,7 @@ type RunnerConfig struct {
 func NewAPIGroupRunner(cfg RunnerConfig, providers ...app.Provider) (*APIGroupRunner, error) {
 	groups := []appBuilderGroup{}
 	for _, provider := range providers {
-		created, err := newAppBuilderGroup(cfg, provider)
+		created, err := NewAppBuilderGroup(cfg, provider)
 		if err != nil {
 			return nil, err
 		}
@@ -83,7 +83,7 @@ type appBuilderGroup struct {
 	customConfig any
 }
 
-func newAppBuilderGroup(cfg RunnerConfig, provider app.Provider) (appBuilderGroup, error) {
+func NewAppBuilderGroup(cfg RunnerConfig, provider app.Provider) (appBuilderGroup, error) {
 	manifest := provider.Manifest()
 	if manifest.Location.Type != app.ManifestLocationEmbedded {
 		return appBuilderGroup{}, fmt.Errorf("app: %s has unsupported manifest location type: %s", manifest.ManifestData.AppName, manifest.Location.Type)
@@ -104,7 +104,7 @@ func newAppBuilderGroup(cfg RunnerConfig, provider app.Provider) (appBuilderGrou
 		confCopy.ManagedKinds = map[schema.GroupVersion][]resource.Kind{
 			gv: kinds,
 		}
-		confCopy.groupVersion = gv
+		confCopy.GroupVersion = gv
 		if confCopy.CustomConfig != nil {
 			group.customConfig = confCopy.CustomConfig
 		}

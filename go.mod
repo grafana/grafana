@@ -657,6 +657,8 @@ require (
 )
 
 require (
+	github.com/go-jose/go-jose/v3 v3.0.4
+	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/go-openapi/swag/conv v0.25.1 // indirect
 	github.com/go-openapi/swag/fileutils v0.25.1 // indirect
 	github.com/go-openapi/swag/jsonname v0.25.1 // indirect

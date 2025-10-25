@@ -19,6 +19,7 @@ var WireSet = wire.NewSet(
 	ProvideBuilderRunners,
 	playlist.RegisterAppInstaller,
 	investigations.RegisterApp,
+	// TODO: Enable this conditionally, when running the advisor locally
 	advisor.RegisterApp,
 	plugins.RegisterAppInstaller,
 	shorturl.RegisterAppInstaller,

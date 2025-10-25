@@ -8,8 +8,8 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
-	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/org"
+	advisor "github.com/grafana/grafana/apps/advisor2/pkg/apis/advisor/v0alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -57,26 +57,15 @@ func NewCheckReportFailureWithMoreInfo(
 	}
 }
 
-func GetNamespaces(ctx context.Context, stackID string, orgService org.Service) ([]string, error) {
-	var namespaces []string
-	if stackID != "" {
-		// Single namespace for cloud stack
-		stackId, err := strconv.ParseInt(stackID, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid stack id: %s", stackID)
-		}
-		namespaces = []string{types.CloudNamespaceFormatter(stackId)}
-	} else {
-		// Multiple namespaces for each org
-		orgs, err := orgService.Search(ctx, &org.SearchOrgsQuery{})
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch orgs: %w", err)
-		}
-		for _, o := range orgs {
-			namespaces = append(namespaces, types.OrgNamespaceFormatter(o.ID))
-		}
+func GetNamespace(stackID string) (string, error) {
+	if stackID == "" {
+		return metav1.NamespaceDefault, nil
 	}
-	return namespaces, nil
+	stackId, err := strconv.ParseInt(stackID, 10, 64)
+	if err != nil {
+		return "", fmt.Errorf("invalid stack id: %s", stackID)
+	}
+	return types.CloudNamespaceFormatter(stackId), nil
 }
 
 func GetStatusAnnotation(obj resource.Object) string {

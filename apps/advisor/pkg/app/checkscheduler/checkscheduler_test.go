@@ -185,6 +185,9 @@ func TestRunner_Run_CheckCleanup(t *testing.T) {
 				checksDeleted = append(checksDeleted, id.Name)
 				return nil
 			},
+			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+				return obj, nil
+			},
 		}
 
 		mockTypesClient := &MockClient{
@@ -205,7 +208,7 @@ func TestRunner_Run_CheckCleanup(t *testing.T) {
 // TestRunner_Run_UnprocessedChecks tests handling of unprocessed checks
 func TestRunner_Run_UnprocessedChecks(t *testing.T) {
 	t.Run("marks unprocessed checks as error", func(t *testing.T) {
-		patchOperations := []resource.PatchOperation{}
+		updateCalls := 0
 
 		mockClient := &MockClient{
 			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
@@ -221,9 +224,9 @@ func TestRunner_Run_UnprocessedChecks(t *testing.T) {
 					},
 				}, nil
 			},
-			patchFunc: func(ctx context.Context, id resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions, into resource.Object) error {
-				patchOperations = append(patchOperations, patch.Operations...)
-				return nil
+			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+				updateCalls++
+				return obj, nil
 			},
 		}
 
@@ -237,8 +240,8 @@ func TestRunner_Run_UnprocessedChecks(t *testing.T) {
 
 		err := runAndTimeout(runner)
 		assert.ErrorAs(t, err, &context.DeadlineExceeded)
-		// Should patch unprocessed check with error status
-		assert.Greater(t, len(patchOperations), 0)
+		// Should update unprocessed check with error status
+		assert.Greater(t, updateCalls, 0)
 	})
 }
 
@@ -263,6 +266,9 @@ func TestRunner_Run_Pagination(t *testing.T) {
 						{ObjectMeta: metav1.ObjectMeta{Name: "check-2"}},
 					},
 				}, nil
+			},
+			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+				return obj, nil
 			},
 		}
 
@@ -315,8 +321,8 @@ func createTestRunnerWithRegistry(checkClient, typesClient *MockClient, checkReg
 		}
 	}
 	if checkClient.patchFunc == nil {
-		checkClient.patchFunc = func(ctx context.Context, id resource.Identifier, patch resource.PatchRequest, opts resource.PatchOptions, into resource.Object) error {
-			return nil
+		checkClient.patchFunc = func(ctx context.Context, id resource.Identifier, patch resource.PatchRequest, opts resource.PatchOptions) (resource.Object, error) {
+			return nil, nil
 		}
 	}
 
@@ -346,7 +352,8 @@ type MockClient struct {
 	listFunc   func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error)
 	createFunc func(ctx context.Context, identifier resource.Identifier, obj resource.Object, options resource.CreateOptions) (resource.Object, error)
 	deleteFunc func(ctx context.Context, identifier resource.Identifier, options resource.DeleteOptions) error
-	patchFunc  func(ctx context.Context, identifier resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions, into resource.Object) error
+	updateFunc func(ctx context.Context, identifier resource.Identifier, obj resource.Object, options resource.UpdateOptions) (resource.Object, error)
+	patchFunc  func(ctx context.Context, id resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions) (resource.Object, error)
 }
 
 func (m *MockClient) List(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
@@ -361,8 +368,12 @@ func (m *MockClient) Delete(ctx context.Context, identifier resource.Identifier,
 	return m.deleteFunc(ctx, identifier, options)
 }
 
-func (m *MockClient) PatchInto(ctx context.Context, identifier resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions, into resource.Object) error {
-	return m.patchFunc(ctx, identifier, patch, options, into)
+func (m *MockClient) Update(ctx context.Context, identifier resource.Identifier, obj resource.Object, options resource.UpdateOptions) (resource.Object, error) {
+	return m.updateFunc(ctx, identifier, obj, options)
+}
+
+func (m *MockClient) Patch(ctx context.Context, id resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions) (resource.Object, error) {
+	return m.patchFunc(ctx, id, patch, options)
 }
 
 type MockCheckService struct {
