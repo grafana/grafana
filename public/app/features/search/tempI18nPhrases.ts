@@ -10,7 +10,11 @@ export function getSearchPlaceholder(includePanels = false) {
 }
 
 export function getNewDashboardPhrase() {
-  return t('search.dashboard-actions.new-dashboard', 'New dashboard');
+  return t('search.dashboard-actions.new-dashboard', 'Empty dashboard');
+}
+
+export function getNewTemplateDashboardPhrase() {
+  return t('search.dashboard-actions.new-template-dashboard', 'Dashboard from template');
 }
 
 export function getNewFolderPhrase() {

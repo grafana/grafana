@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
 import { Menu, Dropdown, ToolbarButton } from '@grafana/ui';
 import { useSelector } from 'app/types/store';
 
@@ -15,7 +15,27 @@ export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
   const [isOpen, setIsOpen] = useState(false);
 
-  const createActions = useMemo(() => findCreateActions(navBarTree), [navBarTree]);
+  const createActions = useMemo(() => {
+    const createActions = findCreateActions(navBarTree);
+
+    const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
+    const renderPreBuiltDashboardAction = testDataSources.length > 0 && config.featureToggles.dashboardLibrary;
+    if (renderPreBuiltDashboardAction) {
+      createActions.splice(1, 0, {
+        id: 'browse-template-dashboard',
+        text: 'Dashboard from template',
+        url: '/dashboards?templateDashboards=true',
+        onClick: () => {
+          reportInteraction('grafana_menu_item_clicked', {
+            url: '/dashboards?templateDashboards=true',
+            from: 'quickadd',
+          });
+        },
+      });
+    }
+
+    return createActions;
+  }, [navBarTree]);
   const showQuickAdd = createActions.length > 0;
 
   if (!showQuickAdd) {
