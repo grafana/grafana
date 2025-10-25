@@ -599,4 +599,17 @@ module.exports = [
       ],
     },
   },
+
+  // {
+  //   name: 'grafana/plugin-external-import-paths',
+  //   files: [
+  //     'public/app/plugins/panel/histogram/**/*.{ts,tsx}',
+  //   ],
+  //   plugins: {
+  //     '@grafana': grafanaPlugin,
+  //   },
+  //   rules: {
+  //     '@grafana/no-plugin-external-import-paths': 'error',
+  //   },
+  // },
 ];
