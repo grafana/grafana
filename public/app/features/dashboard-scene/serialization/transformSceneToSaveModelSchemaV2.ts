@@ -46,6 +46,8 @@ import {
   defaultDataQueryKind,
   SwitchVariableKind,
   defaultTimeSettingsSpec,
+  defaultDashboardLinkType,
+  defaultDashboardLink,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -84,7 +86,18 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload ?? defaultDashboardV2Spec().preload,
     editable: sceneDash.editable ?? defaultDashboardV2Spec().editable,
-    links: sceneDash.links ?? defaultDashboardV2Spec().links,
+    links: (sceneDash.links || []).map((link) => ({
+      title: link.title ?? defaultDashboardLink().title,
+      url: link.url ?? defaultDashboardLink().url,
+      type: link.type ?? defaultDashboardLinkType(),
+      icon: link.icon ?? defaultDashboardLink().icon,
+      tooltip: link.tooltip ?? defaultDashboardLink().tooltip,
+      tags: link.tags ?? defaultDashboardLink().tags,
+      asDropdown: link.asDropdown ?? defaultDashboardLink().asDropdown,
+      keepTime: link.keepTime ?? defaultDashboardLink().keepTime,
+      includeVars: link.includeVars ?? defaultDashboardLink().includeVars,
+      targetBlank: link.targetBlank ?? defaultDashboardLink().targetBlank,
+    })),
     tags: sceneDash.tags ?? defaultDashboardV2Spec().tags,
     // EOF dashboard settings
 
