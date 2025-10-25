@@ -4642,7 +4642,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "При выборе пользовательского размещения сетки не поддерживается условный рендеринг. Чтобы воспользоваться функцией, переключитесь на автоматическую сетку.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -6029,6 +6030,13 @@
       "usage-count_few": "Используется на {{count}} дашбордах",
       "usage-count_many": "Используется на {{count}} дашбордах",
       "usage-count_other": "Используется на {{count}} дашбордах"
+    },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
     },
     "move-provisioned-dashboard-form": {
       "api-error": "Не удалось переместить дашборд",
@@ -7677,7 +7685,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Очистить папки",
     "noOptionsMessage-no-folders-found": "Папки не найдены",
     "select-aria-label": "Фильтр папок",
     "select-placeholder": "Фильтровать по папкам"
@@ -12780,6 +12787,7 @@
       "theme-label": "Тема интерфейса",
       "week-start-label": "Начало недели"
     },
+    "save": "",
     "theme": {
       "default-label": "По умолчанию",
       "experimental": "Экспериментальный"
@@ -13183,13 +13191,13 @@
       "placeholder-search-teams": "Поиск команд"
     },
     "team-settings": {
-      "description-email": "Это необязательное действие, которое используется в основном для установки аватара профиля команды (с помощью сервиса Gravatar).",
+      "description-email": "",
       "label-email": "Адрес электронной почты",
       "label-name": "Имя",
       "label-numerical-identifier": "Числовой идентификатор",
       "label-role": "Роль",
       "label-team-details": "Сведения о команде",
-      "save": "Сохранить"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "Синхронизация команд упрощает управление доступом пользователей в Grafana, сразу обновляя команды Grafana и разрешения каждого пользователя на основе их участия в группе с единым входом, а не при входе пользователя в систему."
