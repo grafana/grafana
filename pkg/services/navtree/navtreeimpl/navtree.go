@@ -2,6 +2,7 @@ package navtreeimpl
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -161,7 +163,8 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		}
 	}
 
-	if connectionsSection := s.buildDataConnectionsNavLink(c); connectionsSection != nil {
+	// Add Connections section after app links are processed so we can check for plugin items
+	if connectionsSection := s.buildDataConnectionsNavLink(c, treeRoot); connectionsSection != nil {
 		treeRoot.AddSection(connectionsSection)
 	}
 
@@ -548,7 +551,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	return nil
 }
 
-func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *navtree.NavLink {
+func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 
 	var children []*navtree.NavLink
@@ -556,8 +559,14 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
-	if hasAccess(datasources.ConfigurationPageAccess) {
-		// Add new connection
+	// Check if user has traditional datasources permissions
+	hasDatasourcesAccess := hasAccess(datasources.ConfigurationPageAccess)
+
+	// Check if there are any plugin items already added to the Connections section
+	hasPluginItems := s.hasConnectionsPluginItems(c, treeRoot)
+
+	// Add datasources items if user has datasources access
+	if hasDatasourcesAccess {
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-add-new-connection",
 			Text:     "Add new connection",
@@ -577,7 +586,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		})
 	}
 
-	if len(children) > 0 {
+	if len(children) > 0 || hasPluginItems {
 		// Connections (main)
 		navLink = &navtree.NavLink{
 			Text:       "Connections",
@@ -591,4 +600,61 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		return navLink
 	}
 	return nil
+}
+
+// hasConnectionsPluginItems checks if there are any plugin items that have been added to the Connections section
+// This happens when plugins use navigation.app_standalone_pages configuration to add items under /connections/*
+// It also checks RBAC permissions to ensure the user has access to the plugin items
+func (s *ServiceImpl) hasConnectionsPluginItems(c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) bool {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+
+	// Look for any standalone plugin pages that are configured to be under the Connections section
+	// These would have IDs like "standalone-plugin-page-/connections/..."
+	for _, section := range treeRoot.Children {
+		for _, child := range section.Children {
+			if child.Id != "" &&
+				(strings.HasPrefix(child.Id, "standalone-plugin-page-/connections/") ||
+					strings.HasPrefix(child.Url, "/connections/")) {
+
+				// If this is a plugin item, check RBAC permissions
+				if child.PluginID != "" {
+					// Get the plugin to check its includes and permissions
+					plugin, exists := s.pluginStore.Plugin(c.Req.Context(), child.PluginID)
+					if !exists {
+						continue
+					}
+
+					// Check if user has access to this plugin
+					if !hasAccess(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
+						continue
+					}
+
+					// Find the specific include that matches this navigation item
+					hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
+					foundAccessibleInclude := false
+
+					for _, include := range plugin.Includes {
+						if include.Type == "page" && include.Path != "" {
+							// Check if this include matches the navigation item URL
+							if strings.HasSuffix(child.Url, include.Path) || include.Path == child.Url {
+								if hasAccessToInclude(include) {
+									foundAccessibleInclude = true
+									break
+								}
+							}
+						}
+					}
+
+					// Only count this item if user has access to the specific include
+					if foundAccessibleInclude {
+						return true
+					}
+				} else {
+					// Non-plugin item, assume accessible
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
