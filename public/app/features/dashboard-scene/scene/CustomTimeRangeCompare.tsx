@@ -1,8 +1,8 @@
 import { reportInteraction } from '@grafana/runtime';
-import { SceneTimeRangeCompare, SceneComponentProps, VizPanel, sceneGraph } from '@grafana/scenes';
+import { SceneTimeRangeCompare, VizPanel, sceneGraph } from '@grafana/scenes';
 import { TimeCompareOptions } from '@grafana/schema';
 
-function hasTimeCompare(options: unknown): options is TimeCompareOptions {
+export function hasTimeCompare(options: unknown): options is TimeCompareOptions {
   return options != null && typeof options === 'object' && 'timeCompare' in options;
 }
 
@@ -14,7 +14,6 @@ export class CustomTimeRangeCompare extends SceneTimeRangeCompare {
       ...state,
       compareWith: undefined,
       compareOptions: [],
-      hideCheckbox: true,
     });
 
     this.parentOnCompareWithChanged = this.onCompareWithChanged.bind(this);
@@ -59,21 +58,4 @@ export class CustomTimeRangeCompare extends SceneTimeRangeCompare {
       });
     }
   }
-
-  static Component = function CustomTimeRangeCompareRenderer({ model }: SceneComponentProps<SceneTimeRangeCompare>) {
-    const vizPanel = sceneGraph.getAncestor(model, VizPanel);
-    const { options } = vizPanel.useState();
-
-    const isTimeCompareEnabled = hasTimeCompare(options) && options.timeCompare;
-
-    if (!isTimeCompareEnabled) {
-      return <></>;
-    }
-
-    return (
-      <div className="show-on-hover">
-        <SceneTimeRangeCompare.Component model={model} />
-      </div>
-    );
-  };
 }

@@ -251,14 +251,13 @@ export function getDefaultVizPanel(): VizPanel {
     seriesLimit: config.panelSeriesLimit,
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
-    $behaviors: [],
+    $behaviors: config.featureToggles.timeComparison
+      ? [new CustomTimeRangeCompare({ compareWith: undefined, compareOptions: [] })]
+      : [],
     extendPanelContext: setDashboardPanelContext,
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
-    headerActions: config.featureToggles.timeComparison
-      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
-      : undefined,
     $data: new SceneDataTransformer({
       $data: new SceneQueryRunner({
         queries: [{ refId: 'A' }],

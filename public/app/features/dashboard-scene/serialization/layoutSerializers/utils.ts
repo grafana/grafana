@@ -70,12 +70,11 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     seriesLimit: config.panelSeriesLimit,
     $data: createPanelDataProvider(panel),
     titleItems,
-    $behaviors: [],
+    $behaviors: config.featureToggles.timeComparison
+      ? [new CustomTimeRangeCompare({ compareWith: undefined, compareOptions: [] })]
+      : [],
     extendPanelContext: setDashboardPanelContext,
     // _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel), //FIXME: Angular Migration
-    headerActions: config.featureToggles.timeComparison
-      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
-      : undefined,
   };
 
   if (!config.publicDashboardAccessToken) {

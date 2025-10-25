@@ -1,6 +1,30 @@
 import { Dashboard, Panel, RowPanel } from '@grafana/schema';
 
-import { isValidLibraryPanelRef, hasLibraryPanelsInV1Dashboard } from './utils';
+import { CustomTimeRangeCompare } from '../scene/CustomTimeRangeCompare';
+
+import { isValidLibraryPanelRef, hasLibraryPanelsInV1Dashboard, getDefaultVizPanel } from './utils';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      timeComparison: false,
+    },
+    panelSeriesLimit: 100,
+  },
+  getDataSourceSrv: jest.fn(() => ({
+    getInstanceSettings: jest.fn(() => ({
+      uid: 'test-datasource',
+      name: 'Test Datasource',
+      type: 'prometheus',
+    })),
+  })),
+}));
+
+jest.mock('../scene/CustomTimeRangeCompare', () => ({
+  CustomTimeRangeCompare: jest.fn(),
+}));
 
 describe('utils', () => {
   describe('isValidLibraryPanelRef', () => {
@@ -367,6 +391,37 @@ describe('utils', () => {
       };
 
       expect(hasLibraryPanelsInV1Dashboard(dashboard)).toBe(true);
+    });
+  });
+
+  describe('getDefaultVizPanel', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should include CustomTimeRangeCompare in $behaviors when timeComparison feature toggle is enabled', () => {
+      const mockConfig = require('@grafana/runtime').config;
+      mockConfig.featureToggles.timeComparison = true;
+
+      const vizPanel = getDefaultVizPanel();
+
+      expect(vizPanel.state.$behaviors).toBeDefined();
+      expect(vizPanel.state.$behaviors).toHaveLength(1);
+      expect(CustomTimeRangeCompare).toHaveBeenCalledWith({
+        compareWith: undefined,
+        compareOptions: [],
+      });
+    });
+
+    it('should have empty $behaviors array when timeComparison feature toggle is disabled', () => {
+      const mockConfig = require('@grafana/runtime').config;
+      mockConfig.featureToggles.timeComparison = false;
+
+      const vizPanel = getDefaultVizPanel();
+
+      expect(vizPanel.state.$behaviors).toBeDefined();
+      expect(vizPanel.state.$behaviors).toHaveLength(0);
+      expect(CustomTimeRangeCompare).not.toHaveBeenCalled();
     });
   });
 });

@@ -811,12 +811,12 @@ describe('transformSaveModelToScene', () => {
       expect(gridItem.state.body.state.title).toEqual(panel.title);
     });
 
-    describe('header actions', () => {
+    describe('behaviors', () => {
       beforeEach(() => {
         jest.clearAllMocks();
       });
 
-      it('should include headerActions when timeComparison feature toggle is enabled', () => {
+      it('should include CustomTimeRangeCompare in $behaviors when timeComparison feature toggle is enabled', () => {
         config.featureToggles.timeComparison = true;
 
         const panel = {
@@ -827,11 +827,11 @@ describe('transformSaveModelToScene', () => {
 
         const { vizPanel } = buildGridItemForTest(panel);
 
-        expect(vizPanel.state.headerActions).toBeDefined();
-        expect(vizPanel.state.headerActions).toHaveLength(1);
+        expect(vizPanel.state.$behaviors).toBeDefined();
+        expect(vizPanel.state.$behaviors).toHaveLength(1);
       });
 
-      it('should not include headerActions when timeComparison feature toggle is disabled', () => {
+      it('should have empty $behaviors array when timeComparison feature toggle is disabled', () => {
         config.featureToggles.timeComparison = false;
 
         const panel = {
@@ -842,7 +842,8 @@ describe('transformSaveModelToScene', () => {
 
         const { vizPanel } = buildGridItemForTest(panel);
 
-        expect(vizPanel.state.headerActions).toBeUndefined();
+        expect(vizPanel.state.$behaviors).toBeDefined();
+        expect(vizPanel.state.$behaviors).toHaveLength(0);
       });
     });
   });

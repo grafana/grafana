@@ -40,6 +40,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
+import { CustomTimeRangeCompare, hasTimeCompare } from './CustomTimeRangeCompare';
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
@@ -180,6 +181,11 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         e.preventDefault();
       },
     });
+
+    const timeComparisonMenuItem = getTimeComparisonMenuItem(panel);
+    if (timeComparisonMenuItem) {
+      items.push(timeComparisonMenuItem);
+    }
 
     if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
       moreSubMenu.push({
@@ -418,6 +424,52 @@ function getInspectMenuItem(
       }
     },
     subMenu: inspectSubMenu.length > 0 ? inspectSubMenu : undefined,
+  };
+}
+
+function getTimeComparisonMenuItem(panel: VizPanel): PanelMenuItem | undefined {
+  if (!config.featureToggles.timeComparison) {
+    return undefined;
+  }
+
+  const isTimeCompareEnabled = hasTimeCompare(panel.state.options) && panel.state.options.timeCompare;
+
+  if (!isTimeCompareEnabled) {
+    return undefined;
+  }
+
+  // Find the time comparison object in the panel's behaviors
+  const timeCompare = panel.state.$behaviors?.find(
+    (behavior): behavior is CustomTimeRangeCompare => behavior instanceof CustomTimeRangeCompare
+  );
+
+  if (!timeCompare?.state.compareOptions?.length) {
+    return undefined;
+  }
+
+  const { compareOptions, compareWith } = timeCompare.state;
+
+  const subMenu: PanelMenuItem[] = compareOptions.map((option, index) => {
+    const isSelected = compareWith === option.value || (!compareWith && index === 0);
+
+    return {
+      text: option.label,
+      iconClassName: isSelected ? 'check' : undefined,
+      onClick: (e) => {
+        e.preventDefault();
+        timeCompare.onCompareWithChanged(option.value);
+      },
+    };
+  });
+
+  return {
+    text: t('panel.header-menu.time-comparison', 'Time comparison'),
+    iconClassName: 'clock-nine',
+    type: 'submenu',
+    subMenu,
+    onClick: (e) => {
+      e.preventDefault();
+    },
   };
 }
 
