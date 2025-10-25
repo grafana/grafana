@@ -35,17 +35,20 @@ const sourceFiles = teamFiles.filter((file) => {
   const ext = path.extname(file);
   return (
     ['.ts', '.tsx', '.js', '.jsx'].includes(ext) &&
-    // exclude all tests
+    // exclude all tests and mocks
     !path.matchesGlob(file, '**/test/**/*') &&
     !file.includes('.test.') &&
     !file.includes('.spec.') &&
+    !path.matchesGlob(file, '**/__mocks__/**/*') &&
     // and storybook stories
     !file.includes('.story.') &&
     // and generated files
     !file.includes('.gen.ts') &&
     // and type definitions
     !file.includes('.d.ts') &&
-    !file.endsWith('/types.ts')
+    !file.endsWith('/types.ts') &&
+    // and anything in graveyard
+    !path.matchesGlob(file, '**/graveyard/**/*')
   );
 });
 
