@@ -53,7 +53,7 @@ const FlameGraphTopTableContainer = memo(
     onTableSort,
     colorScheme,
   }: Props) => {
-    const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
+    const { table, otherEntry } = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
 
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
@@ -80,19 +80,44 @@ const FlameGraphTopTableContainer = memo(
               search,
               sandwichItem
             );
+            
+            // Reserve space for the "other" section if it exists
+            const otherSectionHeight = otherEntry ? 80 : 0;
+            const tableHeight = height - otherSectionHeight;
+            
             return (
-              <Table
-                initialSortBy={sort}
-                onSortByChange={(s) => {
-                  if (s && s.length) {
-                    onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
-                  }
-                  setSort(s);
-                }}
-                data={frame}
-                width={width}
-                height={height}
-              />
+              <>
+                <Table
+                  initialSortBy={sort}
+                  onSortByChange={(s) => {
+                    if (s && s.length) {
+                      onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+                    }
+                    setSort(s);
+                  }}
+                  data={frame}
+                  width={width}
+                  height={tableHeight}
+                />
+                {otherEntry && (
+                  <div className={styles.otherSection}>
+                    <div className={styles.otherTitle}>Other</div>
+                    <div className={styles.otherDescription}>
+                      The flamegraph was limited to the top nodes. The "other" entry aggregates all remaining stack
+                      traces that were not included in the visualization. This represents{' '}
+                      <strong>
+                        {data.isDiffFlamegraph()
+                          ? `${formatOtherValue(otherEntry.total, data)} (baseline) / ${formatOtherValue(
+                              otherEntry.totalRight,
+                              data
+                            )} (comparison)`
+                          : formatOtherValue(otherEntry.total, data)}
+                      </strong>{' '}
+                      of aggregated data.
+                    </div>
+                  </div>
+                )}
+              </>
             );
           }}
         </AutoSizer>
@@ -107,6 +132,7 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
   // Group the data by label, we show only one row per label and sum the values
   // TODO: should be by filename + funcName + linenumber?
   let filteredTable: { [key: string]: TableData } = Object.create(null);
+  let otherEntry: TableData | undefined;
 
   // Track call stack to detect recursive calls
   const callStack: string[] = [];
@@ -128,22 +154,32 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
 
     // If user is doing text search we filter out labels in the same way we highlight them in flame graph.
     if (!matchedLabels || matchedLabels.has(label)) {
-      filteredTable[label] = filteredTable[label] || {};
-      filteredTable[label].self = filteredTable[label].self ? filteredTable[label].self + self : self;
+      // Check if this is the "other" entry - it should be extracted separately
+      if (label.toLowerCase() === 'other') {
+        otherEntry = otherEntry || { self: 0, total: 0, totalRight: 0 };
+        otherEntry.self += self;
+        if (!isRecursive) {
+          otherEntry.total += value;
+          otherEntry.totalRight += valueRight;
+        }
+      } else {
+        filteredTable[label] = filteredTable[label] || {};
+        filteredTable[label].self = filteredTable[label].self ? filteredTable[label].self + self : self;
 
-      // Only add to total if this is not a recursive call
-      if (!isRecursive) {
-        filteredTable[label].total = filteredTable[label].total ? filteredTable[label].total + value : value;
-        filteredTable[label].totalRight = filteredTable[label].totalRight
-          ? filteredTable[label].totalRight + valueRight
-          : valueRight;
+        // Only add to total if this is not a recursive call
+        if (!isRecursive) {
+          filteredTable[label].total = filteredTable[label].total ? filteredTable[label].total + value : value;
+          filteredTable[label].totalRight = filteredTable[label].totalRight
+            ? filteredTable[label].totalRight + valueRight
+            : valueRight;
+        }
       }
     }
 
     // Add current call to the stack
     callStack.push(label);
   }
-  return filteredTable;
+  return { table: filteredTable, otherEntry };
 }
 
 function buildTableDataFrame(
@@ -361,6 +397,11 @@ function ActionCell(props: ActionCellProps) {
   );
 }
 
+function formatOtherValue(value: number, data: FlameGraphDataContainer): string {
+  const displayValue = data.valueDisplayProcessor(value);
+  return `${displayValue.text}${displayValue.suffix || ''}`;
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     topTableContainer: css({
@@ -368,6 +409,26 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1),
       backgroundColor: theme.colors.background.secondary,
       height: '100%',
+    }),
+    otherSection: css({
+      label: 'otherSection',
+      padding: theme.spacing(1, 2),
+      backgroundColor: theme.colors.background.primary,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      marginTop: theme.spacing(1),
+    }),
+    otherTitle: css({
+      label: 'otherTitle',
+      fontSize: theme.typography.h6.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      marginBottom: theme.spacing(0.5),
+      color: theme.colors.text.secondary,
+    }),
+    otherDescription: css({
+      label: 'otherDescription',
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      lineHeight: 1.5,
     }),
   };
 };
