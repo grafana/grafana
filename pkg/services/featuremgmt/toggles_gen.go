@@ -803,6 +803,9 @@ const (
 	// Use a POST request to list rules by passing down the namespaces user has access to
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 
+	// FlagAlertingFetchRuleStatuses
+	FlagAlertingFetchRuleStatuses = "alertingFetchRuleStatuses"
+
 	// FlagNewLogsPanel
 	// Enables the new logs panel in Explore
 	FlagNewLogsPanel = "newLogsPanel"
