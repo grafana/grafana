@@ -16,6 +16,7 @@ import {
 } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
+import { DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -40,7 +41,7 @@ export const AUTO_GRID_DEFAULT_ROW_HEIGHT = 'standard';
 
 export class AutoGridLayoutManager
   extends SceneObjectBase<AutoGridLayoutManagerState>
-  implements DashboardLayoutManager
+  implements DashboardLayoutManager, DashboardLayoutGrid
 {
   public static Component = AutoGridLayoutManagerRenderer;
 
@@ -200,12 +201,11 @@ export class AutoGridLayoutManager
     });
   }
 
-  public merge(other: DashboardLayoutManager) {
-    if (!(other instanceof AutoGridLayoutManager)) {
-      throw new Error('Cannot merge non-auto grid layout');
-    }
-
-    const sourceLayout = other.state.layout;
+  public mergeGrid(other: DashboardLayoutGrid) {
+    const sourceLayout =
+      other instanceof AutoGridLayoutManager
+        ? other.state.layout
+        : AutoGridLayoutManager.createFromLayout(other).state.layout;
     const movedChildren = [...sourceLayout.state.children];
 
     // Remove from source and append to destination
