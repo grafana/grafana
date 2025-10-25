@@ -559,9 +559,9 @@ export const LogListContextProvider = ({
         logListState.filterLevels.length === 0
           ? logs
           : logs.filter((log) => logListState.filterLevels.includes(log.logLevel));
-      download(format, filteredLogs, logsMeta);
+      download(format, filteredLogs, logsMeta, displayedFields);
     },
-    [logListState.filterLevels, logs, logsMeta]
+    [displayedFields, logListState.filterLevels, logs, logsMeta]
   );
 
   const closeDetails = useCallback(() => {
