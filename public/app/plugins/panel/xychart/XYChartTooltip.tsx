@@ -8,6 +8,7 @@ import {
   VizTooltipWrapper,
   ColorIndicator,
   VizTooltipItem,
+  AdHocFilterModel,
 } from '@grafana/ui/internal';
 
 import { getFieldActions } from '../status-history/utils';
@@ -24,6 +25,7 @@ export interface Props {
   xySeries: XYSeries[];
   replaceVariables: InterpolateFunction;
   dataLinks: LinkModel[];
+  adHocFilters?: AdHocFilterModel[];
   canExecuteActions?: boolean;
 }
 
@@ -52,6 +54,7 @@ export const XYChartTooltip = ({
   isPinned,
   replaceVariables,
   dataLinks,
+  adHocFilters,
   canExecuteActions,
 }: Props) => {
   const rowIndex = dataIdxs.find((idx) => idx !== null)!;
@@ -136,7 +139,7 @@ export const XYChartTooltip = ({
         ? getFieldActions(yFieldFrame, yField, replaceVariables, rowIndex, 'xychart')
         : [];
 
-      footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} />;
+      footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} adHocFilters={adHocFilters} />;
     }
   }
 
