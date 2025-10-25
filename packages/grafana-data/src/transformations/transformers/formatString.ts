@@ -25,6 +25,8 @@ export interface FormatStringTransformerOptions {
   substringStart: number;
   substringEnd: number;
   outputFormat: FormatStringOutput;
+  stringPrefix: string;
+  stringSuffix: string;
 }
 
 const splitToCapitalWords = (input: string) => {
@@ -36,8 +38,8 @@ const splitToCapitalWords = (input: string) => {
 };
 
 export const getFormatStringFunction = (options: FormatStringTransformerOptions) => {
-  return (field: Field) =>
-    field.values.map((value: string) => {
+  return (field: Field, allFields: Field[]) =>
+    field.values.map((value: string, index: number) => {
       switch (options.outputFormat) {
         case FormatStringOutput.UpperCase:
           return value.toUpperCase();
@@ -106,12 +108,12 @@ export const formatStringTransformer: DataTransformerInfo<FormatStringTransforme
  * @internal
  */
 export const createStringFormatter =
-  (fieldMatches: FieldMatcher, formatStringFunction: (field: Field) => string[]) =>
+  (fieldMatches: FieldMatcher, formatStringFunction: (field: Field, allFields: Field[]) => string[]) =>
   (frame: DataFrame, allFrames: DataFrame[]) => {
     return frame.fields.map((field) => {
       // Find the configured field
       if (fieldMatches(field, frame, allFrames)) {
-        const newVals = formatStringFunction(field);
+        const newVals = formatStringFunction(field, frame.fields);
 
         return {
           ...field,
