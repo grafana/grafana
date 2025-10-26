@@ -67,6 +67,7 @@ func ProvideAppInstallers(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesLogsDrilldown) {
 		installers = append(installers, logsdrilldownAppInstaller)
 	}
+	//nolint:statickcheck
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
 		installers = append(installers, annotationAppInstaller)
 	}
