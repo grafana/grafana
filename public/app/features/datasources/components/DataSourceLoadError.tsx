@@ -19,8 +19,8 @@ export function DataSourceLoadError({ dataSourceRights, onDelete, notFound }: Pr
   return (
     <>
       {readOnly && <DataSourceReadOnlyMessage />}
-      <Stack direction="column" gap={1}>
-        <Stack direction="column" alignItems="center" gap={1}>
+      <Stack direction="column">
+        <Stack direction="column" alignItems="center">
           {notFound && (
             <EmptyState
               variant="not-found"
@@ -28,7 +28,7 @@ export function DataSourceLoadError({ dataSourceRights, onDelete, notFound }: Pr
             />
           )}
         </Stack>
-        <Stack direction="row" gap={2} alignItems="flex-start">
+        <Stack direction="row" gap={2}>
           {canDelete && (
             <Button type="submit" variant="destructive" onClick={onDelete}>
               <Trans i18nKey="datasources.data-source-load-error.delete">Delete</Trans>
