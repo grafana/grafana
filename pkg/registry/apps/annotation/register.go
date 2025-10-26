@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
 
@@ -148,16 +150,77 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if err != nil {
 		return nil, err
 	}
+	query := &annotations.ItemQuery{OrgID: orgID, SignedInUser: user, AlertID: -1}
+	if options.FieldSelector != nil {
+		for _, r := range options.FieldSelector.Requirements() {
+			switch r.Field {
+			case "spec.dashboardUID":
+				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
+					query.DashboardUID = r.Value
+				} else {
+					return nil, fmt.Errorf("unsupported operator %s for spec.dashboardUID (only = supported)", r.Operator)
+				}
 
-	items, err := s.service.Find(ctx, &annotations.ItemQuery{
-		OrgID:        orgID,
-		SignedInUser: user,
-		AlertID:      -1, // no alert annotations
-	})
+			case "spec.panelID":
+				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
+					panelID, err := strconv.ParseInt(r.Value, 10, 64)
+					if err != nil {
+						return nil, fmt.Errorf("invalid panelID value %q: %w", r.Value, err)
+					}
+					query.PanelID = panelID
+				} else {
+					return nil, fmt.Errorf("unsupported operator %s for spec.panelID (only = supported)", r.Operator)
+				}
+			case "spec.time":
+				switch r.Operator {
+				case selection.GreaterThan:
+					from, err := strconv.ParseInt(r.Value, 10, 64)
+					if err != nil {
+						return nil, fmt.Errorf("invalid time value %q: %w", r.Value, err)
+					}
+					query.From = from
+				case selection.LessThan:
+					to, err := strconv.ParseInt(r.Value, 10, 64)
+					if err != nil {
+						return nil, fmt.Errorf("invalid time value %q: %w", r.Value, err)
+					}
+					query.To = to
+				default:
+					return nil, fmt.Errorf("unsupported operator %s for spec.time (only >, < supported for ranges)", r.Operator)
+				}
+
+			case "spec.timeEnd":
+				switch r.Operator {
+				case selection.GreaterThan:
+					from, err := strconv.ParseInt(r.Value, 10, 64)
+					if err != nil {
+						return nil, fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
+					}
+					query.From = from
+				case selection.LessThan:
+					to, err := strconv.ParseInt(r.Value, 10, 64)
+					if err != nil {
+						return nil, fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
+					}
+					query.To = to
+				default:
+					return nil, fmt.Errorf("unsupported operator %s for spec.timeEnd (only >, < supported for ranges)", r.Operator)
+				}
+
+			default:
+				return nil, fmt.Errorf("unsupported field selector: %s", r.Field)
+			}
+		}
+	}
+
+	query.Limit = 100
+	if options.Limit > 0 {
+		query.Limit = options.Limit
+	}
+	items, err := s.service.Find(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-
 	list := &annotationV0.AnnotationList{
 		Items: make([]annotationV0.Annotation, len(items)),
 	}
@@ -168,6 +231,8 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		}
 		list.Items[i] = *c
 	}
+
+	// TODO: pagination?
 	return list, nil
 }
 
