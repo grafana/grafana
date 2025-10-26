@@ -629,15 +629,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return vizPanel;
   }
 
-  public switchLayout(layout: DashboardLayoutManager) {
+  public switchLayout(layout: DashboardLayoutManager, skipUndo?: boolean) {
     const currentLayout = this.state.body;
-
-    dashboardEditActions.edit({
-      description: t('dashboard.edit-actions.switch-layout', 'Switch layout'),
-      source: this,
-      perform: () => this.setState({ body: layout }),
-      undo: () => this.setState({ body: currentLayout }),
-    });
+    const perform = () => this.setState({ body: layout });
+    const undo = () => this.setState({ body: currentLayout });
+    if (skipUndo) {
+      perform();
+    } else {
+      dashboardEditActions.edit({
+        description: t('dashboard.edit-actions.switch-layout', 'Switch layout'),
+        source: this,
+        perform,
+        undo,
+      });
+    }
   }
 
   public getLayout(): DashboardLayoutManager {
@@ -729,6 +734,71 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public getDashboardPanels() {
     return dashboardSceneGraph.getVizPanels(this);
+  }
+
+  public getExpressionTypes(saveModel?: Dashboard | DashboardV2Spec): string[] | undefined {
+    const model = saveModel ?? this.getSaveModel();
+
+    const expressionTypes = new Set<string>();
+
+    // Handle V1 dashboards
+    if ('panels' in model && model.panels) {
+      for (const panel of model.panels) {
+        // Skip panels without targets (e.g., row panels)
+        if (!('targets' in panel) || !panel.targets?.length) {
+          continue;
+        }
+
+        for (const target of panel.targets) {
+          // Only count if it's actually an expression query
+          const datasourceUid =
+            target?.datasource && typeof target.datasource === 'object' && 'uid' in target.datasource
+              ? target.datasource.uid
+              : undefined;
+
+          const targetType = target?.type;
+          if (datasourceUid === '__expr__' && typeof targetType === 'string' && targetType) {
+            expressionTypes.add(targetType);
+          }
+        }
+      }
+    }
+
+    // Handle V2 dashboards
+    if ('elements' in model && model.elements) {
+      for (const element of Object.values(model.elements)) {
+        // Check if element is a Panel (not LibraryPanel)
+        if (element.kind !== 'Panel') {
+          continue;
+        }
+
+        const queries = element.spec.data?.spec?.queries;
+        if (!Array.isArray(queries)) {
+          continue;
+        }
+
+        for (const query of queries) {
+          const querySpec = query?.spec?.query;
+          if (!querySpec || typeof querySpec !== 'object') {
+            continue;
+          }
+
+          const datasource = querySpec.datasource;
+          const datasourceName =
+            datasource && typeof datasource === 'object' && 'name' in datasource ? datasource.name : undefined;
+
+          const spec = querySpec.spec;
+          const queryType = spec && typeof spec === 'object' && 'type' in spec ? spec.type : undefined;
+
+          if (datasourceName === '__expr__' && typeof queryType === 'string' && queryType) {
+            expressionTypes.add(queryType);
+          }
+        }
+      }
+    }
+
+    // Return array of expression types or undefined if no expressions
+    return expressionTypes.size > 0 ? Array.from(expressionTypes) : undefined;
   }
 
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {

@@ -122,7 +122,7 @@ export function AppChrome({ children }: Props) {
                 [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
               })}
             >
-              <ErrorBoundaryAlert>
+              <ErrorBoundaryAlert boundaryName="scopes-dashboards">
                 <ScopesDashboards />
               </ErrorBoundaryAlert>
             </div>

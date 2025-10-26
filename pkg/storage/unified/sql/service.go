@@ -59,6 +59,7 @@ type service struct {
 	subservicesWatcher *services.FailureWatcher
 	hasSubservices     bool
 
+	backend   resource.StorageBackend
 	cfg       *setting.Cfg
 	features  featuremgmt.FeatureToggles
 	db        infraDB.DB
@@ -97,6 +98,7 @@ func ProvideUnifiedStorageGrpcService(
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
+	backend resource.StorageBackend,
 ) (UnifiedStorageGrpcService, error) {
 	var err error
 	tracer := otel.Tracer("unified-storage")
@@ -109,6 +111,7 @@ func ProvideUnifiedStorageGrpcService(
 	})
 
 	s := &service{
+		backend:            backend,
 		cfg:                cfg,
 		features:           features,
 		stopCh:             make(chan struct{}),
@@ -263,6 +266,7 @@ func (s *service) starting(ctx context.Context) error {
 	}
 
 	serverOptions := ServerOptions{
+		Backend:        s.backend,
 		DB:             s.db,
 		Cfg:            s.cfg,
 		Tracer:         s.tracing,
@@ -306,7 +310,7 @@ func (s *service) starting(ctx context.Context) error {
 
 	if s.cfg.EnableSharding {
 		s.log.Info("waiting until resource server is JOINING in the ring")
-		lfcCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		lfcCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ResourceServerJoinRingTimeout)
 		defer cancel()
 		if err := ring.WaitInstanceState(lfcCtx, s.searchRing, s.ringLifecycler.GetInstanceID(), ring.JOINING); err != nil {
 			return fmt.Errorf("error switching to JOINING in the ring: %s", err)

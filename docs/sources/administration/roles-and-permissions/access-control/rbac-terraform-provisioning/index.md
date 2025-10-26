@@ -95,7 +95,7 @@ provider "grafana" {
 
 ## Provision basic roles
 
-The following example shows how to assign basic roles to users, teams, and service accounts. Basic roles are predefined in Grafana and provide a set of permissions for common use cases.
+The following example shows how to assign basic roles to users and service accounts. Basic roles are predefined in Grafana and provide a set of permissions for common use cases.
 
 | Basic role      | UID                   |
 | --------------- | --------------------- |
@@ -107,11 +107,11 @@ The following example shows how to assign basic roles to users, teams, and servi
 
 You can use any of the basic role UIDs from the table above in your role assignments. For example, to assign the "None" role, use `basic_none` as the `role_uid`.
 
-```terraform
-resource "grafana_team" "viewer_team" {
-  name = "terraform_viewer_team"
-}
+{{< admonition type="note" >}}
+You can't assign basic roles to teams. To grant team permissions, assign a fixed or custom role to the team.
+{{< /admonition >}}
 
+```terraform
 resource "grafana_user" "editor_user" {
   email    = "terraform_editor@example.com"
   login    = "terraform_editor_user"
@@ -120,12 +120,6 @@ resource "grafana_user" "editor_user" {
 
 resource "grafana_service_account" "admin_sa" {
   name = "terraform_admin_sa"
-}
-
-# Assign Viewer role to a team
-resource "grafana_role_assignment" "viewer_role_assignment" {
-  role_uid = "basic_viewer"
-  teams    = [grafana_team.viewer_team.id]
 }
 
 # Assign Editor role to a user
@@ -138,6 +132,22 @@ resource "grafana_role_assignment" "editor_role_assignment" {
 resource "grafana_role_assignment" "admin_role_assignment" {
   role_uid = "basic_admin"
   service_accounts = [grafana_service_account.admin_sa.id]
+}
+```
+
+### Assign a fixed or custom role to a team
+
+Use fixed or custom roles to grant permissions to teams:
+
+```terraform
+resource "grafana_team" "writers_team" {
+  name = "terraform_writers_team"
+}
+
+# Assign a fixed role to a team
+resource "grafana_role_assignment" "writers_team_fixed_role" {
+  role_uid = "fixed:dashboards:writer"
+  teams    = [grafana_team.writers_team.id]
 }
 ```
 

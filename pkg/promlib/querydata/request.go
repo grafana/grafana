@@ -100,10 +100,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 		Responses: backend.Responses{},
 	}
 
-	var (
-		hasPromQLScopeFeatureFlag = s.featureToggles.IsEnabled("promQLScope")
-		m                         sync.Mutex
-	)
+	var m sync.Mutex
 
 	concurrentQueryCount, err := req.PluginContext.GrafanaConfig.ConcurrentQueryCount()
 	if err != nil {
@@ -113,14 +110,14 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 
 	_ = concurrency.ForEachJob(ctx, len(req.Queries), concurrentQueryCount, func(ctx context.Context, idx int) error {
 		query := req.Queries[idx]
+// Extract hideWarnings from JSONData if available
+hideWarnings := false
+if v, ok := query.JSONData["hideWarnings"].(bool); ok {
+	hideWarnings = v
+}
 
-		// Extract hideWarnings from JSONData if available
-		hideWarnings := false
-		if v, ok := query.JSONData["hideWarnings"].(bool); ok {
-			hideWarnings = v
-		}
+r := s.handleQuery(ctx, query, fromAlert, hasPromQLScopeFeatureFlag, hideWarnings)
 
-		r := s.handleQuery(ctx, query, fromAlert, hasPromQLScopeFeatureFlag, hideWarnings)
 		if r != nil {
 			m.Lock()
 			result.Responses[query.RefID] = *r
@@ -132,11 +129,12 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromAlert,
+func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromAlert bool, 
 	hasPromQLScopeFeatureFlag bool, hideWarnings bool) *backend.DataResponse {
+
 	traceCtx, span := s.tracer.Start(ctx, "datasource.prometheus")
 	defer span.End()
-	query, err := models.Parse(ctx, s.log, span, bq, s.TimeInterval, s.intervalCalculator, fromAlert, hasPromQLScopeFeatureFlag)
+	query, err := models.Parse(ctx, s.log, span, bq, s.TimeInterval, s.intervalCalculator, fromAlert)
 	if err != nil {
 		return &backend.DataResponse{
 			Error: err,

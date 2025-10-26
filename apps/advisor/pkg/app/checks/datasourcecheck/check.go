@@ -3,6 +3,8 @@ package datasourcecheck
 import (
 	"context"
 	"errors"
+	sysruntime "runtime"
+	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
@@ -18,15 +20,18 @@ const (
 	HealthCheckStepID   = "health-check"
 	UIDValidationStepID = "uid-validation"
 	MissingPluginStepID = "missing-plugin"
+	PromDepAuthStepID   = "prom-dep-auth"
 )
 
 type check struct {
-	DatasourceSvc         datasources.DataSourceService
-	PluginStore           pluginstore.Store
-	PluginContextProvider pluginContextProvider
-	PluginClient          plugins.Client
-	PluginRepo            repo.Service
-	GrafanaVersion        string
+	DatasourceSvc             datasources.DataSourceService
+	PluginStore               pluginstore.Store
+	PluginContextProvider     pluginContextProvider
+	PluginClient              plugins.Client
+	PluginRepo                repo.Service
+	GrafanaVersion            string
+	pluginCanBeInstalledCache map[string]bool
+	pluginExistsCacheMu       sync.RWMutex
 }
 
 func New(
@@ -38,17 +43,24 @@ func New(
 	grafanaVersion string,
 ) checks.Check {
 	return &check{
-		DatasourceSvc:         datasourceSvc,
-		PluginStore:           pluginStore,
-		PluginContextProvider: pluginContextProvider,
-		PluginClient:          pluginClient,
-		PluginRepo:            pluginRepo,
-		GrafanaVersion:        grafanaVersion,
+		DatasourceSvc:             datasourceSvc,
+		PluginStore:               pluginStore,
+		PluginContextProvider:     pluginContextProvider,
+		PluginClient:              pluginClient,
+		PluginRepo:                pluginRepo,
+		GrafanaVersion:            grafanaVersion,
+		pluginCanBeInstalledCache: make(map[string]bool),
 	}
 }
 
 func (c *check) Items(ctx context.Context) ([]any, error) {
-	dss, err := c.DatasourceSvc.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	dss, err := c.DatasourceSvc.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
+		OrgID: requester.GetOrgID(),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +99,7 @@ func (c *check) Name() string {
 }
 
 func (c *check) Init(ctx context.Context) error {
+	c.pluginCanBeInstalledCache = make(map[string]bool)
 	return nil
 }
 
@@ -102,7 +115,57 @@ func (c *check) Steps() []checks.Step {
 			PluginRepo:     c.PluginRepo,
 			GrafanaVersion: c.GrafanaVersion,
 		},
+		&promDepAuthStep{
+			canBeInstalled: c.canBeInstalled,
+		},
 	}
+}
+
+// canBeInstalled checks if a plugin is already installed or if it's available in the plugin repository.
+// Returns true if:
+// - The plugin is NOT installed AND it IS available in the repository (can be installed)
+// Returns false if:
+// - The plugin is already installed, OR
+// - The plugin is NOT available in the repository (nothing to install)
+func (c *check) canBeInstalled(ctx context.Context, pluginType string) (bool, error) {
+	// Check cache first with read lock for performance
+	c.pluginExistsCacheMu.RLock()
+	if canBeInstalled, found := c.pluginCanBeInstalledCache[pluginType]; found {
+		c.pluginExistsCacheMu.RUnlock()
+		return canBeInstalled, nil
+	}
+	c.pluginExistsCacheMu.RUnlock()
+
+	// Cache miss - acquire write lock and check again (double-checked locking pattern)
+	c.pluginExistsCacheMu.Lock()
+	defer c.pluginExistsCacheMu.Unlock()
+
+	// Another goroutine may have populated the cache while we waited for the lock
+	if canBeInstalled, found := c.pluginCanBeInstalledCache[pluginType]; found {
+		return canBeInstalled, nil
+	}
+
+	// Check if plugin is already installed
+	if _, isInstalled := c.PluginStore.Plugin(ctx, pluginType); isInstalled {
+		c.pluginCanBeInstalledCache[pluginType] = false
+		return false, nil
+	}
+
+	// Plugin is not installed - check if it's available in the repository
+	availablePlugins, err := c.PluginRepo.GetPluginsInfo(ctx, repo.GetPluginsInfoOptions{
+		IncludeDeprecated: true,
+		Plugins:           []string{pluginType},
+	}, repo.NewCompatOpts(c.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH))
+	if err != nil {
+		// On error, assume plugin is installed/unavailable to avoid showing incorrect install links
+		return false, err
+	}
+
+	// Plugin is not installed but IS available - return false to show install link
+	// Plugin is not installed and NOT available in repo - return true (nothing to install)
+	isAvailableInRepo := len(availablePlugins) > 0
+	c.pluginCanBeInstalledCache[pluginType] = !isAvailableInRepo
+	return isAvailableInRepo, nil
 }
 
 type pluginContextProvider interface {
