@@ -65,12 +65,13 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 ) (*DataSourceAPIBuilder, error) {
 	// We want to expose just a limited set of plugins
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	explicitPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
 
 	// Requires dev-mode
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	configCrudUseNewApis := features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)
 
-	// This requires devmode!
 	if !explicitPluginList && !configCrudUseNewApis {
 		return nil, nil // skip registration unless opting into experimental apis
 	}
@@ -117,6 +118,7 @@ func RegisterAPIService(
 			datasources.GetDatasourceProvider(pluginJSON),
 			contextProvider,
 			accessControl,
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
 			configCrudUseNewApis,
 		)

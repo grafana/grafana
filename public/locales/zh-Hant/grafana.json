@@ -3672,7 +3672,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "按字母順序 (A–Z)",
-        "alphabetically-za": "按字母順序 (Z–A)"
+        "alphabetically-za": "按字母順序 (Z–A)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -4515,7 +4517,8 @@
       "paste-row": "貼上列",
       "paste-tab": "貼上分頁",
       "un-group-panels": "解散群組",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4579,7 +4582,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "自訂網格版面配置不支援條件轉譯。切換至自動網格以使用條件轉譯。",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5026,6 +5030,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "複製",
         "copy-or-duplicate": "複製或重複",
@@ -5035,7 +5040,10 @@
         "group-layout-disabled": "此層級上不存在群組",
         "panel-layout": "面板版面配置",
         "panel-layout-disabled": "選擇一列或分頁以變更面板版面配置選項"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5184,7 +5192,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "刪除此列也會移除所有面板。確定要繼續嗎？",
       "delete-row-title": "要刪除列嗎？",
@@ -5224,9 +5231,7 @@
         "title-not-unique": "此標題不是唯一"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "儀表板已儲存"
@@ -5316,6 +5321,9 @@
       "delete-tab-title": "要刪除分頁嗎？",
       "delete-tab-yes": "刪除",
       "description": "將面板組織成橫向分頁",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "分頁",
       "tab": {
         "new": "新分頁",
@@ -5957,6 +5965,13 @@
       "last-edited": "<person />在 {{timeAgo}}前",
       "usage-count_other": "用於 {{count}} 個儀表板"
     },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
+    },
     "move-provisioned-dashboard-form": {
       "api-error": "無法移動儀表板",
       "cancel-action": "取消",
@@ -6265,6 +6280,9 @@
       "aria-label-variable-referenced-other-variables-dashboard": "此變數被其他變數或儀表板參照使用。",
       "content-variable-not-referenced-other-variables-dashboard": "其他變數或儀表板參照不會使用此變數。",
       "content-variable-referenced-other-variables-dashboard": "其他變數或儀表板參照會使用此變數。"
+    },
+    "variable-controls": {
+      "add-variable": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "變數編輯器表單",
@@ -7123,9 +7141,6 @@
       "title-failed-sample-query": "無法載入此查詢的紀錄樣本",
       "tooltip": "顯示對可視化指標有貢獻的紀錄行"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} 出現在 {{percentage}}% 的紀錄行中"
-    },
     "logs-table-empty-fields": {
       "no-fields": "沒有欄位"
     },
@@ -7133,10 +7148,6 @@
       "fields": "欄位",
       "reset": "重設",
       "selected-fields": "選取的欄位"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "拖放圖示",
-      "title-drag-and-drop-to-reorder": "拖放以重新排序"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "按名稱選取查詢項目",
@@ -7605,7 +7616,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "清除資料夾",
     "noOptionsMessage-no-folders-found": "未找到資料夾",
     "select-aria-label": "資料夾篩選條件",
     "select-placeholder": "按資料夾篩選"
@@ -7655,6 +7665,7 @@
   },
   "gauge": {
     "category-gauge": "儀表",
+    "category-radial-bar": "",
     "description-min-height": "最小列高（橫向）",
     "description-min-width": "最小欄寬（縱向）",
     "description-neutral": "留空以使用最小值作為中性點",
@@ -7670,7 +7681,8 @@
     "name-neutral": "中性",
     "name-show-threshold-labels": "顯示閾值標籤",
     "name-show-threshold-markers": "顯示閾值標記",
-    "placeholder-neutral": "自動"
+    "placeholder-neutral": "自動",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "套用",
@@ -7971,6 +7983,42 @@
     "select-group": "選擇群組"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_other": "",
+        "lastNHours_other": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_other": "",
+        "lastNYears_other": "",
+        "nextNDays_other": "",
+        "nextNHours_other": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_other": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9074,6 +9122,8 @@
       "make-time-range-permanent": "將時間範圍設為絕對／永久",
       "move-time-range-back": "將時間範圍向後移動",
       "move-time-range-forward": "將時間範圍向前移動",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "開啟搜尋",
       "open-share-embed-drawer": "分享面板嵌入",
       "open-share-link-drawer": "分享面板連結",
@@ -9499,6 +9549,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "顯示控制項以跳至最後或第一個紀錄行，並按紀錄層級篩選",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -10711,11 +10770,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -11710,6 +11767,11 @@
       "next": "繼續",
       "previous": "上一個"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "已完成步驟",
       "label-current-step": "目前步驟",
@@ -11785,7 +11847,8 @@
       "button-cancelling": "正在取消…",
       "button-previous": "上一個",
       "button-submitting": "正在提交…",
-      "error-instance-repository-exists": "執行個體儲存庫已存在"
+      "error-instance-repository-exists": "執行個體儲存庫已存在",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12007,6 +12070,28 @@
       "show-response": "顯示回應"
     },
     "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12540,6 +12625,7 @@
       "theme-label": "介面主題",
       "week-start-label": "一週哪一天開始"
     },
+    "save": "",
     "theme": {
       "default-label": "預設值",
       "experimental": "實驗性"
@@ -12635,6 +12721,10 @@
     "sql-suggestion-history": "SQL 建議歷史紀錄",
     "suggestions": "建議",
     "view-explanation": "檢視解釋"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -12936,13 +13026,13 @@
       "placeholder-search-teams": "搜尋團隊"
     },
     "team-settings": {
-      "description-email": "這是可選項目，主要用於設定團隊個人資料頭像（透過 gravatar 服務）",
+      "description-email": "",
       "label-email": "電子郵件",
       "label-name": "名稱",
       "label-numerical-identifier": "數字識別碼",
       "label-role": "角色",
       "label-team-details": "團隊詳細資料",
-      "save": "儲存"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "團隊同步可讓您更輕鬆地管理 Grafana 中的使用者存取權限，它可以根據每個使用者的單一登入群組成員資格，立即更新其 Grafana 團隊和權限，而不是在使用者登入時更新"

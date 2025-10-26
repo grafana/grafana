@@ -20,6 +20,7 @@ func NewSearchOptions(
 	indexMetrics *resource.BleveIndexMetrics,
 	ownsIndexFn func(key resource.NamespacedResource) (bool, error),
 ) (resource.SearchOptions, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) || features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		root := cfg.IndexPath
 		if root == "" {
@@ -45,7 +46,6 @@ func NewSearchOptions(
 			FileThreshold:          int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
 			IndexCacheTTL:          cfg.IndexCacheTTL,             // How long to keep the index cache in memory
 			BuildVersion:           cfg.BuildVersion,
-			UseFullNgram:           features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageUseFullNgram),
 			OwnsIndex:              ownsIndexFn,
 			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
 		}, tracer, indexMetrics)
