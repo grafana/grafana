@@ -74,12 +74,13 @@ func (s *FakeDataSourceService) AddDataSource(ctx context.Context, cmd *datasour
 		s.lastID = int64(len(s.DataSources) - 1)
 	}
 	dataSource := &datasources.DataSource{
-		ID:       s.lastID + 1,
-		Name:     cmd.Name,
-		Type:     cmd.Type,
-		UID:      cmd.UID,
-		OrgID:    cmd.OrgID,
-		JsonData: cmd.JsonData,
+		ID:             s.lastID + 1,
+		Name:           cmd.Name,
+		Type:           cmd.Type,
+		UID:            cmd.UID,
+		OrgID:          cmd.OrgID,
+		JsonData:       cmd.JsonData,
+		SecureJsonData: cmd.EncryptedSecureJsonData,
 	}
 	s.DataSources = append(s.DataSources, dataSource)
 	return dataSource, nil
@@ -122,7 +123,11 @@ func (s *FakeDataSourceService) GetHTTPTransport(ctx context.Context, ds *dataso
 }
 
 func (s *FakeDataSourceService) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
-	return make(map[string]string), nil
+	output := make(map[string]string)
+	for key, value := range ds.SecureJsonData {
+		output[key] = string(value)
+	}
+	return output, nil
 }
 
 func (s *FakeDataSourceService) DecryptedValue(ctx context.Context, ds *datasources.DataSource, key string) (string, bool, error) {

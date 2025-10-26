@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"path"
 	"strings"
@@ -205,9 +204,9 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 		return nil, err
 	}
 
-	headers := make(http.Header)
+	headers := ho.Header
 	for k, v := range w.cfg.CustomHeaders {
-		headers.Add(k, v)
+		headers.Set(k, v)
 	}
 
 	var backend backendType
