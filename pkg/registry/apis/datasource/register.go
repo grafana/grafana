@@ -128,8 +128,7 @@ func RegisterAPIService(
 
 		// Hardcoded schemas for testdata
 		// NOTE: this will be driven by the pluginJSON/manifest soon
-		if pluginJSON.ID == "grafana-testdata-datasource" &&
-			features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		if pluginJSON.ID == "grafana-testdata-datasource" && configCrudUseNewApis {
 			builder.schemaProvider = hardcoded.TestdataOpenAPIExtension
 		}
 
