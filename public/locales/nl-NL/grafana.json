@@ -3692,7 +3692,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "Alfabetisch (a-z)",
-        "alphabetically-za": "Alfabetisch (z-a)"
+        "alphabetically-za": "Alfabetisch (z-a)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -4535,7 +4537,8 @@
       "paste-row": "Rij plakken",
       "paste-tab": "Tabblad plakken",
       "un-group-panels": "Groepering opheffen",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4599,7 +4602,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "Voorwaardelijke weergave wordt niet ondersteund in de aangepaste rasterindeling. Schakel over naar auto grid om dit te gebruiken.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5046,6 +5050,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Kopiëren",
         "copy-or-duplicate": "Kopiëren of dupliceren",
@@ -5055,7 +5060,10 @@
         "group-layout-disabled": "Er bestaan geen groepen op dit niveau",
         "panel-layout": "Paneelindeling",
         "panel-layout-disabled": "Selecteer een rij of tabblad om de indelingsopties van het paneel te wijzigen"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5205,7 +5213,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "Als je deze rij verwijdert, worden ook alle panelen verwijderd. Weet je zeker dat je wilt doorgaan?",
       "delete-row-title": "Rij verwijderen?",
@@ -5245,9 +5252,7 @@
         "title-not-unique": "Deze titel is niet uniek"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Dashboard opgeslagen"
@@ -5337,6 +5342,9 @@
       "delete-tab-title": "Tabblad verwijderen?",
       "delete-tab-yes": "Verwijderen",
       "description": "Panelen organiseren in horizontale tabbladen",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Tabbladen",
       "tab": {
         "new": "Nieuw tabblad",
@@ -5979,6 +5987,13 @@
       "usage-count_one": "Gebruikt op {{count}} dashboards",
       "usage-count_other": "Gebruikt op {{count}} dashboards"
     },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
+    },
     "move-provisioned-dashboard-form": {
       "api-error": "Kan dashboard niet verplaatsen",
       "cancel-action": "Annuleren",
@@ -6288,6 +6303,9 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Deze variabele wordt gebruikt door andere variabelen of dashboard.",
       "content-variable-not-referenced-other-variables-dashboard": "Deze variabele wordt niet gebruikt door andere variabelen of dashboard.",
       "content-variable-referenced-other-variables-dashboard": "Deze variabele wordt gebruikt door andere variabelen of dashboard."
+    },
+    "variable-controls": {
+      "add-variable": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulier variabele bewerker",
@@ -7146,9 +7164,6 @@
       "title-failed-sample-query": "Kan logvoorbeeld voor deze query niet laden",
       "tooltip": "Loglijnen weergeven die hebben bijgedragen aan gevisualiseerde statistieken"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} verschijnt in {{percentage}}% van de loglijnen"
-    },
     "logs-table-empty-fields": {
       "no-fields": "Geen velden"
     },
@@ -7156,10 +7171,6 @@
       "fields": "Velden",
       "reset": "Resetten",
       "selected-fields": "Geselecteerde velden"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "Pictogram slepen en neerzetten",
-      "title-drag-and-drop-to-reorder": "Versleep om opnieuw te rangschikken"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Query selecteren op naam",
@@ -7628,7 +7639,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Mappen wissen",
     "noOptionsMessage-no-folders-found": "Geen mappen gevonden",
     "select-aria-label": "Mapfilter",
     "select-placeholder": "Filteren op map"
@@ -7678,6 +7688,7 @@
   },
   "gauge": {
     "category-gauge": "Meter",
+    "category-radial-bar": "",
     "description-min-height": "Minimale rijhoogte (horizontale oriëntatie)",
     "description-min-width": "Minimale kolombreedte (verticale oriëntatie)",
     "description-neutral": "Laat leeg om Min als neutraal punt te gebruiken",
@@ -7693,7 +7704,8 @@
     "name-neutral": "Neutraal",
     "name-show-threshold-labels": "Drempellabels weergeven",
     "name-show-threshold-markers": "Drempelmarkeringen weergeven",
-    "placeholder-neutral": "automatisch"
+    "placeholder-neutral": "automatisch",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Toepassen",
@@ -7994,6 +8006,52 @@
     "select-group": "Groep selecteren"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_one": "",
+        "lastNDays_other": "",
+        "lastNHours_one": "",
+        "lastNHours_other": "",
+        "lastNMinutes_one": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_one": "",
+        "lastNMonths_other": "",
+        "lastNYears_one": "",
+        "lastNYears_other": "",
+        "nextNDays_one": "",
+        "nextNDays_other": "",
+        "nextNHours_one": "",
+        "nextNHours_other": "",
+        "nextNMinutes_one": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_one": "",
+        "nextNMonths_other": "",
+        "nextNYears_one": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9097,6 +9155,8 @@
       "make-time-range-permanent": "Tijdsbereik absoluut/permanent maken",
       "move-time-range-back": "Tijdsbereik terugzetten",
       "move-time-range-forward": "Tijdsbereik vooruitzetten",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Zoekopdracht openen",
       "open-share-embed-drawer": "Paneelinsluiting delen",
       "open-share-link-drawer": "Paneellink delen",
@@ -9527,6 +9587,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Weergavebesturingselementen om naar de laatste of eerste logregel te gaan en filters op logniveau",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -10745,11 +10814,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -11750,6 +11817,11 @@
       "next": "Volgende",
       "previous": "Vorige"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Voltooide stap",
       "label-current-step": "Huidige stap",
@@ -11825,7 +11897,8 @@
       "button-cancelling": "Annuleren…",
       "button-previous": "Vorige",
       "button-submitting": "Indienen...",
-      "error-instance-repository-exists": "Er bestaat al een instantierepository"
+      "error-instance-repository-exists": "Er bestaat al een instantierepository",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12048,6 +12121,28 @@
       "show-response": "Antwoord weergeven"
     },
     "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12584,6 +12679,7 @@
       "theme-label": "Interfacethema",
       "week-start-label": "Begin van de week"
     },
+    "save": "",
     "theme": {
       "default-label": "Standaard",
       "experimental": "Experimenteel"
@@ -12679,6 +12775,10 @@
     "sql-suggestion-history": "Geschiedenis SQL-suggesties",
     "suggestions": "Suggesties",
     "view-explanation": "Uitleg bekijken"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -12981,13 +13081,13 @@
       "placeholder-search-teams": "Teams zoeken"
     },
     "team-settings": {
-      "description-email": "Dit is optioneel en wordt voornamelijk gebruikt voor het instellen van de teamprofielavatar (via gravatar-service)",
+      "description-email": "",
       "label-email": "E-mailadres",
       "label-name": "Naam",
       "label-numerical-identifier": "Numerieke id",
       "label-role": "Rol",
       "label-team-details": "Teamgegevens",
-      "save": "Opslaan"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "Teamsynchronisatie maakt het makkelijker voor je om de toegang van gebruikers in Grafana te beheren door onmiddellijk de Grafana-teams en toestemmingen van elke gebruiker bij te werken op basis van hun lidmaatschap van een single sign-on-groep, in plaats van wanneer gebruikers zich aanmelden"

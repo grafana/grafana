@@ -142,7 +142,7 @@ func (n *eventStore) Save(ctx context.Context, event Event) error {
 		Name:            event.Name,
 		ResourceVersion: event.ResourceVersion,
 		Action:          event.Action,
-		//TODO why isnt folder part of the key?
+		Folder:          event.Folder,
 	}
 
 	if err := eventKey.Validate(); err != nil {

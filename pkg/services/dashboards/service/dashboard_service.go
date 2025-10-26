@@ -1181,6 +1181,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	permissions := []accesscontrol.SetResourcePermissionCommand{}
 
 	isNested := obj.GetFolder() != ""
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
 		// Don't set any permissions for nested dashboards
 		return nil
@@ -1937,7 +1938,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	if len(query.Tags) > 0 {
 		req := []*resourcepb.Requirement{{
 			Key:      resource.SEARCH_FIELD_TAGS,
-			Operator: string(selection.In),
+			Operator: "=",
 			Values:   query.Tags,
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)

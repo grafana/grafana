@@ -3692,7 +3692,9 @@
     "trash-state-manager": {
       "label": {
         "alphabetically-az": "Alfabetiskt (A–Ö)",
-        "alphabetically-za": "Alfabetiskt (Ö–A)"
+        "alphabetically-za": "Alfabetiskt (Ö–A)",
+        "deleted-newest": "",
+        "deleted-oldest": ""
       }
     }
   },
@@ -4535,7 +4537,8 @@
       "paste-row": "Klistra in rad",
       "paste-tab": "Klistra in flik",
       "un-group-panels": "Ta bort gruppering",
-      "ungroup-rows": ""
+      "ungroup-rows": "",
+      "ungroup-tabs": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -4599,7 +4602,8 @@
       },
       "editor": {
         "info": "",
-        "not-supported-for-custom-grid": "Villkorsstyrd rendering stöds inte för den anpassade rutnätslayouten. Byt till automatiskt rutnät om du vill använda villkorsstyrd rendering.",
+        "learn-more": "",
+        "not-supported-for-custom-grid": "",
         "unsupported-object-type": ""
       },
       "overlay": {
@@ -5046,6 +5050,7 @@
       }
     },
     "layout": {
+      "cancel": "",
       "common": {
         "copy": "Kopiera",
         "copy-or-duplicate": "Kopiera eller duplicera",
@@ -5055,7 +5060,10 @@
         "group-layout-disabled": "Det finns inga grupper på den här nivån",
         "panel-layout": "Panellayout",
         "panel-layout-disabled": "Välj en rad eller flik för att ändra alternativ för panellayout"
-      }
+      },
+      "continue": "",
+      "ungroup-nested-text": "",
+      "ungroup-nested-title": ""
     },
     "legacy-dashboard-api": {
       "fetch-error": {
@@ -5205,7 +5213,6 @@
     },
     "rows-layout": {
       "cancel": "",
-      "continue": "",
       "convert-to": "",
       "delete-row-text": "Om du tar bort denna rad tas också alla paneler bort. Är du säker på att du vill fortsätta?",
       "delete-row-title": "Radera rad?",
@@ -5245,9 +5252,7 @@
         "title-not-unique": "Den här titeln är inte unik"
       },
       "ungroup-convert-text": "",
-      "ungroup-convert-title": "",
-      "ungroup-nested-text": "",
-      "ungroup-nested-title": ""
+      "ungroup-convert-title": ""
     },
     "save-dashboard": {
       "message-dashboard-saved": "Kontrollpanelen sparades"
@@ -5337,6 +5342,9 @@
       "delete-tab-title": "Radera flik?",
       "delete-tab-yes": "Ta bort",
       "description": "Organisera paneler i horisontella flikar",
+      "edit": {
+        "ungroup-tabs": ""
+      },
       "name": "Flikar",
       "tab": {
         "new": "Ny flik",
@@ -5979,6 +5987,13 @@
       "usage-count_one": "Används på {{count}} instrumentpaneler",
       "usage-count_other": "Används på {{count}} instrumentpaneler"
     },
+    "managed-badge": {
+      "kubectl": "",
+      "plugin": "",
+      "provisioned": "",
+      "repository": "",
+      "terraform": ""
+    },
     "move-provisioned-dashboard-form": {
       "api-error": "Det gick inte att flytta kontrollpanelen",
       "cancel-action": "Avbryt",
@@ -6288,6 +6303,9 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Den här variabeln hänvisas till av andra variabler eller instrumentpanelen.",
       "content-variable-not-referenced-other-variables-dashboard": "Den här variabeln hänvisas inte till av andra variabler eller instrumentpanelen.",
       "content-variable-referenced-other-variables-dashboard": "Den här variabeln hänvisas till av andra variabler eller instrumentpanelen."
+    },
+    "variable-controls": {
+      "add-variable": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulär för variabelsredigering",
@@ -7146,9 +7164,6 @@
       "title-failed-sample-query": "Det gick inte att ladda loggprov för denna fråga",
       "tooltip": "Visa loggrader som bidrog till visualiserade mätvärden"
     },
-    "logs-table-available-fields": {
-      "title-label-percentage": "{{labelName}} visas i {{percentage}} % av loggraderna"
-    },
     "logs-table-empty-fields": {
       "no-fields": "Inga fält"
     },
@@ -7156,10 +7171,6 @@
       "fields": "Fält",
       "reset": "Återställ",
       "selected-fields": "Markerade fält"
-    },
-    "logs-table-nav-field": {
-      "aria-label-drag-and-drop-icon": "Ikonen dra och släpp",
-      "title-drag-and-drop-to-reorder": "Ändra ordning genom dra och släpp"
     },
     "logs-table-wrap": {
       "aria-label-select-query-by-name": "Välj fråga efter namn",
@@ -7628,7 +7639,6 @@
     }
   },
   "folder-filter": {
-    "clear-folder-button": "Rensa mappar",
     "noOptionsMessage-no-folders-found": "Inga mappar hittades",
     "select-aria-label": "Mappfilter",
     "select-placeholder": "Filtrera efter mapp"
@@ -7678,6 +7688,7 @@
   },
   "gauge": {
     "category-gauge": "Mätare",
+    "category-radial-bar": "",
     "description-min-height": "Minsta radhöjd (horisontell orientering)",
     "description-min-width": "Minsta kolumnbredd (vertikal orientering)",
     "description-neutral": "Lämna tomt för att använda Min som neutral punkt",
@@ -7693,7 +7704,8 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Visa tröskelvärdesetiketter",
     "name-show-threshold-markers": "Visa tröskelmarkörer",
-    "placeholder-neutral": "auto"
+    "placeholder-neutral": "auto",
+    "threshold": ""
   },
   "gen-ai": {
     "apply-suggestion": "Tillämpa",
@@ -7994,6 +8006,52 @@
     "select-group": "Markera grupp"
   },
   "grafana-data": {
+    "datetime": {
+      "rangeutils": {
+        "getBaseRangeOptions": {
+          "dayBeforeYesterday": "",
+          "previousFiscalQuarter": "",
+          "previousFiscalYear": "",
+          "previousMonth": "",
+          "previousWeek": "",
+          "previousYear": "",
+          "thisDayLastWeek": "",
+          "thisFiscalQuarter": "",
+          "thisFiscalQuarterSoFar": "",
+          "thisFiscalYear": "",
+          "thisFiscalYearSoFar": "",
+          "thisMonth": "",
+          "thisMonthSoFar": "",
+          "thisWeek": "",
+          "thisWeekSoFar": "",
+          "thisYear": "",
+          "thisYearSoFar": "",
+          "today": "",
+          "todaySoFar": "",
+          "yesterday": ""
+        },
+        "lastNDays_one": "",
+        "lastNDays_other": "",
+        "lastNHours_one": "",
+        "lastNHours_other": "",
+        "lastNMinutes_one": "",
+        "lastNMinutes_other": "",
+        "lastNMonths_one": "",
+        "lastNMonths_other": "",
+        "lastNYears_one": "",
+        "lastNYears_other": "",
+        "nextNDays_one": "",
+        "nextNDays_other": "",
+        "nextNHours_one": "",
+        "nextNHours_other": "",
+        "nextNMinutes_one": "",
+        "nextNMinutes_other": "",
+        "nextNMonths_one": "",
+        "nextNMonths_other": "",
+        "nextNYears_one": "",
+        "nextNYears_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -9097,6 +9155,8 @@
       "make-time-range-permanent": "Gör tidsintervallet absolut/permanent",
       "move-time-range-back": "Flytta tidsintervall tillbaka",
       "move-time-range-forward": "Flytta tidsintervall framåt",
+      "open-alerting": "",
+      "open-assistant": "",
       "open-search": "Öppna sökning",
       "open-share-embed-drawer": "Dela inbäddad panel",
       "open-share-link-drawer": "Dela panellänk",
@@ -9527,6 +9587,15 @@
     "description-enable-logs-highlighting": "",
     "description-show-controls": "Visa kontroller för att hoppa till den sista eller första loggraden och filtrera efter loggnivå",
     "description-show-log-attributes": "",
+    "field-selector": {
+      "aria-label-drag-and-drop-icon": "",
+      "clear-button": "",
+      "collapse": "",
+      "expand": "",
+      "label-title": "",
+      "placeholder-search-fields-by-name": "",
+      "title-drag-and-drop-to-reorder": ""
+    },
     "fields": {
       "type": {
         "loki": {
@@ -10745,11 +10814,9 @@
   "panel": {
     "dashlist": {
       "empty-state-message": "",
-      "mark-as-starred": "",
       "recently-viewed-dashboards": "",
       "search": "",
-      "starred-dashboards": "",
-      "unmark-as-starred": ""
+      "starred-dashboards": ""
     },
     "get-calculation-value-data-links-variable-suggestions": {
       "value-calc-var": {
@@ -11750,6 +11817,11 @@
       "next": "Nästa",
       "previous": "Föregående"
     },
+    "shared": {
+      "progress-bar": {
+        "aria-label": ""
+      }
+    },
     "sidebar-item": {
       "label-completed-step": "Slutfört steg",
       "label-current-step": "Nuvarande steg",
@@ -11825,7 +11897,8 @@
       "button-cancelling": "Avbryter …",
       "button-previous": "Föregående",
       "button-submitting": "Skickar …",
-      "error-instance-repository-exists": "Instanslagringsplatsen finns redan"
+      "error-instance-repository-exists": "Instanslagringsplatsen finns redan",
+      "error-save-repository-setting": ""
     },
     "workflow-options-label": {
       "push-to-a-new-branch": "",
@@ -12048,6 +12121,28 @@
       "show-response": "Visa svar"
     },
     "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
+  },
+  "radialbar": {
+    "config": {
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "rounded-bars": "",
+        "spotlight": ""
+      },
+      "gradient": "",
+      "gradient-auto": "",
+      "gradient-none": "",
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "threshold-labels": "",
+      "threshold-markers": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12584,6 +12679,7 @@
       "theme-label": "Gränssnittstema",
       "week-start-label": "Veckostart"
     },
+    "save": "",
     "theme": {
       "default-label": "Standard",
       "experimental": "Experimentellt"
@@ -12679,6 +12775,10 @@
     "sql-suggestion-history": "SQL-förslagshistorik",
     "suggestions": "Förslag",
     "view-explanation": "Visa förklaring"
+  },
+  "stars": {
+    "mark-as-starred": "",
+    "unmark-as-starred": ""
   },
   "stat": {
     "add-orientation-option": {
@@ -12981,13 +13081,13 @@
       "placeholder-search-teams": "Sök team"
     },
     "team-settings": {
-      "description-email": "Detta är valfritt och används främst för att ställa in teamprofilens avatar (via gravatartjänsten)",
+      "description-email": "",
       "label-email": "E-post",
       "label-name": "Namn",
       "label-numerical-identifier": "Numerisk identifierare",
       "label-role": "Roll",
       "label-team-details": "Teamdetaljer",
-      "save": "Spara"
+      "save": ""
     },
     "team-sync-upgrade-content": {
       "description": "Team Sync gör det enklare att hantera användarnas åtkomst i Grafana genom att omedelbart uppdatera varje användares Grafana-team och behörigheter baserat på deras gruppmedlemskap med enkel inloggning, istället för när användare loggar in"
