@@ -1408,7 +1408,7 @@
         "tags": [
           "Route"
         ],
-        "operationId": "post_route_test_json",
+        "operationId": "post_route_test",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1461,7 +1461,7 @@
         "tags": [
           "Route"
         ],
-        "operationId": "post_route_test_json",
+        "operationId": "post_route_test",
         "requestBody": {
           "content": {
             "application/json": {
