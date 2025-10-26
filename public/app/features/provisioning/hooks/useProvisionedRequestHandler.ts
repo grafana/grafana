@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -74,6 +74,8 @@ export function useProvisionedRequestHandler<T>({
   resourceType,
 }: Props<T>) {
   const dispatch = useDispatch();
+  const hasHandled = useRef(false);
+
   useEffect(() => {
     const repoType = repository?.type || 'git';
     const info: ProvisionedOperationInfo = {
@@ -83,11 +85,13 @@ export function useProvisionedRequestHandler<T>({
     };
 
     if (request.isError) {
+      hasHandled.current = true;
       handlers.onError?.(request.error, info);
       return;
     }
 
-    if (request.isSuccess && request.data) {
+    if (request.isSuccess && request.data && !hasHandled.current) {
+      hasHandled.current = true;
       const { ref, path, urls, resource } = request.data;
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const resourceData = resource.upsert as Resource<T>;
