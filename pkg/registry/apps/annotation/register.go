@@ -237,20 +237,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return nil, errors.New("not implemented")
-	// orgID, err := request.OrgIDForList(ctx)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// c, err := s.service.GetCorrelation(ctx, correlations.GetCorrelationQuery{
-	// 	UID:   name,
-	// 	OrgId: orgID,
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
-	//
-	// return correlations.ToResource(c, s.namespacer)
+	return nil, errors.New("fetching single annotations not supported by legacy storage")
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
